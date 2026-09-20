@@ -1,0 +1,10 @@
+# Line endings are a property of this project, not of the machine that cloned
+# it: the working tree here is currently mixed (game.ts CRLF, app.ts LF), and
+# core.autocrlf is a per-machine setting that does not travel with the repo.
+# Normalise every text file to LF in the repository; checkouts still get the
+# platform's own endings.
+* text=auto eol=lf
+
+# Binary: never normalise, never diff as text.
+*.png  binary
+*.pdn  binary

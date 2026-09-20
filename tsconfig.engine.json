@@ -1,0 +1,11 @@
+{
+  // Proves the rules engine is free of browser APIs: no DOM lib at all, so a
+  // stray `document` or `window` in src/engine is a compile error rather than
+  // something discovered when it fails to run headlessly.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": ["node"]
+  },
+  "include": ["src/engine", "src/sim", "src/data.ts", "test"]
+}

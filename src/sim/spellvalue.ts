@@ -1,0 +1,596 @@
+/**
+ * What a spell is actually worth, measured.
+ *
+ * The autoplayer in `autoplay.ts` is omniscient — it clears boards in tier
+ * order and never guesses — so it can prove the zero-damage guarantee but it
+ * can say nothing at all about spells, because it is never in the situation a
+ * spell is for. This one plays honestly instead: it reads only what a player
+ * can see, deduces what it can, and when deduction runs out it either spends
+ * mana or takes a guess and eats the damage.
+ *
+ * Run the same boards under different spending policies and the difference in
+ * outcome IS the spell's value. Prices then follow from value: two spells are
+ * correctly priced relative to each other when a point of mana buys the same
+ * amount of certainty through either one.
+ *
+ * The deduction here is deliberately the game's own — the bound Sweep proves,
+ * plus exact tiers from Reveal's marks — with one addition, which is that it
+ * also reasons from a Census count. The engine's `safeCells` does not, and
+ * that asymmetry is itself one of the things being measured: a spell whose
+ * answer the game cannot act on is worth less than the same answer in a form
+ * it can.
+ *
+ *   npx tsx src/sim/spellvalue.ts [seeds]          every magic ladder
+ *   npx tsx src/sim/spellvalue.ts [seeds] arcane   one ladder, board by board
+ *
+ * The per-board view answers a different question from the per-ladder one: not
+ * what a spell is worth, but whether there is anything for it to be worth. A
+ * spell can only pay at a moment where deduction has run out, so a ladder that
+ * rarely corners the player has nothing for one to do, however good it is.
+ */
+
+import { loadLadders } from '../data.js';
+import { boardConfig } from '../engine/config.js';
+import { Game } from '../engine/game.js';
+import { SPELLS, type SpellId } from '../engine/spells.js';
+import type { Cell } from '../engine/types.js';
+import { hiddenCap, shadeOf } from '../engine/checker.js';
+
+/**
+ * How the player spends, if they spend at all.
+ *
+ * The information spells are cast at a stuck point and judged on whether they
+ * unlock a deduction. Exercise cannot be judged that way and it is not a flaw
+ * in the spell: it unlocks nothing, it makes the fight you were already going
+ * to take cost less. So it is cast at the same moment — the one where
+ * deduction has run out and a guess is coming — and judged on the `exercised`
+ * event the fight itself emits, which says exactly what it spared.
+ */
+type Policy = 'none' | 'reveal' | 'census' | 'census-best' | 'exercise';
+
+interface Run {
+  cleared: boolean;
+  hpLost: number;
+  guesses: number;
+  stuckPoints: number;
+  casts: number;
+  castsThatHelped: number;
+  manaSpent: number;
+  manaPool: number;
+}
+
+/**
+ * What the board tells you, per open numbered cell: how much tier is still
+ * hidden behind it, and which cells that is spread over.
+ *
+ * Marks only ever come from Reveal here, so a mark is an exact tier rather
+ * than a claim, and subtracting it is as sound as subtracting an open cell.
+ */
+interface Constraint {
+  readonly cell: Cell;
+  /** Tier still unaccounted for, over `unknown`. */
+  readonly residual: number;
+  /** Covered, unmarked neighbours — the cells the residual is spread over. */
+  readonly unknown: Cell[];
+  /** Creatures among `unknown`, if Census has been cast here. */
+  readonly creatures: number | null;
+}
+
+/**
+ * The most tier one of a constraint's unknown cells could be hiding.
+ *
+ * On an ordinary board that is the whole residual and this is the bound Sweep
+ * already proves. On a checkerboard the colours carry the parity of the sum,
+ * which caps a single cell below the residual and sometimes pins it at zero —
+ * see `hiddenCap`. Taught to the harness because a real player on that board
+ * can see the colours: measuring the ladder with a player who could not would
+ * be measuring a different mode.
+ *
+ * Marks never reach this. Everything marked has already been subtracted out of
+ * the residual, so `unknown` IS the set the parity argument is about.
+ */
+function capOf(game: Game, c: Constraint, cell: Cell): number {
+  if (game.config.placement !== 'checker') return c.residual;
+  const dark = c.unknown.reduce((n, u) => n + (shadeOf(u) === 'dark' ? 1 : 0), 0);
+  return hiddenCap(shadeOf(cell), c.residual, dark);
+}
+
+function constraintsOf(game: Game): Constraint[] {
+  const out: Constraint[] = [];
+
+  for (const cell of game.grid.flat()) {
+    if (!cell.present || !cell.open) continue;
+    const ns = game.neighboursOf(cell);
+    let known = 0;
+    let markedSum = 0;
+    let markedCount = 0;
+    let openCreatures = 0;
+    const unknown: Cell[] = [];
+
+    for (const n of ns) {
+      if (n.open) {
+        known += n.tier;
+        if (n.tier > 0) openCreatures++;
+      } else if (n.mark > 0) {
+        markedSum += n.mark;
+        markedCount++;
+      } else {
+        unknown.push(n);
+      }
+    }
+    if (!unknown.length) continue;
+
+    out.push({
+      cell,
+      residual: cell.num - known - markedSum,
+      unknown,
+      creatures: cell.census === null ? null : cell.census - openCreatures - markedCount,
+    });
+  }
+  return out;
+}
+
+/**
+ * Pairs of numbers, subtracted.
+ *
+ * Where one number's covered cells are wholly inside another's, the difference
+ * is a constraint in its own right: the cells only the bigger one can see, and
+ * the tier left once the smaller one's share is taken out. This is the
+ * standard sweeper move, and it is also the *only* place a Census count can
+ * compound, because counts subtract the same way sums do — which is what
+ * "sum plus count pins the layout" means in practice.
+ *
+ * It exists here so the comparison is fair. Without it a Census answer has
+ * nowhere to go but the one number it was cast on, and calling a spell weak
+ * because the harness cannot use it would be measuring the harness.
+ *
+ * Only cells within two steps of each other can share covered neighbours, so
+ * that is as far as the pairing looks.
+ */
+function subtractPairs(constraints: Constraint[]): Constraint[] {
+  const derived: Constraint[] = [];
+
+  for (const a of constraints) {
+    if (a.unknown.length > 6) continue;
+    for (const b of constraints) {
+      if (a === b) continue;
+      if (Math.abs(a.cell.x - b.cell.x) > 2 || Math.abs(a.cell.y - b.cell.y) > 2) continue;
+      if (a.unknown.length >= b.unknown.length) continue;
+      if (!a.unknown.every((c) => b.unknown.includes(c))) continue;
+
+      const rest = b.unknown.filter((c) => !a.unknown.includes(c));
+      if (!rest.length) continue;
+      derived.push({
+        cell: b.cell,
+        residual: b.residual - a.residual,
+        unknown: rest,
+        creatures: a.creatures !== null && b.creatures !== null
+          ? b.creatures - a.creatures
+          : null,
+      });
+    }
+  }
+  return derived;
+}
+
+/** Everything the board says, directly and by subtraction. */
+function allConstraints(game: Game): Constraint[] {
+  const direct = constraintsOf(game);
+  return [...direct, ...subtractPairs(direct)];
+}
+
+/**
+ * Name every cell a number pins down on its own, and mark it.
+ *
+ * A number with one covered neighbour left has told you that cell's tier
+ * exactly. This is the workhorse deduction of the whole game and it compounds:
+ * each cell named is a cell subtracted from its other numbers, which pins down
+ * the next. Marking is how it propagates, because a mark is subtracted from
+ * every constraint that touches it.
+ *
+ * Returns whether anything was learned, so the caller can run it to a fixed
+ * point before deciding it is stuck.
+ */
+function nameWhatIsCertain(game: Game): boolean {
+  let learned = false;
+
+  for (const c of allConstraints(game)) {
+    if (c.residual < 0) continue;
+
+    // Proven empty ground, without having to be the last cell behind its
+    // number. On a checkerboard a dark square alone under an even sum is
+    // empty however many light squares share the number with it, which is the
+    // cheap read that mode is built on; everywhere else a cap of zero is just
+    // a residual of zero and this says nothing new.
+    for (const cell of c.unknown) {
+      if (cell.mark > 0 || cell.open || capOf(game, c, cell) !== 0) continue;
+      if (game.status === 'playing') { game.open(cell.x, cell.y); learned = true; }
+    }
+
+    if (c.unknown.length !== 1) continue;
+    const cell = c.unknown[0]!;
+    if (cell.mark > 0 || cell.open || c.residual === 0) continue;
+    game.setMark(cell.x, cell.y, Math.min(9, c.residual));
+    learned = true;
+  }
+  return learned;
+}
+
+/**
+ * Everything that can be opened without a gamble.
+ *
+ * Four rules, in order of how much they need to know:
+ *   nothing left to hide  — residual 0, so every covered neighbour is empty;
+ *   a named creature      — Reveal or deduction gave an exact tier, and it is
+ *                           at or under your level, so the fight is free;
+ *   Sweep's bound         — the whole residual fits under your level, so no
+ *                           single cell behind it can be over your level;
+ *   the Census bound      — knowing how many creatures share the residual puts
+ *                           a tighter cap on the biggest of them, because each
+ *                           of the others is worth at least 1. This is the
+ *                           only thing a Census count can do that the residual
+ *                           could not already: a count of zero says the same
+ *                           as a residual of zero, and anything short of the
+ *                           full count says which cells only by luck.
+ */
+function safeToOpen(game: Game, constraints: Constraint[]): Cell[] {
+  const safe = new Set<Cell>();
+  const level = game.level;
+
+  // Named creatures at or under level: free EXP, and the only way a board with
+  // marks on it ever gets finished.
+  for (const cell of game.grid.flat()) {
+    if (cell.present && !cell.open && cell.mark > 0 && cell.mark <= level) safe.add(cell);
+  }
+
+  for (const c of constraints) {
+    if (c.residual < 0) continue;
+
+    let proven = c.residual === 0;
+    if (!proven && level >= 1 && c.residual <= level) proven = true;
+    if (!proven && c.creatures !== null && c.creatures > 0 && level >= 1) {
+      if (c.residual - (c.creatures - 1) <= level) proven = true;
+    }
+    if (proven) {
+      for (const n of c.unknown) safe.add(n);
+      continue;
+    }
+    // The colour bound, which is decided per cell rather than for the whole
+    // set at once: half a number's unknowns can be safe while the other half
+    // is not, which is the shape of deduction unique to this board.
+    for (const n of c.unknown) if (capOf(game, c, n) <= level) safe.add(n);
+  }
+  return [...safe];
+}
+
+/**
+ * Where to gamble when there is nothing left to prove.
+ *
+ * The cheapest guess is the one with the least tier behind it per cell it
+ * could be hiding. A cell no number touches at all is scored off the board's
+ * own average, which is usually worse than a constrained one and correctly so.
+ *
+ * Only cells the crawl rule would actually let the player click, because this
+ * is meant to be an honest player and a real one cannot gamble on a room they
+ * have not reached yet. `inReach` is free on every board without a rule.
+ */
+function bestGuess(game: Game, constraints: Constraint[]): Cell | null {
+  const board = game.config;
+  const total = board.quantity.reduce((s, n, i) => s + n * (i + 1), 0);
+  const covered = game.grid.flat()
+    .filter((c) => c.present && !c.open && c.mark === 0 && game.inReach(c));
+  if (!covered.length) return null;
+  const loose = total / Math.max(1, covered.length);
+
+  // Two numbers per cell: the most tier it could possibly be hiding, and the
+  // average if the residual were spread evenly. Damage is convex in tier, so
+  // the ceiling decides and the average breaks ties.
+  const ceiling = new Map<Cell, number>();
+  const mean = new Map<Cell, number>();
+  for (const c of constraints) {
+    if (c.residual < 0) continue;
+    const counted = c.creatures !== null && c.creatures > 0
+      ? c.residual - (c.creatures - 1)
+      : c.residual;
+    const each = c.residual / c.unknown.length;
+    for (const n of c.unknown) {
+      // A player choosing where to gamble knows the colours too, so the cheap
+      // square on a checkerboard is often the one whose parity caps it low.
+      const cap = Math.min(counted, capOf(game, c, n));
+      const seenCap = ceiling.get(n);
+      if (seenCap === undefined || cap < seenCap) ceiling.set(n, cap);
+      const seenEach = mean.get(n);
+      if (seenEach === undefined || each < seenEach) mean.set(n, each);
+    }
+  }
+
+  let best: Cell | null = null;
+  let bestKey: [number, number] = [Infinity, Infinity];
+  for (const cell of covered) {
+    const key: [number, number] = [ceiling.get(cell) ?? loose * 2, mean.get(cell) ?? loose];
+    if (key[0] < bestKey[0] || (key[0] === bestKey[0] && key[1] < bestKey[1])) {
+      best = cell;
+      bestKey = key;
+    }
+  }
+  return best;
+}
+
+/** The open cell whose Census would say most about the coming gamble. */
+function censusTarget(game: Game, constraints: Constraint[], guess: Cell): Cell | null {
+  let best: Cell | null = null;
+  let bestScore = -Infinity;
+
+  for (const c of constraints) {
+    if (c.cell.census !== null) continue;
+    if (!c.unknown.includes(guess)) continue;
+    // Most tier spread over fewest cells: the bound the count would tighten.
+    const score = c.residual / c.unknown.length;
+    if (score > bestScore) { best = c.cell; bestScore = score; }
+  }
+  return best;
+}
+
+/**
+ * Where a Census would actually pay — decided by looking.
+ *
+ * This is a cheat, and deliberately so. It tries the count in every open cell
+ * near the impasse, keeps the first that turns something provable, and spends
+ * nothing at all if none of them does. No player can do this; it is an upper
+ * bound on what perfect Census targeting could ever be worth, so that a weak
+ * result cannot be blamed on the harness aiming badly.
+ */
+function censusOracle(game: Game, guess: Cell): Cell | null {
+  for (const cell of game.grid.flat()) {
+    if (!cell.present || !cell.open || cell.census !== null) continue;
+    if (Math.abs(cell.x - guess.x) > 2 || Math.abs(cell.y - guess.y) > 2) continue;
+    const ns = game.neighboursOf(cell);
+    if (!ns.some((n) => !n.open && n.mark === 0)) continue;
+
+    cell.census = ns.filter((n) => n.tier > 0).length;
+    const unlocked = safeToOpen(game, allConstraints(game)).some((c) => !c.open);
+    cell.census = null;
+    if (unlocked) return cell;
+  }
+  return null;
+}
+
+function play(game: Game, policy: Policy, spellId: SpellId | null): Run {
+  const run: Run = {
+    cleared: false, hpLost: 0, guesses: 0, stuckPoints: 0,
+    casts: 0, castsThatHelped: 0, manaSpent: 0, manaPool: 0,
+  };
+  const startHp = game.hp;
+  let castsHere = 0;
+  let guard = game.config.width * game.config.height * 4;
+
+  while (game.status === 'playing' && guard-- > 0) {
+    // Everything free first: name what is certain, then take what is proven,
+    // and only call it stuck when neither has anything left to give.
+    if (nameWhatIsCertain(game)) { castsHere = 0; continue; }
+
+    const constraints = allConstraints(game);
+    // Same again: a proof about a cell you cannot click yet is a proof you
+    // have to hold on to, not a move.
+    const safe = safeToOpen(game, constraints)
+      .filter((c) => c.mark <= game.level && game.inReach(c));
+
+    if (safe.length) {
+      for (const cell of safe) {
+        if (game.status !== 'playing' || cell.open) continue;
+        game.open(cell.x, cell.y);
+      }
+      castsHere = 0;
+      continue;
+    }
+
+    const guess = bestGuess(game, constraints);
+    if (!guess) break;
+    run.stuckPoints++;
+
+    // Exercise, if this policy holds one, goes on the guess about to be made
+    // rather than on the deduction that has already failed. Cast and fall
+    // straight through: it changes nothing a player could reason about, so
+    // going round the loop again would only find the same dead end.
+    if (policy === 'exercise' && game.exerciseCharge === 0
+        && game.mana >= SPELLS.exercise.cost) {
+      const before = game.mana;
+      if (!game.cast('exercise').some((e) => e.type === 'blocked')) {
+        run.casts++;
+        run.manaSpent += before - game.mana;
+      }
+    }
+
+    // Spend, if this policy spends and the spell can still be afforded. Two
+    // casts at one stuck point at most: past that it is throwing mana at a
+    // wall, which is a decision a player makes once and not again.
+    if (policy !== 'none' && spellId && castsHere < 2 && game.mana >= SPELLS[spellId].cost) {
+      const target = spellId === 'reveal'
+        ? guess
+        : policy === 'census-best'
+          ? censusOracle(game, guess)
+          : censusTarget(game, constraints, guess);
+      if (target) {
+        const before = game.mana;
+        const events = game.cast(spellId, target.x, target.y);
+        if (!events.some((e) => e.type === 'blocked')) {
+          run.casts++;
+          castsHere++;
+          run.manaSpent += before - game.mana;
+          const after = safeToOpen(game, allConstraints(game)).filter((c) => !c.open);
+          if (after.length) run.castsThatHelped++;
+          continue;
+        }
+      }
+    }
+
+    run.guesses++;
+    castsHere = 0;
+    const opened = game.open(guess.x, guess.y);
+    // A cast counts as useful when the fight says so. `spared` is the engine's
+    // own arithmetic for what the borrowed level took off the damage, so a
+    // charge spent on a guess that turned out to be empty ground, or on a
+    // creature already free to kill, correctly counts for nothing.
+    if (opened.some((e) => e.type === 'exercised' && e.spared > 0)) run.castsThatHelped++;
+  }
+
+  run.cleared = game.status === 'won';
+  run.hpLost = startHp - game.hp;
+  run.manaPool = game.mana + run.manaSpent;
+  return run;
+}
+
+function byBoard(seeds: number, typeId: string): void {
+  const ladders = loadLadders();
+  const type = ladders.find((t) => t.id === typeId);
+  if (!type) throw new Error(`no ladder "${typeId}"`);
+
+  console.log(`${type.name}, board by board, ${seeds} seeds each.
+`);
+  // A column per spell the ladder actually offers, so the table answers "what
+  // is this ladder's loadout worth on this ladder" rather than reporting on a
+  // spell nobody there can cast.
+  const offered = (['reveal', 'census', 'exercise'] as const)
+    .filter((id) => (type.spells ?? []).includes(id));
+
+  console.log('board   density   cells   stuck/board   guesses   hp lost   cleared   ' +
+    offered.map((id) => `${id} saves`.padStart(16)).join(''));
+
+  for (const board of type.boards) {
+    const cfg = boardConfig(ladders, type.id, board.n);
+    const seedAt = (s: number) => s * 2654435761 + 11;
+    const base: Run[] = [];
+    for (let s = 0; s < seeds; s++) base.push(play(Game.create(cfg, seedAt(s)), 'none', null));
+
+    // Same seeds for every policy, so the difference between two columns is
+    // the spell and never the board.
+    const withSpell = new Map<Policy, Run[]>();
+    for (const id of offered) {
+      const runs: Run[] = [];
+      for (let s = 0; s < seeds; s++) runs.push(play(Game.create(cfg, seedAt(s)), id, id));
+      withSpell.set(id, runs);
+    }
+    const mean = (rs: Run[], pick: (r: Run) => number) =>
+      rs.reduce((a, r) => a + pick(r), 0) / rs.length;
+
+    console.log(
+      `${String(board.n).padStart(4)}  ${board.density.toFixed(1).padStart(7)}%  ` +
+      `${String(board.cells).padStart(6)}  ${mean(base, (r) => r.stuckPoints).toFixed(1).padStart(11)}  ` +
+      `${mean(base, (r) => r.guesses).toFixed(1).padStart(8)}  ` +
+      `${mean(base, (r) => r.hpLost).toFixed(2).padStart(7)}  ` +
+      `${(100 * mean(base, (r) => (r.cleared ? 1 : 0))).toFixed(0).padStart(7)}%  ` +
+      offered.map((id) => (mean(base, (r) => r.hpLost)
+        - mean(withSpell.get(id)!, (r) => r.hpLost)).toFixed(2).padStart(16)).join(''),
+    );
+  }
+}
+
+function main(): void {
+  const seeds = Number(process.argv[2] ?? 40);
+  if (process.argv[3]) { byBoard(seeds, process.argv[3]); return; }
+  const ladders = loadLadders();
+  const magic = ladders.filter((t) => (t.spells ?? []).length > 0 && !t.search);
+
+  console.log(
+    `An honest player, ${seeds} seeds x every board of every magic ladder.\n` +
+    'Deduction is Sweep\'s own bound plus exact tiers from Reveal, plus the ' +
+    'Census count.\n',
+  );
+  console.log(
+    'ladder        policy       cleared   hp lost   guesses  stuck  casts  useful  ' +
+    'mana spent  of pool',
+  );
+
+  const totals = new Map<Policy, Run[]>();
+  /**
+   * The spell-less runs each policy is judged against — only over the ladders
+   * that actually offer that spell.
+   *
+   * One baseline for everything was fine while every magic ladder carried
+   * every spell being measured. Exercise is not on every ladder, so a single
+   * baseline would compare its runs on the ladders that have it against
+   * spell-less runs on ladders that do not, and the difference would be a fact
+   * about which boards those are rather than about the spell.
+   */
+  const baselines = new Map<Policy, Run[]>();
+
+  for (const type of magic) {
+    let typeBase: Run[] = [];
+    for (const policy of ['none', 'reveal', 'census', 'census-best', 'exercise'] as const) {
+      const spellId: SpellId | null = policy === 'none' ? null
+        : policy === 'census-best' ? 'census' : policy;
+      if (spellId && !(type.spells ?? []).includes(spellId)) continue;
+      const runs: Run[] = [];
+
+      for (const board of type.boards) {
+        const cfg = boardConfig(ladders, type.id, board.n);
+        for (let s = 0; s < seeds; s++) {
+          runs.push(play(Game.create(cfg, s * 2654435761 + 11), policy, spellId));
+        }
+      }
+      (totals.get(policy) ?? totals.set(policy, []).get(policy)!).push(...runs);
+      if (policy === 'none') typeBase = runs;
+      else (baselines.get(policy) ?? baselines.set(policy, []).get(policy)!).push(...typeBase);
+
+      const mean = (pick: (r: Run) => number) =>
+        runs.reduce((s, r) => s + pick(r), 0) / runs.length;
+      console.log(
+        `${type.name.padEnd(13)} ${policy.padEnd(12)} ` +
+        `${(100 * mean((r) => (r.cleared ? 1 : 0))).toFixed(1).padStart(6)}%  ` +
+        `${mean((r) => r.hpLost).toFixed(2).padStart(7)}   ` +
+        `${mean((r) => r.guesses).toFixed(1).padStart(7)}  ` +
+        `${mean((r) => r.stuckPoints).toFixed(1).padStart(5)}  ` +
+        `${mean((r) => r.casts).toFixed(1).padStart(5)}  ` +
+        `${(100 * mean((r) => r.castsThatHelped) / Math.max(0.001, mean((r) => r.casts)))
+          .toFixed(0).padStart(5)}%  ` +
+        `${mean((r) => r.manaSpent).toFixed(0).padStart(10)}  ` +
+        `${(100 * mean((r) => r.manaSpent) / mean((r) => r.manaPool)).toFixed(0).padStart(6)}%`,
+      );
+    }
+    console.log('');
+  }
+
+  const mean = (rs: Run[], pick: (r: Run) => number) =>
+    rs.reduce((s, r) => s + pick(r), 0) / rs.length;
+  const base = totals.get('none')!;
+  const baseHp = mean(base, (r) => r.hpLost);
+  const baseClear = mean(base, (r) => (r.cleared ? 1 : 0));
+
+  console.log('value against playing spell-less, on the ladders that offer each spell:\n');
+  console.log('spell        cost   hp saved/cast   hp saved/mana   clear rate  +pts');
+  const perMana: Array<[SpellId, number, number]> = [];
+
+  for (const policy of ['reveal', 'census', 'census-best', 'exercise'] as const) {
+    const rs = totals.get(policy);
+    const against = baselines.get(policy);
+    if (!rs || !against) continue;
+    const savedTotal = mean(against, (r) => r.hpLost) - mean(rs, (r) => r.hpLost);
+    const casts = mean(rs, (r) => r.casts);
+    const spent = mean(rs, (r) => r.manaSpent);
+    const clear = mean(rs, (r) => (r.cleared ? 1 : 0));
+    const baseClearHere = mean(against, (r) => (r.cleared ? 1 : 0));
+    const id: SpellId = policy === 'census-best' ? 'census' : policy;
+    perMana.push([id, SPELLS[id].cost, savedTotal / Math.max(0.001, spent)]);
+    console.log(
+      `${policy.padEnd(12)} ${String(SPELLS[id].cost).padStart(4)}   ` +
+      `${(savedTotal / Math.max(0.001, casts)).toFixed(3).padStart(13)}   ` +
+      `${(savedTotal / Math.max(0.001, spent)).toFixed(4).padStart(13)}   ` +
+      `${(100 * clear).toFixed(1).padStart(9)}%  ` +
+      `${(100 * (clear - baseClearHere)).toFixed(1).padStart(4)}`,
+    );
+  }
+
+  // Priced correctly when a point of mana buys the same certainty either way.
+  const [a, b] = perMana;
+  if (a && b && b[2] > 0) {
+    const fair = a[1] * (b[2] / a[2]);
+    console.log(
+      `\nequal value per mana would price ${b[0]} at ${fair.toFixed(1)} ` +
+      `against ${a[0]} at ${a[1]} (it costs ${b[1]})`,
+    );
+  }
+  console.log(`\nspell-less baseline: ${baseHp.toFixed(2)} hp lost, ` +
+    `${(100 * baseClear).toFixed(1)}% cleared`);
+}
+
+main();

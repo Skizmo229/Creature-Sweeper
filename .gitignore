@@ -1,0 +1,25 @@
+# Third-party reference material — see design/original-reference/README.md.
+# Kept locally for verifying mechanics, deliberately not tracked: this project
+# is intended for public release and that folder is not our code.
+# Remove this line if you decide to track it, but keep it out of build output.
+design/original-reference/
+
+__pycache__/
+*.pyc
+node_modules/
+dist/
+
+# Local, machine-specific harness settings.
+.claude/settings.local.json
+
+# OS and editor cruft.
+.DS_Store
+Thumbs.db
+*.swp
+
+# Screenshots of the ORIGINAL game and the Paint.NET file they were exported
+# from. Third-party expression: hojamaka's, not ours, and so not covered by
+# this project's licences. Kept locally to document the original's modes, on
+# the same footing as design/original-reference/ above.
+game_types.pdn
+design/screenshots/

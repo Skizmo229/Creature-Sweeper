@@ -1,0 +1,164 @@
+[
+ {
+  "bed": "NORMAL board 5",
+  "strategy": "Scatter (current)",
+  "opening": 36.0,
+  "delta": 0,
+  "zeros": 52.5,
+  "avg_num": 4.08,
+  "max_num": 16.0
+ },
+ {
+  "bed": "NORMAL board 5",
+  "strategy": "Tier-1 triads in 3\u00d73",
+  "opening": 46.0,
+  "delta": 28,
+  "zeros": 69.5,
+  "avg_num": 4.03,
+  "max_num": 16.0
+ },
+ {
+  "bed": "NORMAL board 5",
+  "strategy": "Triads + 2/4 pairs",
+  "opening": 48.0,
+  "delta": 33,
+  "zeros": 74.0,
+  "avg_num": 3.95,
+  "max_num": 16.0
+ },
+ {
+  "bed": "NORMAL board 5",
+  "strategy": "Apex lairs in 5\u00d75",
+  "opening": 26.5,
+  "delta": -26,
+  "zeros": 40.0,
+  "avg_num": 5.19,
+  "max_num": 19.0
+ },
+ {
+  "bed": "NORMAL board 5",
+  "strategy": "Banded (low rim\u2192high core)",
+  "opening": 43.0,
+  "delta": 19,
+  "zeros": 55.0,
+  "avg_num": 4.25,
+  "max_num": 18.0
+ },
+ {
+  "bed": "NORMAL board 5",
+  "strategy": "Scatter + wrap-around",
+  "opening": 36.0,
+  "delta": 0,
+  "zeros": 44.0,
+  "avg_num": 4.38,
+  "max_num": 16.0
+ },
+ {
+  "bed": "EXTREME board 5",
+  "strategy": "Scatter (current)",
+  "opening": 24.0,
+  "delta": 0,
+  "zeros": 32.0,
+  "avg_num": 6.64,
+  "max_num": 22.0
+ },
+ {
+  "bed": "EXTREME board 5",
+  "strategy": "Tier-1 triads in 3\u00d73",
+  "opening": 26.0,
+  "delta": 8,
+  "zeros": 37.0,
+  "avg_num": 6.62,
+  "max_num": 22.0
+ },
+ {
+  "bed": "EXTREME board 5",
+  "strategy": "Triads + 2/4 pairs",
+  "opening": 31.0,
+  "delta": 29,
+  "zeros": 45.5,
+  "avg_num": 6.46,
+  "max_num": 22.0
+ },
+ {
+  "bed": "EXTREME board 5",
+  "strategy": "Apex lairs in 5\u00d75",
+  "opening": 12.0,
+  "delta": -50,
+  "zeros": 10.0,
+  "avg_num": 11.42,
+  "max_num": 30.0
+ },
+ {
+  "bed": "EXTREME board 5",
+  "strategy": "Banded (low rim\u2192high core)",
+  "opening": 26.0,
+  "delta": 8,
+  "zeros": 40.0,
+  "avg_num": 6.57,
+  "max_num": 29.0
+ },
+ {
+  "bed": "EXTREME board 5",
+  "strategy": "Scatter + wrap-around",
+  "opening": 23.0,
+  "delta": -4,
+  "zeros": 24.0,
+  "avg_num": 7.09,
+  "max_num": 22.0
+ },
+ {
+  "bed": "HUGE board 5",
+  "strategy": "Scatter (current)",
+  "opening": 55.0,
+  "delta": 0,
+  "zeros": 151.0,
+  "avg_num": 6.46,
+  "max_num": 28.0
+ },
+ {
+  "bed": "HUGE board 5",
+  "strategy": "Tier-1 triads in 3\u00d73",
+  "opening": 60.5,
+  "delta": 10,
+  "zeros": 175.0,
+  "avg_num": 6.46,
+  "max_num": 29.0
+ },
+ {
+  "bed": "HUGE board 5",
+  "strategy": "Triads + 2/4 pairs",
+  "opening": 65.5,
+  "delta": 19,
+  "zeros": 193.5,
+  "avg_num": 6.37,
+  "max_num": 28.0
+ },
+ {
+  "bed": "HUGE board 5",
+  "strategy": "Apex lairs in 5\u00d75",
+  "opening": 53.0,
+  "delta": -4,
+  "zeros": 154.0,
+  "avg_num": 6.47,
+  "max_num": 29.0
+ },
+ {
+  "bed": "HUGE board 5",
+  "strategy": "Banded (low rim\u2192high core)",
+  "opening": 76.5,
+  "delta": 39,
+  "zeros": 166.5,
+  "avg_num": 6.63,
+  "max_num": 32.0
+ },
+ {
+  "bed": "HUGE board 5",
+  "strategy": "Scatter + wrap-around",
+  "opening": 53.0,
+  "delta": -4,
+  "zeros": 136.5,
+  "avg_num": 6.73,
+  "max_num": 29.0
+ }
+]

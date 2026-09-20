@@ -1,0 +1,2443 @@
+<meta charset="utf-8">
+<title>Creature Sweeper Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  --ground:#e9e7df; --surface:#f6f4ee; --surface-2:#dedbd0;
+  --ink:#191814; --muted:#6a675c; --rule:#c9c5b8; --rule-soft:#dcd8cc;
+  --accent:#1d7a3a; --accent-soft:#dcecdf; --accent-ink:#0f4a22;
+  --danger:#b02a1c; --danger-soft:#f4e0dc; --danger-ink:#7d1d13;
+  --gold:#8a6d12; --gold-soft:#efe7cb;
+  /* chart series — validated against surface #f6f4ee (all six checks pass) */
+  --s-easy:#8a8316; --s-normal:#a3461a; --s-extreme:#3b28d6; --s-huge:#1d7a2e; --s-huge_extreme:#6b2fd6;
+  --shadow:0 1px 2px rgba(25,24,20,.06), 0 6px 18px rgba(25,24,20,.05);
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Public Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --ground:#1a1a16; --surface:#22221c; --surface-2:#2c2c24;
+  --ink:#ece9de; --muted:#98937f; --rule:#3b3b31; --rule-soft:#302f27;
+  --accent:#5fd483; --accent-soft:#1c3626; --accent-ink:#8ce7a8;
+  --danger:#e8735e; --danger-soft:#3c211b; --danger-ink:#f2a494;
+  --gold:#d8b64a; --gold-soft:#332c16;
+  /* chart series — re-stepped for surface #22221c (all six checks pass) */
+  --s-easy:#9c9429; --s-normal:#b35a2f; --s-extreme:#6a57f0; --s-huge:#35a04f; --s-huge_extreme:#a86ef5;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.28);
+}}
+:root[data-theme="dark"]{
+  --ground:#1a1a16; --surface:#22221c; --surface-2:#2c2c24;
+  --ink:#ece9de; --muted:#98937f; --rule:#3b3b31; --rule-soft:#302f27;
+  --accent:#5fd483; --accent-soft:#1c3626; --accent-ink:#8ce7a8;
+  --danger:#e8735e; --danger-soft:#3c211b; --danger-ink:#f2a494;
+  --gold:#d8b64a; --gold-soft:#332c16;
+  /* chart series — re-stepped for surface #22221c (all six checks pass) */
+  --s-easy:#9c9429; --s-normal:#b35a2f; --s-extreme:#6a57f0; --s-huge:#35a04f; --s-huge_extreme:#a86ef5;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.28);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--f-body); font-size:16px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px; margin:0 auto; padding-inline:20px;}
+.col{max-width:68ch;}
+
+/* ---------- nav ---------- */
+nav{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:40;
+  background:color-mix(in srgb, var(--ground) 88%, transparent);
+  backdrop-filter:blur(10px); border-bottom:1px solid var(--rule);
+}
+nav .wrap{display:flex; gap:4px; align-items:center; overflow-x:auto; padding-block:9px; scrollbar-width:none;}
+nav .wrap::-webkit-scrollbar{display:none}
+nav a{
+  font-family:var(--f-mono); font-size:11px; font-weight:500; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--muted); text-decoration:none;
+  padding:5px 9px; border-radius:3px; white-space:nowrap;
+}
+nav a:hover{color:var(--ink); background:var(--surface-2)}
+nav a:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+
+/* ---------- hero ---------- */
+header{padding-block:56px 34px; border-bottom:1px solid var(--rule);}
+.eyebrow{
+  font-family:var(--f-mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--muted); margin:0 0 16px;
+}
+h1{
+  font-family:var(--f-display); font-weight:800; line-height:1.02;
+  font-size:clamp(2.1rem,6vw,3.6rem); margin:0 0 18px; letter-spacing:-.022em; text-wrap:balance;
+}
+.lede{font-size:clamp(1.02rem,2.2vw,1.16rem); color:var(--muted); margin:0; max-width:62ch;}
+.lede strong{color:var(--ink); font-weight:600}
+
+/* HUD strip — the game's own status bar, carrying real figures */
+.hud{
+  margin-top:30px; background:#23231f; color:#f0eee4; border-radius:4px;
+  padding:14px 16px; display:flex; flex-wrap:wrap; gap:8px 26px;
+  font-family:var(--f-mono); font-size:12.5px; letter-spacing:.04em;
+  box-shadow:var(--shadow);
+}
+.hud span{display:inline-flex; gap:7px; align-items:baseline; white-space:nowrap}
+.hud b{color:#8c8878; font-weight:500; font-size:10.5px; letter-spacing:.12em}
+.hud i{font-style:normal; font-variant-numeric:tabular-nums}
+
+/* ---------- sections ---------- */
+section{padding-block:52px; border-bottom:1px solid var(--rule-soft);}
+section:last-of-type{border-bottom:0}
+h2{
+  font-family:var(--f-display); font-weight:700; font-size:clamp(1.5rem,3.4vw,2.05rem);
+  margin:0 0 6px; letter-spacing:-.016em; text-wrap:balance;
+}
+h3{
+  font-family:var(--f-display); font-weight:600; font-size:1.12rem;
+  margin:36px 0 10px; letter-spacing:-.008em;
+}
+h4{
+  font-family:var(--f-mono); font-weight:700; font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted); margin:28px 0 10px;
+}
+.kicker{
+  font-family:var(--f-mono); font-size:11px; letter-spacing:.15em; text-transform:uppercase;
+  color:var(--accent); margin:0 0 12px; font-weight:500;
+}
+p{margin:0 0 16px}
+.col p:last-child{margin-bottom:0}
+a{color:var(--accent-ink)}
+code,.m{font-family:var(--f-mono); font-size:.88em; font-variant-numeric:tabular-nums}
+code{background:var(--surface-2); padding:1px 5px; border-radius:3px}
+ul{margin:0 0 16px; padding-left:20px}
+li{margin-bottom:7px}
+strong{font-weight:600}
+
+/* ---------- callout ---------- */
+.note{
+  background:var(--surface); border:1px solid var(--rule);
+  border-left:3px solid var(--accent); border-radius:0 5px 5px 0;
+  padding:16px 18px; margin:22px 0; font-size:.95rem;
+}
+.note.warn{border-left-color:var(--danger)}
+.note.gold{border-left-color:var(--gold)}
+.note.parked{border-left-color:var(--rule); border-style:dashed; color:var(--muted)}
+.note.parked strong,.note.parked em{color:var(--ink)}
+
+/* ---------- chart ---------- */
+.chart-head{margin-bottom:14px}
+.chart-title{
+  font-family:var(--f-display); font-weight:600; font-size:1.06rem;
+  margin:0 0 4px; letter-spacing:-.008em;
+}
+.chart-sub{font-size:.85rem; color:var(--muted); margin:0 0 12px; max-width:70ch}
+.multiples{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px;
+  margin-top:4px;
+}
+.mult{
+  background:var(--surface); border:1px solid var(--rule); border-radius:5px; padding:8px 10px 6px;
+}
+.mult h4{
+  margin:0 0 2px; font-family:var(--f-mono); font-size:10px; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--ink); font-weight:700;
+}
+.mult p{
+  margin:0 0 4px; font-family:var(--f-mono); font-size:9.5px; color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+.mult svg{display:block; width:100%; height:auto}
+.chart-box{overflow-x:auto; position:relative}
+.chart-box svg{display:block; min-width:600px; max-width:100%; height:auto}
+.chart-box svg text{font-family:var(--f-mono)}
+.tip{
+  position:absolute; pointer-events:none; opacity:0; transform:translate(-50%,-115%);
+  background:var(--ink); color:var(--ground); border-radius:4px; padding:7px 10px;
+  font-family:var(--f-mono); font-size:11px; line-height:1.5; white-space:nowrap;
+  box-shadow:var(--shadow); transition:opacity .1s; z-index:5;
+}
+.tip b{display:block; font-size:10px; letter-spacing:.1em; opacity:.75; font-weight:500}
+
+/* ---------- board shape lab ---------- */
+.shape-lab{
+  border:1px solid var(--rule); border-radius:5px; background:var(--surface);
+  padding:14px 16px 12px; margin:22px 0;
+}
+.shape-lab .chips{margin:0 0 12px}
+.shape-controls{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  padding-bottom:12px; margin-bottom:12px; border-bottom:1px solid var(--rule-soft);
+}
+.shape-controls label{
+  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--muted); font-weight:700;
+}
+.shape-controls input[type=range]{accent-color:var(--accent); width:150px}
+.shape-controls .ctl-gap{flex:1 1 12px}
+.shape-controls .aspect[aria-pressed="true"]{
+  background:var(--accent); color:var(--surface); border-color:var(--accent); font-weight:700;
+}
+.shape-controls.no-param label,
+.shape-controls.no-param input[type=range],
+.shape-controls.no-param #shape-param-value{visibility:hidden}
+.shape-stats{
+  display:flex; flex-wrap:wrap; gap:6px 20px; margin-bottom:12px;
+  font-family:var(--f-mono); font-size:11px; font-variant-numeric:tabular-nums;
+}
+.shape-stats b{
+  display:block; font-size:9.5px; letter-spacing:.11em; text-transform:uppercase;
+  color:var(--muted); font-weight:700; margin-bottom:2px;
+}
+.shape-board{overflow-x:auto}
+.shape-board svg{display:block; min-width:420px; max-width:100%; height:auto}
+.hint-line{margin:10px 0 0; font-size:.8rem; color:var(--muted)}
+
+/* ---------- temp asset sheet ---------- */
+.sheet{
+  display:grid; gap:1px; background:var(--rule);
+  border:1px solid var(--rule); border-radius:5px; overflow:hidden; margin:24px 0;
+}
+.sheet-row{
+  background:var(--surface); padding:14px 16px;
+  display:flex; flex-wrap:wrap; gap:14px 22px; align-items:center;
+}
+.sheet-id{flex:0 0 150px; min-width:150px}
+.sheet-id b{
+  display:block; font-family:var(--f-mono); font-size:11.5px; font-weight:700;
+  color:var(--ink); letter-spacing:.04em;
+}
+.sheet-id span{font-family:var(--f-mono); font-size:9.5px; letter-spacing:.09em; color:var(--muted)}
+.sheet-pal{display:flex; gap:0; border-radius:3px; overflow:hidden; flex:0 0 auto}
+.sheet-pal i{display:block; width:26px; height:26px}
+.sheet-glyphs{display:flex; gap:5px; flex-wrap:wrap; align-items:center}
+.sheet-glyphs svg{display:block; border-radius:2px}
+.sheet-face{
+  flex:1 1 130px; font-family:var(--f-mono); font-size:10.5px; color:var(--muted); line-height:1.5;
+}
+.sheet-face b{display:block; color:var(--ink); font-weight:700; letter-spacing:.04em}
+.note p:last-child{margin-bottom:0}
+.note-h{
+  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--muted); margin:0 0 7px; font-weight:700;
+}
+
+/* ---------- tables ---------- */
+.scroll{overflow-x:auto; margin:20px 0; border:1px solid var(--rule); border-radius:5px; background:var(--surface);}
+table{border-collapse:collapse; width:100%; font-family:var(--f-mono); font-size:12.5px; font-variant-numeric:tabular-nums;}
+th,td{padding:7px 11px; text-align:right; white-space:nowrap; border-bottom:1px solid var(--rule-soft);}
+th{
+  font-size:10px; letter-spacing:.1em; text-transform:uppercase; font-weight:700;
+  color:var(--muted); background:var(--surface-2); position:sticky; top:0;
+  border-bottom:1px solid var(--rule);
+}
+td:first-child,th:first-child{text-align:left}
+td.l,th.l{text-align:left}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:color-mix(in srgb, var(--accent) 7%, transparent)}
+.name{font-weight:700; color:var(--ink)}
+.dim{color:var(--muted)}
+.gate{color:var(--danger); font-weight:700}
+.free{color:var(--accent-ink)}
+.swatch{display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:7px; vertical-align:-1px;}
+
+/* ---------- damage matrix ---------- */
+#dmg table{font-size:12px}
+#dmg td{text-align:center; padding:6px 0; min-width:40px; border:1px solid var(--rule-soft)}
+#dmg th{text-align:center}
+#dmg td.rowhead,#dmg th.rowhead{font-weight:700; background:var(--surface-2); color:var(--muted); font-size:10px; letter-spacing:.08em}
+
+/* ---------- ladder explorer ---------- */
+.chips{display:flex; flex-wrap:wrap; gap:7px; margin:22px 0 4px;}
+.chip{
+  font-family:var(--f-mono); font-size:11.5px; font-weight:500; letter-spacing:.05em;
+  padding:7px 12px; border-radius:4px; border:1px solid var(--rule);
+  background:var(--surface); color:var(--muted); cursor:pointer;
+  display:inline-flex; align-items:center; transition:background .12s, color .12s, border-color .12s;
+}
+.chip:hover{color:var(--ink); border-color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink); color:var(--ground); border-color:var(--ink); font-weight:700}
+.chip:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.chip.post{border-style:dashed}
+.chip-sep{
+  display:inline-flex; align-items:center; padding-left:9px; margin-left:4px;
+  border-left:1px solid var(--rule); color:var(--muted);
+  font-family:var(--f-mono); font-size:9.5px; letter-spacing:.13em; text-transform:uppercase;
+}
+
+.ladder-head{
+  display:flex; flex-wrap:wrap; gap:18px 30px; align-items:flex-start;
+  margin-top:26px; padding-bottom:20px; border-bottom:1px solid var(--rule-soft);
+}
+.ladder-head .about{flex:1 1 340px; max-width:58ch}
+.ladder-head h3{margin:0 0 8px; font-size:1.3rem}
+.ladder-head p{margin:0; font-size:.94rem; color:var(--muted)}
+.axis{
+  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--accent); font-weight:700; margin:0 0 6px;
+}
+.deltas{display:flex; flex-wrap:wrap; gap:10px 22px; font-family:var(--f-mono); font-size:11.5px;}
+.delta b{display:block; font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:3px}
+.delta i{font-style:normal; font-variant-numeric:tabular-nums}
+.arrow{color:var(--muted); padding:0 3px}
+
+figure{margin:26px 0 0}
+figcaption{
+  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.11em; text-transform:uppercase;
+  color:var(--muted); margin-top:10px;
+}
+.footprints{overflow-x:auto}
+.footprints svg{display:block; min-width:520px; max-width:100%; height:auto}
+
+/* ---------- unlock graph ---------- */
+.dag{overflow-x:auto; margin:24px 0}
+.dag svg{display:block; min-width:660px; max-width:100%; height:auto}
+
+/* ---------- grid of knobs ---------- */
+.knobs{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:1px;
+  background:var(--rule); border:1px solid var(--rule); border-radius:5px; overflow:hidden; margin:22px 0;
+}
+.knob{background:var(--surface); padding:14px 16px}
+.knob b{
+  display:block; font-family:var(--f-mono); font-size:10.5px; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:6px;
+}
+.knob .was{font-family:var(--f-mono); font-size:11.5px; color:var(--danger); display:block; margin-bottom:3px}
+.knob .now{font-size:13.5px; line-height:1.45}
+
+/* ---------- decisions ---------- */
+.q{border-top:1px solid var(--rule); padding-top:20px; margin-top:22px}
+.q:first-of-type{border-top:0}
+.q h3{margin-top:0}
+.qnum{
+  font-family:var(--f-mono); font-size:11px; color:var(--accent); font-weight:700;
+  letter-spacing:.1em; display:block; margin-bottom:4px;
+}
+
+footer{padding-block:40px 64px; color:var(--muted); font-size:.87rem}
+footer .wrap{display:flex; flex-wrap:wrap; gap:10px 28px; justify-content:space-between}
+footer code{font-size:.85em}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+@media (max-width:620px){
+  header{padding-block:38px 26px}
+  section{padding-block:40px}
+  .hud{font-size:11.5px; gap:7px 18px}
+}
+</style>
+
+<nav>
+  <div class="wrap">
+    <a href="#rules">Rules engine</a>
+    <a href="#modes">Original modes</a>
+    <a href="#identity">Tuning identity</a>
+    <a href="#progression">Progression</a>
+    <a href="#opening">The opening</a>
+    <a href="#magic">Magic</a>
+    <a href="#generation">Generation</a>
+    <a href="#ladders">Ladders</a>
+    <a href="#assets">Type identity</a>
+    <a href="#free">Free mode</a>
+    <a href="#sudoku">Creature Sudoku</a>
+    <a href="#open">Decisions</a>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <p class="eyebrow">Design reference · derived from mamono sweeper</p>
+    <h1>Creature Sweeper Reference</h1>
+    <p class="lede">Everything mamono sweeper actually does, verified against its own source rather than its
+      description — and the <strong>progression ladders</strong> built on top of it. Nineteen game types of ten
+      tuned boards each, with a scaling continuation past every one of them, and every number derived from one
+      tuning identity found in the original's data.</p>
+    <div class="hud">
+      <span><b>GAME TYPES</b><i>19</i></span>
+      <span><b>TUNED LADDER</b><i>10 boards</i></span>
+      <span><b>WITH SCALING</b><i>517 boards</i></span>
+      <span><b>TIERS</b><i>5–9</i></span>
+      <span><b>DAMAGE</b><i>E×(⌈E/L⌉−1)</i></span>
+      <span><b>OPENING</b><i>auto, largest</i></span>
+    </div>
+  </div>
+</header>
+
+<section id="rules">
+  <div class="wrap">
+    <div class="col">
+      <p class="kicker">01 — What the original actually does</p>
+      <h2>The rules engine</h2>
+      <p>Verified by decoding the shipped <code>main.js</code>. Where the published description is vague or
+        incomplete, the code wins; a few behaviours below are not documented anywhere.</p>
+
+      <h3>Board and generation</h3>
+      <p>A <span class="m">W×H</span> grid of 16px cells. The board is generated on the
+        <strong>first click</strong>, not at load. Every cell except the one clicked enters a candidate pool;
+        each tier's quota is then drawn at random. Two consequences matter:</p>
+      <ul>
+        <li><strong>First-click safety covers exactly one cell.</strong> You can open a "7" on move one with no
+          cascade. Modern Minesweeper normally guarantees a zero-opening.</li>
+        <li><strong>Placement is pure random — there is no solvability check.</strong> Unresolvable 50/50s exist
+          and ship.</li>
+      </ul>
+
+      <h3>Numbers are sums, not counts</h3>
+      <p>A revealed cell shows the <strong>sum of its eight neighbours' tier levels</strong>. A
+        <span class="m">4</span> is one tier-4 creature, or two tier-2s, or a 1+3, or four 1s. You never learn
+        <em>how many</em> neighbours are creatures. This is the single biggest departure from Minesweeper and it
+        is where all the deduction depth lives.</p>
+      <p>Cascade fires only when a cell's number is <span class="m">0</span>, recursing into all eight
+        neighbours. Since <span class="m">0</span> implies no creature neighbours, a cascade can never pop one.</p>
+
+      <h3>Combat</h3>
+      <p>You always strike first. Enemy HP, enemy attack and EXP value are all derived from one number — its
+        tier. Your attack is your level.</p>
+    </div>
+
+    <div class="scroll" style="max-width:none">
+      <table><tbody>
+        <tr><td class="l dim">enemy HP</td><td class="l m">E</td><td class="l dim">your attack</td><td class="l m">L</td></tr>
+        <tr><td class="l dim">enemy attack</td><td class="l m">E</td><td class="l dim">EXP on kill</td><td class="l m">2^(E−1)</td></tr>
+      </tbody></table>
+    </div>
+
+    <div class="col">
+      <p>For a fight you survive, the closed form is <strong><span class="m">damage = E × (⌈E/L⌉ − 1)</span></strong>.
+        The shape to internalise: <strong>one tier up always costs exactly <span class="m">E</span> HP</strong>
+        while <span class="m">E ≤ 2L</span>. Two tiers up is where it cliffs.</p>
+    </div>
+
+    <figure id="dmg">
+      <div class="scroll"><table id="dmg-table"></table></div>
+      <figcaption>HP lost beating a tier-E creature at level L, assuming you survive. Green = free.</figcaption>
+    </figure>
+
+    <div class="col">
+      <div class="note warn">
+        <p class="note-h">LV 0 is a death sentence, by construction</p>
+        <p>At level 0 your attack is 0, so enemy HP never decreases and the loop runs until you die. That is
+          exactly how BLIND mode forbids combat — it doesn't special-case anything, it just sets
+          <span class="m">LV 0</span> and <span class="m">HP 1</span>.</p>
+      </div>
+
+      <h3>Progression</h3>
+      <p>EXP is cumulative and never resets. Thresholds live in a per-mode array; past its end the game returns
+        <span class="m">9999 + ex</span>, which is why a maxed level displays <span class="m">NE9999</span>.</p>
+
+      <div class="note">
+        <p class="note-h">There is no healing anywhere in the original</p>
+        <p>Max HP is read exactly once — at the win screen, to decide whether you earned a perfect clear.
+          HP only ever goes down. This makes <strong>HP a guess budget, not a combat resource</strong>: you spend
+          it on 50/50s and misreads, never on required fights. It is the most load-bearing fact in the design.</p>
+        <p style="margin-top:12px"><strong>Creature Sweeper keeps this within a board</strong> and refills between
+          them — so the guess budget is per-board rather than per-run.</p>
+      </div>
+
+      <h3>Win, lose, and marking</h3>
+      <ul>
+        <li><strong>Battle types</strong> — win when every creature is dead. You must click every creature cell;
+          empty cells may be left unopened.</li>
+        <li><strong>Search types (BLIND)</strong> — win when every <em>non-creature</em> cell is open. Creatures
+          are unkillable.</li>
+        <li><strong>Lose</strong> — HP hits 0; all creatures are revealed.</li>
+      </ul>
+      <p>Number keys <span class="m">0–9</span> mark the cell under the cursor. Two behaviours are worth stealing
+        outright:</p>
+      <ul>
+        <li><strong>Marks are a click-guard.</strong> If a cell's mark exceeds your current level, the click is
+          blocked entirely. Marking a cell "5" at LV2 makes it physically unclickable — intent and protection in
+          one gesture. This is the game's only safety rail and it is genuinely good design.</li>
+        <li><strong>In search modes only</strong>, marking decrements that tier's remaining counter, so the LV row
+          behaves like Minesweeper's flag counter. In battle modes the counter moves only on an actual kill.</li>
+      </ul>
+      <p>Smaller details: no chording (clicking an opened empty cell does nothing); clicking an
+        <em>already-defeated</em> creature toggles its sprite against its own neighbour-sum, so killing something
+        grants an extra reading; the timer starts on first click and caps at 9999s.</p>
+    </div>
+  </div>
+</section>
+
+<section id="modes">
+  <div class="wrap">
+    <div class="col">
+      <p class="kicker">02 — Baseline</p>
+      <h2>The seven original modes</h2>
+      <p>These are the shipped values, unmodified. They become board 1 (or close to it) of each Creature Sweeper
+        ladder.</p>
+    </div>
+    <div class="scroll"><table id="modes-table"></table></div>
+    <div class="col">
+      <p class="dim" style="font-size:.9rem">BLIND's threshold values are vestigial — at LV 0 the next-level
+        target is hardcoded to 9999 and no fight can ever be won, so they are dead data.</p>
+    </div>
+  </div>
+</section>
+
+<section id="identity">
+  <div class="wrap">
+    <div class="col">
+      <p class="kicker">03 — The finding</p>
+      <h2>The tuning identity</h2>
+      <p>Let <strong><span class="m">C<sub>k</sub></span></strong> be the total EXP obtainable from
+        <em>every creature of tier ≤ k</em>. Compare that against each mode's level thresholds:</p>
+    </div>
+    <div class="scroll"><table id="identity-table"></table></div>
+    <div class="col">
+      <p>The upper thresholds are <strong>exactly <span class="m">C<sub>k</sub></span></strong>, in every single
+        mode. That is not coincidence — it is the game's core tuning rule:</p>
+      <div class="note gold">
+        <p class="note-h">The rule</p>
+        <p>The last <em>N</em> level-ups each require killing <strong>literally every creature at or below that
+          tier</strong>. Earlier level-ups are granted partway through a tier (roughly 20–70% of the way), then
+          the curve locks to 100%.</p>
+      </div>
+      <h4>What follows from it</h4>
+      <ul>
+        <li><strong>You cannot out-level the content.</strong> You reach max level at the precise instant only the
+          top tier remains. HUGE has exactly <em>one</em> tier-9 creature, and you hit LV9 the moment it is the
+          last thing on the board — a deliberate boss beat hidden in an EXP table.</li>
+        <li><strong>Every mode is perfect-clearable with zero damage.</strong> Verified arithmetically for all five
+          battle modes: playing strictly in tier order, there are always enough same-or-lower-tier creatures to
+          fund each level-up. Damage is never mechanically required.</li>
+        <li><strong>Lock depth is the real difficulty dial.</strong> EASY, NORMAL and EXTREME lock the top two
+          thresholds; HUGE locks four; HUGE × EXTREME locks five. More locked tiers means less slack. It scales
+          cleanly and is a far better progression knob than board size alone.</li>
+      </ul>
+      <div class="note warn">
+        <p class="note-h">Lock depth amplifies the need for solvable generation</p>
+        <p>A deep lock means you must positively identify <em>every</em> creature in a tier before you can
+          advance. If the last one sits in an unresolvable position, you are stuck and forced to gamble. Deep
+          locks are only fair on top of guaranteed-solvable boards.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="progression">
+  <div class="wrap">
+    <div class="col">
+      <p class="kicker">04 — Creature Sweeper</p>
+      <h2>Progression mode</h2>
+      <p>Each game type owns a ladder of <strong>10 boards</strong> of increasing difficulty, and each type scales
+        along its <em>own</em> axis so the ladders feel different rather than merely longer.</p>
+
+      <h4>The model</h4>
+      <ul>
+        <li><strong>Ten boards per type.</strong> Board 1 is the original mode's tuning (or very near it); board 10
+          is the ceiling.</li>
+        <li><strong>You climb in order.</strong> A type opens at board 1; clearing board <em>n</em> unlocks board
+          <em>n+1</em>.</li>
+        <li><strong>Unlocks are permanent.</strong> Every board you have reached stays selectable — after a loss,
+          after quitting, across sessions. Losing costs you the attempt, never the progress.</li>
+        <li><strong>Beating board 10 clears the type</strong>, unlocking the next type and that type's
+          <a href="#fullrun">Full Run</a>.</li>
+        <li><strong>Boards 11+ exist and are playable</strong>, but are not required for anything.</li>
+        <li><strong>HP refills between boards.</strong> Each board is its own self-contained budget — except
+          in a <a href="#fullrun">Full Run</a>, which is the one mode where it does not.</li>
+      </ul>
+
+      <h4>What a save has to hold</h4>
+      <p>Per type: the highest board unlocked, whether board 10 has been cleared, and the Full Run history.
+        Per board: cleared, and cleared-without-damage — the original already distinguishes a clear from a perfect
+        clear, and it costs nothing to keep. A run keeps <em>how deep the best attempt reached</em> as well as
+        whether one was completed, because a mode that takes an hour has to have something to show for an attempt
+        that ended on board 7.</p>
+      <div class="scroll" style="margin-top:14px">
+        <table><tbody>
+          <tr><td class="l dim">per type</td><td class="l m">unlocked · highestBoard · cleared</td></tr>
+          <tr><td class="l dim">per full run</td><td class="l m">cleared · bestBoard · bestHp · bestTime · attempts</td></tr>
+          <tr><td class="l dim">per board</td><td class="l m">cleared · perfect · bestTime</td></tr>
+        </tbody></table>
+      </div>
+      <p class="dim" style="font-size:.9rem">Selection is then one predicate —
+        <span class="m">board ≤ highestBoard</span> — which is also the only thing standing between this and a
+        free-select or practice mode later, should you want one.</p>
+
+      <h4>Ladder handoff</h4>
+      <p>Each ladder's top board is tuned to sit roughly where the next ladder's bottom board sits, so a player who
+        finishes EASY 10 meets NORMAL 1 as a lateral step rather than a cliff. EASY 10 is a larger board than
+        NORMAL 1 but a sparser one — longer, not sharper.</p>
+
+      <h4>Unlock graph</h4>
+      <p>Two kinds of gate, and they make different claims.</p>
+      <ul>
+        <li><strong>A type gate</strong> — "clear NORMAL" — is a statement about <em>readiness</em>: this ladder
+          teaches something the next one assumes. HUGE and EXTREME are now siblings off NORMAL rather than a
+          chain, so the player picks which wall to walk into first, and they meet again at HUGE&nbsp;×&nbsp;EXTREME,
+          which requires <em>both</em> — a ladder that is two ladders at once should not be reachable without
+          having played the things it combines. HUGE&nbsp;×&nbsp;BLIND works the same way, and so does
+          WRAPPED&nbsp;CROSS, which needs CROSS and WRAPAROUND. A combined type gating this way also leaves
+          the board-count schedule alone, which is the one place in the unlock data that can strand a save.</li>
+        <li><strong>A board-count gate</strong> — "clear 25 boards, anywhere" — is a statement about
+          <em>time served</em>, and it is what the eight variant ladders use. They do not teach each other: a hex
+          grid teaches you nothing about a torus, and neither teaches you Sudoku, so chaining them was always a
+          fiction — and an expensive one, because it made a player who wanted the ragged cave grind three shapes
+          they had no interest in to get there. Counting boards lets them arrive from whatever direction they
+          like, and spreads the variants across the whole game instead of bunching them behind one branch.</li>
+        <li><strong>Magic</strong> still branches sideways from NORMAL: ARCANE, then ORACLE. Keeping it off the
+          chain means the tuned ladders stay exactly as they are and the spell economy can be retuned freely.</li>
+      </ul>
+      <p>The thresholds run 25, 30, 35, 40, 45, 50, 55, 60 — HIVE, WRAPAROUND, DIAMOND, DONUT, CROSS, RAGGED CAVE,
+        SUDOKU, BLIND — and the menu is ordered to match, so it reads in the order a player will meet it.
+        Every board counts once, scaling boards included.</p>
+      <div class="note">
+        <p class="note-h">A board-count gate can deadlock the game, and silently</p>
+        <p>A type gate that cannot be met is a cycle, and a cycle is obvious. A board-count gate is just a number,
+          and nothing about it says whether a player can reach that number <em>without</em> the type it guards.
+          Set BLIND's threshold above what the type-gated ladders offer and the only way to unlock BLIND would be
+          to have already unlocked BLIND — a save that is simply stuck, with nothing to point at.</p>
+        <p>So the budget is asserted rather than assumed. The types that gate on type-clears alone — EASY, NORMAL,
+          HUGE, EXTREME, HUGE&nbsp;×&nbsp;EXTREME, ARCANE, ORACLE — offer <strong>70 tuned boards</strong> between
+          them, and BLIND at 65 is the top of the schedule. A test walks the graph from an empty save and fails if
+          any type is left stranded, and a second one checks every threshold fits inside the 70 without counting a
+          single scaling board, so a player who never goes past board 10 still reaches everything.</p>
+      </div>
+    </div>
+
+    <div class="dag" id="dag"></div>
+
+    <div class="col">
+      <div class="note">
+        <p class="note-h">Why BLIND is off the critical path</p>
+        <p>A player who bounces off pure deduction can still finish the game, and a player who loves it gets a
+          second game to start after the first one ends. The alternative — unlocking BLIND after NORMAL and
+          HUGE × BLIND after HUGE, so they shadow the main line — is a one-line change to the unlock table if you
+          would rather have them available early.</p>
+      </div>
+
+      <div class="note" id="fullrun">
+        <p class="note-h">Built — Full Run</p>
+        <p>All ten boards of a type back to back on <strong>one HP pool</strong>, unlocked by clearing board 10 of
+          that type, so a run is never how a player first meets a board. The pool is board 1's HP and the
+          per-board schedule is ignored; board 1 is the most generous entry in every schedule, so the ceiling
+          never drops under the player mid-run. After each board you clear you heal <strong>half the pool,
+          rounded down</strong>, capped at the pool.</p>
+        <p><strong>Level and EXP reset on every board, and that is forced rather than chosen.</strong> Thresholds
+          are <span class="m">C<sub>k</sub></span> of a <em>specific</em> board, so carrying level forward would
+          start board 2 near its ceiling and every board after the first would be free. Only HP carries. Mana does
+          not either: a run-long pool would make the late boards the ones where spells are free, which is
+          backwards, and it would reward not casting in a game whose measured problem with spells is that nobody
+          is ever forced to spend.</p>
+        <p>None of this touches the zero-damage guarantee, which is a statement about one board: at level
+          <span class="m">k</span> every tier <span class="m">≤ k</span> is a free kill and the gate to
+          <span class="m">k+1</span> is at most <span class="m">C<sub>k</sub></span>. Because a run resets the
+          level economy every board, that argument still applies ten boards deep — so a whole run is clearable
+          without the heal ever mattering, which is what <span class="m">npm run sim:run</span> asserts across
+          every type. HP stays a guess budget; the run just makes it one budget instead of ten.</p>
+        <p class="dim">The rounding down is load-bearing on exactly one ladder. BLIND's pool is 1, so its heal is
+          0 and a run there is a single-mistake run. Rounding up would restore it in full and turn the mode into
+          ten unrelated boards on that ladder — the harsher rule is the only one that means anything at a pool of
+          one.</p>
+      </div>
+
+      <h4>Boards beyond 10 — built</h4>
+      <p>Every schedule below is linear, so boards 11+ continue it by its own average step per board, clamped:
+        density at 34% (battle) and 30% (search), board size at 64×32, lock depth at <span class="m">T−1</span>,
+        HP at the floor the tuned ladder itself chose. They are emitted as a separate <span class="m">extended</span>
+        list, <em>not</em> folded into the ten — the ladder is still ten boards, a Full Run is still ten boards, and
+        clearing a type is still board 10. Only the scaling picker reads past it.</p>
+      <p>Three rules make the continuation honest rather than merely long. <strong>A cap is never set below where
+        the ladder already finished</strong> — HIVE ends at 35% and ARCANE at 34.5%, both past the nominal 34%
+        ceiling, and clamping them to it made board 11 <em>sparser</em> than board 10. <strong>A flat dial stays
+        flat</strong>: EASY's lock depth is 2 by design, and letting it drift to <span class="m">T−1</span> would
+        make board 30 of EASY a differently-named EXTREME. And <strong>a step that produces no new board is
+        skipped, not treated as the end</strong> — EXTREME's board grows 0.444 cells at a time, so board 11 rounded
+        to board 10 and a stop-on-repeat gave it no continuation at all despite 30 cells of width left to grow.</p>
+      <p>Two things can make a later board <em>hold less</em> than an earlier one, and both are refused outright
+        rather than patched. A wider CROSS can be a smaller one, because its arms are
+        <span class="m">|x − cx| ≤ param/2</span> wide and <span class="m">cx</span> lands on a cell centre for an
+        odd box and between two for an even one — 35 across gives nine-wide arms, 36 gives eight. A board whose
+        <span class="m">C<sub>k</sub></span> went backwards cannot carry the thresholds of the board before it,
+        because the EXP to meet them is no longer on it. Search ladders are exempt, having no level economy at
+        all — BLIND's own tuned ten step <span class="m">C<sub>1</sub></span> backwards at board 6, where the tier
+        count rises and the same creatures spread wider.</p>
+      <p>A type stops where it stops changing, which lands in very different places: SUDOKU gets three boards and
+        stops at its generator's floor, HUGE × EXTREME gets six because it is already at the wall, and the gentler
+        ladders run to the thirties. Past that a board would be the previous board with a fresh seed, which
+        replaying the previous board already gives you. Every one of the 461 boards is swept by
+        <span class="m">npm run sim</span> and clears at full HP.</p>
+
+      <h4>How the numbers are derived</h4>
+      <p>Per type, a board index <span class="m">n</span> supplies size, tier count, density, HP, lock depth and an
+        opening-generosity value <span class="m">α₀</span>. Everything else is computed:</p>
+      <ul>
+        <li>Creature count <span class="m">M = round(density × W × H)</span>, apportioned across tiers by one of
+          two archetype shapes — <strong>descending</strong> (a linear ramp from <span class="m">T</span> down to
+          <span class="m">round(T/4)</span>, which reproduces both the original's 5-tier and 9-tier
+          distributions) or <strong>flat</strong>. HUGE and HUGE × BLIND additionally pin their top tier to a
+          fixed apex count.</li>
+        <li><span class="m">C<sub>k</sub></span> from that distribution.</li>
+        <li>The top <span class="m">lock</span> thresholds are set to <span class="m">C<sub>k</sub></span> exactly;
+          the rest to <span class="m">α<sub>k</sub> · C<sub>k</sub></span>, with <span class="m">α</span> ramping
+          from <span class="m">α₀</span> up to 0.70.</li>
+        <li>A final pass enforces that no board is easier than the one below it on any threshold.</li>
+      </ul>
+      <p class="dim" style="font-size:.9rem">Sanity check on the generator: fed the original's board sizes and
+        densities, it reproduces HUGE's distribution as
+        <span class="m">52,46,41,35,30,24,18,13,1</span> against the shipped
+        <span class="m">52,46,40,36,30,24,18,13,1</span>, and reproduces HUGE × EXTREME's five locked thresholds
+        exactly.</p>
+    </div>
+  </div>
+</section>
+
+<section id="opening">
+  <div class="wrap">
+    <div class="col">
+      <p class="kicker">05 — First move</p>
+      <h2>The opening</h2>
+      <p><strong>The game opens the board for you.</strong> Rather than protecting a cell you pick, it finds the
+        zero-region whose cascade reveals the most cells and opens that one before you touch anything.</p>
+      <p>Worth being precise about what gets revealed: a cascade from a zero cell opens that cell's 8-connected
+        component of zero cells <em>plus</em> the fringe of numbered cells touching it. So "biggest" should mean
+        the largest total reveal — component and fringe together — not the most zeros.</p>
+
+      <h4>It simplifies the pipeline</h4>
+      <p>There is no first click left to protect, so the board no longer has to be generated lazily on input. It
+        generates at load, in order: distribute creatures, compute numbers, find the best opening, verify the rest
+        is solvable from there, reveal it. The timer then starts on the player's first <em>real</em> click, not
+        on the auto-open.</p>
+
+      <h4>Does it hold up at high density?</h4>
+      <p>A zero cell needs all eight neighbours empty, so zero-regions thin out as density climbs — exactly where
+        a good opening matters most. I simulated 400 boards for each of the 70 board configurations, 28,000
+        boards in total:</p>
+      <ul>
+        <li><strong>Every board had at least one zero-region.</strong> Not one failure in 28,000 — so the
+          degenerate case is real in principle but never hit at these densities.</li>
+        <li><strong>The smallest opening ever produced was 9 cells</strong> (EXTREME, boards 7–10): a known-empty
+          cell plus its eight numbered neighbours. Even the worst case is a usable foothold.</li>
+        <li><strong>The rule is self-regulating.</strong> Opening size is inversely coupled to density with no
+          tuning at all — generous exactly where the game is teaching, tight exactly where it is hard.</li>
+      </ul>
+    </div>
+
+    <figure>
+      <div class="chart-head">
+        <h3 class="chart-title">Opening size against creature density</h3>
+        <p class="chart-sub">Median cells revealed by the auto-opening · 400 simulated boards per point ·
+          each panel is one ladder, board 1 (sparsest) to board 10 (densest).
+          All panels share the same axes: density 10–35% across, 0–110 cells up.</p>
+      </div>
+      <div class="multiples" id="open-charts"></div>
+      <figcaption>Within every ladder, density rises and the opening shrinks — no tuning required, the coupling
+        is automatic. Panels sit at different heights because the largest zero-region grows sublinearly with
+        board area: HUGE's opening is bigger in cells than NORMAL's at the same density, but far smaller as a
+        share of the board.</figcaption>
+    </figure>
+
+    <div class="col">
+      <div class="note gold">
+        <p class="note-h">One place it may be too generous</p>
+        <p>EASY board 1 reveals a median of <strong>104 of 256 cells — 41% of the board</strong>, because at
+          11.7% density the empty cells percolate into one huge connected blob. By NORMAL board 1 that is already
+          down to 10%, and by EXTREME board 10 to 2.8%. For the teaching ladder a large freebie is arguably
+          correct, but if it feels like the board plays itself, the fix is a cap: take the largest region
+          <em>under</em> a ceiling of N% of the board rather than the largest outright.</p>
+      </div>
+      <h4>Fallbacks and knobs</h4>
+      <ul>
+        <li><strong>If no zero-region exists</strong> — impossible at ladder densities, reachable in Free mode —
+          open the single cell with the lowest number instead, breaking ties by most empty neighbours.</li>
+        <li><strong>Guarantee a floor</strong> by making "best opening ≥ N cells" a generation constraint and
+          re-rolling if it fails. Generation is cheap; this makes the 9-cell worst case a promise rather than an
+          observation.</li>
+        <li><strong>Always-largest is deterministic</strong> per board, which may make openings feel samey. Picking
+          at random among regions within ~80% of the best keeps the quality and restores variety.</li>
+        <li><strong>Expose it</strong> — auto-open (default) · guaranteed-zero on a cell you pick · 3×3 protected
+          · one-cell protected (the original) · none.</li>
+      </ul>
+    </div>
+
+    <div class="scroll"><table id="opening-table"></table></div>
+  </div>
+</section>
+
+<section id="magic">
+  <div class="wrap">
+    <div class="col">
+      <p class="kicker">06 — Built</p>
+      <h2>Magic &amp; mana</h2>
+      <div class="note gold">
+        <p class="note-h">The prices tripled, and that is the first time they have mattered</p>
+        <p>At the old 25/10/50/100, buying your way out of <em>every</em> moment a deductive player is cornered
+          cost between 1% and 32% of a board's whole mana pool. No ladder could run out of mana by playing
+          well, so price was inert everywhere &mdash; doubling or halving the table would have changed nothing.
+          At 30/75/150/300 the same shopping list costs <strong>40&ndash;86% on the late boards</strong>, so you
+          can no longer answer everything and which moments to buy is a decision. Early boards stay cheap
+          (2&ndash;30%), because that is where the spells are introduced.</p>
+        <p style="margin-top:12px">Measured across fifteen seeds a board: casting fell from 2.4 to 1.4 Reveals a
+          board on DUNGEON while the share of them that unlocked something rose to 87%, which is the shape of a
+          player who has started choosing. Clear rates moved a little and did not collapse &mdash; DUNGEON
+          98&rarr;93%, DONUT 91&rarr;87%, ORACLE 51&rarr;49%, the rest unchanged.</p>
+        <p style="margin-top:12px">It stays <strong>one global table</strong>. What varies between ladders is
+          already carried twice over, by income (a board's pool spans 150 to 1,233) and by demand (forced
+          guesses span 0.1 to 6.0 a board); a per-ladder price would be a third axis saying what those two
+          already say, and would stop "Reveal costs 75" being a fact learned once.</p>
+      </div>
+
+      <div class="note">
+        <p class="note-h">Status</p>
+        <p>Four spells are implemented and playable — Reveal, Census, Exercise and Beacon.
+          <strong>ARCANE</strong> and <strong>ORACLE</strong> are built around them; the four cut-out ladders —
+          <strong>DONUT</strong>, <strong>CROSS</strong>, <strong>DIAMOND</strong> and
+          <strong>RAGGED CAVE</strong> — carry ARCANE's loadout as well, and
+          <strong>DUNGEON</strong> carries that plus Exercise. Echo and Scry below are
+          still on paper. The rest of this section is what the build follows.</p>
+      </div>
+      <p>Worth naming the underlying thing first: <strong>mana and HP are two currencies for the same
+        commodity — certainty.</strong> HP buys it by absorbing a wrong guess after the fact; mana buys it in
+        advance by removing the guess. Every spell below is priced against that, and it is why the set stays
+        small.</p>
+
+      <h4>The economy</h4>
+      <p>Income is a hybrid, and the split is deliberate rather than arbitrary.</p>
+      <ul>
+        <li><strong>Kills pay <span class="m">+tier</span> each</strong> — linear, where EXP is exponential at
+          <span class="m">2^(E−1)</span>. That difference does the balancing by itself: early you are
+          <em>mana-rich and EXP-poor</em>, late the reverse, so spells are most available exactly when you are
+          weakest and thin out as your level takes over.</li>
+        <li><strong>Exploration pays 1 per 4 empty cells you uncover yourself.</strong> A trickle, not a wage.</li>
+        <li>A <strong>starting pool</strong> of <strong>75</strong>, the same on every magic ladder, keeps the
+          opening moves from being spell-less. It is exactly one Reveal, or two Censuses with change: enough to
+          answer the first question the board asks, never enough to answer the second. It tripled with the
+          prices, because what it is for is that one opening answer rather than a particular number.</li>
+      </ul>
+
+      <div class="note gold">
+        <p class="note-h">Why kills lead and exploration only trickles</p>
+        <p>Paying per cell opened sounds equivalent, and is not. Kill income is <strong>exact and known at
+          design time</strong> (<span class="m">Σ qᵢ·i</span>) and it <strong>scales with difficulty</strong> —
+          a denser board holds more creatures and so more mana. Cell income does the opposite. Measured across
+          the ladders, total cells outnumber total kill-mana by <span class="m">3.7×</span> on the sparsest
+          board and only <span class="m">0.6×</span> on the densest, so paying per cell at any flat rate makes
+          the <em>easy</em> boards the mana-rich ones.</p>
+        <p style="margin-top:12px">Per-cell is also cascade-lumpy: one lucky click that opens sixty squares
+          would hand over a windfall, and this design has spent a lot of effort reducing what luck decides.</p>
+      </div>
+
+      <p>So the trickle is small, and measured on full clears it lands where intended — a clear minority that
+        shrinks as boards get harder:</p>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="l">Board</th><th>Start</th><th>From kills</th><th>From exploring</th>
+          <th>Total</th><th>Trickle share</th></tr></thead>
+        <tbody>
+          <tr><td class="l name">ARCANE #1</td><td>75</td><td>298</td><td>88</td><td>461</td><td class="free">19%</td></tr>
+          <tr><td class="l name">ARCANE #10</td><td>75</td><td>613</td><td>124</td><td>812</td><td class="free">15%</td></tr>
+          <tr><td class="l name">ORACLE #1</td><td>75</td><td>519</td><td>106</td><td>700</td><td class="free">15%</td></tr>
+          <tr><td class="l name">ORACLE #10</td><td>75</td><td>1011</td><td>147</td><td>1233</td><td class="free">12%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col">
+      <p>The trickle earns its place by doing three things kills cannot: it <strong>pays before the first kill
+        lands</strong>, it <strong>keeps paying while you are stuck</strong> on a frontier with nothing safe to
+        fight, and it is the <strong>only possible income in search modes</strong>, where nothing can be killed
+        at all — so BLIND could take spells without any special case.</p>
+      <p class="dim" style="font-size:.9rem">Neither the dealt opening nor Beacon's cells accrue: the first is
+        not your work, and the second would let Beacon refund part of its own price.</p>
+
+      <div class="note warn">
+        <p class="note-h">A trap worth knowing before any spell is written</p>
+        <p><strong>Any spell that removes a creature must still grant its full EXP.</strong> The locked
+          thresholds are <span class="m">C<sub>k</sub></span> — the <em>total</em> EXP available from tiers
+          at or below k. Kill a creature without collecting its EXP and that total can no longer be reached,
+          so the gate becomes permanently impassable and the run is silently dead. Either every removal pays
+          full EXP, or thresholds have to be recomputed against what is left. The first option is much
+          simpler.</p>
+      </div>
+
+      <h4>The set</h4>
+      <p>Three information spells at different price-and-precision points, one that makes progress, one that
+        converts mana straight into survivability.</p>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="l">Spell</th><th>Mana</th><th class="l">Effect</th>
+          <th class="l">Why it is priced there</th></tr></thead>
+        <tbody>
+          <tr><td class="l name">Reveal <span class="free">·built</span></td><td>75</td>
+            <td class="l">Learn one cell exactly, and clear the empty ground touching it. A creature is marked with its true tier; empty ground opens.</td>
+            <td class="l dim">Replaced the weaker "is it empty" idea: a truthful mark also feeds mark-assisted Sweep, so it buys deduction rather than one square. Started at 6 and was repriced on measurement — it is the most valuable thing in the set by a wide margin, saving 0.94 HP a cast where Census saves 0.01, and at 6 it was simply the answer to every question. The ring of blank ground around the target came later and is worth 45% of the spell on its own (0.65 → 0.94 a cast): a cell with no creature on it was always free to open, so clearing it gives away no safety the player did not have, it just saves the clicks. It cannot run away — every neighbour of a tier-N cell carries at least N in its own number, so none of them can be a zero cell, and a cascade needs one.</td></tr>
+          <tr><td class="l name dim">Echo <span class="dim">·paper</span></td><td class="dim">6</td>
+            <td class="l">Highest tier present in a 3×3.</td>
+            <td class="l dim">Bounds the danger without solving the layout — tells you what you'd survive, not where it is.</td></tr>
+          <tr><td class="l name">Census <span class="free">·built</span></td><td>30</td>
+            <td class="l">How many creatures in a 3×3.</td>
+            <td class="l dim">Resolves the sum-versus-count ambiguity the whole game is built on — when you can find the cell worth asking about. Cast where it demonstrably helps it is worth 0.33 HP, near Reveal's 0.64; cast by judgement it lands on such a cell 2–9% of the time. The information is strong and the aiming is the problem, which is a design question rather than a price.</td></tr>
+          <tr><td class="l name">Exercise <span class="free">·built</span></td><td>150</td>
+            <td class="l">Fight your next battle one level higher.</td>
+            <td class="l dim">Replaced Ward, which soaked a flat 6 damage. Damage is <span class="m">E·(⌈E/L⌉−1)</span>, a staircase rather than a slope, so a borrowed level is worth nothing until it crosses a step and then worth the whole step — 10 damage down to 5 at LV2 against a tier 5. It also lifts the mark guard for that one fight, which is the fight it exists for. Never kept, and the creature still pays full EXP.</td></tr>
+          <tr><td class="l name">Beacon <span class="free">·built</span></td><td>300</td>
+            <td class="l">Open the largest remaining zero-region.</td>
+            <td class="l dim">Reuses the auto-opening primitive as an unstuck button. The dearest thing in the game because it can restart a dead board, and because at its old 22 it was close to free against a pool nobody could exhaust.</td></tr>
+          <tr><td class="l name dim">Scry <span class="dim">·paper</span></td><td class="dim">30</td>
+            <td class="l">Exact tiers in a 3×3, auto-marked, <em>not</em> opened.</td>
+            <td class="l dim">Strictly the most informative, so it has to be the most expensive. No combat, no cascade.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col">
+      <div class="note gold">
+        <p class="note-h">Your second idea should be free, not a spell — and here is the proof</p>
+        <p>Auto-opening every neighbour of a revealed cell whose number is ≤ your level isn't a gamble at all.
+          <strong>It is provably zero-damage.</strong> The number is the <em>sum</em> of neighbouring tiers, so
+          no single neighbour can exceed it. If that sum is ≤ your level <span class="m">L</span>, then every
+          adjacent creature has tier <span class="m">E ≤ L</span>, and damage is
+          <span class="m">E×(⌈E/L⌉−1) = 0</span> for all of them.</p>
+        <p style="margin-top:12px">So it is this game's version of chording, and it is <em>always</em> correct.
+          Charging mana for a provably free action just taxes tedium. Make it a one-click <strong>Sweep</strong>
+          — resolve all safe moves — available in every mode, respecting the mark click-guard so it never
+          touches a cell you flagged above your level.</p>
+      </div>
+
+      <h4>Two refinements the base rule misses</h4>
+      <p>The rule as stated is needlessly timid, because a cell's number counts neighbours you can already
+        see. Both fixes work on the same quantity — the part of the number still <em>hidden</em>.</p>
+      <ul>
+        <li><strong>Subtract what is visible.</strong> A defeated creature's tier is a fact, not a guess, so a
+          <span class="m">7</span> beside a dead tier-6 hides only a <span class="m">1</span>. This costs
+          nothing: it is still a proof, just a tighter one.</li>
+        <li><strong>Subtract the player's marks.</strong> If you marked a neighbour "4" beside a
+          <span class="m">5</span>, the residual is <span class="m">1</span>, so everything else in that ring
+          is free at LV1. This reaches dramatically further — but it is an <em>assumption</em>, not a proof.
+          A wrong mark costs HP, and the bound covers only the <em>unmarked</em> neighbours, since the marked
+          ones are what produced it.</li>
+      </ul>
+      <div class="note warn">
+        <p class="note-h">The two promises are different, so they are two buttons</p>
+        <p>Folding marks into Sweep would quietly downgrade it from "cannot cost HP" to "cannot cost HP if
+          your reading is right". Those are different enough that the player should choose, so the prototype
+          ships both: <strong>Sweep</strong> (<span class="m">S</span>) resolves only what is proven, and
+          <strong>Sweep&nbsp;+&nbsp;marks</strong> (<span class="m">D</span>) additionally trusts your claims.</p>
+        <p style="margin-top:12px">Each button carries a live count, and the mark-assisted one enables only
+          when it would open strictly more than the proof can — so it lights up exactly when your marks have
+          bought you something, and stays dark when they have not. A residual that goes <em>negative</em>
+          proves a mark is wrong; that cell is currently skipped, but surfacing the contradiction would be
+          free feedback.</p>
+      </div>
+      <p>Your first idea splits in two depending on whether it opens or only shows. <strong>Scry</strong> above is
+        the "show" half. The "open" half — blow a 3×3 and fight whatever is in it — is a fine power spell too,
+        but note it is a genuine gamble rather than a tool: anything above your level still hits you, and it must
+        pay full EXP per the trap above.</p>
+
+      <h4>Loadouts as identity</h4>
+      <p>Rather than splicing magic into the tuned main line, the two magic types branch off NORMAL as their own
+        chain. Nothing already measured moves, and the branch can be retuned freely. The shaped ladders take the
+        same loadout without taking the same prices: their boards hold fewer cells, so the pools are smaller in
+        absolute terms, but the shape of the economy is ARCANE's — exploration pays 23–25% of income on their
+        first boards falling to 18–20% by their tenth, against ARCANE's 26% and 20%, and the smallest of them
+        still carries thirteen full kits. Costs and the starting pool carry over untouched.</p>
+      <div class="note gold">
+        <p class="note-h">The zero-damage guarantee survives magic untouched</p>
+        <p>Not one of the four spells removes a creature. That is the whole reason the set looks like this:
+          information, a borrowed level and movement only. Every C_k gate still receives every point of EXP it was
+          tuned against, and the invariant tests pass on both new ladders unchanged.</p>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="l">Type</th><th class="l">Loadout</th><th class="l">Reasoning</th></tr></thead>
+        <tbody>
+          <tr><td class="l name">ARCANE</td><td class="l">Reveal · Census</td>
+            <td class="l dim">Magic arrives. Two instruments only, on a board that runs denser than EXTREME because you are expected to spend rather than gamble. 75 starting mana.</td></tr>
+          <tr><td class="l name">ORACLE</td><td class="l">Reveal · Census · Exercise · Beacon</td>
+            <td class="l dim">Six tiers on a flat curve so no number is safely assumed, and 8 HP falling to 6. The full kit, and it needs all of it. 75 starting mana.</td></tr>
+          <tr><td class="l name">DONUT · CROSS · WRAPPED CROSS · DIAMOND · RAGGED CAVE</td><td class="l">Reveal · Census</td>
+            <td class="l dim">ARCANE's loadout on the cut-out shapes. Every one of them is mostly boundary, so what they lack is not information but certainty about what is behind a number — which is the pair of instruments that answers it. 75 starting mana.</td></tr>
+          <tr><td class="l name">DUNGEON</td><td class="l">Reveal · Census · Exercise</td>
+            <td class="l dim">Hallways and doorways are always empty, so a forced guess is a guess on what is in front of you and usually one you already know something about. That makes it a ladder of many cheap guesses rather than few expensive ones — a deductive player is cornered 0.5 times on board 1 rising to 5.4 on board 10, about ARCANE's rate, and still clears 83% of board 10. Exercise earns its place here as it does nowhere else outside ORACLE, and this is the ladder with the thinnest mana pool, so the prices bite hardest. 75 starting mana.</td></tr>
+          <tr><td class="l name dim">every other type</td><td class="l dim">none</td>
+            <td class="l dim">The tuned main line and the post-game stay exactly as they were measured. Magic is a branch off NORMAL and a loadout on the shapes, not a change to the main line.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="generation">
+  <div class="wrap">
+    <div class="col">
+      <p class="kicker">07 — Proposed</p>
+      <h2>Generation &amp; topology</h2>
+
+      <h4>More distribution shapes</h4>
+      <p>Two archetypes are in use. Four more are worth having, and one of them is barely a variant at all:</p>
+      <ul>
+        <li><strong>Ascending</strong> — more high tiers than low. Inverts the economy and makes the opening
+          hours brutal.</li>
+        <li><strong>Bimodal</strong> — a swarm of tier 1 and a cluster of apex creatures, little in between. A
+          <span class="m">6</span> becomes either six tier-1s or one tier-6, which is a much sharper read than
+          the muddle in the middle.</li>
+        <li><strong>Single-tier</strong> — every creature the same level. Numbers collapse to
+          <span class="m">count × tier</span>, which is literally Minesweeper with a multiplier. A clean puzzle
+          variant and a good tutorial board.</li>
+        <li><strong>Descending + apex</strong> — already in use by HUGE, worth naming as its own shape.</li>
+      </ul>
+      <div class="note gold">
+        <p class="note-h">All of them keep the zero-damage guarantee</p>
+        <p>This generalises further than I expected. At level <span class="m">k</span> you can safely kill every
+          tier ≤ k, which yields <span class="m">C<sub>k</sub></span> EXP, and the threshold to reach
+          <span class="m">k+1</span> is at most <span class="m">C<sub>k</sub></span> by construction. By
+          induction you can always climb the whole ladder without taking a point of damage —
+          <strong>whatever the distribution shape.</strong> So new archetypes can be added freely; the invariant
+          is a property of the threshold rule, not of any particular curve.</p>
+      </div>
+
+      <h4>Placement rules</h4>
+      <p>Six primitives cover your examples and a couple more. Each needs a scatter fallback for leftovers,
+        because <span class="m">C<sub>k</sub></span> depends on placing <em>exactly</em> the quota per tier:</p>
+      <ul>
+        <li><strong>Scatter</strong> — uniform random. What the original does.</li>
+        <li><strong>Cluster</strong>(tier, n, box) — your tier-1 triads in a 3×3.</li>
+        <li><strong>Pair</strong>(tierA, tierB, box) — your 2-and-4 pairs in a 2×2.</li>
+        <li><strong>Lair</strong>(boss, escort, n, box) — your boss ringed by its tier-below escorts.</li>
+        <li><strong>Spread</strong>(tier, minimum distance) — anti-clustering; keeps apex creatures apart.</li>
+        <li><strong>Band</strong>(tier → region) — a spatial difficulty gradient: low tiers at the rim, high tiers
+          toward the core.</li>
+      </ul>
+      <p>I simulated each against three real boards — same creature counts every time, only the placement
+        changes — measuring the auto-opening, how much of the board is zero, and the numbers themselves:</p>
+    </div>
+
+    <div class="scroll"><table id="placement-table"></table></div>
+
+    <div class="col">
+      <p>Three things fall out, and they are not what I would have guessed:</p>
+      <ul>
+        <li><strong>Clustering makes boards easier, substantially.</strong> Grouping creatures empties the space
+          between groups: triads plus pairs lift the opening by 19–33% and raise zero-cell counts by roughly
+          half. If you add clustering, <strong>densities have to rise to compensate</strong> or every ladder
+          silently gets gentler.</li>
+        <li><strong>Lairs make boards harder, and how much depends on the distribution.</strong> On EXTREME's flat
+          curve — 34 top-tier creatures — lairs halve the opening and push the average number from 6.6 to 11.4.
+          On HUGE, which has two apex creatures at that board, the effect is −4%. Lair impact scales with how
+          many top-tier creatures exist, which makes it a natural pairing with flat distributions and a
+          non-event on descending ones.</li>
+        <li><strong>Banding moves difficulty around rather than changing its total.</strong> The opening grows
+          19–39%, because the rim is now sparse — but the maximum number climbs too (16→18, 22→29, 28→32) as the
+          core concentrates. You start at the edge and work inward as you level, which pairs neatly with the
+          tier-order climb the threshold rule already forces. The catch is that the auto-opening becomes
+          predictable: it will nearly always be on the rim.</li>
+      </ul>
+      <p class="dim" style="font-size:.9rem">Clustering also tends to <em>help</em> solvable generation — more
+        structure means more deducible patterns — while lairs likely hurt it. Worth measuring once a solver
+        exists.</p>
+
+      <h4>Wrap-around <span class="free">·built</span></h4>
+      <p>Two ladders, <strong>RING</strong> (a cylinder — left and right joined) and <strong>TORUS</strong> (every
+        edge joined). Both run <em>NORMAL's exact schedule</em>: same sizes, same densities, same HP, same lock
+        depth. That is deliberate. With every other variable pinned, whatever you feel playing them is the wrap
+        and nothing else.</p>
+      <p>Corner neighbour counts go <span class="m">3 → 5 → 8</span> across the three.</p>
+
+      <div class="note gold">
+        <p class="note-h">The measurement contradicted itself, which turned out to be the interesting part</p>
+        <p>At equal density a torus has <strong>16–22% fewer blank cells</strong> than a square board — expected,
+          since no cell gets a shortened neighbour list any more. But its <strong>opening is bigger</strong>
+          (44 → 53 cells at NORMAL's opening density), because blank regions now connect <em>around</em> the seam
+          instead of being cut off by the rim.</p>
+        <p style="margin-top:12px">So the two obvious metrics point in opposite directions, and neither captures
+          the actual cost. <strong>Edges are information.</strong> A corner has three neighbours and a rim cell
+          five, and those constrained cells are where a sweeper player gets every cheap foothold — the classic
+          openings are all edge patterns. Wrapping deletes every one of them. That is a deduction effect, and no
+          blank-cell count will ever see it. Which is exactly why both ladders keep NORMAL's numbers: the honest
+          way to price it is to play it.</p>
+      </div>
+      <div class="note">
+        <p class="note-h">How it is drawn</p>
+        <p>A <strong>ghost band</strong> one cell deep beyond each joined edge, repeating what lies across the
+          seam at reduced opacity, with a <strong>dashed line</strong> marking where the real board ends. The
+          board reserves room for the band when it sizes itself, or it would be drawn off-canvas and never seen.</p>
+        <p style="margin-top:12px">Two details that matter more than they sound. <strong>Hovering lights every
+          neighbour</strong>, so on a wrapped board the highlight visibly jumps to the far side — that teaches
+          the topology in about three seconds, faster than any caption. And <strong>the band is clickable</strong>:
+          a click on the repeat resolves to the real cell it is showing, because anything drawn as part of the
+          board should behave like part of the board.</p>
+      </div>
+
+      <h4>Board shapes</h4>
+      <p>One lever sits under all of them. A cell's number is the SUM of its neighbours, so
+        <strong>fewer neighbours means fewer unknowns means easier to deduce</strong>. Edges and corners are free
+        information, which is exactly why wrapping — which deletes all of them — is the only variant that makes
+        the board harder. Every shape goes the other way.</p>
+      <p>Measured on a 30×16 bounding box at 24% density, where "blank" means a cell with no creature neighbour,
+        i.e. a free foothold:</p>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="l">Shape</th><th>Cells</th><th>Mean neighbours</th><th>Boundary cells</th>
+          <th>Blank rate</th><th>vs rectangle</th></tr></thead>
+        <tbody>
+          <tr><td class="l name">Wraparound</td><td>480</td><td>8.00</td><td>0%</td><td>11.1%</td>
+            <td class="gate">−20% harder</td></tr>
+          <tr><td class="l name">Rectangle</td><td>480</td><td>7.43</td><td>18%</td><td>13.9%</td>
+            <td class="dim">baseline</td></tr>
+          <tr><td class="l">Strip 60×8</td><td>480</td><td>7.16</td><td>28%</td><td>15.2%</td>
+            <td class="free">+9%</td></tr>
+          <tr><td class="l">Triangle</td><td>256</td><td>7.16</td><td>34%</td><td>15.2%</td>
+            <td class="free">+10%</td></tr>
+          <tr><td class="l">Diamond</td><td>240</td><td>7.15</td><td>35%</td><td>15.4%</td>
+            <td class="free">+11%</td></tr>
+          <tr><td class="l name">Cross</td><td>260</td><td>6.98</td><td>34%</td><td>16.2%</td>
+            <td class="free">+16%</td></tr>
+          <tr><td class="l name">Donut</td><td>368</td><td>6.91</td><td>37%</td><td>16.3%</td>
+            <td class="free">+18%</td></tr>
+          <tr><td class="l">Ragged cave</td><td>389</td><td>6.77</td><td>47%</td><td>17.1%</td>
+            <td class="free">+23% easiest</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col">
+      <p>So shapes span roughly −20% to +23% around a rectangle, all correctable with density the same way hex
+        needed six to eight points. Shape is also free visual identity: a ragged cave and a tight rectangle read
+        as different games before a single click.</p>
+      <p>The parameter usually matters more than the shape's name — a three-wide cross is a corridor puzzle, a
+        seven-wide one is just a lumpy rectangle. Worth turning the dials:</p>
+
+      <div class="note gold">
+        <p class="note-h">Parameterise masks in cells, not in fractions of the board</p>
+        <p>The first version of this sized the donut hole as a percentage of width and height, which quietly made
+          the ring nine cells thick along the long sides and four along the short ones — the same board playing
+          two different games depending on which bit of the loop you were standing in. The thickness
+          <em>is</em> the gameplay, so it has to be the thing held constant.</p>
+        <p style="margin-top:12px">Fixing that had an unexpected payoff: <strong>aspect ratio then stops
+          mattering at all.</strong> A donut with a four-cell ring measures 6.53 mean neighbours, 50% boundary
+          and an 18.2% blank rate on a 30×16 board — and 6.53, 50% and 18.2% on a 22×22 one. Identical. So there
+          is no difficulty argument for square boards, and wide ones can stay wide, which suits screens.</p>
+        <p style="margin-top:12px">One structural difference survives, and only for the cross:
+          <strong>arm lengths</strong>. At arm width 6, a wide board gives arms of 12, 5, 12 and 5 cells — two
+          corridors and two stubs — where a square board gives four of 8. Per-cell averages cannot see that,
+          but "four parallel puzzles round a hub" is only true on the square one.</p>
+      </div>
+    </div>
+
+    <div class="shape-lab">
+      <div class="chips" id="shape-chips" role="group" aria-label="Board shape"></div>
+      <div class="shape-controls">
+        <label id="shape-param-label" for="shape-param"></label>
+        <input type="range" id="shape-param" min="1" max="10" step="1" value="3" />
+        <span id="shape-param-value" class="m"></span>
+        <span class="ctl-gap"></span>
+        <button type="button" class="ghost small aspect" data-aspect="wide">Wide 30×16</button>
+        <button type="button" class="ghost small aspect" data-aspect="square">Square 22×22</button>
+        <button type="button" class="ghost small" id="shape-reroll">Reroll</button>
+      </div>
+      <div class="shape-stats" id="shape-stats"></div>
+      <div class="shape-board" id="shape-board"></div>
+      <p class="hint-line">Real generated layouts at 24% density: covered ground, the auto-opening already
+        revealed, numbers summing only the neighbours that exist inside the mask.</p>
+    </div>
+
+    <div class="col">
+      <div class="note gold">
+        <p class="note-h">Built — DONUT, CROSS, DIAMOND and RAGGED CAVE</p>
+        <p>Four shaped ladders ship: a ring, a cross, an inscribed diamond, and a cave carved fresh from
+          every seed. Cut-away cells are <em>absent</em>, not empty — they hold nothing, neighbour nothing,
+          and count toward no win condition. Densities run 2–5 points above NORMAL to pay back what the
+          extra boundary gives away.</p>
+        <p style="margin-top:12px">The cave was the one that stayed parked, and the obstacle was never the
+          carving. Its silhouette moves with the seed, so its cell count moves too — and every level
+          threshold comes from <span class="m">C<sub>k</sub></span>, which needs the creature quota fixed
+          before the board is built. A mask that came back a few cells light would not throw; the board
+          would simply be mistuned on that seed, with the top gate, which is exactly
+          <span class="m">C<sub>k</sub></span>, sitting a kill out of reach.</p>
+        <p style="margin-top:12px">The way out was to stop treating the count as an outcome. The count is
+          <em>chosen</em> per board, the generator is required to land on it exactly, and a test holds it to
+          that on every seed. Everything upstream then carries over from the fixed shapes untouched — quota,
+          <span class="m">C<sub>k</sub></span>, thresholds, the zero-damage guarantee. Deriving thresholds at
+          generation time would also have worked, and would have cost the whole one-way flow from
+          <span class="m">ladders.py</span> into the engine.</p>
+      </div>
+
+      <div class="note gold">
+        <p class="note-h">Wrapping a shape is not wrapping a rectangle — WRAPPED CROSS</p>
+        <p>"Edges are free information, so joining them is the only variant that makes the game harder" is a
+          claim about a rectangle, where a thin rim surrounds a large interior. A cross is nearly all rim, so
+          joining its arm tips deletes very little of it — and does something much larger instead. CROSS is
+          four dead-end corridors sharing a hub; joining the tips turns them into two loops, so a player stuck
+          at one tip can work in from the other. It is the DUNGEON finding with the sign flipped: what sets
+          the count of forced guesses is how many separate puzzles the board is cut into.</p>
+        <p style="margin-top:12px">Measured with the honest player, 25 seeds a board, at CROSS's own
+          schedule: <strong>0.0–2.3 forced guesses a board against CROSS's 0.3–2.4</strong>, and 92% of board
+          10 cleared against 80%. So it ships at CROSS's schedule lifted 1.2 density points, 24.7–31.9%,
+          which puts it back on CROSS's curve — 0.1–2.7 guesses, 84% cleared — and still inside the 34% the
+          rest of the game treats as the point a board stops being a puzzle.</p>
+        <p style="margin-top:12px">Two things in the engine only surfaced once a board was shaped
+          <em>and</em> wrapped. A hole filtered out of the neighbours it was handed but not out of the ones it
+          asked for, so adjacency was asymmetric at a hole; and the dashed seam was stroked around the
+          bounding box, which on this board would claim a join across background where there is no board to
+          join. Both are one-line fixes, and both were invisible on every board before this one.</p>
+      </div>
+
+      <div class="note warn">
+        <p class="note-h">Disconnected shapes break the opening</p>
+        <p>The auto-opening reveals exactly one region. A mask with separate islands leaves every island but one
+          with no way in, and no amount of deduction fixes it. Either reject disconnected masks at generation, or
+          give <em>each</em> connected component its own opening — which is the more interesting option, since it
+          makes an archipelago board a set of parallel puzzles.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ladders">
+  <div class="wrap">
+    <div class="col">
+      <p class="kicker">08 — The numbers</p>
+      <h2>Ladder explorer</h2>
+      <p>Pick a type. Every figure below is generated, not hand-written, so the whole set stays consistent when
+        you retune a schedule.</p>
+    </div>
+
+    <div class="chips" id="chips" role="group" aria-label="Game type"></div>
+
+    <div class="ladder-head">
+      <div class="about">
+        <p class="axis" id="l-axis"></p>
+        <h3 id="l-name"></h3>
+        <p id="l-blurb"></p>
+      </div>
+      <div class="deltas" id="l-deltas"></div>
+    </div>
+
+    <figure>
+      <div class="footprints" id="footprints"></div>
+      <figcaption id="fp-cap"></figcaption>
+    </figure>
+
+    <div class="scroll"><table id="ladder-table"></table></div>
+    <div class="col">
+      <p class="dim" style="font-size:.9rem"><span class="gate">Red</span> level gates are full-tier-clear
+        requirements — the threshold equals <span class="m">C<sub>k</sub></span> exactly.
+        <span class="free">Green</span> gates are reachable partway through a tier. A lock depth equal to
+        <span class="m">T−1</span> means <em>every</em> level-up is a full-tier clear.</p>
+    </div>
+  </div>
+</section>
+
+<section id="assets">
+  <div class="wrap">
+    <div class="col">
+      <p class="kicker">09 — Look and feel</p>
+      <h2>Type identity &amp; temp assets</h2>
+      <p>Every game type gets its own palette, creature set, number face and voice. These are placeholders chosen
+        so that nothing needs drawing or recording yet — but each one occupies a real slot, so replacing it later
+        is a swap rather than a rebuild.</p>
+
+      <h4>Temp creatures: pips on a 3×3 grid</h4>
+      <p>A tier-<em>N</em> creature is drawn as <strong>N pips in a 3×3 grid</strong>, die-style. It costs no art,
+        draws procedurally at any size, covers exactly the 1–9 range the game needs, and stays countable rather
+        than memorised — useful while the numbers are still moving. It also echoes the 3×3 neighbourhood the
+        whole game is built on, which is a happy accident rather than a design goal.</p>
+      <p>Colour and shape carry different jobs, which is what made the first attempt unreadable. <strong>Pip
+        shape carries type identity</strong> — each ladder has its own. <strong>Pip colour carries tier
+        identity and is global</strong>, so a tier-4 creature looks the same on every board.</p>
+      <p>Five hues cover tiers 1–5; tiers 6–9 reuse the same five wearing a gold halo. The hues are spread
+        rather than ramped warm-to-hot: a yellow-orange-red ramp put adjacent tiers at
+        <span class="m">ΔE 2.5</span> under protanopia, which is precisely why the glyphs were hard to read at
+        a glance. Since the pip <em>count</em> already encodes magnitude, colour is free to do identity instead.
+        The one soft pair that remains — yellow against green, <span class="m">ΔE 6.4</span> protan — is
+        disambiguated completely by the count.</p>
+    </div>
+
+    <div class="sheet" id="asset-sheet"></div>
+
+    <div class="col">
+      <h4>Number faces and voices</h4>
+      <p>Number faces are placeholder stacks — the point is that the slot exists per type and the board
+        immediately looks different, not that these are the final faces. For audio, the cheapest thing that
+        produces seven distinct identities is <strong>one shared event set rendered through seven voice
+        profiles</strong>: same MML strings, different waveform and base octave. No audio files at all.</p>
+    </div>
+    <div class="scroll"><table id="voice-table"></table></div>
+
+    <div class="col">
+      <h4>Where the gameplay identities are thin</h4>
+      <p>Four types already play differently in a way a player would name out loud: <strong>EXTREME</strong>'s flat
+        distribution means a high tier is as likely as a low one, so no number is ever safely assumed;
+        <strong>HUGE</strong> is a long campaign with nine tiers and a single apex creature you reach max level
+        exactly in time to meet; <strong>HUGE × EXTREME</strong> is the wall; <strong>BLIND</strong> removes
+        combat entirely.</p>
+      <p><strong>EASY and NORMAL are currently the same game at different sizes</strong> — same descending
+        distribution, same five tiers, same HP, differing only in board and density. That is the one real gap. The
+        cheapest fix that makes EASY mechanically distinct rather than merely smaller is to run it at
+        <strong>four tiers instead of five</strong>: it caps the worst number at 32 instead of 40, shortens the
+        level curve, and makes it a genuinely gentler ruleset rather than a smaller board. It would mean
+        regenerating EASY's ladder, which is one line in the schedule.</p>
+    </div>
+  </div>
+</section>
+
+<section id="free">
+  <div class="wrap">
+    <div class="col">
+      <p class="kicker">10 — Everything else</p>
+      <h2>Free mode knobs</h2>
+      <p>Each of these is hardcoded in the original. Each is a parameter you could expose. Red shows the original's
+        fixed value.</p>
+    </div>
+    <div class="knobs" id="knobs"></div>
+    <div class="col">
+      <h3>The QOL gaps</h3>
+      <p>Confirmed absent from the original: guaranteed-solvable boards, meaningful first-click protection,
+        chording, undo, board seeds or sharing, custom sizes, save and resume, colourblind options (marks are
+        green-only, creature numbers red-only), any stats beyond a share string, and any difficulty rung between
+        EASY's 30 creatures and NORMAL's 99.</p>
+      <p>The two highest-value fixes are the ones that make the original feel <em>unfair</em> rather than hard:
+        <strong>solvable-board generation</strong> and <strong>proper first-click protection</strong>. The mark
+        click-guard is already good design — build on it rather than replace it.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sudoku">
+  <div class="wrap">
+    <div class="col">
+      <p class="kicker">11 — Built</p>
+      <h2>Creature Sudoku</h2>
+      <div class="note">
+        <p class="note-h">Status</p>
+        <p>Built and in the ladder: ten boards, generated guess-free, tuned on the givens count and
+          verified by <span class="m">npm run sim:sudoku</span>. The player supplies the Sudoku
+          reasoning; Sweep harvests the cells they have identified.</p>
+      </div>
+      <p>A 9×9 board where the tiers obey Sudoku's rules: <strong>each of the nine digits appears exactly once
+        in every row, column and 3×3 box</strong>. The digits are <strong>tiers 0–8</strong>, not 1–9 — tier 0
+        is empty ground, and treating it as a digit like any other is what makes the whole thing fit.</p>
+      <p>That gives a second deduction channel running alongside the neighbour sums, and a global one: Sudoku
+        constrains cells nowhere near anything you have revealed, which nothing else in the game does. Every
+        other variant here is local.</p>
+
+      <h4>Digits 0–8 is what makes the opening free</h4>
+      <p>Because tier 0 is a digit, <strong>every row, column and box contains exactly one empty cell</strong> —
+        nine of them, spread by construction. Those nine cells <em>are</em> the opening. They are safe by
+        definition, they show their numbers, and they grant no EXP, so nothing is invented and the auto-opening
+        needs no new case at all.</p>
+
+      <div class="note warn">
+        <p class="note-h">Why 1–9 does not work, and it is not a small thing</p>
+        <p>At 100% density there is no empty ground, so anything the board pre-reveals is a pre-<em>killed</em>
+          creature — and a removed creature must grant its full EXP or the <span class="m">C<sub>k</sub></span>
+          gates become unreachable. Thirty random pre-kills grant roughly <strong>1,700 EXP, past
+          <span class="m">C<sub>7</sub></span></strong>, handing the player level 8 before their first click.
+          The only safe form is pre-killing <em>whole low tiers</em>, since clearing every tier ≤ k grants
+          exactly <span class="m">C<sub>k</sub></span>, which is exactly the LV k+1 gate. That works, but 0–8
+          removes the problem instead of managing it.</p>
+      </div>
+    </div>
+
+    <div class="col">
+      <h4>The measurement: do the two channels compose?</h4>
+      <p>That is the question the idea lives or dies on — whether the sums add anything once Sudoku is in the
+        room, or whether this is Sudoku wearing a hat. Played by an honest solver that sees only what a player
+        can see (Sudoku singles and hidden singles, plus the neighbour-sum bound) and guesses when it runs dry.
+        60 boards per row, opening fixed at the nine empty cells, every gate a full-tier clear:</p>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="l">Givens</th><th>Sudoku only</th><th>Sudoku + sums</th>
+          <th class="l">&nbsp;</th></tr></thead>
+        <tbody>
+          <tr><td class="l name">12</td><td class="dim">0%</td><td class="dim">0%</td>
+            <td class="l dim">unplayable either way</td></tr>
+          <tr><td class="l name">16</td><td class="dim">0%</td><td>8%</td>
+            <td class="l dim">the sums switch on</td></tr>
+          <tr><td class="l name">20</td><td class="dim">0%</td><td class="free">62%</td>
+            <td class="l dim">&nbsp;</td></tr>
+          <tr><td class="l name">24</td><td class="dim">0%</td><td class="free">92%</td>
+            <td class="l dim">Sudoku alone still clean-solves none</td></tr>
+          <tr><td class="l name">30</td><td>15%</td><td class="free">98%</td><td class="l dim">&nbsp;</td></tr>
+          <tr><td class="l name">36</td><td>57%</td><td class="free">98%</td>
+            <td class="l dim">where Sudoku alone catches up</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col">
+      <p class="dim" style="font-size:.9rem">Clean-solved = cleared with zero forced guesses.</p>
+      <p><strong>The neighbour-sum channel is worth about fifteen givens.</strong> A board that plays fair at 24
+        givens would need around 38 to be a fair Sudoku. So the majority of the information in a playable board
+        comes from the sweeper side, and the answer is that they compose — this is a hybrid rather than a
+        reskin.</p>
+
+      <h4>Difficulty is the givens, and almost only the givens</h4>
+      <p>Because generation rejects anything that needs a guess, the clear rate is 100% by construction and
+        measuring it proves only that the generator worked. What difficulty actually means here is the
+        <em>shape</em> of the deduction — and the honest measure of it is the <strong>tightest round</strong>:
+        the fewest cells any single round of deduce-kill-deduce ever hands you. A board that opens in big
+        sweeps is a different game from one that yields three cells at a time.</p>
+      <p>Measured through the real engine, across the shipped ladder:</p>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="l">Board</th><th>Givens</th><th>Lock</th><th>Attempts to build</th>
+          <th>Rounds</th><th>Tightest round</th></tr></thead>
+        <tbody>
+          <tr><td class="l name">1</td><td>26</td><td>3</td><td class="dim">1.0</td><td>8.0</td><td>9.0</td></tr>
+          <tr><td class="l name">4</td><td>21</td><td>4</td><td class="dim">1.2</td><td>8.2</td><td>7.5</td></tr>
+          <tr><td class="l name">7</td><td>18</td><td>6</td><td class="dim">1.6</td><td>8.5</td><td>5.4</td></tr>
+          <tr><td class="l name">9</td><td>16</td><td>7</td><td>15.6</td><td>8.9</td><td class="free">3.7</td></tr>
+          <tr><td class="l name">10</td><td>15</td><td>7</td><td>25.6</td><td>9.1</td><td class="free">3.1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col">
+      <p>Rounds sit near eight on every board, which is the tier count — the level gates force roughly one
+        round per tier, and that is the rhythm of the type. The gradient is entirely in the tightest round,
+        9.0 down to 3.1.</p>
+
+      <div class="note gold">
+        <p class="note-h">The floor is generation cost, not playability</p>
+        <p>Build cost is flat to about 18 givens, <strong>15× at 16, 45× at 14, and there is no guess-free
+          board at all below about 11</strong>. The ladder stops at 15 because the cost curve turns over
+          there, not because the boards stop being interesting. Below the floor the generator throws rather
+          than quietly shipping a board it cannot vouch for — the same alarm the cave's cell count has, and
+          for the same reason.</p>
+        <p>One consequence worth stating plainly: because boards are tested against a <em>fixed</em> solver
+          strength, fewer givens does not demand harder techniques. It makes such boards rarer and their
+          chains longer and tighter. That is a real difficulty axis but a bounded one, and it is the thing to
+          revisit first if the ladder reads as flat.</p>
+      </div>
+
+      <p>Lock depth is a mild second dial, running 3 to 7 across the ladder.</p>
+      <p>Note what is gone. <strong>Density, tier count and distribution archetype are all fixed by the Sudoku
+        rule</strong> — <span class="m">quantity</span> is nine of each tier on every board, so
+        <span class="m">C<sub>k</sub></span> is identical on every board of the ladder. The three axes every
+        existing ladder scales on do not exist here, and <span class="m">ladders.py</span>'s density schedule
+        and distribution machinery are bypassed entirely. This needs its own code path, not another row in
+        <span class="m">TYPES</span>.</p>
+      <p>The size axis is gone too: 9×9 is 9×9. A 4×4 and a 6×6 with 2×3 boxes give a teaching ramp, but 16×16
+        breaks the EXP curve at 2<sup>15</sup> a kill.</p>
+
+      <div class="note gold">
+        <p class="note-h">The real argument for building it</p>
+        <p><strong>HP stops working as a guess budget.</strong> Damage is <span class="m">E·(⌈E/L⌉−1)</span>, so
+          a tier-8 at LV1 costs 56 against this ladder's HP of 14–20 — one wrong guess is fatal several times
+          over. So this type <em>must</em> be guess-free, and it is the one type that easily can be.
+          Generate-and-test against the propagator is cheap enough to do on every board, which makes
+          <strong>SUDOKU the first ladder in the game with a proven zero-forced-guess guarantee</strong> — and
+          a live testbed for the solvable-generation work the rest of the game still wants.</p>
+      </div>
+
+      <h4>What it cost</h4>
+      <ul>
+        <li><strong>Marks became candidate sets.</strong> <span class="m">mark</span> is one value per cell, and
+          you cannot solve a Sudoku with one pencil mark per cell. <span class="m">Cell.notes</span> is now a
+          bitmask of candidate tiers, bit <span class="m">t</span> for tier <span class="m">t</span> — and
+          deliberately not a second mark, because a mark is a value that feeds the neighbour-sum subtraction
+          and a set cannot. A QOL win for the whole game, not just this type.</li>
+        <li><strong>Notes can protect you; they must never expose you.</strong> That asymmetry was learned the
+          hard way. A set is read in exactly one direction — if even the <em>smallest</em> candidate is above
+          your level then every possibility is, and the cell is guarded. It is deliberately not read the other
+          way. Shipped briefly, a cell whose candidates were all at or below your level counted as safe, and
+          Sweep would open it: a cell pencilled "2 or 3" at LV5, actually a tier 7, offered up for 7 damage.
+          A pencil mark means "the tiers I have not ruled out yet", which is the opposite of a claim about what
+          the cell is, so acting on it permissively charges the player for thinking out loud. When you are sure,
+          you commit the pencil to a mark — pencil for candidates, pen for a digit you have solved.</li>
+        <li><strong>Sweep must stay weaker than the generator's own solver</strong> — and that is the one
+          thing this type does not get for free. Everywhere else a board contains real ambiguity, so any
+          automatic deducer runs out on its own. These boards are made by rejecting anything the propagator
+          cannot finish, so the moment Sweep was taught the Sudoku rule it cleared 100% of every board in a
+          single click. It did, briefly, and it made the ladder unplayable.</li>
+        <li><strong>So Sweep became a harvester instead.</strong> It opens every cell whose tier you have
+          <em>written down</em> and which your level already covers — the clues under the strict button,
+          your own marks under the assisted one, keeping the proof-versus-claim line exactly where it is
+          everywhere else. The division of labour is: you do the Sudoku, it does the clicking.</li>
+        <li><strong>The neighbour-sum proof is not weak here, it is empty.</strong> Measured at
+          <strong>zero cells on every board of the ladder</strong>, even with half the grid correctly marked:
+          hidden sums run to sixty at this density, so <span class="m">hidden ≤ level</span> never holds and
+          the mark-assisted residual never comes near a level either. Both buttons were permanently dark, which
+          is what the harvest rule replaced — it gave up nothing.</li>
+        <li><strong>It still cannot run away with the board</strong>, because marks are player-authored and
+          nothing regenerates them: you only ever get back the work you put in. That is the same property that
+          keeps notes safe, and any future convenience that fills marks or candidates automatically would hand
+          it straight back.</li>
+        <li><strong>Clues had to become unerasable.</strong> Re-marking toggles a mark off, so a player could
+          rub out a given they could never get back and turn a guess-free board into an unfair one. Givens
+          carry a <span class="m">given</span> flag and refuse to be marked or pencilled over.</li>
+        <li><strong>Census is fully inert.</strong> It counts creatures among the neighbours, and here that is
+          eight minus the empties — which the Sudoku rule already tells you. ARCANE's loadout does not transfer,
+          and this ladder ships without magic; the natural replacement, if it ever gets any, is unit-scoped:
+          naming the cell in a row or box that holds a given tier.</li>
+        <li><strong>The boxes needed making visible at all.</strong> A row and a column announce themselves;
+          a 3×3 box is nine cells that look exactly like their neighbours, so the constraint the board is built
+          on was invisible. Two things now carry it. Alternate boxes take a translucent <strong>wash</strong> —
+          a wash rather than a second set of colours, so it derives from whatever theme is in play and lands the
+          same on covered tile and cleared floor. That second part is what matters: by the endgame the whole
+          board is floor, which is precisely when the grouping is hardest to hold. And the boundaries take a
+          <strong>heavy rule</strong>, drawn as one pass over the finished board rather than per cell, so no
+          cell can paint over its neighbour's half of a shared edge. It has to be around twice the weight of an
+          ordinary cell edge or it simply reads as one more of them — at equal weight it was invisible.</li>
+        <li><strong>A dealt clue and a claim you made are different things, so they are different colours.</strong>
+          Givens are gold, the player's own marks stay green. Gold also reads as fixed, which is honest: a given
+          is the one annotation on the board you are not allowed to change.</li>
+      </ul>
+
+      <div class="note parked">
+        <p class="note-h">What the numbers do not cover</p>
+        <p>The solver does singles and hidden singles only — no pairs, triples or X-wing — and the sum bound
+          ignores Sudoku interaction among a cell's unknown neighbours. So it is a floor for a strong player and
+          a ceiling for a weak one. Treat the givens band as ±3 and re-measure through the real engine rather
+          than a second implementation of the board rules, which is the lesson
+          <span class="m">design/opening.py</span> already taught once.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="open">
+  <div class="wrap">
+    <div class="col">
+      <p class="kicker">12 — Still open</p>
+      <h2>Decisions pending</h2>
+
+      <div class="q">
+        <span class="qnum">01</span>
+        <h3>Is half the pool the right Full Run heal?</h3>
+        <p>The knob this section used to ask for now exists, and it is set to half the pool per cleared board —
+          which gives a NORMAL run an effective budget well above its ten HP while still leaving one bad board
+          felt several boards later. It is <em>fair</em> at any setting, because zero-damage play is always
+          possible and the simulation confirms a run needs no heal at all; but fair and enjoyable are different
+          questions and only playtesting settles which fraction feels right. Both ends are one number away: a heal
+          of zero is the original Ironman, a full heal makes a run ten unrelated boards with a shared clock.</p>
+      </div>
+
+      <div class="q">
+        <span class="qnum">02</span>
+        <h3>When should the BLIND ladders actually unlock?</h3>
+        <p>They sit behind the whole main line above, which is the safe reading of "unlockable once clear" — it
+          keeps them fully off the critical path. The looser alternative is unlocking BLIND after NORMAL and
+          HUGE × BLIND after HUGE, so each shadows its combat counterpart and a deduction-first player gets it
+          much earlier. Worth deciding before the unlock table is written, though it is a small table.</p>
+      </div>
+
+      <div class="q">
+        <span class="qnum">03</span>
+        <h3>Do the search ladders need a fourth scaling axis?</h3>
+        <p>BLIND and HUGE × BLIND have no level economy, so they scale on only three axes — size, density and tier
+          count — and cannot use lock depth at all. They run out of headroom sooner than the battle ladders. If
+          they feel thin around board 7, the options are a fourth axis (a move limit, a timer, a shrinking mark
+          allowance) or simply accepting that they are shorter ladders. Lower stakes now that they are post-game
+          content.</p>
+      </div>
+
+      <div class="q">
+        <span class="qnum">04</span>
+        <h3>Should a Full Run record its boards on the ladder?</h3>
+        <p>Settled by the unlock rather than by preference: a run opens only once board 10 is cleared, so every
+          board in it has already been cleared and there is no progress a run could add. A failed run therefore
+          costs only the run, which is the right price for opt-in post-clear content. What is still worth deciding
+          is whether a board cleared <em>inside</em> a run should be allowed to set that board's best time — it
+          currently cannot, on the grounds that clearing board 6 at 2 HP carried in from board 5 is not the same
+          claim as clearing board 6 outright.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Mechanics verified against the shipped source. Creature Sweeper ladders generated from
+      <code>ladders.py</code>.</span>
+    <span class="m">freeware · fan remix</span>
+  </div>
+</footer>
+
+<script id="ladders-data" type="application/json">/*__LADDERS__*/</script>
+<script id="opening-data" type="application/json">/*__OPENING__*/</script>
+<script id="placement-data" type="application/json">/*__PLACEMENT__*/</script>
+<script>
+(function(){
+  "use strict";
+  var LAD = JSON.parse(document.getElementById('ladders-data').textContent);
+
+  /* ---------- original shipped modes ---------- */
+  var ORIG = [
+    {name:"EASY",           tint:"#b3ab1e", w:16,h:16, q:[10,8,6,4,2],                  hp:10, lv:1, exp:[7,20,50,82],                          type:"battle"},
+    {name:"NORMAL",         tint:"#8a5a12", w:30,h:16, q:[33,27,20,13,6],               hp:10, lv:1, exp:[10,50,167,271],                       type:"battle"},
+    {name:"EXTREME",        tint:"#3b28d6", w:30,h:16, q:[25,25,25,25,25],              hp:10, lv:1, exp:[10,50,175,375],                       type:"battle"},
+    {name:"BLIND",          tint:"#8a8a8a", w:30,h:16, q:[33,27,20,13,6],               hp:1,  lv:0, exp:[],                                    type:"search"},
+    {name:"HUGE",           tint:"#1d7a2e", w:50,h:25, q:[52,46,40,36,30,24,18,13,1],   hp:30, lv:1, exp:[10,90,202,400,1072,1840,2992,4656],  type:"battle"},
+    {name:"HUGE × EXTREME", tint:"#4b2fd6", w:50,h:25, q:[36,36,36,36,36,36,36,36,36],  hp:10, lv:1, exp:[3,10,150,540,1116,2268,4572,9180],   type:"battle"},
+    {name:"HUGE × BLIND",   tint:"#6e6e6e", w:50,h:25, q:[52,46,40,36,30,24,18,13,1],   hp:1,  lv:0, exp:[],                                    type:"search"}
+  ];
+
+  function cumExp(q){ var r=0; return q.map(function(n,i){ r += n*Math.pow(2,i); return r; }); }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function sw(c){ return '<span class="swatch" style="background:'+c+'"></span>'; }
+
+  /* ---------- damage matrix ---------- */
+  (function(){
+    var max = 9, rows = [];
+    rows.push('<thead><tr><th class="rowhead">LV \\ E</th>' +
+      Array.from({length:max},function(_,i){return '<th>'+(i+1)+'</th>';}).join('') + '</tr></thead>');
+    var body = [];
+    for (var L=1; L<=max; L++){
+      var tds = [];
+      for (var E=1; E<=max; E++){
+        var d = E * (Math.ceil(E/L) - 1);
+        var style='', cls='';
+        if (d === 0){ style='background:var(--accent-soft);color:var(--accent-ink)'; }
+        else {
+          var t = Math.min(1, d/40);
+          style = 'background:color-mix(in srgb, var(--danger) '+(8+t*46).toFixed(0)+'%, var(--surface));';
+          if (t > .42) style += 'color:#fff;';
+          style += 'font-weight:'+(t>.3?700:500)+';';
+        }
+        tds.push('<td class="'+cls+'" style="'+style+'">'+d+'</td>');
+      }
+      body.push('<tr><td class="rowhead">'+L+'</td>'+tds.join('')+'</tr>');
+    }
+    rows.push('<tbody>'+body.join('')+'</tbody>');
+    document.getElementById('dmg-table').innerHTML = rows.join('');
+  })();
+
+  /* ---------- original modes table ---------- */
+  (function(){
+    var h = '<thead><tr><th class="l">Mode</th><th class="l">Grid</th><th>Cells</th><th>Creatures</th>' +
+            '<th>Density</th><th>Tiers</th><th>HP</th><th>LV</th><th class="l">Distribution</th>' +
+            '<th class="l">Level gates</th><th class="l">Win</th></tr></thead>';
+    var rows = ORIG.map(function(m){
+      var cells = m.w*m.h, M = m.q.reduce(function(a,b){return a+b;},0);
+      var C = cumExp(m.q);
+      var gates = m.exp.length
+        ? m.exp.map(function(v,i){ return '<span class="'+(v===C[i]?'gate':'free')+'">'+v+'</span>'; }).join(', ')
+        : '<span class="dim">—</span>';
+      return '<tr><td class="l name">'+sw(m.tint)+esc(m.name)+'</td>' +
+        '<td class="l">'+m.w+'×'+m.h+'</td><td>'+cells+'</td><td>'+M+'</td>' +
+        '<td>'+(100*M/cells).toFixed(1)+'%</td><td>'+m.q.length+'</td>' +
+        '<td>'+m.hp+'</td><td>'+m.lv+'</td>' +
+        '<td class="l dim">'+m.q.join(', ')+'</td>' +
+        '<td class="l">'+gates+'</td>' +
+        '<td class="l dim">'+(m.type==='battle'?'kill all':'open all')+'</td></tr>';
+    }).join('');
+    document.getElementById('modes-table').innerHTML = h+'<tbody>'+rows+'</tbody>';
+  })();
+
+  /* ---------- C_k identity table ---------- */
+  (function(){
+    var h = '<thead><tr><th class="l">Mode</th><th class="l">Series</th>' +
+            '<th class="l">k=1</th><th class="l">2</th><th class="l">3</th><th class="l">4</th>' +
+            '<th class="l">5</th><th class="l">6</th><th class="l">7</th><th class="l">8</th></tr></thead>';
+    var rows = ORIG.filter(function(m){ return m.exp.length; }).map(function(m){
+      var C = cumExp(m.q), n = m.exp.length;
+      function cellsFor(arr, mark){
+        var out = '';
+        for (var i=0;i<8;i++){
+          if (i >= n){ out += '<td class="l dim">·</td>'; continue; }
+          var hit = m.exp[i] === C[i];
+          out += '<td class="l'+(hit&&mark?' gate':'')+'">'+arr[i]+'</td>';
+        }
+        return out;
+      }
+      return '<tr><td class="l name" rowspan="2">'+sw(m.tint)+esc(m.name)+'</td>' +
+             '<td class="l dim">C<sub>k</sub></td>'+cellsFor(C,true)+'</tr>' +
+             '<tr><td class="l dim">threshold</td>'+cellsFor(m.exp,true)+'</tr>';
+    }).join('');
+    document.getElementById('identity-table').innerHTML = h+'<tbody>'+rows+'</tbody>';
+  })();
+
+  /* ---------- unlock DAG ---------- */
+  (function(){
+    /* Two kinds of gate, and they are drawn differently on purpose.
+       A TYPE gate is an arrow: this ladder assumes you played that one.
+       A BOARD-COUNT gate is a position on a scale: it assumes nothing about
+       WHAT you played, only how much. Drawing the counted types as a chain
+       (which this did, back when they were one) claims a dependency between a
+       hex grid and a torus that has never existed and now is not even in the
+       data. */
+    var W=700, bw=118, bh=46;
+    var byId = {}; LAD.forEach(function(t){ byId[t.id]=t; });
+
+    var counted = LAD.filter(function(t){ return t.requires_boards > 0; });
+
+    /* Main line is no longer a single chain: HUGE and EXTREME are siblings off
+       NORMAL and meet again at HUGE x EXTREME, so it gets its own small
+       layout rather than a row. HUGE x BLIND hangs off the counted lane,
+       because one of its two parents lives there. */
+    var col = [10, 10+150, 10+300, 10+450];
+    var pos = {};
+    pos.easy         = [col[0], 30];
+    pos.normal       = [col[1], 30];
+    pos.huge         = [col[2], 8];
+    pos.extreme      = [col[2], 66];
+    pos.huge_extreme = [col[3], 38];
+    pos.arcane       = [col[1]+60, 132];
+    pos.oracle       = [col[2]+60, 132];
+
+    var laneY = 236, rowH = 58;
+    var perRow = 4;
+    counted.forEach(function(t,i){
+      pos[t.id] = [10 + (i % perRow) * ((W-20-bw)/(perRow-1)),
+                   laneY + Math.floor(i / perRow) * rowH];
+    });
+    pos.huge_blind = [col[3], laneY + Math.ceil(counted.length/perRow) * rowH + 14];
+    var H = pos.huge_blind[1] + bh + 16;
+
+    var arrow = function(from, to){
+      var a=pos[from], b=pos[to];
+      var d;
+      if (Math.abs(a[1]-b[1]) < 4) {
+        d = 'M'+(a[0]+bw)+' '+(a[1]+bh/2)+' L'+(b[0]-5)+' '+(b[1]+bh/2);
+      } else {
+        var fx=a[0]+bw, fy=a[1]+bh/2, tx=b[0]-5, ty=b[1]+bh/2, mx=(fx+tx)/2;
+        d = 'M'+fx+' '+fy+' C'+mx+' '+fy+' '+mx+' '+ty+' '+tx+' '+ty;
+      }
+      return '<path d="'+d+'" fill="none" stroke="var(--muted)" stroke-width="1.5" ' +
+             'marker-end="url(#ah)" opacity=".7"/>';
+    };
+
+    var s = '<svg viewBox="0 0 '+W+' '+H+'" role="img" ' +
+            'aria-label="Game type unlock graph: a branching main line gated on clearing ' +
+            'types, and eight variant ladders gated on boards cleared anywhere">';
+    s += '<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">' +
+         '<path d="M0 0 L8 4 L0 8 z" fill="var(--muted)"/></marker></defs>';
+
+    /* type-gated edges, straight from the data */
+    LAD.forEach(function(t){
+      (t.requires || []).forEach(function(req){
+        if (pos[req] && pos[t.id]) s += arrow(req, t.id);
+      });
+    });
+
+    /* the counted lane: a rule with the thresholds hung off it, not a chain */
+    var laneTop = laneY - 20;
+    s += '<line x1="10" y1="'+laneTop+'" x2="'+(W-10)+'" y2="'+laneTop+'" ' +
+         'stroke="var(--rule)" stroke-width="1" stroke-dasharray="3 3"/>';
+    s += '<text x="10" y="'+(laneTop-7)+'" fill="var(--muted)" ' +
+         'font-family="JetBrains Mono, monospace" font-size="9.5" letter-spacing="1.4">' +
+         'BOARDS CLEARED ANYWHERE &#8212; NO TYPE REQUIRED</text>';
+
+    var label = function(y, a){
+      s += '<text x="10" y="'+y+'" fill="var(--muted)" font-family="JetBrains Mono, monospace" ' +
+           'font-size="9.5" letter-spacing="1.4">'+a+'</text>';
+    };
+    label(114, 'MAGIC &#8212; BRANCH OFF NORMAL');
+
+    Object.keys(pos).forEach(function(id){
+      var p=pos[id], t=byId[id];
+      if (!t) return;
+      var sub;
+      if (t.requires_boards) sub = t.requires_boards + ' boards cleared';
+      else if (t.requires.length) sub = 'clear ' + t.requires.map(function(r){
+        return byId[r].name; }).join(' + ');
+      else sub = 'unlocked at start';
+      s += '<g><rect x="'+p[0]+'" y="'+p[1]+'" width="'+bw+'" height="'+bh+'" rx="4" ' +
+           'fill="var(--surface)" stroke="var(--rule)" stroke-width="1"' +
+           (t.postgame ? ' stroke-dasharray="4 3"' : '') + '/>' +
+           '<rect x="'+p[0]+'" y="'+p[1]+'" width="4" height="'+bh+'" rx="2" fill="'+t.tint+'"/>' +
+           '<text x="'+(p[0]+14)+'" y="'+(p[1]+20)+'" fill="var(--ink)" ' +
+           'font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700">'+esc(t.name)+'</text>' +
+           '<text x="'+(p[0]+14)+'" y="'+(p[1]+35)+'" fill="var(--muted)" ' +
+           'font-family="JetBrains Mono, monospace" font-size="9">'+esc(sub)+'</text></g>';
+    });
+    s += '</svg>';
+    document.getElementById('dag').innerHTML = s;
+  })();
+
+  /* ---------- ladder explorer ---------- */
+  var chips = document.getElementById('chips');
+  var current = 'normal';
+  try { var saved = localStorage.getItem('cs-ladder'); if (saved) current = saved; } catch(e){}
+  if (!LAD.some(function(t){ return t.id===current; })) current = 'normal';
+
+  var postStarted = false;
+  LAD.forEach(function(t){
+    if (t.postgame && !postStarted){
+      postStarted = true;
+      var sep = document.createElement('span');
+      sep.className = 'chip-sep';
+      sep.textContent = 'post-game';
+      chips.appendChild(sep);
+    }
+    var b = document.createElement('button');
+    b.type='button'; b.className='chip' + (t.postgame ? ' post' : '');
+    b.setAttribute('aria-pressed', String(t.id===current));
+    b.dataset.id = t.id;
+    b.innerHTML = sw(t.tint)+esc(t.name);
+    b.addEventListener('click', function(){ select(t.id); });
+    chips.appendChild(b);
+  });
+
+  function select(id){
+    current = id;
+    try { localStorage.setItem('cs-ladder', id); } catch(e){}
+    Array.prototype.forEach.call(chips.children, function(c){
+      c.setAttribute('aria-pressed', String(c.dataset.id===id));
+    });
+    render();
+  }
+
+  function render(){
+    var t = LAD.filter(function(x){ return x.id===current; })[0];
+    var first = t.boards[0], last = t.boards[9];
+
+    document.getElementById('l-axis').textContent =
+      (t.postgame ? 'Post-game · scales on — ' : 'Scales on — ') + t.axis;
+    document.getElementById('l-name').textContent = t.name;
+    document.getElementById('l-blurb').textContent = t.blurb;
+
+    function delta(label, a, b){
+      return '<div class="delta"><b>'+label+'</b><i>'+a+'<span class="arrow">→</span>'+b+'</i></div>';
+    }
+    function stat(label, v){
+      return '<div class="delta"><b>'+label+'</b><i>'+v+'</i></div>';
+    }
+    document.getElementById('l-deltas').innerHTML =
+      delta('Grid', first.w+'×'+first.h, last.w+'×'+last.h) +
+      delta('Creatures', first.monsters, last.monsters) +
+      delta('Density', first.density+'%', last.density+'%') +
+      delta('Tiers', first.tiers, last.tiers) +
+      delta('HP per board', first.hp, last.hp) +
+      (t.search ? '' : delta('Lock depth', first.lock, last.lock) +
+                       stat('Full run pool', t.run_hp + ' for all 10, +' +
+                            Math.floor(t.run_hp / 2) + ' a board'));
+
+    /* board footprints */
+    var maxW = Math.max.apply(null, t.boards.map(function(b){return b.w;}));
+    var maxH = Math.max.apply(null, t.boards.map(function(b){return b.h;}));
+    var u = 1.55, gap = 10, pad = 20;
+    var svgW = pad*2 + t.boards.length*(maxW*u) + (t.boards.length-1)*gap;
+    var svgH = pad + maxH*u + 24;
+    var s = '<svg viewBox="0 0 '+svgW.toFixed(0)+' '+svgH.toFixed(0)+'" role="img" ' +
+            'aria-label="Relative board footprints, board 1 through 10">';
+    t.boards.forEach(function(b,i){
+      var x = pad + i*(maxW*u + gap);
+      var w = b.w*u, h = b.h*u;
+      var y = pad + (maxH*u - h);
+      var op = (0.30 + 0.07*i).toFixed(2);
+      s += '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'" ' +
+           'rx="1.5" fill="'+t.tint+'" fill-opacity="'+op+'" stroke="'+t.tint+'" stroke-width="1"/>';
+      s += '<text x="'+(x+w/2).toFixed(1)+'" y="'+(pad+maxH*u+15).toFixed(1)+'" text-anchor="middle" ' +
+           'fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="9.5">'+b.n+'</text>';
+    });
+    s += '</svg>';
+    document.getElementById('footprints').innerHTML = s;
+    document.getElementById('fp-cap').textContent =
+      'Board footprints at true relative scale — ' + first.cells + ' to ' + last.cells + ' cells';
+
+    /* main table */
+    var T = last.tiers;
+    var tierHeads = '';
+    for (var i=1;i<=T;i++) tierHeads += '<th>t'+i+'</th>';
+    var h = '<thead><tr><th>#</th><th class="l">Grid</th><th>Cells</th><th>Creat.</th><th>Dens.</th>' +
+            '<th>HP</th>' + (t.search ? '' : '<th>Lock</th>') + tierHeads +
+            (t.search ? '' : '<th class="l">Level gates (EX)</th>') + '</tr></thead>';
+
+    var rows = t.boards.map(function(b){
+      var C = cumExp(b.quantity);
+      var tierCells = '';
+      for (var i=0;i<T;i++){
+        tierCells += '<td class="' + (i>=b.tiers ? 'dim' : '') + '">' +
+                     (i<b.tiers ? b.quantity[i] : '·') + '</td>';
+      }
+      var gates = '';
+      if (!t.search){
+        gates = '<td class="l">' + b.exp.map(function(v,i){
+          return '<span class="'+(v===C[i]?'gate':'free')+'">'+v+'</span>';
+        }).join(', ') + '</td>';
+      }
+      var isTen = b.n === 10;
+      return '<tr'+(isTen?' style="background:var(--surface-2)"':'')+'>' +
+        '<td class="name">'+b.n+(isTen?'':'')+'</td>' +
+        '<td class="l">'+b.w+'×'+b.h+'</td>' +
+        '<td class="dim">'+b.cells+'</td>' +
+        '<td>'+b.monsters+'</td>' +
+        '<td>'+b.density.toFixed(1)+'%</td>' +
+        '<td>'+b.hp+'</td>' +
+        (t.search ? '' : '<td>'+b.lock+(b.lock===b.tiers-1?'<span class="gate"> ●</span>':'')+'</td>') +
+        tierCells + gates + '</tr>';
+    }).join('');
+
+    document.getElementById('ladder-table').innerHTML = h+'<tbody>'+rows+'</tbody>';
+  }
+
+  render();
+
+  /* ---------- free-mode knobs ---------- */
+  var KNOBS = [
+    ['Number semantics','sum of neighbour tiers','sum · count · max · sum+count · count above your level'],
+    ['Creature HP','= tier','decouple HP from attack from tier'],
+    ['Creature attack','= tier','same — three numbers where the original has one'],
+    ['Player attack','= level','flat · curve · weapon-style'],
+    ['EXP per kill','2^(E−1)','linear · other bases · explicit table'],
+    ['Level curve','fixed exp_array','auto-derive from Cₖ + lock depth'],
+    ['Initiative','player always first','enemy-first · tier-dependent · speed stat'],
+    ['Healing','none, ever','between boards (default) · half the pool in a Full Run · on level-up · potions · regen'],
+    ['Level carry','n/a — single board','reset per board (required by the Cₖ tuning, and what a Full Run does) · carry · partial'],
+    ['First-click safety','one cell','auto-open largest region (default) · guaranteed zero on a picked cell · 3×3 · one cell · none'],
+    ['Solvability','not checked','guaranteed-solvable generation'],
+    ['Cascade trigger','number = 0','number ≤ your level · off'],
+    ['Win condition','kill-all or open-all','either · both · survive N'],
+    ['Mark click-guard','always on','toggle'],
+    ['Mark counters','search modes only','toggle per mode'],
+    ['Tier count','5 or 9','1 to 9+'],
+    ['Density','11.7% – 26%','free'],
+    ['Chording','absent','Sweep — strict (provable) or mark-assisted (trusts your claims)'],
+    ['Magic','none','per-type spell loadouts on a mana economy'],
+    ['Distribution shape','descending or flat','+ ascending · bimodal · single-tier · descending+apex'],
+    ['Placement','uniform random','scatter · cluster · pair · lair · spread · band'],
+    ['Topology','flat rectangle','wrap · cylinder · diamond · cross · donut · cave']
+  ];
+  document.getElementById('knobs').innerHTML = KNOBS.map(function(k){
+    return '<div class="knob"><b>'+esc(k[0])+'</b><span class="was">'+esc(k[1])+
+           '</span><span class="now">'+esc(k[2])+'</span></div>';
+  }).join('');
+
+  /* ---------- opening: chart + table ---------- */
+  var OPEN = JSON.parse(document.getElementById('opening-data').textContent);
+  var OPEN_BY = {};
+  OPEN.forEach(function(r){ (OPEN_BY[r.type] = OPEN_BY[r.type] || []).push(r); });
+
+  (function(){
+    // Small multiples rather than seven lines on one pair of axes. Seven
+    // categorical hues could not be made CVD-separable -- the indigo/violet
+    // pair measured only dE 8.6 even with normal vision -- and one series per
+    // panel needs no categorical palette at all. It also simply reads better.
+    var W = 210, H = 132, ml = 26, mr = 8, mt = 8, mb = 20;
+    var x0 = ml, x1 = W - mr, y0 = mt, y1 = H - mb;
+    var dMin = 10, dMax = 35, vMax = 110;
+    var sx = function(d){ return x0 + (d - dMin) / (dMax - dMin) * (x1 - x0); };
+    var sy = function(v){ return y1 - v / vMax * (y1 - y0); };
+
+    var html = LAD.map(function(t){
+      var pts = OPEN_BY[t.id];
+      if (!pts) return '';
+      var first = pts[0], last = pts[pts.length - 1];
+
+      var g = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' +
+        esc(t.name) + ': median opening falls from ' + first.median + ' cells at ' +
+        first.density + ' percent density to ' + last.median + ' at ' + last.density + '">';
+
+      for (var v = 0; v <= 100; v += 50) {
+        g += '<line x1="' + x0 + '" y1="' + sy(v) + '" x2="' + x1 + '" y2="' + sy(v) +
+             '" stroke="var(--rule-soft)" stroke-width="1"/>' +
+             '<text x="' + (x0 - 5) + '" y="' + (sy(v) + 3) + '" text-anchor="end" ' +
+             'fill="var(--muted)" font-size="7.5">' + v + '</text>';
+      }
+      g += '<line x1="' + x0 + '" y1="' + y1 + '" x2="' + x1 + '" y2="' + y1 +
+           '" stroke="var(--rule)" stroke-width="1"/>';
+      for (var d = 10; d <= 35; d += 5) {
+        g += '<text x="' + sx(d) + '" y="' + (y1 + 11) + '" text-anchor="middle" ' +
+             'fill="var(--muted)" font-size="7.5">' + d + '</text>';
+      }
+
+      var path = pts.map(function(r, i){
+        return (i ? 'L' : 'M') + sx(r.density).toFixed(1) + ' ' + sy(r.median).toFixed(1);
+      }).join(' ');
+      g += '<path d="' + path + '" fill="none" stroke="' + t.tint +
+           '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+      pts.forEach(function(r){
+        g += '<circle cx="' + sx(r.density).toFixed(1) + '" cy="' + sy(r.median).toFixed(1) +
+             '" r="2" fill="' + t.tint + '" stroke="var(--surface)" stroke-width="1"/>';
+      });
+      g += '</svg>';
+
+      return '<div class="mult"><h4>' + sw(t.tint) + esc(t.name) + '</h4>' +
+        '<p>' + first.median + ' → ' + last.median + ' cells · ' +
+        first.density + '–' + last.density + '% dense</p>' + g + '</div>';
+    }).join('');
+
+    document.getElementById('open-charts').innerHTML = html;
+  })();
+
+  (function(){
+    var h = '<thead><tr><th class="l">Type</th><th>Board</th><th>Density</th><th>Cells</th>' +
+            '<th>Median reveal</th><th>% of board</th><th>5th pct</th><th>Worst seen</th></tr></thead>';
+    var byId = {}; LAD.forEach(function(t){ byId[t.id]=t; });
+    var rows = OPEN.map(function(r){
+      var t = byId[r.type], b = t.boards[r.board-1];
+      return '<tr><td class="l name">'+sw(t.tint)+esc(t.name)+'</td>' +
+        '<td>'+r.board+'</td><td>'+r.density.toFixed(1)+'%</td><td class="dim">'+b.cells+'</td>' +
+        '<td class="name">'+r.median+'</td><td>'+r.pct.toFixed(1)+'%</td>' +
+        '<td class="dim">'+r.p05+'</td><td class="dim">'+r.worst+'</td></tr>';
+    }).join('');
+    document.getElementById('opening-table').innerHTML = h+'<tbody>'+rows+'</tbody>';
+  })();
+
+  /* ---------- board shape lab ---------- */
+  (function(){
+    var DENSITY = 0.24, TIERS = 5;
+    // Roughly equal areas, so the comparison is about shape and not size.
+    var ASPECTS = { wide: [30, 16], square: [22, 22] };
+    var aspect = 'wide';
+    var LW = 30, LH = 16;
+
+    function mulberry32(a){
+      return function(){
+        a = (a + 0x6d2b79f5) >>> 0;
+        var t = a;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    /**
+     * Masks are parameterised in CELLS, never in fractions of the board.
+     * A ring "20% of the width" thick is a different puzzle on its long side
+     * than its short one; a ring three cells thick is the same corridor
+     * whatever the aspect. The thickness IS the gameplay, so it has to be the
+     * thing held constant.
+     */
+    var SHAPES = [
+      { id:'rect', name:'Rectangle', param:null,
+        note:'The baseline every other number is quoted against.',
+        mask:function(x,y){ return true; } },
+      { id:'donut', name:'Donut', param:'Ring thickness', min:2, max:8, def:4, unit:' cells',
+        note:'A second interior frontier: you work from both rims toward the middle. Ring thickness is the whole design — thin is a corridor loop, thick is a rectangle with a bite out of it.',
+        mask:function(x,y,t){ return x < t || y < t || x >= LW-t || y >= LH-t; } },
+      { id:'cross', name:'Cross', param:'Arm width', min:2, max:12, def:6, unit:' cells',
+        note:'Narrow arms are almost entirely boundary, so deduction inside one is nearly mechanical — and the arms barely interact, so it reads as four small puzzles round a hub rather than one board.',
+        mask:function(x,y,a){
+          return Math.abs(x-(LW-1)/2) <= a/2 || Math.abs(y-(LH-1)/2) <= a/2;
+        } },
+      { id:'diamond', name:'Diamond', param:null,
+        note:'Staircase edges look distinctive and play almost like a rectangle, for half the cells.',
+        mask:function(x,y){
+          return Math.abs(x-(LW-1)/2)/(LW/2) + Math.abs(y-(LH-1)/2)/(LH/2) <= 1;
+        } },
+      { id:'cave', name:'Ragged cave', param:'Roughness', min:1, max:6, def:3, connect:true,
+        note:'Highest boundary share of the lot, which makes it the most legible board to deduce and the reason it runs the densest of the shaped ladders. The shipped cave is not carved at all: it is grown, two cells wide at a time, until a fixed budget of cells runs out — which is what lets it promise both an exact cell count and a minimum passage width of two, neither of which a trimmed noise field can offer. This sketch stands in for the silhouette only, and is not the real generator.',
+        mask:function(x,y,p,phase){
+          var k = 0.3 + p*0.12;
+          return Math.sin(x*k+phase) + Math.sin(y*k*1.6+phase*1.7) +
+                 Math.sin((x+y)*k*0.6) + Math.sin((x-y)*k*0.75+phase) > -1.1;
+        } },
+      { id:'dungeon', name:'Dungeon', param:'Room size', min:3, max:8, def:5, unit:' cells', connect:true,
+        note:'Rooms joined by hallways one cell wide. The only shape whose difficulty does not come from its boundary share: a wall stops information dead, so a room is a separate puzzle needing its own foothold, and what decides how often you are cornered is how many rooms the map is cut into. It also has rules no other shape has — the hallways are always empty and so is every doorway, so a corridor is somewhere you can always walk and stepping off one into a room is the moment you are exposed. That free scaffolding is worth so much that the nominal density runs 13–26%, well above the other shaped ladders; creatures are packed into room floor alone, so the rooms play at 14–32%. This sketch stands in for the silhouette only.',
+        mask:function(x,y,p,phase){
+          var g = p + 3;
+          var rx = Math.floor((x + phase*3) / g), ry = Math.floor((y + phase*2) / g);
+          var ix = (x + Math.round(phase*3)) % g, iy = (y + Math.round(phase*2)) % g;
+          var room = ix < g-2 && iy < g-2 && ((rx*7 + ry*13 + Math.round(phase*5)) % 5) !== 0;
+          var hall = (iy === Math.floor((g-2)/2) || iy === Math.floor((g-2)/2)+1)
+                  || (ix === Math.floor((g-2)/2) || ix === Math.floor((g-2)/2)+1);
+          return room || (hall && ((rx*5 + ry*3) % 3) !== 0);
+        } },
+      { id:'islands', name:'Archipelago', param:'Islands', min:2, max:5, def:3,
+        note:'Not a difficulty tweak — a different structure. Each island needs its own opening, and they become parallel puzzles sharing one HP and level pool, so which one you take first becomes a real decision.',
+        mask:function(x,y,p){
+          var gapEvery = LW / p;
+          return !((x % gapEvery) < 1.6) && y > 0.5 && y < LH-0.5;
+        } },
+    ];
+
+    var current = SHAPES[1];
+    var paramValue = current.def;
+    var seed = 20260920;
+
+    var chips = document.getElementById('shape-chips');
+    var controls = document.querySelector('.shape-controls');
+    var slider = document.getElementById('shape-param');
+    var paramLabel = document.getElementById('shape-param-label');
+    var paramValueEl = document.getElementById('shape-param-value');
+
+    SHAPES.forEach(function(sh){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.textContent = sh.name;
+      b.setAttribute('aria-pressed', String(sh.id === current.id));
+      b.addEventListener('click', function(){
+        current = sh;
+        paramValue = sh.def || 0;
+        Array.prototype.forEach.call(chips.children, function(c){
+          c.setAttribute('aria-pressed', String(c.textContent === sh.name));
+        });
+        render();
+      });
+      chips.appendChild(b);
+    });
+
+    Array.prototype.forEach.call(controls.querySelectorAll('.aspect'), function(btn){
+      btn.addEventListener('click', function(){
+        aspect = btn.dataset.aspect;
+        render();
+      });
+    });
+
+    slider.addEventListener('input', function(){
+      paramValue = Number(slider.value);
+      render();
+    });
+    document.getElementById('shape-reroll').addEventListener('click', function(){
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      render();
+    });
+
+    function neighboursOf(mask, x, y){
+      var out = [];
+      for (var dy = -1; dy <= 1; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue;
+          var nx = x+dx, ny = y+dy;
+          if (nx < 0 || ny < 0 || nx >= LW || ny >= LH) continue;
+          if (!mask[ny][nx]) continue;
+          out.push([nx, ny]);
+        }
+      }
+      return out;
+    }
+
+    /** Connected components of the mask, largest first. */
+    function components(mask){
+      var seen = {}, comps = [];
+      for (var y = 0; y < LH; y++) for (var x = 0; x < LW; x++) {
+        if (!mask[y][x] || seen[x+','+y]) continue;
+        var comp = [], stack = [[x,y]];
+        seen[x+','+y] = 1;
+        while (stack.length) {
+          var c = stack.pop();
+          comp.push(c);
+          neighboursOf(mask, c[0], c[1]).forEach(function(n){
+            if (!seen[n[0]+','+n[1]]) { seen[n[0]+','+n[1]] = 1; stack.push(n); }
+          });
+        }
+        comps.push(comp);
+      }
+      return comps.sort(function(a,b){ return b.length - a.length; });
+    }
+
+    function buildMask(){
+      var phase = ((seed % 1000) / 1000) * Math.PI * 2;
+      var mask = [];
+      for (var y = 0; y < LH; y++) {
+        var row = [];
+        for (var x = 0; x < LW; x++) row.push(!!current.mask(x, y, paramValue, phase));
+        mask.push(row);
+      }
+      var comps = components(mask);
+      var dropped = 0;
+      // A cave that falls apart is a bug, not a feature: the auto-opening only
+      // reveals one region, so any island but the first would be unreachable.
+      if (current.connect && comps.length > 1) {
+        var keep = {};
+        comps[0].forEach(function(c){ keep[c[0]+','+c[1]] = 1; });
+        for (var y2 = 0; y2 < LH; y2++) for (var x2 = 0; x2 < LW; x2++) {
+          if (mask[y2][x2] && !keep[x2+','+y2]) { mask[y2][x2] = false; dropped++; }
+        }
+        comps = [comps[0]];
+      }
+      return { mask: mask, regions: comps.length, dropped: dropped };
+    }
+
+    function build(){
+      var m = buildMask();
+      var mask = m.mask;
+      var rng = mulberry32(seed);
+
+      var inside = [];
+      for (var y = 0; y < LH; y++) for (var x = 0; x < LW; x++) if (mask[y][x]) inside.push([x,y]);
+
+      var total = Math.round(inside.length * DENSITY);
+      var weights = [];
+      for (var t = 0; t < TIERS; t++) weights.push(TIERS - t);
+      var wsum = weights.reduce(function(a,b){ return a+b; }, 0);
+      var quota = weights.map(function(w){ return Math.max(1, Math.floor(total*w/wsum)); });
+
+      var pool = inside.slice();
+      for (var i = pool.length-1; i > 0; i--) {
+        var j = Math.floor(rng()*(i+1)); var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+      }
+      var tier = {}, at = 0;
+      quota.forEach(function(n, ti){
+        for (var k = 0; k < n && at < pool.length; k++, at++) tier[pool[at][0]+','+pool[at][1]] = ti+1;
+      });
+
+      var num = {}, nbr = {};
+      inside.forEach(function(c){
+        var ns = neighboursOf(mask, c[0], c[1]);
+        nbr[c[0]+','+c[1]] = ns.length;
+        num[c[0]+','+c[1]] = ns.reduce(function(a,n){ return a + (tier[n[0]+','+n[1]] || 0); }, 0);
+      });
+
+      var seen = {}, best = null;
+      inside.forEach(function(c){
+        var key = c[0]+','+c[1];
+        if (seen[key] || tier[key] || num[key] !== 0) return;
+        var region = {}, stack = [c];
+        seen[key] = 1;
+        while (stack.length) {
+          var cur = stack.pop();
+          region[cur[0]+','+cur[1]] = 1;
+          neighboursOf(mask, cur[0], cur[1]).forEach(function(n){
+            var nk = n[0]+','+n[1];
+            region[nk] = 1;
+            if (!tier[nk] && num[nk] === 0 && !seen[nk]) { seen[nk] = 1; stack.push(n); }
+          });
+        }
+        var size = Object.keys(region).length;
+        if (!best || size > best.size) best = { size: size, cells: region };
+      });
+
+      return { mask: mask, inside: inside, tier: tier, num: num, nbr: nbr,
+               open: best ? best.cells : {}, opening: best ? best.size : 0,
+               regions: m.regions, dropped: m.dropped };
+    }
+
+    function stat(label, value, cls){
+      return '<div><b>'+label+'</b><span class="'+(cls||'')+'">'+value+'</span></div>';
+    }
+
+    function render(){
+      var sh = current;
+      LW = ASPECTS[aspect][0];
+      LH = ASPECTS[aspect][1];
+
+      Array.prototype.forEach.call(controls.querySelectorAll('.aspect'), function(btn){
+        btn.setAttribute('aria-pressed', String(btn.dataset.aspect === aspect));
+      });
+
+      controls.classList.toggle('no-param', !sh.param);
+      if (sh.param) {
+        paramLabel.textContent = sh.param;
+        slider.min = sh.min; slider.max = sh.max; slider.value = paramValue;
+        paramValueEl.textContent = paramValue + (sh.unit || '');
+      }
+
+      var b = build();
+      var n = b.inside.length;
+      var meanN = b.inside.reduce(function(a,c){ return a + b.nbr[c[0]+','+c[1]]; }, 0) / n;
+      var bnd = b.inside.filter(function(c){ return b.nbr[c[0]+','+c[1]] < 8; }).length;
+      var blank = b.inside.reduce(function(a,c){
+        return a + Math.pow(1-DENSITY, b.nbr[c[0]+','+c[1]]);
+      }, 0) / n;
+
+      // More than one region means every region but one is unreachable, unless
+      // the shape means it (Archipelago) and the game gives each its own opening.
+      var regionCls = b.regions > 1 ? (sh.id === 'islands' ? 'free' : 'gate') : 'dim';
+
+      document.getElementById('shape-stats').innerHTML =
+        stat('Cells', n + ' of ' + (LW*LH)) +
+        stat('Mean neighbours', meanN.toFixed(2)) +
+        stat('Boundary', Math.round(100*bnd/n) + '%') +
+        stat('Blank rate', (100*blank).toFixed(1) + '%') +
+        stat('Opening', b.opening + ' cells') +
+        stat('Regions', b.regions + (b.dropped ? ' (' + b.dropped + ' trimmed)' : ''), regionCls);
+
+      var CELL = aspect === 'square' ? 18 : 18, PAD = 4;
+      var svg = '<svg viewBox="0 0 ' + (LW*CELL + PAD*2) + ' ' + (LH*CELL + PAD*2) +
+        '" role="img" aria-label="' + esc(sh.name) + ' board layout, ' + n + ' cells">';
+      b.inside.forEach(function(c){
+        var key = c[0]+','+c[1];
+        var x = PAD + c[0]*CELL, y = PAD + c[1]*CELL;
+        var isOpen = !!b.open[key];
+        // Opened ground gets an outline so it still reads as a CELL. Without it,
+        // revealed floor and the hole outside the mask were both just dark.
+        svg += '<rect x="'+x+'" y="'+y+'" width="'+(CELL-1)+'" height="'+(CELL-1)+
+          '" rx="1.5" fill="' + (isOpen ? '#241a0b' : '#8a5a12') + '"' +
+          (isOpen ? ' stroke="#4a3a1e" stroke-width="1"' : '') + '/>';
+        if (isOpen) {
+          var t = b.tier[key];
+          if (t) {
+            svg += '<circle cx="'+(x+(CELL-1)/2)+'" cy="'+(y+(CELL-1)/2)+'" r="4" fill="' +
+              TIER_COLORS[(t-1) % TIER_COLORS.length] + '"/>';
+          } else if (b.num[key] > 0) {
+            svg += '<text x="'+(x+(CELL-1)/2)+'" y="'+(y+(CELL-1)/2+3.5)+'" text-anchor="middle" ' +
+              'fill="#f0dcb8" font-family="JetBrains Mono, monospace" font-size="10" ' +
+              'font-weight="700">'+b.num[key]+'</text>';
+          }
+        }
+      });
+      svg += '</svg>';
+      document.getElementById('shape-board').innerHTML = svg;
+      document.querySelector('.hint-line').textContent = sh.note;
+    }
+
+    render();
+  })();
+
+  /* ---------- temp asset sheet ---------- */
+  var IDENT = {
+    easy:        {floor:'#24220c', ink:'#f4efc4', hot:'#e8b23a', pip:'circle',
+                  face:'Rounded geometric', wave:'triangle', oct:'o5'},
+    normal:      {floor:'#1f1608', ink:'#f0dcb8', hot:'#e0742c', pip:'square',
+                  face:'Bitmap / pixel', wave:'square', oct:'o5'},
+    extreme:     {floor:'#0e0a2e', ink:'#d4cdf7', hot:'#ff5da8', pip:'diamond',
+                  face:'Condensed grotesque', wave:'pulse 25%', oct:'o6'},
+    huge:        {floor:'#08210d', ink:'#c9ecd0', hot:'#e8d24a', pip:'hex',
+                  face:'Wide slab', wave:'square', oct:'o4'},
+    huge_extreme:{floor:'#1a0a2e', ink:'#e0ccf7', hot:'#ff4d6d', pip:'cross',
+                  face:'Heavy condensed', wave:'saw', oct:'o6'},
+    arcane:      {floor:'#06211f', ink:'#bfe9e4', hot:'#4fe0cf', pip:'hex',
+                  face:'Humanist sans', wave:'triangle', oct:'o6'},
+    oracle:      {floor:'#140b26', ink:'#dcd0f5', hot:'#c08bff', pip:'diamond',
+                  face:'Angular display', wave:'pulse 12%', oct:'o5'},
+    checker:     {floor:'#12161f', ink:'#e2e8f4', hot:'#ffd166', pip:'square',
+                  face:'Humanist sans', wave:'square', oct:'o5'},
+    hive:        {floor:'#260a13', ink:'#f2c9d3', hot:'#ff7a9c', pip:'hex',
+                  face:'Geometric wide', wave:'triangle', oct:'o5'},
+    wraparound:  {floor:'#061622', ink:'#c6e4f5', hot:'#4fb8f0', pip:'circle',
+                  face:'Rounded mono', wave:'square', oct:'o4'},
+    donut:       {floor:'#251505', ink:'#f7dcb6', hot:'#ffab4f', pip:'ring',
+                  face:'Rounded geometric', wave:'triangle', oct:'o5'},
+    cross:       {floor:'#0c2108', ink:'#d2eec7', hot:'#8ce06a', pip:'square',
+                  face:'Condensed mono', wave:'pulse 25%', oct:'o5'},
+    wrapped_cross:{floor:'#08211c', ink:'#c9eee4', hot:'#4fe0b8', pip:'cross',
+                  face:'Condensed mono', wave:'square', oct:'o5'},
+    diamond:     {floor:'#210a26', ink:'#f0cdf7', hot:'#e072ff', pip:'diamond',
+                  face:'Angular display', wave:'saw', oct:'o6'},
+    cave:        {floor:'#1a1410', ink:'#ecdfcd', hot:'#ffb04f', pip:'circle',
+                  face:'Rounded slab', wave:'noise-warm', oct:'o4'},
+    dungeon:     {floor:'#161020', ink:'#e2d6f0', hot:'#ffb86b', pip:'cross',
+                  face:'Blackletter-lite', wave:'pulse 12%', oct:'o4'},
+    blind:       {floor:'#1a1a1a', ink:'#e8e8e8', hot:'#9fd8ff', pip:'ring',
+                  face:'Mono', wave:'noise-tinted', oct:'o5'},
+    huge_blind:  {floor:'#14181a', ink:'#dde3e6', hot:'#7fb4d8', pip:'ring-diamond',
+                  face:'Mono wide', wave:'noise', oct:'o4'}
+  };
+
+  // die-face pip layouts on a row-major 3x3 grid
+  var FACES = {
+    1:[4], 2:[0,8], 3:[0,4,8], 4:[0,2,6,8], 5:[0,2,4,6,8],
+    6:[0,2,3,5,6,8], 7:[0,2,3,4,5,6,8], 8:[0,1,2,3,5,6,7,8], 9:[0,1,2,3,4,5,6,7,8]
+  };
+
+  function hex2rgb(h){ return [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)]; }
+  function mix(a, b, t){
+    var A=hex2rgb(a), B=hex2rgb(b);
+    return '#' + [0,1,2].map(function(i){
+      return Math.round(A[i] + (B[i]-A[i])*t).toString(16).padStart(2,'0');
+    }).join('');
+  }
+
+  // Global tier palette — five hues, tiers 6-9 repeat them with a gold halo.
+  var TIER_COLORS = ['#54c8ff', '#5fd97a', '#ffd447', '#ff8f3a', '#ff5fc4'];
+  var TIER_GOLD = '#ffcc33';
+
+  // Geometry for one pip, without paint attributes.
+  function pipGeom(shape, cx, cy, r){
+    switch(shape){
+      case 'square':       return ['rect', 'x="'+(cx-r)+'" y="'+(cy-r)+'" width="'+(2*r)+'" height="'+(2*r)+'"'];
+      case 'diamond':
+      case 'ring-diamond': return ['path', 'd="M'+cx+' '+(cy-r)+'L'+(cx+r)+' '+cy+'L'+cx+' '+(cy+r)+'L'+(cx-r)+' '+cy+'Z"'];
+      case 'hex':          return ['path', 'd="M'+(cx-r)+' '+(cy-r*.6)+'L'+cx+' '+(cy-r)+'L'+(cx+r)+' '+(cy-r*.6)+'L'+(cx+r)+' '+(cy+r*.6)+'L'+cx+' '+(cy+r)+'L'+(cx-r)+' '+(cy+r*.6)+'Z"'];
+      case 'cross':        return ['path', 'd="M'+(cx-r)+' '+(cy-.7)+'h'+(r-.7)+'v'+(-(r-.7))+'h1.4v'+(r-.7)+'h'+(r-.7)+'v1.4h'+(-(r-.7))+'v'+(r-.7)+'h-1.4v'+(-(r-.7))+'h'+(-(r-.7))+'Z"'];
+      default:             return ['circle', 'cx="'+cx+'" cy="'+cy+'" r="'+r+'"'];
+    }
+  }
+
+  function pip(shape, cx, cy, color, radius){
+    var r = radius == null ? 1.9 : radius;
+    var hollow = shape === 'ring' || shape === 'ring-diamond';
+    var g = pipGeom(shape, cx, cy, hollow ? r - 0.5 : r);
+    var paint = hollow
+      ? 'fill="none" stroke="'+color+'" stroke-width="1.1"'
+      : 'fill="'+color+'"';
+    return '<'+g[0]+' '+g[1]+' '+paint+'/>';
+  }
+
+  /** Gold halo behind a gilded pip: same shape, stroked, slightly larger. */
+  /* A ladder can exist before its identity does — SUDOKU arrived that way.
+     Reading a field off the missing entry threw and took every table below it
+     with it, so the page lost its asset sheet and voice table over a gap in a
+     palette. The gap is still a gap, and the voice table says so; it just no
+     longer stops the page. */
+  var IDENT_NONE = {floor:'#181818', ink:'#d8d8d8', hot:'#8a8a8a', pip:'square',
+                    face:'unassigned', wave:'unassigned', oct:'—'};
+  function ident(id){ return IDENT[id] || IDENT_NONE; }
+
+  function pipHalo(shape, cx, cy, radius){
+    var g = pipGeom(shape, cx, cy, radius);
+    return '<'+g[0]+' '+g[1]+' fill="none" stroke="'+TIER_GOLD+
+           '" stroke-width="1.15" stroke-linejoin="round"/>';
+  }
+
+  function glyph(tier, maxTier, id){
+    var d = ident(id);
+    var fill = TIER_COLORS[(tier - 1) % TIER_COLORS.length];
+    var gilded = tier > TIER_COLORS.length;
+    var r = gilded ? 1.45 : 1.9;
+    var cells = FACES[tier] || [4];
+    var g = '<svg width="30" height="30" viewBox="0 0 16 16" role="img" aria-label="tier '+tier+'">' +
+            '<rect width="16" height="16" fill="'+d.floor+'"/>';
+    cells.forEach(function(i){
+      var cx = 3.5 + (i%3)*4.5, cy = 3.5 + Math.floor(i/3)*4.5;
+      if (gilded) g += pipHalo(d.pip, cx, cy, r + 0.5);
+      g += pip(d.pip, cx, cy, fill, r);
+    });
+    return g + '</svg>';
+  }
+
+  document.getElementById('asset-sheet').innerHTML = LAD.map(function(t){
+    var d = ident(t.id);
+    var maxTier = t.boards[t.boards.length-1].tiers;
+    var glyphs = '';
+    for (var i=1; i<=maxTier; i++) glyphs += glyph(i, maxTier, t.id);
+    return '<div class="sheet-row">' +
+      '<div class="sheet-id"><b>'+esc(t.name)+'</b><span>' +
+        (t.postgame ? 'post-game · ' : '') + maxTier + ' tiers</span></div>' +
+      '<div class="sheet-pal" title="tile · revealed floor · number ink · top-tier">' +
+        '<i style="background:'+t.tint+'"></i><i style="background:'+d.floor+'"></i>' +
+        '<i style="background:'+d.ink+'"></i><i style="background:'+d.hot+'"></i></div>' +
+      '<div class="sheet-glyphs">'+glyphs+'</div>' +
+      '<div class="sheet-face"><b>'+esc(d.face)+'</b>'+esc(d.pip)+' pips · '+
+        esc(d.wave)+' '+esc(d.oct)+'</div>' +
+    '</div>';
+  }).join('');
+
+  /* ---------- placement simulation ---------- */
+  (function(){
+    var PL = JSON.parse(document.getElementById('placement-data').textContent);
+    var beds = [];
+    PL.forEach(function(r){ if (beds.indexOf(r.bed) < 0) beds.push(r.bed); });
+
+    var h = '<thead><tr><th class="l">Placement rule</th>' +
+      beds.map(function(b){ return '<th class="l">'+esc(b)+'</th>'; }).join('') +
+      '</tr></thead>';
+
+    var names = [];
+    PL.forEach(function(r){ if (names.indexOf(r.strategy) < 0) names.push(r.strategy); });
+
+    var rows = names.map(function(n){
+      var cells = beds.map(function(b){
+        var r = PL.filter(function(x){ return x.bed===b && x.strategy===n; })[0];
+        var cls = r.delta > 4 ? 'free' : (r.delta < -4 ? 'gate' : 'dim');
+        var d = r.delta === 0 ? '—' : (r.delta > 0 ? '+' : '') + r.delta + '%';
+        return '<td class="l"><span class="'+cls+'">'+r.opening+' cells '+d+'</span>' +
+               '<span class="dim"> · '+r.zeros+' zeros · avg '+r.avg_num.toFixed(2)+
+               ' · max '+r.max_num+'</span></td>';
+      }).join('');
+      return '<tr><td class="l name">'+esc(n)+'</td>'+cells+'</tr>';
+    }).join('');
+
+    document.getElementById('placement-table').innerHTML = h+'<tbody>'+rows+'</tbody>';
+  })();
+
+  (function(){
+    var h = '<thead><tr><th class="l">Type</th><th class="l">Tile</th><th class="l">Revealed</th>' +
+            '<th class="l">Number ink</th><th class="l">Number face (temp)</th>' +
+            '<th class="l">Pip shape</th><th class="l">Voice (temp)</th></tr></thead>';
+    var rows = LAD.map(function(t){
+      var d = IDENT[t.id];
+      if (!d) {
+        return '<tr><td class="l name">'+sw(t.tint)+esc(t.name)+'</td>' +
+          '<td class="l dim">'+t.tint+'</td>' +
+          '<td class="l dim" colspan="5">no identity assigned yet</td></tr>';
+      }
+      return '<tr><td class="l name">'+sw(t.tint)+esc(t.name)+'</td>' +
+        '<td class="l dim">'+t.tint+'</td><td class="l dim">'+d.floor+'</td>' +
+        '<td class="l dim">'+d.ink+'</td><td class="l">'+esc(d.face)+'</td>' +
+        '<td class="l dim">'+esc(d.pip)+'</td>' +
+        '<td class="l">'+esc(d.wave)+' · '+esc(d.oct)+'</td></tr>';
+    }).join('');
+    document.getElementById('voice-table').innerHTML = h+'<tbody>'+rows+'</tbody>';
+  })();
+})();
+</script>
