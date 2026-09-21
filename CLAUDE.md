@@ -1013,7 +1013,7 @@ board is painted, so the game stays navigable however far the board is repainted
 Ordered by how much they matter.
 
 **The ladders have never been played.** Every density, lock depth and HP value is derived and
-simulation-checked but not playtested. This is the biggest open risk and the reason Milestone 2
+simulation-checked but not playtested. This is the biggest open risk and the reason Milestone 2, the current one,
 (headless measurement across many seeds, then retuning `ladders.py`) exists.
 
 **No solver, so boards still contain unresolvable 50/50s.** Some deaths are unfair rather than

@@ -284,7 +284,7 @@ export class App {
 
     const head = el('header', 'title-bar');
     head.append(el('h1', undefined, 'Creature Sweeper'));
-    head.append(el('p', 'sub', 'Prototype — Milestone 1'));
+    head.append(el('p', 'sub', 'Prototype — Milestone 2'));
     // Boards cleared is a currency now, so it is shown whether or not
     // anything is currently waiting on it.
     head.append(el('p', 'sub boards-cleared',
