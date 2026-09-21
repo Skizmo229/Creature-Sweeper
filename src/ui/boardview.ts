@@ -696,9 +696,16 @@ export class BoardView {
    * reads adjacency through `neighboursOf`, so a bond across a wrapped seam or
    * between two hexes needs no special case — and the `>` on the flat index is
    * what keeps each bond from being drawn twice, once from either end.
+   *
+   * A CONGO LINE is tied the same way, orthogonal contacts only. Two members
+   * orthogonally beside each other are consecutive in the line — the no-2x2
+   * rule makes that exact — so the ties draw the line as far as it is known and
+   * say nothing the board had not already. A diagonal contact is where a line
+   * turns a corner, and a tie there would be a link that does not exist.
    */
   private drawBonds(game: Game): void {
-    if (!isPaired(game.config.placement)) return;
+    const congo = game.config.placement === 'congo';
+    if (!congo && !isPaired(game.config.placement)) return;
     const ctx = this.ctx;
     ctx.save();
     ctx.strokeStyle = BOND_COLOR;
@@ -713,6 +720,7 @@ export class BoardView {
         for (const n of game.neighboursOf(cell)) {
           if (!n.open || n.tier === 0) continue;
           if (n.y * w + n.x < cell.y * w + cell.x) continue;
+          if (congo && n.x !== cell.x && n.y !== cell.y) continue;
           const a = this.centreOf(cell.x, cell.y);
           const b = this.centreOf(n.x, n.y);
           // A wrapped pair is adjacent in the rules and a board apart on

@@ -68,7 +68,18 @@ export const THEMES: Record<string, TypeTheme> = {
   // 178 from `ink` and 10.4:1 on the floor, and a mark on a covered tile 3.3:1,
   // in NORMAL's range. No spells here, so an amber `hot` has no gold annotation
   // to collide with.
+  // Pool-tile teal: a gym. Amber `hot` is safe here because the only spell is
+  // Exercise, which writes no gold annotation. 195 from `ink`, 10.0:1 on the
+  // floor, and a mark on a covered tile 3.2:1, in NORMAL's range.
+  workout: { tile: '#0b7285', tileEdge: '#07505e', floor: '#061a1f', ink: '#c5f1f6', hot: '#ffb347', pip: 'square', accent: '#1098ad' },
   packs: { tile: '#58687c', tileEdge: '#3c4859', floor: '#0f141b', ink: '#dbe4ee', hot: '#ffb347', pip: 'diamond', accent: '#8a9bb0' },
+  // Carnival orange on a dark cocoa floor: a conga line is a party. `hot` is
+  // lavender, and the obvious amber is a trap on this board: it sits 10 units
+  // from the tier-3 yellow and 12 from the tier-6 gold, and the hover-level
+  // digit puts those on the same cells. Lavender is 130 from `ink`, 6.9:1 on
+  // the floor and 103 clear of every tier colour. A mark on a covered tile is
+  // 3.0:1, in PAIRS's range. No spells here, so no gold annotation either.
+  congo: { tile: '#c2410c', tileEdge: '#8a2e08', floor: '#1f0d05', ink: '#fde3cf', hot: '#a78bfa', pip: 'ring', accent: '#ea6a2c' },
   hive: { tile: '#a8324f', tileEdge: '#78203a', floor: '#260a13', ink: '#f2c9d3', hot: '#ff7a9c', pip: 'hex', accent: '#d4536f' },
   wraparound: { tile: '#1d6a9e', tileEdge: '#134a70', floor: '#061622', ink: '#c6e4f5', hot: '#4fb8f0', pip: 'circle', accent: '#3b93c4' },
   donut: { tile: '#b06a1d', tileEdge: '#7d4711', floor: '#251505', ink: '#f7dcb6', hot: '#ffab4f', pip: 'ring', accent: '#d68a33' },
@@ -224,7 +235,12 @@ export const TYPE_IDENTITY: Record<string, TypeIdentity> = {
   dominoes: { font: 'sans', sfx: 'thud', victory: 'cascade' },
   // A pack leaves together, so the effect that sends every creature falling at
   // once is the one that reads as the mode.
+  // Heavy type and a thud: the weights room.
+  workout: { font: 'slab', sfx: 'thud', victory: 'burst' },
   packs: { font: 'slab', sfx: 'thud', victory: 'tumble' },
+  // One after another, in order: the effect that is already a line of things
+  // going by in sequence.
+  congo: { font: 'rounded', sfx: 'chime', victory: 'cascade' },
   hive: { font: 'rounded', sfx: 'blip', victory: 'pop' },
   wraparound: { font: 'sans', sfx: 'chime', victory: 'wipeRadial' },
   donut: { font: 'rounded', sfx: 'chime', victory: 'ripple' },

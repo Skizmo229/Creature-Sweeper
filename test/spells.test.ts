@@ -443,7 +443,8 @@ describe('the magic ladders', () => {
     // not where the menu happens to list them.
     expect(magicTypes.map((t) => t.id).sort())
       .toEqual([
-        'arcane', 'cave', 'cross', 'diamond', 'donut', 'dungeon', 'oracle', 'wrapped_cross',
+        'arcane', 'cave', 'cross', 'diamond', 'donut', 'dungeon', 'oracle', 'workout',
+        'wrapped_cross',
       ]);
   });
 
@@ -484,7 +485,11 @@ describe('the magic ladders', () => {
    */
   it('can use its loadout: the cheap spells freely, the dear ones at all', () => {
     for (const type of magicTypes) {
-      const costs = (type.spells ?? []).map((s) => SPELLS[s as keyof typeof SPELLS].cost);
+      // What a spell costs on THIS ladder, which is its opening price where a
+      // workout rule sets one — WORKOUT's Exercise starts at 30, not 150.
+      const cfg = boardConfig(ladders, type.id, 1);
+      const costs = cfg.spells.map((s) =>
+        s === 'exercise' && cfg.workout ? cfg.workout.base : SPELLS[s].cost);
       const cheapest = Math.min(...costs);
       const dearest = Math.max(...costs);
 

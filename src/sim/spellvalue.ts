@@ -37,6 +37,7 @@ import type { Cell } from '../engine/types.js';
 import { hiddenCap, shadeOf } from '../engine/checker.js';
 import { isPaired, ringIsFree } from '../engine/pairs.js';
 import { missingFrom } from '../engine/packs.js';
+import { congoClear } from '../engine/congo.js';
 
 /**
  * How the player spends, if they spend at all.
@@ -48,7 +49,7 @@ import { missingFrom } from '../engine/packs.js';
  * deduction has run out and a guess is coming — and judged on the `exercised`
  * event the fight itself emits, which says exactly what it spared.
  */
-type Policy = 'none' | 'reveal' | 'census' | 'census-best' | 'exercise';
+type Policy = 'none' | 'reveal' | 'census' | 'census-best' | 'exercise' | 'workout' | 'gym';
 
 interface Run {
   cleared: boolean;
@@ -283,7 +284,7 @@ function namePairs(game: Game): boolean {
  * the piece, that cell IS the missing tier.
  */
 function namePacks(game: Game): boolean {
-  if (game.config.placement !== 'packs') return false;
+  if (!isGrouped(game)) return false;
   const tiers = game.config.tiers;
   const done = new Set<Cell>();
   let learned = false;
@@ -313,6 +314,11 @@ function namePacks(game: Game): boolean {
   return learned;
 }
 
+/** A congo line is a pack with a shape, so every pack read applies to it. */
+function isGrouped(game: Game): boolean {
+  return game.config.placement === 'packs' || game.config.placement === 'congo';
+}
+
 /**
  * The highest tier each covered cell could be, as far as the packs beside it
  * can say — or nothing, off a pack board or away from one. A covered neighbour
@@ -321,7 +327,13 @@ function namePacks(game: Game): boolean {
  */
 function packCaps(game: Game): Map<Cell, number> {
   const caps = new Map<Cell, number>();
-  if (game.config.placement !== 'packs') return caps;
+  if (!isGrouped(game)) return caps;
+  // A congo line's shape proves some of its rim empty outright — above all,
+  // every cell the rest of the line cannot reach from its ends. Read through
+  // the engine's own proof, for the pairing ring's reason.
+  if (game.config.placement === 'congo') {
+    for (const cell of congoClear(game.grid, game.config.tiers)) caps.set(cell, 0);
+  }
   const gaps = missingFrom(game.grid.flat(), (c) => game.neighboursOf(c), game.config.tiers);
   for (const [cell, gap] of gaps) {
     for (const n of game.neighboursOf(cell)) {
@@ -515,6 +527,35 @@ function play(game: Game, policy: Policy, spellId: SpellId | null): Run {
     const safe = safeToOpen(game, constraints)
       .filter((c) => c.mark <= game.level && game.inReach(c));
 
+    // WORKOUT's own move, and the reason the mode exists: a creature named at
+    // one tier past your level is a free kill for the price of an Exercise,
+    // and pays double for it. Taken before any guess, because it is not one.
+    //
+    // `gym` goes further and trains on free kills too: any creature already
+    // named at or one past your level, taken on a charge for the double EXP,
+    // whenever the price is back at its base. That is the player who treats
+    // the spell as a way to level rather than as insurance.
+    const training = policy === 'gym' && game.config.workout
+      && game.spellCost('exercise') === game.config.workout.base;
+    if ((training || (!safe.length && (policy === 'workout' || policy === 'gym')))
+        && game.exerciseCharge === 0 && game.canCast('exercise')) {
+      const reachable = game.grid.flat().filter((c) => c.present && !c.open && c.mark > 0
+        && c.mark <= game.level + 1 && (training || c.mark === game.level + 1) && game.inReach(c))
+        .sort((a, b) => b.mark - a.mark)[0];
+      if (reachable) {
+        const before = game.mana;
+        if (!game.cast('exercise').some((e) => e.type === 'blocked')) {
+          run.casts++;
+          run.manaSpent += before - game.mana;
+          const events = game.open(reachable.x, reachable.y);
+          if (events.some((e) => e.type === 'exercised' && (e.spared > 0 || e.bonusExp > 0))) {
+            run.castsThatHelped++;
+          }
+          continue;
+        }
+      }
+    }
+
     if (safe.length) {
       for (const cell of safe) {
         if (game.status !== 'playing' || cell.open) continue;
@@ -532,8 +573,9 @@ function play(game: Game, policy: Policy, spellId: SpellId | null): Run {
     // rather than on the deduction that has already failed. Cast and fall
     // straight through: it changes nothing a player could reason about, so
     // going round the loop again would only find the same dead end.
-    if (policy === 'exercise' && game.exerciseCharge === 0
-        && game.mana >= SPELLS.exercise.cost) {
+    if ((policy === 'exercise' || policy === 'workout' || policy === 'gym')
+        && game.exerciseCharge === 0
+        && game.canCast('exercise')) {
       const before = game.mana;
       if (!game.cast('exercise').some((e) => e.type === 'blocked')) {
         run.casts++;
@@ -544,7 +586,8 @@ function play(game: Game, policy: Policy, spellId: SpellId | null): Run {
     // Spend, if this policy spends and the spell can still be afforded. Two
     // casts at one stuck point at most: past that it is throwing mana at a
     // wall, which is a decision a player makes once and not again.
-    if (policy !== 'none' && spellId && castsHere < 2 && game.mana >= SPELLS[spellId].cost) {
+    if (policy !== 'none' && policy !== 'workout' && policy !== 'gym' && spellId && castsHere < 2
+        && game.canCast(spellId)) {
       const target = spellId === 'reveal'
         ? guess
         : policy === 'census-best'
@@ -580,10 +623,49 @@ function play(game: Game, policy: Policy, spellId: SpellId | null): Run {
   return run;
 }
 
+/**
+ * WORKOUT, board by board, under the two ways a player can hold Exercise.
+ *
+ * `exercise` is the spell as every other ladder measures it: cast when a guess
+ * is coming. `workout` adds the mode's own move — a creature already named at
+ * one past your level is a free kill with a charge, and pays double for it —
+ * which is what a player who has read the button will do. The difference
+ * between the two columns is what the double EXP is worth.
+ */
+function workoutTable(seeds: number, typeId: string): void {
+  const ladders = loadLadders();
+  const type = ladders.find((t) => t.id === typeId)!;
+  console.log(`${type.name}, board by board, ${seeds} seeds each.
+`);
+  console.log('board  density  lock |  none: stuck  clear |  exercise: clear casts |' +
+    '  workout: stuck  hp lost  clear  casts  spent/pool');
+  const seedAt = (s: number) => s * 2654435761 + 11;
+  const pct = (rs: Run[]) => (100 * rs.filter((r) => r.cleared).length / rs.length)
+    .toFixed(0).padStart(4) + '%';
+  const avg = (rs: Run[], pick: (r: Run) => number) => rs.reduce((a, r) => a + pick(r), 0) / rs.length;
+  for (const board of type.boards) {
+    const cfg = boardConfig(ladders, type.id, board.n);
+    const runs = (policy: Policy) => Array.from({ length: seeds },
+      (_, s) => play(Game.create(cfg, seedAt(s)), policy, policy === 'none' ? null : 'exercise'));
+    const none = runs('none');
+    const ex = runs('exercise');
+    const wo = runs(process.env.POLICY === 'gym' ? 'gym' : 'workout');
+    console.log(
+      `${String(board.n).padStart(4)}  ${board.density.toFixed(1).padStart(6)}%  ${board.lock}    |` +
+      `${avg(none, (r) => r.stuckPoints).toFixed(1).padStart(12)} ${pct(none)} |` +
+      `${pct(ex).padStart(16)} ${avg(ex, (r) => r.casts).toFixed(1).padStart(5)} |` +
+      `${avg(wo, (r) => r.stuckPoints).toFixed(1).padStart(15)} ${avg(wo, (r) => r.hpLost).toFixed(2).padStart(8)}` +
+      ` ${pct(wo)} ${avg(wo, (r) => r.casts).toFixed(1).padStart(6)}` +
+      `${(100 * avg(wo, (r) => r.manaSpent) / avg(wo, (r) => r.manaPool)).toFixed(0).padStart(10)}%`,
+    );
+  }
+}
+
 function byBoard(seeds: number, typeId: string): void {
   const ladders = loadLadders();
   const type = ladders.find((t) => t.id === typeId);
   if (!type) throw new Error(`no ladder "${typeId}"`);
+  if (type.workout) { workoutTable(seeds, typeId); return; }
 
   console.log(`${type.name}, board by board, ${seeds} seeds each.
 `);

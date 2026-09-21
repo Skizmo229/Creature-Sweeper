@@ -324,6 +324,10 @@ export class App {
         if (type.requires_boards > cleared) {
           needs.push(`${cleared} / ${type.requires_boards} boards cleared`);
         }
+        const runs = this.progress.fullRunsCompleted();
+        if (type.requires_runs > runs) {
+          needs.push(`${runs} / ${type.requires_runs} Full Runs completed, each on a different type`);
+        }
         meta.textContent = `Locked — ${needs.join(' · ')}`;
       } else if (rec.cleared) {
         const run = this.progress.runRecord(type.id);
@@ -772,18 +776,25 @@ export class App {
     this.notesBtn = notes;
     palette.append(notes);
 
-    const safe = el('button', 'sweep', 'Sweep');
-    safe.title = 'Open only what is proven safe at your level. Can never cost HP.';
-    safe.addEventListener('click', () => this.doSweep(false));
-    this.sweepSafeBtn = safe;
-    palette.append(safe);
+    // A ladder without Sweep gets no buttons for it, rather than two dark ones:
+    // EASY is where the numbers are learned, and a control that can never be
+    // pressed there would only raise the question of what it is for.
+    this.sweepSafeBtn = null;
+    this.sweepMarkBtn = null;
+    if (game.hasSweep) {
+      const safe = el('button', 'sweep', 'Sweep');
+      safe.title = 'Open only what is proven safe at your level. Can never cost HP.';
+      safe.addEventListener('click', () => this.doSweep(false));
+      this.sweepSafeBtn = safe;
+      palette.append(safe);
 
-    const assist = el('button', 'sweep assist', 'Sweep + marks');
-    assist.title = 'Also trust your marks as correct tier claims. ' +
-      'Reaches further, but a wrong mark can cost HP.';
-    assist.addEventListener('click', () => this.doSweep(true));
-    this.sweepMarkBtn = assist;
-    palette.append(assist);
+      const assist = el('button', 'sweep assist', 'Sweep + marks');
+      assist.title = 'Also trust your marks as correct tier claims. ' +
+        'Reaches further, but a wrong mark can cost HP.';
+      assist.addEventListener('click', () => this.doSweep(true));
+      this.sweepMarkBtn = assist;
+      palette.append(assist);
+    }
     wrap.append(palette);
 
     if (game.spells.length) {
@@ -793,7 +804,15 @@ export class App {
         const spell = SPELLS[id];
         const btn = el('button', 'spell');
         btn.dataset.spell = id;
-        btn.title = `${spell.blurb} (${spell.cost} mana, or press ${spellKey(id).toUpperCase()})`;
+        btn.title = `${spell.blurb} (${game.spellCost(id)} mana, or press ${spellKey(id).toUpperCase()})`;
+        // WORKOUT's Exercise plays by different rules, and the tooltip is
+        // where every other spell explains itself.
+        if (id === 'exercise' && game.config.workout) {
+          const w = game.config.workout;
+          btn.title = `Fight your next battle 1 level higher, for ${w.expMultiplier}x EXP if you win. ` +
+            `Costs ${w.base} and ${w.step} more each cast; each level-up takes ${w.relief} off ` +
+            `(never below ${w.base}). Resets every board. Press ${spellKey(id).toUpperCase()}.`;
+        }
         btn.addEventListener('click', () => this.pickSpell(id));
         this.spellBtns.push(btn);
         row.append(btn);
@@ -1153,9 +1172,11 @@ export class App {
       return `MARK ${tier} — click a cell to claim it is a ${tier}, click again to clear · ` +
         `a mark above your level locks the cell · N pencils instead · ${spell}`;
     }
-    const sweep = game && game.config.placement === 'sudoku'
-      ? 'S opens the clues at or below your level · D also opens your own marks'
-      : 'S sweeps what is proven safe · D also trusts your marks';
+    const sweep = game && !game.hasSweep
+      ? 'no Sweep on this ladder — every cell is opened by hand'
+      : game && game.config.placement === 'sudoku'
+        ? 'S opens the clues at or below your level · D also opens your own marks'
+        : 'S sweeps what is proven safe · D also trusts your marks';
     // The crawl rule is the first thing a player meets on a DUNGEON board and
     // there is nothing on screen that would explain a click doing nothing, so
     // it is said here rather than left to be inferred from a red cursor. Once
@@ -1280,6 +1301,11 @@ export class App {
     // held by CSS instead, so the row still cannot jitter as digits change.
     this.hud.hp!.textContent = `HP ${game.hp}`;
     this.hud.lv!.textContent = `Level ${game.level}`;
+    // A standing Exercise is a level you are carrying into the next fight, so
+    // it is shown on the level itself, in red, until that fight spends it.
+    if (game.exerciseCharge > 0) {
+      this.hud.lv!.append(el('span', 'hud-buff', ` +${game.exerciseCharge}`));
+    }
     this.hud.ex!.textContent = `EXP ${game.ex}`;
     this.hud.ne!.textContent = `Next Level ${game.progression.toNext()}`;
     this.hud.hp!.classList.toggle('low', game.hp <= Math.max(1, game.maxHp * 0.3));
@@ -1316,9 +1342,8 @@ export class App {
     }
     for (const btn of this.spellBtns) {
       const id = btn.dataset.spell as SpellId;
-      const spell = SPELLS[id];
       const armed = this.pendingSpell === id;
-      btn.textContent = `${spellLabel(id)} ${spell.cost}`;
+      btn.textContent = `${spellLabel(id)} ${game.spellCost(id)}`;
       btn.disabled = !game.canCast(id);
       btn.classList.toggle('armed', armed);
     }

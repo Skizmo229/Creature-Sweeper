@@ -14,6 +14,7 @@ import { type Shade, shadeAt, shadeForTier } from './checker.js';
 import { choosePairs, isPaired } from './pairs.js';
 import { dealTiles, setsIn } from './dominoes.js';
 import { choosePacks, dealPacks, packsIn } from './packs.js';
+import { chooseLines, dealLines } from './congo.js';
 
 /** All eight surrounding cells. */
 export const DIRS: ReadonlyArray<readonly [number, number]> = [
@@ -646,7 +647,7 @@ export function generateGrid(cfg: BoardConfig, rng: Rng): Grid {
   // The pack rule deals its own tiers, for DOMINOES's reason: one of every tier
   // has to land in each PACK, so the grouping `choosePacks` returns must reach
   // the deal intact, and the ordinary shuffle-and-take below would scatter it.
-  if (cfg.placement === 'packs') {
+  if (cfg.placement === 'packs' || cfg.placement === 'congo') {
     const count = packsIn(cfg.tiers, cfg.quantity);
     if (count === null) {
       throw new Error(
@@ -658,8 +659,14 @@ export function generateGrid(cfg: BoardConfig, rng: Rng): Grid {
       neighbours(
         grid, flat % cfg.width, Math.floor(flat / cfg.width), cfg.topology, cfg.wrap,
       ).map((n) => n.y * cfg.width + n.x);
-    const packs = choosePacks(poolFor('any'), flatNeighbours, count, cfg.tiers, rng);
-    for (const [flat, tier] of dealPacks(packs, cfg.tiers, rng)) {
+    // A congo line is a pack with a shape and an order, and it comes back
+    // leader first so the deal can put the strongest tier at the front.
+    const dealt = cfg.placement === 'congo'
+      ? dealLines(
+        chooseLines(poolFor('any'), flatNeighbours, cfg.width, cfg.height, count, cfg.tiers, rng),
+        cfg.tiers, rng)
+      : dealPacks(choosePacks(poolFor('any'), flatNeighbours, count, cfg.tiers, rng), cfg.tiers, rng);
+    for (const [flat, tier] of dealt) {
       const cell = grid[Math.floor(flat / cfg.width)]![flat % cfg.width]!;
       cell.tier = tier;
       cell.alive = true;

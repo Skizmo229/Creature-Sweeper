@@ -576,3 +576,26 @@ describe('the crawl rule', () => {
     });
   });
 });
+
+describe('a ladder without Sweep', () => {
+  // EASY is where the sum rule is learned, so it offers no Sweep at all —
+  // under any setting of the player's dial, and through any door.
+  it('offers none on EASY, whatever the dial says', async () => {
+    const { loadLadders } = await import('../src/data.js');
+    const { boardConfig } = await import('../src/engine/config.js');
+    const ladders = loadLadders();
+    for (const n of [1, 10]) {
+      const game = Game.create(boardConfig(ladders, 'easy', n), 3, {
+        settings: { ...DEFAULT_GAMEPLAY, sweep: 'on' },
+      });
+      expect(game.hasSweep).toBe(false);
+      expect(game.sweepAvailable).toBe(false);
+      expect(game.chargeNeeded).toBe(0);
+      expect(game.sweep()[0]).toMatchObject({ type: 'blocked', reason: 'no-charge' });
+    }
+    // And every other ladder keeps it.
+    for (const type of ladders.filter((t) => t.id !== 'easy')) {
+      expect(Game.create(boardConfig(ladders, type.id, 1), 3).hasSweep, type.id).toBe(true);
+    }
+  });
+});

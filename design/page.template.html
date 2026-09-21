@@ -560,10 +560,11 @@ footer code{font-size:.85em}
         <li><strong>Magic</strong> still branches sideways from NORMAL: ARCANE, then ORACLE. Keeping it off the
           chain means the tuned ladders stay exactly as they are and the spell economy can be retuned freely.</li>
       </ul>
-      <p>The thresholds run <span id="gate-list">—</span>. They open <strong>easiest first</strong>, ranked by
-        the honest player from <span class="m">sim:spells</span> on its mean clear rate over each tuned ladder;
-        SUDOKU and BLIND cannot be measured on that scale and keep the top two slots. The menu is ordered to
-        match, so it reads in the order a player will meet it. Every board counts once, scaling boards
+      <p>The thresholds run <span id="gate-list">—</span>. The order is <strong>set by hand to pace what the
+        player meets</strong>, not by difficulty: most visibly DUNGEON, the second easiest by the honest
+        player's measure, opens last before SUDOKU. BLIND is not on the board count at
+        all; it needs three Full Runs. The menu is ordered to match, so it reads in the order a player will
+        meet it. Every board counts once, scaling boards
         included.</p>
       <div class="note">
         <p class="note-h">A board-count gate can deadlock the game, and silently</p>
@@ -573,7 +574,11 @@ footer code{font-size:.85em}
           to have already unlocked BLIND — a save that is simply stuck, with nothing to point at.</p>
         <p>So the budget is asserted rather than assumed. The types that gate on type-clears alone — EASY, NORMAL,
           HUGE, EXTREME, HUGE&nbsp;×&nbsp;EXTREME, ARCANE, ORACLE — offer <strong>70 tuned boards</strong> between
-          them, and BLIND at 65 is the top of the schedule. A test walks the graph from an empty save and fails if
+          them, and SUDOKU at 65 is the top of the schedule.
+          BLIND is gated on <strong>three Full Runs completed on different types</strong> instead — finishing
+          something with no restart, which is what BLIND asks of every board. A Full Run opens on a type's
+          board 10, and EASY, NORMAL and HUGE are reachable on type-clears alone, so it cannot strand a save
+          either. A test walks the graph from an empty save and fails if
           any type is left stranded, and a second one checks every threshold fits inside the 70 without counting a
           single scaling board, so a player who never goes past board 10 still reaches everything.</p>
       </div>
@@ -1184,6 +1189,48 @@ footer code{font-size:.85em}
         one size rounded neighbouring boards to the same board. The board grows a row or a column every step
         for granularity rather than difficulty.</p>
 
+      <h4>CONGO LINE — PACKS, strung out <span class="free">·built</span></h4>
+      <p>Creatures dance in <strong>lines of six, one of every tier</strong>, and the tier 6 always leads. A
+        line steps up, down, left or right from one dancer to the next and never bunches into a 2x2 block, and
+        no two lines touch. The rest follow in a random order. It is PACKS with a shape and an order imposed,
+        so everything PACKS proves carries over unchanged: a line is still a connected group of one of each
+        tier that nothing else touches, and <span class="m">missingFrom</span> reads it as it reads a pack.
+        Unlike PACKS it is a counted ladder, at 35 boards.</p>
+
+      <div class="note">
+        <p class="note-h">"No 2x2" and "a true line" are the same rule at this length</p>
+        <p>Two dancers orthogonally side by side without being next in line would close a loop of orthogonal
+          steps, and a loop of grid cells shorter than eight always contains a 2x2 block. A line of six cannot
+          hold a loop of eight. So forbidding the block is forbidding the shortcut, and that buys an exact fact:
+          <strong>every dancer has at most two orthogonal linemates, and the ends have one.</strong> Two open
+          creatures orthogonally side by side are consecutive, which is why the board ties them together the
+          way PAIRS ties a pair. Diagonals are not constrained, and cannot be: a line turning a corner puts the
+          cells either side of the corner diagonally together.</p>
+      </div>
+
+      <div class="note warn">
+        <p class="note-h">The leader rule gives Sweep almost nothing, and the reason is the leader</p>
+        <p>Three proofs follow from the shape, each good at <em>any</em> level: once the leader has a follower
+          beside it, its other sides are empty; a dancer with two open orthogonal linemates is full; and three
+          open creatures in a 2x2 make the fourth cell empty. Measured with the honest player, over 386 stuck
+          points <strong>none of the three ever found a cell the numbers and the pack proof had not</strong>.
+          The leader is the tier 6, a player going in tier order kills it last, and by then the pack proof has
+          freed every ring on the board.</p>
+        <p>What does not wait for the leader is that a line is a path, so the dancers still missing hang off
+          its two ends, within as many orthogonal steps as there are dancers missing. Every covered cell beside
+          a partial line that no such walk reaches is empty ground, which is most of the rim once most of a line
+          is found. PACKS cannot say this. It is <span class="m">beyondReach</span> in
+          <span class="m">congo.ts</span>. It has an answer at 9 of those 386 stuck points and moves the ladder
+          by less than the noise. The mode's difference is in how it reads to a person, not in what Sweep can
+          prove.</p>
+      </div>
+
+      <p>Lines have more rim per dancer than a compact pack, so they jam a little sooner: 34% lays down on every
+        seed from 30x16 to 60x30, and 35% starts losing seeds on the largest board. Measured at PACKS's own
+        schedule (22.5–31.6%) with the honest player taught the rule, 60 seeds a board: <strong>0.1 forced
+        guesses rising to 3.8, 98% cleared falling to 68%</strong>, level with PACKS's 68% at the top. It
+        ships there.</p>
+
       <h4>Wrap-around <span class="free">·built</span></h4>
       <p>Two ladders, <strong>RING</strong> (a cylinder — left and right joined) and <strong>TORUS</strong> (every
         edge joined). Both run <em>NORMAL's exact schedule</em>: same sizes, same densities, same HP, same lock
@@ -1728,9 +1775,12 @@ footer code{font-size:.85em}
     document.getElementById('sim-boards').textContent = all.length;
     var gated = LAD.filter(function(t){ return t.requires_boards > 0; })
       .sort(function(a, b){ return a.requires_boards - b.requires_boards; });
+    var ran = LAD.filter(function(t){ return t.requires_runs > 0; });
     document.getElementById('gate-list').textContent = gated.map(function(t){
       return t.requires_boards + ' ' + t.name;
-    }).join(', ');
+    }).concat(ran.map(function(t){
+      return t.name + ' after ' + t.requires_runs + ' Full Runs';
+    })).join(', ');
     document.getElementById('h-tiers').textContent =
       Math.min.apply(null, tiers) + '–' + Math.max.apply(null, tiers);
   })();
@@ -1833,7 +1883,11 @@ footer code{font-size:.85em}
     var W=700, bw=118, bh=46;
     var byId = {}; LAD.forEach(function(t){ byId[t.id]=t; });
 
-    var counted = LAD.filter(function(t){ return t.requires_boards > 0; });
+    /* BLIND's gate is Full Runs rather than boards, but it is the same kind of
+       claim - earned by play, no type required - so it sits at the end of the
+       same lane. */
+    var counted = LAD.filter(function(t){ return t.requires_boards > 0; })
+      .concat(LAD.filter(function(t){ return t.requires_runs > 0; }));
 
     /* Main line is no longer a single chain: HUGE and EXTREME are siblings off
        NORMAL and meet again at HUGE x EXTREME, so it gets its own small
@@ -1869,7 +1923,8 @@ footer code{font-size:.85em}
        without anyone having to remember this block exists. */
     var derivedX = 10;
     LAD.forEach(function(t){
-      if (pos[t.id] || t.requires_boards || !(t.requires || []).length) return;
+      if (pos[t.id] || t.requires_boards || t.requires_runs ||
+          !(t.requires || []).length) return;
       pos[t.id] = [derivedX, pos.huge_blind[1]];
       derivedX += bw + 32;
     });
@@ -1907,7 +1962,7 @@ footer code{font-size:.85em}
          'stroke="var(--rule)" stroke-width="1" stroke-dasharray="3 3"/>';
     s += '<text x="10" y="'+(laneTop-7)+'" fill="var(--muted)" ' +
          'font-family="JetBrains Mono, monospace" font-size="9.5" letter-spacing="1.4">' +
-         'BOARDS CLEARED ANYWHERE &#8212; NO TYPE REQUIRED</text>';
+         'BOARDS CLEARED ANYWHERE, OR FULL RUNS &#8212; NO TYPE REQUIRED</text>';
 
     var label = function(y, a){
       s += '<text x="10" y="'+y+'" fill="var(--muted)" font-family="JetBrains Mono, monospace" ' +
@@ -1920,6 +1975,7 @@ footer code{font-size:.85em}
       if (!t) return;
       var sub;
       if (t.requires_boards) sub = t.requires_boards + ' boards cleared';
+      else if (t.requires_runs) sub = t.requires_runs + ' Full Runs completed';
       else if (t.requires.length) sub = 'clear ' + t.requires.map(function(r){
         return byId[r].name; }).join(' + ');
       else sub = 'unlocked at start';
@@ -2471,8 +2527,12 @@ footer code{font-size:.85em}
                   face:'Rounded geometric', wave:'triangle', oct:'o5'},
     dominoes:    {floor:'#15130f', ink:'#efe6d0', hot:'#ff4d6d', pip:'circle',
                   face:'Humanist sans', wave:'square', oct:'o4'},
+    workout:     {floor:'#061a1f', ink:'#c5f1f6', hot:'#ffb347', pip:'square',
+                  face:'Wide slab', wave:'square', oct:'o4'},
     packs:       {floor:'#0f141b', ink:'#dbe4ee', hot:'#ffb347', pip:'diamond',
                   face:'Wide slab', wave:'square', oct:'o4'},
+    congo:       {floor:'#1f0d05', ink:'#fde3cf', hot:'#a78bfa', pip:'ring',
+                  face:'Rounded geometric', wave:'triangle', oct:'o5'},
     hive:        {floor:'#260a13', ink:'#f2c9d3', hot:'#ff7a9c', pip:'hex',
                   face:'Geometric wide', wave:'triangle', oct:'o5'},
     wraparound:  {floor:'#061622', ink:'#c6e4f5', hot:'#4fb8f0', pip:'circle',

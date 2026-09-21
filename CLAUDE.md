@@ -346,8 +346,7 @@ shifted up 1.2 density points (24.7–31.9%), which puts it back on CROSS's curv
 Anything else combining a shape with a topology should be measured rather than reasoned about.
 
 **It is gated on its two parents, not on a board count, and that is the cheaper of the two.**
-`requires_boards` spends the one budget in the unlock data that can silently strand a save — the 70
-boards the type-gated ladders offer, of which BLIND's 65 already takes the top. A combined type has
+`requires_boards` spends the one budget in the unlock data that can silently strand a save. A combined type has
 somewhere better to say the same thing: HUGE x EXTREME's rule, that a ladder which is two ladders at
 once should not be reachable without having played both.
 
@@ -480,10 +479,14 @@ clears the same share of every board as at HP 10. Lock was tried on the theory t
 ring proof by holding your level down; it moved the clear rate and left the forced guesses alone,
 because the EXP economy gets you there anyway. It keeps NORMAL's 10.
 
-**Adding a counted ladder means adding a slot below 65, never one above it.** Appending at 70
-would spend the whole 70-board budget the type-gated ladders offer, which is the one number in
-that file that can strand a save with nothing to point at. PAIRS got its slot by extending the
-schedule downward to 15.
+**The counted schedule steps by exactly five, 15 to 80, and a new counted ladder is a new slot.**
+Both are by request, and a test pins the step. It used to stop at 65 so that every gate fit inside the
+70 tuned boards the type-gated ladders offer; DOMINOES, WORKOUT and PACKS joining it took the top to
+80, so the last three gates (CAVE is the last within 70) now need a variant played first. That is
+safe because every counted ladder opened is ten more tuned boards: `test/unlocks.test.ts` walks the
+schedule in order on tuned boards alone and fails if any gate is never met. It starts at 15 by request
+too, so the first variant arrives after EASY and half of NORMAL rather than on EASY alone. DOMINOES and
+PACKS used to be gated on clearing PAIRS; they are counted now and still open after it.
 
 **DOMINOES is PAIRS dealt as a full domino set, and the set decides the distribution.** Every
 pairing {a,b} of a double-T set appears once, so every tier appears exactly T+1 times and
@@ -559,6 +562,60 @@ time. **The board grows a row or column every step for granularity**, because on
 density points on 480 cells and a fixed size rounded neighbouring boards to the same board, which
 `test/scaling.test.ts` caught.
 
+**CONGO LINE is PACKS strung out, and at six "no 2x2" and "a true line" are the same rule.** Lines of
+six, one of every tier, stepping orthogonally, led by the tier 6; no two lines touch. The generator
+enforces the stronger-sounding rule — no member orthogonally beside any member but the one before and
+after — and it is not a second rule: an orthogonal shortcut closes a loop of grid cells, and every loop
+shorter than eight contains a 2x2, which six cells cannot avoid. What that buys is exact: **two open
+creatures orthogonally side by side are consecutive in the line.** That is why the board ties them
+(`drawBonds`, orthogonal contacts only — a diagonal is a corner, not a link), and it is what every proof
+in `congo.ts` rests on. Square and unwrapped only, refused in `config.ts`: hex has no orthogonal step,
+and a wrapped seam would be a line the eye cannot follow. Every pack read carries over unchanged —
+`missingFrom`, `namePacks` and `packCaps` all treat it as a pack — because a line IS a pack.
+
+**The leader rule, which is the part that sounds like the mode, gives Sweep nothing, and that was
+measured rather than assumed.** Three shape proofs, each good at any level: a leader with a follower
+open beside it has its other sides empty; a member with two open orthogonal linemates is full; three
+open creatures in a 2x2 make the fourth empty. Over 386 stuck points the honest player never once had
+a cell from any of them that the numbers and the pack proof had not already given. The reason is the
+leader itself: it is the tier 6, a player in tier order kills it last, and by then `missingFrom` has
+freed every ring on the board. They are kept because they are sound and cheap and help a player who
+killed a leader by guessing — but the rule that does something is **a line only continues from its
+ends** (`beyondReach`): the members still missing are within that many orthogonal steps of the open
+stretch's two ends, so the rest of its rim is empty ground at any level, which PACKS cannot say. Even
+that answers only 9 of the 386 stuck points and moves the ladder by less than the noise. Worth knowing
+before anyone expects a new deduction rule to be a new difficulty: this mode differs from PACKS in how it
+reads, not in what can be proved. The test that matters is `never calls a creature empty, whatever is
+open` — these proofs claim EMPTY, so one wrong cell is a free sweep into a creature.
+
+**It ships at PACKS's schedule, because that measured where PACKS is.** 22.5–31.6%, 60 seeds a
+board with the honest player taught both proofs: 0.1 → 3.8 forced guesses, 98% → 68% cleared, against
+PACKS's 0.3 → 4.6 and 68%. Openings match too (median 25.6% of board 1 against 25.8%). The packing
+ceiling is 34% (`CONGO_MAX_DENSITY`: every seed to 60x30 at 34%, seeds lost at 35% on the largest), which
+is also the battle ceiling, so the continuation is capped at 33.5% — rounding to whole lines put 34.1% on
+one board otherwise. The mean clear rate, 92.8, sits between CROSS and HIVE; it opens at 50.
+
+**WORKOUT is the one ladder whose spell has its own price, and the price is the mode.** Exercise
+alone, 30 mana, 10 dearer every cast, 10 cheaper for every level gained and never below 30; a kill
+made on a borrowed level pays double EXP; all of it resets with the board because a new board is a
+new `Game`. It is `WorkoutRule` on the config, read through `Game.spellCost` — anything that prices
+a spell must ask that, not `SPELLS[id].cost`, or it will quote WORKOUT's Exercise at 150.
+
+**Double EXP is safe for the four facts because it only ever ADDS.** A gate is `C_k`, so a kill paying
+short would strand one; a kill paying over only reaches it sooner, which is what the deeper lock
+(3, then the full 4 from board 4) is there to push against. `config.ts` refuses a multiplier below 1
+for exactly that reason. The bonus is paid on ANY fight the charge is spent on, free ones included,
+by request — so farming it is legal play.
+
+**Measured, the double EXP barely moves difficulty, and that is the thing to know before tuning on it.**
+With the honest player from `sim:spells` (40 seeds a board, `npm run sim:spells -- 40 workout`):
+spell-less 0.1 → 5.7 forced guesses and 100% → 73% cleared; casting at each forced guess 100% → 85%,
+mean 96.6% against NORMAL's 98.8% spell-less. A player who also farms — every named creature at or
+one past its level, taken on a charge whenever the price is back at 30 (`POLICY=gym`) — casts about
+five times a board instead of two and clears the same share. The cheap casts are rationed by
+level-ups, and a five-tier board only has four. If the mode should cast MORE, the lever is `relief`
+(or relief on kills rather than levels), not density.
+
 **The unlock graph only drew ladders it had a hard-coded position for, so WRAPPED CROSS had been
 missing from it since it shipped.** Nothing failed and nothing said so. Every type-gated variant is
 now placed by rule on the row beside HUGE x BLIND, which fixed it and caught DOMINOES before it went
@@ -572,8 +629,8 @@ in 13 of 40 boards before this was caught.
 
 ## Current state
 
-22 game types × 10 tuned boards, plus a scaling continuation to board 13–40 depending on type
-(598 boards in all). 324 tests. Playable prototype with canvas board, HUD, marks,
+24 game types × 10 tuned boards, plus a scaling continuation to board 13–40 depending on type
+(672 boards in all). 367 tests. Playable prototype with canvas board, HUD, marks,
 pencil marks, two Sweep modes, magic, Full Run, the full unlock chain, a rules card, an
 always-present mute toggle, and a settings menu with nine presentation options and seven
 gameplay dials. Sweep defaults to CHARGED, ten hand-opened cells a sweep.
@@ -582,13 +639,15 @@ gameplay dials. Sweep defaults to CHARGED, ten hand-opened cells a sweep.
 main line   EASY -> NORMAL -> { HUGE, EXTREME } -> HUGE x EXTREME (needs both)
 magic       NORMAL -> ARCANE -> ORACLE
 variants    gated on BOARDS CLEARED ANYWHERE, not on each other:
-            WRAPAROUND 15 · DUNGEON 20 · CHECKERBOARD 25 · DIAMOND 30 · CROSS 35
-            HIVE 40 · PAIRS 45 · RAGGED CAVE 50 · DONUT 55 · SUDOKU 60 · BLIND 65
+            WRAPAROUND 15 · CROSS 20 · HIVE 25 · DIAMOND 30 · PAIRS 35 · DOMINOES 40
+            WORKOUT 45 · PACKS 50 · DONUT 55 · CHECKERBOARD 60 · CONGO LINE 65
+            RAGGED CAVE 70 · DUNGEON 75 · SUDOKU 80
+full runs   BLIND needs Full Runs completed on 3 different types
             the five cut-out shapes carry ARCANE's loadout (Reveal, Census, 75 mana),
             and DUNGEON carries Exercise on top of it
 combined    WRAPPED CROSS needs CROSS and WRAPAROUND; it carries ARCANE's loadout too
-            DOMINOES needs PAIRS — the pairing rule, dealt as a full double-six set
-            PACKS needs PAIRS — the pairing rule grown to packs of one of every tier
+workout     WORKOUT: NORMAL's boards, deeper gates, Exercise alone at 30 rising by 10
+no sweep    EASY offers no Sweep at all (`sweep: false` in the ladder data)
 post-game   HUGE x BLIND needs HUGE and BLIND
 full run    every type -> its own FULL RUN, unlocked by clearing that type's board 10
 scaling     every type -> boards 11..N, unlocked the same way, picked with arrows
@@ -1122,31 +1181,44 @@ from `sim:spells` and moving the density until the curve matched ARCANE's retune
 **Anything classifying ladders by "has spells" now needs shape checked first.** The reference
 page's unlock graph did exactly that and would have emptied the shape row into the magic row.
 
-**There are two kinds of unlock gate, and only one of them fails loudly.** `requires` is a list of
+**There are three kinds of unlock gate, and only one of them fails loudly.** `requires` is a list of
 types whose board 10 must be cleared — readiness, and a bad one is a cycle, which is obvious.
 `requires_boards` is a count of boards cleared anywhere — time served, and a bad one is just a
 number. Nothing about the number says whether a player can reach it *without* the type it guards,
-so setting BLIND above what the type-gated ladders offer would leave a save simply stuck, with
+so setting one above what the type-gated ladders offer would leave a save simply stuck, with
 nothing to point at. The type-gated ladders (EASY, NORMAL, HUGE, EXTREME, HUGE x EXTREME, ARCANE,
-ORACLE) offer 70 tuned boards; BLIND at 65 is the top of the schedule. `test/unlocks.test.ts` walks
-the graph from an empty save and fails if anything is stranded, and separately asserts every
-threshold fits inside those 70 *without* counting a scaling board — a player who never goes past
-board 10 must still reach everything.
+ORACLE) offer 70 tuned boards; SUDOKU at 80 is the top of the schedule. `test/unlocks.test.ts` walks
+the graph from an empty save and fails if anything is stranded, and separately walks the counted
+gates in order *without* counting a scaling board — a player who never goes past board 10 must still
+reach everything.
+
+**`requires_runs` is the third, and only BLIND carries it: Full Runs completed on three DIFFERENT
+types.** Not readiness and not time served, but finishing something with no restart, which is what a
+1 HP board asks every time. It counts `runs[id].cleared` in the save, one per type, so running EASY
+three times is one run; a run that falls short counts for nothing. It fails as quietly as a board
+count, so it is guarded the same way: a Full Run opens on a type's board 10, the types reachable on
+type-clears alone offer seven of them, and a test asserts the gate fits inside that. Anything that
+classifies types as "ungated" has to check this field too — the budget tests counted BLIND as free
+until they did. The reference page draws BLIND at the end of the counted lane.
 
 **The variant ladders do not teach each other, so they are not chained.** A hex grid teaches
 nothing about a torus and neither teaches Sudoku; chaining them made a player who wanted the ragged
 cave grind three shapes they had no interest in first. Counting boards lets them arrive from any
 direction. The menu order follows the thresholds so it reads in the order a player meets it.
 
-**The counted ladders open easiest first, and the order is a measurement.** Ranked by the honest
-player from `sim:spells`, spell-less, 30 seeds a board, on mean clear rate over the tuned ten:
-WRAPAROUND 99.0, DUNGEON 97.7, CHECKERBOARD 97.4, DIAMOND 95.5, CROSS 94.0, HIVE 92.7, PAIRS 92.1,
-RAGGED CAVE 89.0, DONUT 84.9. SUDOKU and BLIND cannot be put on that scale and keep 60 and 65.
+**The counted ladders used to open easiest first; the order is now set by hand, by request.** It is
+WRAPAROUND, CROSS, HIVE, DIAMOND, PAIRS, DONUT, CHECKERBOARD, CONGO LINE, RAGGED CAVE, DUNGEON, then
+SUDOKU, and it does not follow difficulty — most visibly DUNGEON, the second easiest, is last before
+SUDOKU. Don't "fix" it back to the ranking. The ranking
+by the honest player from `sim:spells`, spell-less, 30 seeds a board, on mean clear rate over the
+tuned ten, is still worth having:
+WRAPAROUND 99.0, DUNGEON 97.7, CHECKERBOARD 97.4, DIAMOND 95.5, CROSS 94.0, CONGO LINE 92.8 (60
+seeds), HIVE 92.7, PAIRS 92.1, RAGGED CAVE 89.0, DONUT 84.9. SUDOKU cannot be put on that scale and
+keeps the top slot, 80; BLIND is no longer on the schedule.
 Two things in it contradict notes elsewhere in this file and are worth knowing before anyone
 reorders by argument: WRAPAROUND, at NORMAL's own schedule, was cornered 0.0-0.6 times a board and
-is the gentlest of the lot, whatever "edges are free information" predicts; and DUNGEON, opening
-at 20, is now where most players meet spells and the crawl rule at once, before ARCANE has
-necessarily been played. HIVE and PAIRS are within the noise of each other.
+is the gentlest of the lot, whatever "edges are free information" predicts; and DUNGEON, the ladder
+that carries spells and the crawl rule at once, now opens at 60, so ARCANE has usually come first. CONGO LINE, HIVE and PAIRS are within the noise of each other.
 
 **Every cleared board counts once, scaling boards included.** That is deliberate: a player who
 would rather go deep on one ladder than wide across several gets there too.
@@ -1332,7 +1404,7 @@ already refused — the same error the tier-0 pencil made on SUDOKU, in a milder
 ever a wasted click rather than a wrong one, which is why it is here and not above, but the fix is
 the same shape: gate the palette on the hovered cell's colour.
 
-**Smaller:** BLIND's unlock timing is a guess (currently post-game); no pinch-zoom on touch, so
+**Smaller:** BLIND's unlock timing is a guess (three Full Runs); no pinch-zoom on touch, so
 the largest boards are pan-only on mobile; `design/placement.py` is still a Python reimplementation
 and knows nothing about the checkerboard or the pairing;
 the reference page has no identity row for SUDOKU, so its asset sheet and voice table show a

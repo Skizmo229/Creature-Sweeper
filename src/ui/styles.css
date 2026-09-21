@@ -159,6 +159,7 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
  */
 .hud-hp { min-width: 6ch; }
 .hud-lv { min-width: 9ch; }
+.hud-buff { color: #ff4d4d; font-weight: 700; }
 .hud-ex { min-width: 10ch; }
 .hud-ne { min-width: 16ch; }
 .hud-mp { min-width: 7ch; }

@@ -36,8 +36,8 @@ function boardsOf(typeId: string) {
 }
 
 describe('ladder data', () => {
-  it('has twenty-two types of ten boards', () => {
-    expect(ladders).toHaveLength(22);
+  it('has twenty-four types of ten boards', () => {
+    expect(ladders).toHaveLength(24);
     for (const type of ladders) expect(type.boards).toHaveLength(10);
   });
 

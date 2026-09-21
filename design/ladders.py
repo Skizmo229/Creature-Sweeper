@@ -188,6 +188,9 @@ TYPES = [
         lock=[2]*10,
         alpha0=[.70,.68,.66,.64,.62,.60,.58,.56,.54,.52],
         boss=None,
+        # No Sweep here. EASY is where the sum rule is learned, and a button
+        # that reads the numbers for you takes away the one thing it is for.
+        sweep=False,
     ),
     dict(
         id="normal", name="NORMAL", tint="#8a5a12", archetype="descending",
@@ -395,6 +398,55 @@ TYPES = [
         ceiling=dict(density_cap=.250),
     ),
     dict(
+        id="workout", name="WORKOUT", tint="#0b7285", archetype="descending",
+        axis="Exercise, over and over",
+        blurb="NORMAL's boards with deeper level gates and one spell: Exercise, which fights your next "
+              "battle a level higher and pays double EXP if you win. It starts at 30 mana and costs 10 "
+              "more each cast; every level-up takes 10 back off.",
+        # NORMAL's sizes, so the only things that differ are the ones this
+        # ladder is about.
+        size=[(30,16)]*5+[(32,17),(34,18),(36,19),(38,20),(40,20)],
+        tiers=[5]*10,
+        # Measured with the honest player from `sim:spells`, 40 seeds a board.
+        # At NORMAL's own density the deeper lock barely registered on boards
+        # 1-5 and the player cast Exercise once or twice a board, spending a
+        # tenth of its mana - nothing for the spell to do. Two points denser,
+        # with the full lock from board 4, gives 0.1 forced guesses rising to
+        # 5.7 spell-less, and clears 100% falling to 85% casting Exercise at
+        # each forced guess - mean 96.6% over the ten against NORMAL's 98.8%
+        # (spell-less, same player). "A little harder than NORMAL" was the
+        # brief, and that is what this is.
+        #
+        # What the measurement said about the double EXP, which is worth
+        # knowing before tuning on it: very little. A player who also farms it
+        # - takes every named creature at or one past its level on a charge
+        # whenever the price is back at 30 - casts about five times a board
+        # rather than two and clears the same share. The cheap casts are rationed
+        # by level-ups, and a five-tier board has four of them. The spell earns
+        # its clear rate by making forced guesses survivable, as it does on
+        # ORACLE and DUNGEON; the EXP is what makes casting it feel good.
+        density=[.226,.233,.240,.247,.254,.261,.268,.276,.283,.290],
+        hp=[10]*10,
+        # Deeper than NORMAL's 2-3, and this is the dial the mode is built on.
+        # A locked gate is "kill every creature at or below this tier", so it
+        # holds your level down, and a level held down is what makes the fight
+        # one tier up come round often - the exact fight Exercise makes free.
+        # Double EXP is the way over the wall: a kill made on a borrowed level
+        # pays twice, so a gate can be reached before its tier is cleared.
+        # 4 is the most a five-tier board has: every threshold a C_k gate.
+        lock=[3,3,3,4,4,4,4,4,4,4],
+        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
+        boss=None,
+        spells=["exercise"],
+        # One Exercise exactly, the same reasoning as 75 being one Reveal.
+        start_mana=30,
+        # Exercise here costs `base`, `step` more each cast, and `relief` less
+        # for each level gained, never below `base`. A kill made on a borrowed
+        # level pays `exp_multiplier` times its EXP. All of it resets with the
+        # board, as mana does.
+        workout=dict(base=30, step=10, relief=10, exp_multiplier=2),
+    ),
+    dict(
         id="packs", name="PACKS", tint="#58687c", archetype="flat",
         axis="Packs of one of every tier",
         blurb="Creatures travel in packs of six - one of every tier, all touching - and no two packs "
@@ -429,6 +481,27 @@ TYPES = [
         lock=[2,2,2,2,2,3,3,3,3,3],
         alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
         boss=None,
+    ),
+    dict(
+        id="congo", name="CONGO LINE", tint="#c2410c", archetype="flat",
+        axis="Lines of one of every tier",
+        blurb="Creatures dance in lines of six - one of every tier, stepping up, down, left or right, "
+              "never bunched into a 2x2 - and the tier 6 always leads. No two lines touch. A line can "
+              "only carry on from its ends, so the ground around a half-found line is mostly empty.",
+        placement="congo",
+        # PACKS with a shape and an order imposed, so it starts from PACKS's
+        # schedule and is measured from there. See the tuning note below.
+        size=[(30,16),(30,16),(31,16),(31,17),(32,17),(33,17),(33,18),(34,18),(35,19),(36,19)],
+        tiers=[6]*10,
+        density=[.230,.240,.250,.260,.270,.280,.290,.300,.310,.320],
+        hp=[10]*10,
+        lock=[2,2,2,2,2,3,3,3,3,3],
+        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
+        boss=None,
+        # Just under the 34% the lines can be laid down at, because the
+        # continuation rounds creatures to whole lines and 34% of 740 cells
+        # rounds to 34.1%.
+        ceiling=dict(density_cap=.335),
     ),
     dict(
         id="hive", name="HIVE", tint="#a8324f", archetype="descending",
@@ -866,15 +939,12 @@ UNLOCKS = {
     "oracle": ["arcane"],
     "checker": [],
     "pairs": [],
-    # A variant of PAIRS that assumes you already know the pairing rule, so it
-    # is gated on having played it - the WRAPPED CROSS argument. It also costs
-    # nothing from the board-count budget, which is the one number in this
-    # file that can strand a save.
-    "dominoes": ["pairs"],
-    # PAIRS grown to groups of six. Same argument as DOMINOES: it assumes the
-    # "creatures stand in groups that may not touch" rule is already familiar,
-    # and gating on a type costs nothing from the board-count budget.
-    "packs": ["pairs"],
+    # Both used to need PAIRS cleared. They are on the board-count schedule now,
+    # by request, and still open after PAIRS because their counts are higher.
+    "dominoes": [],
+    "packs": [],
+    "workout": [],
+    "congo": [],
     "hive": [],
     "wraparound": [],
     "diamond": [],
@@ -896,40 +966,66 @@ UNLOCKS = {
 # Boards cleared anywhere in the game, counting each board once. 0 means the
 # type has no board-count gate at all.
 #
-# The top of this schedule is deliberately tight rather than generous: the
-# types that gate on type-clears alone offer 70 ladder boards between them
-# (EASY, NORMAL, HUGE, EXTREME, HUGE x EXTREME, ARCANE, ORACLE), so BLIND at 65
-# is reachable without ever touching a variant - and every scaling board past
-# 10 counts too, so a player who would rather go deep than wide has that road
-# as well.
+# The schedule runs 15 to 80 in steps of exactly five, by request, so a new
+# counted ladder is a new slot at the end rather than a gap shared. It starts at
+# 15 so the first variant arrives after EASY and half of NORMAL, not on EASY
+# alone.
 #
-# ORDERED EASIEST TO HARDEST, MEASURED. The honest player from `sim:spells`,
-# spell-less, 30 seeds a board, mean clear rate over the tuned ten:
+# The types that gate on type-clears alone offer 70 ladder boards between them
+# (EASY, NORMAL, HUGE, EXTREME, HUGE x EXTREME, ARCANE, ORACLE), so the top of
+# the schedule - CAVE at 70 is the last reachable that way - now asks a player
+# who never touches a variant to play one. Every earlier variant is ten more
+# tuned boards, so the gates are still met without a single scaling board;
+# `test/unlocks.test.ts` walks the schedule in order to check exactly that.
+# Scaling boards past 10 count too, for a player who would rather go deep.
+#
+# THE ORDER IS A DESIGN CHOICE, not the measured difficulty ranking it used to
+# follow. It is set by hand to pace what the player meets. For reference, the
+# honest player from `sim:spells`, spell-less, 30 seeds a board, mean clear rate
+# over the tuned ten, ranks them:
 #
 #   WRAPAROUND 99.0   DUNGEON 97.7   CHECKERBOARD 97.4   DIAMOND 95.5
-#   CROSS 94.0        HIVE 92.7      PAIRS 92.1          RAGGED CAVE 89.0
-#   DONUT 84.9
+#   CROSS 94.0        CONGO LINE 92.8 HIVE 92.7          PAIRS 92.1
+#   RAGGED CAVE 89.0  DONUT 84.9
 #
 # Spell-less on purpose, so every ladder is measured by the same player; the
 # shaped ladders carry spells in play, which only makes them gentler than this.
-# HIVE and PAIRS are within the noise of each other. SUDOKU and BLIND cannot be
-# measured on the same scale -- one is guess-free by construction and the
-# other has no combat -- so they keep the top two slots, where they were.
-# Re-measure before reordering: WRAPAROUND leading is the opposite of what the
-# "edges are free information" argument predicts, and it is what the player
-# actually did.
+# HIVE and PAIRS are within the noise of each other. SUDOKU cannot be measured
+# on the same scale -- it is guess-free by construction -- so it keeps the top
+# slot. BLIND is not on this schedule at all; see UNLOCK_RUNS.
+# The biggest departure from that ranking is DUNGEON, the second easiest, now
+# last before SUDOKU. DUNGEON is also where most players met spells and the crawl rule, so
+# arriving late means ARCANE has usually been played first.
 UNLOCK_BOARDS = {
     "wraparound": 15,
-    "dungeon": 20,
-    "checker": 25,
+    "cross": 20,
+    "hive": 25,
     "diamond": 30,
-    "cross": 35,
-    "hive": 40,
-    "pairs": 45,
-    "cave": 50,
+    "pairs": 35,
+    "dominoes": 40,
+    "workout": 45,
+    "packs": 50,
     "donut": 55,
-    "sudoku": 60,
-    "blind": 65,
+    "checker": 60,
+    "congo": 65,
+    "cave": 70,
+    "dungeon": 75,
+    "sudoku": 80,
+}
+
+# Full Runs completed, on that many DIFFERENT types. 0 means no such gate.
+#
+# A third kind of gate, and it says something neither of the others can: not
+# "you are ready" or "you have played a lot", but "you have finished something
+# without being allowed to start again". BLIND is 1 HP and any creature ends the
+# board, which is exactly the discipline a Full Run - one HP pool carried across
+# ten boards - is practice for. Distinct types, so it cannot be met by running
+# EASY three times.
+#
+# It cannot strand a save: a Full Run opens on clearing a type's board 10, and
+# EASY, NORMAL and HUGE are all reachable on type-clears alone.
+UNLOCK_RUNS = {
+    "blind": 3,
 }
 
 # Menu order. HUGE now sits before EXTREME, and the variant ladders are ordered
@@ -937,12 +1033,11 @@ UNLOCK_BOARDS = {
 # will actually meet it.
 MAINLINE = ["easy", "normal", "huge", "extreme", "huge_extreme"]
 MAGIC = ["arcane", "oracle"]
-# The variant lane, in the order its gates open, which is easiest first (see
-# UNLOCK_BOARDS). A combined type sits right after the last of its parents to
-# open. The list is menu order, not a taxonomy -- a placement rule sits here
+# The variant lane, in the order its gates open (see UNLOCK_BOARDS). A
+# combined type sits right after the last of its parents to open. The list is menu order, not a taxonomy -- a placement rule sits here
 # beside the topologies and the shapes because that is where a player meets it.
-TOPOLOGY = ["wraparound", "dungeon", "checker", "diamond", "cross", "wrapped_cross", "hive",
-            "pairs", "dominoes", "packs", "cave", "donut"]
+TOPOLOGY = ["wraparound", "cross", "wrapped_cross", "hive", "diamond", "pairs", "dominoes",
+            "workout", "packs", "donut", "checker", "congo", "cave", "dungeon"]
 PUZZLE = ["sudoku"]
 POSTGAME = ["blind", "huge_blind"]
 
@@ -994,7 +1089,7 @@ def board_row(t, n, W, H, T, lock, alpha0, hp, density, boss, givens, cells_over
         q = [(T + 1) * sets] * T
     else:
         M = round(density * cells)
-        if t.get("placement") == "packs":
+        if t.get("placement") in ("packs", "congo"):
             # The rule IS the distribution, as for DOMINOES: every pack is one
             # of each tier, so n packs is n of every tier and the curve is flat
             # by construction. Unlike a domino set a pack is small, so density
@@ -1138,6 +1233,8 @@ def build():
             placement=t.get("placement", "uniform"),
             spells=t.get("spells", []),
             start_mana=t.get("start_mana", 0),
+            **({"workout": t["workout"]} if t.get("workout") else {}),
+            **({"sweep": False} if t.get("sweep") is False else {}),
             topology=t.get("topology", "square"),
             shape=t.get("shape", "rect"),
             shape_param=t.get("shape_param", 0),
@@ -1152,6 +1249,8 @@ def build():
             requires=UNLOCKS[t["id"]],
             # Boards cleared anywhere, counting each once. 0 means no such gate.
             requires_boards=UNLOCK_BOARDS.get(t["id"], 0),
+            # Full Runs completed on distinct types. 0 means no such gate.
+            requires_runs=UNLOCK_RUNS.get(t["id"], 0),
             boards=boards,
             # Boards 11..N. Unlocked by clearing board 10, and deliberately
             # NOT part of `boards`: the ladder is ten, a Full Run is ten, and
