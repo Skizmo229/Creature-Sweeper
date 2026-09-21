@@ -35,8 +35,40 @@ export const THEMES: Record<string, TypeTheme> = {
   huge: { tile: '#1d7a2e', tileEdge: '#12561f', floor: '#08210d', ink: '#c9ecd0', hot: '#e8d24a', pip: 'hex', accent: '#4fc46a' },
   huge_extreme: { tile: '#6b2fd6', tileEdge: '#4a1f96', floor: '#1a0a2e', ink: '#e0ccf7', hot: '#ff4d6d', pip: 'cross', accent: '#a96bff' },
   arcane: { tile: '#1f7d76', tileEdge: '#145650', floor: '#06211f', ink: '#bfe9e4', hot: '#4fe0cf', pip: 'hex', accent: '#2aa39a' },
-  oracle: { tile: '#5b3fa8', tileEdge: '#3d2a74', floor: '#140b26', ink: '#dcd0f5', hot: '#c08bff', pip: 'diamond', accent: '#7e5bd6' },
+  // `hot` is rose rather than the light violet it shipped with, for the same
+  // reason PAIRS moved: at #c08bff it sat 75 RGB units from `ink`, so a
+  // creature's number and an ordinary number read as one pale lavender. The
+  // warm fix PAIRS took is NOT available here — this ladder carries Reveal,
+  // which writes GIVEN_COLOR, and an amber `hot` lands 58 units off that gold.
+  // Rose clears the gold by 124, clears Census's cyan, and keeps the violet
+  // family the palette is built on. 181 from `ink`, and 5.8:1 on the floor —
+  // the same contrast NORMAL and HUGE x EXTREME have always shipped.
+  oracle: { tile: '#5b3fa8', tileEdge: '#3d2a74', floor: '#140b26', ink: '#dcd0f5', hot: '#fa4f7a', pip: 'diamond', accent: '#7e5bd6' },
   checker: { tile: '#4f5d75', tileEdge: '#37425a', floor: '#12161f', ink: '#e2e8f4', hot: '#ffd166', pip: 'square', accent: '#7f8fa8' },
+  // `hot` is amber rather than the pale orange it shipped with, and on this
+  // ladder that is legibility rather than taste. A defeated creature's number
+  // is its PARTNER'S TIER and is shown by default here, so it is the one
+  // number on the board that most needs to be told apart from an ordinary
+  // floor number at a glance — and #ffb07a sat 85 units from `ink` in RGB,
+  // which reads as the same pale colour. Amber is 139 away and also contrasts
+  // BETTER against the floor (11.3:1 against 10.1), so nothing was traded.
+  pairs: { tile: '#b5482a', tileEdge: '#82301b', floor: '#25100a', ink: '#f7d6c6', hot: '#ffc23d', pip: 'ringDiamond', accent: '#d96a45' },
+  // Bone tiles on an ebony floor, round pips, crimson for a creature's number
+  // — a domino set. Every value here was measured rather than picked, because
+  // the obvious ivory tile is a trap: at #c9bd9b the green mark on a covered
+  // cell is 1.1:1, worse than EASY's 1.4:1, which is the tile the mark's dark
+  // outline was added to rescue. This bone brings it to 2.1:1, in the pack
+  // beside BLIND, and keeps covered and cleared cells 5:1 apart. `hot` sits
+  // 183 from `ink` and 5.8:1 on the floor, and 83 clear of the nearest colour
+  // that can share this board — the tier-4 orange of the hover-level digit.
+  // Round pips because a creature's glyph is already a die face, and half a
+  // domino is exactly that.
+  dominoes: { tile: '#8f8466', tileEdge: '#6b6249', floor: '#15130f', ink: '#efe6d0', hot: '#ff4d6d', pip: 'circle', accent: '#c9bd9b' },
+  // Wolf grey with amber eyes: a pack. Measured the same way as the rest — `hot`
+  // 178 from `ink` and 10.4:1 on the floor, and a mark on a covered tile 3.3:1,
+  // in NORMAL's range. No spells here, so an amber `hot` has no gold annotation
+  // to collide with.
+  packs: { tile: '#58687c', tileEdge: '#3c4859', floor: '#0f141b', ink: '#dbe4ee', hot: '#ffb347', pip: 'diamond', accent: '#8a9bb0' },
   hive: { tile: '#a8324f', tileEdge: '#78203a', floor: '#260a13', ink: '#f2c9d3', hot: '#ff7a9c', pip: 'hex', accent: '#d4536f' },
   wraparound: { tile: '#1d6a9e', tileEdge: '#134a70', floor: '#061622', ink: '#c6e4f5', hot: '#4fb8f0', pip: 'circle', accent: '#3b93c4' },
   donut: { tile: '#b06a1d', tileEdge: '#7d4711', floor: '#251505', ink: '#f7dcb6', hot: '#ffab4f', pip: 'ring', accent: '#d68a33' },
@@ -45,8 +77,23 @@ export const THEMES: Record<string, TypeTheme> = {
   diamond: { tile: '#8f3fa0', tileEdge: '#652a73', floor: '#210a26', ink: '#f0cdf7', hot: '#e072ff', pip: 'diamond', accent: '#b45cc4' },
   cave: { tile: '#8a7050', tileEdge: '#5f4c36', floor: '#1a1410', ink: '#ecdfcd', hot: '#ffb04f', pip: 'circle', accent: '#ad9270' },
   dungeon: { tile: '#6a5088', tileEdge: '#493761', floor: '#161020', ink: '#e2d6f0', hot: '#ffb86b', pip: 'cross', accent: '#9b7ad1' },
-  sudoku: { tile: '#7d4a8f', tileEdge: '#573165', floor: '#1c0f21', ink: '#ead2f2', hot: '#d78cff', pip: 'square', accent: '#b45cc9' },
-  blind: { tile: '#8a8a8a', tileEdge: '#616161', floor: '#1a1a1a', ink: '#e8e8e8', hot: '#9fd8ff', pip: 'ring', accent: '#bdbdbd' },
+  // Magenta, not the light violet it shipped with (74 units from `ink`, which
+  // reads as the same colour). Gold is doubly unavailable on this ladder:
+  // every given is drawn in GIVEN_COLOR, so an amber `hot` would be 21 units
+  // from the one annotation this board is covered in. Magenta is 160 clear of
+  // it and 126 from `ink`, at 6.7:1 on the floor.
+  sudoku: { tile: '#7d4a8f', tileEdge: '#573165', floor: '#1c0f21', ink: '#ead2f2', hot: '#ff5dc8', pip: 'square', accent: '#b45cc9' },
+  // A saturated azure rather than the pale blue it shipped with. This is the
+  // hardest `ink` in the set to sit beside — a neutral near-white — so the
+  // only thing that separates from it is SATURATION, not hue: #9fd8ff was 78
+  // units away and #3fb8f0 is 176. Kept bright (7.7:1) rather than taken
+  // darker for a few more units of separation, because this ladder's boards
+  // are among the largest in the game and so are drawn at the smallest cells.
+  //
+  // Worth knowing why this matters at all on a ladder that never defeats a
+  // creature: a palette is a PLAYER setting, so BLIND's is worn on boards
+  // that do.
+  blind: { tile: '#8a8a8a', tileEdge: '#616161', floor: '#1a1a1a', ink: '#e8e8e8', hot: '#3fb8f0', pip: 'ring', accent: '#bdbdbd' },
   huge_blind: { tile: '#7a8288', tileEdge: '#545a5f', floor: '#14181a', ink: '#dde3e6', hot: '#7fb4d8', pip: 'ringDiamond', accent: '#a8b4bb' },
 };
 
@@ -169,6 +216,15 @@ export const TYPE_IDENTITY: Record<string, TypeIdentity> = {
   arcane: { font: 'serif', sfx: 'glass', victory: 'sparkle' },
   oracle: { font: 'serif', sfx: 'glass', victory: 'pop' },
   checker: { font: 'sans', sfx: 'chime', victory: 'wipe' },
+  // Creatures leave in twos, so the effect that takes them one burst at a time
+  // is the one that reads as the mode.
+  pairs: { font: 'rounded', sfx: 'chime', victory: 'pop' },
+  // Thud is the clack of a tile set down. Cascade is the one clear effect in
+  // the game that is already a row of things falling over in sequence.
+  dominoes: { font: 'sans', sfx: 'thud', victory: 'cascade' },
+  // A pack leaves together, so the effect that sends every creature falling at
+  // once is the one that reads as the mode.
+  packs: { font: 'slab', sfx: 'thud', victory: 'tumble' },
   hive: { font: 'rounded', sfx: 'blip', victory: 'pop' },
   wraparound: { font: 'sans', sfx: 'chime', victory: 'wipeRadial' },
   donut: { font: 'rounded', sfx: 'chime', victory: 'ripple' },
@@ -233,6 +289,23 @@ export const OUT_OF_REACH_COLOR = '#ff5a5a';
  * rubbed out like one.
  */
 export const GIVEN_COLOR = '#f2c34e';
+
+/**
+ * The tie between the two halves of a defeated pair.
+ *
+ * Drawn for the same reason the Sudoku box rules are: the rule a board rests
+ * on has to be visible or it is not a rule the player can use, and "these two
+ * creatures belong to each other" is invisible on a finished grid — both cells
+ * are just open creatures, exactly like any other.
+ *
+ * Translucent white rather than an annotation colour, and the choice is
+ * deliberate. Green, gold and cyan all mean something the PLAYER or a spell
+ * put there; this is a fact about the board's own structure, in the same
+ * family as the silhouette, so it borrows the silhouette's white and steps
+ * back from it. Every ladder's floor is dark, so one value reads on all of
+ * them.
+ */
+export const BOND_COLOR = 'rgba(255, 255, 255, 0.5)';
 
 /**
  * The 3x3 box rules.

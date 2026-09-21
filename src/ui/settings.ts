@@ -74,6 +74,32 @@ export const HIGHLIGHT_NAMES: Record<HighlightStyle, string> = {
   block: 'Flat 3×3 block, whatever the board shape',
 };
 
+/**
+ * What the cursor does to a creature you have already beaten.
+ *
+ * 'none' is the default and is the game as it has always been: hovering a
+ * defeated creature changes nothing about it.
+ *
+ * 'tier' writes that creature's level over its glyph, in the level's own
+ * colour. It reveals NOTHING — the pips already say the tier, and this is the
+ * same fact written as a digit instead of counted — which is why it belongs
+ * here among the presentation settings and can never touch a record. What it
+ * saves is the counting: at nine tiers a glyph is nine pips, and telling eight
+ * from nine at a glance is genuinely slow.
+ *
+ * Anything else is a PipShape, and restyles the hovered glyph into that shape.
+ * It is the thinnest of the three today, because every tier of every type is
+ * drawn from the same die-face pips and the shape is decoration — it earns its
+ * place when there is real per-creature art to swap to, and the option exists
+ * now so that the setting does not have to be invented then.
+ */
+export type HoverDefeated = 'none' | 'tier' | PipShape;
+
+export const HOVER_DEFEATED_NAMES: Record<'none' | 'tier', string> = {
+  none: 'Nothing — leave it as it is',
+  tier: 'Show its level, in that level’s own colour',
+};
+
 /** Cell sizes the zoom ceiling can be set to, in CSS pixels. */
 export const MIN_MAX_ZOOM = 24;
 export const MAX_MAX_ZOOM = 128;
@@ -94,6 +120,8 @@ export interface PresentationSettings {
    * the stroke crosses the pips and some players read it as clutter.
    */
   readonly strikeDefeated: boolean;
+  /** What the cursor does to a creature you have already beaten. */
+  readonly hoverDefeated: HoverDefeated;
   /** Ceiling for manual zoom, in CSS pixels per cell. */
   readonly maxZoom: number;
   /**
@@ -117,6 +145,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   victory: DEFAULT,
   highlight: DEFAULT,
   strikeDefeated: true,
+  hoverDefeated: 'none',
   maxZoom: DEFAULT_MAX_ZOOM,
   muted: false,
 };
@@ -167,6 +196,10 @@ function readPresentation(raw: unknown): PresentationSettings {
     victory: str('victory', DEFAULT) as VictoryChoice,
     highlight: str('highlight', DEFAULT) as HighlightChoice,
     strikeDefeated: typeof p.strikeDefeated === 'boolean' ? p.strikeDefeated : true,
+    // Same argument as `icons` above: an unknown pip shape falls through
+    // `drawCreature`'s own default, so a value written by a newer build is
+    // kept rather than thrown away.
+    hoverDefeated: str('hoverDefeated', 'none') as HoverDefeated,
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
     // Defaults to unmuted, so a save written before the speaker existed opens
     // with sound on — which is the state that save was actually played in.

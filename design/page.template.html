@@ -571,7 +571,7 @@ footer code{font-size:.85em}
           WRAPPED&nbsp;CROSS, which needs CROSS and WRAPAROUND. A combined type gating this way also leaves
           the board-count schedule alone, which is the one place in the unlock data that can strand a save.</li>
         <li><strong>A board-count gate</strong> — "clear 25 boards, anywhere" — is a statement about
-          <em>time served</em>, and it is what the eight variant ladders use. They do not teach each other: a hex
+          <em>time served</em>, and it is what the counted variant ladders use. They do not teach each other: a hex
           grid teaches you nothing about a torus, and neither teaches you Sudoku, so chaining them was always a
           fiction — and an expensive one, because it made a player who wanted the ragged cave grind three shapes
           they had no interest in to get there. Counting boards lets them arrive from whatever direction they
@@ -999,7 +999,9 @@ footer code{font-size:.85em}
       <ul>
         <li><strong>Scatter</strong> — uniform random. What the original does.</li>
         <li><strong>Cluster</strong>(tier, n, box) — your tier-1 triads in a 3×3.</li>
-        <li><strong>Pair</strong>(tierA, tierB, box) — your 2-and-4 pairs in a 2×2.</li>
+        <li><strong>Pair</strong>(tierA, tierB, box) — your 2-and-4 pairs in a 2×2. Shipped, in a much
+          stronger form: as a rule over the <em>whole board</em> rather than a sprinkled motif. See PAIRS
+          below.</li>
         <li><strong>Lair</strong>(boss, escort, n, box) — your boss ringed by its tier-below escorts.</li>
         <li><strong>Spread</strong>(tier, minimum distance) — anti-clustering; keeps apex creatures apart.</li>
         <li><strong>Band</strong>(tier → region) — a spatial difficulty gradient: low tiers at the rim, high tiers
@@ -1032,6 +1034,172 @@ footer code{font-size:.85em}
       <p class="dim" style="font-size:.9rem">Clustering also tends to <em>help</em> solvable generation — more
         structure means more deducible patterns — while lairs likely hurt it. Worth measuring once a solver
         exists.</p>
+
+      <h4>PAIRS — every creature has exactly one creature neighbour <span class="free">·built</span></h4>
+      <p>It sounds like a rule about couples and it is really a rule about <strong>packing</strong>. If every
+        creature has exactly one creature beside it, the occupied cells are adjacent pairs — and
+        <strong>no two pairs may touch</strong>, because a contact would give the creatures either side of it a
+        second neighbour. So the board is a scattering of dominoes, each alone inside a ring of empty ground.</p>
+
+      <div class="note">
+        <p class="note-h">The consequence that does all the work, and it was free</p>
+        <p>A creature's neighbours are its partner and nothing else. A cell's number is the <em>sum</em> of its
+          neighbours' tiers. Therefore <strong>a creature's own number is its partner's tier, exactly</strong> —
+          no arithmetic, no ambiguity, no subtraction. The engine already computed a number for every cell
+          including creatures, and already let a defeated one show it, so the mode's single most valuable
+          deduction fell straight out of machinery built for something else. Kill anything and it names its
+          partner. On this ladder that number is shown by default rather than hidden behind the sprite toggle,
+          because burying it one click away would bury the point of the rule.</p>
+      </div>
+
+      <p>Two proofs come off that, and both are in <span class="m">safeCells</span> rather than left for the
+        player to translate into marks by hand — the lesson Census taught:</p>
+      <ul>
+        <li><strong>Partner in reach.</strong> A defeated creature whose number is at or below your level has a
+          partner you can kill for free, and every other neighbour is empty ground. The whole ring is free to
+          open.</li>
+        <li><strong>Partner already met.</strong> A defeated creature with a defeated creature beside it has
+          found the one creature it is allowed to touch, so everything else around it is blank —
+          <strong>at any level</strong>. Clearing one pair is worth about seven cells of certainty.</li>
+      </ul>
+      <p>Neither can run away, and the reason is the packing rather than anything about levels: a freed ring
+        holds the partner and otherwise empty ground, because no second domino may touch the first. A trigger
+        clears one pair and stops, and the cascade it sets off kills nothing, so it triggers nothing further.
+        Compare the Sudoku rule, which had to be kept out of <span class="m">safeCells</span> entirely because
+        it could iterate its way to a solved board.</p>
+
+      <div class="note warn">
+        <p class="note-h">The measurement went the opposite way to the guess</p>
+        <p>The rule was expected to give the board away — sparse, clustered, big voids, a huge free opening.
+          It does the reverse. The exclusion ring around every pair spreads the creatures <em>evenly</em>, and
+          clustering is what makes a zero-region, so the auto-opening comes out <strong>30–65% smaller</strong>
+          than a uniform board of the same density (6.9% against 10.0% at 20.6%), and cells hiding nothing at
+          all drop from 18.8% to 10.7%. Measured over 300 seeds a board, PAIRS has the smallest openings in the
+          game: 6.0% of the board falling to 1.1%, against NORMAL's 9.2% to 4.0%.</p>
+        <p>That is the clustering finding above with the sign flipped, and the two are consistent: pairing
+          <em>is</em> clustering, at the smallest scale there is, but the no-touching rule is
+          <strong>anti</strong>-clustering at every larger one, and the larger one wins.</p>
+      </div>
+
+      <p>So the board plays tighter than NORMAL at a matched density and then comes apart faster than anything
+        else in the game. Every other ladder grows more ambiguous as it goes; this one grows less.</p>
+
+      <h4>Its difficulty axis is size, and that was forced rather than chosen</h4>
+      <p>Dominoes that may not touch cannot exceed <strong>two cells in every six — 33.3%</strong> — and a
+        random lay-down jams far below that, measured at 24.8–25.6% over 200 seeds. The quota has to be landed
+        <em>exactly</em>, because <span class="m">C<sub>k</sub></span> assumed it, so the schedule has to stop
+        where placement is still reliable rather than where the board stops being a puzzle: at 26% it places on
+        every seed within 40 restarts, at 28% on one seed in four. A board two creatures light would not throw
+        — it would simply have its top gate one kill out of reach, on that seed only. Same failure shape as the
+        ragged cave's cell count, and the same answer.</p>
+      <p>Which leaves four points of density, and inside them density does almost nothing. Measured with the
+        honest player from <span class="m">sim:spells</span>, walking 20% to 25% on a <em>fixed</em> board moved
+        the forced guesses from 0.0 to 1.5 and left the first six boards at 0.0 — a ladder with nothing in it,
+        the same failure ARCANE had before it was retuned. <strong>Growing the board across the same span gives
+        0.2 rising to 2.1</strong>, at 100% falling to 83% cleared, which puts it on WRAPPED CROSS's curve
+        (0.1 to 2.7, 84%) and inside the variant family. Deduction here is local, so area is what buys you more
+        places to be cornered. It is the only ladder in the game whose axis is size, and it spans the widest
+        range of any tuned ladder: 480 cells to 1,056.</p>
+
+      <div class="note">
+        <p class="note-h">HP is not a dial here, and it looks like the obvious one</p>
+        <p>This mode's characteristic gamble is "exactly one of these <em>k</em> cells holds a tier <em>T</em>,
+          the rest are empty", with <em>T</em> read straight off a dead creature's number. So a wrong guess is
+          one known, lethal blow rather than an accumulation — and the whole ladder at HP 12 and at HP 14 clears
+          the same share of every board as at HP 10, to the point. It keeps NORMAL's 10. Lock depth was tried
+          too, on the theory that it throttles the ring proof by holding your level down; it moved the clear
+          rate and barely touched the forced guesses, because the EXP economy gets you there anyway.</p>
+      </div>
+
+      <h4>DOMINOES — PAIRS, dealt as a full set <span class="free">·built</span></h4>
+      <p>Every creature still has exactly one creature beside it, but the pairings are now a
+        <strong>double-T domino set</strong>: every pair of tiers {a,b} with a ≤ b turns up exactly once,
+        doubles included. It is gated on clearing PAIRS rather than on a board count — it assumes the pairing
+        rule, the same argument as WRAPPED CROSS needing both its parents.</p>
+
+      <div class="note">
+        <p class="note-h">The set decides the distribution, so it is the Sudoku situation</p>
+        <p>A double-T set carries every tier exactly <strong>T+1 times</strong> — T−1 tiles pairing it with
+          each other tier, plus its own double, which carries two. So <span class="m">quantity</span> is flat
+          by construction and is not a dial at all; <span class="m">ladders.py</span> branches around its own
+          distribution path for this type exactly as it does for Sudoku. That flat curve is EXTREME's whole
+          lever, inherited for free: a tier 6 is as common as a tier 1.</p>
+      </div>
+
+      <p>What it hands the player is bookkeeping. One open creature identifies a whole <em>tile</em>, not half
+        of one — its own tier you fought, and its partner's tier is its number. The set is finite and known
+        from the first move, so a tile you have found is one you no longer have to fear: there is exactly one
+        five-double, and once a pair reads 5—5 no other five stands beside a five. That reasoning is left to
+        the player rather than put in <span class="m">safeCells</span>, the same call Sudoku makes, and it is
+        the obvious thing to measure next.</p>
+
+      <h4>No blanks, and the reason is structural</h4>
+      <p>A [0|x] tile is a creature whose partner is empty ground, which breaks the one-creature-neighbour
+        rule both of PAIRS's Sweep proofs rest on. Worse, a blank half is drawn as ordinary floor with nothing
+        to tell it apart, so a quarter of a double-six set would be tiles the player cannot verify — and
+        [0|0] is invisible in principle. The set bookkeeping <em>is</em> the mode, and a set with holes in it
+        is the one thing it cannot have.</p>
+
+      <div class="note warn">
+        <p class="note-h">Six tiers on every board, so density is nearly the whole dial</p>
+        <p>Every board is a <strong>double-six set</strong> — 21 tiles, seven of each tier — or several
+          copies of one. The tier count never moves, so the ladder is copies of the set and how tightly they
+          are packed. That second one turned out to dominate. With the honest player from
+          <span class="m">sim:spells</span>, four sets on board 10 cleared <strong>88% at 22.5% density and
+          45% at 25%</strong> — the steepest cliff of any ladder measured, because a flat six-tier set makes
+          every forced guess as likely to land on a tier 6 as a tier 1. The set count barely moved it: topping
+          out at three, four or five sets all collapsed at 25%.</p>
+        <p>So the band runs 18.5% to 23.5%, well under the packing ceiling, which is left to the scaling
+          boards. Over 60 seeds a board: <strong>0.1 forced guesses rising to 2.2, 98% cleared falling to
+          70%</strong> — harder than PAIRS's 83%, which is right for the ladder you reach by clearing it.</p>
+        <p class="dim" style="font-size:.9rem">Two things measured on the way there are still true.
+          Double-nine does not fit a multi-set ladder at all: at 90 creatures a set, the largest board holds
+          five. And HP is no rescue on a flat curve — a double-eight ladder cleared 53%, 53% and 55% of its
+          board 10 at HP 10, 14 and 18.</p>
+      </div>
+
+      <p>Between one set count and the next the creature count cannot move, so the <em>only</em> way to raise
+        density is a smaller board — boards 6 to 8 hold the same 126 creatures on 594 cells shrinking to 561.
+        It is the one ladder in the game that gets harder by getting smaller.</p>
+
+      <h4>PACKS — PAIRS, grown to groups of six <span class="free">·built</span></h4>
+      <p>Creatures travel in <strong>packs of six, one of every tier</strong>, all touching, and no two packs
+        touch. That is PAIRS's rule with six in place of two — "exactly one creature neighbour" is the same
+        statement as "connected groups of two that may not touch". It is gated on clearing PAIRS, like
+        DOMINOES. "All touch" has to mean <em>connected</em>: the most cells that are all mutually adjacent is
+        four on a square grid and three on hex. Pack shapes are loose — grown a random neighbour at a time, so
+        an L or a snake is as legal as a block.</p>
+
+      <div class="note">
+        <p class="note-h">A pack is a group of creatures standing together, so membership is never hidden</p>
+        <p>Packs never touch, so a pack is exactly a connected group of creatures and needs no link drawn. A
+          covered cell beside a creature is a packmate or empty ground. A packmate is one of the tiers that pack
+          has not shown yet, so once the strongest missing tier is within your level the whole ring is free —
+          and a pack with all six found is ringed by empty ground at <em>any</em> level, PAIRS's "met its
+          partner" proof grown. Both are one number, <span class="m">missingFrom</span>, and Sweep reads it.
+          Neither runs away: a freed ring holds packmates and blank ground only, so a trigger finishes one
+          pack and stops.</p>
+      </div>
+
+      <div class="note warn">
+        <p class="note-h">The opposite of PAIRS: packs leave the board open</p>
+        <p>Pairing spreads creatures evenly and gives the game its smallest openings. Packs of six are big
+          clusters, and clustering is what makes empty ground: on 30x16 at 25% density, cells with nothing
+          around them rise from 9.4% on a uniform board to 23.3%. In the real engine board 1's opening is a
+          median <strong>26% of the board</strong>, against NORMAL's 9%. The packing ceiling is not what binds
+          it — six cells have far less rim per creature than two, and 36% lays down on every seed measured —
+          so density is free to be the dial.</p>
+        <p>First guess was 26–34%, reasoning from the open ground; it cleared 35% of board 10. The flat curve
+          is what that missed — one of every tier per pack makes a tier 6 as common as a tier 1. Measured with
+          the honest player taught the rule, 120 seeds a board, the ladder runs 22.5–31.6%: <strong>0.2 forced
+          guesses rising to 5.2, 99% cleared falling to 70%</strong>, DOMINOES's 70% at the top. The guesses
+          run well ahead of the clear rate, which is the CHECKERBOARD and DUNGEON signature a third time: a
+          guess beside a pack is capped by what the pack has not shown, so it is cheaper.</p>
+      </div>
+
+      <p>Packs come in sixes, so one pack is 1.25 density points on a 480-cell board, and a schedule held on
+        one size rounded neighbouring boards to the same board. The board grows a row or a column every step
+        for granularity rather than difficulty.</p>
 
       <h4>Wrap-around <span class="free">·built</span></h4>
       <p>Two ladders, <strong>RING</strong> (a cylinder — left and right joined) and <strong>TORUS</strong> (every
@@ -1687,6 +1855,23 @@ footer code{font-size:.85em}
                    laneY + Math.floor(i / perRow) * rowH];
     });
     pos.huge_blind = [col[3], laneY + Math.ceil(counted.length/perRow) * rowH + 14];
+
+    /* Every other ladder gated on TYPES rather than on a board count goes on
+       the same row as HUGE x BLIND, left to right, and its arrows come down to
+       it from its parents in the lane above.
+
+       Placed by rule rather than by name, because the graph only ever draws a
+       ladder it has a position for - and WRAPPED CROSS, the first variant
+       gated on its parents, never got one, so it had been missing from this
+       graph since it shipped, with nothing to say so. DOMINOES would have been
+       the second. Anything added to UNLOCKS with parents now lands here
+       without anyone having to remember this block exists. */
+    var derivedX = 10;
+    LAD.forEach(function(t){
+      if (pos[t.id] || t.requires_boards || !(t.requires || []).length) return;
+      pos[t.id] = [derivedX, pos.huge_blind[1]];
+      derivedX += bw + 32;
+    });
     var H = pos.huge_blind[1] + bh + 16;
 
     var arrow = function(from, to){
@@ -1704,7 +1889,7 @@ footer code{font-size:.85em}
 
     var s = '<svg viewBox="0 0 '+W+' '+H+'" role="img" ' +
             'aria-label="Game type unlock graph: a branching main line gated on clearing ' +
-            'types, and eight variant ladders gated on boards cleared anywhere">';
+            'types, and ' + counted.length + ' variant ladders gated on boards cleared anywhere">';
     s += '<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">' +
          '<path d="M0 0 L8 4 L0 8 z" fill="var(--muted)"/></marker></defs>';
 
@@ -2277,10 +2462,16 @@ footer code{font-size:.85em}
                   face:'Heavy condensed', wave:'saw', oct:'o6'},
     arcane:      {floor:'#06211f', ink:'#bfe9e4', hot:'#4fe0cf', pip:'hex',
                   face:'Humanist sans', wave:'triangle', oct:'o6'},
-    oracle:      {floor:'#140b26', ink:'#dcd0f5', hot:'#c08bff', pip:'diamond',
+    oracle:      {floor:'#140b26', ink:'#dcd0f5', hot:'#fa4f7a', pip:'diamond',
                   face:'Angular display', wave:'pulse 12%', oct:'o5'},
     checker:     {floor:'#12161f', ink:'#e2e8f4', hot:'#ffd166', pip:'square',
                   face:'Humanist sans', wave:'square', oct:'o5'},
+    pairs:       {floor:'#25100a', ink:'#f7d6c6', hot:'#ffc23d', pip:'ringDiamond',
+                  face:'Rounded geometric', wave:'triangle', oct:'o5'},
+    dominoes:    {floor:'#15130f', ink:'#efe6d0', hot:'#ff4d6d', pip:'circle',
+                  face:'Humanist sans', wave:'square', oct:'o4'},
+    packs:       {floor:'#0f141b', ink:'#dbe4ee', hot:'#ffb347', pip:'diamond',
+                  face:'Wide slab', wave:'square', oct:'o4'},
     hive:        {floor:'#260a13', ink:'#f2c9d3', hot:'#ff7a9c', pip:'hex',
                   face:'Geometric wide', wave:'triangle', oct:'o5'},
     wraparound:  {floor:'#061622', ink:'#c6e4f5', hot:'#4fb8f0', pip:'circle',
@@ -2297,7 +2488,7 @@ footer code{font-size:.85em}
                   face:'Rounded slab', wave:'noise-warm', oct:'o4'},
     dungeon:     {floor:'#161020', ink:'#e2d6f0', hot:'#ffb86b', pip:'cross',
                   face:'Blackletter-lite', wave:'pulse 12%', oct:'o4'},
-    blind:       {floor:'#1a1a1a', ink:'#e8e8e8', hot:'#9fd8ff', pip:'ring',
+    blind:       {floor:'#1a1a1a', ink:'#e8e8e8', hot:'#3fb8f0', pip:'ring',
                   face:'Mono', wave:'noise-tinted', oct:'o5'},
     huge_blind:  {floor:'#14181a', ink:'#dde3e6', hot:'#7fb4d8', pip:'ring-diamond',
                   face:'Mono wide', wave:'noise', oct:'o4'}

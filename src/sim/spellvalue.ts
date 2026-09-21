@@ -35,6 +35,8 @@ import { Game } from '../engine/game.js';
 import { SPELLS, type SpellId } from '../engine/spells.js';
 import type { Cell } from '../engine/types.js';
 import { hiddenCap, shadeOf } from '../engine/checker.js';
+import { isPaired, ringIsFree } from '../engine/pairs.js';
+import { missingFrom } from '../engine/packs.js';
 
 /**
  * How the player spends, if they spend at all.
@@ -213,7 +215,122 @@ function nameWhatIsCertain(game: Game): boolean {
     game.setMark(cell.x, cell.y, Math.min(9, c.residual));
     learned = true;
   }
+  const paired = namePairs(game);
+  return namePacks(game) || paired || learned;
+}
+
+/**
+ * What the pairing rule names, which is a great deal and none of it arithmetic.
+ *
+ * Taught to the harness for the same reason the colour bound was: a real
+ * player on that board can see the rule, and measuring the ladder with a
+ * player who could not would have been measuring a different mode and would
+ * have tuned it far too sparse.
+ *
+ * Two reads, and neither needs a number subtracted from anything:
+ *
+ *   Met its partner — an open creature beside an open creature has found the
+ *   one creature it is allowed to touch, so every other neighbour is empty
+ *   ground and can be opened at any level. This is the crater that makes
+ *   clearing a pair worth doing.
+ *
+ *   Last candidate standing — if the partner is still covered and only one
+ *   covered neighbour is left, that cell IS the partner, and its tier is the
+ *   creature's own number exactly. The pairing equivalent of "a number with
+ *   one covered neighbour has named it", and it fires far more often, because
+ *   a creature's ring empties out fast once the cells around it open.
+ */
+function namePairs(game: Game): boolean {
+  if (!isPaired(game.config.placement)) return false;
+  let learned = false;
+
+  for (const cell of game.grid.flat()) {
+    if (!cell.present || !cell.open || cell.tier === 0) continue;
+    const ns = game.neighboursOf(cell);
+    const covered = ns.filter((n) => !n.open);
+    if (!covered.length) continue;
+
+    if (ns.some((n) => n.open && n.tier > 0)) {
+      // The partner is accounted for; the rest of the ring is blank ground.
+      for (const n of covered) {
+        if (game.status !== 'playing') break;
+        game.open(n.x, n.y);
+        learned = true;
+      }
+      continue;
+    }
+    // Still out there, so it is one of the covered cells — and if that is the
+    // only one left, it is named without a guess.
+    if (covered.length === 1 && covered[0]!.mark === 0 && cell.num > 0) {
+      game.setMark(covered[0]!.x, covered[0]!.y, Math.min(9, cell.num));
+      learned = true;
+    }
+  }
   return learned;
+}
+
+/**
+ * What the pack rule names. Taught to the harness for PAIRS's reason: a real
+ * player can see which creatures stand together, and a harness that could not
+ * would tune the ladder against a different mode.
+ *
+ * The ring proof — "every covered neighbour is a packmate, and a packmate is
+ * one of the tiers still missing" — is read through the engine's own
+ * `missingFrom` in `safeToOpen` and `bestGuess`. What this adds is the one read
+ * that names a tier rather than bounding it: a piece of a pack showing all but
+ * one tier has exactly one creature left, and it must touch the piece, since a
+ * pack is connected and the rest are found. If only one covered cell touches
+ * the piece, that cell IS the missing tier.
+ */
+function namePacks(game: Game): boolean {
+  if (game.config.placement !== 'packs') return false;
+  const tiers = game.config.tiers;
+  const done = new Set<Cell>();
+  let learned = false;
+
+  for (const cell of game.grid.flat()) {
+    if (!cell.present || !cell.open || cell.tier === 0 || done.has(cell)) continue;
+    const piece: Cell[] = [cell];
+    done.add(cell);
+    for (let i = 0; i < piece.length; i++) {
+      for (const n of game.neighboursOf(piece[i]!)) {
+        if (n.open && n.tier > 0 && !done.has(n)) { done.add(n); piece.push(n); }
+      }
+    }
+    if (piece.length !== tiers - 1) continue;
+    const rim = new Set<Cell>();
+    for (const c of piece) for (const n of game.neighboursOf(c)) if (!n.open) rim.add(n);
+    if (rim.size !== 1) continue;
+    const [only] = [...rim];
+    const found = new Set(piece.map((c) => c.tier));
+    let missing = 0;
+    for (let t = 1; t <= tiers; t++) if (!found.has(t)) missing = t;
+    if (only!.mark === 0 && missing > 0) {
+      game.setMark(only!.x, only!.y, missing);
+      learned = true;
+    }
+  }
+  return learned;
+}
+
+/**
+ * The highest tier each covered cell could be, as far as the packs beside it
+ * can say — or nothing, off a pack board or away from one. A covered neighbour
+ * of an open creature is a packmate or empty, so it is capped by the highest
+ * tier that pack has not shown yet.
+ */
+function packCaps(game: Game): Map<Cell, number> {
+  const caps = new Map<Cell, number>();
+  if (game.config.placement !== 'packs') return caps;
+  const gaps = missingFrom(game.grid.flat(), (c) => game.neighboursOf(c), game.config.tiers);
+  for (const [cell, gap] of gaps) {
+    for (const n of game.neighboursOf(cell)) {
+      if (n.open) continue;
+      const seen = caps.get(n);
+      if (seen === undefined || gap < seen) caps.set(n, gap);
+    }
+  }
+  return caps;
 }
 
 /**
@@ -260,6 +377,23 @@ function safeToOpen(game: Game, constraints: Constraint[]): Cell[] {
     // is not, which is the shape of deduction unique to this board.
     for (const n of c.unknown) if (capOf(game, c, n) <= level) safe.add(n);
   }
+
+  // The pairing ring, read through the engine's own proof rather than a copy
+  // of it — a second implementation of a rule this load-bearing is a second
+  // place for it to drift. A creature's number is its partner's tier, so at or
+  // below your level the whole ring around it is free.
+  if (isPaired(game.config.placement)) {
+    for (const cell of game.grid.flat()) {
+      if (!cell.present || !cell.open || cell.tier === 0) continue;
+      const ns = game.neighboursOf(cell);
+      if (!ringIsFree(cell, ns, level)) continue;
+      for (const n of ns) if (!n.open) safe.add(n);
+    }
+  }
+
+  // The pack ring, the same way: capped by the highest tier the pack beside it
+  // still has to show, which is 0 once the pack is whole.
+  for (const [cell, cap] of packCaps(game)) if (cap <= level) safe.add(cell);
   return [...safe];
 }
 
@@ -302,6 +436,12 @@ function bestGuess(game: Game, constraints: Constraint[]): Cell | null {
       const seenEach = mean.get(n);
       if (seenEach === undefined || each < seenEach) mean.set(n, each);
     }
+  }
+
+  // A player beside a pack knows what the pack still has to show.
+  for (const [cell, cap] of packCaps(game)) {
+    const seen = ceiling.get(cell);
+    if (seen === undefined || cap < seen) ceiling.set(cell, cap);
   }
 
   let best: Cell | null = null;

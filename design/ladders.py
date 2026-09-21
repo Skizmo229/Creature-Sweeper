@@ -300,6 +300,170 @@ TYPES = [
         boss=None,
     ),
     dict(
+        id="pairs", name="PAIRS", tint="#b5482a", archetype="descending",
+        axis="Size, at a density that cannot move",
+        blurb="Every creature has exactly one creature beside it. That sounds like a rule about "
+              "couples and is really a rule about packing: the occupied cells are adjacent pairs, "
+              "and no two pairs may touch, because a contact would give the creatures either side "
+              "of it a second neighbour. So a creature's neighbours are its partner and empty "
+              "ground - which means a creature's own number IS its partner's tier, exactly, with "
+              "no arithmetic at all. Kill anything and it names its partner; find both halves of a "
+              "pair and the whole ring around them is proven empty at any level. It plays tighter "
+              "than NORMAL at the same density and then comes apart faster than anything else in "
+              "the game: the spacing the rule forces leaves fewer blank cells and a smaller "
+              "opening, and every pair you take detonates about seven cells of certainty. It is "
+              "the only ladder in the game whose difficulty axis is size, and not by choice: the "
+              "packing has a hard ceiling near 25%, so density has nowhere to go and the board "
+              "grows instead - from 480 cells to 1056, the widest span of any tuned ladder.",
+        placement="pairs",
+        # SIZE IS THE AXIS, and it is the only ladder here where that was
+        # forced rather than chosen. Every other variant compensates for an
+        # easier board by packing it; this one cannot, because its own rule
+        # caps how tightly it can be packed. See the density note below. What
+        # is left is area: deduction on this board is local, so a bigger board
+        # is more places to be cornered, and the honest player's forced guesses
+        # track cells almost linearly where they barely moved with density.
+        size=[(30,16),(32,17),(33,18),(35,19),(36,20),(38,21),(40,22),(41,23),(43,23),(44,24)],
+        tiers=[5]*10,
+        # Bounded at BOTH ends, which is new here, and the ceiling is the
+        # binding one.
+        #
+        # THE CEILING IS STRUCTURAL. Dominoes that may not touch cannot exceed
+        # two cells in every six (33.3%), and a random lay-down jams far below
+        # that -- 24.8-25.6% over 200 seeds across these board sizes. The quota
+        # has to be landed EXACTLY, because C_k assumed it, so the schedule
+        # stops where placement is still reliable rather than where the board
+        # stops being a puzzle. At 26% it places on every seed within 40
+        # restarts; at 28% on one seed in four.
+        #
+        # THE FLOOR WAS A MEASUREMENT AND IT WENT THE OPPOSITE WAY TO THE
+        # GUESS. The rule was expected to give the board away -- sparse,
+        # clustered, big voids. It does the reverse: the exclusion ring around
+        # every pair spreads the creatures EVENLY, and clustering is what makes
+        # a zero-region, so the auto-opening comes out 30-65% SMALLER than a
+        # uniform board of the same density (6.9% against 10.0% at 20.6%), and
+        # cells hiding nothing at all drop from 18.8% to 10.7%.
+        #
+        # So the range left is four points, and inside it density does almost
+        # nothing: measured with the honest player from `sim:spells`, walking
+        # 20% to 25% on a FIXED board moved the forced guesses from 0.0 to 1.5
+        # and left the first six boards at 0.0 -- a ladder with nothing in it,
+        # the same failure ARCANE had before it was retuned. Growing the board
+        # across the same span gives 0.2 rising to 2.1, which is the curve
+        # wanted. Density is still scheduled because it is free to move and
+        # every point helps; it is simply not what carries this ladder.
+        density=[.212,.219,.225,.230,.234,.238,.242,.245,.248,.250],
+        # HP IS NOT A DIAL HERE, and that is worth stating because it looks
+        # like the obvious one. This mode's characteristic gamble is "exactly
+        # one of these k cells holds a tier T, the rest are empty" with T read
+        # straight off a dead creature's number -- so a wrong guess is one
+        # known, lethal blow rather than an accumulation. Measured: the whole
+        # ladder at HP 12 and at HP 14 clears the same share of every board as
+        # at HP 10, to the point. It keeps NORMAL's 10.
+        hp=[10]*10,
+        lock=[2,2,2,2,2,3,3,3,3,3],
+        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
+        boss=None,
+        # The continuation cannot climb density the way every other variant
+        # does -- the packing ceiling binds, not the point a board stops being
+        # a puzzle -- so it is pinned at the tuned ladder's last step and the
+        # schedule grows the board instead, which is the axis anyway.
+        ceiling=dict(density_cap=.250),
+    ),
+    dict(
+        id="dominoes", name="DOMINOES", tint="#d8cfb6", archetype="flat",
+        axis="Copies of a double-six set, packed tighter",
+        blurb="PAIRS, dealt as a full double-six domino set. Every creature still has exactly "
+              "one creature beside it, but now the pairings are the set: every pair of tiers "
+              "{a,b} from 1 to 6 turns up exactly once, doubles included - 21 tiles, seven of "
+              "every tier. So a tier 6 is no rarer than a tier 1, every board carries exactly "
+              "six tiers, and one kill names a whole tile, since you fought the creature and "
+              "its number is its partner. The set is finite and known from the first move, so "
+              "the tiles you have found are the tiles you no longer have to fear: there is "
+              "exactly one five-double, and once a pair reads 5 - 5 no other five stands beside "
+              "a five. No blanks - a blank half would be indistinguishable from empty floor, "
+              "and a set you cannot verify is not a set. The ladder deals one set, then more "
+              "copies of it, on boards packed a little tighter each time.",
+        placement="dominoes",
+        # SIX TIERS ON EVERY BOARD - a double-six set, the classic one - so the
+        # tier count is not a dial here at all. That leaves exactly two: how
+        # many copies of the set, and how tightly the board packs them.
+        #
+        # Density is the one that matters, and it matters more on this board
+        # than on any other measured so far. With the honest player from
+        # `sim:spells`, four sets at the top cleared board 10 88% of the time
+        # at 22.5% density and 45% at 25% - a steeper cliff than any ladder in
+        # the game, because a flat six-tier set makes every forced guess as
+        # likely to land on a tier 6 as a tier 1. The set COUNT barely moved
+        # it: topping out at three, four or five sets all collapsed at 25%.
+        # So the band runs 18.5% to 23.5%, well under the packing ceiling, and
+        # the ceiling is left to the scaling boards.
+        #
+        # Measured over 60 seeds a board: 0.1 forced guesses rising to 2.2,
+        # 98% cleared falling to 70%. Harder than PAIRS's 83%, which is right
+        # for the ladder you reach by clearing PAIRS.
+        tiers=[6]*10,
+        sets=[1,1,2,2,2,3,3,3,4,4],
+        # Derived, not hand-picked: each is the board nearest the target
+        # density at a sane aspect. The creature count comes in whole sets, so
+        # between one set count and the next the ONLY way to raise density is
+        # a smaller board - boards 6 to 8 hold the same 126 creatures on 594
+        # cells shrinking to 561. It is the one ladder in the game that gets
+        # harder by getting smaller.
+        size=[(19,12),(20,11),(27,16),(26,16),(27,15),(33,18),(32,18),(33,17),(35,21),(34,21)],
+        # Not consulted by `board_row` for this type - the set decides the
+        # quantity and the board decides the density. The continuation reads
+        # it, though: each scaling board adds a set and carries this schedule
+        # on toward the packing ceiling, which is where the opt-in boards live.
+        density=[0.185,0.1906,0.1961,0.2017,0.2072,0.2128,0.2183,0.2239,0.2294,0.235],
+        hp=[10]*10,
+        lock=[2,2,2,2,2,3,3,3,3,3],
+        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
+        boss=None,
+        ceiling=dict(density_cap=.250),
+    ),
+    dict(
+        id="packs", name="PACKS", tint="#58687c", archetype="flat",
+        axis="Density, on a board the packs leave mostly open",
+        blurb="Creatures travel in packs of six - one of every tier, all touching - and no two "
+              "packs touch. So a pack is exactly a group of creatures standing together, and a "
+              "covered cell beside one is a packmate or empty ground, never anything else. Each "
+              "pack holds every tier once, so the tiers you have found say which are still out "
+              "there: once the strongest one missing is within your level the ground around the "
+              "pack is free, and a pack with all six found is ringed by empty ground at any "
+              "level. Packs cluster, and clustering is what leaves ground open, so the board runs "
+              "dense to stay a puzzle - and a tier 6 is as common as a tier 1.",
+        placement="packs",
+        # DENSITY IS THE AXIS, and the board grows a little every step as well
+        # -- not for difficulty but for granularity. Creatures come in packs of
+        # six, so on a 480-cell board one pack is 1.25 density points, and a
+        # schedule held on one size rounded neighbouring boards to the SAME
+        # board. Growing a column or a row each step gives every board its own
+        # pack count.
+        #
+        # Measured with the honest player from `sim:spells`, taught the pack
+        # rule, 120 seeds a board: 0.2 forced guesses rising to 5.2, 99%
+        # cleared falling to 70% -- DOMINOES's 70% at the top, the other ladder
+        # you reach by clearing PAIRS.
+        #
+        # Two things about how it got here. First guess was NORMAL-plus-a-bit
+        # (26-34%), because packs leave so much ground open; it cleared 35% of
+        # board 10 at 7.2 forced guesses. The flat curve is what that missed: a
+        # tier 6 is as common as a tier 1, so an open board is still an
+        # expensive one to guess on. Second, the guess count here runs well
+        # ahead of the clear rate -- 5.2 guesses against DOMINOES's 2.2 at the
+        # same 70% -- which is the CHECKERBOARD and DUNGEON signature again: a
+        # guess beside a pack is capped by the tiers that pack has not shown,
+        # so it is a cheaper guess. More guesses, each worth less.
+        size=[(30,16),(30,16),(31,16),(31,17),(32,17),(33,17),(33,18),(34,18),(35,19),(36,19)],
+        tiers=[6]*10,
+        density=[.230,.240,.250,.260,.270,.280,.290,.300,.310,.320],
+        hp=[10]*10,
+        lock=[2,2,2,2,2,3,3,3,3,3],
+        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
+        boss=None,
+    ),
+    dict(
         id="hive", name="HIVE", tint="#a8324f", archetype="descending",
         axis="Density, on a six-neighbour grid",
         blurb="Hexagons. Every cell has six neighbours instead of eight, so numbers run about a "
@@ -692,6 +856,32 @@ def extend(t):
             # cannot vouch for, so the schedule must stop above it.
             row["givens"] = max(over.get("givens_floor", 12),
                                 round(t["givens"][-1] + dgiv * i))
+        if t.get("placement") == "dominoes":
+            # A domino board's creatures come in whole sets, so the step past
+            # board 10 is one more set, and the board is sized to hold it at
+            # the density cap rather than extrapolated from the size schedule.
+            # Extrapolating is what every other ladder does and it is wrong
+            # here: the schedule's own growth would lay seven sets on a board
+            # sized for about six and run past the packing ceiling, which
+            # config.ts refuses outright. Once a set no longer fits the largest
+            # board there is simply no further step, and the loop ends there.
+            s_next = t["sets"][-1] + i
+            creatures = T * (T + 1) * s_next
+            # Keep the ladder's own landscape shape. Pinning the height at the
+            # ceiling and deriving the width was the first version, and it made
+            # the first scaling board 21x32 - a portrait board after ten
+            # landscape ones. Only once the natural shape stops fitting does
+            # the height go to the ceiling to buy width.
+            cells = creatures / row["density"]
+            h = min(max_h, max(1, round(math.sqrt(cells / 1.75))))
+            w = math.ceil(creatures / (row["density"] * h))
+            if w > max_w:
+                h = max_h
+                w = math.ceil(creatures / (row["density"] * h))
+                if w > max_w:
+                    break
+            row["size"] = (w, h)
+            row["sets"] = s_next
         if t.get("cells") is not None:
             # A carved shape's count is chosen, never measured - same 40% of
             # the bounding box the tuned ten hold, and still inside the margin
@@ -732,6 +922,16 @@ UNLOCKS = {
     "arcane": ["normal"],
     "oracle": ["arcane"],
     "checker": [],
+    "pairs": [],
+    # A variant of PAIRS that assumes you already know the pairing rule, so it
+    # is gated on having played it - the WRAPPED CROSS argument. It also costs
+    # nothing from the board-count budget, which is the one number in this
+    # file that can strand a save.
+    "dominoes": ["pairs"],
+    # PAIRS grown to groups of six. Same argument as DOMINOES: it assumes the
+    # "creatures stand in groups that may not touch" rule is already familiar,
+    # and gating on a type costs nothing from the board-count budget.
+    "packs": ["pairs"],
     "hive": [],
     "wraparound": [],
     "diamond": [],
@@ -762,8 +962,19 @@ UNLOCKS = {
 # end, because it belongs with the other shaped boards and the 5-board cadence
 # is what makes the sequence legible; SUDOKU and BLIND each moved up one step
 # to make room, and 65 is still five clear of the budget.
+#
+# PAIRS was fitted by extending the schedule DOWNWARD rather than upward, and
+# that is the whole reason it cost nothing. The obvious placement -- append it
+# at 70 -- would have spent the entire budget and left a save with no slack at
+# all, which is the one failure in this file that strands a player with nothing
+# to point at. Opening CHECKERBOARD at 15 instead adds an eleventh slot at the
+# cheap end, where a board is quick, and every threshold from HIVE upward is
+# exactly where it was. PAIRS sits second for the same reason CHECKERBOARD
+# leads: both HAND the player a rule rather than taking something away, so they
+# belong together at the gentle end of the lane.
 UNLOCK_BOARDS = {
-    "checker": 20,
+    "checker": 15,
+    "pairs": 20,
     "hive": 25,
     "wraparound": 30,
     "diamond": 35,
@@ -786,7 +997,7 @@ MAGIC = ["arcane", "oracle"]
 # that a ladder can change a rule at all. The list is menu order, not a
 # taxonomy -- a placement rule sits here beside the topologies and the shapes
 # because that is where a player meets it.
-TOPOLOGY = ["checker", "hive", "wraparound", "diamond", "donut", "cross",
+TOPOLOGY = ["checker", "pairs", "dominoes", "packs", "hive", "wraparound", "diamond", "donut", "cross",
             "wrapped_cross", "cave", "dungeon"]
 PUZZLE = ["sudoku"]
 POSTGAME = ["blind", "huge_blind"]
@@ -805,7 +1016,8 @@ def carved_room(shape, w, h):
     return (w - 2) * (h - 2)
 
 
-def board_row(t, n, W, H, T, lock, alpha0, hp, density, boss, givens, cells_override):
+def board_row(t, n, W, H, T, lock, alpha0, hp, density, boss, givens, cells_override,
+              sets=None):
     """One board's row. Shared by the tuned ten and the continuation, because a
     board past 10 is the same kind of object built from the same rules - only
     the schedule feeding it differs."""
@@ -829,8 +1041,37 @@ def board_row(t, n, W, H, T, lock, alpha0, hp, density, boss, givens, cells_over
         # tiers and nine empties, on every board, so C_k never moves and
         # density is not a dial here - the givens are.
         q = [9] * T
+    elif t.get("placement") == "dominoes":
+        # The same situation as Sudoku: the rule IS the distribution. A
+        # double-T set carries every tier exactly T+1 times, so the quantity is
+        # flat by construction and the schedule's density is not consulted at
+        # all - it falls out of how big a board the set is laid on. `sets`
+        # copies of the set scale the count without bending the curve.
+        q = [(T + 1) * sets] * T
     else:
         M = round(density * cells)
+        if t.get("placement") == "packs":
+            # The rule IS the distribution, as for DOMINOES: every pack is one
+            # of each tier, so n packs is n of every tier and the curve is flat
+            # by construction. Unlike a domino set a pack is small, so density
+            # still drives the count directly - rounded DOWN to whole packs,
+            # the direction that can never push a board past its packing.
+            q = [M // T] * T
+            C = cumulative_exp(q)
+            ea = exp_array(q, lock, alpha0)
+            return dict(
+                n=n, w=W, h=H, cells=cells, monsters=sum(q),
+                density=round(100 * sum(q) / cells, 1),
+                tiers=T, quantity=q, hp=hp, lock=lock, exp=ea, givens=givens,
+                total_exp=C[-1], empty=cells - sum(q),
+            )
+        if t.get("placement") == "pairs":
+            # Every creature has exactly one partner, so an odd total leaves
+            # one of them with nobody. Rounded DOWN rather than up, because the
+            # packing this rule needs has a ceiling and the schedule already
+            # runs close to it -- a quota nudged upward is the one direction
+            # that can make a board fail to generate.
+            M -= M % 2
         if t["archetype"] == "flat":
             w = shape_flat(T if boss is None else T - 1)
         else:
@@ -892,6 +1133,7 @@ def build():
                 boss=t["boss"][n] if t["boss"] else None,
                 givens=t["givens"][n] if t.get("givens") else None,
                 cells_override=t["cells"][n] if t.get("cells") else None,
+                sets=t["sets"][n] if t.get("sets") else None,
             ))
         monotone(boards)
 
@@ -911,6 +1153,7 @@ def build():
                 lock=row["lock"], alpha0=row["alpha0"], hp=row["hp"],
                 density=row["density"], boss=row.get("boss"),
                 givens=row.get("givens"), cells_override=row.get("cells"),
+                sets=row.get("sets"),
             )
             # A board that offers LESS exp than the one before it cannot be a
             # step up, and its thresholds could not be lifted to match even if

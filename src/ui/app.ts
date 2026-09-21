@@ -253,6 +253,7 @@ export class App {
       font: this.settings.fontStack(this.typeId),
       highlight: this.settings.highlightStyle(this.typeId),
       strikeDefeated: p.strikeDefeated,
+      hoverDefeated: p.hoverDefeated,
     };
   }
 

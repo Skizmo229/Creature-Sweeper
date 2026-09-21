@@ -155,12 +155,22 @@ export type OpeningRule =
  * 'checker' colours the board and sends even tiers to the light squares and
  * odd tiers to the dark ones, so a cell's colour halves the alphabet of tiers
  * it could be hiding; see `checker.ts`.
+ * 'pairs' gives every creature exactly one creature neighbour, which makes the
+ * occupied cells non-touching dominoes and makes a creature's own number its
+ * partner's tier; see `pairs.ts`.
+ * 'dominoes' is 'pairs' with the tiers dealt as a full domino set, every
+ * pairing {a,b} exactly once, which makes the distribution flat by
+ * construction; see `dominoes.ts`.
+ * 'packs' is 'pairs' grown to groups of one-of-every-tier: connected packs that
+ * may not touch, which again makes the distribution flat; see `packs.ts`.
  *
  * None of them touches `quantity`, which is why none of them can reach C_k:
  * a placement decides where a board's creatures stand, never how many there
- * are or what they are worth.
+ * are or what they are worth. 'pairs' comes closest and still does not — it
+ * requires the TOTAL to be even, which is a constraint on what `ladders.py`
+ * may ask for rather than something the placement changes.
  */
-export type Placement = 'uniform' | 'sudoku' | 'checker';
+export type Placement = 'uniform' | 'sudoku' | 'checker' | 'pairs' | 'dominoes' | 'packs';
 
 export interface BoardConfig {
   /** Game type id, e.g. "normal". */

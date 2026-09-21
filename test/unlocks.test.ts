@@ -87,8 +87,8 @@ describe('the shape of the graph', () => {
         .toBeGreaterThan(counted[i - 1]!.requires_boards);
     }
     expect(counted.map((t) => t.id)).toEqual(
-      ['checker', 'hive', 'wraparound', 'diamond', 'donut', 'cross', 'cave', 'dungeon',
-        'sudoku', 'blind'],
+      ['checker', 'pairs', 'hive', 'wraparound', 'diamond', 'donut', 'cross', 'cave',
+        'dungeon', 'sudoku', 'blind'],
     );
   });
 });

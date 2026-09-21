@@ -8,6 +8,9 @@
 
 import type { BoardConfig, OpeningRule, Placement } from './types.js';
 import { sideTotals } from './checker.js';
+import { PAIR_MAX_DENSITY } from './pairs.js';
+import { setsIn } from './dominoes.js';
+import { PACK_MAX_DENSITY, packsIn } from './packs.js';
 import { SPELLS, type SpellId, isSpellId, orderSpells } from './spells.js';
 
 /** One board's row as `ladders.py` emits it. */
@@ -263,6 +266,105 @@ function readChecker(type: LadderType, row: LadderBoard): 'checker' {
 }
 
 /**
+ * The pairing rule's structural requirements.
+ *
+ * Same argument as the checkerboard block above and the cave's cell count:
+ * neither of these would throw on a board, they would quietly produce a
+ * different mode from the one that was tuned, and a player cannot tell which
+ * one they are on.
+ *
+ * An EVEN total, because every creature has exactly one partner and an odd one
+ * has nobody. This is the only constraint pairing puts on `quantity`, and it
+ * is a much lighter one than the checkerboard's — pairing ignores tiers, so a
+ * tier 2 may partner a tier 7 and the distribution is left entirely alone.
+ * `ladders.py` rounds its quota down to even to meet it.
+ *
+ * And a density the packing can actually reach. Dominoes that may not touch
+ * jam well below a board's capacity, and the quota has to be hit EXACTLY
+ * because C_k assumed it — so a schedule that asked for too many would not
+ * produce a hard board, it would produce a board that fails to generate on
+ * some seeds and is mistuned on the rest. Refused here, with the arithmetic in
+ * the message, rather than deep inside a lay-down that ran out of room.
+ */
+function readPairs(type: LadderType, row: LadderBoard): 'pairs' {
+  const where = `${type.id}#${row.n}`;
+  const total = row.quantity.reduce((a, b) => a + b, 0);
+  if (total % 2 !== 0) {
+    throw new Error(
+      `${where}: ${total} creatures cannot pair up — every creature has ` +
+      `exactly one partner, so the total must be even`,
+    );
+  }
+  // Against the cells a creature may actually stand on, which on a shaped
+  // board is fewer than the bounding box and on a dungeon fewer again.
+  const share = total / row.cells;
+  if (share > PAIR_MAX_DENSITY) {
+    throw new Error(
+      `${where}: ${total} creatures on ${row.cells} cells is ` +
+      `${(100 * share).toFixed(1)}%, past the ${(100 * PAIR_MAX_DENSITY).toFixed(0)}% ` +
+      `a non-touching domino packing can be laid down reliably`,
+    );
+  }
+  return 'pairs';
+}
+
+/**
+ * The domino rule's structural requirements.
+ *
+ * Everything PAIRS requires, because a domino board IS a pairing board — the
+ * even total and the packing ceiling are checked by `readPairs` itself rather
+ * than restated here, so the two cannot drift. What this adds is the set.
+ *
+ * `quantity` must be exactly a whole number of double-T sets: flat, at T+1 of
+ * each tier per set. Same argument as the Sudoku block below and the
+ * checkerboard's balance: a board whose quantity were merely CLOSE to a set
+ * would still generate and still be tuned correctly — and would not be the
+ * mode, because the dealer could not lay a full set onto it. It is refused
+ * here, with the arithmetic, rather than on the first seed that tries.
+ */
+function readDominoes(type: LadderType, row: LadderBoard): 'dominoes' {
+  const where = `${type.id}#${row.n}`;
+  if (setsIn(row.tiers, row.quantity) === null) {
+    const per = row.tiers + 1;
+    throw new Error(
+      `${where}: quantity [${row.quantity.join(',')}] is not a whole number of ` +
+      `double-${row.tiers} domino sets — a set is ${per} of every tier, so the ` +
+      `quantity has to be flat and a multiple of ${per}`,
+    );
+  }
+  readPairs(type, row);
+  return 'dominoes';
+}
+
+/**
+ * The pack rule's structural requirements, for the same reason as the domino
+ * set's: a quantity merely CLOSE to whole packs would still be tuned correctly
+ * and still generate — and would not be the mode, because the dealer could not
+ * put one of every tier into every pack.
+ *
+ * `quantity` must be flat, n of every tier for n packs. And the density must be
+ * one the packing can reach, because the quota has to be landed exactly.
+ */
+function readPacks(type: LadderType, row: LadderBoard): 'packs' {
+  const where = `${type.id}#${row.n}`;
+  if (packsIn(row.tiers, row.quantity) === null) {
+    throw new Error(
+      `${where}: quantity [${row.quantity.join(',')}] is not a whole number of packs — ` +
+      `a pack is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
+    );
+  }
+  const share = row.monsters / row.cells;
+  if (share > PACK_MAX_DENSITY) {
+    throw new Error(
+      `${where}: ${row.monsters} creatures on ${row.cells} cells is ` +
+      `${(100 * share).toFixed(1)}%, past the ${(100 * PACK_MAX_DENSITY).toFixed(0)}% ` +
+      `non-touching packs can be laid down reliably`,
+    );
+  }
+  return 'packs';
+}
+
+/**
  * Sudoku placement carries hard structural requirements, because the rule is
  * what fixes the quantities and therefore C_k. A board that failed any of
  * these would not throw during generation — it would just be tuned against
@@ -271,10 +373,17 @@ function readChecker(type: LadderType, row: LadderBoard): 'checker' {
  */
 function readPlacement(type: LadderType, row: LadderBoard): Placement {
   const raw = type.placement ?? 'uniform';
-  if (raw !== 'uniform' && raw !== 'sudoku' && raw !== 'checker') {
-    throw new Error(`${type.id}: unknown placement "${raw}" (uniform | sudoku | checker)`);
+  if (raw !== 'uniform' && raw !== 'sudoku' && raw !== 'checker' && raw !== 'pairs'
+      && raw !== 'dominoes' && raw !== 'packs') {
+    throw new Error(
+      `${type.id}: unknown placement "${raw}" ` +
+      `(uniform | sudoku | checker | pairs | dominoes | packs)`,
+    );
   }
   if (raw === 'checker') return readChecker(type, row);
+  if (raw === 'pairs') return readPairs(type, row);
+  if (raw === 'dominoes') return readDominoes(type, row);
+  if (raw === 'packs') return readPacks(type, row);
   if (raw !== 'sudoku') return raw;
 
   if (row.w !== 9 || row.h !== 9) {

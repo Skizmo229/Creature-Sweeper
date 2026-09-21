@@ -31,6 +31,8 @@ import {
   neighbours,
 } from './board.js';
 import { hiddenCap, shadeOf } from './checker.js';
+import { isPaired, ringIsFree } from './pairs.js';
+import { missingFrom } from './packs.js';
 import { mulberry32 } from './rng.js';
 
 export interface GameOptions {
@@ -234,6 +236,13 @@ export class Game {
     if (this.status !== 'playing' || this.level <= 0) return out;
     if (this.config.placement === 'sudoku') return this.markedSafe(useMarks);
     const checkered = this.config.placement === 'checker';
+    const paired = isPaired(this.config.placement);
+    // The highest tier each open creature's pack could still be hiding. Worked
+    // out once per call rather than per cell, because a pack's piece is shared
+    // by every creature in it.
+    const packGaps = this.config.placement === 'packs'
+      ? missingFrom(this.grid.flat(), (c) => this.neighboursOf(c), this.config.tiers)
+      : null;
     const seen = new Set<Cell>();
 
     for (const row of this.grid) {
@@ -285,6 +294,31 @@ export class Game {
         if (!proven && cell.census !== null) {
           const hiddenCreatures = cell.census - openCreatures;
           if (hiddenCreatures > 0 && hidden - (hiddenCreatures - 1) <= this.level) proven = true;
+        }
+
+        // Proven a fourth way, by pairing. A creature has exactly one creature
+        // neighbour, so an open one is surrounded by its partner and empty
+        // ground — and its own number IS that partner's tier, because nothing
+        // else beside it carries one. So the whole ring is free once either
+        // the partner is within your level or you have already met it.
+        //
+        // It folds into `proven` rather than standing beside it because it
+        // answers for the entire ring at once, which is what that flag means.
+        // See `ringIsFree` for why this cannot iterate: a freed ring holds the
+        // partner and otherwise blank ground, since no second pair may touch
+        // the first, so a trigger clears one domino and stops.
+        if (!proven && paired && ringIsFree(cell, ns, this.level)) proven = true;
+
+        // Proven a fifth way, by packs. Packs never touch, so every covered
+        // neighbour of an open creature is a packmate or empty ground, and a
+        // packmate is one of the tiers its pack has not shown yet. When the
+        // highest of those is within your level the ring is free — and when
+        // none is missing, the pack is whole and the ring is empty at ANY
+        // level. Like the pairing proof it cannot run away: a freed ring holds
+        // packmates and blank ground, so a trigger finishes one pack and stops.
+        if (!proven && packGaps) {
+          const gap = packGaps.get(cell);
+          if (gap !== undefined && gap <= this.level) proven = true;
         }
 
         // Claimed: the same bound, but only after trusting the player's marks.
