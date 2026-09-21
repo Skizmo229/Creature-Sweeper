@@ -13,16 +13,17 @@
 import type { Cell } from '../engine/types.js';
 import type { Game } from '../engine/game.js';
 import {
-  BOARD_OUTLINE, BOX_RULE, CENSUS_COLOR, GIVEN_COLOR, MARK_COLOR, MARK_OUTLINE, NOTE_COLOR,
-  OUT_OF_REACH_COLOR,
-  type TypeTheme, drawCreature,
+  BOARD_OUTLINE, BOND_COLOR, BOX_RULE, CENSUS_COLOR, GIVEN_COLOR, MARK_COLOR, MARK_OUTLINE,
+  NOTE_COLOR, OUT_OF_REACH_COLOR, PIP_SHAPES,
+  type PipShape, type TypeTheme, drawCreature, tierColor,
 } from './theme.js';
 import { hexAt, hexBoardSize, hexCentre, hexPoints, hexRadius, hexRowStep } from './hexgeom.js';
-import { DEFAULT_MAX_ZOOM, type HighlightStyle } from './settings.js';
+import { DEFAULT_MAX_ZOOM, type HighlightStyle, type HoverDefeated } from './settings.js';
 import type { VictorySource, VictorySprite } from './victory.js';
 import { hasNote } from '../engine/notes.js';
 import { SUDOKU_BOX, SUDOKU_SIZE } from '../engine/sudoku.js';
 import { shadeOf } from '../engine/checker.js';
+import { isPaired } from '../engine/pairs.js';
 
 /**
  * Floor used only by fit(), for boards too large to fit even when shrunk —
@@ -64,6 +65,11 @@ const HEX_EDGE_DIRS: ReadonlyArray<ReadonlyArray<readonly [number, number]>> = [
   [[1, -1], [1, 0], [1, 1], [0, 1], [-1, 0], [0, -1]],
 ];
 
+/** Narrow the hover setting to the branch that restyles the glyph. */
+function isPipShape(value: HoverDefeated): value is PipShape {
+  return (PIP_SHAPES as readonly string[]).includes(value);
+}
+
 /** A square cell's corners, clockwise from the top-left. */
 function squareCorners(cx: number, cy: number, half: number): Array<[number, number]> {
   return [
@@ -87,6 +93,8 @@ export interface BoardDisplay {
   highlight: HighlightStyle | null;
   /** Whether a defeated creature keeps its struck-through corner. */
   strikeDefeated: boolean;
+  /** What the cursor does to a creature already beaten. */
+  hoverDefeated: HoverDefeated;
 }
 
 export const DEFAULT_DISPLAY: BoardDisplay = {
@@ -94,6 +102,7 @@ export const DEFAULT_DISPLAY: BoardDisplay = {
   font: 'ui-monospace, monospace',
   highlight: 'neighbours',
   strikeDefeated: true,
+  hoverDefeated: 'none',
 };
 
 /**
@@ -469,6 +478,7 @@ export class BoardView {
     // something each rim cell paints half of its own bevel over.
     this.drawSilhouette(game);
     this.drawBoxRules(game);
+    this.drawBonds(game);
     this.drawSeams(game);
 
     if (this.hovered && game.status === 'playing' && this.display.highlight) {
@@ -673,6 +683,67 @@ export class BoardView {
     ctx.restore();
   }
 
+  /**
+   * Tie the two halves of every uncovered pair together.
+   *
+   * Only where BOTH are open, because that is exactly when the player knows
+   * which cell the partner is. One open creature tells you a partner exists
+   * and what tier it is — its own number says so — but not where, and drawing
+   * a line to it would hand over the one thing the mode asks you to work out.
+   *
+   * In its own pass after the cells, for the same reason the box rules are: a
+   * cell drawn later would paint over its neighbour's half of the line. It
+   * reads adjacency through `neighboursOf`, so a bond across a wrapped seam or
+   * between two hexes needs no special case — and the `>` on the flat index is
+   * what keeps each bond from being drawn twice, once from either end.
+   *
+   * A CONGO LINE is tied the same way, orthogonal contacts only. Two members
+   * orthogonally beside each other are consecutive in the line — the no-2x2
+   * rule makes that exact — so the ties draw the line as far as it is known and
+   * say nothing the board had not already. A diagonal contact is where a line
+   * turns a corner, and a tie there would be a link that does not exist.
+   */
+  private drawBonds(game: Game): void {
+    const congo = game.config.placement === 'congo';
+    if (!congo && !isPaired(game.config.placement)) return;
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.strokeStyle = BOND_COLOR;
+    ctx.lineWidth = Math.max(1, this.cellPx / 12);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+
+    const w = game.config.width;
+    for (const row of game.grid) {
+      for (const cell of row) {
+        if (!cell.present || !cell.open || cell.tier === 0) continue;
+        for (const n of game.neighboursOf(cell)) {
+          if (!n.open || n.tier === 0) continue;
+          if (n.y * w + n.x < cell.y * w + cell.x) continue;
+          if (congo && n.x !== cell.x && n.y !== cell.y) continue;
+          const a = this.centreOf(cell.x, cell.y);
+          const b = this.centreOf(n.x, n.y);
+          // A wrapped pair is adjacent in the rules and a board apart on
+          // screen, so joining the two centres would draw a line straight
+          // across the board. Only the near case is drawn; the seam itself
+          // already says the edges are joined.
+          if (Math.abs(a.cx - b.cx) > this.cellPx * 2
+            || Math.abs(a.cy - b.cy) > this.cellPx * 2) continue;
+          // Inset off both centres rather than joining them, so the tie sits
+          // in the gap between the two cells and neither glyph is painted
+          // over. The number on a creature here is its partner's tier, which
+          // is the most valuable thing on the board — a line through it would
+          // be structure obscuring the fact the structure is about.
+          const t = 0.3;
+          ctx.moveTo(a.cx + (b.cx - a.cx) * t, a.cy + (b.cy - a.cy) * t);
+          ctx.lineTo(b.cx - (b.cx - a.cx) * t, b.cy - (b.cy - a.cy) * t);
+        }
+      }
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
   private drawSeams(game: Game): void {
     const wrap = game.config.wrap;
     if (wrap === 'none') return;
@@ -724,6 +795,36 @@ export class BoardView {
    * Census sits in the top-left corner rather than the middle, so it can never
    * be confused with the cell's own number or a mark, both of which are centred.
    */
+  /**
+   * The hovered creature's level, written over its cell.
+   *
+   * Sized and placed like the cell's own number rather than like the Census
+   * badge, because this one REPLACES what the cell was showing instead of
+   * annotating it — so it should read as the cell's content, at the size the
+   * eye already expects a digit there.
+   *
+   * Two things keep it from being confused with the number it covers. It wears
+   * `tierColor`, the same global encoding the pips underneath it wear, which no
+   * `ink` or `hot` in the set comes near. And it carries a dark backing plate,
+   * because a tier-3 is gold and several floors are light enough that a gold
+   * digit on them alone would be thin.
+   */
+  private drawTierBadge(cell: Cell, box: { x: number; y: number; size: number }): void {
+    const ctx = this.ctx;
+    const { x, y, size } = box;
+    ctx.save();
+    ctx.fillStyle = 'rgba(6, 6, 10, 0.72)';
+    ctx.beginPath();
+    ctx.arc(x + size / 2, y + size / 2, size * 0.46, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = tierColor(cell.tier);
+    ctx.font = `bold ${Math.round(size * 0.74)}px ${this.display.font}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(cell.tier), x + size / 2, y + size / 2 + size * 0.04);
+    ctx.restore();
+  }
+
   private drawCensus(cell: Cell, cx: number, cy: number): void {
     const ctx = this.ctx;
     const box = this.contentBox(cx, cy);
@@ -834,6 +935,25 @@ export class BoardView {
     // same alpha reads as a bigger step there.
     if (this.washesCell(cell)) this.fillWash(0.17);
 
+    // The cursor, over a creature that is already dealt with. It reveals
+    // nothing — the pips under the cursor already say the tier — so this is
+    // presentation and it takes the cell before either branch below, which is
+    // what makes it one rule rather than two: "while you hover a beaten
+    // creature, it shows its level", whether the cell was showing its glyph or
+    // the number it was toggled to.
+    //
+    // Drawn in the LEVEL'S OWN COLOUR, which is the part that keeps it safe to
+    // read. A cell's number and a creature's level are both single digits, and
+    // on PAIRS both are live at once — the number there is the partner's
+    // level — so a digit that simply replaced another digit in the same ink
+    // would be a misread waiting to happen. `tierColor` is already the global
+    // encoding of a tier, worn by the very pips this is covering.
+    if (cell.tier > 0 && this.display.hoverDefeated === 'tier' && cell === this.hovered
+        && !this.creaturesHidden) {
+      this.drawTierBadge(cell, box);
+      return;
+    }
+
     // A defeated creature shows its sprite, or its own number when toggled.
     if (cell.tier > 0 && !cell.showNum) {
       // ...unless a clear effect currently owns the glyphs, in which case the
@@ -843,7 +963,13 @@ export class BoardView {
       // Dim the glyph itself rather than washing it out with a floor overlay,
       // which left defeated creatures almost invisible.
       if (!cell.alive) ctx.globalAlpha = 0.55;
-      drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme);
+      // The hovered glyph may be restyled into another shape. `drawCreature`
+      // reads the shape off the theme, so this is a theme with one field
+      // changed rather than a second drawing path.
+      const glyphTheme = cell === this.hovered && isPipShape(this.display.hoverDefeated)
+        ? { ...theme, pip: this.display.hoverDefeated }
+        : theme;
+      drawCreature(ctx, box.x, box.y, box.size, cell.tier, glyphTheme);
       ctx.restore();
       // A struck-through corner reads as "dealt with" at a glance. Optional,
       // because at small cell sizes the stroke crosses the pips and some

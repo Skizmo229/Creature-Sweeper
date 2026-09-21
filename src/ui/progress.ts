@@ -220,17 +220,27 @@ export class Progress {
   }
 
   /**
-   * A type opens once it has both of its gates.
+   * Types with a completed Full Run. Each type counts once however many times
+   * it has been run, which is what "separate" means in the BLIND gate.
+   */
+  fullRunsCompleted(): number {
+    return Object.values(this.data.runs).filter((r) => r.cleared).length;
+  }
+
+  /**
+   * A type opens once it has all of its gates.
    *
    * `requires` is readiness — the ladders this one assumes you have played.
-   * `requires_boards` is time served, counted across the whole game. A type
-   * may carry either, both or neither.
+   * `requires_boards` is time served, counted across the whole game.
+   * `requires_runs` is Full Runs completed on distinct types. A type may carry
+   * any of them or none.
    */
   isTypeUnlocked(ladders: Ladders, typeId: string): boolean {
     if (this.data.unlockAll) return true;
     const type = ladders.find((t) => t.id === typeId);
     if (!type) return false;
     if (this.boardsCleared() < type.requires_boards) return false;
+    if (this.fullRunsCompleted() < type.requires_runs) return false;
     return type.requires.every((req) => this.typeRecord(req).cleared);
   }
 

@@ -6,8 +6,12 @@
  * those numbers.
  */
 
-import type { BoardConfig, OpeningRule, Placement } from './types.js';
+import type { BoardConfig, OpeningRule, Placement, WorkoutRule } from './types.js';
 import { sideTotals } from './checker.js';
+import { PAIR_MAX_DENSITY } from './pairs.js';
+import { setsIn } from './dominoes.js';
+import { PACK_MAX_DENSITY, packsIn } from './packs.js';
+import { CONGO_MAX_DENSITY } from './congo.js';
 import { SPELLS, type SpellId, isSpellId, orderSpells } from './spells.js';
 
 /** One board's row as `ladders.py` emits it. */
@@ -42,6 +46,10 @@ export interface LadderType {
   /** Spell ids this type offers; absent or empty means no magic. */
   spells?: string[];
   start_mana?: number;
+  /** WORKOUT's Exercise rules; absent means the global price table. */
+  workout?: { base: number; step: number; relief: number; exp_multiplier: number };
+  /** False on a ladder that offers no Sweep. Absent means it does. */
+  sweep?: boolean;
   /** 'hex' gives cells six neighbours instead of eight. Defaults to square. */
   topology?: string;
   /** 'horizontal' joins left/right; 'both' makes a torus. */
@@ -86,6 +94,14 @@ export interface LadderType {
    * player grind three shapes to reach a fourth they actually wanted.
    */
   requires_boards: number;
+  /**
+   * Full Runs completed, each on a different type. 0 means no such gate.
+   *
+   * The third claim: not readiness or time served but finishing something
+   * without a restart, which is what BLIND asks of every board. Distinct types
+   * so the same easy run three times does not count.
+   */
+  requires_runs: number;
   /** The tuned ladder: ten boards, and the thing "clearing a type" means. */
   boards: LadderBoard[];
   /**
@@ -127,6 +143,36 @@ function readSpells(type: LadderType): SpellId[] {
   // Sorted by price here rather than wherever the ladder listed them, so a
   // loadout can never be offered in an order that disagrees with its costs.
   return orderSpells(raw.filter(isSpellId));
+}
+
+/**
+ * WORKOUT's rules for Exercise, validated at the boundary.
+ *
+ * Refused unless the type actually offers Exercise, because a rule for a spell
+ * nobody can cast would read as a mode and do nothing. The multiplier may not
+ * be below 1: the gates are C_k, so a kill paying short of full EXP could
+ * leave the top gate out of reach.
+ */
+function readWorkout(type: LadderType, spells: readonly string[]): WorkoutRule | undefined {
+  const raw = type.workout;
+  if (!raw) return undefined;
+  if (!spells.includes('exercise')) {
+    throw new Error(`${type.id}: a workout rule needs Exercise in the loadout`);
+  }
+  const { base, step, relief, exp_multiplier: expMultiplier } = raw;
+  for (const [name, v] of [['base', base], ['step', step], ['relief', relief]] as const) {
+    if (!Number.isInteger(v) || v < 0) {
+      throw new Error(`${type.id}: workout ${name} is ${v}; it must be a whole number of mana`);
+    }
+  }
+  if (base < 1) throw new Error(`${type.id}: a free Exercise is not a price`);
+  if (!Number.isInteger(expMultiplier) || expMultiplier < 1) {
+    throw new Error(
+      `${type.id}: workout exp_multiplier is ${expMultiplier}; below 1 a kill pays short ` +
+      `of the EXP its C_k gate was built from`,
+    );
+  }
+  return { base, step, relief, expMultiplier };
 }
 
 /** Wrapping needs at least 3 cells across the joined axis, or a cell would
@@ -263,6 +309,134 @@ function readChecker(type: LadderType, row: LadderBoard): 'checker' {
 }
 
 /**
+ * The pairing rule's structural requirements.
+ *
+ * Same argument as the checkerboard block above and the cave's cell count:
+ * neither of these would throw on a board, they would quietly produce a
+ * different mode from the one that was tuned, and a player cannot tell which
+ * one they are on.
+ *
+ * An EVEN total, because every creature has exactly one partner and an odd one
+ * has nobody. This is the only constraint pairing puts on `quantity`, and it
+ * is a much lighter one than the checkerboard's — pairing ignores tiers, so a
+ * tier 2 may partner a tier 7 and the distribution is left entirely alone.
+ * `ladders.py` rounds its quota down to even to meet it.
+ *
+ * And a density the packing can actually reach. Dominoes that may not touch
+ * jam well below a board's capacity, and the quota has to be hit EXACTLY
+ * because C_k assumed it — so a schedule that asked for too many would not
+ * produce a hard board, it would produce a board that fails to generate on
+ * some seeds and is mistuned on the rest. Refused here, with the arithmetic in
+ * the message, rather than deep inside a lay-down that ran out of room.
+ */
+function readPairs(type: LadderType, row: LadderBoard): 'pairs' {
+  const where = `${type.id}#${row.n}`;
+  const total = row.quantity.reduce((a, b) => a + b, 0);
+  if (total % 2 !== 0) {
+    throw new Error(
+      `${where}: ${total} creatures cannot pair up — every creature has ` +
+      `exactly one partner, so the total must be even`,
+    );
+  }
+  // Against the cells a creature may actually stand on, which on a shaped
+  // board is fewer than the bounding box and on a dungeon fewer again.
+  const share = total / row.cells;
+  if (share > PAIR_MAX_DENSITY) {
+    throw new Error(
+      `${where}: ${total} creatures on ${row.cells} cells is ` +
+      `${(100 * share).toFixed(1)}%, past the ${(100 * PAIR_MAX_DENSITY).toFixed(0)}% ` +
+      `a non-touching domino packing can be laid down reliably`,
+    );
+  }
+  return 'pairs';
+}
+
+/**
+ * The domino rule's structural requirements.
+ *
+ * Everything PAIRS requires, because a domino board IS a pairing board — the
+ * even total and the packing ceiling are checked by `readPairs` itself rather
+ * than restated here, so the two cannot drift. What this adds is the set.
+ *
+ * `quantity` must be exactly a whole number of double-T sets: flat, at T+1 of
+ * each tier per set. Same argument as the Sudoku block below and the
+ * checkerboard's balance: a board whose quantity were merely CLOSE to a set
+ * would still generate and still be tuned correctly — and would not be the
+ * mode, because the dealer could not lay a full set onto it. It is refused
+ * here, with the arithmetic, rather than on the first seed that tries.
+ */
+function readDominoes(type: LadderType, row: LadderBoard): 'dominoes' {
+  const where = `${type.id}#${row.n}`;
+  if (setsIn(row.tiers, row.quantity) === null) {
+    const per = row.tiers + 1;
+    throw new Error(
+      `${where}: quantity [${row.quantity.join(',')}] is not a whole number of ` +
+      `double-${row.tiers} domino sets — a set is ${per} of every tier, so the ` +
+      `quantity has to be flat and a multiple of ${per}`,
+    );
+  }
+  readPairs(type, row);
+  return 'dominoes';
+}
+
+/**
+ * The pack rule's structural requirements, for the same reason as the domino
+ * set's: a quantity merely CLOSE to whole packs would still be tuned correctly
+ * and still generate — and would not be the mode, because the dealer could not
+ * put one of every tier into every pack.
+ *
+ * `quantity` must be flat, n of every tier for n packs. And the density must be
+ * one the packing can reach, because the quota has to be landed exactly.
+ */
+function readPacks(type: LadderType, row: LadderBoard): 'packs' {
+  const where = `${type.id}#${row.n}`;
+  if (packsIn(row.tiers, row.quantity) === null) {
+    throw new Error(
+      `${where}: quantity [${row.quantity.join(',')}] is not a whole number of packs — ` +
+      `a pack is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
+    );
+  }
+  const share = row.monsters / row.cells;
+  if (share > PACK_MAX_DENSITY) {
+    throw new Error(
+      `${where}: ${row.monsters} creatures on ${row.cells} cells is ` +
+      `${(100 * share).toFixed(1)}%, past the ${(100 * PACK_MAX_DENSITY).toFixed(0)}% ` +
+      `non-touching packs can be laid down reliably`,
+    );
+  }
+  return 'packs';
+}
+
+/**
+ * The congo rule's requirements: PACKS's, plus a plain square board. A line is
+ * defined by ORTHOGONAL steps, which hex does not have, and a wrapped seam
+ * would let a line step off one edge and on at the other — legal to
+ * `neighbours()`, invisible as a line on screen, and a case the "no 2x2" proof
+ * would have to be re-argued for. Refused rather than half-supported.
+ */
+function readCongo(type: LadderType, row: LadderBoard): 'congo' {
+  const where = `${type.id}#${row.n}`;
+  if (type.topology === 'hex' || (type.wrap && type.wrap !== 'none')) {
+    throw new Error(`${where}: congo lines step orthogonally, so they need an unwrapped square board`);
+  }
+  if (packsIn(row.tiers, row.quantity) === null) {
+    throw new Error(
+      `${where}: quantity [${row.quantity.join(',')}] is not a whole number of lines — ` +
+      `a line is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
+    );
+  }
+  const share = row.monsters / row.cells;
+  if (share > CONGO_MAX_DENSITY) {
+    throw new Error(
+      `${where}: ${row.monsters} creatures on ${row.cells} cells is ` +
+      `${(100 * share).toFixed(1)}%, past the ${(100 * CONGO_MAX_DENSITY).toFixed(0)}% ` +
+      `non-touching lines can be laid down reliably`,
+    );
+  }
+  return 'congo';
+}
+
+/**
  * Sudoku placement carries hard structural requirements, because the rule is
  * what fixes the quantities and therefore C_k. A board that failed any of
  * these would not throw during generation — it would just be tuned against
@@ -271,10 +445,18 @@ function readChecker(type: LadderType, row: LadderBoard): 'checker' {
  */
 function readPlacement(type: LadderType, row: LadderBoard): Placement {
   const raw = type.placement ?? 'uniform';
-  if (raw !== 'uniform' && raw !== 'sudoku' && raw !== 'checker') {
-    throw new Error(`${type.id}: unknown placement "${raw}" (uniform | sudoku | checker)`);
+  if (raw !== 'uniform' && raw !== 'sudoku' && raw !== 'checker' && raw !== 'pairs'
+      && raw !== 'dominoes' && raw !== 'packs' && raw !== 'congo') {
+    throw new Error(
+      `${type.id}: unknown placement "${raw}" ` +
+      `(uniform | sudoku | checker | pairs | dominoes | packs | congo)`,
+    );
   }
   if (raw === 'checker') return readChecker(type, row);
+  if (raw === 'pairs') return readPairs(type, row);
+  if (raw === 'dominoes') return readDominoes(type, row);
+  if (raw === 'packs') return readPacks(type, row);
+  if (raw === 'congo') return readCongo(type, row);
   if (raw !== 'sudoku') return raw;
 
   if (row.w !== 9 || row.h !== 9) {
@@ -356,6 +538,8 @@ export function boardConfig(
   const startLevel = type.search ? 0 : 1;
   const shape = readShape(type);
   const placement = readPlacement(type, row);
+  const spells = readSpells(type);
+  const workout = readWorkout(type, spells);
 
   return {
     typeId: type.id,
@@ -376,8 +560,10 @@ export function boardConfig(
     // through to the single-cell fallback.
     opening: options.opening ?? (placement === 'sudoku' ? 'empties' : 'auto'),
     reach: readReach(type),
-    spells: readSpells(type),
+    spells,
     startMana: type.start_mana ?? 0,
+    ...(workout ? { workout } : {}),
+    ...(type.sweep === false ? { sweep: false } : {}),
     topology: type.topology === 'hex' ? 'hex' : 'square',
     wrap: readWrap(type, row),
     shape: shape,

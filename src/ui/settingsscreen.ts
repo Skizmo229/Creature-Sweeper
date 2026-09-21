@@ -43,7 +43,9 @@ import {
   MIN_MAX_ZOOM,
   OFF,
   HIGHLIGHT_NAMES,
+  HOVER_DEFEATED_NAMES,
   type HighlightStyle,
+  type HoverDefeated,
   type Settings,
 } from './settings.js';
 import {
@@ -67,6 +69,7 @@ import {
   clearedBoard,
   hexSampleBoard,
   sampleBoard,
+  topDefeatedCell,
   zoomSampleBoard,
 } from './preview.js';
 import type { Game } from '../engine/game.js';
@@ -311,6 +314,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
     font: settings.fontStack(typeId),
     highlight: settings.highlightStyle(typeId),
     strikeDefeated: p.strikeDefeated,
+    hoverDefeated: p.hoverDefeated,
     ...over,
   });
 
@@ -437,6 +441,48 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
       ],
       p.strikeDefeated ? 'on' : 'off',
       (v) => pick({ strikeDefeated: v === 'on' }),
+    ));
+
+  // --- what the cursor does to a beaten creature
+  //
+  // Pinned on the highest-tier defeated creature, because a hover setting
+  // about defeated creatures is invisible pinned anywhere else — and a
+  // thumbnail has no cursor to hover with. The board carries TWO beaten
+  // creatures and only one is pinned, so every tile shows the chosen
+  // treatment beside an untouched one rather than asking the player to
+  // remember what the last tile looked like.
+  const hoverChip = (hoverDefeated: HoverDefeated) => () =>
+    renderPreview(sampleBoard(), currentTheme, display({ hoverDefeated }),
+      { cell: CHIP_CELL, pin: topDefeatedCell(sampleBoard()) }).canvas;
+
+  wideRow(look, 'Hovering a creature you have beaten',
+    'Its level is already there to be counted off the pips, so showing it as a digit gives ' +
+    'nothing away — it just saves the counting, which is worth most on the nine-tier ladders. ' +
+    'The digit wears that level’s own colour, so it can never be mistaken for the cell’s number. ' +
+    'Restyling the glyph is the thin one for now: every creature is drawn from the same die-face ' +
+    'pips, so it changes the shape and nothing else until there is real art to swap to.',
+    gallery(
+      [
+        { value: 'none', label: HOVER_DEFEATED_NAMES.none, example: hoverChip('none') },
+        { value: 'tier', label: HOVER_DEFEATED_NAMES.tier, example: hoverChip('tier') },
+        // One of these is always the shape the board is ALREADY drawn in, so
+        // its tile is pixel-identical to "Nothing" — measured, not guessed.
+        // That is truthful and reads as a broken tile, which is the same trap
+        // the cursor-highlight gallery had to be moved to a hex board to
+        // escape. It cannot be escaped that way here, because these tiles have
+        // to wear the player's own icon or they are previewing someone else's
+        // board. So it is named instead, the way "game type default" names
+        // what it resolves to.
+        ...PIP_SHAPES.map((id): Choice => ({
+          value: id,
+          label: id === currentTheme.pip
+            ? `Restyle to ${PIP_NAMES[id].toLowerCase()} — already the shape in use`
+            : `Restyle to ${PIP_NAMES[id].toLowerCase()}`,
+          example: hoverChip(id),
+        })),
+      ],
+      p.hoverDefeated,
+      (v) => pick({ hoverDefeated: v as HoverDefeated }),
     ));
 
   // --- maximum zoom

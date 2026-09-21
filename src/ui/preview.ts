@@ -132,6 +132,25 @@ export function sampleBoard(): Game {
 }
 
 /**
+ * The defeated creature on an example board with the most pips.
+ *
+ * Derived rather than written down as a coordinate, because what the gallery
+ * needs is not "a cell" but "a cell the setting can be SEEN on" — and a hover
+ * setting about defeated creatures shows nothing at all if it is pinned over
+ * floor. The highest tier for the same reason `buildSample` opens the highest
+ * tiers: a tier 4 is four pips, so it is where a shape swap reads and where
+ * counting the pips is most worth replacing with a digit.
+ *
+ * Headless like everything else here — it queries a board and returns a
+ * coordinate; the pinning itself is the renderer's job.
+ */
+export function topDefeatedCell(game: Game): { x: number; y: number } {
+  const best = cellsOf(game, (c) => c.open && c.tier > 0)
+    .sort((a, b) => b.tier - a.tier)[0];
+  return best ? { x: best.x, y: best.y } : { x: 0, y: 0 };
+}
+
+/**
  * A hex example, used only by the cursor-highlight gallery.
  *
  * It has to be hex. On a plain square board "true neighbours" and "flat 3x3

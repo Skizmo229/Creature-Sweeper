@@ -20,6 +20,7 @@ import {
   clearedBoard,
   hexSampleBoard,
   sampleBoard,
+  topDefeatedCell,
   zoomSampleBoard,
 } from '../src/ui/preview.js';
 import type { Game } from '../src/engine/game.js';
@@ -128,6 +129,27 @@ describe('the gallery examples', () => {
     expect(hexSampleBoard().config.topology).toBe('hex');
     // And it must still be playing, or the highlight is not drawn at all.
     expect(hexSampleBoard().status).toBe('playing');
+  });
+
+  it('pins the hover example on a defeated creature, not on floor', () => {
+    // The hover gallery is about what the cursor does to a BEATEN creature, so
+    // a pin that landed on floor would leave every tile identical and the
+    // setting would look like it did nothing. This is the alarm if the sample
+    // board's layout ever moves.
+    const board = sampleBoard();
+    const { x, y } = topDefeatedCell(board);
+    const cell = board.cellAt(x, y)!;
+    expect(cell.open).toBe(true);
+    expect(cell.tier).toBeGreaterThan(0);
+  });
+
+  it('pins it on the highest tier, where the level is worth reading', () => {
+    // Counting pips is what the digit replaces, so the example should be on
+    // the glyph with the most of them — and a shape swap reads there too.
+    const board = sampleBoard();
+    const { x, y } = topDefeatedCell(board);
+    const best = Math.max(...creatures(board).filter((c) => c.open).map((c) => c.tier));
+    expect(board.cellAt(x, y)!.tier).toBe(best);
   });
 
   it('shows a creature and a number on the zoom example', () => {

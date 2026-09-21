@@ -155,12 +155,25 @@ export type OpeningRule =
  * 'checker' colours the board and sends even tiers to the light squares and
  * odd tiers to the dark ones, so a cell's colour halves the alphabet of tiers
  * it could be hiding; see `checker.ts`.
+ * 'pairs' gives every creature exactly one creature neighbour, which makes the
+ * occupied cells non-touching dominoes and makes a creature's own number its
+ * partner's tier; see `pairs.ts`.
+ * 'dominoes' is 'pairs' with the tiers dealt as a full domino set, every
+ * pairing {a,b} exactly once, which makes the distribution flat by
+ * construction; see `dominoes.ts`.
+ * 'packs' is 'pairs' grown to groups of one-of-every-tier: connected packs that
+ * may not touch, which again makes the distribution flat; see `packs.ts`.
+ * 'congo' is 'packs' strung out: each pack is an orthogonal line with no 2x2
+ * block in it, led by the strongest tier; see `congo.ts`.
  *
  * None of them touches `quantity`, which is why none of them can reach C_k:
  * a placement decides where a board's creatures stand, never how many there
- * are or what they are worth.
+ * are or what they are worth. 'pairs' comes closest and still does not — it
+ * requires the TOTAL to be even, which is a constraint on what `ladders.py`
+ * may ask for rather than something the placement changes.
  */
-export type Placement = 'uniform' | 'sudoku' | 'checker';
+export type Placement = 'uniform' | 'sudoku' | 'checker' | 'pairs' | 'dominoes' | 'packs'
+  | 'congo';
 
 export interface BoardConfig {
   /** Game type id, e.g. "normal". */
@@ -218,6 +231,34 @@ export interface BoardConfig {
   readonly spells: readonly SpellId[];
   /** Mana in hand at the start, so the opening moves are not spell-less. */
   readonly startMana: number;
+  /**
+   * WORKOUT's Exercise rules, or absent for the global price. See
+   * `WorkoutRule`. Optional so every config built by hand stays unchanged.
+   */
+  readonly workout?: WorkoutRule;
+  /**
+   * False on a ladder that offers no Sweep at all — EASY, where the numbers are
+   * learned by hand. Absent means Sweep is on offer, subject to the player's
+   * dial. Optional so every config built by hand stays unchanged.
+   */
+  readonly sweep?: boolean;
+}
+
+/**
+ * Exercise as WORKOUT plays it: cheap to start, dearer every cast, cheaper
+ * again as you level, and a fight fought on a borrowed level pays extra EXP.
+ *
+ * All in mana except the multiplier. The price is `base + surcharge`, where
+ * each cast adds `step` to the surcharge and each level gained takes `relief`
+ * off it, never below zero. A new board is a new `Game`, so the surcharge
+ * resets with the board, the same way mana does.
+ */
+export interface WorkoutRule {
+  readonly base: number;
+  readonly step: number;
+  readonly relief: number;
+  /** EXP multiplier for a creature killed on a borrowed level. */
+  readonly expMultiplier: number;
 }
 
 export type GameStatus = 'playing' | 'won' | 'lost';
@@ -240,7 +281,7 @@ export type GameEvent =
   /** A spell resolved. `detail` is what it told you, if anything. */
   | { type: 'spell'; id: SpellId; x?: number; y?: number; detail?: string }
   /** Exercise lent levels to this fight, and what that spared you. */
-  | { type: 'exercised'; levels: number; spared: number };
+  | { type: 'exercised'; levels: number; spared: number; bonusExp: number };
 
 export type BlockReason =
   /** The cell is marked above your level — the guard that protects you. */

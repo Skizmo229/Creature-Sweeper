@@ -11,13 +11,19 @@
 
 import { describe, expect, it } from 'vitest';
 import { loadLadders } from '../src/data.js';
-import { maxBoard } from '../src/engine/config.js';
 import { Progress, type SaveData } from '../src/ui/progress.js';
 
 const ladders = loadLadders();
 
-/** A save with a given set of types fully cleared and their boards recorded. */
-function saveWith(clearedTypes: string[], extraBoards: Array<[string, number]> = []) {
+/**
+ * A save with a given set of types fully cleared and their boards recorded,
+ * and a Full Run completed on each type in `ranTypes`.
+ */
+function saveWith(
+  clearedTypes: string[],
+  extraBoards: Array<[string, number]> = [],
+  ranTypes: string[] = [],
+) {
   const data: SaveData = {
     version: 1, types: {}, boards: {}, runs: {}, scaling: {}, unlockAll: false,
     seenHowTo: true,
@@ -32,12 +38,16 @@ function saveWith(clearedTypes: string[], extraBoards: Array<[string, number]> =
   for (const [id, n] of extraBoards) {
     data.boards[`${id}#${n}`] = { cleared: true, perfect: false, bestTime: 1 };
   }
+  for (const id of ranTypes) {
+    data.runs[id] = { cleared: true, bestBoard: 10, bestHp: 1, bestTime: 1, attempts: 1 };
+  }
   return new Progress(data);
 }
 
 describe('the shape of the graph', () => {
   it('starts somewhere', () => {
-    const open = ladders.filter((t) => !t.requires.length && !t.requires_boards);
+    const open = ladders.filter(
+      (t) => !t.requires.length && !t.requires_boards && !t.requires_runs);
     expect(open.map((t) => t.id)).toEqual(['easy']);
   });
 
@@ -78,6 +88,18 @@ describe('the shape of the graph', () => {
     expect(ladders.find((t) => t.id === 'wrapped_cross')!.requires_boards).toBe(0);
   });
 
+  it('starts the counted gates at 15, after EASY and half of NORMAL', () => {
+    const counted = ladders.filter((t) => t.requires_boards > 0);
+    expect(Math.min(...counted.map((t) => t.requires_boards))).toBe(15);
+  });
+
+  it('gates BLIND on three Full Runs and nothing else', () => {
+    const blind = ladders.find((t) => t.id === 'blind')!;
+    expect(blind.requires_runs).toBe(3);
+    expect(blind.requires_boards).toBe(0);
+    expect(blind.requires).toEqual([]);
+  });
+
   it('orders the menu by the gate that opens each type', () => {
     // The variant ladders are ordered by their board count, so the menu reads
     // in the order a player will actually meet it.
@@ -87,46 +109,64 @@ describe('the shape of the graph', () => {
         .toBeGreaterThan(counted[i - 1]!.requires_boards);
     }
     expect(counted.map((t) => t.id)).toEqual(
-      ['checker', 'hive', 'wraparound', 'diamond', 'donut', 'cross', 'cave', 'dungeon',
-        'sudoku', 'blind'],
+      ['wraparound', 'cross', 'hive', 'diamond', 'pairs', 'dominoes', 'workout', 'packs', 'donut',
+        'checker', 'congo', 'cave', 'dungeon', 'sudoku'],
     );
   });
 });
 
 describe('every gate can actually be met', () => {
   /**
-   * Boards reachable without ever unlocking a board-count type.
+   * Walk the board-count schedule in order, clearing only TUNED boards.
    *
-   * This is the budget every count gate has to fit inside, and the one number
-   * that can silently deadlock the game: set BLIND's threshold above it and
-   * the only way to reach BLIND would be to have already reached BLIND.
+   * The budget is every board-10 ladder a player can have reached so far: the
+   * type-gated ladders, plus every counted ladder whose gate the budget has
+   * already met, since each one opened is ten more boards to clear. A gate the
+   * walk never meets would be a save that can go no further - the deadlock
+   * these tests exist for. Scaling boards are left out on purpose, so a
+   * player who never goes past board 10 must still reach everything.
+   *
+   * This replaced a stricter claim, that every gate fit inside the 70 boards
+   * the type-gated ladders offer. The schedule now steps by five to 80, so the
+   * top three gates need a variant played first, which is the intent.
    */
-  function budgetWithoutCountedTypes(): number {
-    const free = ladders.filter((t) => !t.requires_boards);
-    const reachable = new Set<string>();
+  function walkCountedGates(): { reached: Set<string>; budget: number } {
+    const reached = new Set<string>();
+    const tuned = () => [...reached]
+      .reduce((sum, id) => sum + ladders.find((t) => t.id === id)!.boards.length, 0);
     for (;;) {
-      const before = reachable.size;
-      for (const type of free) {
-        if (type.requires.every((r) => reachable.has(r))) reachable.add(type.id);
+      const before = reached.size;
+      for (const type of ladders) {
+        if (reached.has(type.id) || type.requires_runs) continue;
+        if (!type.requires.every((r) => reached.has(r))) continue;
+        if (type.requires_boards > tuned()) continue;
+        reached.add(type.id);
       }
-      if (reachable.size === before) break;
+      if (reached.size === before) break;
     }
-    return [...reachable]
-      .reduce((sum, id) => sum + maxBoard(ladders, id), 0);
+    return { reached, budget: tuned() };
   }
 
-  it('keeps every board-count gate inside what a player can reach without it', () => {
-    const budget = budgetWithoutCountedTypes();
-    for (const type of ladders) {
-      expect(type.requires_boards, `${type.id} cannot be unlocked by any player`)
-        .toBeLessThanOrEqual(budget);
+  it('meets every board-count gate on tuned boards alone, taking them in order', () => {
+    const { reached } = walkCountedGates();
+    for (const type of ladders.filter((t) => t.requires_boards > 0)) {
+      expect(reached.has(type.id), `${type.id} (${type.requires_boards}) cannot be reached`)
+        .toBe(true);
     }
   });
 
-  it('keeps them inside the tuned ladders alone, with no scaling grind', () => {
-    // Stricter, and the one that matters for how the game feels: a player who
-    // never touches a scaling board should still reach every gate.
-    const free = ladders.filter((t) => !t.requires_boards);
+  it('steps the board-count schedule by exactly five', () => {
+    const gates = ladders.map((t) => t.requires_boards).filter((n) => n > 0)
+      .sort((a, b) => a - b);
+    for (let i = 1; i < gates.length; i++) {
+      expect(gates[i]! - gates[i - 1]!, `gap after ${gates[i - 1]}`).toBe(5);
+    }
+  });
+
+  it('keeps the Full Run gate inside what a player can reach without it', () => {
+    // A Full Run opens on a type's board 10, so the runs available without any
+    // run-gated type are one per type reachable on type-clears alone.
+    const free = ladders.filter((t) => !t.requires_boards && !t.requires_runs);
     const reachable = new Set<string>();
     for (;;) {
       const before = reachable.size;
@@ -135,20 +175,19 @@ describe('every gate can actually be met', () => {
       }
       if (reachable.size === before) break;
     }
-    const budget = [...reachable].reduce(
-      (sum, id) => sum + ladders.find((t) => t.id === id)!.boards.length, 0);
     for (const type of ladders) {
-      expect(type.requires_boards, `${type.id} needs scaling boards to reach`)
-        .toBeLessThanOrEqual(budget);
+      expect(type.requires_runs, `${type.id} cannot be unlocked by any player`)
+        .toBeLessThanOrEqual(reachable.size);
     }
   });
 
   it('reaches every type from an empty save by clearing things in some order', () => {
     // The real test: walk the graph the way a player would, and check nothing
-    // is left stranded.
+    // is left stranded. Clearing a type opens its Full Run, so the walk runs
+    // every type it clears.
     const cleared: string[] = [];
     for (let pass = 0; pass < ladders.length + 1; pass++) {
-      const progress = saveWith(cleared);
+      const progress = saveWith(cleared, [], cleared);
       for (const type of ladders) {
         if (cleared.includes(type.id)) continue;
         if (progress.isTypeUnlocked(ladders, type.id)) cleared.push(type.id);
@@ -191,6 +230,31 @@ describe('the gates as the game applies them', () => {
     // Clearing EASY and NORMAL is 20 boards — readiness, but not time served.
     const progress = saveWith(['easy', 'normal']);
     expect(progress.isTypeUnlocked(ladders, 'hive')).toBe(false);
+  });
+
+  it('holds BLIND shut on two Full Runs, and opens it on a third', () => {
+    const two = saveWith(['easy', 'normal', 'huge'], [], ['easy', 'normal']);
+    expect(two.fullRunsCompleted()).toBe(2);
+    expect(two.isTypeUnlocked(ladders, 'blind')).toBe(false);
+    const three = saveWith(['easy', 'normal', 'huge'], [], ['easy', 'normal', 'huge']);
+    expect(three.fullRunsCompleted()).toBe(3);
+    expect(three.isTypeUnlocked(ladders, 'blind')).toBe(true);
+  });
+
+  it('counts a type once however many times its run was completed', () => {
+    // "Separate" runs means separate types: the save keeps one run record per
+    // type, so running EASY three times is still one.
+    const progress = saveWith(['easy'], [], ['easy']);
+    progress.recordRun('easy', { completed: true, reachedBoard: 10, hp: 5, seconds: 60 });
+    progress.recordRun('easy', { completed: true, reachedBoard: 10, hp: 5, seconds: 60 });
+    expect(progress.fullRunsCompleted()).toBe(1);
+    expect(progress.isTypeUnlocked(ladders, 'blind')).toBe(false);
+  });
+
+  it('does not count a run that fell short', () => {
+    const progress = saveWith(['easy', 'normal', 'huge'], [], ['easy', 'normal']);
+    progress.recordRun('huge', { completed: false, reachedBoard: 9, hp: 0, seconds: 60 });
+    expect(progress.fullRunsCompleted()).toBe(2);
   });
 
   it('needs both parents for a combined type, not just one', () => {

@@ -22,7 +22,9 @@
  * being introduced.
  *
  * One consequence worth keeping in view: this is a single global table, and it
- * should stay one. The variation between ladders is already carried twice over
+ * should stay one — with one deliberate exception, WORKOUT, whose Exercise runs
+ * on a price of its own (`WorkoutRule` in types.ts, read by `Game.spellCost`)
+ * because the rising price IS that mode rather than a tuning of it. The variation between ladders is already carried twice over
  * by income (a board's pool spans 150 to 1,233) and by demand (forced guesses
  * span 0.1 to 6.0 a board). A per-ladder price would be a third axis saying
  * what those two already say, and it would stop "Reveal costs 75" being a fact

@@ -31,6 +31,9 @@ import {
   neighbours,
 } from './board.js';
 import { hiddenCap, shadeOf } from './checker.js';
+import { isPaired, ringIsFree } from './pairs.js';
+import { missingFrom } from './packs.js';
+import { congoClear } from './congo.js';
 import { mulberry32 } from './rng.js';
 
 export interface GameOptions {
@@ -76,6 +79,12 @@ export class Game {
   mana: number;
   /** Levels the next fight borrows, from a standing Exercise. */
   exerciseCharge = 0;
+  /**
+   * What WORKOUT's Exercise costs above its base price. Each cast adds the
+   * rule's `step`, each level gained takes `relief` off, and it never goes
+   * below zero. Always zero on a board without a workout rule.
+   */
+  exerciseSurcharge = 0;
   /** Empty cells uncovered since the last mana the trickle paid out. */
   private exploreProgress = 0;
 
@@ -234,6 +243,20 @@ export class Game {
     if (this.status !== 'playing' || this.level <= 0) return out;
     if (this.config.placement === 'sudoku') return this.markedSafe(useMarks);
     const checkered = this.config.placement === 'checker';
+    const paired = isPaired(this.config.placement);
+    // The highest tier each open creature's pack could still be hiding. Worked
+    // out once per call rather than per cell, because a pack's piece is shared
+    // by every creature in it.
+    // A congo line is a pack, so the pack proof reads it unchanged.
+    const grouped = this.config.placement === 'packs' || this.config.placement === 'congo';
+    const packGaps = grouped
+      ? missingFrom(this.grid.flat(), (c) => this.neighboursOf(c), this.config.tiers)
+      : null;
+    // Cells the line's own shape has proven empty; see `congoClear`. Decided
+    // per cell rather than per ring, like the checkerboard's parity.
+    const lineClear = this.config.placement === 'congo'
+      ? congoClear(this.grid, this.config.tiers)
+      : null;
     const seen = new Set<Cell>();
 
     for (const row of this.grid) {
@@ -287,6 +310,31 @@ export class Game {
           if (hiddenCreatures > 0 && hidden - (hiddenCreatures - 1) <= this.level) proven = true;
         }
 
+        // Proven a fourth way, by pairing. A creature has exactly one creature
+        // neighbour, so an open one is surrounded by its partner and empty
+        // ground — and its own number IS that partner's tier, because nothing
+        // else beside it carries one. So the whole ring is free once either
+        // the partner is within your level or you have already met it.
+        //
+        // It folds into `proven` rather than standing beside it because it
+        // answers for the entire ring at once, which is what that flag means.
+        // See `ringIsFree` for why this cannot iterate: a freed ring holds the
+        // partner and otherwise blank ground, since no second pair may touch
+        // the first, so a trigger clears one domino and stops.
+        if (!proven && paired && ringIsFree(cell, ns, this.level)) proven = true;
+
+        // Proven a fifth way, by packs. Packs never touch, so every covered
+        // neighbour of an open creature is a packmate or empty ground, and a
+        // packmate is one of the tiers its pack has not shown yet. When the
+        // highest of those is within your level the ring is free — and when
+        // none is missing, the pack is whole and the ring is empty at ANY
+        // level. Like the pairing proof it cannot run away: a freed ring holds
+        // packmates and blank ground, so a trigger finishes one pack and stops.
+        if (!proven && packGaps) {
+          const gap = packGaps.get(cell);
+          if (gap !== undefined && gap <= this.level) proven = true;
+        }
+
         // Claimed: the same bound, but only after trusting the player's marks.
         // A negative residual means the marks contradict the number, so the
         // claim is already known to be wrong and is not acted on.
@@ -303,8 +351,10 @@ export class Game {
         const provenByColour = (n: Cell): boolean =>
           checkered && hiddenCap(shadeOf(n), hidden, darkCovered) <= this.level;
 
-        if (!proven && !claimedSafe && !(checkered && ns.some(
-          (n) => !n.open && provenByColour(n)))) continue;
+        const provenByLine = (n: Cell): boolean => !!lineClear && lineClear.has(n);
+
+        if (!proven && !claimedSafe && !ns.some(
+          (n) => !n.open && (provenByColour(n) || provenByLine(n)))) continue;
 
         for (const n of ns) {
           if (n.open || seen.has(n)) continue;
@@ -313,8 +363,8 @@ export class Game {
           // And so does the same lock written as a set. Without this, Sweep
           // would be a way around the guard rather than a tool inside it.
           if (hasNotes(n.notes) && lowestNote(n.notes) > this.level) continue;
-          const colourProof = provenByColour(n);
-          if (!proven && !colourProof) {
+          const cellProof = provenByColour(n) || provenByLine(n);
+          if (!proven && !cellProof) {
             // Nothing proved this particular cell, so all that is left is the
             // mark-assisted bound -- and that covers only the UNMARKED
             // neighbours: the marked ones are the assumption that produced the
@@ -658,11 +708,23 @@ export class Game {
 
   /** Cells the charge mode wants banked, or 0 when it is not in play. */
   get chargeNeeded(): number {
+    if (!this.hasSweep) return 0;
     return this.settings.sweep === 'charge' ? this.settings.sweepChargeClicks : 0;
+  }
+
+  /**
+   * Whether this ladder offers Sweep at all. EASY does not: it is where the
+   * sum rule is learned, and a button that reads the numbers for you takes
+   * away the one thing the ladder is for. A ladder fact rather than a dial, so
+   * it touches no record — the dial compares players, this compares nothing.
+   */
+  get hasSweep(): boolean {
+    return this.config.sweep !== false;
   }
 
   /** Whether Sweep can be used at all right now, under the current dial. */
   get sweepAvailable(): boolean {
+    if (!this.hasSweep) return false;
     if (this.settings.sweep === 'off') return false;
     if (this.settings.sweep === 'charge') return this.sweepCharge >= this.chargeNeeded;
     return true;
@@ -730,7 +792,18 @@ export class Game {
   canCast(id: SpellId): boolean {
     if (this.status !== 'playing') return false;
     if (!this.config.spells.includes(id)) return false;
-    return this.mana >= SPELLS[id].cost;
+    return this.mana >= this.spellCost(id);
+  }
+
+  /**
+   * What casting this spell costs right now. The global table, except for
+   * Exercise on a board with a workout rule, where the price moves with how
+   * often you have cast it and how far you have levelled since.
+   */
+  spellCost(id: SpellId): number {
+    const workout = this.config.workout;
+    if (id === 'exercise' && workout) return workout.base + this.exerciseSurcharge;
+    return SPELLS[id].cost;
   }
 
   /**
@@ -744,7 +817,8 @@ export class Game {
     if (this.status !== 'playing') return [{ type: 'blocked', reason: 'game-over' }];
     if (!this.config.spells.includes(id)) return [{ type: 'blocked', reason: 'no-such-spell' }];
     const spell = SPELLS[id];
-    if (this.mana < spell.cost) return [{ type: 'blocked', reason: 'no-mana' }];
+    const cost = this.spellCost(id);
+    if (this.mana < cost) return [{ type: 'blocked', reason: 'no-mana' }];
 
     let target: Cell | null = null;
     if (spell.targeted) {
@@ -844,7 +918,12 @@ export class Game {
       }
     }
 
-    this.mana -= spell.cost;
+    this.mana -= cost;
+    // The price rises only once the cast has gone through, so a refused cast
+    // costs nothing now and nothing later.
+    if (id === 'exercise' && this.config.workout) {
+      this.exerciseSurcharge += this.config.workout.step;
+    }
     this.started = true;
     events.push(
       target
@@ -939,9 +1018,17 @@ export class Game {
     const taken = result.damage;
     this.hp = Math.max(0, this.hp - taken);
 
+    // WORKOUT pays extra EXP for a kill made on a borrowed level. Extra, never
+    // less: the gates are C_k, so a kill paying short could strand one, but a
+    // kill paying over only reaches a gate sooner. The bonus is counted here so
+    // the event can say what it was worth.
+    const workout = this.config.workout;
+    const bonusExp = lent > 0 && workout && result.defeated
+      ? expForTier(cell.tier) * (workout.expMultiplier - 1)
+      : 0;
     if (lent > 0) {
       const unaided = resolveBattle(this.level, this.hp + taken, cell.tier, bite).damage;
-      events.push({ type: 'exercised', levels: lent, spared: unaided - taken });
+      events.push({ type: 'exercised', levels: lent, spared: unaided - taken, bonusExp });
     }
     events.push({
       type: 'battle',
@@ -959,8 +1046,15 @@ export class Game {
       // TOTAL exp available from tiers at or below k, so a creature that dies
       // without paying makes that threshold permanently unreachable.
       this.mana += manaRewardFor(cell.tier, this.settings);
-      if (this.progression.award(expForTier(cell.tier))) {
+      const levelBefore = this.level;
+      if (this.progression.award(expForTier(cell.tier) + bonusExp)) {
         events.push({ type: 'levelUp', level: this.level });
+        // Levelling eases WORKOUT's price, a step per level gained. A double
+        // kill can buy two levels at once, and both count.
+        if (workout) {
+          this.exerciseSurcharge = Math.max(
+            0, this.exerciseSurcharge - workout.relief * (this.level - levelBefore));
+        }
       }
       if (this.creaturesLeft() === 0 && !this.config.search) {
         this.status = 'won';
