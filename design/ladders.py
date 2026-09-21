@@ -178,9 +178,9 @@ def damage(L, E):
 TYPES = [
     dict(
         id="easy", name="EASY", tint="#b3ab1e", archetype="descending",
-        axis="Board size",
-        blurb="The teaching ladder. Density and tier count barely move; the board just "
-              "gets bigger, so every board is a legible step up without new rules.",
+        axis="Gentle boards to learn on",
+        blurb="Start here. Sparse boards that grow a little each time, so you can learn how the "
+              "numbers add up before anything gets crowded.",
         size=[(16,16),(18,16),(20,16),(22,16),(24,16),(24,18),(26,18),(28,18),(28,20),(30,20)],
         tiers=[5]*10,
         density=[.117,.126,.134,.143,.151,.160,.169,.177,.186,.195],
@@ -191,9 +191,9 @@ TYPES = [
     ),
     dict(
         id="normal", name="NORMAL", tint="#8a5a12", archetype="descending",
-        axis="Density, then size",
-        blurb="The reference ladder. Holds the original 30x16 board for half the run "
-              "while density climbs, then starts growing. HP never moves - 10 is NORMAL's identity.",
+        axis="The classic game",
+        blurb="The classic game: five tiers on a 30x16 board. Creatures pack in tighter for five "
+              "boards, then the board itself starts to grow.",
         size=[(30,16)]*5+[(32,17),(34,18),(36,19),(38,20),(40,20)],
         tiers=[5]*10,
         density=[.206,.213,.220,.227,.234,.241,.248,.256,.263,.270],
@@ -204,9 +204,9 @@ TYPES = [
     ),
     dict(
         id="extreme", name="EXTREME", tint="#3b28d6", archetype="flat",
-        axis="Density + lock depth, HP erosion",
-        blurb="Flat tier distribution means high-tier creatures are as common as low ones. "
-              "Scales by packing the board tighter, shaving HP, and locking more of the curve.",
+        axis="Strong creatures everywhere",
+        blurb="Strong creatures are as common as weak ones, so no number is safe to assume. Boards "
+              "pack tighter and HP falls from 10 to 8.",
         size=[(30,16)]*4+[(32,18)]*3+[(34,20)]*3,
         tiers=[5]*10,
         density=[.260,.269,.278,.287,.296,.304,.313,.322,.331,.340],
@@ -217,12 +217,9 @@ TYPES = [
     ),
     dict(
         id="arcane", name="ARCANE", tint="#2aa39a", archetype="descending",
-        axis="Density, with tools to match",
-        blurb="Magic arrives. Reveal and Census turn a guess into a purchase, so the board runs "
-              "denser than EXTREME does - you are expected to spend rather than gamble. Densities "
-              "were raised on measurement: at its old schedule a deductive player was cornered "
-              "0.1 times a board and cleared 97% of them untouched, which left the spells nothing "
-              "to do. They now corner it 0.1 to 5 times a board across the ladder.",
+        axis="Magic: Reveal and Census",
+        blurb="Magic arrives. Earn mana by exploring and fighting, then spend it on Reveal and Census "
+              "when deduction runs out. Boards run denser to match.",
         size=[(30,16)]*3+[(32,17)]*2+[(34,18)]*2+[(36,19)]*2+[(38,20)],
         tiers=[5]*10,
         density=[.265,.274,.283,.292,.301,.310,.319,.328,.337,.345],
@@ -235,9 +232,9 @@ TYPES = [
     ),
     dict(
         id="oracle", name="ORACLE", tint="#7e5bd6", archetype="flat",
-        axis="Ambiguity, answered by spells",
-        blurb="Six tiers on a flat curve, so no number can be safely assumed, and only 8 HP to be "
-              "wrong with. The full kit is on offer and you will want all of it.",
+        axis="Every spell, little HP",
+        blurb="Six tiers, all equally common, and only 8 HP falling to 6. Every spell is on offer - "
+              "Census, Reveal, Exercise and Beacon - and you will need them.",
         size=[(32,18)]*3+[(34,19)]*2+[(36,20)]*2+[(38,21)]*2+[(40,22)],
         tiers=[6]*10,
         density=[.258,.266,.274,.282,.290,.298,.306,.314,.322,.330],
@@ -250,22 +247,16 @@ TYPES = [
     ),
     dict(
         id="checker", name="CHECKERBOARD", tint="#4f5d75", archetype="descending",
-        axis="Density, with half the alphabet ruled out",
+        axis="Tiers split by square colour",
         # Six tiers rather than five, and that is the one structural choice
         # here. The parity split has to be even for the balance promise to
         # leave the distribution alone: at five tiers three of them are odd and
         # two are even, so the even pair would carry half the board between
         # them and the curve would buckle. At six it is three against three and
         # the archetype's own shape survives nearly intact.
-        blurb="The board is a checkerboard, and a creature's tier decides which colour it "
-              "may stand on: even tiers on the light squares, odd tiers on the dark. Empty "
-              "ground goes anywhere, which is what stops it being a colouring puzzle. Because "
-              "a cell's number is a SUM, the light cells behind it always total an even "
-              "number - so the whole parity of a number belongs to its dark neighbours, and a "
-              "number with one covered dark square and an even hidden sum has just proven that "
-              "square is empty, at any level. That is a cheap, constant, compounding read, "
-              "which is why it runs denser than NORMAL; the two colours carry within one "
-              "creature of each other, so neither half is the easy half.",
+        blurb="Even tiers stand only on light squares, odd tiers only on dark; empty ground can be "
+              "anywhere. Light neighbours always add up to an even number, so whether a number is odd "
+              "or even is decided by its dark neighbours alone.",
         placement="checker",
         # Even cell counts throughout, or one colour gets a square more than
         # the other. Every width here is even, which is enough on its own.
@@ -301,20 +292,10 @@ TYPES = [
     ),
     dict(
         id="pairs", name="PAIRS", tint="#b5482a", archetype="descending",
-        axis="Size, at a density that cannot move",
-        blurb="Every creature has exactly one creature beside it. That sounds like a rule about "
-              "couples and is really a rule about packing: the occupied cells are adjacent pairs, "
-              "and no two pairs may touch, because a contact would give the creatures either side "
-              "of it a second neighbour. So a creature's neighbours are its partner and empty "
-              "ground - which means a creature's own number IS its partner's tier, exactly, with "
-              "no arithmetic at all. Kill anything and it names its partner; find both halves of a "
-              "pair and the whole ring around them is proven empty at any level. It plays tighter "
-              "than NORMAL at the same density and then comes apart faster than anything else in "
-              "the game: the spacing the rule forces leaves fewer blank cells and a smaller "
-              "opening, and every pair you take detonates about seven cells of certainty. It is "
-              "the only ladder in the game whose difficulty axis is size, and not by choice: the "
-              "packing has a hard ceiling near 25%, so density has nowhere to go and the board "
-              "grows instead - from 480 cells to 1056, the widest span of any tuned ladder.",
+        axis="Creatures come in pairs",
+        blurb="Every creature touches exactly one other creature, and no two pairs touch. A beaten "
+              "creature's number is its partner's tier, and once both halves are found the ground "
+              "around them is safe. Boards grow rather than crowd.",
         placement="pairs",
         # SIZE IS THE AXIS, and it is the only ladder here where that was
         # forced rather than chosen. Every other variant compensates for an
@@ -372,18 +353,9 @@ TYPES = [
     ),
     dict(
         id="dominoes", name="DOMINOES", tint="#d8cfb6", archetype="flat",
-        axis="Copies of a double-six set, packed tighter",
-        blurb="PAIRS, dealt as a full double-six domino set. Every creature still has exactly "
-              "one creature beside it, but now the pairings are the set: every pair of tiers "
-              "{a,b} from 1 to 6 turns up exactly once, doubles included - 21 tiles, seven of "
-              "every tier. So a tier 6 is no rarer than a tier 1, every board carries exactly "
-              "six tiers, and one kill names a whole tile, since you fought the creature and "
-              "its number is its partner. The set is finite and known from the first move, so "
-              "the tiles you have found are the tiles you no longer have to fear: there is "
-              "exactly one five-double, and once a pair reads 5 - 5 no other five stands beside "
-              "a five. No blanks - a blank half would be indistinguishable from empty floor, "
-              "and a set you cannot verify is not a set. The ladder deals one set, then more "
-              "copies of it, on boards packed a little tighter each time.",
+        axis="A double-six domino set",
+        blurb="PAIRS dealt as a double-six domino set: every pairing of tiers 1-6 appears once per "
+              "set, so every tier is equally common. Later boards deal more sets, packed tighter.",
         placement="dominoes",
         # SIX TIERS ON EVERY BOARD - a double-six set, the classic one - so the
         # tier count is not a dial here at all. That leaves exactly two: how
@@ -424,15 +396,10 @@ TYPES = [
     ),
     dict(
         id="packs", name="PACKS", tint="#58687c", archetype="flat",
-        axis="Density, on a board the packs leave mostly open",
-        blurb="Creatures travel in packs of six - one of every tier, all touching - and no two "
-              "packs touch. So a pack is exactly a group of creatures standing together, and a "
-              "covered cell beside one is a packmate or empty ground, never anything else. Each "
-              "pack holds every tier once, so the tiers you have found say which are still out "
-              "there: once the strongest one missing is within your level the ground around the "
-              "pack is free, and a pack with all six found is ringed by empty ground at any "
-              "level. Packs cluster, and clustering is what leaves ground open, so the board runs "
-              "dense to stay a puzzle - and a tier 6 is as common as a tier 1.",
+        axis="Packs of one of every tier",
+        blurb="Creatures travel in packs of six - one of every tier, all touching - and no two packs "
+              "touch. Whatever a pack has not shown yet is all that can hide beside it; a complete "
+              "pack is ringed by empty ground.",
         placement="packs",
         # DENSITY IS THE AXIS, and the board grows a little every step as well
         # -- not for difficulty but for granularity. Creatures come in packs of
@@ -465,10 +432,9 @@ TYPES = [
     ),
     dict(
         id="hive", name="HIVE", tint="#a8324f", archetype="descending",
-        axis="Density, on a six-neighbour grid",
-        blurb="Hexagons. Every cell has six neighbours instead of eight, so numbers run about a "
-              "quarter lower and blank regions are far more common - which is why it runs six to "
-              "eight density points above NORMAL just to feel the same.",
+        axis="Hexagonal cells",
+        blurb="Hexagons: six neighbours instead of eight. Numbers run lower and blank areas open "
+              "wider, so the boards are packed denser to make up for it.",
         size=[(30,16)]*3+[(32,17)]*2+[(34,18)]*2+[(36,19)]*2+[(40,20)],
         tiers=[5]*10,
         density=[.260,.270,.280,.290,.300,.310,.320,.330,.340,.350],
@@ -480,11 +446,9 @@ TYPES = [
     ),
     dict(
         id="wraparound", name="WRAPAROUND", tint="#1d6a9e", archetype="descending",
-        axis="NORMAL, with every edge joined",
-        blurb="Every edge joined, top to bottom as well as side to side. Deliberately NORMAL's "
-              "exact schedule - same sizes, same densities, same HP - so the only thing that "
-              "changed is that the board has no edges. With no corner and no rim to brace "
-              "against, the cheap footholds a sweeper player lives on are simply not there.",
+        axis="No edges, no corners",
+        blurb="NORMAL's boards with every edge joined - off the right is the left, off the top is the "
+              "bottom. There are no edges or corners to work in from.",
         size=[(30,16)]*5+[(32,17),(34,18),(36,19),(38,20),(40,20)],
         tiers=[5]*10,
         density=[.206,.213,.220,.227,.234,.241,.248,.256,.263,.270],
@@ -496,10 +460,9 @@ TYPES = [
     ),
     dict(
         id="donut", name="DONUT", tint="#b06a1d", archetype="descending",
-        axis="Density, on a ring with two rims",
-        blurb="A hole in the middle, so the board has a second interior frontier and you work "
-              "inward from both. The ring is a constant thickness in cells, which keeps the "
-              "corridor the same puzzle the whole way round.",
+        axis="A ring with a hole",
+        blurb="A ring with a hole in the middle, so there are two rims to work in from. Reveal and "
+              "Census available.",
         size=[(30,16)]*3+[(34,18)]*2+[(36,19)]*2+[(38,20)]*2+[(40,21)],
         tiers=[5]*10,
         density=[.230,.238,.246,.254,.262,.270,.278,.286,.294,.302],
@@ -513,10 +476,9 @@ TYPES = [
     ),
     dict(
         id="cross", name="CROSS", tint="#4a8f3a", archetype="descending",
-        axis="Density, down four narrow arms",
-        blurb="A cross. The arms are almost entirely boundary, so deduction inside one is nearly "
-              "mechanical - and they barely interact, so it plays as four small puzzles sharing a "
-              "hub and one level economy rather than as one board.",
+        axis="Four narrow arms",
+        blurb="Four narrow arms around a hub. Each arm is nearly all edge and plays like its own "
+              "small puzzle. Reveal and Census available.",
         size=[(26,22)]*3+[(28,24)]*2+[(30,26)]*2+[(32,28)]*2+[(34,30)],
         tiers=[5]*10,
         density=[.235,.243,.251,.259,.267,.275,.283,.291,.299,.307],
@@ -530,7 +492,7 @@ TYPES = [
     ),
     dict(
         id="wrapped_cross", name="WRAPPED CROSS", tint="#2f8f7e", archetype="descending",
-        axis="Density, down four arms with no ends",
+        axis="A cross whose arms loop",
         # Joining the arm tips makes the board EASIER, which is the opposite of
         # what wrapping does to a rectangle and the only interesting thing
         # about this ladder. WRAPAROUND is harder than NORMAL because it
@@ -549,12 +511,8 @@ TYPES = [
         # on CROSS's curve: 0.1-2.7 guesses and 84% cleared. It tops out at
         # 31.9%, still inside the 34% the rest of the game treats as the point
         # a board stops being a puzzle.
-        blurb="A cross with the ends of its arms joined to each other - left to right and top "
-              "to bottom - so each pair of opposite arms is one loop and no arm has a tip to "
-              "work inward from. Wrapping makes a rectangle harder by deleting its free rim, "
-              "but a cross is nearly all rim and keeps it; what it loses is the four dead ends "
-              "that made it four puzzles, so it plays a little looser than CROSS at the same "
-              "density and runs 1.2 points above it to compensate.",
+        blurb="A cross with opposite arm tips joined, turning four dead ends into two loops - stuck "
+              "at one end, work in from the other. Reveal and Census available.",
         size=[(26,22)]*3+[(28,24)]*2+[(30,26)]*2+[(32,28)]*2+[(34,30)],
         tiers=[5]*10,
         density=[.247,.255,.263,.271,.279,.287,.295,.303,.311,.319],
@@ -569,10 +527,9 @@ TYPES = [
     ),
     dict(
         id="diamond", name="DIAMOND", tint="#8f3fa0", archetype="descending",
-        axis="Density, inside a slanted rim",
-        blurb="A diamond inscribed in the box. The staircase edges expose far more cells than a "
-              "straight rim does, so it plays a little looser than a rectangle while looking "
-              "nothing like one.",
+        axis="Stepped diamond edges",
+        blurb="A diamond-shaped board. Its stepped edges give you more edge cells to read from than a "
+              "straight rim. Reveal and Census available.",
         size=[(32,18)]*3+[(36,20)]*2+[(40,22)]*2+[(44,24)]*2+[(48,26)],
         tiers=[5]*10,
         density=[.225,.233,.241,.249,.257,.265,.273,.281,.289,.297],
@@ -586,11 +543,9 @@ TYPES = [
     ),
     dict(
         id="cave", name="RAGGED CAVE", tint="#8a7050", archetype="descending",
-        axis="Density, inside a different cave every seed",
-        blurb="Caverns, tunnels and dead ends, carved fresh from the seed - the only board "
-              "whose outline is not the same twice. Nothing is squared off against the bounding "
-              "box, so almost every cell is on some edge, which makes it the most legible board "
-              "in the game to deduce and the reason it runs the densest of the shaped ladders.",
+        axis="A new cave every seed",
+        blurb="Tunnels and caverns, a different cave every seed. Almost every cell is near an edge, "
+              "so it reads easily and is packed denser for it. Reveal and Census available.",
         size=[(38,19),(38,20),(40,20),(42,21),(42,22),(44,23),(44,24),(46,25),(48,25),(50,26)],
         # Chosen, not measured -- see shape_cells. Held at 40% of the bounding
         # box: the cave is grown inside a wobbling rim with caverns punched out
@@ -611,18 +566,10 @@ TYPES = [
     ),
     dict(
         id="dungeon", name="DUNGEON", tint="#7a5c9e", archetype="descending",
-        axis="Density, through rooms and hallways",
-        blurb="Rooms joined by hallways one cell wide, laid out fresh from the seed, and "
-              "crawled rather than surveyed: you may only act within two steps of ground you "
-              "have already uncovered, counted as a walk so it stops at a wall instead of "
-              "reaching through one. The hallways are always empty and so is every doorway, so "
-              "a corridor is somewhere you can always walk and stepping off one into a room is "
-              "the moment you are exposed. That free scaffolding is worth a great deal - the "
-              "corridors cascade open and every doorway is a read into the room beyond - which "
-              "is why the nominal density runs 13-26% here: creatures are packed into the room "
-              "floor alone, so the rooms themselves play at 14-32%. A wall still stops "
-              "information dead, so a room is a small board of its own, and it carries ARCANE's "
-              "loadout plus Exercise because the rooms are where you are cornered.",
+        axis="Crawl room by room",
+        blurb="Rooms joined by one-cell hallways, new every seed. You may only act within two steps "
+              "of ground you have uncovered. Hallways and doorways are always empty; the creatures "
+              "are all in the rooms. Reveal, Census and Exercise available.",
         size=[(36,20),(38,20),(38,22),(40,22),(42,22),(42,24),(44,24),(46,26),(48,26),(50,28)],
         # Chosen, not measured -- see shape_cells. About 40% of the bounding
         # box, the same share the cave holds: rooms need a wall between them
@@ -655,9 +602,9 @@ TYPES = [
     ),
     dict(
         id="blind", name="BLIND", tint="#8a8a8a", archetype="descending",
-        axis="Size, density, tier count",
-        blurb="No combat at all - HP 1, LV 0, win by opening every empty cell. With no "
-              "level economy to tune, difficulty is pure ambiguity: bigger board, denser field, more tiers.",
+        axis="No fighting, 1 HP",
+        blurb="No fighting: 1 HP, and any creature ends the board. Win by uncovering every empty "
+              "cell. Tiers rise from five to seven.",
         size=[(30,16)]*3+[(34,18)]*3+[(38,20)]*2+[(42,22)]*2,
         tiers=[5,5,5,5,5,6,6,7,7,7],
         density=[.206,.214,.222,.231,.239,.247,.255,.264,.272,.280],
@@ -669,9 +616,9 @@ TYPES = [
     ),
     dict(
         id="huge", name="HUGE", tint="#1d7a2e", archetype="descending",
-        axis="Size + lock depth, HP erosion",
-        blurb="Nine tiers and a single apex creature you reach max level exactly in time to meet. "
-              "Scales by growing an already-large board and locking more of the curve behind full-tier clears.",
+        axis="Nine tiers, huge boards",
+        blurb="Nine tiers on a huge board, with 30 HP falling to 24. The top tier is only one to "
+              "three creatures, and you reach max level just in time to face them.",
         size=[(50,25),(50,25),(52,26),(52,26),(54,27),(54,27),(56,28),(56,28),(60,30),(60,30)],
         tiers=[9]*10,
         density=[.208,.214,.220,.226,.232,.238,.243,.249,.255,.260],
@@ -682,9 +629,9 @@ TYPES = [
     ),
     dict(
         id="huge_extreme", name="HUGE x EXTREME", tint="#4b2fd6", archetype="flat",
-        axis="Density + lock depth to the wall",
-        blurb="The hardest ladder. Flat distribution across nine tiers on a huge board with only 10 HP. "
-              "By board 9 every single level-up is a full-tier-clear gate - no slack anywhere in the curve.",
+        axis="The hardest ladder",
+        blurb="The hardest ladder: HUGE's nine tiers, EXTREME's flat spread, and 10 HP. By the end, "
+              "every level-up needs every creature below it cleared.",
         size=[(50,25),(50,25),(52,26),(52,26),(54,27),(54,27),(56,28),(56,28),(58,29),(58,29)],
         tiers=[9]*10,
         density=[.259,.266,.273,.281,.288,.295,.302,.309,.316,.320],
@@ -695,9 +642,9 @@ TYPES = [
     ),
     dict(
         id="huge_blind", name="HUGE x BLIND", tint="#6e6e6e", archetype="descending",
-        axis="Size + density",
-        blurb="The marathon. Nine tiers of ambiguity across the biggest boards in the game, "
-              "with no combat to break up the deduction. Endurance as much as skill.",
+        axis="The marathon",
+        blurb="BLIND on the largest boards in the game: nine tiers, 1 HP, no fighting. A test of "
+              "endurance.",
         size=[(50,25),(50,25),(54,27),(54,27),(56,28),(56,28),(60,30),(60,30),(64,32),(64,32)],
         tiers=[9]*10,
         density=[.208,.215,.222,.229,.236,.243,.250,.257,.264,.270],
@@ -709,14 +656,10 @@ TYPES = [
     ),
     dict(
         id="sudoku", name="SUDOKU", tint="#b45cc9", archetype="flat",
-        axis="Givens, then lock depth",
-        blurb="The tiers obey Sudoku's rules over the digits 0-8, so each tier appears once "
-              "in every row, column and 3x3 box - and tier 0 is a digit like any other, which "
-              "puts exactly one empty cell in each. Those nine empties are the opening, free "
-              "and needing no rule of their own. The rule fixes density, tier count and "
-              "distribution, so C_k is identical on all ten boards and the only real dial is "
-              "how many cells you are told up front. Every board is generated guess-free, "
-              "because at 100% density HP cannot be a guess budget.",
+        axis="Tiers follow Sudoku rules",
+        blurb="A 9x9 board where tiers 0-8 follow Sudoku's rules: each appears once per row, column "
+              "and 3x3 box. The nine empty cells start open, some tiers are given in gold, and every "
+              "board can be solved without guessing.",
         placement="sudoku",
         size=[(9, 9)] * 10,
         tiers=[8] * 10,
@@ -958,30 +901,33 @@ UNLOCKS = {
 # (EASY, NORMAL, HUGE, EXTREME, HUGE x EXTREME, ARCANE, ORACLE), so BLIND at 65
 # is reachable without ever touching a variant - and every scaling board past
 # 10 counts too, so a player who would rather go deep than wide has that road
-# as well. DUNGEON took a slot in the middle of the schedule rather than the
-# end, because it belongs with the other shaped boards and the 5-board cadence
-# is what makes the sequence legible; SUDOKU and BLIND each moved up one step
-# to make room, and 65 is still five clear of the budget.
+# as well.
 #
-# PAIRS was fitted by extending the schedule DOWNWARD rather than upward, and
-# that is the whole reason it cost nothing. The obvious placement -- append it
-# at 70 -- would have spent the entire budget and left a save with no slack at
-# all, which is the one failure in this file that strands a player with nothing
-# to point at. Opening CHECKERBOARD at 15 instead adds an eleventh slot at the
-# cheap end, where a board is quick, and every threshold from HIVE upward is
-# exactly where it was. PAIRS sits second for the same reason CHECKERBOARD
-# leads: both HAND the player a rule rather than taking something away, so they
-# belong together at the gentle end of the lane.
+# ORDERED EASIEST TO HARDEST, MEASURED. The honest player from `sim:spells`,
+# spell-less, 30 seeds a board, mean clear rate over the tuned ten:
+#
+#   WRAPAROUND 99.0   DUNGEON 97.7   CHECKERBOARD 97.4   DIAMOND 95.5
+#   CROSS 94.0        HIVE 92.7      PAIRS 92.1          RAGGED CAVE 89.0
+#   DONUT 84.9
+#
+# Spell-less on purpose, so every ladder is measured by the same player; the
+# shaped ladders carry spells in play, which only makes them gentler than this.
+# HIVE and PAIRS are within the noise of each other. SUDOKU and BLIND cannot be
+# measured on the same scale -- one is guess-free by construction and the
+# other has no combat -- so they keep the top two slots, where they were.
+# Re-measure before reordering: WRAPAROUND leading is the opposite of what the
+# "edges are free information" argument predicts, and it is what the player
+# actually did.
 UNLOCK_BOARDS = {
-    "checker": 15,
-    "pairs": 20,
-    "hive": 25,
-    "wraparound": 30,
-    "diamond": 35,
-    "donut": 40,
-    "cross": 45,
+    "wraparound": 15,
+    "dungeon": 20,
+    "checker": 25,
+    "diamond": 30,
+    "cross": 35,
+    "hive": 40,
+    "pairs": 45,
     "cave": 50,
-    "dungeon": 55,
+    "donut": 55,
     "sudoku": 60,
     "blind": 65,
 }
@@ -991,14 +937,12 @@ UNLOCK_BOARDS = {
 # will actually meet it.
 MAINLINE = ["easy", "normal", "huge", "extreme", "huge_extreme"]
 MAGIC = ["arcane", "oracle"]
-# The variant lane, in the order its gates open. CHECKERBOARD leads it because
-# it opens first: it is the only variant that HANDS the player a rule rather
-# than taking something away, so it is the gentlest introduction to the idea
-# that a ladder can change a rule at all. The list is menu order, not a
-# taxonomy -- a placement rule sits here beside the topologies and the shapes
-# because that is where a player meets it.
-TOPOLOGY = ["checker", "pairs", "dominoes", "packs", "hive", "wraparound", "diamond", "donut", "cross",
-            "wrapped_cross", "cave", "dungeon"]
+# The variant lane, in the order its gates open, which is easiest first (see
+# UNLOCK_BOARDS). A combined type sits right after the last of its parents to
+# open. The list is menu order, not a taxonomy -- a placement rule sits here
+# beside the topologies and the shapes because that is where a player meets it.
+TOPOLOGY = ["wraparound", "dungeon", "checker", "diamond", "cross", "wrapped_cross", "hive",
+            "pairs", "dominoes", "packs", "cave", "donut"]
 PUZZLE = ["sudoku"]
 POSTGAME = ["blind", "huge_blind"]
 

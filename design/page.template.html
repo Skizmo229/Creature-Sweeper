@@ -5,37 +5,18 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
 :root{
-  --ground:#e9e7df; --surface:#f6f4ee; --surface-2:#dedbd0;
-  --ink:#191814; --muted:#6a675c; --rule:#c9c5b8; --rule-soft:#dcd8cc;
-  --accent:#1d7a3a; --accent-soft:#dcecdf; --accent-ink:#0f4a22;
-  --danger:#b02a1c; --danger-soft:#f4e0dc; --danger-ink:#7d1d13;
-  --gold:#8a6d12; --gold-soft:#efe7cb;
-  /* chart series — validated against surface #f6f4ee (all six checks pass) */
-  --s-easy:#8a8316; --s-normal:#a3461a; --s-extreme:#3b28d6; --s-huge:#1d7a2e; --s-huge_extreme:#6b2fd6;
-  --shadow:0 1px 2px rgba(25,24,20,.06), 0 6px 18px rgba(25,24,20,.05);
+  color-scheme:dark;
+  --ground:#1a1a16; --surface:#22221c; --surface-2:#2c2c24;
+  --ink:#ece9de; --muted:#98937f; --rule:#3b3b31; --rule-soft:#302f27;
+  --accent:#5fd483; --accent-soft:#1c3626; --accent-ink:#8ce7a8;
+  --danger:#e8735e; --danger-soft:#3c211b; --danger-ink:#f2a494;
+  --gold:#d8b64a; --gold-soft:#332c16;
+  /* chart series - stepped for surface #22221c (all six checks pass) */
+  --s-easy:#9c9429; --s-normal:#b35a2f; --s-extreme:#6a57f0; --s-huge:#35a04f; --s-huge_extreme:#a86ef5;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.28);
   --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
   --f-body:"Public Sans","Segoe UI",system-ui,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
-}
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
-  --ground:#1a1a16; --surface:#22221c; --surface-2:#2c2c24;
-  --ink:#ece9de; --muted:#98937f; --rule:#3b3b31; --rule-soft:#302f27;
-  --accent:#5fd483; --accent-soft:#1c3626; --accent-ink:#8ce7a8;
-  --danger:#e8735e; --danger-soft:#3c211b; --danger-ink:#f2a494;
-  --gold:#d8b64a; --gold-soft:#332c16;
-  /* chart series — re-stepped for surface #22221c (all six checks pass) */
-  --s-easy:#9c9429; --s-normal:#b35a2f; --s-extreme:#6a57f0; --s-huge:#35a04f; --s-huge_extreme:#a86ef5;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.28);
-}}
-:root[data-theme="dark"]{
-  --ground:#1a1a16; --surface:#22221c; --surface-2:#2c2c24;
-  --ink:#ece9de; --muted:#98937f; --rule:#3b3b31; --rule-soft:#302f27;
-  --accent:#5fd483; --accent-soft:#1c3626; --accent-ink:#8ce7a8;
-  --danger:#e8735e; --danger-soft:#3c211b; --danger-ink:#f2a494;
-  --gold:#d8b64a; --gold-soft:#332c16;
-  /* chart series — re-stepped for surface #22221c (all six checks pass) */
-  --s-easy:#9c9429; --s-normal:#b35a2f; --s-extreme:#6a57f0; --s-huge:#35a04f; --s-huge_extreme:#a86ef5;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.28);
 }
 
 *{box-sizing:border-box}
@@ -350,14 +331,14 @@ footer code{font-size:.85em}
     <p class="eyebrow">Design reference · derived from mamono sweeper</p>
     <h1>Creature Sweeper Reference</h1>
     <p class="lede">Everything mamono sweeper actually does, verified against its own source rather than its
-      description — and the <strong>progression ladders</strong> built on top of it. Nineteen game types of ten
+      description — and the <strong>progression ladders</strong> built on top of it. <span id="h-types-lede">22</span> game types of ten
       tuned boards each, with a scaling continuation past every one of them, and every number derived from one
       tuning identity found in the original's data.</p>
     <div class="hud">
-      <span><b>GAME TYPES</b><i>19</i></span>
+      <span><b>GAME TYPES</b><i id="h-types">22</i></span>
       <span><b>TUNED LADDER</b><i>10 boards</i></span>
-      <span><b>WITH SCALING</b><i>517 boards</i></span>
-      <span><b>TIERS</b><i>5–9</i></span>
+      <span><b>WITH SCALING</b><i id="h-boards">598 boards</i></span>
+      <span><b>TIERS</b><i id="h-tiers">5–9</i></span>
       <span><b>DAMAGE</b><i>E×(⌈E/L⌉−1)</i></span>
       <span><b>OPENING</b><i>auto, largest</i></span>
     </div>
@@ -579,9 +560,11 @@ footer code{font-size:.85em}
         <li><strong>Magic</strong> still branches sideways from NORMAL: ARCANE, then ORACLE. Keeping it off the
           chain means the tuned ladders stay exactly as they are and the spell economy can be retuned freely.</li>
       </ul>
-      <p>The thresholds run 25, 30, 35, 40, 45, 50, 55, 60 — HIVE, WRAPAROUND, DIAMOND, DONUT, CROSS, RAGGED CAVE,
-        SUDOKU, BLIND — and the menu is ordered to match, so it reads in the order a player will meet it.
-        Every board counts once, scaling boards included.</p>
+      <p>The thresholds run <span id="gate-list">—</span>. They open <strong>easiest first</strong>, ranked by
+        the honest player from <span class="m">sim:spells</span> on its mean clear rate over each tuned ladder;
+        SUDOKU and BLIND cannot be measured on that scale and keep the top two slots. The menu is ordered to
+        match, so it reads in the order a player will meet it. Every board counts once, scaling boards
+        included.</p>
       <div class="note">
         <p class="note-h">A board-count gate can deadlock the game, and silently</p>
         <p>A type gate that cannot be met is a cycle, and a cycle is obvious. A board-count gate is just a number,
@@ -656,7 +639,7 @@ footer code{font-size:.85em}
       <p>A type stops where it stops changing, which lands in very different places: SUDOKU gets three boards and
         stops at its generator's floor, HUGE × EXTREME gets six because it is already at the wall, and the gentler
         ladders run to the thirties. Past that a board would be the previous board with a fresh seed, which
-        replaying the previous board already gives you. Every one of the 461 boards is swept by
+        replaying the previous board already gives you. Every one of the <span id="sim-boards">598</span> boards is swept by
         <span class="m">npm run sim</span> and clears at full HP.</p>
 
       <h4>How the numbers are derived</h4>
@@ -1734,6 +1717,24 @@ footer code{font-size:.85em}
   "use strict";
   var LAD = JSON.parse(document.getElementById('ladders-data').textContent);
 
+  // Header counts are read off the data, never typed in: they were once, and went stale.
+  (function(){
+    var all = [];
+    LAD.forEach(function(t){ all = all.concat(t.boards, t.extended || []); });
+    var tiers = all.map(function(b){ return b.tiers; });
+    document.getElementById('h-types').textContent = LAD.length;
+    document.getElementById('h-types-lede').textContent = LAD.length;
+    document.getElementById('h-boards').textContent = all.length + ' boards';
+    document.getElementById('sim-boards').textContent = all.length;
+    var gated = LAD.filter(function(t){ return t.requires_boards > 0; })
+      .sort(function(a, b){ return a.requires_boards - b.requires_boards; });
+    document.getElementById('gate-list').textContent = gated.map(function(t){
+      return t.requires_boards + ' ' + t.name;
+    }).join(', ');
+    document.getElementById('h-tiers').textContent =
+      Math.min.apply(null, tiers) + '–' + Math.max.apply(null, tiers);
+  })();
+
   /* ---------- original shipped modes ---------- */
   var ORIG = [
     {name:"EASY",           tint:"#b3ab1e", w:16,h:16, q:[10,8,6,4,2],                  hp:10, lv:1, exp:[7,20,50,82],                          type:"battle"},
@@ -1973,7 +1974,7 @@ footer code{font-size:.85em}
     var first = t.boards[0], last = t.boards[9];
 
     document.getElementById('l-axis').textContent =
-      (t.postgame ? 'Post-game · scales on — ' : 'Scales on — ') + t.axis;
+      (t.postgame ? 'Post-game · ' : '') + t.axis;
     document.getElementById('l-name').textContent = t.name;
     document.getElementById('l-blurb').textContent = t.blurb;
 

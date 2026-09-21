@@ -222,8 +222,8 @@ denser than CROSS.
 main line   EASY -> NORMAL -> { HUGE, EXTREME } -> HUGE x EXTREME (needs both)
 magic       NORMAL -> ARCANE -> ORACLE
 variants    unlocked by BOARDS CLEARED ANYWHERE, not by each other:
-            CHECKERBOARD 15 · PAIRS 20 · HIVE 25 · WRAPAROUND 30 · DIAMOND 35
-            DONUT 40 · CROSS 45 · RAGGED CAVE 50 · DUNGEON 55 · SUDOKU 60 · BLIND 65
+            WRAPAROUND 15 · DUNGEON 20 · CHECKERBOARD 25 · DIAMOND 30 · CROSS 35
+            HIVE 40 · PAIRS 45 · RAGGED CAVE 50 · DONUT 55 · SUDOKU 60 · BLIND 65
 combined    WRAPPED CROSS needs CROSS and WRAPAROUND; DOMINOES and PACKS need PAIRS
 post-game   HUGE x BLIND needs HUGE and BLIND
 ```

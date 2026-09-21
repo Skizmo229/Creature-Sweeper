@@ -87,8 +87,8 @@ describe('the shape of the graph', () => {
         .toBeGreaterThan(counted[i - 1]!.requires_boards);
     }
     expect(counted.map((t) => t.id)).toEqual(
-      ['checker', 'pairs', 'hive', 'wraparound', 'diamond', 'donut', 'cross', 'cave',
-        'dungeon', 'sudoku', 'blind'],
+      ['wraparound', 'dungeon', 'checker', 'diamond', 'cross', 'hive', 'pairs', 'cave',
+        'donut', 'sudoku', 'blind'],
     );
   });
 });
@@ -172,25 +172,25 @@ describe('the gates as the game applies them', () => {
   });
 
   it('holds a counted type shut one board short, and opens it on the next', () => {
-    const hive = ladders.find((t) => t.id === 'hive')!;
-    expect(hive.requires_boards).toBe(25);
+    const checker = ladders.find((t) => t.id === 'checker')!;
+    expect(checker.requires_boards).toBe(25);
 
     // 24 boards: EASY's ten, NORMAL's ten, four of HUGE.
     const short = saveWith(['easy', 'normal'],
       [['huge', 1], ['huge', 2], ['huge', 3], ['huge', 4]]);
     expect(short.boardsCleared()).toBe(24);
-    expect(short.isTypeUnlocked(ladders, 'hive')).toBe(false);
+    expect(short.isTypeUnlocked(ladders, 'checker')).toBe(false);
 
     const enough = saveWith(['easy', 'normal'],
       [['huge', 1], ['huge', 2], ['huge', 3], ['huge', 4], ['huge', 5]]);
     expect(enough.boardsCleared()).toBe(25);
-    expect(enough.isTypeUnlocked(ladders, 'hive')).toBe(true);
+    expect(enough.isTypeUnlocked(ladders, 'checker')).toBe(true);
   });
 
   it('does not open a counted type on type-clears alone', () => {
     // Clearing EASY and NORMAL is 20 boards — readiness, but not time served.
     const progress = saveWith(['easy', 'normal']);
-    expect(progress.isTypeUnlocked(ladders, 'hive')).toBe(false);
+    expect(progress.isTypeUnlocked(ladders, 'checker')).toBe(false);
   });
 
   it('needs both parents for a combined type, not just one', () => {

@@ -480,10 +480,10 @@ clears the same share of every board as at HP 10. Lock was tried on the theory t
 ring proof by holding your level down; it moved the clear rate and left the forced guesses alone,
 because the EXP economy gets you there anyway. It keeps NORMAL's 10.
 
-**PAIRS was fitted into `UNLOCK_BOARDS` by extending the schedule DOWNWARD.** Appending it at 70
-would have spent the whole 70-board budget the type-gated ladders offer, which is the one number in
-that file that can strand a save with nothing to point at. Opening CHECKERBOARD at 15 adds an
-eleventh slot at the cheap end and leaves every threshold from HIVE upward exactly where it was.
+**Adding a counted ladder means adding a slot below 65, never one above it.** Appending at 70
+would spend the whole 70-board budget the type-gated ladders offer, which is the one number in
+that file that can strand a save with nothing to point at. PAIRS got its slot by extending the
+schedule downward to 15.
 
 **DOMINOES is PAIRS dealt as a full domino set, and the set decides the distribution.** Every
 pairing {a,b} of a double-T set appears once, so every tier appears exactly T+1 times and
@@ -582,8 +582,8 @@ gameplay dials. Sweep defaults to CHARGED, ten hand-opened cells a sweep.
 main line   EASY -> NORMAL -> { HUGE, EXTREME } -> HUGE x EXTREME (needs both)
 magic       NORMAL -> ARCANE -> ORACLE
 variants    gated on BOARDS CLEARED ANYWHERE, not on each other:
-            CHECKERBOARD 15 · PAIRS 20 · HIVE 25 · WRAPAROUND 30 · DIAMOND 35
-            DONUT 40 · CROSS 45 · RAGGED CAVE 50 · DUNGEON 55 · SUDOKU 60 · BLIND 65
+            WRAPAROUND 15 · DUNGEON 20 · CHECKERBOARD 25 · DIAMOND 30 · CROSS 35
+            HIVE 40 · PAIRS 45 · RAGGED CAVE 50 · DONUT 55 · SUDOKU 60 · BLIND 65
             the five cut-out shapes carry ARCANE's loadout (Reveal, Census, 75 mana),
             and DUNGEON carries Exercise on top of it
 combined    WRAPPED CROSS needs CROSS and WRAPAROUND; it carries ARCANE's loadout too
@@ -1128,9 +1128,7 @@ types whose board 10 must be cleared — readiness, and a bad one is a cycle, wh
 number. Nothing about the number says whether a player can reach it *without* the type it guards,
 so setting BLIND above what the type-gated ladders offer would leave a save simply stuck, with
 nothing to point at. The type-gated ladders (EASY, NORMAL, HUGE, EXTREME, HUGE x EXTREME, ARCANE,
-ORACLE) offer 70 tuned boards; BLIND at 65 is the top of the schedule. DUNGEON took a slot in the
-middle of it rather than the end — it belongs with the other shaped boards, and the five-board
-cadence is what makes the sequence legible — so SUDOKU and BLIND each moved up one step. `test/unlocks.test.ts` walks
+ORACLE) offer 70 tuned boards; BLIND at 65 is the top of the schedule. `test/unlocks.test.ts` walks
 the graph from an empty save and fails if anything is stranded, and separately asserts every
 threshold fits inside those 70 *without* counting a scaling board — a player who never goes past
 board 10 must still reach everything.
@@ -1139,6 +1137,16 @@ board 10 must still reach everything.
 nothing about a torus and neither teaches Sudoku; chaining them made a player who wanted the ragged
 cave grind three shapes they had no interest in first. Counting boards lets them arrive from any
 direction. The menu order follows the thresholds so it reads in the order a player meets it.
+
+**The counted ladders open easiest first, and the order is a measurement.** Ranked by the honest
+player from `sim:spells`, spell-less, 30 seeds a board, on mean clear rate over the tuned ten:
+WRAPAROUND 99.0, DUNGEON 97.7, CHECKERBOARD 97.4, DIAMOND 95.5, CROSS 94.0, HIVE 92.7, PAIRS 92.1,
+RAGGED CAVE 89.0, DONUT 84.9. SUDOKU and BLIND cannot be put on that scale and keep 60 and 65.
+Two things in it contradict notes elsewhere in this file and are worth knowing before anyone
+reorders by argument: WRAPAROUND, at NORMAL's own schedule, was cornered 0.0-0.6 times a board and
+is the gentlest of the lot, whatever "edges are free information" predicts; and DUNGEON, opening
+at 20, is now where most players meet spells and the crawl rule at once, before ARCANE has
+necessarily been played. HIVE and PAIRS are within the noise of each other.
 
 **Every cleared board counts once, scaling boards included.** That is deliberate: a player who
 would rather go deep on one ladder than wide across several gets there too.
