@@ -146,6 +146,17 @@ than as a minefield with corridors drawn on it. The classification cannot be rec
 finished grid, because a corridor cell and a room cell are both just `present: true`, so
 `dungeonMap` returns it and `buildShape` carries it as far as creature placement.
 
+**A doorway also carries a POCKET, and the asymmetry in how it is measured is what makes it fit.**
+The pocket is a room cell orthogonally beside a door that is itself against a wall, and it is empty
+too: the doorway bought a free read into the room, but the cell you stepped onto next was still a
+blind commitment, and the crawl rule makes that the expensive kind of guess. ORTHO for "beside a
+door" and the full ring for "against a wall" — taking the ring on both was tried first and it does
+not merely run dense, it cannot generate at all, because a small room is mostly perimeter and the
+ring swallows the perimeter whole. "Against a wall" is also what keeps it a pocket rather than a
+corridor of immunity: for a door mid-wall it clears the two cells flanking it and nothing deeper.
+Out of bounds counts as wall, correctly — the plan sits inside `DUNGEON_MARGIN`, so the edge of the
+box is void in the way the space between rooms is.
+
 **The earlier version built everything from 2x2 blocks, which bought a two-cell minimum width by
 construction, and that is gone deliberately.** Hallways are one cell wide now, so there is no width
 guarantee left to make. Two things survived the change and one did not. The cell count is still
@@ -166,13 +177,30 @@ and trimming is exactly what creates one-cell threads, so it could never get the
 wide is the target, so the thing trimming does wrong is the thing being asked for.
 
 **`MIN_SPAWN_SHARE` exists because the density the ladder quotes is not the density you feel.**
-Creatures go only in room floor, never a hallway or a doorway, so the pool they are dealt into is
-smaller than the board and the rooms play denser than the number in `ladders.py`. At 0.78 the two
-are held in a known ratio — measured, room floor is 78-95% of the map, so rooms run 14.2-32.5%
-against a nominal 12.8-26.4%. Before the floor was tightened the ratio wandered with the seed and
-the scaling boards reached 37.7%, past the 34% the rest of the game treats as the point a board
-stops being a puzzle. That is the number to check against when this schedule is touched, not the
-nominal one.
+Creatures go only in room floor, never a hallway, a doorway or a doorway's pocket, so the pool they
+are dealt into is smaller than the board and the rooms play denser than the number in `ladders.py`.
+That is the number to check against when this schedule is touched, not the nominal one. Before any
+floor existed the ratio wandered with the seed and the scaling boards reached 37.7%, past the 34%
+the rest of the game treats as the point a board stops being a puzzle.
+
+**It was 0.78, and that number was derived rather than chosen — which is exactly why the doorway
+pocket broke it.** Board 10's nominal density is 26.4%, and 26.4/0.78 = 33.8%, just inside the
+ceiling: the floor WAS the ceiling, restated as a share. The pocket makes 0.78 unreachable —
+measured over 40 seeds a board the share now runs 58-76% at worst and 71-82% on average, because
+small boards have small rooms and a small room is mostly perimeter — so every plan on the early
+boards was refused and `dungeonMap` threw on every seed. It is 0.55 now, and **the invariant moved
+from the share to the thing the share was a proxy for**: `test/invariants.test.ts` bounds the
+density a room actually plays at, because that is what decides whether a board is still a puzzle,
+and the share only ever mattered because density/share is it. Board 1 cannot reach a 77% share at
+all and still plays at ~22%, which is the whole argument in one board.
+
+**What the pocket cost, measured:** felt room density went from 15.9-30.4% to 18.0-32.6% on an
+average seed, and reaches 34.9% on the worst board-10 seed in 40. That is 0.9 points past the
+ceiling, on a game where HIVE sits at 35% and CHECKERBOARD at 38.5% for stated reasons — and the
+pocket hands back guaranteed-safe ground, so the board is not straightforwardly denser to PLAY even
+where it is denser to describe. **That last claim is the unmeasured one.** DUNGEON's schedule is the
+only one in the game derived by playing it, with the honest player in `sim:spells`, and re-deriving
+it is what would settle whether the density should now come down.
 
 **The crawl rule is what makes DUNGEON a dungeon, and it is one number.** `reach: 2` in the ladder
 data: you may only open a cell, or cast a targeted spell on one, within two steps of ground you have
@@ -228,7 +256,7 @@ ever has to remember this.
 
 **Reveal writes a GIVEN, not a player mark.** Same flag a Sudoku clue carries, because it is the
 same kind of claim: the board talking rather than the player guessing. It renders gold instead of
-green, so a fact you paid 25 mana for never looks like a hypothesis you wrote down, and `setMark`
+green, so a fact you paid 75 mana for never looks like a hypothesis you wrote down, and `setMark`
 and `toggleNote` refuse to erase it, so it cannot be rubbed out by a stray right-click and bought
 back. It does NOT make Sweep stronger, and that is worth knowing before `given` is read anywhere
 else: the strict proof consults `given` only on the Sudoku path, which no board carrying spells
@@ -411,9 +439,10 @@ in 13 of 40 boards before this was caught.
 ## Current state
 
 19 game types × 10 tuned boards, plus a scaling continuation to board 13–40 depending on type
-(517 boards in all). 267 tests. Playable prototype with canvas board, HUD, marks,
-pencil marks, two Sweep modes, magic, Full Run, the full unlock chain, and a settings
-menu with eight presentation options and seven gameplay dials.
+(517 boards in all). 270 tests. Playable prototype with canvas board, HUD, marks,
+pencil marks, two Sweep modes, magic, Full Run, the full unlock chain, a rules card, an
+always-present mute toggle, and a settings menu with eight presentation options and seven
+gameplay dials. Sweep defaults to CHARGED, ten hand-opened cells a sweep.
 
 ```
 main line   EASY -> NORMAL -> { HUGE, EXTREME } -> HUGE x EXTREME (needs both)
@@ -421,7 +450,7 @@ magic       NORMAL -> ARCANE -> ORACLE
 variants    gated on BOARDS CLEARED ANYWHERE, not on each other:
             CHECKERBOARD 20 · HIVE 25 · WRAPAROUND 30 · DIAMOND 35 · DONUT 40
             CROSS 45 · RAGGED CAVE 50 · DUNGEON 55 · SUDOKU 60 · BLIND 65
-            the five cut-out shapes carry ARCANE's loadout (Reveal, Census, 25 mana),
+            the five cut-out shapes carry ARCANE's loadout (Reveal, Census, 75 mana),
             and DUNGEON carries Exercise on top of it
 combined    WRAPPED CROSS needs CROSS and WRAPAROUND; it carries ARCANE's loadout too
 post-game   HUGE x BLIND needs HUGE and BLIND
@@ -460,9 +489,7 @@ cannot be finished.
 direction (`isAtLeastAsHard`), so a player who makes the game harder keeps their clears, unlocks
 and best times, and a player who makes it easier gets none of them. A blanket "modified" flag was
 the obvious alternative and is wrong: most of these are asymmetric, and throwing away the times of
-someone playing at HP ×0.5 punishes the opposite of what the rule is for. Sweep is deliberately
-absent from the check — both non-default modes take a tool away, and any finite bank is less than
-unlimited, so no setting of it can make a board easier. The consequence is said in three places,
+someone playing at HP ×0.5 punishes the opposite of what the rule is for. The consequence is said in three places,
 because a player who discovers it at the end of a board discovers it too late: live in the settings
 screen, on the ladder list, and on the clear overlay itself.
 
@@ -478,6 +505,15 @@ takes a `bite` that defaults to the tier. That opens exactly one hole: at level 
 never reduce the creature and at bite 0 the creature can never reduce the player, so the loop does
 not terminate. It is a stalemate and is returned as one, rather than guarded with a round cap that
 would be a number nobody could justify.
+
+**Sweep used to be absent from that check, and defaulting it to charged is what made it join.**
+The old argument was sound while the default was `'on'`: both other modes take a tool away, so no
+setting of the dial could be easier than default. Charging it by default (ten hand-opened cells)
+inverts that — `'on'` is now unlimited access to a tool the tuned game rations, and a player who
+switched to it would have been handed records, unlocks and best times for a strictly easier game.
+`sweepRank` orders the three (off > charge > on) and `sweepChargeClicks` is compared too, because a
+bank of 1 is `'on'` wearing a meter. The alarm if this is ever flipped back is the test asserting a
+fresh board on the tuned default has NO sweep banked.
 
 **A sweep must never pay for the next one.** In charge mode the meter banks one charge per cell
 opened *by hand*; the cells a sweep opens are excluded, or a single sweep of forty cells would bank
@@ -679,6 +715,51 @@ expected to override.
 **The font is a player setting, so no glyph in the UI can be assumed.** The in-game settings button
 shipped as a gear (U+2699) and rendered as tofu the moment the board was put in anything but the
 mono default. It is spelled out now. Anything added to the chrome has to survive all five stacks.
+**The mute speaker is the same rule answered the other way**: it is inline SVG, not a character,
+because a path has no font dependency and is the same picture under all five. A word would have
+done; a speaker glyph would have been the gear bug again.
+
+**The speaker lives on `document.body`, not in the app root, and that is what "always" means here.**
+Every screen begins with `root.replaceChildren()`, so anything inside it is destroyed on each
+navigation — an always-present control has to survive that rather than be re-added in four places
+and forgotten in the fifth. **Muting is deliberately not the same as setting the sound pack to
+OFF**, though both end in silence: the pack is a taste, muting is a circumstance, and folding them
+together would throw the player's chosen pack away every time they silenced the game for a minute.
+It is repainted from `applyPresentation` rather than only from its own handler, because "Reset
+presentation" clears `muted` too and a speaker still showing a cross over a game making noise would
+be the control lying about the thing it controls.
+
+**The HUD says words, and the zero padding went with the codes.** `EX0000`/`NE0007` were the
+original's four-character readouts, legible only once you already know the game — and "Next Level"
+is the one number a new player most needs named, because it is what turns a fight from fatal to
+free. Padding existed to hold a fixed width under a terse label, so with words it reads as a part
+number; width is held per readout in CSS instead, since what each absorbs differs. Time Attack
+needed a call of its own: `T-0004` carried the only thing distinguishing a countdown from a
+count-up in one character, and it is `TIME 12 LEFT` now because a glyph is not available here.
+
+**The rules are stated before the first click, and EASY is the only ladder that explains a death.**
+Nothing in the UI said what a number MEANS — every ladder subtitle is its tuning axis ("Density,
+then size"), which is the right label for a designer and says nothing to a player, and the hint line
+under the board explains which button does what. The sum rule leads the card because it is the one
+a Minesweeper player gets wrong, and it is stated with its proof: a number can exceed 8 where a cell
+has only 8 neighbours. The loss overlay says what killed you on EASY alone — every other type is
+gated behind clearing it, so repeating it would stop being an explanation and become nagging. It is
+gated on `TEACHING_TYPE` in `app.ts` rather than on a flag in `ladders.json`, because which overlay
+says what is a presentation decision with no business round-tripping through the ladder generator.
+
+**The loss note says "took your last N HP", not "cost N", and the difference is not style.** A
+`battle` event reports HP ACTUALLY lost, so a 20-point blow against 10 HP reports 10 — which read
+as a contradiction beside the rules card's "a tier 5 at LV1 costs 20 HP". On a fatal blow the HP
+lost is always exactly what was left, so this says the true number without quoting a price.
+Deriving the full blow instead would put a second copy of the damage formula outside the engine.
+
+**`.overlay` is `position: fixed`, and it was `absolute` for most of the game's life.** That is
+right only where the screen is exactly one viewport tall, which is true of `.screen.game` (100dvh)
+and false of every other screen: the ladder list is as tall as its cards, 2064px at phone width, so
+an overlay inset to it centred its card at y=720 against an 812px window and left a 92px sliver of
+the top edge showing. That was already true of the "ERASE PROGRESS?" confirmation before any rules
+card existed. Safe as `fixed` because the one animated transform is on `.stage`, the overlay's
+SIBLING — a transformed ancestor would capture it and quietly turn this back into `absolute`.
 
 **The zoom ceiling caps magnification only.** A small board is held at the player's limit instead
 of being blown up to fill the stage — which is what the old `MAX_CELL = 48` constant already did

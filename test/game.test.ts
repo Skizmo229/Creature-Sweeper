@@ -3,6 +3,17 @@ import { Game } from '../src/engine/game.js';
 import { computeNumbers, findBestOpening, neighbours } from '../src/engine/board.js';
 import { noteTiers } from '../src/engine/notes.js';
 import type { BoardConfig } from '../src/engine/types.js';
+import { DEFAULT_GAMEPLAY } from '../src/engine/settings.js';
+
+/**
+ * Settings with the Sweep gate taken off.
+ *
+ * The tuned default charges Sweep by ten hand-opened cells. Tests about what a
+ * sweep DOES once it fires say so here rather than banking ten clicks of
+ * unrelated setup first — and rather than passing by accident because the
+ * setup happened to open enough cells.
+ */
+const UNGATED_SWEEP = { settings: { ...DEFAULT_GAMEPLAY, sweep: 'on' as const } };
 
 /** A small hand-built board so the assertions can be exact. */
 function tinyConfig(over: Partial<BoardConfig> = {}): BoardConfig {
@@ -303,7 +314,7 @@ describe('sweep and marks', () => {
 
   it('can cost HP when a mark is wrong — the price of the assumption', () => {
     const build = () => {
-      const g = Game.create(tinyConfig(), 7);
+      const g = Game.create(tinyConfig(), 7, UNGATED_SWEEP);
       paint(g, ['........', '.3......', '........', '........',
                 '........', '........', '........', '........']);
       g.open(2, 2);              // reveals a 3: the tier-3 at (1,1)

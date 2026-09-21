@@ -109,13 +109,33 @@ const ATTEMPTS_PER_SHARE = 2;
  * The least of the map that may be room floor a creature could stand on.
  *
  * The quota is a density applied to the WHOLE cell count, but creatures only
- * ever go in rooms and never in a doorway, so the pool they are dealt into is
- * smaller than the board. This is the floor under that pool: it keeps the
- * quota fitting, and — more importantly — it keeps how packed a room feels
- * from wandering seed to seed, which is a tuning number and not something to
- * leave to chance. A plan under it is thrown away and another tried.
+ * ever go in rooms, never in a doorway and never in a doorway's pocket, so the
+ * pool they are dealt into is smaller than the board. This is the floor under
+ * that pool: it keeps the quota fitting, and it keeps how packed a room feels
+ * from wandering seed to seed. A plan under it is thrown away and another
+ * tried.
+ *
+ * IT WAS 0.78, AND THAT NUMBER WAS DERIVED RATHER THAN CHOSEN: board 10's
+ * nominal density is 26.4%, and 26.4/0.78 = 33.8%, just inside the 34% the
+ * rest of the game treats as the point a board stops being a puzzle. So the
+ * floor was the ceiling, restated as a share.
+ *
+ * The doorway pocket makes 0.78 unreachable. Measured over 40 seeds a board,
+ * the share now runs 58-76% at worst and 71-82% on average, so every plan on
+ * the small boards was refused and `dungeonMap` threw on every seed — small
+ * boards have small rooms, and a small room is mostly perimeter.
+ *
+ * What it costs, measured rather than reasoned about: felt room density goes
+ * from 15.9-30.4% to 18.0-32.6% on an average seed, and reaches 34.9% on the
+ * worst board-10 seed in 40. That is 0.9 points past the ceiling, on a ladder
+ * where HIVE already sits at 35% and CHECKERBOARD at 38.5% for stated reasons
+ * — and the pocket itself hands back guaranteed-safe ground, so the board is
+ * not straightforwardly denser to play even where it is denser to describe.
+ * THAT LAST CLAIM IS THE UNMEASURED ONE. DUNGEON's schedule is the only one in
+ * the game derived by playing it, with the honest player in `sim:spells`, and
+ * re-deriving it is what would settle whether the density should now come down.
  */
-const MIN_SPAWN_SHARE = 0.78;
+const MIN_SPAWN_SHARE = 0.55;
 
 /** Tries at spending the remaining budget before the attempt is abandoned. */
 const SPEND_TRIES = 600;
@@ -562,13 +582,52 @@ function attempt(bw: number, bh: number, target: number, share: number, rng: Rng
  */
 function spawnableCells(present: Mask, hall: Mask, bw: number, bh: number): Mask {
   const out = blank(bw, bh);
+  const door = blank(bw, bh);
   for (let y = 0; y < bh; y++) {
     for (let x = 0; x < bw; x++) {
       if (!present[y]![x] || hall[y]![x]) continue;
       const atDoor = ORTHO.some(([dx, dy]) => hall[y + dy]?.[x + dx] === true);
+      door[y]![x] = atDoor;
       out[y]![x] = !atDoor;
     }
   }
+
+  // THE DOORWAY POCKET: a door's neighbours that are also against a wall.
+  //
+  // The doorway itself being empty already buys a free read into the room, but
+  // the cell you step onto NEXT was still a blind commitment, and the crawl
+  // rule makes that the expensive kind of guess — you are forced to gamble on
+  // what is in front of you rather than on the cheapest square anywhere.
+  //
+  // "Against a wall" is what keeps this small and keeps it a pocket rather
+  // than a corridor of immunity reaching into the room. For a door in the
+  // middle of a wall it clears the two cells flanking it along that wall and
+  // nothing else, because the cells deeper in touch no void. So the safe
+  // ground hugs the entrance and the room proper is still the risk.
+  //
+  // ORTHO for "next to the door", the full ring for "touches a wall", and the
+  // asymmetry is the whole reason this fits. Taking the ring on BOTH was tried
+  // first and it does not merely run dense, it cannot generate: spawnable fell
+  // to 55% of the map against a floor of 78%, every plan was refused and
+  // `dungeonMap` threw on every board. Rooms here are small — ROOM_COUNT pins
+  // seven of them — so most of a room's perimeter is already both wall-adjacent
+  // and door-adjacent, and the ring swallowed the perimeter whole.
+  //
+  // Out of bounds counts as wall, which is correct and not an accident of the
+  // lookup: the plan is laid out inside DUNGEON_MARGIN, so the edge of the box
+  // is void in exactly the way the space between rooms is.
+  const ring = [...ORTHO, ...DIAG];
+  const wallAt = (x: number, y: number) => present[y]?.[x] !== true;
+  const pocket: Array<[number, number]> = [];
+  for (let y = 0; y < bh; y++) {
+    for (let x = 0; x < bw; x++) {
+      if (!out[y]![x]) continue;                                   // hall, door, or void
+      if (!ORTHO.some(([dx, dy]) => door[y + dy]?.[x + dx] === true)) continue;
+      if (!ring.some(([dx, dy]) => wallAt(x + dx, y + dy))) continue;
+      pocket.push([x, y]);
+    }
+  }
+  for (const [x, y] of pocket) out[y]![x] = false;
   return out;
 }
 

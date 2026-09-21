@@ -20,6 +20,7 @@ const ladders = loadLadders();
 function saveWith(clearedTypes: string[], extraBoards: Array<[string, number]> = []) {
   const data: SaveData = {
     version: 1, types: {}, boards: {}, runs: {}, scaling: {}, unlockAll: false,
+    seenHowTo: true,
   };
   for (const id of clearedTypes) {
     const type = ladders.find((t) => t.id === id)!;

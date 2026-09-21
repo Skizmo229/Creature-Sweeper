@@ -76,7 +76,7 @@ export const DEFAULT_GAMEPLAY: GameplaySettings = {
   enemyDamageRatio: 1,
   manaRegenRatio: 1,
   manaRewardRatio: 1,
-  sweep: 'on',
+  sweep: 'charge',
   sweepChargeClicks: 10,
   timeAttack: false,
 };
@@ -101,10 +101,25 @@ export function isAtLeastAsHard(s: GameplaySettings): boolean {
     && s.hpRegenRatio <= DEFAULT_GAMEPLAY.hpRegenRatio
     && s.enemyDamageRatio >= DEFAULT_GAMEPLAY.enemyDamageRatio
     && s.manaRegenRatio <= DEFAULT_GAMEPLAY.manaRegenRatio
-    && s.manaRewardRatio <= DEFAULT_GAMEPLAY.manaRewardRatio;
-  // Sweep is deliberately absent: 'on' is the default and both other modes
-  // take a tool away, so no setting of it can make the game easier. The
-  // charge size is the same argument — any finite bank is less than unlimited.
+    && s.manaRewardRatio <= DEFAULT_GAMEPLAY.manaRewardRatio
+    && sweepRank(s) >= sweepRank(DEFAULT_GAMEPLAY)
+    && s.sweepChargeClicks >= DEFAULT_GAMEPLAY.sweepChargeClicks;
+}
+
+/**
+ * How hard a Sweep mode is, as an order: off is hardest, on is easiest.
+ *
+ * Sweep used to be absent from the hardness check, and the argument for that
+ * was sound while the default was 'on': both other modes take a tool away, so
+ * nothing could be easier than the default. Charging it by default inverts
+ * that — 'on' is now unlimited access to a tool the tuned game rations, and a
+ * player who switched to it would have been handed records and unlocks for a
+ * strictly easier game. The charge size is the same argument in miniature: a
+ * bank of 1 cell per sweep is nearly 'on' wearing a meter, so it has to be
+ * compared rather than assumed finite-and-therefore-harder.
+ */
+function sweepRank(s: GameplaySettings): number {
+  return s.sweep === 'off' ? 2 : s.sweep === 'charge' ? 1 : 0;
 }
 
 /** True when every dial sits exactly where the ladder was tuned. */
@@ -124,6 +139,8 @@ export function easierThanDefault(s: GameplaySettings): string[] {
   if (s.enemyDamageRatio < DEFAULT_GAMEPLAY.enemyDamageRatio) out.push('creature damage');
   if (s.manaRegenRatio > DEFAULT_GAMEPLAY.manaRegenRatio) out.push('mana regen');
   if (s.manaRewardRatio > DEFAULT_GAMEPLAY.manaRewardRatio) out.push('mana reward');
+  if (sweepRank(s) < sweepRank(DEFAULT_GAMEPLAY)) out.push('Sweep');
+  else if (s.sweepChargeClicks < DEFAULT_GAMEPLAY.sweepChargeClicks) out.push('cells per sweep');
   return out;
 }
 

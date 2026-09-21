@@ -146,6 +146,23 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
 }
 .hud-item.right { margin-left: auto; color: var(--muted); }
 .hud-item.low { color: var(--danger); }
+/*
+ * Reserve each readout's width so the row cannot jitter.
+ *
+ * Zero padding used to do this: it was there to hold a fixed width under a
+ * terse label, and it went when the labels became words, because "Next Level
+ * 0007" reads as a part number. Widths are per readout rather than one blanket
+ * minimum, since what each has to absorb differs — HP only ever shrinks, EXP
+ * climbs into four digits, and Next Level carries the longest label in the row
+ * as well as the number. `ch` is exact here because the HUD is set in the
+ * board's mono stack.
+ */
+.hud-hp { min-width: 6ch; }
+.hud-lv { min-width: 9ch; }
+.hud-ex { min-width: 10ch; }
+.hud-ne { min-width: 16ch; }
+.hud-mp { min-width: 7ch; }
+.hud-item.right { min-width: 13ch; text-align: right; }
 
 .board-label {
   margin: 10px 2px 6px;
@@ -240,9 +257,24 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
 
 /* ------------------------------------------------------------------- overlay */
 
+/*
+ * Pinned to the VIEWPORT, not to the screen it was appended to.
+ *
+ * `absolute` is right only where the screen is exactly one viewport tall,
+ * which is true of `.screen.game` (100dvh) and false of every other screen:
+ * the ladder list is as tall as its cards, 2064px at phone width, so an
+ * overlay inset to it centred its card at y=720 against an 812px window and
+ * left a 92px sliver of the top edge showing. That was already true of the
+ * "ERASE PROGRESS?" confirmation before any rules card existed.
+ *
+ * Safe as `fixed` because the one animated transform in the app is on
+ * `.stage`, which is the overlay's SIBLING — a transformed ancestor would
+ * capture it and quietly turn this back into `absolute`.
+ */
 .overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
+  overflow-y: auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -270,6 +302,32 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
   flex-wrap: wrap;
   justify-content: center;
   margin-top: 18px;
+}
+
+/*
+ * The rules card is the one overlay carrying prose rather than a score, so it
+ * is wider and ranged left — three blocks of centred text is a poster, not
+ * something anyone reads. Its body takes the ordinary ink colour and leaves
+ * the ladder's accent for the headings, or every line competes for the eye.
+ */
+.overlay-card.howto {
+  max-width: 560px;
+  text-align: left;
+}
+.overlay-card.howto h2,
+.overlay-card.howto .overlay-stats { text-align: center; }
+.overlay-card.howto .overlay-stats { margin-bottom: 18px; }
+.overlay-card.howto .overlay-note {
+  color: var(--ink);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+.howto-rule {
+  margin: 0 0 3px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--tint);
 }
 
 /* --------------------------------------------------------------------- tools */
@@ -545,3 +603,54 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
 .clear-demo canvas { display: block; cursor: inherit; }
 
 .settings-stack .settings-gallery { margin-top: 0; }
+
+/* ------------------------------------------------------------ mute toggle */
+
+/*
+ * The speaker in the corner: present on every screen, so it is parented to
+ * `document.body` and positioned against the viewport rather than against a
+ * screen that gets rebuilt under it.
+ *
+ * The icon is inline SVG and that is load-bearing, not decorative. The font is
+ * a player setting, and a speaker CHARACTER renders as tofu under any stack
+ * that lacks the glyph — the settings gear already shipped that bug once. A
+ * path has no font dependency.
+ */
+.mute-toggle {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top, 0px));
+  right: max(10px, env(safe-area-inset-right, 0px));
+  z-index: 60;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: rgba(28, 28, 21, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.mute-toggle:hover { border-color: var(--tint); color: var(--tint); }
+.mute-toggle:focus-visible { outline: 2px solid var(--tint); outline-offset: 2px; }
+.mute-toggle.is-muted { color: var(--muted); }
+.mute-toggle svg { width: 20px; height: 20px; display: block; }
+/* The cone is filled, the waves and the cross are strokes. */
+.mute-toggle svg path { fill: currentColor; }
+.mute-toggle svg .mute-wave,
+.mute-toggle svg .mute-slash {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.mute-toggle.is-muted .mute-slash { stroke: var(--danger); }
+
+/*
+ * Keep the screens' own top-right controls out from under it. The game HUD
+ * ends in Settings and Back, and the ladder list's header runs full width;
+ * both would otherwise pass beneath a fixed button.
+ */
+.screen.game .hud { padding-right: 52px; }
+.screen > .title-bar { padding-right: 44px; }

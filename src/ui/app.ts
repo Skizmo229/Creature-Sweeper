@@ -33,6 +33,17 @@ const el = <K extends keyof HTMLElementTagNameMap>(
 const pad = (n: number, width: number) =>
   String(Math.max(0, Math.floor(n))).padStart(width, '0');
 
+/**
+ * The ladder that teaches, and so the only one that explains a death.
+ *
+ * Named rather than spelled inline because it is a claim about the ladder's
+ * ROLE, not about its name: EASY is the entry point every other type is gated
+ * behind, so it is the one place a player can still be meeting the rules for
+ * the first time. If another ladder ever took that job, this is the one line
+ * that would move.
+ */
+const TEACHING_TYPE = 'easy';
+
 export class App {
   private readonly root: HTMLElement;
   private readonly progress = Progress.load();
@@ -107,6 +118,21 @@ export class App {
    *  every-frame check cannot forfeit twice. */
   private timeExpired = false;
 
+  /**
+   * The fight that ended the board, kept so the loss overlay can say what
+   * killed you.
+   *
+   * The engine already hands this over — a `battle` event carries the tier and
+   * the HP it actually cost — and the UI used to drop it on the floor, which
+   * left "GAME OVER" unable to explain itself at the one moment a new player
+   * is paying most attention. Null when the board was lost to the clock
+   * instead, which has no fight to describe.
+   */
+  private fatalBattle: { tier: number; damage: number } | null = null;
+
+  /** The always-present speaker. Lives on `document.body`, not on the root. */
+  private muteBtn: HTMLElement | null = null;
+
   /** Dev handle: the live game, for console poking and UI tests. */
   get current(): Game | null {
     return this.game;
@@ -145,8 +171,60 @@ export class App {
     // A settings change has to reach the board the player came from, not just
     // the next one they start.
     this.settings.onChange(() => this.applyPresentation());
+    this.buildMuteButton();
     this.applyPresentation();
     this.showTypes();
+  }
+
+  /**
+   * The speaker in the corner: one switch for every sound in the game.
+   *
+   * Built once and parented to `document.body` rather than to the app root,
+   * because every screen begins with `root.replaceChildren()` — anything
+   * inside it is rebuilt on each navigation, and "always there" has to mean
+   * surviving that rather than being re-added in four places and forgotten in
+   * the fifth.
+   *
+   * Drawn as inline SVG, which is not a style choice. The font is a player
+   * setting, and a speaker CHARACTER is exactly the bug the settings gear
+   * already shipped once: it renders as tofu under any stack that lacks the
+   * glyph. An SVG path has no such dependency and is the same picture under
+   * all five.
+   */
+  private buildMuteButton(): void {
+    const btn = el('button', 'mute-toggle');
+    btn.type = 'button';
+    btn.addEventListener('click', () => {
+      this.settings.setPresentation({ muted: !this.settings.presentation.muted });
+      this.syncMuteButton();
+    });
+    document.body.append(btn);
+    this.muteBtn = btn;
+    this.syncMuteButton();
+  }
+
+  /** Repaint the speaker for the current state, and say so for screen readers. */
+  private syncMuteButton(): void {
+    const btn = this.muteBtn;
+    if (!btn) return;
+    const muted = this.settings.presentation.muted;
+    // The cone is common to both; muted adds the cross, unmuted the waves. A
+    // label as well as a title, because an icon-only control is unreadable to
+    // anything that cannot see it.
+    const cone = 'M4 9.5h3.2L11.5 6v12L7.2 14.5H4z';
+    btn.innerHTML =
+      `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">` +
+      `<path d="${cone}" />` +
+      (muted
+        ? `<path class="mute-slash" d="M15 9.5l5 5M20 9.5l-5 5" />`
+        : `<path class="mute-wave" d="M14.5 9a4.5 4.5 0 010 6M17.5 6.8a8 8 0 010 10.4" />`) +
+      `</svg>`;
+    btn.classList.toggle('is-muted', muted);
+    const label = muted ? 'Sound off — click to turn sound on'
+                        : 'Sound on — click to turn sound off';
+    btn.title = label;
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('aria-pressed', String(muted));
   }
 
   /**
@@ -160,6 +238,11 @@ export class App {
     document.documentElement.style.setProperty('--mono', this.settings.fontStack(this.typeId));
     this.sfx.setPack(this.settings.sfxPack(this.typeId));
     this.view?.setDisplay(this.settings.themeFor(this.typeId), this.boardDisplay());
+    // From here rather than only from the button's own handler: "Reset
+    // presentation" in the settings screen clears `muted` too, and a speaker
+    // still showing a cross over a game that had started making noise again
+    // would be the control lying about the thing it controls.
+    this.syncMuteButton();
   }
 
   /** The renderer's slice of the presentation settings. */
@@ -267,6 +350,10 @@ export class App {
     unlockAll.append(box, el('span', undefined, 'Unlock everything (prototype)'));
     tools.append(unlockAll);
 
+    const howto = el('button', 'ghost', 'How to play');
+    howto.addEventListener('click', () => this.showHowTo());
+    tools.append(howto);
+
     const settings = el('button', 'ghost', 'Settings');
     settings.addEventListener('click', () => this.showSettings(() => this.showTypes()));
     tools.append(settings);
@@ -290,6 +377,16 @@ export class App {
     wrap.append(tools);
 
     this.root.append(wrap);
+
+    // Opens itself exactly once, on a save that has never seen it. A player
+    // arriving here for the first time has one unlocked ladder and no idea
+    // what the game is, so there is nothing else for them to be doing; after
+    // that it is a button like any other. Marked seen when shown rather than
+    // when dismissed, so a reload cannot reopen it.
+    if (!this.progress.seenHowTo) {
+      this.progress.markHowToSeen();
+      this.showHowTo();
+    }
   }
 
   // ------------------------------------------------------------- screen: boards
@@ -568,6 +665,7 @@ export class App {
     this.notesMode = false;
     this.tierArmedByPencil = false;
     this.pendingSpell = null;
+    this.fatalBattle = null;
   }
 
   private buildGameScreen(): void {
@@ -589,7 +687,10 @@ export class App {
     // --- HUD, in the original's notation
     const hud = el('div', 'hud');
     const mk = (key: string, cls = '') => {
-      const span = el('span', `hud-item ${cls}`.trim());
+      // The key rides along as a class so each readout can reserve its own
+      // width: they lost their zero padding when the labels became words, and
+      // "EXP 0" growing into "EXP 1234" shoves everything to its right along.
+      const span = el('span', `hud-item hud-${key} ${cls}`.trim());
       this.hud[key] = span;
       hud.append(span);
       return span;
@@ -817,6 +918,66 @@ export class App {
   private closeAsk(): void {
     this.askOverlay?.remove();
     this.askOverlay = null;
+  }
+
+  /**
+   * The rules, stated before the first click.
+   *
+   * Everything else on the ladder screen describes what each ladder VARIES —
+   * "Density, then size", "Size + lock depth" — which is the right label for a
+   * designer and says nothing to a player who has not been told the game yet.
+   * The hint line under the board has the same shape: it explains which button
+   * does what and never what a number means.
+   *
+   * The sum rule leads because it is the one a Minesweeper player will get
+   * wrong. They read a 4 as four creatures, play on it, die, and conclude the
+   * board lied to them — so it is stated with the proof that makes it
+   * undeniable rather than merely asserted.
+   */
+  private showHowTo(onClose?: () => void): void {
+    this.closeAsk();
+    const overlay = el('div', 'overlay win');
+    const card = el('div', 'overlay-card howto');
+    card.append(el('h2', undefined, 'HOW TO PLAY'));
+    card.append(el('p', 'overlay-stats',
+      'Minesweeper, except the creatures fight back — and the numbers count differently.'));
+
+    const rule = (heading: string, body: string) => {
+      card.append(el('p', 'howto-rule', heading));
+      card.append(el('p', 'overlay-note', body));
+    };
+
+    rule('A number is a sum, not a count.',
+      'It is the tiers of the creatures around it added together. A 9 might be two ' +
+      'creatures — a tier 5 beside a tier 4 — or it might be nine tier 1s. That is ' +
+      'why a number can be larger than 8 when a cell has only 8 neighbours.');
+
+    rule('Anything at or below your level dies for free.',
+      'Your level is the LV in the corner. A creature of that tier or lower falls in ' +
+      'one blow and costs nothing, and pays EXP. A stronger one fights back, and the ' +
+      'gap is expensive: a tier 5 at LV1 costs 20 HP.');
+
+    rule('HP is a guess budget.',
+      'Every board can be cleared without taking a single point of damage — the EXP ' +
+      'needed for each level is always already on the board below it. So HP is not a ' +
+      'combat resource. You spend it when you guess.');
+
+    card.append(el('p', 'overlay-note',
+      'Click to open · right-click, or a LV button, to mark what you think a cell is · ' +
+      'S opens what is provably safe.'));
+
+    const row = el('div', 'overlay-actions');
+    const go = el('button', 'primary', 'Got it');
+    go.addEventListener('click', () => { this.closeAsk(); onClose?.(); });
+    row.append(go);
+    card.append(row);
+    overlay.append(card);
+
+    const screen = this.root.querySelector('.screen');
+    if (!screen) { onClose?.(); return; }
+    screen.append(overlay);
+    this.askOverlay = overlay;
+    go.focus();
   }
 
   /**
@@ -1050,6 +1211,17 @@ export class App {
     if (events.some((ev) => ev.type === 'levelUp')) this.flash('levelup');
     this.sound(events);
 
+    // Keep the blow that ended it, before the events go out of scope. The last
+    // costly fight in the batch is the fatal one: a single click resolves at
+    // most one fight, and a sweep stops the moment HP runs out.
+    if (game.status === 'lost') {
+      const fights = events.filter((ev) => ev.type === 'battle' && ev.damage > 0);
+      const last = fights[fights.length - 1];
+      if (last && last.type === 'battle') {
+        this.fatalBattle = { tier: last.tier, damage: last.damage };
+      }
+    }
+
     this.refresh();
     if (game.status !== 'playing') this.finish();
   }
@@ -1098,10 +1270,17 @@ export class App {
     const game = this.game;
     if (!game) return;
 
-    this.hud.hp!.textContent = `HP${pad(game.hp, 2)}`;
-    this.hud.lv!.textContent = `LV${pad(game.level, 2)}`;
-    this.hud.ex!.textContent = `EX${pad(game.ex, 4)}`;
-    this.hud.ne!.textContent = `NE${pad(game.progression.toNext(), 4)}`;
+    // Words rather than the original's four-character codes. EX and NE are
+    // only legible once you already know the game, which is the opposite of
+    // what a readout is for — and "Next Level" is the one number a new player
+    // most needs named, because it is what turns a fight from fatal to free.
+    // The zero padding went with them: it existed to hold a fixed width under
+    // a terse label, and "Next Level 0007" reads as a part number. Width is
+    // held by CSS instead, so the row still cannot jitter as digits change.
+    this.hud.hp!.textContent = `HP ${game.hp}`;
+    this.hud.lv!.textContent = `Level ${game.level}`;
+    this.hud.ex!.textContent = `EXP ${game.ex}`;
+    this.hud.ne!.textContent = `Next Level ${game.progression.toNext()}`;
     this.hud.hp!.classList.toggle('low', game.hp <= Math.max(1, game.maxHp * 0.3));
     if (this.hud.run && this.run) {
       this.hud.run.textContent = `RUN${this.boardIndex}/${this.run.boardCount}`;
@@ -1131,7 +1310,7 @@ export class App {
     if (this.hint) this.hint.textContent = this.hintText();
 
     if (this.hud.mp) {
-      this.hud.mp.textContent = `MP${pad(game.mana, 3)}`;
+      this.hud.mp.textContent = `MP ${game.mana}`;
       this.hud.mp.classList.toggle('charged', game.exerciseCharge > 0);
     }
     for (const btn of this.spellBtns) {
@@ -1201,9 +1380,13 @@ export class App {
   private updateClock(): void {
     const left = this.remainingSeconds();
     if (this.hud.t) {
+      // "LEFT" rather than a minus sign or an arrow: the old `T-0004` carried
+      // the only thing distinguishing a countdown from a count-up in a single
+      // character, and a glyph is not available here — the font is a player
+      // setting, so the word is the portable way to say it.
       this.hud.t.textContent = left === null
-        ? `T${pad(this.elapsedSeconds(), 4)}`
-        : `T-${pad(left, 4)}`;
+        ? `TIME ${this.elapsedSeconds()}`
+        : `TIME ${left} LEFT`;
       // Under ten seconds it reads like the HP counter does, for the same
       // reason: it is the number about to end the board.
       this.hud.t.classList.toggle('low', left !== null && left <= 10);
@@ -1278,6 +1461,34 @@ export class App {
     if (won && perfect) {
       card.append(el('p', 'overlay-note',
         'No damage taken — every board can be cleared this way.'));
+    }
+    // The same fact, said to the players who need it rather than only to the
+    // ones who have already proved they know it. A loss is the moment of most
+    // attention in the game and it used to report the score and nothing else,
+    // so a player who had misread the rule got no hint that they had.
+    //
+    // EASY only, and that is the whole of the reason: it calls itself the
+    // teaching ladder, and every other type is gated behind clearing it. A
+    // player who has reached NORMAL has already been told this and proved it,
+    // so repeating it on every death would stop being an explanation and
+    // become nagging — the thing the perfect-clear note gets right by firing
+    // once in a blue moon. Gated on the type id rather than on a flag in
+    // `ladders.json`: that file is tuning data generated by `ladders.py` and
+    // flows one way, and which overlay says what is a presentation decision
+    // that has no business round-tripping through the ladder generator.
+    if (!won && this.fatalBattle && this.typeId === TEACHING_TYPE) {
+      const { tier, damage } = this.fatalBattle;
+      // "Took your last N" rather than "cost N": a battle event reports HP
+      // ACTUALLY lost, so a 20-point blow against 10 HP reports 10 — which
+      // read as a contradiction beside the rules card's "a tier 5 at LV1 costs
+      // 20 HP". On a fatal blow the HP lost is always exactly what was left,
+      // so this says the same number without quoting a price. Deriving the
+      // full blow instead would mean a second copy of the damage formula
+      // outside the engine, which is how the two drift.
+      card.append(el('p', 'overlay-note',
+        `A tier ${tier} creature at LV${game.level} took your last ${damage} HP. ` +
+        `At LV${tier} it would have cost nothing — ` +
+        'every board can be cleared without taking a single point of damage.'));
     }
     // Said on the overlay rather than only in Settings, because this is the
     // moment the absence of a new best time would otherwise look like a bug.

@@ -62,10 +62,22 @@ export interface SaveData {
   scaling: Record<string, number>;
   /** Prototype escape hatch: ignore the unlock chain. */
   unlockAll: boolean;
+  /**
+   * The rules card has been shown once, so it stops opening itself.
+   *
+   * Absent in saves written before it existed, which `load` handles by
+   * spreading an empty save underneath — an older save is simply a player who
+   * has not seen it, and showing it once to a returning player is a far
+   * smaller cost than never showing it to a new one.
+   */
+  seenHowTo: boolean;
 }
 
 function emptySave(): SaveData {
-  return { version: 1, types: {}, boards: {}, runs: {}, scaling: {}, unlockAll: false };
+  return {
+    version: 1, types: {}, boards: {}, runs: {}, scaling: {},
+    unlockAll: false, seenHowTo: false,
+  };
 }
 
 export function boardKey(typeId: string, board: number): string {
@@ -106,6 +118,15 @@ export class Progress {
 
   setUnlockAll(on: boolean): void {
     this.data.unlockAll = on;
+    this.save();
+  }
+
+  get seenHowTo(): boolean {
+    return this.data.seenHowTo;
+  }
+
+  markHowToSeen(): void {
+    this.data.seenHowTo = true;
     this.save();
   }
 

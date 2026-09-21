@@ -96,6 +96,17 @@ export interface PresentationSettings {
   readonly strikeDefeated: boolean;
   /** Ceiling for manual zoom, in CSS pixels per cell. */
   readonly maxZoom: number;
+  /**
+   * Silence everything, from the always-present speaker in the corner.
+   *
+   * Deliberately NOT the same thing as setting `sfx` to OFF, even though both
+   * end in silence. The pack is a taste — which of five voices the game
+   * speaks in — and muting is a circumstance: someone walked in, the room is
+   * quiet, it is late. Folding the second into the first would throw the
+   * player's chosen pack away every time they silenced the game for a minute,
+   * and there would be nothing to restore when they turned it back on.
+   */
+  readonly muted: boolean;
 }
 
 export const DEFAULT_PRESENTATION: PresentationSettings = {
@@ -107,6 +118,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   highlight: DEFAULT,
   strikeDefeated: true,
   maxZoom: DEFAULT_MAX_ZOOM,
+  muted: false,
 };
 
 interface SettingsData {
@@ -156,6 +168,9 @@ function readPresentation(raw: unknown): PresentationSettings {
     highlight: str('highlight', DEFAULT) as HighlightChoice,
     strikeDefeated: typeof p.strikeDefeated === 'boolean' ? p.strikeDefeated : true,
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
+    // Defaults to unmuted, so a save written before the speaker existed opens
+    // with sound on — which is the state that save was actually played in.
+    muted: typeof p.muted === 'boolean' ? p.muted : false,
   };
 }
 
@@ -273,8 +288,15 @@ export class Settings {
     return (FONTS[id as FontId] ?? FONTS.mono).stack;
   }
 
-  /** The sound pack, or null for silence. */
+  /**
+   * The sound pack, or null for silence.
+   *
+   * Mute is checked first and answers for every sound in the game, which is
+   * what makes the corner speaker a single switch rather than one more way to
+   * set the same preference. The pack underneath is left exactly as it was.
+   */
   sfxPack(typeId: string): SfxPackId | null {
+    if (this.data.presentation.muted) return null;
     const choice = this.data.presentation.sfx;
     if (choice === OFF) return null;
     return (choice === DEFAULT ? identityFor(typeId).sfx : choice) as SfxPackId;

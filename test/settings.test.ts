@@ -181,7 +181,15 @@ describe('the sweep dial', () => {
   });
 
   it('is always available when the dial is on', () => {
-    expect(sweepable(DEFAULT_GAMEPLAY).sweepAvailable).toBe(true);
+    expect(sweepable(dials({ sweep: 'on' })).sweepAvailable).toBe(true);
+  });
+
+  it('starts uncharged on the tuned default, which is charged', () => {
+    // The default gates Sweep behind ten hand-opened cells, so a fresh board
+    // has nothing banked. This is the assertion that fails first if the
+    // default is ever flipped back.
+    expect(DEFAULT_GAMEPLAY.sweep).toBe('charge');
+    expect(sweepable(DEFAULT_GAMEPLAY).sweepAvailable).toBe(false);
   });
 });
 
@@ -231,12 +239,23 @@ describe('which settings keep a record', () => {
       { manaRegenRatio: 0 },
       { manaRewardRatio: 0.1 },
       { sweep: 'off' as const },
-      { sweep: 'charge' as const, sweepChargeClicks: 1 },
+      { sweep: 'charge' as const, sweepChargeClicks: 25 },
       { timeAttack: true },
     ]) {
       expect(isAtLeastAsHard(dials(patch)), JSON.stringify(patch)).toBe(true);
       expect(easierThanDefault(dials(patch))).toEqual([]);
     }
+  });
+
+  it('refuses an unlimited Sweep, now that the default rations it', () => {
+    // The whole reason Sweep had to join this check. While 'on' was the
+    // default, nothing about the dial could be easier than default; charging
+    // it by default makes unlimited access exactly that.
+    expect(isAtLeastAsHard(dials({ sweep: 'on' }))).toBe(false);
+    expect(easierThanDefault(dials({ sweep: 'on' }))).toEqual(['Sweep']);
+    // And a bank small enough to be 'on' wearing a meter.
+    expect(isAtLeastAsHard(dials({ sweepChargeClicks: 1 }))).toBe(false);
+    expect(easierThanDefault(dials({ sweepChargeClicks: 1 }))).toEqual(['cells per sweep']);
   });
 
   it('refuses anything easier, and names it', () => {
