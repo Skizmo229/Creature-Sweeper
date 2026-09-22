@@ -47,6 +47,27 @@ export interface GameFont {
    * which in every case is already heavy.
    */
   weight: number;
+  /**
+   * Only where the file misstates how tall its capitals are: the height its
+   * OS/2 table claims over the height its H is really drawn. The browser sizes
+   * `font-size-adjust: cap-height` from the claim, so the ladder list's names
+   * multiply their target by this to land where the letters actually stand.
+   * Aladin claims 0.387 em for capitals of 0.716 and would come out nearly
+   * twice the size of every other name; Gluten's claim is 8% short. The rest
+   * agree with their own letters to within 3%, and are left alone.
+   */
+  capHeightFix?: number;
+  /**
+   * The same correction for LOWERCASE, which the whole interface is sized by
+   * (`font-size-adjust: ex-height` on the body). Aladin claims 0.337 em for an
+   * x drawn at 0.460, which set ARCANE's HUD, menus and settings text 37%
+   * larger than every other ladder's. Three other faces disagree with their own
+   * x by more than 5% and are left alone on purpose: Bungee has no lowercase
+   * and Cinzel's lowercase are small capitals, so correcting either would size
+   * capitals to everyone else's lowercase and shrink it by 17% (Cinzel) or 31%
+   * (Bungee); Gluten, 8% out, is left as HIVE has always looked.
+   */
+  exHeightFix?: number;
 }
 
 const SANS = 'system-ui, sans-serif';
@@ -67,12 +88,13 @@ export const FONTS: Record<FontId, GameFont> = {
   'barlow-condensed': { name: 'Barlow Condensed', stack: `"Barlow Condensed", ${SANS}`, weight: 600 },
   'chakra-petch': { name: 'Chakra Petch', stack: `"Chakra Petch", ${SANS}`, weight: 700 },
   anton: { name: 'Anton', stack: `Anton, ${SANS}`, weight: 400 },
-  aladin: { name: 'Aladin', stack: `Aladin, ${SERIF}`, weight: 400 },
+  aladin: { name: 'Aladin', stack: `Aladin, ${SERIF}`, weight: 400,
+    capHeightFix: 387 / 716, exHeightFix: 337 / 460 },
   cinzel: { name: 'Cinzel', stack: `Cinzel, ${SERIF}`, weight: 700 },
   comfortaa: { name: 'Comfortaa', stack: `Comfortaa, ${SANS}`, weight: 700 },
   overpass: { name: 'Overpass', stack: `Overpass, ${SANS}`, weight: 700 },
   'exo-2': { name: 'Exo 2', stack: `"Exo 2", ${SANS}`, weight: 700 },
-  gluten: { name: 'Gluten', stack: `Gluten, ${SANS}`, weight: 600 },
+  gluten: { name: 'Gluten', stack: `Gluten, ${SANS}`, weight: 600, capHeightFix: 1167 / 1263 },
   'abril-fatface': { name: 'Abril Fatface', stack: `"Abril Fatface", ${SERIF}`, weight: 400 },
   'baloo-2': { name: 'Baloo 2', stack: `"Baloo 2", ${SANS}`, weight: 700 },
   'alfa-slab-one': { name: 'Alfa Slab One', stack: `"Alfa Slab One", ${SERIF}`, weight: 400 },

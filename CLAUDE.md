@@ -1056,6 +1056,24 @@ that along with its `@font-face` and licence line. It is the one face loaded wit
 block` rather than `swap`: a moment without the title reads better than watching it jump from a
 system face into its own on a first visit.
 
+**The ladder list sets each name in its own ladder's face, and sizes it by CAPITAL height.** It
+asks `Settings.font(type.id)`, so on "game type default" the list previews twenty-four faces and a
+forced face puts every name in that one, the same as the rest of the interface. The body's
+`ex-height` rule would size them by a letter the names do not contain — they are all capitals — and
+caps ran from 8.3px to 12.8px under it, so `.type-name` overrides it with `cap-height 0.69`, where
+NORMAL already stood. **The browser reads that metric from the file's OS/2 table, not the letters,
+and two files lie**: Aladin claims 0.387 em for capitals drawn at 0.716 and came out at nearly
+twice the size of every other name; Gluten is 8% short. `GameFont.capHeightFix` corrects the two.
+Aladin's x-height claim is wrong the same way (0.337 against 0.460), and for as long as the faces
+were bundled it set ARCANE's whole HUD, menus and settings text 37% larger than every other
+ladder's; `GameFont.exHeightFix` corrects that, through `--ex-fix` on the body rule. **A
+font-size-adjust inherits as a finished number, correction included**, so an element that wears a
+different face from its parent has to declare its own or it inherits Aladin's: the title does
+(`--title-ex-fix`), the font captions in settings do (`--ex-fix` set on the caption, even when it
+is 1), and anything new that sets a face inline must too. Bungee, Cinzel and Gluten also misstate
+their x-height by more than 5% and are left alone for reasons given at `exHeightFix`. Check a new
+face's OS/2 claims against its glyphs with fontTools before trusting either rule with it.
+
 **Some faces carry a character of their own, and that is the price of the whole interface wearing
 them.** Aladin's capital E is drawn like a euro sign, so ARCANE's HUD reads "€XP"; Sniglet's 5 has
 a rounded top; Bungee has no lowercase. None of it touches a digit's legibility on the board, which

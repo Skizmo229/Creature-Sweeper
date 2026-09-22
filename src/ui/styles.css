@@ -14,6 +14,8 @@
   --danger: #e8735e;
   /* The ladder's face, set from app.ts. This is only what shows before it is. */
   --font: "JetBrains Mono", ui-monospace, monospace;
+  /* Where every face's lowercase stands, as a share of the em — see body. */
+  --ex-height: 0.52;
   color-scheme: dark;
 }
 
@@ -34,8 +36,13 @@ html, body {
      shouting on the next, and Bungee — capitals only — was larger still. The
      target is where the old monospace stack landed on Windows (Cascadia Mono
      0.52, Consolas 0.49), so the layout built on it holds.
-     The board is a canvas, which ignores this; it does its own sizing. */
-  font-size-adjust: ex-height 0.52;
+     The board is a canvas, which ignores this; it does its own sizing.
+     The browser takes a face's x-height from its file rather than its letters,
+     and Aladin's file is wrong, so `--ex-fix` (`GameFont.exHeightFix`, set
+     from app.ts) corrects it. This inherits as a finished NUMBER, fix
+     included, so any element that wears a different face from its parent
+     must declare its own — the title and the font captions do. */
+  font-size-adjust: ex-height calc(var(--ex-height) * var(--ex-fix, 1));
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
@@ -61,7 +68,10 @@ html, body {
 .title-bar .sub { margin: 0; color: var(--muted); font-size: 0.85rem; max-width: 60ch; }
 /* The game's own name, in its own face unless the player forces one. Set from
    app.ts (`Settings.titleFont`); the fallback only covers the first frame. */
-.title-bar h1.game-title { font-family: var(--title-font, var(--font)); }
+.title-bar h1.game-title {
+  font-family: var(--title-font, var(--font));
+  font-size-adjust: ex-height calc(var(--ex-height) * var(--title-ex-fix, 1));
+}
 
 button {
   font-family: inherit;
@@ -96,7 +106,18 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
   flex-direction: column;
   gap: 4px;
 }
-.type-name { font-size: 1rem; font-weight: 700; letter-spacing: 0.05em; }
+/* Each name wears its own ladder's face (app.ts), and every name is capitals,
+   so the body's ex-height rule sizes them by a letter they do not contain:
+   caps ran from 8.3px in Bungee to 12.8px in Aladin. Capital height instead,
+   pinned where NORMAL's JetBrains Mono already stood under the old rule.
+   `--cap-fix` corrects a face whose file misstates its capital height
+   (`GameFont.capHeightFix`). */
+.type-name {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  font-size-adjust: cap-height calc(0.69 * var(--cap-fix, 1));
+}
 .type-meta { font-size: 0.75rem; color: var(--tint); }
 .type-axis { font-size: 0.72rem; color: var(--muted); }
 
@@ -657,6 +678,9 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
   line-height: 1.35;
   color: var(--muted);
   text-align: center;
+  /* A font tile's caption wears its own face, and sets its own `--ex-fix`
+     beside it; any other caption inherits the page's. See body. */
+  font-size-adjust: ex-height calc(var(--ex-height) * var(--ex-fix, 1));
 }
 .preview-chip.active .chip-label { color: var(--tint); }
 
