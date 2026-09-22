@@ -1303,7 +1303,33 @@ boards 1-6, where it is cornered at most twice. The cliff is between boards 6 an
 guesses to 9.1). That is 6 HP and a flat 6-tier curve against forced guesses no play can avoid: those
 boards are decided by 50/50s. Worth settling before the ladders are playtested, since a human will
 read it as unfairness — and the solver says it cannot be settled by generate-and-test (0 of 30 board
-10s were guess-free), so it is a density or HP question for ORACLE, or construction.
+10s were guess-free), so it is a schedule question for ORACLE, or construction — and the schedule
+lever turned out to be the lock, not density or HP (next note).
+
+**The cliffs on the hard ladders sit where the lock gets deep, and the lock — not HP, not density —
+is what makes those boards guess-decided.** Lock depth maxes out at one less than the tier count,
+where every threshold above the first is a full-tier-clear gate. EXTREME reaches it (4 of 5) at board
+9 and ORACLE (5 of 6) at board 7, and each ladder's perfect-deducer clear rate falls off a cliff on
+exactly that board. Held one short of the maximum and otherwise unchanged, complete deducer, 30
+seeds a board: ORACLE 7–10 go from 23 / 3 / 0 / 3% cleared to **97 / 63 / 40 / 47%**, board 7's
+forced guesses from 9.1 to 2.6; EXTREME 9–10 from 20 / 7% to **60 / 60%**, forced guesses from
+about 8 to 5.5. Against that, ORACLE with two more HP barely moves (43 / 3 / 0 / 3%) — a bigger
+budget only buys the player more forced guesses before the end — and three points less density
+helps a little (47 / 53 / 37 / 13%). Lock held at 4 AND two more HP takes ORACLE 7–10 to 97 / 70 /
+63 / 63%. The mechanism is the tuning identity's own: a max-depth gate needs every creature of a tier
+found before the next level, and the last one of a tier is often the one sitting in a 50/50. The
+reference page's "lock depth amplifies the need for solvable generation" was a warning; this is its
+size — the step to maximum depth roughly triples a perfect player's forced guesses on the board
+where it lands.
+
+**HUGE x EXTREME does not follow the pattern, because it is deep everywhere.** Its lock runs 5–8 of
+9, and a perfect player's clear rate is already 60–85% at lock 6 on boards 4–6 and 25% at lock 7 on
+board 7. Holding boards 9–10 one short of maximum changes almost nothing (0 → 10% and 0 → 0%, 20
+seeds), and holding lock at 6 from board 4 on only lifts boards 7–10 to 35 / 20 / 25 / 15%. Deep,
+dense and nine tiers at once: the lock alone cannot rescue it, and whether "the hardest ladder"
+should be winnable by play at all is the question to answer first. **None of these schedules has
+been changed** — they are measured candidates, built with the real generator through `CS_LADDERS`,
+and the zero-damage guarantee holds for any lock by construction.
 
 **"Share of the pool spent" is the wrong measure of scarcity, and it took two sessions to notice.**
 It said 1-11% on the dense ladders and 29-34% on DUNGEON, which read as "prices bite on DUNGEON
