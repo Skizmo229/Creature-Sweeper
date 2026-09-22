@@ -49,13 +49,11 @@ import {
   type Settings,
 } from './settings.js';
 import {
-  FONTS,
   PALETTE_IDS,
   PIP_NAMES,
   PIP_SHAPES,
   SFX_NAMES,
   VICTORY_NAMES,
-  type FontId,
   type PipShape,
   type SfxPackId,
   type TypeTheme,
@@ -63,6 +61,7 @@ import {
   identityFor,
   themeFor,
 } from './theme.js';
+import { FONTS, FONT_IDS, type FontId, LEGIBLE_FONT, TYPE_FONTS } from './typefaces.js';
 import { BoardView, type BoardDisplay } from './boardview.js';
 import {
   PREVIEW_SEED,
@@ -169,6 +168,11 @@ interface Choice {
   label: string;
   /** The example for this option, if it has a drawn one. */
   example?: () => HTMLElement;
+  /**
+   * A face to set the label in. The font setting dresses the interface as well
+   * as the board, so each font tile's own caption is the interface example.
+   */
+  labelFont?: string;
 }
 
 function typeName(typeId: string): string {
@@ -242,7 +246,9 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
       chip.classList.toggle('active', active);
       chip.setAttribute('aria-pressed', String(active));
       if (c.example) chip.append(c.example());
-      chip.append(el('span', 'chip-label', c.label));
+      const caption = el('span', 'chip-label', c.label);
+      if (c.labelFont) caption.style.fontFamily = c.labelFont;
+      chip.append(caption);
       chip.addEventListener('click', () => {
         if (live) {
           for (const other of box.children) {
@@ -311,7 +317,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
 
   const display = (over: Partial<BoardDisplay> = {}): BoardDisplay => ({
     maxCell: p.maxZoom,
-    font: settings.fontStack(typeId),
+    font: settings.font(typeId),
     highlight: settings.highlightStyle(typeId),
     strikeDefeated: p.strikeDefeated,
     hoverDefeated: p.hoverDefeated,
@@ -370,20 +376,31 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
     ));
 
   // --- font
+  //
+  // Each tile names the ladder the face belongs to, because "Pirata One" alone
+  // tells a player nothing about why it is here.
+  const fontOwner = (id: FontId): string => {
+    if (id === LEGIBLE_FONT) return 'easiest to read';
+    const owner = Object.keys(TYPE_FONTS).find((t) => TYPE_FONTS[t] === id);
+    return owner ? typeName(owner) : '';
+  };
   wideRow(look, 'Font',
-    'Board numbers, marks and the interface. System stacks only, so nothing arrives late and ' +
-    'reflows the board.',
+    'Board numbers, marks and the whole interface. Every ladder has a face of its own; ' +
+    `${FONTS[LEGIBLE_FONT].name} belongs to none of them — it was designed for readers with ` +
+    'low vision, and keeps every digit easy to tell apart.',
     gallery(
       [
         {
           value: DEFAULT,
           label: `Game type default — ${FONTS[ident.font].name}`,
-          example: chipBoard(currentTheme, { font: FONTS[ident.font].stack }),
+          example: chipBoard(currentTheme, { font: FONTS[ident.font] }),
+          labelFont: FONTS[ident.font].stack,
         },
-        ...(Object.keys(FONTS) as FontId[]).map((id): Choice => ({
+        ...FONT_IDS.map((id): Choice => ({
           value: id,
-          label: FONTS[id].name,
-          example: chipBoard(currentTheme, { font: FONTS[id].stack }),
+          label: [FONTS[id].name, fontOwner(id)].filter(Boolean).join(' — '),
+          example: chipBoard(currentTheme, { font: FONTS[id] }),
+          labelFont: FONTS[id].stack,
         })),
       ],
       p.font,

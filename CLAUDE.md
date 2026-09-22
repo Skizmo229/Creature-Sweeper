@@ -992,16 +992,58 @@ nothing is going to hand it back to.
 **Every "game type default" option names what it resolves to.** "Game type default" on its own is a
 promise with no content — the player cannot tell whether choosing it changes anything. The picker
 says "Game type default — Blips", which is the only thing that makes the three-way shape worth
-having. Fonts, sound packs and clear effects had no per-type answer before this, so `TYPE_IDENTITY`
+having. Sound packs and clear effects had no per-type answer before this, so `TYPE_IDENTITY`
 in `theme.ts` supplies one per ladder with a fallback, kept beside `THEMES` rather than inside it:
 `TypeTheme` is what the renderer needs to draw a board at all, and these are defaults the player is
-expected to override.
+expected to override. The font's answer lives in `TYPE_FONTS` in `typefaces.ts` instead, for the
+reason in the next note, and `identityFor` stitches the two back together.
+
+**Every ladder has a typeface of its own, bundled, and the face dresses the whole interface.**
+Twenty-four faces plus Atkinson Hyperlegible Next, which no ladder wears — it was designed for
+readers with low vision and is there for anyone who wants the easiest one. They are the Latin
+woff2 files Google Fonts serves, copied out of the Fontsource packages into `src/ui/fonts/`, not
+npm dependencies. System stacks could not have done it — twenty-four distinct looks are not
+installed anywhere — and one of the five stacks this replaced was already quietly wrong: Georgia
+("Storybook", worn by ARCANE, ORACLE and DIAMOND) has OLD-STYLE FIGURES, its 3, 4, 5, 7 and 9
+hanging 18% below the line, so every board in it had numbers jumping about. **A face must have
+lining figures before it can be added**, and that is a thing to measure, not eyeball: a canvas has
+no way to switch a face's figure style, so an old-style face cannot be rescued once chosen.
+Playfair Display, Almendra and Grenze Gotisch were all turned away for it.
+
+**Four things had to change for twenty-five faces to share one renderer.** (1) Each face carries
+the weight the board draws at, because eight have a regular only and a canvas asked for bold from
+one fakes it, which smears; `font-synthesis-weight: none` says the same to the interface. (2) The
+board sizes digits to a measured height (`DIGIT_HEIGHT` in `boardview.ts`) rather than to the em:
+Baloo 2's digits are 62% of theirs and Anton's 87%, so one size made some ladders squint-sized. (3)
+It centres them on their measured ink, replacing a fixed nudge under a `'middle'` baseline that
+was tuned for one face. (4) The interface does the same through `font-size-adjust: ex-height 0.52`
+— lowercase ran from 46% of the em to 73%. **A bundled face can still arrive a frame late**, which
+is why the old stacks were system-only: the interface reflows by itself, and `BoardView` asks for
+its face and repaints once when it lands. Measured metrics are cached only once the face has
+loaded, or the fallback's would size the board for the rest of the session.
+
+**The font data lives in `typefaces.ts`, not `theme.ts`, and that is `preview.ts`'s reason again.**
+`theme.ts` draws creatures, so it names `CanvasRenderingContext2D`, and the test pass compiles with
+no DOM at all. `test/fonts.test.ts` needs the table, and holds four things that each drift
+silently: every ladder has its own face; every face has an `@font-face`, and every file is named by
+one; the board weight is one the face really has; and every face's copyright notice is in
+`public/FONT-LICENSES.txt`, which Vite copies to the root of every build. **Adding a face means all
+four.** Old saves carry the five retired ids (`mono`, `sans`, ...), and `migrateFontChoice` maps
+them onto the nearest face on read — `mono` onto JetBrains Mono, which its stack named first.
+
+**Some faces carry a character of their own, and that is the price of the whole interface wearing
+them.** Aladin's capital E is drawn like a euro sign, so ARCANE's HUD reads "€XP"; Sniglet's 5 has
+a rounded top; Bungee has no lowercase. None of it touches a digit's legibility on the board, which
+is what every face was chosen on, but the settings screen sets each tile's caption in its own face
+so the player sees it before choosing.
 
 **The font is a player setting, so no glyph in the UI can be assumed.** The in-game settings button
 shipped as a gear (U+2699) and rendered as tofu the moment the board was put in anything but the
-mono default. It is spelled out now. Anything added to the chrome has to survive all five stacks.
+mono default. It is spelled out now. Anything added to the chrome has to survive all twenty-five
+faces — and the bundled files are Latin only, so anything outside Latin-1 and general punctuation
+(the arrows, the star) is drawn by the system fallback each stack names after its face.
 **The mute speaker is the same rule answered the other way**: it is inline SVG, not a character,
-because a path has no font dependency and is the same picture under all five. A word would have
+because a path has no font dependency and is the same picture under every face. A word would have
 done; a speaker glyph would have been the gear bug again.
 
 **The speaker lives on `document.body`, not in the app root, and that is what "always" means here.**

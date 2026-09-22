@@ -17,6 +17,7 @@ import {
   NOTE_COLOR, OUT_OF_REACH_COLOR, PIP_SHAPES,
   type PipShape, type TypeTheme, drawCreature, tierColor,
 } from './theme.js';
+import { FONTS, type GameFont } from './typefaces.js';
 import { hexAt, hexBoardSize, hexCentre, hexPoints, hexRadius, hexRowStep } from './hexgeom.js';
 import { type PinchStart, pinchStart, pinchTo } from './pinch.js';
 import { DEFAULT_MAX_ZOOM, type HighlightStyle, type HoverDefeated } from './settings.js';
@@ -75,6 +76,58 @@ function isPipShape(value: HoverDefeated): value is PipShape {
   return (PIP_SHAPES as readonly string[]).includes(value);
 }
 
+/**
+ * How tall a digit stands, as a share of the font size, in the face every
+ * number on the board was sized for — JetBrains Mono, as near as makes no
+ * difference the old monospace stack.
+ *
+ * Faces differ by more than a third here: Baloo 2's digits are 62% of their
+ * em and Anton's 87%. Drawn at one size, a board in Baloo reads a size smaller
+ * than one in Anton, which on a 16px cell is the difference between reading a
+ * number and squinting at it. So every face is drawn at whatever size puts its
+ * digits at this height, within limits — see `digitMetrics`.
+ */
+const DIGIT_HEIGHT = 0.73;
+/** How far a face may be resized to reach DIGIT_HEIGHT, either way. */
+const DIGIT_SCALE_LIMITS = [0.8, 1.25] as const;
+
+/** A face's digits, measured, as shares of its font size. */
+interface DigitMetrics {
+  /** Font size multiplier that stands the digits DIGIT_HEIGHT tall. */
+  scale: number;
+  /** Ink above the baseline. */
+  ascent: number;
+  /** Ink below it. */
+  descent: number;
+}
+
+/**
+ * Measured metrics per face. Only a face that has actually loaded is cached:
+ * measured before it lands, a face is its fallback's metrics, and caching
+ * those would size the board for the wrong face for the rest of the session.
+ */
+const DIGIT_METRICS = new Map<string, DigitMetrics>();
+
+function digitMetrics(ctx: CanvasRenderingContext2D, face: GameFont): DigitMetrics {
+  const key = `${face.weight} 100px ${face.stack}`;
+  const known = DIGIT_METRICS.get(key);
+  if (known) return known;
+  ctx.save();
+  ctx.font = key;
+  // All ten together: the board sets a whole number on one baseline, so the
+  // digits share one ink box rather than each being centred on its own.
+  const m = ctx.measureText('0123456789');
+  ctx.restore();
+  const ascent = m.actualBoundingBoxAscent / 100;
+  const descent = m.actualBoundingBoxDescent / 100;
+  const height = ascent + descent;
+  const [lo, hi] = DIGIT_SCALE_LIMITS;
+  const scale = height > 0 ? Math.min(hi, Math.max(lo, DIGIT_HEIGHT / height)) : 1;
+  const out = { scale, ascent, descent };
+  if (document.fonts.check(key)) DIGIT_METRICS.set(key, out);
+  return out;
+}
+
 /** A square cell's corners, clockwise from the top-left. */
 function squareCorners(cx: number, cy: number, half: number): Array<[number, number]> {
   return [
@@ -92,8 +145,8 @@ function squareCorners(cx: number, cy: number, half: number): Array<[number, num
 export interface BoardDisplay {
   /** Ceiling for manual zoom, in CSS pixels per cell. */
   maxCell: number;
-  /** CSS font stack for every number, mark and pencil note on the board. */
-  font: string;
+  /** The face for every number, mark and pencil note on the board. */
+  font: GameFont;
   /** How the cursor lights the board, or null for not at all. */
   highlight: HighlightStyle | null;
   /** Whether a defeated creature keeps its struck-through corner. */
@@ -107,7 +160,7 @@ export interface BoardDisplay {
 
 export const DEFAULT_DISPLAY: BoardDisplay = {
   maxCell: DEFAULT_MAX_ZOOM,
-  font: 'ui-monospace, monospace',
+  font: FONTS['jetbrains-mono'],
   highlight: 'neighbours',
   strikeDefeated: true,
   hoverDefeated: 'tier',
@@ -202,6 +255,13 @@ export class BoardView {
   private canPan = false;
 
   private readonly options: BoardViewOptions;
+
+  /**
+   * The face this view has asked the browser for and is waiting on, so a
+   * repaint is requested once per face rather than once per frame drawn
+   * before it arrives.
+   */
+  private awaitingFont: string | null = null;
 
   constructor(
     canvas: HTMLCanvasElement, cb: BoardViewCallbacks, options: BoardViewOptions = {},
@@ -482,6 +542,48 @@ export class BoardView {
 
   // ------------------------------------------------------------------ render
 
+  /**
+   * Set the board's face for a number that would be `px` in the face the
+   * board was sized for, and say where to put the baseline.
+   *
+   * `centre` is the offset from a point to the baseline that centres the
+   * digits' ink on that point. It replaces a fixed nudge under a 'middle'
+   * baseline, which was tuned for one face: 'middle' is the middle of the
+   * em, and faces hang their digits in the em at very different heights.
+   * `ascent` is the ink above the baseline, for text set from a top edge.
+   */
+  private numberFont(px: number): { centre: number; ascent: number } {
+    const face = this.display.font;
+    const m = digitMetrics(this.ctx, face);
+    const size = Math.max(1, Math.round(px * m.scale));
+    this.ctx.font = `${face.weight} ${size}px ${face.stack}`;
+    this.ctx.textBaseline = 'alphabetic';
+    return { centre: (m.ascent - m.descent) / 2 * size, ascent: m.ascent * size };
+  }
+
+  /**
+   * Repaint once the board's face has loaded, if it has not yet.
+   *
+   * The interface reflows when a face lands and the board cannot: a canvas
+   * keeps whatever it last drew, which before the face arrives is the
+   * fallback. Asking is also what starts the download — a face nothing on the
+   * page has used yet is not fetched just because the canvas names it.
+   */
+  private awaitFont(): void {
+    const face = this.display.font;
+    const probe = `${face.weight} 16px ${face.stack}`;
+    if (this.awaitingFont === probe || document.fonts.check(probe)) return;
+    this.awaitingFont = probe;
+    document.fonts.load(probe).then(
+      () => {
+        if (this.awaitingFont !== probe) return;   // the face changed meanwhile
+        this.awaitingFont = null;
+        this.render();
+      },
+      () => { this.awaitingFont = null; },
+    );
+  }
+
   render(): void {
     const game = this.game;
     const theme = this.theme;
@@ -489,6 +591,7 @@ export class BoardView {
 
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.awaitFont();
 
     this.drawGhostBand(game, theme);
 
@@ -850,10 +953,9 @@ export class BoardView {
     ctx.arc(x + size / 2, y + size / 2, size * 0.46, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = tierColor(cell.tier);
-    ctx.font = `bold ${Math.round(size * 0.74)}px ${this.display.font}`;
+    const { centre } = this.numberFont(size * 0.74);
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(String(cell.tier), x + size / 2, y + size / 2 + size * 0.04);
+    ctx.fillText(String(cell.tier), x + size / 2, y + size / 2 + centre);
     ctx.restore();
   }
 
@@ -875,10 +977,9 @@ export class BoardView {
     ctx.closePath();
     ctx.fill();
     ctx.fillStyle = CENSUS_COLOR;
-    ctx.font = `bold ${Math.round(size * 0.32)}px ${this.display.font}`;
+    const { ascent } = this.numberFont(size * 0.32);
     ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(String(cell.census), x + Math.max(1, size * 0.04), y + Math.max(0, size * 0.02));
+    ctx.fillText(String(cell.census), x + Math.max(1, size * 0.04), y + Math.max(0, size * 0.02) + ascent);
     ctx.restore();
   }
 
@@ -900,13 +1001,12 @@ export class BoardView {
       const box = this.contentBox(cx, cy);
       // Outlined, because green alone vanishes on a light tile like EASY's olive.
       ctx.save();
-      ctx.font = `bold ${Math.round(box.size * 0.58)}px ${this.display.font}`;
+      const { centre } = this.numberFont(box.size * 0.58);
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
       ctx.lineJoin = 'round';
       ctx.lineWidth = Math.max(2, box.size * 0.16);
       ctx.strokeStyle = MARK_OUTLINE;
-      const my = cy + box.size * 0.04;
+      const my = cy + centre;
       ctx.strokeText(String(cell.mark), cx, my);
       // A clue the board dealt and a claim the player made are different
       // things, so they are different colours. Same outline, because both
@@ -941,9 +1041,8 @@ export class BoardView {
     if (font < 5) return;   // below this the pips are noise, not information
 
     ctx.save();
-    ctx.font = `600 ${font}px ${this.display.font}`;
+    const { centre } = this.numberFont(font);
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
     // Outlined, for the reason a mark is: green alone vanishes on a light tile.
     // Composited straight onto its tile the dimmed green measured 1.22:1 on
     // EASY, 1.61 on BLIND and 1.70 on DOMINOES — and going opaque only reaches
@@ -961,7 +1060,7 @@ export class BoardView {
       at.push({
         glyph: t === 0 ? '·' : String(t),
         x: box.x + pad + w * (t % cols) + w / 2,
-        y: box.y + pad + h * Math.floor(t / cols) + h / 2,
+        y: box.y + pad + h * Math.floor(t / cols) + h / 2 + centre,
       });
     }
     for (const { glyph, x, y } of at) ctx.strokeText(glyph, x, y);
@@ -1067,10 +1166,9 @@ export class BoardView {
     // Red on a creature's own cell, ink on open ground — as in the original.
     ctx.fillStyle = cell.tier > 0 ? theme.hot : theme.ink;
     const scale = text.length > 1 ? 0.5 : 0.62;
-    ctx.font = `bold ${Math.round(box.size * scale)}px ${this.display.font}`;
+    const { centre } = this.numberFont(box.size * scale);
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, cx, cy + box.size * 0.04);
+    ctx.fillText(text, cx, cy + centre);
     ctx.restore();
   }
 

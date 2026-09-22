@@ -266,7 +266,7 @@ export class App {
    * canvas and nothing cascades into it.
    */
   private applyPresentation(): void {
-    document.documentElement.style.setProperty('--mono', this.settings.fontStack(this.typeId));
+    document.documentElement.style.setProperty('--font', this.settings.font(this.typeId).stack);
     this.sfx.setPack(this.settings.sfxPack(this.typeId));
     this.view?.setDisplay(this.settings.themeFor(this.typeId), this.boardDisplay());
     // From here rather than only from the button's own handler: "Reset
@@ -281,7 +281,7 @@ export class App {
     const p = this.settings.presentation;
     return {
       maxCell: p.maxZoom,
-      font: this.settings.fontStack(this.typeId),
+      font: this.settings.font(this.typeId),
       highlight: this.settings.highlightStyle(this.typeId),
       strikeDefeated: p.strikeDefeated,
       hoverDefeated: p.hoverDefeated,
@@ -717,7 +717,7 @@ export class App {
     const type = ladders.find((t) => t.id === this.typeId)!;
 
     this.sfx.setPack(this.settings.sfxPack(this.typeId));
-    document.documentElement.style.setProperty('--mono', this.settings.fontStack(this.typeId));
+    document.documentElement.style.setProperty('--font', this.settings.font(this.typeId).stack);
     this.endVictory();
     this.closeAsk();
     this.root.replaceChildren();

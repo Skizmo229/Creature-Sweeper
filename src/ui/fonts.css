@@ -1,0 +1,262 @@
+/*
+ * The bundled faces, one per ladder plus Atkinson Hyperlegible Next.
+ *
+ * Generated from the Fontsource packages (Google Fonts' own files), Latin
+ * subset only: the interface is English, and a glyph a face lacks (the arrows,
+ * the star) falls through to the system fonts named after it in each stack in
+ * theme.ts. Every family here must have an entry in FONTS there, and its
+ * copyright line in public/FONT-LICENSES.txt — test/fonts.test.ts holds all
+ * three together.
+ *
+ * `swap` so interface text is never invisible while a face arrives. The board
+ * is a canvas and cannot reflow, so BoardView repaints itself when its face
+ * lands instead.
+ */
+
+@font-face {
+  font-family: 'Atkinson Hyperlegible Next';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('./fonts/atkinson.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Fredoka';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('./fonts/fredoka.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('./fonts/jetbrains-mono.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Barlow Condensed';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/barlow-condensed-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Barlow Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/barlow-condensed-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Barlow Condensed';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/barlow-condensed-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Chakra Petch';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/chakra-petch-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Chakra Petch';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/chakra-petch-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Anton';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/anton.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Aladin';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/aladin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Cinzel';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url('./fonts/cinzel.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('./fonts/comfortaa.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Overpass';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./fonts/overpass.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Exo 2';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./fonts/exo-2.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Gluten';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./fonts/gluten.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Abril Fatface';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/abril-fatface.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Baloo 2';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('./fonts/baloo-2.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Alfa Slab One';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/alfa-slab-one.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Black Ops One';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/black-ops-one.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Russo One';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/russo-one.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Sniglet';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/sniglet-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Sniglet';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('./fonts/sniglet-800.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Libre Baskerville';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/libre-baskerville-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Libre Baskerville';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/libre-baskerville-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Bungee';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/bungee.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url('./fonts/rubik.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Pirata One';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/pirata-one.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Libre Franklin';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./fonts/libre-franklin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/space-mono-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/space-mono-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Big Shoulders Display';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./fonts/big-shoulders.woff2') format('woff2');
+}

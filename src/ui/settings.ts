@@ -29,8 +29,6 @@ import {
   snapRatio,
 } from '../engine/settings.js';
 import {
-  FONTS,
-  type FontId,
   type PipShape,
   type SfxPackId,
   type TypeTheme,
@@ -38,6 +36,7 @@ import {
   identityFor,
   themeFor,
 } from './theme.js';
+import { type FontId, type GameFont, fontFor, migrateFontChoice } from './typefaces.js';
 import { SETTINGS_KEY as KEY } from './savefile.js';
 
 /** "Use the game type's own" — a deferral, not a value. */
@@ -191,7 +190,10 @@ function readPresentation(raw: unknown): PresentationSettings {
     // setting written by a newer build.
     icons: str('icons', DEFAULT) as IconChoice,
     palette: str('palette', DEFAULT),
-    font: str('font', DEFAULT) as FontChoice,
+    // Retired ids map to their successors — see `migrateFontChoice`. An id
+    // this build does not know is kept, like `icons`, and resolves to the
+    // baseline face until a build that knows it reads the save.
+    font: migrateFontChoice(str('font', DEFAULT)) as FontChoice,
     sfx: str('sfx', DEFAULT) as SfxChoice,
     victory: str('victory', DEFAULT) as VictoryChoice,
     highlight: str('highlight', DEFAULT) as HighlightChoice,
@@ -316,11 +318,10 @@ export class Settings {
     return { ...base, pip };
   }
 
-  /** The CSS font stack for this ladder's screens and board numbers. */
-  fontStack(typeId: string): string {
+  /** The face for this ladder's screens and board numbers. */
+  font(typeId: string): GameFont {
     const choice = this.data.presentation.font;
-    const id = choice === DEFAULT ? identityFor(typeId).font : choice;
-    return (FONTS[id as FontId] ?? FONTS.mono).stack;
+    return fontFor(choice === DEFAULT ? identityFor(typeId).font : choice);
   }
 
   /**

@@ -1,3 +1,6 @@
+/* The bundled faces. First, because an @import anywhere else is ignored. */
+@import './fonts.css';
+
 :root {
   --bg: #17170f;
   --panel: #23231b;
@@ -9,7 +12,8 @@
   --muted: #948f7b;
   --tint: #d99a34;
   --danger: #e8735e;
-  --mono: ui-monospace, "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+  /* The ladder's face, set from app.ts. This is only what shows before it is. */
+  --font: "JetBrains Mono", ui-monospace, monospace;
   color-scheme: dark;
 }
 
@@ -20,7 +24,18 @@ html, body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--mono);
+  font-family: var(--font);
+  /* Eight of the faces come in one weight only, and a bold faked from it
+     smears. Those eight are heavy already, so bold text simply keeps it. */
+  font-synthesis-weight: none;
+  /* Every face is sized so its lowercase stands the same height. Left to the
+     em, the interface changed size with the ladder: Aladin's x-height is 46%
+     of its em and Anton's 73%, so the same 14px read small on one ladder and
+     shouting on the next, and Bungee — capitals only — was larger still. The
+     target is where the old monospace stack landed on Windows (Cascadia Mono
+     0.52, Consolas 0.49), so the layout built on it holds.
+     The board is a canvas, which ignores this; it does its own sizing. */
+  font-size-adjust: ex-height 0.52;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
@@ -338,7 +353,8 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
   box-sizing: border-box;
   width: 100%;
   resize: vertical;
-  font: 0.7rem/1.4 ui-monospace, Consolas, monospace;
+  /* Bundled, whatever the ladder: a code is base64, where 0/O and 1/l/I matter. */
+  font: 0.7rem/1.4 "JetBrains Mono", ui-monospace, Consolas, monospace;
   word-break: break-all;
   color: var(--ink);
   background: rgba(0, 0, 0, 0.3);

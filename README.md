@@ -50,6 +50,8 @@ creature_sweeper/
 │  │  ├─ settings.ts         the settings store, and what "game type default" resolves to
 │  │  ├─ settingsscreen.ts   the settings form
 │  │  ├─ preview.ts          the settings screen's example boards — real games, no rendering
+│  │  ├─ typefaces.ts        the bundled faces, and which ladder wears which
+│  │  ├─ fonts.css           @font-face for every file in fonts/ (OFL — see Licence)
 │  │  ├─ sfx.ts              sound packs, synthesised rather than loaded
 │  │  └─ victory.ts          the board-clear effects
 │  ├─ sim/                   headless measurement, all driving the real engine
@@ -160,7 +162,8 @@ offered cheapest first ·
 scroll or `+`/`-` to zoom in, `F` to reset · `Esc` backs out.
 
 **Settings** are reachable from the ladder list and from the HUD mid-board, and are two separate
-things. The **presentation** half — creature icons, board palette, font, sound pack, board-clear
+things. The **presentation** half — creature icons, board palette, font (every ladder has a
+typeface of its own, plus Atkinson Hyperlegible for anyone who wants the easiest one to read), sound pack, board-clear
 effect, cursor highlight, the strike through defeated creatures, and the zoom ceiling — touches no
 rule, so it can never affect a record; each one is either the game type's own answer, a value you
 pick, or off. Every visual setting shows its options rather than naming them: the examples are real
@@ -385,6 +388,12 @@ point of a freeware remix is that what comes after it stays free too.
 **Creative Commons Attribution-ShareAlike 4.0 International**. See [`LICENSE-DOCS`](LICENSE-DOCS).
 Use the findings, quote them, build on them; credit this project and keep your version under the
 same licence.
+
+**Fonts** — the files under `src/ui/fonts/` are not ours, and neither licence above covers them.
+They are twenty-five faces from Google Fonts, each under the **SIL Open Font License 1.1**. Every
+copyright notice, and the licence itself, is in
+[`public/FONT-LICENSES.txt`](public/FONT-LICENSES.txt), which is copied into every build so it
+ships beside the fonts it covers.
 
 **Neither licence covers the third-party material described above**, none of which is in this
 repository. Creature Sweeper is an independent implementation, not affiliated with or endorsed by

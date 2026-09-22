@@ -10,6 +10,8 @@
  * same everywhere. Shape is decoration; colour is information.
  */
 
+import { type FontId, typeFontId } from './typefaces.js';
+
 export type PipShape = 'circle' | 'square' | 'diamond' | 'hex' | 'cross' | 'ring' | 'ringDiamond';
 
 export interface TypeTheme {
@@ -131,39 +133,6 @@ export const PIP_NAMES: Record<PipShape, string> = {
   ringDiamond: 'Hollow gems',
 };
 
-/**
- * Font stacks the player can choose between.
- *
- * All system stacks with no download, because the board is drawn on a canvas
- * at arbitrary sizes and a font that arrives late would render the first frame
- * in a fallback and reflow every number. `mono` is what the game has always
- * used and stays the baseline every type defaults to unless it says otherwise.
- */
-export type FontId = 'mono' | 'sans' | 'rounded' | 'serif' | 'slab';
-
-export const FONTS: Record<FontId, { name: string; stack: string }> = {
-  mono: {
-    name: 'Terminal',
-    stack: 'ui-monospace, "JetBrains Mono", "Cascadia Mono", Consolas, monospace',
-  },
-  sans: {
-    name: 'Clean',
-    stack: 'system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-  },
-  rounded: {
-    name: 'Soft',
-    stack: '"Trebuchet MS", Verdana, Geneva, "DejaVu Sans", sans-serif',
-  },
-  serif: {
-    name: 'Storybook',
-    stack: 'Georgia, "Iowan Old Style", "Times New Roman", serif',
-  },
-  slab: {
-    name: 'Heavy',
-    stack: '"Rockwell", "Courier New", "Bookman Old Style", serif',
-  },
-};
-
 /** Sound packs. See `sfx.ts` — each is a set of synthesis recipes, not files. */
 export type SfxPackId = 'chime' | 'blip' | 'thud' | 'glass';
 
@@ -216,47 +185,53 @@ export interface TypeIdentity {
   victory: VictoryId;
 }
 
-const FALLBACK_IDENTITY: TypeIdentity = { font: 'mono', sfx: 'blip', victory: 'confetti' };
+const FALLBACK_IDENTITY: Omit<TypeIdentity, 'font'> = { sfx: 'blip', victory: 'confetti' };
 
-export const TYPE_IDENTITY: Record<string, TypeIdentity> = {
-  easy: { font: 'rounded', sfx: 'chime', victory: 'confetti' },
+/**
+ * Every ladder wears a face of its own — no two share one, and
+ * `test/fonts.test.ts` holds that. The reasons are the look, not the reading:
+ * each was checked on its own palette at a 16px cell before it was chosen.
+ */
+export const TYPE_IDENTITY: Record<string, Omit<TypeIdentity, 'font'>> = {
+  easy: { sfx: 'chime', victory: 'confetti' },
   // The original's own clear, on the ladder that is the original.
-  normal: { font: 'mono', sfx: 'blip', victory: 'tumble' },
-  extreme: { font: 'mono', sfx: 'blip', victory: 'burst' },
-  huge: { font: 'sans', sfx: 'thud', victory: 'tumble' },
-  huge_extreme: { font: 'slab', sfx: 'thud', victory: 'cascade' },
-  arcane: { font: 'serif', sfx: 'glass', victory: 'sparkle' },
-  oracle: { font: 'serif', sfx: 'glass', victory: 'pop' },
-  checker: { font: 'sans', sfx: 'chime', victory: 'wipe' },
+  normal: { sfx: 'blip', victory: 'tumble' },
+  extreme: { sfx: 'blip', victory: 'burst' },
+  huge: { sfx: 'thud', victory: 'tumble' },
+  huge_extreme: { sfx: 'thud', victory: 'cascade' },
+  arcane: { sfx: 'glass', victory: 'sparkle' },
+  oracle: { sfx: 'glass', victory: 'pop' },
+  checker: { sfx: 'chime', victory: 'wipe' },
   // Creatures leave in twos, so the effect that takes them one burst at a time
   // is the one that reads as the mode.
-  pairs: { font: 'rounded', sfx: 'chime', victory: 'pop' },
+  pairs: { sfx: 'chime', victory: 'pop' },
   // Thud is the clack of a tile set down. Cascade is the one clear effect in
   // the game that is already a row of things falling over in sequence.
-  dominoes: { font: 'sans', sfx: 'thud', victory: 'cascade' },
+  dominoes: { sfx: 'thud', victory: 'cascade' },
+  // Heavy type and a thud: the weights room.
+  workout: { sfx: 'thud', victory: 'burst' },
   // A pack leaves together, so the effect that sends every creature falling at
   // once is the one that reads as the mode.
-  // Heavy type and a thud: the weights room.
-  workout: { font: 'slab', sfx: 'thud', victory: 'burst' },
-  packs: { font: 'slab', sfx: 'thud', victory: 'tumble' },
+  packs: { sfx: 'thud', victory: 'tumble' },
   // One after another, in order: the effect that is already a line of things
   // going by in sequence.
-  congo: { font: 'rounded', sfx: 'chime', victory: 'cascade' },
-  hive: { font: 'rounded', sfx: 'blip', victory: 'pop' },
-  wraparound: { font: 'sans', sfx: 'chime', victory: 'wipeRadial' },
-  donut: { font: 'rounded', sfx: 'chime', victory: 'ripple' },
-  cross: { font: 'sans', sfx: 'blip', victory: 'wipe' },
-  wrapped_cross: { font: 'sans', sfx: 'chime', victory: 'wipe' },
-  diamond: { font: 'serif', sfx: 'glass', victory: 'sparkle' },
-  cave: { font: 'slab', sfx: 'thud', victory: 'burn' },
-  dungeon: { font: 'slab', sfx: 'thud', victory: 'burn' },
-  sudoku: { font: 'sans', sfx: 'glass', victory: 'wipeDown' },
-  blind: { font: 'mono', sfx: 'thud', victory: 'wipeRadial' },
-  huge_blind: { font: 'mono', sfx: 'thud', victory: 'cascade' },
+  congo: { sfx: 'chime', victory: 'cascade' },
+  hive: { sfx: 'blip', victory: 'pop' },
+  wraparound: { sfx: 'chime', victory: 'wipeRadial' },
+  donut: { sfx: 'chime', victory: 'ripple' },
+  cross: { sfx: 'blip', victory: 'wipe' },
+  wrapped_cross: { sfx: 'chime', victory: 'wipe' },
+  diamond: { sfx: 'glass', victory: 'sparkle' },
+  cave: { sfx: 'thud', victory: 'burn' },
+  dungeon: { sfx: 'thud', victory: 'burn' },
+  sudoku: { sfx: 'glass', victory: 'wipeDown' },
+  blind: { sfx: 'thud', victory: 'wipeRadial' },
+  huge_blind: { sfx: 'thud', victory: 'cascade' },
 };
 
 export function identityFor(typeId: string): TypeIdentity {
-  return TYPE_IDENTITY[typeId] ?? FALLBACK_IDENTITY;
+  // The face lives in `typefaces.ts`, where the tests can reach it — see there.
+  return { ...(TYPE_IDENTITY[typeId] ?? FALLBACK_IDENTITY), font: typeFontId(typeId) };
 }
 
 /** Marks are green, as in the original. Drawn with a dark outline so they
