@@ -220,6 +220,15 @@ at board 10 it is cornered 3.2 times a board on DUNGEON and 3.1 on ARCANE, and c
 87%. Same number of forced guesses, far cheaper ones — the doorway reads are why, and it is the "a
 guess you know something about is cheaper" finding for a fourth time.
 
+**`ROOM_COUNT` moves DUNGEON's guesses and barely moves its danger — measured, not changed.** With the
+honest player, 30 seeds a board, at 7 rooms (shipped), 9 and 11: 17.8, 21.0 and 25.6 stuck points
+over the ladder (ARCANE: 24.0), while the average clear rate only goes 98%, 96%, 95% (ARCANE: 82%);
+board 10 lands at 4.8 / 97%, 5.9 / 80% and 6.3 / 87%. So about eleven rooms would make DUNGEON as
+PUZZLING as ARCANE and it would still be far gentler, because the doorways keep every forced guess
+cheap. If it should be DEADLIER rather than more puzzling, the lever is HP — 10 on every board —
+not rooms and not density. Measured by editing the constant for the length of a run and putting it
+back; nothing about the mode changed.
+
 **The crawl rule is what makes DUNGEON a dungeon, and it is one number.** `reach: 2` in the ladder
 data: you may only open a cell, or cast a targeted spell on one, within two steps of ground you have
 already uncovered. Two things about how it is measured are load-bearing. It counts steps through
