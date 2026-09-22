@@ -621,6 +621,17 @@ missing from it since it shipped.** Nothing failed and nothing said so. Every ty
 now placed by rule on the row beside HUGE x BLIND, which fixed it and caught DOMINOES before it went
 missing the same way.
 
+**The web build ships to itch.io, and two things about that are load-bearing.** `base: './'` in
+`vite.config.ts`: itch serves an HTML game from a per-upload subfolder, so absolute `/assets/...`
+paths load nothing and the page is blank with no error. `npm run package` builds and zips `dist/`
+into `release/` with `index.html` at the zip's root, and refuses a build with absolute paths. And
+the save is `localStorage` inside itch's third-party iframe, which Safari caps and may clear, so
+**Back up / restore save** on the ladder list carries progress and settings out as a `CS1:` code
+(`src/ui/savefile.ts`). It is base64 rather than JSON because it gets pasted through chat apps, and
+a chat app curling a quote breaks JSON silently. Import refuses anything that would load as a
+blank save, since that would wipe exactly what it exists to protect. **Changing `SaveData` now
+means writing a migration** — testers' saves, and their exported codes, are in the wild.
+
 **Connectivity must be asserted, not assumed.** The auto-opening reveals *one* region, so a board
 that fragments leaves everything else unreachable. A ragged-cave generator produced stray islands
 in 13 of 40 boards before this was caught.
@@ -630,7 +641,7 @@ in 13 of 40 boards before this was caught.
 ## Current state
 
 24 game types × 10 tuned boards, plus a scaling continuation to board 13–40 depending on type
-(672 boards in all). 367 tests. Playable prototype with canvas board, HUD, marks,
+(672 boards in all). 375 tests. Playable prototype with canvas board, HUD, marks,
 pencil marks, two Sweep modes, magic, Full Run, the full unlock chain, a rules card, an
 always-present mute toggle, and a settings menu with nine presentation options and seven
 gameplay dials. Sweep defaults to CHARGED, ten hand-opened cells a sweep.

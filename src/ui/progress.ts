@@ -10,8 +10,7 @@
  */
 
 import type { Ladders } from '../engine/config.js';
-
-const KEY = 'creature-sweeper.progress.v1';
+import { PROGRESS_KEY as KEY } from './savefile.js';
 
 export interface BoardRecord {
   cleared: boolean;

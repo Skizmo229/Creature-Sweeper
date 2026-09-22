@@ -38,8 +38,7 @@ import {
   identityFor,
   themeFor,
 } from './theme.js';
-
-const KEY = 'creature-sweeper.settings.v1';
+import { SETTINGS_KEY as KEY } from './savefile.js';
 
 /** "Use the game type's own" — a deferral, not a value. */
 export const DEFAULT = 'default';

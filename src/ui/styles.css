@@ -315,6 +315,35 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
   max-width: 560px;
   text-align: left;
 }
+
+/*
+ * The save backup card. The code is long and meaningless to read, so it sits
+ * in a small monospace box that wraps anywhere; it is there to be selected,
+ * not studied.
+ */
+.overlay-card.backup { max-width: 520px; text-align: left; }
+.overlay-card.backup h2 { text-align: center; }
+.overlay-card.backup .overlay-note { color: var(--ink); line-height: 1.5; }
+.backup-label {
+  margin: 18px 0 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--tint);
+}
+.backup-code {
+  box-sizing: border-box;
+  width: 100%;
+  resize: vertical;
+  font: 0.7rem/1.4 ui-monospace, Consolas, monospace;
+  word-break: break-all;
+  color: var(--ink);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 8px;
+}
+.overlay-card.backup .overlay-actions { margin-top: 10px; justify-content: flex-start; }
+.overlay-card.backup .backup-error { color: var(--danger); min-height: 1em; }
 .overlay-card.howto h2,
 .overlay-card.howto .overlay-stats { text-align: center; }
 .overlay-card.howto .overlay-stats { margin-bottom: 18px; }

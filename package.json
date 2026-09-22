@@ -3,11 +3,12 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "A Minesweeper/RPG hybrid \u2014 remix of mamono sweeper. Rules engine.",
+  "description": "A Minesweeper/RPG hybrid — remix of mamono sweeper. Rules engine.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "package": "vite build && node scripts/package.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.engine.json",

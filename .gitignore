@@ -23,3 +23,6 @@ Thumbs.db
 # the same footing as design/original-reference/ above.
 game_types.pdn
 design/screenshots/
+
+# Zipped builds for itch.io, made by `npm run package`.
+release/
