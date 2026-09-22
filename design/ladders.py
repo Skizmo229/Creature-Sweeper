@@ -554,7 +554,16 @@ TYPES = [
               "small puzzle. Reveal and Census available.",
         size=[(26,22)]*3+[(28,24)]*2+[(30,26)]*2+[(32,28)]*2+[(34,30)],
         tiers=[5]*10,
-        density=[.235,.243,.251,.259,.267,.275,.283,.291,.299,.307],
+        # Retuned for its spells: the schedule was derived for a spell-less
+        # board, and magic is what ARCANE runs denser for. Measured with the
+        # honest player, 60 seeds a board: the old schedule was cornered 13.1
+        # times over the ladder and cleared 94%, against ARCANE's 24.0 and 82%.
+        # 2.5 points up brings it to 21.8 and 89%, and board 10 to 5.0 stuck
+        # and 63% cleared, against ARCANE's 5.1 and 63%. No single shift
+        # matches both: CROSS's guesses are cheaper (an arm is nearly all rim),
+        # so matching the clear rate would overshoot the guesses. Tops out at
+        # 33.3%.
+        density=[.260,.268,.276,.284,.292,.300,.308,.316,.324,.332],
         hp=[10]*10,
         lock=[2,2,2,2,2,3,3,3,3,3],
         alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
@@ -584,11 +593,19 @@ TYPES = [
         # on CROSS's curve: 0.1-2.7 guesses and 84% cleared. It tops out at
         # 31.9%, still inside the 34% the rest of the game treats as the point
         # a board stops being a puzzle.
+        #
+        # CROSS then moved 2.5 points up for its spells, and this moved with
+        # it, keeping the 1.2 between them. Re-measured at 60 seeds rather than
+        # assumed: 21.7 stuck points over the ladder against CROSS's 21.8, so
+        # it is still on CROSS's curve, clearing 84% against 89%. The price is
+        # the opening boards, 1.3-1.9 stuck against CROSS's 0.9-1.2 -- joined
+        # tips cost the most where the board is small. Tops out at 34.4%, past
+        # 34 by as much as ARCANE's own 34.5.
         blurb="A cross with opposite arm tips joined, turning four dead ends into two loops - stuck "
               "at one end, work in from the other. Reveal and Census available.",
         size=[(26,22)]*3+[(28,24)]*2+[(30,26)]*2+[(32,28)]*2+[(34,30)],
         tiers=[5]*10,
-        density=[.247,.255,.263,.271,.279,.287,.295,.303,.311,.319],
+        density=[.272,.280,.288,.296,.304,.312,.320,.328,.336,.344],
         hp=[10]*10,
         lock=[2,2,2,2,2,3,3,3,3,3],
         alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
@@ -605,7 +622,14 @@ TYPES = [
               "straight rim. Reveal and Census available.",
         size=[(32,18)]*3+[(36,20)]*2+[(40,22)]*2+[(44,24)]*2+[(48,26)],
         tiers=[5]*10,
-        density=[.225,.233,.241,.249,.257,.265,.273,.281,.289,.297],
+        # Retuned for its spells, the way CROSS was. The old schedule was the
+        # gentlest shaped ladder by a distance -- cornered 10.9 times over the
+        # ladder and clearing 95%, 60 seeds a board, against ARCANE's 24.0 and
+        # 82% -- because the stepped rim is free information at every step.
+        # 4 points up gives 20.1 and 84%, and the complete deducer agrees
+        # (9.5 forced guesses and 92% against ARCANE's 10.7 and 93%). Tops out
+        # at 33.7%.
+        density=[.265,.273,.281,.289,.297,.305,.313,.321,.329,.337],
         hp=[10]*10,
         lock=[2,2,2,2,2,3,3,3,3,3],
         alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],

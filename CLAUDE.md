@@ -375,8 +375,11 @@ work in from the other. It is the DUNGEON finding again with the sign flipped: w
 of forced guesses is how many separate puzzles the board is cut into. Measured with the honest
 player from `sim:spells`, 25 seeds a board, at CROSS's own schedule: 0.0–2.3 forced guesses a board
 against CROSS's 0.3–2.4, and 92% of board 10 cleared against 80%. It ships at CROSS's schedule
-shifted up 1.2 density points (24.7–31.9%), which puts it back on CROSS's curve at 0.1–2.7 and 84%.
-Anything else combining a shape with a topology should be measured rather than reasoned about.
+shifted up 1.2 density points, which put it back on CROSS's curve at 0.1–2.7 and 84%. When CROSS
+later moved 2.5 points up for its spells this moved with it (now 27.2–34.4%) and was re-measured:
+21.7 stuck points over the ladder against CROSS's 21.8, still on the curve, at the cost of harder
+opening boards (1.3–1.9 stuck against CROSS's 0.9–1.2). Anything else combining a shape with a
+topology should be measured rather than reasoned about.
 
 **It is gated on its two parents, not on a board count, and that is the cheaper of the two.**
 `requires_boards` spends the one budget in the unlock data that can silently strand a save. A combined type has
@@ -674,7 +677,7 @@ in 13 of 40 boards before this was caught.
 ## Current state
 
 24 game types × 10 tuned boards, plus a scaling continuation to board 13–40 depending on type
-(672 boards in all). 387 tests. Playable prototype with canvas board, HUD, marks,
+(671 boards in all). 387 tests. Playable prototype with canvas board, HUD, marks,
 pencil marks, two Sweep modes, magic, Full Run, the full unlock chain, a rules card, an
 always-present mute toggle, and a settings menu with nine presentation options and seven
 gameplay dials. Sweep defaults to CHARGED, ten hand-opened cells a sweep.
@@ -1261,15 +1264,34 @@ prices that was 1-32%, so even a player buying everything finished with two-thir
 mana unspent, on DUNGEON as much as anywhere. Nothing was scarce; DUNGEON was just the least
 un-scarce. See the pricing note above for what that changed.
 
-**The shaped ladders have magic but were tuned without it.** DONUT, CROSS, DIAMOND and RAGGED CAVE
-carry ARCANE's loadout, and their densities are still the ones derived for a spell-less board.
-ARCANE runs 1.4–2.2 density points above NORMAL precisely because magic lets you buy answers, so
-the same argument says these four are now easier than they were measured to be. The mana economy
-itself needed no changes — measured at 23–25% exploration share on their first boards against
-ARCANE's 26%, and 13+ full kits on the poorest — so this is a density question only. Nothing is
-broken either way; the sim still clears every board at full HP. DUNGEON is the exception and the
-template for fixing the other four: its schedule was derived by playing it with the honest player
-from `sim:spells` and moving the density until the curve matched ARCANE's retuned one.
+**The shaped ladders carry magic, and now sit on ARCANE's curve — two of the four had to move and two
+did not.** DONUT, CROSS, DIAMOND and RAGGED CAVE carry ARCANE's loadout on densities derived for a
+spell-less board, and the argument was that ARCANE runs 1.4–2.2 points above NORMAL because magic
+buys answers, so all four played easier than measured. Measuring them against ARCANE's curve with the
+honest player — DUNGEON's method — said that was true of only two. At 60 seeds a board, ARCANE is
+cornered 24.0 times over its ten boards and clears 82% on average. DONUT was already HARDER (41 stuck
+points, 85%) and RAGGED CAVE already on it (25, 89%), so both stay. CROSS (13.1, 94%) and DIAMOND
+(10.9, 95%) moved: CROSS 2.5 points up to 21.8 and 89%, board 10 at 5.0 stuck and 63% cleared against
+ARCANE's 5.1 and 63%; DIAMOND 4 points up to 20.1 and 84%. WRAPPED CROSS moved with CROSS to keep its
+1.2-point relationship, and re-measured still on CROSS's curve. The complete deducer from
+`sim:forced` agrees on both movers, which matters because it is the check that the honest player
+ranks these ladders the way a stronger one would. The mana economy needed no changes — 23–25%
+exploration share on their first boards against ARCANE's 26%, 13+ full kits on the poorest.
+
+**Stuck points and clear rate disagree about DONUT and CROSS, in opposite directions, and the curve
+matched is the stuck points.** DONUT is cornered nearly twice as often as ARCANE and clears about as
+much; CROSS at its new schedule is cornered a little less and clears more. Both are the "cheap guess"
+finding again — a guess on DONUT's two rims or CROSS's all-rim arms is a guess you know something
+about. Every retune in this file matched forced guesses (DUNGEON, CHECKERBOARD, WRAPPED CROSS), so
+this one did too; a ladder meant to be as DEADLY as ARCANE rather than as puzzling would match the
+clear rate instead and land somewhere else.
+
+**A retune is measured on a candidate file, never on the real one.** `CS_LADDERS=path.json` points
+every sim at a candidate `ladders.json`, so a schedule can be walked and measured before it replaces
+the tuned one — and a sim already running is not handed a half-finished edit, since the file is read
+once per process. The candidates here were built by importing `ladders.py`, shifting `TYPES` in
+memory and calling `build()`, so thresholds, the continuation and every invariant came from the real
+generator; the final `ladders.json` was checked byte-for-byte against the candidate that was measured.
 
 **Anything classifying ladders by "has spells" now needs shape checked first.** The reference
 page's unlock graph did exactly that and would have emptied the shape row into the magic row.
@@ -1305,9 +1327,11 @@ SUDOKU, and it does not follow difficulty — most visibly DUNGEON, the second e
 SUDOKU. Don't "fix" it back to the ranking. The ranking
 by the honest player from `sim:spells`, spell-less, 30 seeds a board, on mean clear rate over the
 tuned ten, is still worth having:
-WRAPAROUND 99.0, DUNGEON 97.7, CHECKERBOARD 97.4, DIAMOND 95.5, CROSS 94.0, CONGO LINE 92.8 (60
-seeds), HIVE 92.7, PAIRS 92.1, RAGGED CAVE 89.0, DONUT 84.9. SUDOKU cannot be put on that scale and
-keeps the top slot, 80; BLIND is no longer on the schedule.
+WRAPAROUND 99.0, DUNGEON 97.7, CHECKERBOARD 97.4, CONGO LINE 92.8 (60 seeds), HIVE 92.7, PAIRS
+92.1, RAGGED CAVE 89.0, CROSS 88.7 (60 seeds, since its retune), DONUT 84.9, WRAPPED CROSS 84.3
+and DIAMOND 83.7 (both 60 seeds, since the retune). SUDOKU cannot be put on that scale and keeps
+the top slot, 80; BLIND is no longer on the schedule. The complete deducer re-ranks the
+placement-rule ladders well below their place here — see the solver note.
 Two things in it contradict notes elsewhere in this file and are worth knowing before anyone
 reorders by argument: WRAPAROUND, at NORMAL's own schedule, was cornered 0.0-0.6 times a board and
 is the gentlest of the lot, whatever "edges are free information" predicts; and DUNGEON, the ladder
