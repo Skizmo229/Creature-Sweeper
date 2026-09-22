@@ -703,7 +703,7 @@ in 13 of 40 boards before this was caught.
 ## Current state
 
 24 game types × 10 tuned boards, plus a scaling continuation to board 13–40 depending on type
-(671 boards in all). 395 tests. Playable prototype with canvas board, HUD, marks,
+(689 boards in all). 395 tests. Playable prototype with canvas board, HUD, marks,
 pencil marks, two Sweep modes, magic, Full Run, the full unlock chain, a rules card, an
 always-present mute toggle, and a settings menu with nine presentation options and seven
 gameplay dials. Sweep defaults to CHARGED, ten hand-opened cells a sweep.
@@ -1146,7 +1146,8 @@ five against the solver is the open question this leaves.
 
 **Guess-free generate-and-test is affordable early and impossible late.** Share of boards a perfect
 deducer finishes without once being cornered, 30 seeds: NORMAL 94% (board 10: 93%), ARCANE 73%
-(37%), DUNGEON 59% (17%), DONUT 36% (3%) — and 0% on board 10 of EXTREME, HUGE x EXTREME and ORACLE.
+(37%), DUNGEON 59% (17%), DONUT 36% (3%) — and 0% on board 10 of EXTREME, HUGE x EXTREME and ORACLE
+(HUGE x EXTREME before its retune; 5% since).
 Rejecting any board that forces a guess costs about three deals on ARCANE's top board and cannot
 produce EXTREME's at all. The top of the hard ladders needs construction (placing creatures so the
 deduction exists) or a weaker target — no forced guess that can KILL, rather than none at all, which
@@ -1159,7 +1160,7 @@ it must guess, guesses the cell whose WORST case is lowest: the solver asked at 
 judgement breaking the tie. At each forced guess it records whether that worst case could have
 killed at the player's HP. A board where none could is a board a perfect player cannot lose, so its
 share is exactly what generate-and-test would keep under this target. At board 10, 30 seeds:
-ARCANE 97% (against 37% guess-free), DONUT 73% (3%), EXTREME 7% (0%), HUGE x EXTREME 0% (0%),
+ARCANE 97% (against 37% guess-free), DONUT 73% (3%), EXTREME 7% (0%), HUGE x EXTREME 0% (0%, before its retune),
 ORACLE 0% (0%). Cheap for the magic and shaped ladders, one deal in fourteen for EXTREME's top
 board — and impossible for HUGE x EXTREME 9–10 and ORACLE 9–10, which is not a generation problem
 but a schedule one: see the lock-depth note. The guesser matters less than it sounds: "lowest worst
@@ -1322,14 +1323,36 @@ reference page's "lock depth amplifies the need for solvable generation" was a w
 size — the step to maximum depth roughly triples a perfect player's forced guesses on the board
 where it lands.
 
+**Two short of maximum is not advised, measured.** EXTREME 9–10 at lock 2 clear 67 / 60% for a
+perfect player against one-short's 60 / 60% — nothing bought. ORACLE 7–10 at lock 3 reach 100 / 77 /
+57 / 67% against one-short's 97 / 63 / 40 / 47% — a real gain, but the same one "one short plus two
+HP" already gets (97 / 70 / 63 / 63%, honest player 60 / 43 / 13 / 30%). And two short puts the top
+boards BELOW the middle of their own ladder — EXTREME's boards 5–8 hold lock 3, ORACLE's 4–6 lock
+4 — so the lock dial would run backwards exactly where the ladder is meant to peak. The advice given
+was one short on both, with two more HP on ORACLE 7–10 if its top should be as winnable as two short
+would make it.
+
 **HUGE x EXTREME does not follow the pattern, because it is deep everywhere.** Its lock runs 5–8 of
 9, and a perfect player's clear rate is already 60–85% at lock 6 on boards 4–6 and 25% at lock 7 on
 board 7. Holding boards 9–10 one short of maximum changes almost nothing (0 → 10% and 0 → 0%, 20
 seeds), and holding lock at 6 from board 4 on only lifts boards 7–10 to 35 / 20 / 25 / 15%. Deep,
-dense and nine tiers at once: the lock alone cannot rescue it, and whether "the hardest ladder"
-should be winnable by play at all is the question to answer first. **None of these schedules has
-been changed** — they are measured candidates, built with the real generator through `CS_LADDERS`,
-and the zero-damage guarantee holds for any lock by construction.
+dense and nine tiers at once: the lock alone cannot rescue it.
+
+**HUGE x EXTREME's board 10 is winnable now, by request, and it took lock AND density.** Keeping the
+maximum lock (8) was tried first, because the blurb made it the ladder's identity: board 9–10 at
+lock 8 needed density cut to 26% — below board 1's — to reach even 30% for a perfect player, which is
+no ladder at all. What shipped holds lock at 7 on boards 7–10 and steps density back at board 7 to
+pay for that lock step: `density .259 .266 .273 .281 .284 .286 .278 .279 .280 .281`, `lock 5 5 5 6
+6 6 7 7 7 7`. Perfect player 75 / 70 / 65 / 55 / 65 / 60% on boards 5–10 (was 70 / 60 / 25 / 0 / 0 /
+0), honest player 10% on board 10 (was 0), 20 seeds. Two alternatives measured level with it and
+are worth knowing: lock 6 from board 4 with density rising to 30% (board 10: 45% / 5%), and lock 6 with
+density held near 29% (50% / 5%) — both flatten the lock dial where this keeps it climbing. The blurb
+now says "every level-up past the first", which is what lock 7 of 9 means. The continuation changed
+more than the ten: with room left under the ceilings it now runs 24 boards past 10 instead of 6, and
+its lock climbs back to 8 by board 13 — so the scaling boards are the unwinnable kind again, which is
+optional content getting as hard as it can. EXTREME and ORACLE were left as they are, pending the
+decision above; the zero-damage guarantee holds for any lock by construction, and `npm run sim`
+cleared all 689 boards at full HP after the change.
 
 **"Share of the pool spent" is the wrong measure of scarcity, and it took two sessions to notice.**
 It said 1-11% on the dense ladders and 29-34% on DUNGEON, which read as "prices bite on DUNGEON

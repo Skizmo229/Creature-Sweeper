@@ -728,12 +728,22 @@ TYPES = [
         id="huge_extreme", name="HUGE x EXTREME", tint="#4b2fd6", archetype="flat",
         axis="The hardest ladder",
         blurb="The hardest ladder: HUGE's nine tiers, EXTREME's flat spread, and 10 HP. By the end, "
-              "every level-up needs every creature below it cleared.",
+              "every level-up past the first needs every creature below it cleared.",
         size=[(50,25),(50,25),(52,26),(52,26),(54,27),(54,27),(56,28),(56,28),(58,29),(58,29)],
         tiers=[9]*10,
-        density=[.259,.266,.273,.281,.288,.295,.302,.309,.316,.320],
+        # Retuned so board 10 is winnable, which it was not: measured with the
+        # complete deducer from `sim:forced`, a PERFECT player cleared 25% of
+        # board 7 and none of boards 8-10 (20 seeds), because lock 7-8 of 9 on
+        # boards this dense makes the last creature of a tier the one sitting
+        # in a 50/50 over and over. Holding the maximum lock (8) and cutting
+        # density could not fix it short of board 1's density. Lock stops at 7
+        # and density steps back at board 7 to pay for that lock step, landing
+        # boards 7-10 at 65 / 55 / 65 / 60% for a perfect player and board 10 at
+        # 10% for the honest one — the hardest board in the game, but one a
+        # strong player can win.
+        density=[.259,.266,.273,.281,.284,.286,.278,.279,.280,.281],
         hp=[10,10,10,9,9,9,9,8,8,8],
-        lock=[5,5,5,6,6,6,7,7,8,8],
+        lock=[5,5,5,6,6,6,7,7,7,7],
         alpha0=[.083,.080,.077,.074,.070,.066,.062,.058,.054,.050],
         boss=None,
     ),
