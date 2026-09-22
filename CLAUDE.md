@@ -1123,6 +1123,13 @@ slider out from under the pointer, so a copy of the HUD follows the thumb (`--de
 buttons squeeze the board to the stage's 180px floor and the game screen scrolls. Measured, and
 left alone — the range is for desktops too, and a phone player can simply choose less.
 
+**The HUD's readouts are twice the size they shipped at (1.9rem, 1.7rem on a phone), by request**,
+and that moved the numbers above. At 100% on a 1124px window the HUD now takes two rows — Time and
+the Settings / Back buttons drop to the second — and the board loses about 60px of height. On a
+375px phone it stacks four or five rows deep (230-297px): NORMAL keeps a 304px board, and ORACLE,
+with MP in the row, already sits on the 180px floor and scrolls a few pixels. The buttons in the
+HUD kept their size; they are controls, not readouts.
+
 **The zoom ceiling caps magnification only.** A small board is held at the player's limit instead
 of being blown up to fill the stage — which is what the old `MAX_CELL = 48` constant already did
 — but a board too big for the stage still shrinks past it down to `MIN_CELL`, so the setting can

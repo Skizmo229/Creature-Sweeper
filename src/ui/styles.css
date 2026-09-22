@@ -158,9 +158,12 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
   border: 1px solid var(--line);
   border-radius: 4px;
   padding: 10px 14px;
-  /* --demo-scale is set only on the Text size example in settings, which has
+  /* Twice the size it shipped at (0.95rem), by request: HP and the level gap
+     are what a player glances at mid-guess, so they read at a glance. Only the
+     readouts — Settings and Back are buttons with their own size.
+     --demo-scale is set only on the Text size example in settings, which has
      to show a size before the whole page has been switched to it. */
-  font-size: calc(0.95rem * var(--demo-scale, 1));
+  font-size: calc(1.9rem * var(--demo-scale, 1));
   letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
 }
@@ -402,7 +405,7 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
 
 @media (max-width: 540px) {
   .screen { padding: 14px 12px 28px; }
-  .hud { gap: 12px; font-size: calc(0.85rem * var(--demo-scale, 1)); }
+  .hud { gap: 12px; font-size: calc(1.7rem * var(--demo-scale, 1)); }
   .sweep { margin-left: 0; }
 }
 
