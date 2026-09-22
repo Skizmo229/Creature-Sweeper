@@ -57,6 +57,7 @@
  */
 
 import type { Cell, Placement } from './types.js';
+import { noteBit } from './notes.js';
 import { type Rng, randInt, shuffle } from './rng.js';
 
 /**
@@ -204,6 +205,36 @@ export function ringIsFree(cell: Cell, ns: readonly Cell[], level: number): bool
   //    therefore either that partner or empty ground, and if the partner is
   //    within your level then all of them are free.
   return cell.num <= level;
+}
+
+/**
+ * What a covered cell could hold by the pairing rule alone, as a note mask —
+ * or null when no open creature touches it, and the rule says nothing yet.
+ *
+ * The same reading as `ringIsFree`, asked of one cell instead of a ring, and
+ * it is what keeps the pencil from offering a hypothesis the board has already
+ * refused. Beside an open creature, a covered cell is either that creature's
+ * partner or empty ground, and the creature's own number IS the partner's
+ * tier — so the candidates are {0, that number}. Two things narrow it to {0}:
+ * the creature has already met its partner (proof B), or two open creatures
+ * touch the cell, because a creature standing there would have two creature
+ * neighbours.
+ *
+ * Sound in the only direction that matters: it may leave a tier in that the
+ * numbers could rule out, but it never takes out the tier a cell really holds.
+ * `test/pairs.test.ts` checks that on every covered cell of real boards played
+ * part-way.
+ */
+export function pairCandidates(
+  cell: Cell,
+  neighboursOf: (c: Cell) => readonly Cell[],
+): number | null {
+  const mates = neighboursOf(cell).filter((n) => n.open && n.tier > 0);
+  if (mates.length === 0) return null;
+  if (mates.length > 1) return noteBit(0);
+  const mate = mates[0]!;
+  if (neighboursOf(mate).some((n) => n.open && n.tier > 0)) return noteBit(0);
+  return noteBit(0) | noteBit(mate.num);
 }
 
 /**

@@ -18,8 +18,10 @@ import {
   manaRewardFor,
 } from './settings.js';
 import {
+  hasNote,
   hasNotes,
   lowestNote,
+  noteBit,
   toggleNote as toggleNoteBit,
 } from './notes.js';
 import {
@@ -30,8 +32,8 @@ import {
   inBounds,
   neighbours,
 } from './board.js';
-import { hiddenCap, shadeOf } from './checker.js';
-import { isPaired, ringIsFree } from './pairs.js';
+import { allowsTier, hiddenCap, shadeOf } from './checker.js';
+import { isPaired, pairCandidates, ringIsFree } from './pairs.js';
 import { missingFrom } from './packs.js';
 import { congoClear } from './congo.js';
 import { mulberry32 } from './rng.js';
@@ -668,6 +670,8 @@ export class Game {
     if (tier < 0 || tier > this.config.tiers) {
       return [{ type: 'blocked', reason: 'out-of-bounds' }];
     }
+    // Before the mark is rubbed out, so a refused candidate changes nothing.
+    if (!this.canNote(cell, tier)) return [{ type: 'blocked', reason: 'ruled-out' }];
 
     const events: GameEvent[] = [];
     if (cell.mark > 0) {
@@ -683,6 +687,50 @@ export class Game {
     this.started = true;
     events.push({ type: 'noted', x, y, from, to });
     return events;
+  }
+
+  /**
+   * The tiers this covered cell could still be holding by the placement rule
+   * alone, as a note mask — what the pencil may offer here.
+   *
+   * Only what the rule says outright, read off what is already on screen: the
+   * square's colour on CHECKERBOARD, the partner's number beside a defeated
+   * creature on a pairing board (`pairCandidates`), and on SUDOKU the fact that
+   * the opening uncovered every empty cell, so nothing covered can be tier 0.
+   * Deliberately NOT anything that takes deduction — a Sudoku row already
+   * holding a 3 does not strike the 3 here. Pencil marks are where the player
+   * does that work, and a pencil that did it for them would be the
+   * auto-candidates convenience that turns Sweep back into a solve button.
+   *
+   * Sound one way only, which is the way that matters: a tier the rule has
+   * not refused stays in even when the numbers could rule it out, and the tier
+   * a cell really holds is never taken out. The tests check the second half on
+   * every covered cell of real boards played part-way.
+   */
+  noteCandidates(cell: Cell): number {
+    const tiers = this.config.tiers;
+    let mask = (1 << (tiers + 1)) - 1;
+    const { placement } = this.config;
+    if (placement === 'sudoku') mask &= ~noteBit(0);
+    if (placement === 'checker') {
+      for (let t = 1; t <= tiers; t++) {
+        if (!allowsTier(cell.x, cell.y, t)) mask &= ~noteBit(t);
+      }
+    }
+    if (isPaired(placement)) {
+      const pair = pairCandidates(cell, (c) => this.neighboursOf(c));
+      if (pair !== null) mask &= pair;
+    }
+    return mask;
+  }
+
+  /**
+   * Would `toggleNote` accept this tier on this cell? Taking a candidate OFF is
+   * always allowed — a note pencilled before the board ruled it out has to stay
+   * erasable — so only adding one is held to `noteCandidates`.
+   */
+  canNote(cell: Cell, tier: number): boolean {
+    return hasNote(cell.notes, tier) || hasNote(this.noteCandidates(cell), tier);
   }
 
   /** Rub out a cell's pencil marks entirely. */

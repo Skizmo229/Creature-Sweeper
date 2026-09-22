@@ -333,6 +333,30 @@ says the cell is simultaneously provably safe (no candidate exceeds your level) 
 fatal (no candidate is at or below it). Every reader checks `hasNotes` first, and `highestNote` /
 `lowestNote` return -1 rather than a sentinel that would pass a comparison.
 
+**The pencil refuses a candidate the placement rule has already refused, and nothing it would take
+deduction to refuse.** `Game.noteCandidates` is the whole list: the square's colour on CHECKERBOARD,
+the partner's number beside a defeated creature on a pairing board (`pairCandidates` — empty ground
+or exactly that tier, and only empty ground once the creature has met its partner or when two
+creatures touch the cell), and no tier 0 on SUDOKU. It is enforced in `toggleNote`, not in the
+palette, for the reason Sweep's charge is — so the click and the keyboard cannot disagree — and it
+refuses only ADDING a note, because a candidate pencilled before the board ruled it out has to stay
+erasable. **It must never grow a Sudoku row/column/box rule, or anything else that is the player's
+deduction to make**: that is the auto-candidates convenience which turns Sweep back into a solve
+button. It claims IMPOSSIBLE, so the test that matters is that it never refuses the tier a cell
+really holds, over real boards walked part-way (`test/candidates.test.ts`).
+
+**The cursor says whether THIS click would land, which is a question about the mode, not only
+about reach.** It used to ask the crawl rule unconditionally, so on DUNGEON it went red over cells a
+mark or a pencil would have landed on — annotation is exempt from reach. `App.clickLands` answers it
+now and `BoardView` asks through the optional `lands` callback: reach while opening or casting, and
+while a tier is armed only annotation's own refusals (a given, a ruled-out candidate). The palette
+strikes through the ruled-out tiers for the hovered cell too — struck rather than dimmed, because
+dimmed already means "none of these left".
+
+**Pencil notes wear the mark's dark outline, and the dim is kept.** The dimmed green composited on
+its own tile ran 1.22:1 on EASY, 1.61 on BLIND and 1.70 on DOMINOES, and going opaque only reaches
+1.37 on EASY because the hue itself is light. Against its halo it is 5.1-5.9:1 on every palette.
+
 **Wrapping a SHAPE does the opposite of wrapping a rectangle, and WRAPPED CROSS is the case.**
 "Edges are free information, so joining them is the only variant that is harder" is a claim about a
 rectangle, where the rim is a small part of a large interior. A cross is nearly all rim, so it
@@ -641,7 +665,7 @@ in 13 of 40 boards before this was caught.
 ## Current state
 
 24 game types × 10 tuned boards, plus a scaling continuation to board 13–40 depending on type
-(672 boards in all). 375 tests. Playable prototype with canvas board, HUD, marks,
+(672 boards in all). 385 tests. Playable prototype with canvas board, HUD, marks,
 pencil marks, two Sweep modes, magic, Full Run, the full unlock chain, a rules card, an
 always-present mute toggle, and a settings menu with nine presentation options and seven
 gameplay dials. Sweep defaults to CHARGED, ten hand-opened cells a sweep.
@@ -1409,24 +1433,19 @@ confirms a run needs no heal at all — but fair and enjoyable are different que
 playtesting settles which fraction feels right. Both ends are one number away in `run.ts`: a heal of
 zero is the original Ironman, a full heal makes a run ten unrelated boards with a shared clock.
 
-**CHECKERBOARD's pencil palette still offers the impossible tiers.** On a light square the odd
-tiers are not candidates and never will be, so the pencil is offering a hypothesis the board has
-already refused — the same error the tier-0 pencil made on SUDOKU, in a milder form. It is only
-ever a wasted click rather than a wrong one, which is why it is here and not above, but the fix is
-the same shape: gate the palette on the hovered cell's colour.
+**Marks are not gated the way the pencil is, and that is a decision rather than an oversight.**
+`setMark` will still write an odd tier on a light CHECKERBOARD square. A mark is a claim, and the
+mark guard locks a cell on it, so refusing one is refusing to let the player be wrong in a way the
+board can already see — arguably a kindness, arguably the game playing itself. Left open.
 
 **Smaller:** BLIND's unlock timing is a guess (three Full Runs); no pinch-zoom on touch, so
 the largest boards are pan-only on mobile; `design/placement.py` is still a Python reimplementation
 and knows nothing about the checkerboard or the pairing;
 the reference page has no identity row for SUDOKU, so its asset sheet and voice table show a
 placeholder (that used to be a crash that killed both tables — `ident()` in `page.template.html`);
-PAIRS's pencil palette offers tiers a dead neighbour has already ruled out — beside a defeated
-creature every covered cell is either empty or exactly that creature's number, which is the same
-gate CHECKERBOARD's palette wants and a sharper version of it.
-Pencil notes are faint on every light tile: composited against its own tile the dimmed green runs
-1.22:1 on EASY, 1.62:1 on BLIND and 1.70:1 on DOMINOES — a property of `NOTE_COLOR`'s 72% alpha
-rather than of any one palette, and EASY is the real worst case, so any fix belongs on the note, not
-on a tile.
+PACKS and CONGO LINE could take the same pencil gate as PAIRS — a covered cell beside an open
+creature is a packmate or empty ground, and a packmate is one of the tiers its pack has not shown —
+but it is not built, and it is a union over every adjacent piece rather than one number.
 
 ---
 

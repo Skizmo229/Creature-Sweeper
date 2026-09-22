@@ -10,6 +10,7 @@ import { boardConfig, boardRow, maxBoard } from '../engine/config.js';
 import { FullRun } from '../engine/run.js';
 import { randomSeed } from '../engine/rng.js';
 import type { Cell, GameEvent } from '../engine/types.js';
+import { hasNote } from '../engine/notes.js';
 import { BoardView, type BoardDisplay } from './boardview.js';
 import { ladders } from './ladders.js';
 import { Progress } from './progress.js';
@@ -868,7 +869,9 @@ export class App {
     this.view = new BoardView(canvas, {
       onOpen: (x, y) => this.onCellPrimary(x, y),
       onCycleMark: (x, y) => this.cycleMark(x, y),
-      onHover: () => { /* hover ring is drawn by the view */ },
+      // The hover ring is drawn by the view; the palette answers for the cell.
+      onHover: () => this.gatePalette(),
+      lands: (cell) => this.clickLands(cell),
     });
     this.view.setGame(game, theme, this.boardDisplay());
     this.refresh();
@@ -1281,7 +1284,6 @@ export class App {
         // only Shift pencilled, so in Pencil mode the palette and the keyboard
         // did opposite things — the mode silently did not apply to typing.
         const pencil = this.notesMode !== e.shiftKey;
-        if (pencil && tier === 0 && !this.canPencilEmpty()) return;
         this.apply(pencil
           ? game.toggleNote(cell.x, cell.y, tier)
           : game.setMark(cell.x, cell.y, tier));
@@ -1348,14 +1350,58 @@ export class App {
   }
 
   /**
-   * Whether "might be empty ground" is a hypothesis this board can still hold.
+   * Whether "might be empty ground" is a hypothesis this board can hold at all.
    *
    * Sudoku opens every empty cell before the first move, so no covered cell
-   * there can be tier 0. The palette hides the control; this is the same fact
-   * for the keyboard, so the two cannot disagree.
+   * there can be tier 0, and the palette hides the control. This is the
+   * board-wide half of that fact; the engine holds it per cell in
+   * `noteCandidates`, which is what refuses the keyboard and the click alike.
    */
   private canPencilEmpty(): boolean {
     return this.game?.config.placement !== 'sudoku';
+  }
+
+  /**
+   * Whether a click on this cell would land in the mode the palette is in,
+   * which is what the board's cursor colours itself by.
+   *
+   * Annotation is exempt from the crawl rule — a player may reason about a
+   * room before they can enter it — so while a tier is armed reach does not
+   * apply. The cursor used to ask about reach regardless, and on a DUNGEON
+   * board went red over cells a mark or a pencil would have landed on. What
+   * does apply is the refusals annotation has of its own: a given cannot be
+   * written over, and the pencil will not take a candidate the placement rule
+   * has already ruled out. Open ground stays unremarked, as it always was.
+   */
+  private clickLands(cell: Cell): boolean {
+    const game = this.game;
+    if (!game) return true;
+    if (this.markMode >= 0) {
+      if (cell.open) return true;
+      if (cell.given) return false;
+      return !this.notesMode || game.canNote(cell, this.markMode);
+    }
+    return game.inReach(cell);
+  }
+
+  /**
+   * While pencilling, strike through the palette tiers the hovered cell has
+   * already ruled out — the answer `toggleNote` will give, shown before the
+   * click instead of after it. A candidate already pencilled is never struck,
+   * because taking it off is always allowed. Nothing is struck with nothing
+   * hovered: the palette sits off the board, so reaching for it clears the
+   * strikes, and the row goes back to meaning every tier.
+   */
+  private gatePalette(): void {
+    const game = this.game;
+    const cell = this.view?.hoveredCell ?? null;
+    const mask = game && this.notesMode && cell && !cell.open && !cell.given
+      ? game.noteCandidates(cell) | cell.notes
+      : ~0;
+    for (const btn of this.counters) {
+      btn.classList.toggle('ruled-out', !hasNote(mask, Number(btn.dataset.tier)));
+    }
+    this.emptyNoteBtn?.classList.toggle('ruled-out', !hasNote(mask, 0));
   }
 
   private toggleNotesMode(): void {
@@ -1488,6 +1534,7 @@ export class App {
       this.emptyNoteBtn.hidden = !this.notesMode || !this.canPencilEmpty();
       this.emptyNoteBtn.classList.toggle('active', this.notesMode && this.markMode === 0);
     }
+    this.gatePalette();
     if (this.hint) this.hint.textContent = this.hintText();
 
     if (this.hud.mp) {

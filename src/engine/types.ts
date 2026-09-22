@@ -302,6 +302,13 @@ export type BlockReason =
   /** The cell carries a board-dealt clue, which the player may not rub out. */
   | 'given'
   /**
+   * A pencil candidate the placement rule has already refused for this cell —
+   * an odd tier on a light CHECKERBOARD square, anything but empty ground or
+   * the partner's tier beside a defeated PAIRS creature, empty ground on
+   * SUDOKU. See `Game.noteCandidates`. Only ever refuses ADDING a note.
+   */
+  | 'ruled-out'
+  /**
    * Too far from anything you have uncovered. Only boards with a `reach` can
    * produce this, and only for opening and targeted spells.
    */

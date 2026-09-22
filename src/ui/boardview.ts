@@ -127,6 +127,12 @@ export interface BoardViewCallbacks {
   /** Right-click / long-press: cycle the mark on a covered cell. */
   onCycleMark: (x: number, y: number) => void;
   onHover: (cell: Cell | null) => void;
+  /**
+   * Whether a click on this cell would land, in whatever mode the caller is in
+   * — the cursor is coloured by it. Left out, the answer is the crawl rule's,
+   * which is right for a view that only ever opens cells.
+   */
+  lands?: (cell: Cell) => boolean;
 }
 
 export class BoardView {
@@ -504,16 +510,18 @@ export class BoardView {
   private drawHighlight(game: Game, hovered: Cell, style: HighlightStyle): void {
     const ctx = this.ctx;
     ctx.save();
-    // On a crawl board the cursor says whether the click would land as well as
-    // where. Colour rather than a second shape: the highlight is already
-    // carrying the shape information, and a player scanning for somewhere to
-    // go needs to read this at the speed they move the mouse.
+    // The cursor says whether the click would land as well as where: past the
+    // reach on a crawl board, or a pencil candidate the board has ruled out.
+    // Colour rather than a second shape: the highlight is already carrying the
+    // shape information, and a player scanning for somewhere to go needs to
+    // read this at the speed they move the mouse.
     //
     // Each cell is asked for itself, so the surround is not all one colour —
     // hovering the edge of your reach lights the cells you can still take in
     // green and the ones past it in red, which shows the boundary rather than
     // just reporting which side of it the centre is on.
-    const reachable = (cell: Cell): boolean => game.inReach(cell);
+    const reachable = (cell: Cell): boolean =>
+      this.cb.lands ? this.cb.lands(cell) : game.inReach(cell);
     ctx.lineWidth = 2;
 
     if (style !== 'cell') {
@@ -912,13 +920,28 @@ export class BoardView {
     ctx.font = `600 ${font}px ${this.display.font}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    // Outlined, for the reason a mark is: green alone vanishes on a light tile.
+    // Composited straight onto its tile the dimmed green measured 1.22:1 on
+    // EASY, 1.61 on BLIND and 1.70 on DOMINOES — and going opaque only reaches
+    // 1.37 on EASY, because the hue itself is light. Against its own halo it
+    // is 5.1-5.9:1 on every palette, so the fix lives on the note and no tile
+    // had to move. All the halos go down before any fill, so a halo can never
+    // bite into a neighbouring candidate.
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = Math.max(1.5, font * 0.3);
+    ctx.strokeStyle = MARK_OUTLINE;
     ctx.fillStyle = NOTE_COLOR;
+    const at: { glyph: string; x: number; y: number }[] = [];
     for (let t = 0; t < slots; t++) {
       if (!hasNote(cell.notes, t)) continue;
-      const x = box.x + pad + w * (t % cols) + w / 2;
-      const y = box.y + pad + h * Math.floor(t / cols) + h / 2;
-      ctx.fillText(t === 0 ? '·' : String(t), x, y);
+      at.push({
+        glyph: t === 0 ? '·' : String(t),
+        x: box.x + pad + w * (t % cols) + w / 2,
+        y: box.y + pad + h * Math.floor(t / cols) + h / 2,
+      });
     }
+    for (const { glyph, x, y } of at) ctx.strokeText(glyph, x, y);
+    for (const { glyph, x, y } of at) ctx.fillText(glyph, x, y);
     ctx.restore();
   }
 

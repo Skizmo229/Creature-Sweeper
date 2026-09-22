@@ -334,7 +334,8 @@ export const BOX_RULE = 'rgba(8, 4, 12, 0.92)';
 
 /** Pencil marks: the same green as a mark, dimmed. A note is a weaker form of
  *  the same claim, so it should read as the same ink lightly applied rather
- *  than as a different kind of annotation. */
+ *  than as a different kind of annotation. It wears the mark's dark outline
+ *  too, which is what carries it on a light tile — see `drawNotes`. */
 export const NOTE_COLOR = 'rgba(53, 224, 106, 0.72)';
 
 /**
