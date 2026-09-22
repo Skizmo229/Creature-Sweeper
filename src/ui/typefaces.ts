@@ -90,6 +90,18 @@ export const FONTS: Record<FontId, GameFont> = {
 
 export const FONT_IDS = Object.keys(FONTS) as FontId[];
 
+/**
+ * The face the game's own name is set in on the ladder list, chosen by the
+ * player: storybook monsters.
+ *
+ * It belongs to no ladder and the picker does not offer it — it is the title's
+ * and nothing else's. So "game type default" leaves the title in it wherever
+ * the player has been, and only a face the player FORCES reaches the title,
+ * because forcing a face is a statement about the whole interface and the
+ * title is part of it. `Settings.titleFont` is that rule.
+ */
+export const TITLE_FONT: GameFont = { name: 'Griffy', stack: `Griffy, ${SANS}`, weight: 400 };
+
 /** The legibility face, which is nobody's default. */
 export const LEGIBLE_FONT: FontId = 'atkinson';
 

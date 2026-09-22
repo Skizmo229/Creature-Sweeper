@@ -393,7 +393,8 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   wideRow(look, 'Font',
     'Board numbers, marks and the whole interface. Every ladder has a face of its own; ' +
     `${FONTS[LEGIBLE_FONT].name} belongs to none of them — it was designed for readers with ` +
-    'low vision, and keeps every digit easy to tell apart.',
+    'low vision, and keeps every digit easy to tell apart. The game’s title keeps its own face ' +
+    'unless you pick one here.',
     gallery(
       [
         {

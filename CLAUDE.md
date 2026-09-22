@@ -1034,6 +1034,15 @@ one; the board weight is one the face really has; and every face's copyright not
 four.** Old saves carry the five retired ids (`mono`, `sans`, ...), and `migrateFontChoice` maps
 them onto the nearest face on read — `mono` onto JetBrains Mono, which its stack named first.
 
+**The title has a face of its own — Griffy, chosen by the player — and only a FORCED face reaches
+it.** On "game type default" the ladder list's `Creature Sweeper` stays in Griffy whichever ladder
+was last visited; pick a face in settings and the title wears that, because forcing a face is a
+statement about the whole interface. `TITLE_FONT` in `typefaces.ts` and `Settings.titleFont` are
+the rule; the picker does not offer Griffy and no ladder wears it, and `test/fonts.test.ts` holds
+that along with its `@font-face` and licence line. It is the one face loaded with `font-display:
+block` rather than `swap`: a moment without the title reads better than watching it jump from a
+system face into its own on a first visit.
+
 **Some faces carry a character of their own, and that is the price of the whole interface wearing
 them.** Aladin's capital E is drawn like a euro sign, so ARCANE's HUD reads "€XP"; Sniglet's 5 has
 a rounded top; Bungee has no lowercase. None of it touches a digit's legibility on the board, which

@@ -1,5 +1,6 @@
 /*
- * The bundled faces, one per ladder plus Atkinson Hyperlegible Next.
+ * The bundled faces, one per ladder plus Atkinson Hyperlegible Next, and the
+ * title's own (Griffy, at the end).
  *
  * Generated from the Fontsource packages (Google Fonts' own files), Latin
  * subset only: the interface is English, and a glyph a face lacks (the arrows,
@@ -259,4 +260,16 @@
   font-weight: 100 900;
   font-display: swap;
   src: url('./fonts/big-shoulders.woff2') format('woff2');
+}
+
+/* The title's face, which no ladder wears and the picker does not offer — see
+   TITLE_FONT in typefaces.ts. `block` rather than `swap`: the title is one
+   line of decoration, and a moment without it reads better than watching it
+   jump from a system face into its own on a first visit. */
+@font-face {
+  font-family: 'Griffy';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('./fonts/griffy.woff2') format('woff2');
 }

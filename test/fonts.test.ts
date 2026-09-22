@@ -13,7 +13,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { loadLadders } from '../src/data.js';
 import {
-  FONTS, FONT_IDS, LEGIBLE_FONT, TYPE_FONTS, fontFor, migrateFontChoice,
+  FONTS, FONT_IDS, LEGIBLE_FONT, TITLE_FONT, TYPE_FONTS, fontFor, migrateFontChoice,
 } from '../src/ui/typefaces.js';
 
 const CSS = readFileSync('src/ui/fonts.css', 'utf8');
@@ -80,9 +80,29 @@ describe('fonts.css', () => {
     expect(new Set(FACES.map((f) => f.file))).toEqual(new Set(files));
   });
 
-  it('declares only faces the table offers', () => {
+  it('declares only faces the table offers, and the title face', () => {
     const offered = new Set(FONT_IDS.map((id) => familyOf(FONTS[id].stack)));
+    offered.add(familyOf(TITLE_FONT.stack));
     for (const f of FACES) expect(offered, f.family).toContain(f.family);
+  });
+});
+
+describe('the title face', () => {
+  const family = familyOf(TITLE_FONT.stack);
+
+  it('is loaded, at the weight it is set in', () => {
+    const faces = FACES.filter((f) => f.family === family);
+    expect(faces.some((f) => TITLE_FONT.weight >= f.lo && TITLE_FONT.weight <= f.hi)).toBe(true);
+  });
+
+  it('ships with its copyright notice', () => {
+    // Labelled "Griffy (the title)" in the file, so the note in brackets is optional.
+    expect(LICENCES).toMatch(new RegExp(`\\n${family}( \\([^)]*\\))?\\n  Copyright`));
+  });
+
+  it('belongs to the title alone — no ladder wears it and the picker does not offer it', () => {
+    const offered = FONT_IDS.map((id) => familyOf(FONTS[id].stack));
+    expect(offered).not.toContain(family);
   });
 });
 

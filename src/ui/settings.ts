@@ -36,7 +36,7 @@ import {
   identityFor,
   themeFor,
 } from './theme.js';
-import { type FontId, type GameFont, fontFor, migrateFontChoice } from './typefaces.js';
+import { type FontId, type GameFont, TITLE_FONT, fontFor, migrateFontChoice } from './typefaces.js';
 import { SETTINGS_KEY as KEY } from './savefile.js';
 
 /** "Use the game type's own" — a deferral, not a value. */
@@ -332,6 +332,16 @@ export class Settings {
     const base = themeFor(palette === DEFAULT ? typeId : palette);
     const pip = icons === DEFAULT ? themeFor(typeId).pip : icons;
     return { ...base, pip };
+  }
+
+  /**
+   * The face for the game's title: its own, unless the player has forced a
+   * face on the whole interface. Takes no ladder, because the title has no
+   * ladder — "game type default" means the title's own default here.
+   */
+  titleFont(): GameFont {
+    const choice = this.data.presentation.font;
+    return choice === DEFAULT ? TITLE_FONT : fontFor(choice);
   }
 
   /** The face for this ladder's screens and board numbers. */

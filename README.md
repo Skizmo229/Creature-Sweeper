@@ -390,7 +390,8 @@ Use the findings, quote them, build on them; credit this project and keep your v
 same licence.
 
 **Fonts** — the files under `src/ui/fonts/` are not ours, and neither licence above covers them.
-They are twenty-five faces from Google Fonts, each under the **SIL Open Font License 1.1**. Every
+They are twenty-six faces from Google Fonts — the twenty-five the font setting offers, and
+Griffy for the title — each under the **SIL Open Font License 1.1**. Every
 copyright notice, and the licence itself, is in
 [`public/FONT-LICENSES.txt`](public/FONT-LICENSES.txt), which is copied into every build so it
 ships beside the fonts it covers.

@@ -267,6 +267,7 @@ export class App {
    */
   private applyPresentation(): void {
     document.documentElement.style.setProperty('--font', this.settings.font(this.typeId).stack);
+    document.documentElement.style.setProperty('--title-font', this.settings.titleFont().stack);
     // A percentage, so it multiplies the browser's own text size rather than
     // replacing it: a player who already reads at a larger default keeps it.
     document.documentElement.style.fontSize = `${this.settings.presentation.textSize * 100}%`;
@@ -317,7 +318,7 @@ export class App {
     const cleared = this.progress.boardsCleared();
 
     const head = el('header', 'title-bar');
-    head.append(el('h1', undefined, 'Creature Sweeper'));
+    head.append(el('h1', 'game-title', 'Creature Sweeper'));
     head.append(el('p', 'sub', 'Prototype — Milestone 2'));
     // Boards cleared is a currency now, so it is shown whether or not
     // anything is currently waiting on it.
