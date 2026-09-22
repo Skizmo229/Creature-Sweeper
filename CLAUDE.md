@@ -1130,6 +1130,13 @@ the Settings / Back buttons drop to the second — and the board loses about 60p
 with MP in the row, already sits on the 180px floor and scrolls a few pixels. The buttons in the
 HUD kept their size; they are controls, not readouts.
 
+**The HUD's level number wears its tier's creature colour, by request** — `tierColor`, the one
+encoding of a tier the whole game shares, so at Level 3 the yellow creatures are free and the 3 is
+yellow. Tiers 6-9 repeat the first four hues under a gold halo on their pips, so their levels carry
+a gold stroke too, painted under the fill (`paint-order: stroke fill`) so the hue stays whole;
+without it Level 6 would read as Level 1. 0.08em was measured against 0.12em, which turned a thin
+digit mostly gold, and 0.04em, which vanished at HUD size.
+
 **The zoom ceiling caps magnification only.** A small board is held at the player's limit instead
 of being blown up to fill the stage — which is what the old `MAX_CELL = 48` constant already did
 — but a board too big for the stage still shrinks past it down to `MIN_CELL`, so the setting can

@@ -17,7 +17,7 @@ import { Progress } from './progress.js';
 import {
   PROGRESS_KEY, SETTINGS_KEY, type SaveBundle, decodeSave, describeSave, encodeSave, localDate,
 } from './savefile.js';
-import { themeFor } from './theme.js';
+import { TIER_GOLD, themeFor, tierColor, tierGilded } from './theme.js';
 import { SPELLS, spellKey, spellLabel, type SpellId } from '../engine/spells.js';
 import { easierThanDefault, isAtLeastAsHard } from '../engine/settings.js';
 import { Settings } from './settings.js';
@@ -1503,7 +1503,18 @@ export class App {
     // a terse label, and "Next Level 0007" reads as a part number. Width is
     // held by CSS instead, so the row still cannot jitter as digits change.
     this.hud.hp!.textContent = `HP ${game.hp}`;
-    this.hud.lv!.textContent = `Level ${game.level}`;
+    // The number wears its tier's creature colour, which is the one encoding
+    // of a tier the whole game shares: at Level 3 the yellow creatures are
+    // free, and the 3 is yellow. Tiers past five repeat a hue under a gold
+    // halo, so their levels carry the same halo — otherwise Level 6 would be
+    // indistinguishable from Level 1 at a glance.
+    const levelNum = el('span', 'hud-level-num', String(game.level));
+    levelNum.style.color = tierColor(game.level);
+    if (tierGilded(game.level)) {
+      levelNum.classList.add('gilded');
+      levelNum.style.setProperty('--halo', TIER_GOLD);
+    }
+    this.hud.lv!.replaceChildren('Level ', levelNum);
     // A standing Exercise is a level you are carrying into the next fight, so
     // it is shown on the level itself, in red, until that fight spends it.
     if (game.exerciseCharge > 0) {

@@ -62,6 +62,7 @@ import {
   type VictoryId,
   identityFor,
   themeFor,
+  tierColor,
 } from './theme.js';
 import { FONTS, FONT_IDS, type FontId, LEGIBLE_FONT, TYPE_FONTS } from './typefaces.js';
 import { BoardView, type BoardDisplay } from './boardview.js';
@@ -512,9 +513,13 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   // release.
   const textDemo = el('div', 'hud text-size-demo');
   // The real HUD's own classes, so each readout reserves the width it does in play.
-  for (const [key, item] of [['hp', 'HP 10'], ['lv', 'Level 1'], ['ex', 'EXP 0'], ['ne', 'Next Level 6']]) {
+  for (const [key, item] of [['hp', 'HP 10'], ['lv', 'Level '], ['ex', 'EXP 0'], ['ne', 'Next Level 6']]) {
     textDemo.append(el('span', `hud-item hud-${key}`, item));
   }
+  // Level 1, in tier 1's colour, as the real readout draws it.
+  const demoLevel = el('span', 'hud-level-num', '1');
+  demoLevel.style.color = tierColor(1);
+  textDemo.querySelector('.hud-lv')!.append(demoLevel);
   const showTextSize = (size: number): void => {
     // Relative to what the page is already set at, which is what rem means.
     textDemo.style.setProperty('--demo-scale', String(size / p.textSize));
