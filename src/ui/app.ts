@@ -1126,7 +1126,7 @@ export class App {
 
     rule('A number is a sum, not a count.',
       'It is the tiers of the creatures around it added together. A 9 might be two ' +
-      'creatures — a tier 5 beside a tier 4 — or it might be nine tier 1s. That is ' +
+      'creatures — a tier 5 beside a tier 4 — or three tier 3s. That is ' +
       'why a number can be larger than 8 when a cell has only 8 neighbours.');
 
     rule('Anything at or below your level dies for free.',
