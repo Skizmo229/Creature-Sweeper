@@ -57,6 +57,17 @@ export interface GameFont {
    * agree with their own letters to within 3%, and are left alone.
    */
   capHeightFix?: number;
+  /**
+   * The same correction for LOWERCASE, which the whole interface is sized by
+   * (`font-size-adjust: ex-height` on the body). Aladin claims 0.337 em for an
+   * x drawn at 0.460, which set ARCANE's HUD, menus and settings text 37%
+   * larger than every other ladder's. Three other faces disagree with their own
+   * x by more than 5% and are left alone on purpose: Bungee has no lowercase
+   * and Cinzel's lowercase are small capitals, so correcting either would size
+   * capitals to everyone else's lowercase and shrink it by 17% (Cinzel) or 31%
+   * (Bungee); Gluten, 8% out, is left as HIVE has always looked.
+   */
+  exHeightFix?: number;
 }
 
 const SANS = 'system-ui, sans-serif';
@@ -77,7 +88,8 @@ export const FONTS: Record<FontId, GameFont> = {
   'barlow-condensed': { name: 'Barlow Condensed', stack: `"Barlow Condensed", ${SANS}`, weight: 600 },
   'chakra-petch': { name: 'Chakra Petch', stack: `"Chakra Petch", ${SANS}`, weight: 700 },
   anton: { name: 'Anton', stack: `Anton, ${SANS}`, weight: 400 },
-  aladin: { name: 'Aladin', stack: `Aladin, ${SERIF}`, weight: 400, capHeightFix: 387 / 716 },
+  aladin: { name: 'Aladin', stack: `Aladin, ${SERIF}`, weight: 400,
+    capHeightFix: 387 / 716, exHeightFix: 337 / 460 },
   cinzel: { name: 'Cinzel', stack: `Cinzel, ${SERIF}`, weight: 700 },
   comfortaa: { name: 'Comfortaa', stack: `Comfortaa, ${SANS}`, weight: 700 },
   overpass: { name: 'Overpass', stack: `Overpass, ${SANS}`, weight: 700 },

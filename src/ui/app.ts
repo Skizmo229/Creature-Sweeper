@@ -266,8 +266,10 @@ export class App {
    * canvas and nothing cascades into it.
    */
   private applyPresentation(): void {
-    document.documentElement.style.setProperty('--font', this.settings.font(this.typeId).stack);
-    document.documentElement.style.setProperty('--title-font', this.settings.titleFont().stack);
+    this.wearFont();
+    const title = this.settings.titleFont();
+    document.documentElement.style.setProperty('--title-font', title.stack);
+    document.documentElement.style.setProperty('--title-ex-fix', String(title.exHeightFix ?? 1));
     // A percentage, so it multiplies the browser's own text size rather than
     // replacing it: a player who already reads at a larger default keeps it.
     document.documentElement.style.fontSize = `${this.settings.presentation.textSize * 100}%`;
@@ -278,6 +280,16 @@ export class App {
     // still showing a cross over a game that had started making noise again
     // would be the control lying about the thing it controls.
     this.syncMuteButton();
+  }
+
+  /**
+   * Dress the interface in the current ladder's face, with the correction for
+   * a face whose file misstates its x-height (`GameFont.exHeightFix`).
+   */
+  private wearFont(): void {
+    const face = this.settings.font(this.typeId);
+    document.documentElement.style.setProperty('--font', face.stack);
+    document.documentElement.style.setProperty('--ex-fix', String(face.exHeightFix ?? 1));
   }
 
   /** The renderer's slice of the presentation settings. */
@@ -728,7 +740,7 @@ export class App {
     const type = ladders.find((t) => t.id === this.typeId)!;
 
     this.sfx.setPack(this.settings.sfxPack(this.typeId));
-    document.documentElement.style.setProperty('--font', this.settings.font(this.typeId).stack);
+    this.wearFont();
     this.endVictory();
     this.closeAsk();
     this.root.replaceChildren();

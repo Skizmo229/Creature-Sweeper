@@ -64,7 +64,7 @@ import {
   themeFor,
   tierColor,
 } from './theme.js';
-import { FONTS, FONT_IDS, type FontId, LEGIBLE_FONT, TYPE_FONTS } from './typefaces.js';
+import { FONTS, FONT_IDS, type FontId, type GameFont, LEGIBLE_FONT, TYPE_FONTS } from './typefaces.js';
 import { BoardView, type BoardDisplay } from './boardview.js';
 import {
   PREVIEW_SEED,
@@ -174,9 +174,10 @@ interface Choice {
   example?: () => HTMLElement;
   /**
    * A face to set the label in. The font setting dresses the interface as well
-   * as the board, so each font tile's own caption is the interface example.
+   * as the board, so each font tile's own caption is the interface example —
+   * which is why it carries the face's size correction as well as its name.
    */
-  labelFont?: string;
+  labelFont?: GameFont;
   /**
    * Clicking this tile opens something instead of picking its value — the
    * "User choice" tile, which opens the window of every option.
@@ -256,7 +257,11 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
       chip.setAttribute('aria-pressed', String(active));
       if (c.example) chip.append(c.example());
       const caption = el('span', 'chip-label', c.label);
-      if (c.labelFont) caption.style.fontFamily = c.labelFont;
+      if (c.labelFont) {
+        caption.style.fontFamily = c.labelFont.stack;
+        // Set even when it is 1, or the caption inherits the page's own fix.
+        caption.style.setProperty('--ex-fix', String(c.labelFont.exHeightFix ?? 1));
+      }
       chip.append(caption);
       if (c.open) chip.setAttribute('aria-haspopup', 'dialog');
       chip.addEventListener('click', () => {
@@ -494,13 +499,13 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
       value: DEFAULT,
       label: `Default — ${FONTS[ident.font].name}`,
       example: chipBoard(currentTheme, { font: FONTS[ident.font] }),
-      labelFont: FONTS[ident.font].stack,
+      labelFont: FONTS[ident.font],
     },
     options: FONT_IDS.map((id): Choice => ({
       value: id,
       label: [FONTS[id].name, fontOwner(id)].filter(Boolean).join(' — '),
       example: chipBoard(currentTheme, { font: FONTS[id] }),
-      labelFont: FONTS[id].stack,
+      labelFont: FONTS[id],
     })),
     onPick: (v) => pick({ font: v as FontId | typeof DEFAULT }),
   });
