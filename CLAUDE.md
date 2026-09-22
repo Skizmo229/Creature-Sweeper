@@ -1135,7 +1135,9 @@ encoding of a tier the whole game shares, so at Level 3 the yellow creatures are
 yellow. Tiers 6-9 repeat the first four hues under a gold halo on their pips, so their levels carry
 a gold stroke too, painted under the fill (`paint-order: stroke fill`) so the hue stays whole;
 without it Level 6 would read as Level 1. 0.08em was measured against 0.12em, which turned a thin
-digit mostly gold, and 0.04em, which vanished at HUD size.
+digit mostly gold, and 0.04em, which vanished at HUD size. The LV buttons under the board wear the same colours, and
+fill with their own tier's colour when armed; there the gold is the BORDER, because a stroke on
+text that small reads as smudge.
 
 **The board refits whenever its stage changes size, not only when the window does** — a
 `ResizeObserver` on the stage in `BoardView.fit`. The window listener was the only trigger once,

@@ -261,6 +261,14 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
   min-width: 54px;
 }
 .counter.active { background: var(--tint); color: #17170f; border-color: var(--tint); font-weight: 700; }
+/* A tier's counter wears that tier's creature colour (`--tier`, from app.ts),
+   and armed it fills with it rather than with the ladder's accent. Tiers 6+
+   carry the gold ring their pips do, as the border — a stroke on text this
+   small reads as smudge. The tier-0 pencil slot has no tier and keeps ink. */
+.counter[data-tier] { color: var(--tier, var(--ink)); }
+.counter[data-tier].active { background: var(--tier); border-color: var(--tier); color: #17170f; }
+.counter.gilded,
+.counter.gilded.active { border-color: var(--halo); }
 .counter.done { opacity: 0.35; }
 /* A tier the hovered cell has already ruled out, while pencilling. Struck
    through rather than dimmed, because dimmed already means "none of these

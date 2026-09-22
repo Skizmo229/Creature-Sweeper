@@ -787,6 +787,13 @@ export class App {
     for (let tier = 1; tier <= game.config.tiers; tier++) {
       const btn = el('button', 'counter');
       btn.dataset.tier = String(tier);
+      // Its tier's creature colour, as the HUD's level number wears it; tiers
+      // past five get the gold their pips are ringed with, as the border.
+      btn.style.setProperty('--tier', tierColor(tier));
+      if (tierGilded(tier)) {
+        btn.classList.add('gilded');
+        btn.style.setProperty('--halo', TIER_GOLD);
+      }
       btn.addEventListener('click', () => this.pickTier(tier));
       this.counters.push(btn);
       palette.append(btn);
