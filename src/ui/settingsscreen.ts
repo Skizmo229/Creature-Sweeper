@@ -176,6 +176,11 @@ interface Choice {
    * as the board, so each font tile's own caption is the interface example.
    */
   labelFont?: string;
+  /**
+   * Clicking this tile opens something instead of picking its value — the
+   * "User choice" tile, which opens the window of every option.
+   */
+  open?: () => void;
 }
 
 function typeName(typeId: string): string {
@@ -252,7 +257,9 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
       const caption = el('span', 'chip-label', c.label);
       if (c.labelFont) caption.style.fontFamily = c.labelFont;
       chip.append(caption);
+      if (c.open) chip.setAttribute('aria-haspopup', 'dialog');
       chip.addEventListener('click', () => {
+        if (c.open) { c.open(); return; }
         if (live) {
           for (const other of box.children) {
             const on = other === chip;
@@ -265,6 +272,89 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
       box.append(chip);
     }
     return box;
+  };
+
+  /**
+   * A window holding every option of one setting, over the settings screen.
+   *
+   * It lives inside this screen's own element, so the rebuild that follows a
+   * pick — or leaving the screen by any route — takes it away with everything
+   * else, and no path can strand it. Escape closes it, and is caught before
+   * it reaches the app, where Escape on a board-in-progress would mean
+   * something else entirely. Its examples are drawn only when it opens, which
+   * is also what stopped every pick on this screen redrawing some sixty
+   * thumbnails nobody was looking at.
+   */
+  const openPicker = (
+    title: string, options: Choice[], current: string, onPick: (value: string) => void,
+  ): void => {
+    const overlay = el('div', 'overlay picker');
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', title);
+    const card = el('div', 'overlay-card picker-card');
+    const head = el('div', 'picker-head');
+    const close = el('button', 'ghost small', 'Close (Esc)');
+    head.append(el('h2', undefined, title), close);
+
+    const dismiss = (): void => {
+      overlay.remove();
+      window.removeEventListener('keydown', onKey, true);
+    };
+    const onKey = (e: KeyboardEvent): void => {
+      if (!overlay.isConnected) { window.removeEventListener('keydown', onKey, true); return; }
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      // Immediate as well: an event dispatched at the window itself would
+      // otherwise still reach the app's own listener there.
+      e.stopImmediatePropagation();
+      dismiss();
+    };
+    close.addEventListener('click', dismiss);
+    // A click on the dimmed backdrop, not on the card, closes it too.
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
+    window.addEventListener('keydown', onKey, true);
+
+    card.append(head, gallery(options, current, (v) => { dismiss(); onPick(v); }));
+    overlay.append(card);
+    wrap.append(overlay);
+    (card.querySelector<HTMLElement>('.preview-chip.active') ?? close).focus();
+  };
+
+  /**
+   * A setting with more options than a row can show: two tiles, the game
+   * type's own and the player's own, and every option in a window behind the
+   * second. The "user choice" tile wears the option chosen, so both tiles
+   * still show what they do; before anything is chosen it says how many
+   * there are to choose from.
+   */
+  const choiceRow = (host: HTMLElement, spec: {
+    label: string;
+    hint: string;
+    /** What the window is titled — "Choose a font". */
+    title: string;
+    current: string;
+    /** The game type default, already naming what it resolves to. */
+    fallback: Choice;
+    options: Choice[];
+    onPick: (value: string) => void;
+  }): void => {
+    const chosen = spec.current === DEFAULT
+      ? undefined
+      : spec.options.find((o) => o.value === spec.current);
+    const placeholder = (): HTMLElement =>
+      el('div', 'picker-placeholder', `${spec.options.length} to choose from`);
+    const user: Choice = {
+      // Matches `current` only when an option is chosen, so the tile is lit
+      // exactly when the player's choice is the one in force.
+      value: chosen ? chosen.value : '',
+      label: chosen ? `User choice — ${chosen.label}` : 'User choice — pick one',
+      example: chosen?.example ?? placeholder,
+      ...(chosen?.labelFont ? { labelFont: chosen.labelFont } : {}),
+      open: () => openPicker(spec.title, spec.options, spec.current, spec.onPick),
+    };
+    wideRow(host, spec.label, spec.hint,
+      gallery([spec.fallback, user], spec.current, spec.onPick));
   };
 
   /**
@@ -339,47 +429,48 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
     'Every example below is a real board drawn by the game’s own renderer.');
 
   // --- creature icons
-  wideRow(look, 'Creature icons',
-    'The shape of a creature’s pips. Pip colour stays global — a tier 4 is the same colour ' +
-    'everywhere — and a creature is only ever visible once you have beaten it, which is why ' +
-    'the examples show defeated ones.',
-    gallery(
-      [
-        {
-          value: DEFAULT,
-          label: `Game type default — ${PIP_NAMES[themeFor(typeId).pip]}`,
-          example: chipBoard({ ...currentTheme, pip: themeFor(typeId).pip }),
-        },
-        ...PIP_SHAPES.map((shape): Choice => ({
-          value: shape,
-          label: PIP_NAMES[shape],
-          example: chipBoard({ ...currentTheme, pip: shape }),
-        })),
-      ],
-      p.icons,
-      (v) => pick({ icons: v as PipShape | typeof DEFAULT }),
-    ));
+  //
+  // This row and the next two show the game type default and the player's own
+  // choice, with every option in a window behind the second — see `choiceRow`.
+  choiceRow(look, {
+    label: 'Creature icons',
+    hint: 'The shape of a creature’s pips. Pip colour stays global — a tier 4 is the same ' +
+      'colour everywhere — and a creature is only ever visible once you have beaten it, which ' +
+      'is why the examples show defeated ones.',
+    title: 'Choose creature icons',
+    current: p.icons,
+    fallback: {
+      value: DEFAULT,
+      label: `Default — ${PIP_NAMES[themeFor(typeId).pip]}`,
+      example: chipBoard({ ...currentTheme, pip: themeFor(typeId).pip }),
+    },
+    options: PIP_SHAPES.map((shape): Choice => ({
+      value: shape,
+      label: PIP_NAMES[shape],
+      example: chipBoard({ ...currentTheme, pip: shape }),
+    })),
+    onPick: (v) => pick({ icons: v as PipShape | typeof DEFAULT }),
+  });
 
   // --- board palette
-  wideRow(look, 'Board palette',
-    'Borrow another ladder’s colours for the board. The menus keep this ladder’s own accent, ' +
-    'so the game stays navigable however far the board is repainted.',
-    gallery(
-      [
-        {
-          value: DEFAULT,
-          label: `Game type default — ${typeName(typeId)}`,
-          example: chipBoard({ ...themeFor(typeId), pip: currentPip }),
-        },
-        ...PALETTE_IDS.map((id): Choice => ({
-          value: id,
-          label: typeName(id),
-          example: chipBoard({ ...themeFor(id), pip: currentPip }),
-        })),
-      ],
-      p.palette,
-      (v) => pick({ palette: v }),
-    ));
+  choiceRow(look, {
+    label: 'Board palette',
+    hint: 'Borrow another ladder’s colours for the board. The menus keep this ladder’s own ' +
+      'accent, so the game stays navigable however far the board is repainted.',
+    title: 'Choose a board palette',
+    current: p.palette,
+    fallback: {
+      value: DEFAULT,
+      label: `Default — ${typeName(typeId)}`,
+      example: chipBoard({ ...themeFor(typeId), pip: currentPip }),
+    },
+    options: PALETTE_IDS.map((id): Choice => ({
+      value: id,
+      label: typeName(id),
+      example: chipBoard({ ...themeFor(id), pip: currentPip }),
+    })),
+    onPick: (v) => pick({ palette: v }),
+  });
 
   // --- font
   //
@@ -390,29 +481,28 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
     const owner = Object.keys(TYPE_FONTS).find((t) => TYPE_FONTS[t] === id);
     return owner ? typeName(owner) : '';
   };
-  wideRow(look, 'Font',
-    'Board numbers, marks and the whole interface. Every ladder has a face of its own; ' +
-    `${FONTS[LEGIBLE_FONT].name} belongs to none of them — it was designed for readers with ` +
-    'low vision, and keeps every digit easy to tell apart. The game’s title keeps its own face ' +
-    'unless you pick one here.',
-    gallery(
-      [
-        {
-          value: DEFAULT,
-          label: `Game type default — ${FONTS[ident.font].name}`,
-          example: chipBoard(currentTheme, { font: FONTS[ident.font] }),
-          labelFont: FONTS[ident.font].stack,
-        },
-        ...FONT_IDS.map((id): Choice => ({
-          value: id,
-          label: [FONTS[id].name, fontOwner(id)].filter(Boolean).join(' — '),
-          example: chipBoard(currentTheme, { font: FONTS[id] }),
-          labelFont: FONTS[id].stack,
-        })),
-      ],
-      p.font,
-      (v) => pick({ font: v as FontId | typeof DEFAULT }),
-    ));
+  choiceRow(look, {
+    label: 'Font',
+    hint: 'Board numbers, marks and the whole interface. Every ladder has a face of its own; ' +
+      `${FONTS[LEGIBLE_FONT].name} belongs to none of them — it was designed for readers with ` +
+      'low vision, and keeps every digit easy to tell apart. The game’s title keeps its own ' +
+      'face unless you choose one.',
+    title: 'Choose a font',
+    current: p.font,
+    fallback: {
+      value: DEFAULT,
+      label: `Default — ${FONTS[ident.font].name}`,
+      example: chipBoard(currentTheme, { font: FONTS[ident.font] }),
+      labelFont: FONTS[ident.font].stack,
+    },
+    options: FONT_IDS.map((id): Choice => ({
+      value: id,
+      label: [FONTS[id].name, fontOwner(id)].filter(Boolean).join(' — '),
+      example: chipBoard(currentTheme, { font: FONTS[id] }),
+      labelFont: FONTS[id].stack,
+    })),
+    onPick: (v) => pick({ font: v as FontId | typeof DEFAULT }),
+  });
 
   // --- text size
   //

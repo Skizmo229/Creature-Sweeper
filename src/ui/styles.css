@@ -637,6 +637,41 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
 }
 .preview-chip.active .chip-label { color: var(--tint); }
 
+/* The window behind a "User choice" tile: the whole gallery, in a card wide
+   enough to lay it out, scrolling inside itself so the page underneath keeps
+   its place. Above the corner speaker, which would otherwise sit on its
+   close button on a phone. */
+.overlay.picker { z-index: 70; align-items: flex-start; }
+.overlay-card.picker-card {
+  max-width: 980px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  text-align: left;
+  padding: 16px 18px 20px;
+}
+.picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.picker-head h2 { margin: 0; font-size: 1.1rem; letter-spacing: 0.04em; }
+/* What the "User choice" tile shows before anything is chosen: a box the size
+   of a thumbnail, so the two tiles stand level. */
+.picker-placeholder {
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 78px;
+  padding: 6px;
+  border: 1px dashed var(--line);
+  border-radius: 3px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
 /* The zoom example is drawn at the exact cell size being chosen, so its box
    has to be able to grow to 128px a cell without shifting the layout. */
 .zoom-demo {

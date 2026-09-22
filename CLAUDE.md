@@ -894,6 +894,19 @@ than no preview, because nothing tells the player. Two supports for this in `Boa
 be forty holes in the settings page's scrolling; and `fixedCell`, which sizes the canvas to the
 board instead of the board to the canvas.
 
+**Creature icons, Board palette and Font show two tiles, not their whole gallery — Default and
+User choice — by request.** The full galleries were 8, 25 and 26 tiles in a row, which buried the
+rest of the screen. `choiceRow` in `settingsscreen.ts` draws the default (still naming what it
+resolves to) and a User choice tile that wears the chosen option, or says how many there are
+before anything is chosen; clicking it opens a window (`openPicker`) holding every option, and a
+pick closes it. Three things about that window are load-bearing. It is appended INSIDE the settings
+screen's element, so the rebuild after a pick, or leaving the screen by any route, removes it and
+nothing can strand it. It catches Escape in the capture phase and stops it there, because the app's
+own Escape handler, with a board in progress behind settings, means leave the game. And its examples
+are drawn only when it opens, which took the settings screen from about seventy thumbnails per
+rebuild to twelve. The other galleries (highlight, strike, sound, clear effect) are short enough to
+stay laid out in full.
+
 **Every tile in a gallery draws the SAME board**, from a fixed config and a fixed seed, so the only
 thing differing between tiles is the setting. A per-tile layout would make the palette gallery a
 test of memory rather than of colour. Four boards are shared between about forty thumbnails, which
