@@ -1566,6 +1566,26 @@ footer code{font-size:.85em}
           cornered 6.7–9.1 times a board. The cliff is between boards 6 and 7. It is not the honest player
           being weak; it is the boards.</p>
       </div>
+      <div class="note gold">
+        <p class="note-h">The weaker target rescues most of what the strict one cannot</p>
+        <p>"No forced guess can kill" asks less than "no forced guess": whenever deduction runs out, some cell
+          within reach must be proven below the tier that would end the board at the player's current HP. A
+          board that meets it cannot be lost by a perfect player. Guessing the cell with the lowest proven
+          worst case, 30 seeds a board, the share of board 10s that meet it is <strong>ARCANE 97%</strong>
+          (against 37% guess-free), <strong>DONUT 73%</strong> (3%), EXTREME 7% (0%) — and 0% on HUGE ×
+          EXTREME and ORACLE, where the problem is the schedule, not the generator.</p>
+      </div>
+      <div class="note warn">
+        <p class="note-h">The cliffs are the lock</p>
+        <p>Lock depth maxes out at one less than the tier count, where every threshold above the first is a
+          full-tier-clear gate. EXTREME reaches it at board 9 and ORACLE at board 7, and each ladder falls off a
+          cliff on exactly that board: a max-depth gate needs every creature of a tier found before the next
+          level, and the last one of a tier is often the one in a 50/50. Held one short of the maximum, nothing
+          else changed, a perfect player clears ORACLE 7–10 at <strong>97 / 63 / 40 / 47%</strong> instead of
+          23 / 3 / 0 / 3%, and EXTREME 9–10 at <strong>60 / 60%</strong> instead of 20 / 7%. Two more HP on
+          ORACLE barely moves it; three points less density helps a little. HUGE × EXTREME is deep all the way
+          up — lock 5 to 8 of 9 — and no single lock change rescues it. None of these schedules has changed.</p>
+      </div>
     </div>
 
     <div class="scroll">
@@ -1865,9 +1885,12 @@ footer code{font-size:.85em}
         <h3>What should the hard ladders' top boards do about forced guesses?</h3>
         <p>No board 10 of EXTREME, HUGE × EXTREME or ORACLE was guess-free under a perfect deducer in thirty
           seeds, so generate-and-test cannot fix them, and ORACLE's boards 7–10 are decided by guesses outright.
-          The options are construction (placing creatures so the deduction exists), a weaker target (no forced
-          guess that can kill), or simply less density or more HP on ORACLE's top boards. Worth settling before
-          playtesting, because a player reads a forced 50/50 as unfairness, not difficulty.</p>
+          Measured since, the answer splits by ladder. For EXTREME and ORACLE the cliff is the step to maximum
+          lock depth, and holding the top boards one lock short turns them from unwinnable into hard (ORACLE
+          7–10 at 97–40% for a perfect player, EXTREME 9–10 at 60%) — with the weaker "no guess can kill"
+          target then within generate-and-test's reach. HUGE × EXTREME is deep all the way up and needs a
+          bigger decision: whether "the hardest ladder" should be winnable by play at all. Worth settling
+          before playtesting, because a player reads a forced 50/50 as unfairness, not difficulty.</p>
       </div>
 
       <div class="q">
@@ -1878,6 +1901,16 @@ footer code{font-size:.85em}
           A mark still will. A mark is a claim, and the mark guard locks a cell on it, so refusing one stops the
           player being wrong in a way the board can already see: arguably a kindness, arguably the game playing
           itself.</p>
+      </div>
+
+      <div class="q">
+        <span class="qnum">08</span>
+        <h3>Should DUNGEON be more puzzling, or deadlier, or neither?</h3>
+        <p>It sits well under ARCANE at the top — 98% of board 10 cleared against 63%. More rooms make it more
+          puzzling without making it more dangerous: at 7, 9 and 11 rooms a deductive player is cornered 17.8,
+          21.0 and 25.6 times over the ladder (ARCANE 24.0) and still clears 98%, 96% and 95% on average (ARCANE
+          82%), because a doorway lets you look into a room before you step into it. So eleven rooms would match
+          ARCANE's puzzle; matching its danger would take less HP. Or it stays the gentle crawl it is.</p>
       </div>
     </div>
   </div>
