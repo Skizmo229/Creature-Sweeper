@@ -1,0 +1,102 @@
+[
+ {
+  "ladder": "PAIRS",
+  "id": "pairs",
+  "rule": "pairs",
+  "cells": 720,
+  "creatures": 168,
+  "scatter": {
+   "opening": 42,
+   "zeros": 77,
+   "avg_num": 4.1,
+   "max_num": 16
+  },
+  "shipped": {
+   "opening": 18,
+   "zeros": 29,
+   "avg_num": 4.55,
+   "max_num": 14
+  },
+  "delta": -57
+ },
+ {
+  "ladder": "DOMINOES",
+  "id": "dominoes",
+  "rule": "dominoes",
+  "cells": 405,
+  "creatures": 84,
+  "scatter": {
+   "opening": 41,
+   "zeros": 57,
+   "avg_num": 5.37,
+   "max_num": 21
+  },
+  "shipped": {
+   "opening": 30.5,
+   "zeros": 41,
+   "avg_num": 5.74,
+   "max_num": 19
+  },
+  "delta": -26
+ },
+ {
+  "ladder": "PACKS",
+  "id": "packs",
+  "rule": "packs",
+  "cells": 544,
+  "creatures": 144,
+  "scatter": {
+   "opening": 29,
+   "zeros": 42,
+   "avg_num": 6.94,
+   "max_num": 24
+  },
+  "shipped": {
+   "opening": 82.5,
+   "zeros": 106,
+   "avg_num": 5.89,
+   "max_num": 22
+  },
+  "delta": 184
+ },
+ {
+  "ladder": "CHECKERBOARD",
+  "id": "checker",
+  "rule": "checker",
+  "cells": 544,
+  "creatures": 176,
+  "scatter": {
+   "opening": 19,
+   "zeros": 23,
+   "avg_num": 7.14,
+   "max_num": 23
+  },
+  "shipped": {
+   "opening": 20,
+   "zeros": 22,
+   "avg_num": 7.15,
+   "max_num": 23
+  },
+  "delta": 5
+ },
+ {
+  "ladder": "CONGO LINE",
+  "id": "congo",
+  "rule": "congo",
+  "cells": 544,
+  "creatures": 144,
+  "scatter": {
+   "opening": 29,
+   "zeros": 41.5,
+   "avg_num": 6.94,
+   "max_num": 25
+  },
+  "shipped": {
+   "opening": 75,
+   "zeros": 111,
+   "avg_num": 6.43,
+   "max_num": 23
+  },
+  "delta": 159
+ }
+]

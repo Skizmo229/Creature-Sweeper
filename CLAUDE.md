@@ -66,8 +66,17 @@ arithmetic — and it is why `npm run sim:run` can play whole runs headlessly.
 **Duplicated board logic drifts.** `design/opening.py` was a Python reimplementation of the board
 rules. It agreed with the engine to 0.17 cells — until boards gained hex grids and wrapped edges,
 which it knew nothing about, leaving three ladders with no data. It was replaced by
-`src/sim/opening.ts`, which drives the real engine. **`design/placement.py` is the same pattern
-and has the same risk**; port it if it starts mattering.
+`src/sim/opening.ts`, which drives the real engine. `design/placement.py` was the same pattern and
+went the same way, into `src/sim/placement.ts` — and the port caught it already wrong: it computed
+numbers with wrapped edges but flood-filled the opening without them, so a zero region crossing the
+seam was cut in two and only the larger half counted. The engine's flood fill says wrapping makes
+the opening 7–17% LARGER than scatter on the three test beds, where Python had it 0–4% smaller —
+which may be part of why WRAPAROUND measures as the gentlest counted ladder. The four clustering
+strategies that never shipped (triads, pairs, lairs, bands) still exist only in that file, as tier
+layouts handed to the engine to measure; the half that could drift — numbers, opening, adjacency —
+is the engine's own. It also measures every placement rule that did ship against the same creatures
+scattered, on its own board 5, which the Python could not: PAIRS opens 57% smaller, DOMINOES 26%,
+CHECKERBOARD about the same, PACKS 184% larger and CONGO LINE 159%.
 
 **`design/ladders.py` carries its own copy of the shape predicates**, because it must know how
 many cells a shape leaves before it can apportion creatures, and that count feeds `C_k`. This is
@@ -1521,8 +1530,7 @@ mark guard locks a cell on it, so refusing one is refusing to let the player be 
 board can already see — arguably a kindness, arguably the game playing itself. Left open.
 
 **Smaller:** BLIND's unlock timing is a guess (three Full Runs); no pinch-zoom on touch, so
-the largest boards are pan-only on mobile; `design/placement.py` is still a Python reimplementation
-and knows nothing about the checkerboard or the pairing;
+the largest boards are pan-only on mobile;
 the reference page has no identity row for SUDOKU, so its asset sheet and voice table show a
 placeholder (that used to be a crash that killed both tables — `ident()` in `page.template.html`);
 PACKS and CONGO LINE could take the same pencil gate as PAIRS — a covered cell beside an open

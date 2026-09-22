@@ -57,6 +57,7 @@ creature_sweeper/
 │  │  ├─ cli.ts              clears every board of every ladder
 │  │  ├─ run.ts              completes every type's Full Run
 │  │  ├─ opening.ts          measures the auto-opening -> data/opening.json
+│  │  ├─ placement.ts        what placement rules and topology do to the opening -> data/placement*.json
 │  │  ├─ honest.ts           the honest player: sees what a player sees, guesses when stuck
 │  │  ├─ spellvalue.ts       what each spell is worth, played honestly
 │  │  ├─ solver.ts           the complete deducer: every cell the screen proves free
@@ -68,11 +69,10 @@ creature_sweeper/
 ├─ test/                     invariants as executable specs
 └─ design/
    ├─ ladders.py             generates the 10-board progression ladder per game type
-   ├─ placement.py           simulates placement rules and board topology
    ├─ build.py               injects generated data into the reference page
    ├─ page.template.html     reference page source  ← edit this
    ├─ reference.html         built page             ← generated, do not edit
-   ├─ data/                  generated JSON (ladders, opening, placement)
+   ├─ data/                  generated JSON (ladders, opening, placement, placement-rules)
    ├─ screenshots/           the .pdn layers as PNG, one per mode — not tracked
    └─ original-reference/    third-party source, REFERENCE ONLY, not tracked
 ```
@@ -180,18 +180,21 @@ Order matters — `ladders.py` produces the data the other three consume.
 ```bash
 python design/ladders.py       # fast
 npx tsx src/sim/opening.ts     # slow: drives the real engine over every board
-python design/placement.py     # slow: 18 configurations x 240 boards
+npx tsx src/sim/placement.ts   # the placement experiment, and every shipped rule against scatter
 python design/build.py         # fast
 ```
 
 Editing only prose or layout? `page.template.html` then `build.py` is enough — the data files
 only change when a ladder schedule does.
 
-The opening measurement moved from Python to `src/sim/opening.ts` so it drives the real
-engine: a second implementation only stays honest until the first one grows, and once boards
-gained hex grids and wrapped edges the Python copy could no longer describe them.
+The opening and placement measurements both moved from Python to `src/sim/` so they drive the
+real engine: a second implementation only stays honest until the first one grows, and once boards
+gained hex grids and wrapped edges the Python copies could no longer describe them. The placement
+port found one place it had already gone wrong — the old script computed numbers with wrapped edges
+but flood-filled the opening without them, so a wrapped board's opening came out 0–4% smaller than
+scatter when the engine's own flood fill says 7–17% larger.
 
-Requires Python 3 with `numpy` and `scipy`. Re-exporting `screenshots/` additionally needs
+Requires Python 3, standard library only. Re-exporting `screenshots/` additionally needs
 `pypdn` and `Pillow`. Both that folder and `game_types.pdn` are untracked — they are pictures of
 the *original* game, so they are third-party expression and are kept locally on the same footing
 as `design/original-reference/`. A fresh clone will not have them, and `build.py` does not need
