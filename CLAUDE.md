@@ -665,7 +665,7 @@ in 13 of 40 boards before this was caught.
 ## Current state
 
 24 game types × 10 tuned boards, plus a scaling continuation to board 13–40 depending on type
-(672 boards in all). 385 tests. Playable prototype with canvas board, HUD, marks,
+(672 boards in all). 387 tests. Playable prototype with canvas board, HUD, marks,
 pencil marks, two Sweep modes, magic, Full Run, the full unlock chain, a rules card, an
 always-present mute toggle, and a settings menu with nine presentation options and seven
 gameplay dials. Sweep defaults to CHARGED, ten hand-opened cells a sweep.
@@ -1051,10 +1051,55 @@ Ordered by how much they matter.
 simulation-checked but not playtested. This is the biggest open risk and the reason Milestone 2, the current one,
 (headless measurement across many seeds, then retuning `ladders.py`) exists.
 
-**No solver, so boards still contain unresolvable 50/50s.** Some deaths are unfair rather than
-earned. Solvable generation is the highest-value QOL fix and is harder here than in Minesweeper:
-the constraint is "these *n* cells' tiers sum to *N*, each in 0…T" — a bounded integer composition
-problem, not a count. Start with generate-and-test and measure the rejection rate.
+**Boards still contain unresolvable 50/50s, and there is now a solver that can say which.** Some
+deaths are unfair rather than earned. Solvable generation is the highest-value QOL fix and is harder
+here than in Minesweeper: the constraint is "these *n* cells' tiers sum to *N*, each in 0…T" — a
+bounded integer composition problem, not a count. The generate-and-test rejection rate has been
+measured (below), and it says generate-and-test alone cannot reach the top of the hard ladders.
+
+**The complete deducer is a measuring instrument, not a generator — `src/sim/solver.ts`.** It answers
+exactly what the honest player approximates: is there a covered cell that every layout consistent
+with the screen makes free? It reads what a player can see — numbers (a defeated creature's too),
+open tiers and givens, the colour, pairing and pack rules beside open creatures, and the per-tier
+counts the palette shows — and leaves out the dungeon's room structure and the structural rules
+away from open creatures. Leaving a rule out can only make it find FEWER free cells, so every count
+below is a floor. It is a bounds-propagating search with one idea worth knowing: a layout found
+witnesses a value for every cell in it, so only cells no layout has yet put above your level need a
+search of their own, and those try a two-number window around the cell first, with the numbers at
+the window's edge relaxed to what their outside cells could make up — a window with no room for a
+dangerous value is a proof. `npm run sim:forced` plays the honest player and a player that takes the
+solver's free moves on the same seeds; its `bad` and `hurt` columns must be zero, and were zero over
+every battle ladder at 30 seeds a board (no screen it could not lay out, no HP lost on a cell it
+called free). `test/solver.test.ts` holds both, and that it opens everything Sweep's own proof does.
+It is fast where it is used — milliseconds at a real stuck point — and slow on a frontier scattered
+at random, which no game produces; the search is budgeted, and a question the budget cuts off counts
+as not free. It lives in `src/sim` because nothing in the game calls it; generation using it would be
+the moment to move it to `src/engine`. The honest player moved out of `spellvalue.ts` into
+`src/sim/honest.ts` for it — that file runs its CLI at import — so both measurements share one copy of
+the player; the move was checked by diffing `sim:spells` output before and after, byte for byte.
+
+**Every forced-guess figure in this file is an upper bound — by about two, and not by the same factor
+everywhere.** At 56–97% of the honest player's stuck points the solver had a free move. A perfect
+deducer is cornered 31–59% less on the plain and shaped ladders — ARCANE 2.21 → 1.07 a board,
+EXTREME 5.29 → 3.08, DONUT 4.10 → 2.46 — and 68–85% less on the placement-rule ladders: CHECKERBOARD
+1.21 → 0.18, CONGO LINE 1.28 → 0.27, DOMINOES 0.72 → 0.19, PACKS 1.64 → 0.44, PAIRS 1.16 → 0.37. That
+second group is the one that matters: those rules combine across numbers in ways the honest player's
+one-cell readings never reach, so each of those ladders was tuned against a player who understood
+its rule worse than a strong human will, and plays easier than its tuning says. The typical miss is
+not exotic. ORACLE board 3, LV2: a 3 and a 9 each leave a cell possibly a 3, but a 3 there would
+empty the two cells below it, leaving the 7 beside them needing a tier 7 in its last covered cell,
+on a board that stops at tier 6 — so it is at most a 2, and free. Tuning with the honest player still ranks the plain and shaped ladders consistently
+with each other, because they all fall by about the same share, which is why the shaped-ladder
+retune used it; it does not rank the placement-rule ladders against them, and re-deriving those
+five against the solver is the open question this leaves.
+
+**Guess-free generate-and-test is affordable early and impossible late.** Share of boards a perfect
+deducer finishes without once being cornered, 30 seeds: NORMAL 94% (board 10: 93%), ARCANE 73%
+(37%), DUNGEON 59% (17%), DONUT 36% (3%) — and 0% on board 10 of EXTREME, HUGE x EXTREME and ORACLE.
+Rejecting any board that forces a guess costs about three deals on ARCANE's top board and cannot
+produce EXTREME's at all. The top of the hard ladders needs construction (placing creatures so the
+deduction exists) or a weaker target — no forced guess that can KILL, rather than none at all, which
+is what HP-as-guess-budget already implies.
 
 Archipelago was dropped by request.
 
@@ -1188,10 +1233,14 @@ player 0.1 times on board 1 rising to 5.0 on board 10, clears 98% falling to 65-
 saves 0.75-1.05 HP on the late boards against 0.00-0.56 before. The early boards stay gentle on
 purpose; it is still the ladder that introduces magic.
 
-**ORACLE boards 7-10 are not clearable by a deductive player** — 0-4% across 25 seeds, against 92%
-on board 1. That is 6 HP and a flat 6-tier curve against 7-11 forced guesses, and it is the
-clearest evidence yet for the missing solver: those boards are decided by 50/50s, not by play.
-Worth settling before the ladders are playtested, since a human will read it as unfairness.
+**ORACLE boards 7-10 are not clearable by a deductive player, and the solver confirms it is the
+boards, not the player.** The honest player clears 0-3% of them over 30 seeds. A perfect deducer is
+still cornered 6.7-9.1 times a board there and clears 23%, 3%, 0% and 3% — against 90-100% on
+boards 1-6, where it is cornered at most twice. The cliff is between boards 6 and 7 (2.0 forced
+guesses to 9.1). That is 6 HP and a flat 6-tier curve against forced guesses no play can avoid: those
+boards are decided by 50/50s. Worth settling before the ladders are playtested, since a human will
+read it as unfairness — and the solver says it cannot be settled by generate-and-test (0 of 30 board
+10s were guess-free), so it is a density or HP question for ORACLE, or construction.
 
 **"Share of the pool spent" is the wrong measure of scarcity, and it took two sessions to notice.**
 It said 1-11% on the dense ladders and 29-34% on DUNGEON, which read as "prices bite on DUNGEON

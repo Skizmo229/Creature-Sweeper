@@ -57,7 +57,10 @@ creature_sweeper/
 │  │  ├─ cli.ts              clears every board of every ladder
 │  │  ├─ run.ts              completes every type's Full Run
 │  │  ├─ opening.ts          measures the auto-opening -> data/opening.json
+│  │  ├─ honest.ts           the honest player: sees what a player sees, guesses when stuck
 │  │  ├─ spellvalue.ts       what each spell is worth, played honestly
+│  │  ├─ solver.ts           the complete deducer: every cell the screen proves free
+│  │  ├─ forced.ts           how many of the honest player's forced guesses were forced
 │  │  ├─ sudoku.ts           SUDOKU build cost, and the shape of its deduction
 │  │  └─ topology.ts         compares square / cylinder / torus / hex
 │  ├─ main.ts                browser entry
@@ -80,12 +83,13 @@ Every script resolves its paths relative to its own location, so they can be run
 
 ```bash
 npm run dev       # play it
-npm test          # 349 tests, including the invariants below
+npm test          # 387 tests, including the invariants below
 npm run typecheck # UI config, then an engine config with no DOM lib at all
 npm run sim       # clear every board of every ladder headlessly
 npm run sim -- 200
 npm run sim:run      # complete every type's Full Run, ten boards on one HP pool
 npm run sim:spells   # what each spell is worth, played honestly
+npm run sim:forced   # how many forced guesses a perfect deducer would still face
 npm run sim:sudoku   # SUDOKU: build cost per board, and how tight each one plays
 npm run sim:sudoku -- 8 --sweep
 npm run build
@@ -117,6 +121,13 @@ has run out — and judged on what the fight itself reports having spared.
 
 `npm run sim:spells -- 40 dungeon` gives one ladder board by board, with a column per spell it
 carries: how often a deductive player is cornered there, and what each spell is worth against it.
+
+`npm run sim:forced` checks the instrument itself. The honest player deduces locally, so every
+"cornered" figure it reports is an upper bound; this plays it alongside a player that also takes
+every move the complete deducer in `solver.ts` can prove free, on the same seeds. It reports what
+share of the honest player's stuck points had a free move in them, how often a perfect deducer is
+still cornered, and what share of boards it finishes without guessing — which is what
+generate-and-test would keep. `npm run sim:forced -- 30 oracle` gives one ladder board by board.
 
 **Prices are meant to bite, and for most of this game's life they did not.** The test of whether a
 price matters is not what share of a pool gets spent — that is as much about how often you want to
