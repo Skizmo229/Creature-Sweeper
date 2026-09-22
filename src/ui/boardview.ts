@@ -18,6 +18,7 @@ import {
   type PipShape, type TypeTheme, drawCreature, tierColor,
 } from './theme.js';
 import { hexAt, hexBoardSize, hexCentre, hexPoints, hexRadius, hexRowStep } from './hexgeom.js';
+import { type PinchStart, pinchStart, pinchTo } from './pinch.js';
 import { DEFAULT_MAX_ZOOM, type HighlightStyle, type HoverDefeated } from './settings.js';
 import type { VictorySource, VictorySprite } from './victory.js';
 import { hasNote } from '../engine/notes.js';
@@ -176,6 +177,20 @@ export class BoardView {
   private dragging = false;
   private dragMoved = false;
   private dragStart = { x: 0, y: 0, ox: 0, oy: 0 };
+  /**
+   * Fingers on the board, for pinch-zoom. Touch only: a mouse has one pointer,
+   * and a mouse button released outside the window can leave its pointer
+   * behind, which here would turn the next touch into a phantom pinch.
+   */
+  private readonly touches = new Map<number, { x: number; y: number }>();
+  private pinch: PinchStart | null = null;
+  /**
+   * This touch has been a pinch at some point, so no lift in it may open a
+   * cell. A two-finger touch used to do exactly that: the second finger reset
+   * the pan's starting point and whichever lifted first clicked the cell
+   * under it, which on a phone is a way to end a run by zooming.
+   */
+  private gesture = false;
   /** Only true when the board is larger than the viewport, so panning exists. */
   private canPan = false;
 
@@ -1049,6 +1064,12 @@ export class BoardView {
         if (cell) this.cb.onCycleMark(cell.x, cell.y);
         return;
       }
+      if (e.pointerType === 'touch') {
+        if (!this.touches.size) this.gesture = false;
+        this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (this.touches.size === 2) { this.beginPinch(); return; }
+        if (this.touches.size > 2) return;
+      }
       this.dragMoved = false;
       // Only arm a drag when there is somewhere to drag to. On a board that
       // fits, a click is unambiguous and never has to survive drag tracking.
@@ -1065,6 +1086,11 @@ export class BoardView {
     });
 
     c.addEventListener('pointermove', (e) => {
+      if (this.touches.has(e.pointerId)) {
+        this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (this.pinch && this.touches.size >= 2) { this.movePinch(); return; }
+        if (this.gesture) return;
+      }
       if (this.dragging) {
         const dx = e.clientX - this.dragStart.x;
         const dy = e.clientY - this.dragStart.y;
@@ -1087,6 +1113,12 @@ export class BoardView {
 
     const endDrag = (e: PointerEvent) => {
       if (e.button === 2) return; // right-click was handled on pointerdown
+      if (this.touches.delete(e.pointerId)) {
+        if (this.touches.size < 2) this.pinch = null;
+        // The lift that ends a pinch opens nothing, and nor does the last
+        // finger of it coming up later.
+        if (this.gesture) return;
+      }
       if (this.dragging) {
         this.dragging = false;
         try {
@@ -1100,7 +1132,11 @@ export class BoardView {
       if (cell) this.cb.onOpen(cell.x, cell.y);
     };
     c.addEventListener('pointerup', endDrag);
-    c.addEventListener('pointercancel', () => { this.dragging = false; });
+    c.addEventListener('pointercancel', (e) => {
+      this.dragging = false;
+      this.touches.delete(e.pointerId);
+      if (this.touches.size < 2) this.pinch = null;
+    });
 
     c.addEventListener('pointerleave', () => {
       // Back to the pinned cell rather than to nothing, so a preview that is
@@ -1111,6 +1147,37 @@ export class BoardView {
         this.render();
       }
     });
+  }
+
+  /**
+   * Two fingers are down: from here the gesture is a pinch, whatever the first
+   * finger was doing, and it stays one until every finger is up. Both are
+   * captured so the pinch survives a finger straying off the canvas.
+   */
+  private beginPinch(): void {
+    const [a, b] = [...this.touches.values()];
+    const rect = this.canvas.getBoundingClientRect();
+    this.pinch = pinchStart(a!.x - rect.left, a!.y - rect.top, b!.x - rect.left, b!.y - rect.top,
+      { cell: this.cellPx, originX: this.originX, originY: this.originY });
+    this.gesture = true;
+    this.dragging = false;
+    this.dragMoved = true;
+    for (const id of this.touches.keys()) {
+      try { this.canvas.setPointerCapture(id); } catch { /* already released */ }
+    }
+  }
+
+  private movePinch(): void {
+    if (!this.pinch) return;
+    const [a, b] = [...this.touches.values()];
+    const rect = this.canvas.getBoundingClientRect();
+    const next = pinchTo(this.pinch, a!.x - rect.left, a!.y - rect.top, b!.x - rect.left, b!.y - rect.top,
+      this.fittedCell, Math.max(this.fittedCell, this.display.maxCell));
+    this.cellPx = next.cell;
+    this.originX = next.originX;
+    this.originY = next.originY;
+    this.clampOrigin();
+    this.render();
   }
 
   /**

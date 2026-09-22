@@ -686,7 +686,7 @@ in 13 of 40 boards before this was caught.
 ## Current state
 
 24 game types × 10 tuned boards, plus a scaling continuation to board 13–40 depending on type
-(671 boards in all). 387 tests. Playable prototype with canvas board, HUD, marks,
+(671 boards in all). 392 tests. Playable prototype with canvas board, HUD, marks,
 pencil marks, two Sweep modes, magic, Full Run, the full unlock chain, a rules card, an
 always-present mute toggle, and a settings menu with nine presentation options and seven
 gameplay dials. Sweep defaults to CHARGED, ten hand-opened cells a sweep.
@@ -1016,6 +1016,19 @@ SIBLING — a transformed ancestor would capture it and quietly turn this back i
 of being blown up to fill the stage — which is what the old `MAX_CELL = 48` constant already did
 — but a board too big for the stage still shrinks past it down to `MIN_CELL`, so the setting can
 never leave a board unreachable.
+
+**Two fingers pinch-zoom, and the lift that ends a pinch opens nothing — the second half was a bug
+before the first half existed.** A two-finger touch used to reset the pan's starting point to the
+second finger, and whichever finger lifted first clicked the cell under it: zooming on a phone could
+open a cell, which can end a run. Now a touch that has ever had two fingers down is a gesture until
+every finger is up, and no lift in it opens anything. The pinch scales the cell size with the
+spread of the fingers, clamped to the wheel's own limits, and keeps the board point under the
+midpoint under the midpoint, so one gesture zooms and pans at once. Only `pointerType === 'touch'`
+is tracked: a mouse button released outside the window can leave its pointer behind, which here
+would turn the next touch into a phantom pinch. The arithmetic is in `src/ui/pinch.ts` rather than
+in `BoardView`, for `preview.ts`'s reason — the test pass compiles with no DOM, and `boardview.ts` is
+made of canvas calls. A resize still refits the board, so rotating a phone resets its zoom; that is
+the existing behaviour and was left alone.
 
 **A palette's `hot` has to be told apart from its `ink`, and checking it against the FLOOR misses
 that entirely.** `hot` draws the number on a defeated creature and `ink` draws every other number,
@@ -1529,8 +1542,8 @@ zero is the original Ironman, a full heal makes a run ten unrelated boards with 
 mark guard locks a cell on it, so refusing one is refusing to let the player be wrong in a way the
 board can already see — arguably a kindness, arguably the game playing itself. Left open.
 
-**Smaller:** BLIND's unlock timing is a guess (three Full Runs); no pinch-zoom on touch, so
-the largest boards are pan-only on mobile;
+**Smaller:** BLIND's unlock timing is a guess (three Full Runs); pinch-zoom is built but has
+only been exercised with synthetic touch events, never on a real phone;
 PACKS and CONGO LINE could take the same pencil gate as PAIRS — a covered cell beside an open
 creature is a packmate or empty ground, and a packmate is one of the tiers its pack has not shown —
 but it is not built, and it is a union over every adjacent piece rather than one number.
