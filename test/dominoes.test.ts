@@ -160,11 +160,15 @@ describe('the board', () => {
     }
   });
 
-  it('shows a creature’s number, which is its partner’s tier', () => {
+  it('gives a creature its partner’s tier as its number, one click behind the sprite', () => {
+    // The number IS the partner's tier. It used to start flipped on every
+    // pairing board, so a kill showed the fact and the toggle uncovered the
+    // art; that preset is gone, by request, and a beaten creature here shows
+    // its sprite first like everywhere else. The fact is still one click away.
     const game = Game.create(boardConfig(ladders, 'dominoes', 5), SEEDS[0]!);
     for (const cell of game.grid.flat()) {
       if (cell.tier === 0) continue;
-      expect(cell.showNum).toBe(true);
+      expect(cell.showNum).toBe(false);
       expect(cell.num).toBe(game.neighboursOf(cell).find((n) => n.tier > 0)!.tier);
     }
   });

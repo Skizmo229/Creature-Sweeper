@@ -499,9 +499,12 @@ second half rather than the first, and the first half is the part that sounds in
 creature, and a number is the sum of neighbouring tiers, so the two are the same quantity — no
 arithmetic, no ambiguity. `computeNumbers` already ran over creature cells and `showNum` already
 flipped a defeated one to its number, both built for something else, so the mode's single most
-valuable deduction cost nothing to have. It is shown BY DEFAULT here (`generateGrid` presets
-`showNum` on a pairing board) because leaving the board's best read one click behind a sprite would
-bury the rule, and the toggle now uncovers the art rather than the fact.
+valuable deduction cost nothing to have. It USED to be shown by default here — `generateGrid`
+preset `showNum` on every pairing board, on the argument that leaving the board's best read one
+click behind a sprite would bury the rule — and that preset is gone, by request: a beaten creature
+on PAIRS and DOMINOES shows its art first like everywhere else, and the click uncovers the number.
+The hover setting, which now defaults to showing a beaten creature's level, is not a replacement
+for it: that digit is the creature's OWN tier, and the partner's is still the click away.
 
 **Its two Sweep proofs fold into `proven` as one line, because "the ring is free" is already what
 that flag means.** Partner within your level → every covered neighbour is that partner or blank.
@@ -609,9 +612,9 @@ cell beside an open creature is a packmate or empty ground, and a packmate is on
 So when that tier is within your level the ring is free, and a whole pack (nothing missing) frees its
 ring at any level. It is computed over the component of OPEN creatures, which may be only part of a
 pack when two pieces are joined through a covered cell. That errs safe: a piece can only think MORE
-is missing. It cannot run away for PAIRS's reason, and there are tests for both. `showNum` is NOT
-preset here the way it is on PAIRS, because a creature's number is a sum of packmates, not a
-single named partner.
+is missing. It cannot run away for PAIRS's reason, and there are tests for both. `showNum` is not
+preset here — it no longer is on PAIRS either — and a creature's number here is a sum of packmates
+rather than a single named partner, so there was never a case for it.
 
 **It is the opposite of PAIRS on openings, and that is what sets its density.** Six-cell clusters
 leave empty ground: board 1 opens a median 26% of the board against NORMAL's 9%. The packing ceiling
@@ -1068,8 +1071,11 @@ time, and the shipped set never respected it anyway (CAVE and DONUT are 5 units 
 **Hovering a beaten creature can show its LEVEL, and that is presentation rather than assistance
 because it reveals nothing.** The pips already say the tier — the digit is the same fact written
 instead of counted, which is worth most on the nine-tier ladders where telling eight pips from nine
-is genuinely slow. So it sits with the presentation settings and can never touch a record. Default
-is off, which is the game as it was.
+is genuinely slow. So it sits with the presentation settings and can never touch a record. It
+defaults to ON, by request; "Nothing" is the game as it was. The store writes every presentation
+field whenever it writes one, so a save that ever touched a setting before this flipped carries
+`'none'` explicitly and keeps it, and only a save that never opened settings picks the new default
+up. No migration, because the store cannot tell a chosen "Nothing" from an incidental one.
 
 **It is drawn in the LEVEL'S own colour, and that is what makes it safe to read.** A cell's number
 and a creature's level are both single digits in the same cell, and on PAIRS both are live at once,

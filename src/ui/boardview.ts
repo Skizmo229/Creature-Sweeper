@@ -103,7 +103,7 @@ export const DEFAULT_DISPLAY: BoardDisplay = {
   font: 'ui-monospace, monospace',
   highlight: 'neighbours',
   strikeDefeated: true,
-  hoverDefeated: 'none',
+  hoverDefeated: 'tier',
 };
 
 /**
@@ -754,8 +754,8 @@ export class BoardView {
             || Math.abs(a.cy - b.cy) > this.cellPx * 2) continue;
           // Inset off both centres rather than joining them, so the tie sits
           // in the gap between the two cells and neither glyph is painted
-          // over. The number on a creature here is its partner's tier, which
-          // is the most valuable thing on the board — a line through it would
+          // over. The number a creature here flips to is its partner's tier,
+          // the most valuable thing on the board — a line through it would
           // be structure obscuring the fact the structure is about.
           const t = 0.3;
           ctx.moveTo(a.cx + (b.cx - a.cx) * t, a.cy + (b.cy - a.cy) * t);

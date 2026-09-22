@@ -76,15 +76,16 @@ export const HIGHLIGHT_NAMES: Record<HighlightStyle, string> = {
 /**
  * What the cursor does to a creature you have already beaten.
  *
- * 'none' is the default and is the game as it has always been: hovering a
+ * 'none' is the game as it was before this setting existed: hovering a
  * defeated creature changes nothing about it.
  *
- * 'tier' writes that creature's level over its glyph, in the level's own
- * colour. It reveals NOTHING — the pips already say the tier, and this is the
- * same fact written as a digit instead of counted — which is why it belongs
- * here among the presentation settings and can never touch a record. What it
- * saves is the counting: at nine tiers a glyph is nine pips, and telling eight
- * from nine at a glance is genuinely slow.
+ * 'tier' is the default. It writes that creature's level over its glyph, in
+ * the level's own colour, and reveals NOTHING — the pips already say the
+ * tier, and this is the same fact written as a digit instead of counted —
+ * which is why it belongs here among the presentation settings and can never
+ * touch a record. What it saves is the counting: at nine tiers a glyph is
+ * nine pips, and telling eight from nine at a glance is genuinely slow, which
+ * is why it is the default rather than 'none'.
  *
  * Anything else is a PipShape, and restyles the hovered glyph into that shape.
  * It is the thinnest of the three today, because every tier of every type is
@@ -144,7 +145,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   victory: DEFAULT,
   highlight: DEFAULT,
   strikeDefeated: true,
-  hoverDefeated: 'none',
+  hoverDefeated: 'tier',
   maxZoom: DEFAULT_MAX_ZOOM,
   muted: false,
 };
@@ -197,8 +198,10 @@ function readPresentation(raw: unknown): PresentationSettings {
     strikeDefeated: typeof p.strikeDefeated === 'boolean' ? p.strikeDefeated : true,
     // Same argument as `icons` above: an unknown pip shape falls through
     // `drawCreature`'s own default, so a value written by a newer build is
-    // kept rather than thrown away.
-    hoverDefeated: str('hoverDefeated', 'none') as HoverDefeated,
+    // kept rather than thrown away. Only a save that never wrote this field
+    // takes the default; `persist` writes every field whenever it writes one,
+    // so a save that has touched any setting carries its own value here.
+    hoverDefeated: str('hoverDefeated', 'tier') as HoverDefeated,
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
     // Defaults to unmuted, so a save written before the speaker existed opens
     // with sound on — which is the state that save was actually played in.

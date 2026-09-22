@@ -707,7 +707,8 @@ export function generateGrid(cfg: BoardConfig, rng: Rng): Grid {
         cell.tier = tier;
         cell.alive = true;
       }
-      return finishPaired(grid, cfg);
+      computeNumbers(grid, cfg.topology, cfg.wrap);
+      return grid;
     }
     pools.set('any', shuffle(chosen, rng));
   }
@@ -738,27 +739,7 @@ export function generateGrid(cfg: BoardConfig, rng: Rng): Grid {
     taken.set(key, at + count);
   }
 
-  if (paired) return finishPaired(grid, cfg);
   computeNumbers(grid, cfg.topology, cfg.wrap);
-  return grid;
-}
-
-/**
- * The last step every paired board shares: numbers, and the number shown.
- *
- * On a pairing board a creature's number IS its partner's tier — nothing but
- * the partner borders it — which makes it the single most valuable read the
- * mode offers, where on every other board it is a sum the player can mostly
- * derive. Leaving it one click behind the sprite would bury the whole point of
- * the rule, so it starts flipped, and the toggle uncovers the art instead.
- *
- * Shared rather than written twice because PAIRS and DOMINOES are the same
- * board with a different deal, and the two drifting apart here would make one
- * of them quietly show a sprite where the other shows the fact.
- */
-function finishPaired(grid: Grid, cfg: BoardConfig): Grid {
-  computeNumbers(grid, cfg.topology, cfg.wrap);
-  for (const row of grid) for (const cell of row) if (cell.tier > 0) cell.showNum = true;
   return grid;
 }
 
