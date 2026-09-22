@@ -198,9 +198,18 @@ all and still plays at ~22%, which is the whole argument in one board.
 average seed, and reaches 34.9% on the worst board-10 seed in 40. That is 0.9 points past the
 ceiling, on a game where HIVE sits at 35% and CHECKERBOARD at 38.5% for stated reasons — and the
 pocket hands back guaranteed-safe ground, so the board is not straightforwardly denser to PLAY even
-where it is denser to describe. **That last claim is the unmeasured one.** DUNGEON's schedule is the
-only one in the game derived by playing it, with the honest player in `sim:spells`, and re-deriving
-it is what would settle whether the density should now come down.
+where it is denser to describe.
+
+**Measured since, and the pocket made the board easier to play, not harder — so the density stays.**
+With the honest player over 40 seeds a board (`npm run sim:spells -- 40 dungeon`), DUNGEON now runs
+0.2 → 4.7 stuck points a board and clears 98% of board 10, where before the pocket it ran 0.5 → 5.4
+and cleared 83%. The felt density past the ceiling on the worst seed is a description, not a cost.
+What it leaves is a ladder sitting well under ARCANE at the top — 98% of board 10 cleared against
+68% — so if DUNGEON should be harder, the lever is still `ROOM_COUNT`, not density, which is already
+at the felt ceiling. The complete deducer from `sim:forced` says the same thing from the other side:
+at board 10 it is cornered 3.2 times a board on DUNGEON and 3.1 on ARCANE, and clears 100% against
+87%. Same number of forced guesses, far cheaper ones — the doorway reads are why, and it is the "a
+guess you know something about is cheaper" finding for a fourth time.
 
 **The crawl rule is what makes DUNGEON a dungeon, and it is one number.** `reach: 2` in the ladder
 data: you may only open a cell, or cast a targeted spell on one, within two steps of ground you have
