@@ -1143,7 +1143,7 @@ export class App {
     rule('Anything at or below your level dies for free.',
       'Your level is the LV in the corner. A creature of that tier or lower falls in ' +
       'one blow and costs nothing, and pays EXP. A stronger one fights back, and the ' +
-      'gap is expensive: a tier 5 at LV1 costs 20 HP.');
+      'gap is expensive: a tier 5 at LV 1 costs 20 HP.');
 
     rule('HP is a guess budget.',
       'Every board can be cleared without taking a single point of damage — the EXP ' +
@@ -1536,7 +1536,7 @@ export class App {
 
     for (const btn of this.counters) {
       const tier = Number(btn.dataset.tier);
-      btn.textContent = `LV${tier}\n×${pad(game.counterFor(tier), 2)}`;
+      btn.textContent = `LV ${tier}\n×${pad(game.counterFor(tier), 2)}`;
       btn.classList.toggle('active', this.markMode === tier);
       btn.classList.toggle('done', game.counterFor(tier) <= 0);
     }
@@ -1703,7 +1703,7 @@ export class App {
         ? `${type.name} board ${this.boardIndex} · ${this.frozenSeconds}s · HP ${game.hp}/${game.maxHp}`
         : this.timeExpired
           ? `Time ran out · ${game.creaturesLeft()} creatures still standing`
-          : `${game.creaturesLeft()} creatures still standing · reached LV${game.level}`);
+          : `${game.creaturesLeft()} creatures still standing · reached LV ${game.level}`);
     card.append(stats);
 
     if (won && perfect) {
@@ -1728,14 +1728,14 @@ export class App {
       const { tier, damage } = this.fatalBattle;
       // "Took your last N" rather than "cost N": a battle event reports HP
       // ACTUALLY lost, so a 20-point blow against 10 HP reports 10 — which
-      // read as a contradiction beside the rules card's "a tier 5 at LV1 costs
+      // read as a contradiction beside the rules card's "a tier 5 at LV 1 costs
       // 20 HP". On a fatal blow the HP lost is always exactly what was left,
       // so this says the same number without quoting a price. Deriving the
       // full blow instead would mean a second copy of the damage formula
       // outside the engine, which is how the two drift.
       card.append(el('p', 'overlay-note',
-        `A tier ${tier} creature at LV${game.level} took your last ${damage} HP. ` +
-        `At LV${tier} it would have cost nothing — ` +
+        `A tier ${tier} creature at LV ${game.level} took your last ${damage} HP. ` +
+        `At LV ${tier} it would have cost nothing — ` +
         'every board can be cleared without taking a single point of damage.'));
     }
     // Said on the overlay rather than only in Settings, because this is the

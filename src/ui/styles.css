@@ -275,7 +275,7 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
    left on the board" and a tier can be both. */
 .counter.ruled-out { text-decoration: line-through; text-decoration-thickness: 2px; }
 /* The pencil's tier-0 slot. Narrow, because it carries a dot rather than a
-   "LVn xNN" counter, and never dims -- empty ground is not a tier you run out
+   "LV n ×NN" counter, and never dims -- empty ground is not a tier you run out
    of. */
 /* Same two-line shape as a tier counter, so it reads as part of the same row,
    but narrower and dashed: it is a candidate you pencil, not a tier you can
