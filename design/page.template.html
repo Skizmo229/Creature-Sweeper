@@ -490,7 +490,8 @@ footer code{font-size:.85em}
         <p class="note-h">Lock depth amplifies the need for solvable generation</p>
         <p>A deep lock means you must positively identify <em>every</em> creature in a tier before you can
           advance. If the last one sits in an unresolvable position, you are stuck and forced to gamble. Deep
-          locks are only fair on top of guaranteed-solvable boards.</p>
+          locks are only fair on top of guaranteed-solvable boards — and measured with a complete deducer
+          (section 10), not one board 10 of EXTREME, HUGE × EXTREME or ORACLE in thirty was guess-free.</p>
       </div>
     </div>
   </div>
@@ -943,7 +944,7 @@ footer code{font-size:.85em}
           <tr><td class="l name">DONUT · CROSS · WRAPPED CROSS · DIAMOND · RAGGED CAVE</td><td class="l">Reveal · Census</td>
             <td class="l dim">ARCANE's loadout on the cut-out shapes. Every one of them is mostly boundary, so what they lack is not information but certainty about what is behind a number — which is the pair of instruments that answers it. 75 starting mana.</td></tr>
           <tr><td class="l name">DUNGEON</td><td class="l">Reveal · Census · Exercise</td>
-            <td class="l dim">Hallways and doorways are always empty, so a forced guess is a guess on what is in front of you and usually one you already know something about. That makes it a ladder of many cheap guesses rather than few expensive ones — a deductive player is cornered 0.5 times on board 1 rising to 5.4 on board 10, about ARCANE's rate, and still clears 83% of board 10. Exercise earns its place here as it does nowhere else outside ORACLE, and this is the ladder with the thinnest mana pool, so the prices bite hardest. 75 starting mana.</td></tr>
+            <td class="l dim">Hallways and doorways are always empty, so a forced guess is a guess on what is in front of you and usually one you already know something about. That makes it a ladder of many cheap guesses rather than few expensive ones — a deductive player is cornered 0.2 times on board 1 rising to 4.7 on board 10, near ARCANE's rate, and still clears 98% of board 10 (the doorway pocket took it from 83% — easier to play, though denser to describe). Exercise earns its place here as it does nowhere else outside ORACLE, and this is the ladder with the thinnest mana pool, so the prices bite hardest. 75 starting mana.</td></tr>
           <tr><td class="l name dim">every other type</td><td class="l dim">none</td>
             <td class="l dim">The tuned main line and the post-game stay exactly as they were measured. Magic is a branch off NORMAL and a loadout on the shapes, not a change to the main line.</td></tr>
         </tbody>
@@ -996,32 +997,59 @@ footer code{font-size:.85em}
           toward the core.</li>
       </ul>
       <p>I simulated each against three real boards — same creature counts every time, only the placement
-        changes — measuring the auto-opening, how much of the board is zero, and the numbers themselves:</p>
+        changes — measuring the auto-opening, how much of the board is zero, and the numbers themselves. The
+        measurement is the engine's own now (<span class="m">src/sim/placement.ts</span>): its generator, its
+        neighbour sums, its opening. The strategies that never shipped exist only there, as tier layouts
+        handed to the engine to measure.</p>
     </div>
 
     <div class="scroll"><table id="placement-table"></table></div>
 
     <div class="col">
-      <p>Three things fall out, and they are not what I would have guessed:</p>
+      <p>Five things fall out, and they are not what I would have guessed:</p>
       <ul>
         <li><strong>Clustering makes boards easier, substantially.</strong> Grouping creatures empties the space
-          between groups: triads plus pairs lift the opening by 19–33% and raise zero-cell counts by roughly
-          half. If you add clustering, <strong>densities have to rise to compensate</strong> or every ladder
+          between groups: triads plus pairs lift the opening by 29–40% and raise zero-cell counts by a third to
+          a half. If you add clustering, <strong>densities have to rise to compensate</strong> or every ladder
           silently gets gentler.</li>
         <li><strong>Lairs make boards harder, and how much depends on the distribution.</strong> On EXTREME's flat
           curve — 34 top-tier creatures — lairs halve the opening and push the average number from 6.6 to 11.4.
-          On HUGE, which has two apex creatures at that board, the effect is −4%. Lair impact scales with how
-          many top-tier creatures exist, which makes it a natural pairing with flat distributions and a
-          non-event on descending ones.</li>
+          On HUGE, which has two apex creatures at that board, it is a non-event. Lair impact scales with how
+          many top-tier creatures exist, which makes it a natural pairing with flat distributions and nothing
+          at all on descending ones.</li>
         <li><strong>Banding moves difficulty around rather than changing its total.</strong> The opening grows
-          19–39%, because the rim is now sparse — but the maximum number climbs too (16→18, 22→29, 28→32) as the
+          8–43%, because the rim is now sparse — but the maximum number climbs too (16→18, 22→29, 28→32) as the
           core concentrates. You start at the edge and work inward as you level, which pairs neatly with the
           tier-order climb the threshold rule already forces. The catch is that the auto-opening becomes
           predictable: it will nearly always be on the rim.</li>
+        <li><strong>Wrapping the edges <em>grows</em> the opening, by 7–17%</strong>, even as it cuts the zero
+          count (52→43 on NORMAL) by giving every rim cell a full ring of neighbours: a zero region that reaches
+          one edge now carries on from the other. The Python version of this table had it 0–4% smaller, and
+          that was a bug — it summed numbers across the seam but flood-filled the opening without crossing it —
+          so for a while this table contradicted the wrap-around measurement below, which had it right.
+          A bigger opening may be part of why WRAPAROUND measures as the gentlest ladder of all.</li>
+        <li><strong>A hex grid is easier on every count</strong> — 21–26% more opening and 60–80% more zero
+          cells, because six neighbours make smaller sums (average number 4.1→3.1 on NORMAL). The
+          checkerboard's colours, by contrast, barely move the opening at all: the rule decides <em>which</em>
+          tier stands where, not <em>where</em> creatures stand. Its difficulty lives in deduction.</li>
       </ul>
-      <p class="dim" style="font-size:.9rem">Clustering also tends to <em>help</em> solvable generation — more
-        structure means more deducible patterns — while lairs likely hurt it. Worth measuring once a solver
-        exists.</p>
+      <p>Every placement rule that shipped, each on its own ladder's board 5, against exactly the same
+        creatures scattered uniformly:</p>
+    </div>
+
+    <div class="scroll"><table id="placement-rules-table"></table></div>
+
+    <div class="col">
+      <p>The grouping rules split cleanly in two. <strong>Pairing shrinks the opening</strong> — every domino
+        sits alone in a ring of empty ground, which spreads the creatures evenly — while <strong>packs and lines
+        grow it</strong>, because six-cell groups leave empty ground between them. That is the clustering
+        finding above, measured on rules that shipped: pairing is clustering at the smallest scale there is
+        and anti-clustering at every larger one, and the larger one wins.</p>
+      <p class="dim" style="font-size:.9rem">Clustering was expected to <em>help</em> solvable generation — more
+        structure, more deducible patterns. A solver now exists (section 10) and the shipped rules bear it out:
+        they are the ladders a complete deducer finds far easier than the honest player does, 68–85% fewer
+        forced guesses against 31–59% elsewhere. The clustering strategies themselves never shipped, so it
+        has not been run on them.</p>
 
       <h4>PAIRS — every creature has exactly one creature neighbour <span class="free">·built</span></h4>
       <p>It sounds like a rule about couples and it is really a rule about <strong>packing</strong>. If every
@@ -1343,8 +1371,16 @@ footer code{font-size:.85em}
         <p class="note-h">Built — DONUT, CROSS, DIAMOND and RAGGED CAVE</p>
         <p>Four shaped ladders ship: a ring, a cross, an inscribed diamond, and a cave carved fresh from
           every seed. Cut-away cells are <em>absent</em>, not empty — they hold nothing, neighbour nothing,
-          and count toward no win condition. Densities run 2–5 points above NORMAL to pay back what the
-          extra boundary gives away.</p>
+          and count toward no win condition.</p>
+        <p style="margin-top:12px">They carry ARCANE's spells on densities first derived for a spell-less
+          board, so they were measured against ARCANE's curve with the honest player, 60 seeds a board — and
+          only two of the four had to move. ARCANE is cornered 24.0 times over its ten boards and clears 82% on
+          average. DONUT was already harder (41, 85%) and RAGGED CAVE already on it (25, 89%), so both stay;
+          CROSS (13.1, 94%) went up 2.5 density points and DIAMOND (10.9, 95%) 4, to <strong>21.8 / 89% and
+          20.1 / 84%</strong>. CROSS's board 10 lands at 5.0 forced guesses and 63% cleared against ARCANE's 5.1
+          and 63%. Where forced guesses and clear rate disagree — DONUT is cornered twice as often as ARCANE and
+          clears about as much — it is the cheap-guess finding again: a guess on a rim is a guess you know
+          something about.</p>
         <p style="margin-top:12px">The cave was the one that stayed parked, and the obstacle was never the
           carving. Its silhouette moves with the seed, so its cell count moves too — and every level
           threshold comes from <span class="m">C<sub>k</sub></span>, which needs the creature quota fixed
@@ -1369,9 +1405,10 @@ footer code{font-size:.85em}
           the count of forced guesses is how many separate puzzles the board is cut into.</p>
         <p style="margin-top:12px">Measured with the honest player, 25 seeds a board, at CROSS's own
           schedule: <strong>0.0–2.3 forced guesses a board against CROSS's 0.3–2.4</strong>, and 92% of board
-          10 cleared against 80%. So it ships at CROSS's schedule lifted 1.2 density points, 24.7–31.9%,
-          which puts it back on CROSS's curve — 0.1–2.7 guesses, 84% cleared — and still inside the 34% the
-          rest of the game treats as the point a board stops being a puzzle.</p>
+          10 cleared against 80%. So it ships at CROSS's schedule lifted 1.2 density points, which put it
+          back on CROSS's curve — 0.1–2.7 guesses, 84% cleared. When CROSS moved 2.5 points up for its spells
+          this moved with it, to 27.2–34.4%, and was re-measured rather than assumed: 21.7 forced guesses over
+          the ladder against CROSS's 21.8, still on the curve, at the price of harder opening boards.</p>
         <p style="margin-top:12px">Two things in the engine only surfaced once a board was shaped
           <em>and</em> wrapped. A hole filtered out of the neighbours it was handed but not out of the ones it
           asked for, so adjacency was asymmetric at a hole; and the dashed seam was stroked around the
@@ -1496,6 +1533,74 @@ footer code{font-size:.85em}
       <p>The two highest-value fixes are the ones that make the original feel <em>unfair</em> rather than hard:
         <strong>solvable-board generation</strong> and <strong>proper first-click protection</strong>. The mark
         click-guard is already good design — build on it rather than replace it.</p>
+
+      <h4>Solvable generation, measured</h4>
+      <p>There is a complete deducer now (<span class="m">src/sim/solver.ts</span>). It finds every covered
+        cell that every layout consistent with the screen makes free, and it reads only what a player can see:
+        the numbers, the tiers already open, the placement rules beside open creatures, and the per-tier counts
+        the palette shows. Whatever it leaves out can only make it find <em>fewer</em> free cells, so what it
+        finds is a floor. Played beside the honest player on the same seeds — 30 a board, every battle
+        ladder, with no layout it could not fit and no HP ever lost on a cell it called free — it says three
+        things.</p>
+      <div class="note gold">
+        <p class="note-h">Every forced-guess figure on this page is an upper bound, by about two</p>
+        <p>At 57–97% of the honest player's stuck points there was a free move it missed — ORACLE board 3 at
+          LV2: a 3 and a 9 each leave a cell possibly a 3, but a 3 there would leave the 7 beside it needing a
+          tier 7 on a six-tier board. A perfect deducer is cornered 31–59% less on the plain and shaped
+          ladders and <strong>68–85% less on the placement-rule ladders</strong>: CHECKERBOARD falls from 1.21
+          forced guesses a board to 0.18. Those rules combine across numbers in ways a one-cell reading never
+          reaches, so those five ladders play easier than their tuning says.</p>
+      </div>
+      <div class="note warn">
+        <p class="note-h">Generate-and-test is affordable early and impossible late</p>
+        <p>A board generate-and-test would keep is one a perfect deducer finishes without once being cornered.
+          That is 94% of NORMAL's boards, 73% of ARCANE's (37% of its board 10s), 36% of DONUT's (3%) — and
+          <strong>not one board 10 of EXTREME, HUGE × EXTREME or ORACLE in thirty</strong>. The top of the
+          hard ladders needs construction, placing creatures so the deduction exists, or a weaker target: no
+          forced guess that can kill, rather than none at all, which is what HP as a guess budget already
+          implies.</p>
+      </div>
+      <div class="note warn">
+        <p class="note-h">ORACLE 7–10 are decided by guesses, whoever plays them</p>
+        <p>A perfect deducer clears 90–100% of ORACLE's boards 1–6 and 23%, 3%, 0% and 3% of boards 7–10,
+          cornered 6.7–9.1 times a board. The cliff is between boards 6 and 7. It is not the honest player
+          being weak; it is the boards.</p>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="l">Ladder</th><th>Honest: cornered / board</th><th>Cleared</th>
+          <th>Stuck points with a free move</th><th>Perfect: cornered / board</th><th>Cleared</th>
+          <th>Boards with no guess</th><th>Board 10s with no guess</th></tr></thead>
+        <tbody>
+          <tr><td class="l name">NORMAL</td><td>0.15</td><td>99%</td><td>57%</td><td>0.08</td><td>100%</td><td>94%</td><td>93%</td></tr>
+          <tr><td class="l name">HUGE</td><td>0.50</td><td>99%</td><td>75%</td><td>0.18</td><td>100%</td><td>91%</td><td>63%</td></tr>
+          <tr><td class="l name">EXTREME</td><td>5.29</td><td>55%</td><td>89%</td><td>3.08</td><td>71%</td><td>37%</td><td>0%</td></tr>
+          <tr><td class="l name">HUGE × EXTREME</td><td>6.71</td><td>33%</td><td>91%</td><td>4.54</td><td>51%</td><td>22%</td><td>0%</td></tr>
+          <tr><td class="l name">ARCANE</td><td>2.21</td><td>84%</td><td>83%</td><td>1.07</td><td>94%</td><td>73%</td><td>37%</td></tr>
+          <tr><td class="l name">ORACLE</td><td>5.75</td><td>48%</td><td>91%</td><td>3.97</td><td>60%</td><td>38%</td><td>0%</td></tr>
+          <tr><td class="l name">WRAPAROUND</td><td>0.09</td><td>99%</td><td>89%</td><td>0.01</td><td>100%</td><td>100%</td><td>100%</td></tr>
+          <tr><td class="l name">CROSS *</td><td>2.18</td><td>89%</td><td>65%</td><td>1.27</td><td>93%</td><td>58%</td><td>15%</td></tr>
+          <tr><td class="l name">WRAPPED CROSS *</td><td>2.17</td><td>84%</td><td>67%</td><td>1.01</td><td>93%</td><td>75%</td><td>50%</td></tr>
+          <tr><td class="l name">HIVE</td><td>1.13</td><td>93%</td><td>60%</td><td>0.72</td><td>95%</td><td>79%</td><td>57%</td></tr>
+          <tr><td class="l name">DIAMOND *</td><td>2.01</td><td>84%</td><td>72%</td><td>0.95</td><td>92%</td><td>68%</td><td>45%</td></tr>
+          <tr><td class="l name">PAIRS</td><td>1.16</td><td>92%</td><td>77%</td><td>0.37</td><td>97%</td><td>89%</td><td>77%</td></tr>
+          <tr><td class="l name">DOMINOES</td><td>0.72</td><td>89%</td><td>84%</td><td>0.19</td><td>97%</td><td>94%</td><td>73%</td></tr>
+          <tr><td class="l name">WORKOUT</td><td>1.89</td><td>92%</td><td>77%</td><td>0.95</td><td>96%</td><td>61%</td><td>17%</td></tr>
+          <tr><td class="l name">PACKS</td><td>1.64</td><td>92%</td><td>89%</td><td>0.44</td><td>99%</td><td>77%</td><td>43%</td></tr>
+          <tr><td class="l name">DONUT</td><td>4.10</td><td>85%</td><td>65%</td><td>2.46</td><td>93%</td><td>36%</td><td>3%</td></tr>
+          <tr><td class="l name">CHECKERBOARD</td><td>1.21</td><td>97%</td><td>97%</td><td>0.18</td><td>100%</td><td>89%</td><td>77%</td></tr>
+          <tr><td class="l name">CONGO LINE</td><td>1.28</td><td>94%</td><td>92%</td><td>0.27</td><td>98%</td><td>84%</td><td>53%</td></tr>
+          <tr><td class="l name">RAGGED CAVE</td><td>2.51</td><td>89%</td><td>61%</td><td>1.55</td><td>94%</td><td>49%</td><td>20%</td></tr>
+          <tr><td class="l name">DUNGEON</td><td>1.78</td><td>98%</td><td>61%</td><td>1.06</td><td>99%</td><td>59%</td><td>17%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col">
+      <p class="dim" style="font-size:.9rem">The ten tuned boards of each ladder, spell-less, 30 seeds a board;
+        rows marked * are at their retuned schedules, 60 seeds a board. EASY is left out — it never corners
+        anyone. <span class="m">npm run sim:forced</span> reproduces the table.</p>
     </div>
   </div>
 </section>
@@ -1744,6 +1849,36 @@ footer code{font-size:.85em}
           currently cannot, on the grounds that clearing board 6 at 2 HP carried in from board 5 is not the same
           claim as clearing board 6 outright.</p>
       </div>
+
+      <div class="q">
+        <span class="qnum">05</span>
+        <h3>Should the placement-rule ladders be re-derived against a stronger player?</h3>
+        <p>CHECKERBOARD, PAIRS, DOMINOES, PACKS and CONGO LINE were tuned against the honest player, and a
+          complete deducer finds 68–85% of their forced guesses avoidable against 31–59% everywhere else — their
+          rules give far more than a one-cell reading takes. A real player sits somewhere between the two. Either
+          re-derive those five against the solver, which would make them denser, or accept that they reward
+          understanding the rule more than other ladders do, which is arguably the point of them.</p>
+      </div>
+
+      <div class="q">
+        <span class="qnum">06</span>
+        <h3>What should the hard ladders' top boards do about forced guesses?</h3>
+        <p>No board 10 of EXTREME, HUGE × EXTREME or ORACLE was guess-free under a perfect deducer in thirty
+          seeds, so generate-and-test cannot fix them, and ORACLE's boards 7–10 are decided by guesses outright.
+          The options are construction (placing creatures so the deduction exists), a weaker target (no forced
+          guess that can kill), or simply less density or more HP on ORACLE's top boards. Worth settling before
+          playtesting, because a player reads a forced 50/50 as unfairness, not difficulty.</p>
+      </div>
+
+      <div class="q">
+        <span class="qnum">07</span>
+        <h3>Should marks be refused the way pencil marks now are?</h3>
+        <p>The pencil will not write a candidate the placement rule has already ruled out — an odd tier on a light
+          CHECKERBOARD square, anything but empty ground or the partner's tier beside a defeated PAIRS creature.
+          A mark still will. A mark is a claim, and the mark guard locks a cell on it, so refusing one stops the
+          player being wrong in a way the board can already see: arguably a kindness, arguably the game playing
+          itself.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -1759,6 +1894,7 @@ footer code{font-size:.85em}
 <script id="ladders-data" type="application/json">/*__LADDERS__*/</script>
 <script id="opening-data" type="application/json">/*__OPENING__*/</script>
 <script id="placement-data" type="application/json">/*__PLACEMENT__*/</script>
+<script id="placement-rules-data" type="application/json">/*__PLACEMENT_RULES__*/</script>
 <script>
 (function(){
   "use strict";
@@ -2547,6 +2683,8 @@ footer code{font-size:.85em}
                   face:'Angular display', wave:'saw', oct:'o6'},
     cave:        {floor:'#1a1410', ink:'#ecdfcd', hot:'#ffb04f', pip:'circle',
                   face:'Rounded slab', wave:'noise-warm', oct:'o4'},
+    sudoku:      {floor:'#1c0f21', ink:'#ead2f2', hot:'#ff5dc8', pip:'square',
+                  face:'Tabular sans', wave:'sine', oct:'o6'},
     dungeon:     {floor:'#161020', ink:'#e2d6f0', hot:'#ffb86b', pip:'cross',
                   face:'Blackletter-lite', wave:'pulse 12%', oct:'o4'},
     blind:       {floor:'#1a1a1a', ink:'#e8e8e8', hot:'#3fb8f0', pip:'ring',
@@ -2596,11 +2734,11 @@ footer code{font-size:.85em}
   }
 
   /** Gold halo behind a gilded pip: same shape, stroked, slightly larger. */
-  /* A ladder can exist before its identity does — SUDOKU arrived that way.
-     Reading a field off the missing entry threw and took every table below it
-     with it, so the page lost its asset sheet and voice table over a gap in a
-     palette. The gap is still a gap, and the voice table says so; it just no
-     longer stops the page. */
+  /* A ladder can exist before its identity does — SUDOKU arrived that way, and
+     has an entry now. Reading a field off a missing entry threw and took every
+     table below it with it, so the page lost its asset sheet and voice table
+     over a gap in a palette. A gap still shows as a gap; it just no longer
+     stops the page. */
   var IDENT_NONE = {floor:'#181818', ink:'#d8d8d8', hot:'#8a8a8a', pip:'square',
                     face:'unassigned', wave:'unassigned', oct:'—'};
   function ident(id){ return IDENT[id] || IDENT_NONE; }
@@ -2670,6 +2808,24 @@ footer code{font-size:.85em}
     }).join('');
 
     document.getElementById('placement-table').innerHTML = h+'<tbody>'+rows+'</tbody>';
+  })();
+
+  /* ---------- every shipped placement rule, against its own creatures scattered ---------- */
+  (function(){
+    var PR = JSON.parse(document.getElementById('placement-rules-data').textContent);
+    var h = '<thead><tr><th class="l">Ladder</th><th class="l">Rule</th><th>Board 5</th>' +
+      '<th>Opening, scattered</th><th>Opening, the rule</th><th>Change</th>' +
+      '<th>Zero cells</th><th>Average number</th></tr></thead>';
+    var rows = PR.map(function(r){
+      var cls = r.delta > 4 ? 'free' : (r.delta < -4 ? 'gate' : 'dim');
+      return '<tr><td class="l name">'+esc(r.ladder)+'</td><td class="l dim">'+esc(r.rule)+'</td>' +
+        '<td class="dim">'+r.creatures+' on '+r.cells+'</td>' +
+        '<td>'+r.scatter.opening+'</td><td>'+r.shipped.opening+'</td>' +
+        '<td><span class="'+cls+'">'+(r.delta > 0 ? '+' : '')+r.delta+'%</span></td>' +
+        '<td class="dim">'+r.scatter.zeros+' → '+r.shipped.zeros+'</td>' +
+        '<td class="dim">'+r.scatter.avg_num.toFixed(2)+' → '+r.shipped.avg_num.toFixed(2)+'</td></tr>';
+    }).join('');
+    document.getElementById('placement-rules-table').innerHTML = h+'<tbody>'+rows+'</tbody>';
   })();
 
   (function(){

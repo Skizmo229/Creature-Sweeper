@@ -1100,7 +1100,7 @@ the moment to move it to `src/engine`. The honest player moved out of `spellvalu
 the player; the move was checked by diffing `sim:spells` output before and after, byte for byte.
 
 **Every forced-guess figure in this file is an upper bound — by about two, and not by the same factor
-everywhere.** At 56–97% of the honest player's stuck points the solver had a free move. A perfect
+everywhere.** At 57–97% of the honest player's stuck points the solver had a free move. A perfect
 deducer is cornered 31–59% less on the plain and shaped ladders — ARCANE 2.21 → 1.07 a board,
 EXTREME 5.29 → 3.08, DONUT 4.10 → 2.46 — and 68–85% less on the placement-rule ladders: CHECKERBOARD
 1.21 → 0.18, CONGO LINE 1.28 → 0.27, DOMINOES 0.72 → 0.19, PACKS 1.64 → 0.44, PAIRS 1.16 → 0.37. That
@@ -1531,8 +1531,6 @@ board can already see — arguably a kindness, arguably the game playing itself.
 
 **Smaller:** BLIND's unlock timing is a guess (three Full Runs); no pinch-zoom on touch, so
 the largest boards are pan-only on mobile;
-the reference page has no identity row for SUDOKU, so its asset sheet and voice table show a
-placeholder (that used to be a crash that killed both tables — `ident()` in `page.template.html`);
 PACKS and CONGO LINE could take the same pencil gate as PAIRS — a covered cell beside an open
 creature is a packmate or empty ground, and a packmate is one of the tiers its pack has not shown —
 but it is not built, and it is a union over every adjacent piece rather than one number.
