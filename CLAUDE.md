@@ -1137,6 +1137,19 @@ a gold stroke too, painted under the fill (`paint-order: stroke fill`) so the hu
 without it Level 6 would read as Level 1. 0.08em was measured against 0.12em, which turned a thin
 digit mostly gold, and 0.04em, which vanished at HUD size.
 
+**The board refits whenever its stage changes size, not only when the window does** — a
+`ResizeObserver` on the stage in `BoardView.fit`. The window listener was the only trigger once,
+and everything that happens INSIDE the page slipped past it: the HUD's readouts are filled in after
+the board is fitted, and at twice their old size they wrap to a second row; a ladder's face
+arriving a frame late reflows the HUD; the text size moves every line. Each shrank the stage under
+a board already sized for the old one, and `overflow: hidden` cut it off — measured at up to 95px,
+on ORACLE, NORMAL and HUGE x EXTREME among others. Two things make the fix hold. The stage is
+`flex: 1 1 0`, so its height is what the screen has left and the canvas inside can no longer
+argue with it (with `auto` the canvas fed back into the stage's size, which also made the observer
+a loop waiting to happen). And a refit the player did not ask for keeps a zoom they chose
+(`fit(true)`), because the HUD re-wrapping mid-board is not a reason to throw it away; `F` and a
+window resize still reset it.
+
 **The zoom ceiling caps magnification only.** A small board is held at the player's limit instead
 of being blown up to fill the stage — which is what the old `MAX_CELL = 48` constant already did
 — but a board too big for the stage still shrinks past it down to `MIN_CELL`, so the setting can

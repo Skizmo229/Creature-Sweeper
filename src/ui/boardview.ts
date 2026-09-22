@@ -263,6 +263,25 @@ export class BoardView {
    */
   private awaitingFont: string | null = null;
 
+  /**
+   * Watches the stage, so the board refits when the space it has changes for
+   * any reason, not only when the window does.
+   *
+   * The window listener in app.ts was the only trigger once, and it misses
+   * everything that happens inside the page: the HUD's readouts are filled in
+   * after the board is fitted and at twice their old size can wrap to a
+   * second row; a ladder's face arriving a frame late reflows the HUD taller
+   * or shorter; the text size moves every line. Each of those shrank the
+   * stage under a board already sized for the old one, and the stage clips —
+   * measured, up to 95px of board cut off, top or bottom.
+   *
+   * Created on the first fit, because the stage is the canvas's parent and
+   * that is only known once it is attached. Disconnects itself when the canvas
+   * leaves the page, so a screen rebuild does not leave it watching a stage
+   * nobody sees.
+   */
+  private stageWatch: ResizeObserver | null = null;
+
   constructor(
     canvas: HTMLCanvasElement, cb: BoardViewCallbacks, options: BoardViewOptions = {},
   ) {
@@ -312,8 +331,14 @@ export class BoardView {
     this.render();
   }
 
-  /** Largest whole-pixel cell the stage can hold, then centre the board. */
-  fit(): void {
+  /**
+   * Largest whole-pixel cell the stage can hold, then centre the board.
+   *
+   * `keepZoom` is for a refit the player did not ask for — the stage changed
+   * size under them. A zoom they chose is kept, clamped to the new stage,
+   * rather than thrown away because the HUD re-wrapped.
+   */
+  fit(keepZoom = false): void {
     const game = this.game;
     if (!game) return;
 
@@ -331,6 +356,17 @@ export class BoardView {
     }
 
     const box = this.canvas.parentElement;
+    if (box && !this.stageWatch && typeof ResizeObserver !== 'undefined') {
+      this.stageWatch = new ResizeObserver(() => {
+        if (!this.canvas.isConnected) {
+          this.stageWatch?.disconnect();
+          this.stageWatch = null;
+          return;
+        }
+        this.fit(true);
+      });
+      this.stageWatch.observe(box);
+    }
     const availW = Math.max(120, (box?.clientWidth ?? 960) - 8);
     const availH = Math.max(120, (box?.clientHeight ?? 520) - 8);
 
@@ -355,8 +391,11 @@ export class BoardView {
     // player's limit rather than blown up to fill the stage; a board too big
     // for the stage still shrinks past it, all the way down to MIN_CELL, so
     // the setting can never leave a board unreachable.
+    const zoomed = keepZoom && this.cellPx > this.fittedCell;
     this.fittedCell = Math.max(MIN_CELL, Math.min(this.display.maxCell, fitted));
-    this.cellPx = this.fittedCell;
+    this.cellPx = zoomed
+      ? Math.max(this.fittedCell, Math.min(this.cellPx, Math.max(this.fittedCell, this.display.maxCell)))
+      : this.fittedCell;
 
     this.resizeCanvas(availW, availH);
     this.clampOrigin();
