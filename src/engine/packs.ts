@@ -52,8 +52,64 @@
  * against PAIRS's 26%.
  */
 
-import type { Cell } from './types.js';
+import type { Cell, Placement } from './types.js';
+import { noteBit } from './notes.js';
 import { type Rng, randInt, shuffle } from './rng.js';
+
+/**
+ * Does the pack rule hold on a board with this placement?
+ *
+ * `isPaired`'s reason, one rule over: a congo line IS a pack, so every reader
+ * of the pack rule — the generator, Sweep's proof, the pencil, the honest
+ * player, the solver — has to hand CONGO LINE the pack reading as well, and
+ * each site that spelled out the pair of names was a place to forget one.
+ */
+export function isPacked(placement: Placement): boolean {
+  return placement === 'packs' || placement === 'congo';
+}
+
+/**
+ * What a covered cell could hold by the pack rule alone, as a note mask — or
+ * null when no open creature touches it, and the rule says nothing yet.
+ *
+ * `pairCandidates` grown to packs. Packs never touch, so every creature beside
+ * this cell belongs to the one pack this cell would join if it held a creature,
+ * and a pack holds one of every tier: the candidates are empty ground and the
+ * tiers none of the neighbouring pieces has shown. Two pieces beside it that
+ * show the SAME tier are two different packs, and a creature here would join
+ * them — so then it is empty ground outright.
+ *
+ * Sound in the one direction that matters: a piece may be only part of its
+ * pack, so it can only ever think MORE is missing, never less. The tier a cell
+ * really holds is never taken out, and `test/candidates.test.ts` walks real
+ * boards to hold it to that.
+ */
+export function packCandidates(
+  cell: Cell,
+  neighboursOf: (c: Cell) => readonly Cell[],
+  tiers: number,
+): number | null {
+  const known = (c: Cell): boolean => c.present && c.open && c.tier > 0;
+  const seen = new Set<Cell>();
+  let shown = 0;
+  let touched = false;
+  for (const n of neighboursOf(cell)) {
+    if (!known(n) || seen.has(n)) continue;
+    touched = true;
+    const piece = [n];
+    seen.add(n);
+    let mask = 0;
+    for (let i = 0; i < piece.length; i++) {
+      const p = piece[i]!;
+      mask |= 1 << p.tier;
+      for (const m of neighboursOf(p)) if (known(m) && !seen.has(m)) { seen.add(m); piece.push(m); }
+    }
+    if (shown & mask) return noteBit(0);
+    shown |= mask;
+  }
+  if (!touched) return null;
+  return (((1 << (tiers + 1)) - 1) & ~shown) | noteBit(0);
+}
 
 /**
  * Restarts allowed before a board is refused. Same argument as PAIRS's: a

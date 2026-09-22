@@ -15,7 +15,7 @@ import type { SpellId } from '../engine/spells.js';
 import type { Cell } from '../engine/types.js';
 import { hiddenCap, shadeOf } from '../engine/checker.js';
 import { isPaired, ringIsFree } from '../engine/pairs.js';
-import { missingFrom } from '../engine/packs.js';
+import { isPacked, missingFrom } from '../engine/packs.js';
 import { congoClear } from '../engine/congo.js';
 
 /**
@@ -314,7 +314,7 @@ function namePacks(game: Game): boolean {
 
 /** A congo line is a pack with a shape, so every pack read applies to it. */
 function isGrouped(game: Game): boolean {
-  return game.config.placement === 'packs' || game.config.placement === 'congo';
+  return isPacked(game.config.placement);
 }
 
 /**

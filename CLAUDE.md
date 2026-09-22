@@ -355,7 +355,14 @@ fatal (no candidate is at or below it). Every reader checks `hasNotes` first, an
 deduction to refuse.** `Game.noteCandidates` is the whole list: the square's colour on CHECKERBOARD,
 the partner's number beside a defeated creature on a pairing board (`pairCandidates` — empty ground
 or exactly that tier, and only empty ground once the creature has met its partner or when two
-creatures touch the cell), and no tier 0 on SUDOKU. It is enforced in `toggleNote`, not in the
+creatures touch the cell), the tiers the neighbouring pack has not shown on PACKS and CONGO LINE
+(`packCandidates` — a union over every piece beside the cell, and empty ground outright when two of
+those pieces show the same tier, since a creature there would join two packs), and no tier 0 on
+SUDOKU. The solver reads its domains through the same function, so the pencil and the instrument
+that measures the game cannot disagree about what a rule allows; moving the pack reading here from
+the solver changed none of its output, checked byte for byte. The congo line's shape proof
+(`congoClear`) stays out: it counts reach from the line's ends, which is deduction, not a reading of
+a neighbour. It is enforced in `toggleNote`, not in the
 palette, for the reason Sweep's charge is — so the click and the keyboard cannot disagree — and it
 refuses only ADDING a note, because a candidate pencilled before the board ruled it out has to stay
 erasable. **It must never grow a Sudoku row/column/box rule, or anything else that is the player's
@@ -546,7 +553,8 @@ the shuffle-and-take every other placement does.
 Sweep proofs, the honest player in `sim:spells` and the renderer's bonds all have to treat DOMINOES
 as a pairing board; five separate `=== 'pairs'` checks would have been five places to hand a domino
 board none of the mode's deduction, silently. The third time this codebase has met "anything
-classifying ladders by X".
+classifying ladders by X". `isPacked` is the same answer for the pack rule, which CONGO LINE shares:
+it arrived with the pack pencil, replacing four hand-written `=== 'packs' || === 'congo'` checks.
 
 **No blanks, for a structural reason.** A [0|x] tile is a creature whose partner is empty ground,
 which breaks the one-creature-neighbour rule both proofs rest on; a blank half is also drawn as
@@ -686,7 +694,7 @@ in 13 of 40 boards before this was caught.
 ## Current state
 
 24 game types × 10 tuned boards, plus a scaling continuation to board 13–40 depending on type
-(671 boards in all). 392 tests. Playable prototype with canvas board, HUD, marks,
+(671 boards in all). 394 tests. Playable prototype with canvas board, HUD, marks,
 pencil marks, two Sweep modes, magic, Full Run, the full unlock chain, a rules card, an
 always-present mute toggle, and a settings menu with nine presentation options and seven
 gameplay dials. Sweep defaults to CHARGED, ten hand-opened cells a sweep.
@@ -1543,10 +1551,7 @@ mark guard locks a cell on it, so refusing one is refusing to let the player be 
 board can already see — arguably a kindness, arguably the game playing itself. Left open.
 
 **Smaller:** BLIND's unlock timing is a guess (three Full Runs); pinch-zoom is built but has
-only been exercised with synthetic touch events, never on a real phone;
-PACKS and CONGO LINE could take the same pencil gate as PAIRS — a covered cell beside an open
-creature is a packmate or empty ground, and a packmate is one of the tiers its pack has not shown —
-but it is not built, and it is a union over every adjacent piece rather than one number.
+only been exercised with synthetic touch events, never on a real phone.
 
 ---
 

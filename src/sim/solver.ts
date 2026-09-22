@@ -81,46 +81,16 @@ const lowest = (m: number): number => 31 - Math.clz32(m & -m);
 const highest = (m: number): number => 31 - Math.clz32(m);
 
 /**
- * What an open creature's pack says about the cells beside it: a covered
- * neighbour is a packmate or empty ground, and a packmate is one of the tiers
- * the pack has not shown. Two pieces beside one cell showing the same tier
- * belong to different packs, so a creature there would join two packs — it is
- * empty. A congo line's shape proofs arrive as cells pinned empty.
+ * Cells a congo line's own shape proves empty — the one pack reading the pencil
+ * does not make, because it counts reach from the line's ends rather than
+ * reading a neighbour (see `congoClear`). Everything else the pack rule says
+ * about a cell arrives through `noteCandidates`, the same reading the pencil
+ * uses, so the two cannot drift apart.
  */
-function packDomains(game: Game): Map<Cell, number> {
-  const out = new Map<Cell, number>();
-  const { placement, tiers } = game.config;
-  if (placement !== 'packs' && placement !== 'congo') return out;
-  const full = (1 << (tiers + 1)) - 1;
-  if (placement === 'congo') for (const c of congoClear(game.grid, tiers)) out.set(c, 1);
-
-  const shownBy = new Map<Cell, number>();
-  const clash = new Set<Cell>();
-  const done = new Set<Cell>();
-  for (const cell of game.grid.flat()) {
-    if (!cell.present || !cell.open || cell.tier === 0 || done.has(cell)) continue;
-    const piece = [cell];
-    done.add(cell);
-    for (let i = 0; i < piece.length; i++) {
-      for (const n of game.neighboursOf(piece[i]!)) {
-        if (n.open && n.tier > 0 && !done.has(n)) { done.add(n); piece.push(n); }
-      }
-    }
-    let shown = 0;
-    for (const c of piece) shown |= 1 << c.tier;
-    const rim = new Set<Cell>();
-    for (const c of piece) for (const n of game.neighboursOf(c)) if (!n.open) rim.add(n);
-    for (const r of rim) {
-      const prev = shownBy.get(r) ?? 0;
-      if (prev & shown) clash.add(r);
-      shownBy.set(r, prev | shown);
-    }
-  }
-  for (const [c, shown] of shownBy) {
-    const d = clash.has(c) ? 1 : (full & ~shown) | 1;
-    out.set(c, (out.get(c) ?? full) & d);
-  }
-  return out;
+function lineClear(game: Game): Set<Cell> {
+  return game.config.placement === 'congo'
+    ? new Set(congoClear(game.grid, game.config.tiers))
+    : new Set();
 }
 
 function buildModel(game: Game): Model | null {
@@ -140,8 +110,8 @@ function buildModel(game: Game): Model | null {
   // ones are dead" turns the whole board free without a single number read.
   let alive = 1;
   for (let t = 1; t <= tiers; t++) if (remaining[t]! > 0) alive |= 1 << t;
-  const packs = packDomains(game);
-  const domOf = (c: Cell): number => game.noteCandidates(c) & (packs.get(c) ?? ~0) & alive;
+  const clear = lineClear(game);
+  const domOf = (c: Cell): number => game.noteCandidates(c) & (clear.has(c) ? 1 : ~0) & alive;
 
   const index = new Map<Cell, number>();
   const vars: Cell[] = [];

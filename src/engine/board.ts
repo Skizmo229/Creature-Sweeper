@@ -13,7 +13,7 @@ import { dungeonMap } from './dungeon.js';
 import { type Shade, shadeAt, shadeForTier } from './checker.js';
 import { choosePairs, isPaired } from './pairs.js';
 import { dealTiles, setsIn } from './dominoes.js';
-import { choosePacks, dealPacks, packsIn } from './packs.js';
+import { choosePacks, dealPacks, isPacked, packsIn } from './packs.js';
 import { chooseLines, dealLines } from './congo.js';
 
 /** All eight surrounding cells. */
@@ -647,7 +647,7 @@ export function generateGrid(cfg: BoardConfig, rng: Rng): Grid {
   // The pack rule deals its own tiers, for DOMINOES's reason: one of every tier
   // has to land in each PACK, so the grouping `choosePacks` returns must reach
   // the deal intact, and the ordinary shuffle-and-take below would scatter it.
-  if (cfg.placement === 'packs' || cfg.placement === 'congo') {
+  if (isPacked(cfg.placement)) {
     const count = packsIn(cfg.tiers, cfg.quantity);
     if (count === null) {
       throw new Error(

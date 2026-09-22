@@ -34,7 +34,7 @@ import {
 } from './board.js';
 import { allowsTier, hiddenCap, shadeOf } from './checker.js';
 import { isPaired, pairCandidates, ringIsFree } from './pairs.js';
-import { missingFrom } from './packs.js';
+import { isPacked, missingFrom, packCandidates } from './packs.js';
 import { congoClear } from './congo.js';
 import { mulberry32 } from './rng.js';
 
@@ -250,7 +250,7 @@ export class Game {
     // out once per call rather than per cell, because a pack's piece is shared
     // by every creature in it.
     // A congo line is a pack, so the pack proof reads it unchanged.
-    const grouped = this.config.placement === 'packs' || this.config.placement === 'congo';
+    const grouped = isPacked(this.config.placement);
     const packGaps = grouped
       ? missingFrom(this.grid.flat(), (c) => this.neighboursOf(c), this.config.tiers)
       : null;
@@ -695,8 +695,10 @@ export class Game {
    *
    * Only what the rule says outright, read off what is already on screen: the
    * square's colour on CHECKERBOARD, the partner's number beside a defeated
-   * creature on a pairing board (`pairCandidates`), and on SUDOKU the fact that
-   * the opening uncovered every empty cell, so nothing covered can be tier 0.
+   * creature on a pairing board (`pairCandidates`), the tiers the neighbouring
+   * pack has not shown yet on PACKS and CONGO LINE (`packCandidates`), and on
+   * SUDOKU the fact that the opening uncovered every empty cell, so nothing
+   * covered can be tier 0.
    * Deliberately NOT anything that takes deduction — a Sudoku row already
    * holding a 3 does not strike the 3 here. Pencil marks are where the player
    * does that work, and a pencil that did it for them would be the
@@ -720,6 +722,10 @@ export class Game {
     if (isPaired(placement)) {
       const pair = pairCandidates(cell, (c) => this.neighboursOf(c));
       if (pair !== null) mask &= pair;
+    }
+    if (isPacked(placement)) {
+      const pack = packCandidates(cell, (c) => this.neighboursOf(c), tiers);
+      if (pack !== null) mask &= pack;
     }
     return mask;
   }

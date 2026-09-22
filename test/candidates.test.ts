@@ -15,6 +15,7 @@ import { loadLadders } from '../src/data.js';
 import { boardConfig } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
 import { hasNote, noteTiers } from '../src/engine/notes.js';
+import { packCandidates } from '../src/engine/packs.js';
 import { pairCandidates } from '../src/engine/pairs.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import type { Cell } from '../src/engine/types.js';
@@ -28,6 +29,8 @@ const GATED: Record<string, number[]> = {
   checker: [1, 10],
   pairs: [1, 10],
   dominoes: [1, 10],
+  packs: [1, 10],
+  congo: [1, 10],
   sudoku: [1, 5],
 };
 
@@ -68,12 +71,14 @@ describe('pencil candidates', () => {
                 failures.push(`${id} #${board} seed ${seed}: (${c.x},${c.y}) holds ` +
                   `${c.tier} but is offered ${noteTiers(mask).join(',')}`);
               }
-              // On a pairing board count only what the pairing rule narrowed,
+              // On a pairing or pack board count only what that rule narrowed,
               // so this cannot pass on a gate that never engages.
-              const pair = id === 'pairs' || id === 'dominoes'
+              const engaged = id === 'pairs' || id === 'dominoes'
                 ? pairCandidates(c, (n) => game.neighboursOf(n)) !== null
-                : mask !== every;
-              if (pair) narrowed[id]!++;
+                : id === 'packs' || id === 'congo'
+                  ? packCandidates(c, (n) => game.neighboursOf(n), game.config.tiers) !== null
+                  : mask !== every;
+              if (engaged) narrowed[id]!++;
             }
           };
           check();
@@ -120,6 +125,87 @@ describe('pencil candidates', () => {
       }
     }
     expect(seen).toBeGreaterThan(0);
+  });
+
+  it('offer only empty ground or a tier the neighbouring pack has not shown', () => {
+    let beside = 0;
+    for (const id of ['packs', 'congo']) {
+      for (const seed of SEEDS) {
+        const game = Game.create(boardConfig(ladders, id, 5), seed);
+        const tiers = game.config.tiers;
+        const piece = (start: Cell): Cell[] => {
+          const out = [start];
+          for (let i = 0; i < out.length; i++) {
+            for (const n of game.neighboursOf(out[i]!)) {
+              if (n.open && n.tier > 0 && !out.includes(n)) out.push(n);
+            }
+          }
+          return out;
+        };
+        for (const _ of walk(game, seed)) {
+          for (const c of covered(game)) {
+            const mates = game.neighboursOf(c).filter((n) => n.open && n.tier > 0);
+            if (!mates.length) continue;
+            // One piece only, so the expectation is simple to state.
+            const p = piece(mates[0]!);
+            if (!mates.every((m) => p.includes(m))) continue;
+            const shown = new Set(p.map((m) => m.tier));
+            const want = [0];
+            for (let t = 1; t <= tiers; t++) if (!shown.has(t)) want.push(t);
+            expect(noteTiers(game.noteCandidates(c))).toEqual(want);
+            beside++;
+          }
+        }
+      }
+    }
+    expect(beside).toBeGreaterThan(0);
+  });
+
+  it('offer only empty ground beside a pack shown whole, and beside two packs', () => {
+    // Staged rather than walked: a pack's tier 6 falls last in any honest
+    // order, by which time the ground around it is long open.
+    const game = Game.create(boardConfig(ladders, 'packs', 5), SEEDS[0]!);
+    const creature = (c: Cell) => c.present && c.tier > 0;
+    const packOf = (start: Cell): Cell[] => {
+      const out = [start];
+      for (let i = 0; i < out.length; i++) {
+        for (const n of game.neighboursOf(out[i]!)) if (creature(n) && !out.includes(n)) out.push(n);
+      }
+      return out;
+    };
+    const covered = game.grid.flat().filter((c) => creature(c) && !c.open);
+    const pack = packOf(covered[0]!);
+    expect(pack).toHaveLength(game.config.tiers);
+    for (const m of pack) m.open = true;
+    const rim = game.neighboursOf(pack[0]!).filter((n) => !n.open);
+    expect(rim.length).toBeGreaterThan(0);
+    for (const c of rim) expect(noteTiers(game.noteCandidates(c))).toEqual([0]);
+
+    // Two packs: a covered cell with a creature of the same tier on each side,
+    // from different packs. Each alone would only rule its own tier out; the
+    // pair says a creature here would join two packs, so it is empty ground.
+    const fresh = Game.create(boardConfig(ladders, 'packs', 5), SEEDS[1]!);
+    const packsOf = (start: Cell): Set<Cell> => {
+      const out = [start];
+      for (let i = 0; i < out.length; i++) {
+        for (const n of fresh.neighboursOf(out[i]!)) if (creature(n) && !out.includes(n)) out.push(n);
+      }
+      return new Set(out);
+    };
+    let staged = false;
+    for (const x of fresh.grid.flat()) {
+      if (!x.present || x.open || x.tier !== 0) continue;
+      const ns = fresh.neighboursOf(x).filter(creature);
+      const pair = ns.flatMap((a) => ns.filter((b) => b !== a && b.tier === a.tier && !packsOf(a).has(b))
+        .map((b) => [a, b] as const))[0];
+      if (!pair) continue;
+      pair[0].open = true;
+      pair[1].open = true;
+      expect(noteTiers(fresh.noteCandidates(x))).toEqual([0]);
+      staged = true;
+      break;
+    }
+    expect(staged).toBe(true);
   });
 
   it('refuse a ruled-out candidate without touching the cell', () => {

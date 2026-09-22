@@ -83,7 +83,7 @@ Every script resolves its paths relative to its own location, so they can be run
 
 ```bash
 npm run dev       # play it
-npm test          # 392 tests, including the invariants below
+npm test          # 394 tests, including the invariants below
 npm run typecheck # UI config, then an engine config with no DOM lib at all
 npm run sim       # clear every board of every ladder headlessly
 npm run sim -- 200
