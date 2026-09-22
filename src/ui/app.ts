@@ -1141,7 +1141,8 @@ export class App {
       'why a number can be larger than 8 when a cell has only 8 neighbours.');
 
     rule('Anything at or below your level dies for free.',
-      'Your level is the LV in the corner. A creature of that tier or lower falls in ' +
+      'Your level is the Level number at the top of the board, drawn in the colour of the ' +
+      'strongest creatures it can beat. A creature of that tier or lower falls in ' +
       'one blow and costs nothing, and pays EXP. A stronger one fights back, and the ' +
       'gap is expensive: a tier 5 at LV 1 costs 20 HP.');
 
