@@ -3,6 +3,7 @@
  *
  *   npx tsx src/sim/forced.ts [seeds]           every battle ladder, one row each
  *   npx tsx src/sim/forced.ts [seeds] oracle    one ladder, board by board
+ *   npx tsx src/sim/forced.ts [seeds] oracle 7-10   only those boards
  *
  * Every forced-guess figure in CLAUDE.md comes from the honest player in
  * `honest.ts`, which deduces locally — Sweep's bound, exact tiers, pairs of
@@ -76,13 +77,14 @@ function battleLadders(): LadderType[] {
   return ladders.filter((t) => !t.search && boardConfig(ladders, t.id, 1).placement !== 'sudoku');
 }
 
-function byBoard(seeds: number, typeId: string): void {
+function byBoard(seeds: number, typeId: string, only?: [number, number]): void {
   const type = battleLadders().find((t) => t.id === typeId);
   if (!type) throw new Error(`no battle ladder "${typeId}"`);
   console.log(`${type.name}, board by board, ${seeds} seeds each.\n`);
   console.log('board  density |  honest: stuck  clear   free | complete: forced  clear*  no guess |' +
     '  undecided  bad  hurt');
   for (const b of type.boards) {
+    if (only && (b.n < only[0] || b.n > only[1])) continue;
     const r = measure(type.id, b.n, seeds);
     console.log(
       `${String(b.n).padStart(4)}  ${b.density.toFixed(1).padStart(6)}% |` +
@@ -124,5 +126,9 @@ function everyLadder(seeds: number): void {
 }
 
 const seeds = Number(process.argv[2] ?? 30);
-if (process.argv[3]) byBoard(seeds, process.argv[3]);
+// A board range, for the ladders slow enough that running all ten to look at
+// two is most of the cost: `7-10`, or a single board.
+const range = process.argv[4]?.split('-').map(Number);
+const only: [number, number] | undefined = range ? [range[0]!, range[1] ?? range[0]!] : undefined;
+if (process.argv[3]) byBoard(seeds, process.argv[3], only);
 else everyLadder(seeds);
