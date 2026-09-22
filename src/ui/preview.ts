@@ -151,18 +151,30 @@ export function topDefeatedCell(game: Game): { x: number; y: number } {
 }
 
 /**
- * A hex example, used only by the cursor-highlight gallery.
+ * The cursor-highlight examples, on the grid the player's ladder is played on.
  *
- * It has to be hex. On a plain square board "true neighbours" and "flat 3x3
- * block" light exactly the same eight cells, so a square example would show
- * two identical pictures for two different settings and teach the player that
- * the choice does nothing. On hex the first lights six and the second eight,
- * which is the whole distinction.
+ * It used to be hex for everyone, on the argument that on a square board "true
+ * neighbours" and "flat 3x3 block" light the same eight cells and so look like
+ * a choice that does nothing. By request it now follows the ladder: square
+ * boxes on every square ladder, where the two styles really do behave alike,
+ * and hex on HIVE, where they part — six cells against eight. A preview of a
+ * board the player is not on was answering a question they had not asked.
+ *
+ * Both are 5x4, so the pinned cell sits clear of every edge and its whole ring
+ * is on the board whichever grid is drawn.
  */
-export function hexSampleBoard(): Game {
-  return once('hex', () => buildSample(
-    previewConfig({ width: 5, height: 4, quantity: [1, 1, 1, 1], topology: 'hex' }), 1, 4,
+export function highlightSampleBoard(topology: 'square' | 'hex'): Game {
+  return once(`highlight-${topology}`, () => buildSample(
+    previewConfig({ width: 5, height: 4, quantity: [1, 1, 1, 1], topology }), 1, 4,
   ));
+}
+
+/** The cell the highlight examples hold lit: interior on both grids. */
+export const HIGHLIGHT_PIN = { x: 2, y: 1 } as const;
+
+/** The hex highlight example — HIVE's. */
+export function hexSampleBoard(): Game {
+  return highlightSampleBoard('hex');
 }
 
 /** Two cells at whatever the zoom ceiling is, so the setting is in real units. */

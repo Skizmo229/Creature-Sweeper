@@ -18,7 +18,9 @@ import { loadLadders } from '../src/data.js';
 import {
   PREVIEW_SEED,
   clearedBoard,
+  HIGHLIGHT_PIN,
   hexSampleBoard,
+  highlightSampleBoard,
   sampleBoard,
   topDefeatedCell,
   zoomSampleBoard,
@@ -122,13 +124,22 @@ describe('the gallery examples', () => {
     expect(hexSampleBoard()).toBe(hexSampleBoard());
   });
 
-  it('draws the cursor-highlight example on a hex board', () => {
-    // It has to be hex. On a square board "true neighbours" and "flat 3x3
-    // block" light the same eight cells, so the gallery would show two
-    // identical pictures for two different settings.
-    expect(hexSampleBoard().config.topology).toBe('hex');
-    // And it must still be playing, or the highlight is not drawn at all.
-    expect(hexSampleBoard().status).toBe('playing');
+  it('draws the cursor-highlight example on either grid', () => {
+    // Square boxes for square ladders, hex for HIVE — the gallery previews the
+    // grid the player is actually on.
+    for (const topology of ['square', 'hex'] as const) {
+      const board = highlightSampleBoard(topology);
+      expect(board.config.topology).toBe(topology);
+      expect(highlightSampleBoard(topology)).toBe(board);
+      // Still playing, or the highlight is not drawn at all.
+      expect(board.status).toBe('playing');
+      // The pin is interior, so its whole ring is on the board and the square
+      // gallery shows a full 3x3 box rather than one clipped by an edge.
+      const { x, y } = HIGHLIGHT_PIN;
+      const ring = board.grid.flat().filter((c) => Math.abs(c.x - x) <= 1 && Math.abs(c.y - y) <= 1);
+      expect(ring.length).toBe(9);
+    }
+    expect(hexSampleBoard()).toBe(highlightSampleBoard('hex'));
   });
 
   it('pins the hover example on a defeated creature, not on floor', () => {

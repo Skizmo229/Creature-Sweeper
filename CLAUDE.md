@@ -908,12 +908,15 @@ what puts the strike-through setting in the same picture. (3) The empty cells op
 from those with a number on them: an empty cell numbered 0 cascades, and on a 4x3 board one cascade
 uncovers nearly all of it, leaving no covered tiles to look at.
 
-**The cursor-highlight gallery is drawn on a HEX board, and it has to be.** On a square board
-"true neighbours" and "flat 3x3 block" light exactly the same eight cells, so a square example
-would show two identical pictures for two different settings and teach the player that the choice
-does nothing. On hex the first lights six and the second eight. The tiles also need
+**The cursor-highlight gallery is drawn on the grid of the ladder the player came from** —
+square boxes everywhere, hexagons on HIVE (`highlightSampleBoard`). It was hex for everyone once,
+on the argument that on a square board "true neighbours" and "flat 3x3 block" light exactly the
+same eight cells and so look like a choice that does nothing; by request it now previews the board
+the player is actually on, and the hint says in words where the two part (hex, and a wrapped edge).
+On a square ladder the two tiles are identical, which is true there. The tiles also need
 `BoardView.pinHover`, because a highlight is only visible when something is hovered and a
-thumbnail has no cursor on it — on a touch screen it never will.
+thumbnail has no cursor on it — on a touch screen it never will. The pin is interior on both grids,
+so the square example shows a whole 3x3 box rather than one clipped by an edge.
 
 **Picking a visual option rebuilds the whole screen, and the scroll position is carried across.**
 It has to rebuild: the galleries are drawn in terms of each other — the icon examples wear the

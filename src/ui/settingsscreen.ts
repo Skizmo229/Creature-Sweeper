@@ -68,7 +68,8 @@ import { BoardView, type BoardDisplay } from './boardview.js';
 import {
   PREVIEW_SEED,
   clearedBoard,
-  hexSampleBoard,
+  HIGHLIGHT_PIN,
+  highlightSampleBoard,
   sampleBoard,
   // topDefeatedCell,         // the disabled hover row, below
   zoomSampleBoard,
@@ -449,30 +450,34 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
 
   // --- cursor highlight
   //
-  // Drawn on a HEX board, and that is not decoration. On a square board "true
-  // neighbours" and "flat 3x3 block" light the same eight cells, so a square
-  // example would show two identical pictures for two different settings.
-  const hexChip = (highlight: HighlightStyle | null) => () =>
-    renderPreview(hexSampleBoard(), currentTheme, display({ highlight }),
-      { cell: CHIP_CELL, pin: { x: 2, y: 1 } }).canvas;
+  // Drawn on the grid of the ladder the player came from: hex on HIVE, square
+  // boxes everywhere else. See `highlightSampleBoard`.
+  const hex = ladders.find((t) => t.id === typeId)?.topology === 'hex';
+  const highlightChip = (highlight: HighlightStyle | null) => () =>
+    renderPreview(highlightSampleBoard(hex ? 'hex' : 'square'), currentTheme,
+      display({ highlight }), { cell: CHIP_CELL, pin: HIGHLIGHT_PIN }).canvas;
 
   wideRow(look, '3×3 cursor highlight',
-    'What the cell under the cursor lights up. Shown here on a hex board, because that is where ' +
-    'the first two differ: the default follows real adjacency, so it lights six cells on hex and ' +
-    'jumps across a wrapped edge, where the flat block is always the same eight squares.',
+    hex
+      ? 'What the cell under the cursor lights up, on this ladder’s hexagons. The default follows ' +
+        'real adjacency, so it lights the six cells around it, where the flat block is always ' +
+        'the same eight.'
+      : 'What the cell under the cursor lights up. On square cells the default and the flat block ' +
+        'light the same eight; they part on a hex board, where the default lights six, and across ' +
+        'a wrapped edge, which only the default jumps.',
     gallery(
       [
         {
           value: DEFAULT,
           label: 'Game type default — true neighbours',
-          example: hexChip('neighbours'),
+          example: highlightChip('neighbours'),
         },
         ...(Object.keys(HIGHLIGHT_NAMES) as HighlightStyle[]).map((id): Choice => ({
           value: id,
           label: HIGHLIGHT_NAMES[id],
-          example: hexChip(id),
+          example: highlightChip(id),
         })),
-        { value: OFF, label: 'Off — no highlight', example: hexChip(null) },
+        { value: OFF, label: 'Off — no highlight', example: highlightChip(null) },
       ],
       p.highlight,
       (v) => pick({ highlight: v as HighlightStyle | typeof DEFAULT | typeof OFF }),
@@ -532,8 +537,9 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   //       // One of these is always the shape the board is ALREADY drawn in, so
   //       // its tile is pixel-identical to "Nothing" — measured, not guessed.
   //       // That is truthful and reads as a broken tile, which is the same trap
-  //       // the cursor-highlight gallery had to be moved to a hex board to
-  //       // escape. It cannot be escaped that way here, because these tiles have
+  //       // the cursor-highlight gallery once escaped by moving to a hex board
+  //       // (it follows the ladder's grid now, and accepts the identical pair on
+  //       // square ladders). It cannot be escaped that way here, because these tiles have
   //       // to wear the player's own icon or they are previewing someone else's
   //       // board. So it is named instead, the way "game type default" names
   //       // what it resolves to.
