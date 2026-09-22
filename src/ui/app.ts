@@ -345,7 +345,14 @@ export class App {
       card.disabled = !unlocked;
       card.style.setProperty('--tint', theme.accent);
 
-      card.append(el('span', 'type-name', type.name));
+      // Each name wears the face its own screens do, so the list previews the
+      // ladders rather than repeating whichever one was visited last. A face
+      // the player forces answers for every ladder, which leaves the list in it.
+      const face = this.settings.font(type.id);
+      const name = el('span', 'type-name', type.name);
+      name.style.fontFamily = face.stack;
+      if (face.capHeightFix) name.style.setProperty('--cap-fix', String(face.capHeightFix));
+      card.append(name);
       const meta = el('span', 'type-meta');
       if (!unlocked) {
         // Both gates, and the count one shows progress. "Locked" with no

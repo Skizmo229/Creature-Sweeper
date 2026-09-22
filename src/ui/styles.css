@@ -96,7 +96,18 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
   flex-direction: column;
   gap: 4px;
 }
-.type-name { font-size: 1rem; font-weight: 700; letter-spacing: 0.05em; }
+/* Each name wears its own ladder's face (app.ts), and every name is capitals,
+   so the body's ex-height rule sizes them by a letter they do not contain:
+   caps ran from 8.3px in Bungee to 12.8px in Aladin. Capital height instead,
+   pinned where NORMAL's JetBrains Mono already stood under the old rule.
+   `--cap-fix` corrects a face whose file misstates its capital height
+   (`GameFont.capHeightFix`). */
+.type-name {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  font-size-adjust: cap-height calc(0.69 * var(--cap-fix, 1));
+}
 .type-meta { font-size: 0.75rem; color: var(--tint); }
 .type-axis { font-size: 0.72rem; color: var(--muted); }
 
