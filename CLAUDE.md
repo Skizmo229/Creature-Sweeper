@@ -497,14 +497,28 @@ second half rather than the first, and the first half is the part that sounds in
 
 **A creature's number IS its partner's tier, and that was free.** Nothing but the partner borders a
 creature, and a number is the sum of neighbouring tiers, so the two are the same quantity — no
-arithmetic, no ambiguity. `computeNumbers` already ran over creature cells and `showNum` already
-flipped a defeated one to its number, both built for something else, so the mode's single most
+arithmetic, no ambiguity. `computeNumbers` already ran over creature cells and the renderer could
+already show a defeated one's number, both built for something else, so the mode's single most
 valuable deduction cost nothing to have. It USED to be shown by default here — `generateGrid`
-preset `showNum` on every pairing board, on the argument that leaving the board's best read one
-click behind a sprite would bury the rule — and that preset is gone, by request: a beaten creature
-on PAIRS and DOMINOES shows its art first like everywhere else, and the click uncovers the number.
-The hover setting, which now defaults to showing a beaten creature's level, is not a replacement
-for it: that digit is the creature's OWN tier, and the partner's is still the click away.
+preset a per-cell `showNum` flag on every pairing board, on the argument that leaving the board's
+best read one click behind a sprite would bury the rule — and that preset is gone, by request: a
+beaten creature on PAIRS and DOMINOES shows its art like everywhere else. On every other ladder
+**a beaten creature's number is shown while the cursor is over it**, and that is the whole
+mechanism now. It was a click toggle held on the cell as `showNum`; the flag, the `toggleNum` event
+and the toggle in `Game.open` are gone, so a click on a beaten creature is a click on open ground
+and the number is a picture of where the cursor is rather than state anything has to remember.
+**Touch has no hover**, so on a phone the number is currently unreachable — worth settling before
+pinch-zoom's phone gets tested.
+
+**On PAIRS and DOMINOES it is not drawn at all, by request** (`isPaired` in `BoardView.drawOpen`): a
+lone digit over a creature read as that creature's own level rather than its partner's, and
+confused more than it told. The engine still holds the number and three things still read it, which
+is the open question this leaves. Sweep's partner proof (`ringIsFree`, case A) opens a ring on the
+strength of a number the player can no longer see. The pencil's `pairCandidates` strikes every tier
+but blank and the partner's out of the palette for a cell beside a beaten creature, so hovering one
+in Pencil mode still spells out the partner's tier. And the honest player and the solver both read
+it, so PAIRS's and DOMINOES's schedules were measured against a player who sees more than a real one
+now does — both ladders play harder than their tuning says until they are re-measured.
 
 **Its two Sweep proofs fold into `proven` as one line, because "the ring is free" is already what
 that flag means.** Partner within your level → every covered neighbour is that partner or blank.
@@ -612,9 +626,9 @@ cell beside an open creature is a packmate or empty ground, and a packmate is on
 So when that tier is within your level the ring is free, and a whole pack (nothing missing) frees its
 ring at any level. It is computed over the component of OPEN creatures, which may be only part of a
 pack when two pieces are joined through a covered cell. That errs safe: a piece can only think MORE
-is missing. It cannot run away for PAIRS's reason, and there are tests for both. `showNum` is not
-preset here — it no longer is on PAIRS either — and a creature's number here is a sum of packmates
-rather than a single named partner, so there was never a case for it.
+is missing. It cannot run away for PAIRS's reason, and there are tests for both. A beaten
+creature's number was never shown by default here — it no longer is on PAIRS either — because a
+creature's number here is a sum of packmates rather than a single named partner.
 
 **It is the opposite of PAIRS on openings, and that is what sets its density.** Six-cell clusters
 leave empty ground: board 1 opens a median 26% of the board against NORMAL's 9%. The packing ceiling
@@ -708,7 +722,7 @@ in 13 of 40 boards before this was caught.
 24 game types × 10 tuned boards, plus a scaling continuation to board 13–40 depending on type
 (689 boards in all). 395 tests. Playable prototype with canvas board, HUD, marks,
 pencil marks, two Sweep modes, magic, Full Run, the full unlock chain, a rules card, an
-always-present mute toggle, and a settings menu with nine presentation options and seven
+always-present mute toggle, and a settings menu with eight presentation options and seven
 gameplay dials. Sweep defaults to CHARGED, ten hand-opened cells a sweep.
 
 ```
@@ -1067,6 +1081,13 @@ is a neutral near-white, so nothing separates from it by HUE and only saturation
 constraints, then, not one — `ink`, the floor, and whichever annotation colours that ladder
 actually puts on screen. Distinctness from OTHER palettes is not a fourth: they are worn one at a
 time, and the shipped set never respected it anyway (CAVE and DONUT are 5 units apart).
+
+**The "Hovering a creature you have beaten" setting is DISABLED, and the next three notes describe
+it as it was.** Hover now shows the number under a beaten creature (see the PAIRS note), and the
+two cannot share the cursor. The settings row and the renderer's half are commented out rather than
+deleted — `settingsscreen.ts` and `BoardView.drawOpen` — while `hoverDefeated` is still plumbed and
+saved, so players' chosen values survive and bringing it back is uncommenting both together.
+`drawTierBadge` and `isPipShape` are left defined with no caller for the same reason.
 
 **Hovering a beaten creature can show its LEVEL, and that is presentation rather than assistance
 because it reveals nothing.** The pips already say the tier — the digit is the same fact written

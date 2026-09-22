@@ -171,16 +171,19 @@ describe('open()', () => {
     expect(game.grid[1]![1]!.alive).toBe(false);
   });
 
-  it('toggles a defeated creature between sprite and number', () => {
+  it('treats a defeated creature as open ground — its number is shown on hover', () => {
+    // It used to flip between sprite and number on a click. Hovering shows the
+    // number now, which is the renderer's alone, so a click here is a click on
+    // open ground: refused, and nothing about the cell changes.
     const game = Game.create(tinyConfig(), 7);
     // two creatures, so defeating one does not end the board
     paint(game, ['........', '.1......', '........', '........',
                  '........', '........', '......1.', '........']);
     game.open(1, 1);
     expect(game.status).toBe('playing');
-    const events = game.open(1, 1);
-    expect(events[0]).toMatchObject({ type: 'toggleNum', showNum: true });
-    expect(game.open(1, 1)[0]).toMatchObject({ type: 'toggleNum', showNum: false });
+    const before = { ...game.grid[1]![1]! };
+    expect(game.open(1, 1)).toEqual([{ type: 'blocked', reason: 'already-open' }]);
+    expect(game.grid[1]![1]!).toEqual(before);
   });
 
   it('ends the game when HP runs out', () => {

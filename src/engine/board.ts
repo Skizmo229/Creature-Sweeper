@@ -50,7 +50,7 @@ export type Grid = Cell[][];
 export function makeCell(x: number, y: number): Cell {
   return {
     x, y, tier: 0, num: 0, open: false, alive: false,
-    present: true, mark: 0, given: false, notes: 0, showNum: false, census: null,
+    present: true, mark: 0, given: false, notes: 0, census: null,
   };
 }
 

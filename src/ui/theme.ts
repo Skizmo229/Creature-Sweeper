@@ -47,9 +47,10 @@ export const THEMES: Record<string, TypeTheme> = {
   checker: { tile: '#4f5d75', tileEdge: '#37425a', floor: '#12161f', ink: '#e2e8f4', hot: '#ffd166', pip: 'square', accent: '#7f8fa8' },
   // `hot` is amber rather than the pale orange it shipped with, and on this
   // ladder that is legibility rather than taste. A defeated creature's number
-  // is its PARTNER'S TIER (one click behind the sprite), so it is the one
-  // number on the board that most needs to be told apart from an ordinary
-  // floor number at a glance — and #ffb07a sat 85 units from `ink` in RGB,
+  // is its PARTNER'S TIER, so it is the one number on the board that most
+  // needs to be told apart from an ordinary floor number at a glance. It is
+  // not drawn on pairing boards at the moment (see `BoardView.drawOpen`), so
+  // this is kept for if it comes back — and #ffb07a sat 85 units from `ink` in RGB,
   // which reads as the same pale colour. Amber is 139 away and also contrasts
   // BETTER against the floor (11.3:1 against 10.1), so nothing was traded.
   pairs: { tile: '#b5482a', tileEdge: '#82301b', floor: '#25100a', ink: '#f7d6c6', hot: '#ffc23d', pip: 'ringDiamond', accent: '#d96a45' },

@@ -149,7 +149,9 @@ third axis saying what those two already say.
 In dev, `window.cs` exposes the running app (`cs.play('normal', 3)`, `cs.current`, `cs.sync()`,
 `cs.runFull('normal')`, `cs.currentRun`). It is stripped from production builds.
 
-**Controls:** click to open · right-click or a LV button to mark · number keys act on the cell
+**Controls:** click to open · hover a beaten creature to see the number under it (not on PAIRS or
+DOMINOES) ·
+right-click or a LV button to mark · number keys act on the cell
 under the cursor, marking or pencilling according to the Entry mode · `N` switches that mode ·
 `Shift`+digit does the other one for that keystroke · `S` sweeps what is proven safe ·
 `D` also trusts your marks ·

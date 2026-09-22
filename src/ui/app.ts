@@ -1475,7 +1475,6 @@ export class App {
     else if (has('marked')) event = 'mark';
     else if (events.some((ev) => ev.type === 'revealed' && ev.cells.length > 1)) event = 'cascade';
     else if (has('revealed')) event = 'open';
-    else if (has('toggleNum')) event = 'mark';
     else return;
     this.sfx.play(event);
   }

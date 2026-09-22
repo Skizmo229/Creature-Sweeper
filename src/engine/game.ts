@@ -439,14 +439,10 @@ export class Game {
     const cell = this.cellAt(x, y);
     if (!cell) return [{ type: 'blocked', reason: 'out-of-bounds' }];
 
-    if (cell.open) {
-      // A defeated creature flips between its sprite and its own number.
-      if (cell.tier > 0 && !cell.alive) {
-        cell.showNum = !cell.showNum;
-        return [{ type: 'toggleNum', x, y, showNum: cell.showNum }];
-      }
-      return [{ type: 'blocked', reason: 'already-open' }];
-    }
+    // A defeated creature is open ground like any other. Its own number is
+    // shown while the cursor is over it, which is the renderer's business and
+    // changes nothing here — it used to be a click toggle held on the cell.
+    if (cell.open) return [{ type: 'blocked', reason: 'already-open' }];
 
     // The crawl rule, on boards that have one: you may only open ground
     // within `reach` steps of ground you have already uncovered. Checked

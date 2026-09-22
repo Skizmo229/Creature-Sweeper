@@ -59,8 +59,6 @@ export interface Cell {
    * sure, they commit the pencil to a mark.
    */
   notes: number;
-  /** A defeated creature can toggle between its sprite and its own number. */
-  showNum: boolean;
   /**
    * Creatures among this cell's eight neighbours, once Census has counted
    * them. The number is their SUM, so sum plus count usually pins the layout.
@@ -269,8 +267,6 @@ export type GameEvent =
   /** A fight happened. `damage` is HP actually lost. */
   | { type: 'battle'; x: number; y: number; tier: Tier; damage: number; defeated: boolean }
   | { type: 'levelUp'; level: number }
-  /** A defeated creature's cell toggled between sprite and number. */
-  | { type: 'toggleNum'; x: number; y: number; showNum: boolean }
   | { type: 'marked'; x: number; y: number; from: number; to: number }
   /** A cell's pencil marks changed. `from` and `to` are candidate bitmasks. */
   | { type: 'noted'; x: number; y: number; from: number; to: number }

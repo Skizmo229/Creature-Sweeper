@@ -19,7 +19,8 @@
  * IS the proof.
  *
  * WHAT IT READS is what a player can see and nothing else: the numbers on open
- * cells (a defeated creature's too — one click shows it), the tiers of open
+ * cells (a defeated creature's too — hovering shows it, except on a pairing
+ * board, where it is not drawn and this reads it anyway), the tiers of open
  * cells and of givens, the colour rule, the pairing and pack rules as far as
  * the cells beside an open creature reach, and how many of each tier are left
  * (the palette counts them). What it leaves out is stated rather than hidden:

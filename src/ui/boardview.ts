@@ -66,7 +66,11 @@ const HEX_EDGE_DIRS: ReadonlyArray<ReadonlyArray<readonly [number, number]>> = [
   [[1, -1], [1, 0], [1, 1], [0, 1], [-1, 0], [0, -1]],
 ];
 
-/** Narrow the hover setting to the branch that restyles the glyph. */
+/**
+ * Narrow the hover setting to the branch that restyles the glyph.
+ *
+ * No caller while the hover setting is disabled — see `drawOpen`.
+ */
 function isPipShape(value: HoverDefeated): value is PipShape {
   return (PIP_SHAPES as readonly string[]).includes(value);
 }
@@ -94,7 +98,10 @@ export interface BoardDisplay {
   highlight: HighlightStyle | null;
   /** Whether a defeated creature keeps its struck-through corner. */
   strikeDefeated: boolean;
-  /** What the cursor does to a creature already beaten. */
+  /**
+   * What the cursor does to a creature already beaten. Not read while the
+   * setting is disabled: the cursor shows the number underneath instead.
+   */
   hoverDefeated: HoverDefeated;
 }
 
@@ -831,6 +838,8 @@ export class BoardView {
    * `ink` or `hot` in the set comes near. And it carries a dark backing plate,
    * because a tier-3 is gold and several floors are light enough that a gold
    * digit on them alone would be thin.
+   *
+   * No caller while the hover setting is disabled — see `drawOpen`.
    */
   private drawTierBadge(cell: Cell, box: { x: number; y: number; size: number }): void {
     const ctx = this.ctx;
@@ -973,27 +982,46 @@ export class BoardView {
     // same alpha reads as a bigger step there.
     if (this.washesCell(cell)) this.fillWash(0.17);
 
-    // The cursor, over a creature that is already dealt with. It reveals
-    // nothing — the pips under the cursor already say the tier — so this is
-    // presentation and it takes the cell before either branch below, which is
-    // what makes it one rule rather than two: "while you hover a beaten
-    // creature, it shows its level", whether the cell was showing its glyph or
-    // the number it was toggled to.
+    // A defeated creature under the cursor shows the number underneath it, the
+    // sum of its neighbours. It used to be a click toggle held on the cell;
+    // hovering is the whole mechanism now, so it is a picture of where the
+    // cursor is rather than state anything has to remember. Not while a clear
+    // effect owns the glyphs: the cell is bare floor then, under a creature in
+    // flight.
     //
-    // Drawn in the LEVEL'S OWN COLOUR, which is the part that keeps it safe to
-    // read. A cell's number and a creature's level are both single digits, and
-    // on PAIRS both are live at once — the number there is the partner's
-    // level — so a digit that simply replaced another digit in the same ink
-    // would be a misread waiting to happen. `tierColor` is already the global
-    // encoding of a tier, worn by the very pips this is covering.
-    if (cell.tier > 0 && this.display.hoverDefeated === 'tier' && cell === this.hovered
-        && !this.creaturesHidden) {
-      this.drawTierBadge(cell, box);
-      return;
-    }
+    // Never on a pairing board, by request. The number there is the PARTNER'S
+    // tier, and a lone digit over a creature reads as that creature's own
+    // level — it confused more than it told.
+    const hoverNumber = cell.tier > 0 && !cell.alive && cell === this.hovered
+      && !this.creaturesHidden && !isPaired(game.config.placement);
 
-    // A defeated creature shows its sprite, or its own number when toggled.
-    if (cell.tier > 0 && !cell.showNum) {
+    // DISABLED, with its settings row: "Hovering a creature you have beaten".
+    // The cursor over a beaten creature now shows the number underneath, and
+    // the two cannot share it. `display.hoverDefeated` is still plumbed and
+    // saved, only not read, so bringing it back is uncommenting this, the
+    // restyle below, and the gallery in settingsscreen.ts.
+    //
+    // // The cursor, over a creature that is already dealt with. It reveals
+    // // nothing — the pips under the cursor already say the tier — so this is
+    // // presentation and it takes the cell before either branch below, which is
+    // // what makes it one rule rather than two: "while you hover a beaten
+    // // creature, it shows its level", whether the cell was showing its glyph or
+    // // the number it was toggled to.
+    // //
+    // // Drawn in the LEVEL'S OWN COLOUR, which is the part that keeps it safe to
+    // // read. A cell's number and a creature's level are both single digits, and
+    // // on PAIRS both are live at once — the number there is the partner's
+    // // level — so a digit that simply replaced another digit in the same ink
+    // // would be a misread waiting to happen. `tierColor` is already the global
+    // // encoding of a tier, worn by the very pips this is covering.
+    // if (cell.tier > 0 && this.display.hoverDefeated === 'tier' && cell === this.hovered
+    //     && !this.creaturesHidden) {
+    //   this.drawTierBadge(cell, box);
+    //   return;
+    // }
+
+    // A defeated creature shows its sprite, or its own number while hovered.
+    if (cell.tier > 0 && !hoverNumber) {
       // ...unless a clear effect currently owns the glyphs, in which case the
       // cell is drawn as bare floor and the effect draws the creature.
       if (this.creaturesHidden) return;
@@ -1001,13 +1029,17 @@ export class BoardView {
       // Dim the glyph itself rather than washing it out with a floor overlay,
       // which left defeated creatures almost invisible.
       if (!cell.alive) ctx.globalAlpha = 0.55;
-      // The hovered glyph may be restyled into another shape. `drawCreature`
-      // reads the shape off the theme, so this is a theme with one field
-      // changed rather than a second drawing path.
-      const glyphTheme = cell === this.hovered && isPipShape(this.display.hoverDefeated)
-        ? { ...theme, pip: this.display.hoverDefeated }
-        : theme;
-      drawCreature(ctx, box.x, box.y, box.size, cell.tier, glyphTheme);
+      // DISABLED with the hover setting — see above. A hovered beaten
+      // creature shows its number now, so its glyph is never drawn to restyle.
+      //
+      // // The hovered glyph may be restyled into another shape. `drawCreature`
+      // // reads the shape off the theme, so this is a theme with one field
+      // // changed rather than a second drawing path.
+      // const glyphTheme = cell === this.hovered && isPipShape(this.display.hoverDefeated)
+      //   ? { ...theme, pip: this.display.hoverDefeated }
+      //   : theme;
+      // drawCreature(ctx, box.x, box.y, box.size, cell.tier, glyphTheme);
+      drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme);
       ctx.restore();
       // A struck-through corner reads as "dealt with" at a glance. Optional,
       // because at small cell sizes the stroke crosses the pips and some
@@ -1027,7 +1059,7 @@ export class BoardView {
       return;
     }
 
-    const showNumber = cell.tier > 0 ? cell.showNum : cell.num > 0;
+    const showNumber = cell.tier > 0 ? hoverNumber : cell.num > 0;
     if (!showNumber) return;
 
     const text = String(cell.num);
