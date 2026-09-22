@@ -694,7 +694,7 @@ in 13 of 40 boards before this was caught.
 ## Current state
 
 24 game types × 10 tuned boards, plus a scaling continuation to board 13–40 depending on type
-(671 boards in all). 394 tests. Playable prototype with canvas board, HUD, marks,
+(671 boards in all). 395 tests. Playable prototype with canvas board, HUD, marks,
 pencil marks, two Sweep modes, magic, Full Run, the full unlock chain, a rules card, an
 always-present mute toggle, and a settings menu with nine presentation options and seven
 gameplay dials. Sweep defaults to CHARGED, ten hand-opened cells a sweep.
@@ -1143,7 +1143,19 @@ produce EXTREME's at all. The top of the hard ladders needs construction (placin
 deduction exists) or a weaker target — no forced guess that can KILL, rather than none at all, which
 is what HP-as-guess-budget already implies.
 
-Archipelago was dropped by request.
+**The weaker target — no forced guess that can kill — rescues most of what the strict one cannot,
+and still not the top of the hard ladders.** `npm run sim:lethal` plays the perfect deducer and, when
+it must guess, guesses the cell whose WORST case is lowest: the solver asked at each tier in turn
+(`threshold`, which makes "safe" mean "proven at or below this tier"), the honest player's own
+judgement breaking the tie. At each forced guess it records whether that worst case could have
+killed at the player's HP. A board where none could is a board a perfect player cannot lose, so its
+share is exactly what generate-and-test would keep under this target. At board 10, 30 seeds:
+ARCANE 97% (against 37% guess-free), DONUT 73% (3%), EXTREME 7% (0%), HUGE x EXTREME 0% (0%),
+ORACLE 0% (0%). Cheap for the magic and shaped ladders, one deal in fourteen for EXTREME's top
+board — and impossible for HUGE x EXTREME 9–10 and ORACLE 9–10, which is not a generation problem
+but a schedule one: see the lock-depth note. The guesser matters less than it sounds: "lowest worst
+case" clears about what the honest player's own guess choice does (EXTREME board 10: 10% against
+7%); what moves the numbers is the deduction and the board.
 
 **The mana affordability test is three claims now, and DUNGEON is why it was rewritten twice.** The
 original bar was one vague one — the dearest spell, castable five times over — which was a fair

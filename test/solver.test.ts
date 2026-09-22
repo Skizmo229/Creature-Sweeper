@@ -55,6 +55,29 @@ describe('the complete deducer', () => {
     expect(freed).toBeGreaterThan(0);
   });
 
+  it('never proves a cell under a threshold it is really above, at any threshold', () => {
+    // The same search answers "what cannot kill me" when asked about a tier
+    // other than the player's level, so the bound has to hold at every tier.
+    const wrong: string[] = [];
+    let asked = 0;
+    for (const id of ['extreme', 'checker', 'packs']) {
+      const game = Game.create(boardConfig(ladders, id, 6), 0xbeef);
+      play(game, 'none', null, {
+        rescue: (g) => {
+          for (let k = g.level + 1; k < g.config.tiers; k++) {
+            for (const c of solve(g, { threshold: k, budget: 3000 }).safe) {
+              asked++;
+              if (!c.open && c.tier > k) wrong.push(`${id}: (${c.x},${c.y}) is a ${c.tier}, proven <= ${k}`);
+            }
+          }
+          return solve(g).safe;
+        },
+      });
+    }
+    expect(wrong.slice(0, 5)).toEqual([]);
+    expect(asked).toBeGreaterThan(0);
+  });
+
   it('finds everything Sweep proves, on boards opened at random', () => {
     // Random opening scatters the frontier into a loopy mess no real game
     // produces, which is the hard case for completeness — so the boards are

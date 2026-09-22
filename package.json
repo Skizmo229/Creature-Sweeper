@@ -16,7 +16,8 @@
     "sim:run": "tsx src/sim/run.ts",
     "sim:spells": "tsx src/sim/spellvalue.ts",
     "sim:sudoku": "tsx src/sim/sudoku.ts",
-    "sim:forced": "tsx src/sim/forced.ts"
+    "sim:forced": "tsx src/sim/forced.ts",
+    "sim:lethal": "tsx src/sim/lethal.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

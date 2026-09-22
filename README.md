@@ -62,6 +62,7 @@ creature_sweeper/
 │  │  ├─ spellvalue.ts       what each spell is worth, played honestly
 │  │  ├─ solver.ts           the complete deducer: every cell the screen proves free
 │  │  ├─ forced.ts           how many of the honest player's forced guesses were forced
+│  │  ├─ lethal.ts           whether every forced guess could be survived, guessing carefully
 │  │  ├─ sudoku.ts           SUDOKU build cost, and the shape of its deduction
 │  │  └─ topology.ts         compares square / cylinder / torus / hex
 │  ├─ main.ts                browser entry
@@ -83,13 +84,14 @@ Every script resolves its paths relative to its own location, so they can be run
 
 ```bash
 npm run dev       # play it
-npm test          # 394 tests, including the invariants below
+npm test          # 395 tests, including the invariants below
 npm run typecheck # UI config, then an engine config with no DOM lib at all
 npm run sim       # clear every board of every ladder headlessly
 npm run sim -- 200
 npm run sim:run      # complete every type's Full Run, ten boards on one HP pool
 npm run sim:spells   # what each spell is worth, played honestly
 npm run sim:forced   # how many forced guesses a perfect deducer would still face
+npm run sim:lethal   # whether any of those guesses could kill, guessing as carefully as possible
 npm run sim:sudoku   # SUDOKU: build cost per board, and how tight each one plays
 npm run sim:sudoku -- 8 --sweep
 npm run build
@@ -128,6 +130,11 @@ every move the complete deducer in `solver.ts` can prove free, on the same seeds
 share of the honest player's stuck points had a free move in them, how often a perfect deducer is
 still cornered, and what share of boards it finishes without guessing — which is what
 generate-and-test would keep. `npm run sim:forced -- 30 oracle` gives one ladder board by board.
+
+`npm run sim:lethal -- 30 extreme,oracle` asks the weaker question: when a perfect deducer must
+guess and picks the cell with the lowest proven worst case, could that guess kill? A board where
+none could cannot be lost by a perfect player, so the share of such boards is what generate-and-test
+would keep if the target were "no guess can kill" rather than "no guess at all".
 
 **Prices are meant to bite, and for most of this game's life they did not.** The test of whether a
 price matters is not what share of a pool gets spent — that is as much about how often you want to

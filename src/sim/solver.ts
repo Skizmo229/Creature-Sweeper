@@ -45,6 +45,14 @@ export interface SolveOptions {
   budget?: number;
   /** Frontiers up to this many cells are searched as one system. */
   jointVars?: number;
+  /**
+   * The tier a cell must be proven at or below. Defaults to the player's
+   * level, which makes "safe" mean free to open. Any other value asks a
+   * different question of the same search — at the highest tier that would
+   * NOT kill at the player's current HP, "safe" means a guess there can hurt
+   * but cannot end the board.
+   */
+  threshold?: number;
 }
 
 export interface Solution {
@@ -168,7 +176,7 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
 
   const { tiers, vars, dom, cons, consOf, remaining, interior, interiorDom } = model;
   const n = vars.length;
-  const level = game.level;
+  const level = opts.threshold ?? game.level;
   const every = (1 << (tiers + 1)) - 1;
   const above = level >= tiers ? 0 : every & ~((1 << (level + 1)) - 1);
   const joint = n <= jointVars;

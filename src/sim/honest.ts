@@ -58,6 +58,21 @@ export interface Run {
 export interface PlayOptions {
   rescue?: (game: Game) => Cell[];
   observe?: boolean;
+  /**
+   * Where to gamble when nothing is proven, in place of this player's own
+   * choice. For measuring what a better GUESSER would face, on top of a better
+   * deducer — `lethal.ts` guesses the cell whose worst case is lowest.
+   */
+  guess?: (game: Game) => Cell | null;
+}
+
+/**
+ * This player's own choice of gamble, optionally restricted to some cells —
+ * so a caller that has narrowed the field by other means can still break the
+ * tie the way this player would.
+ */
+export function honestGuess(game: Game, among?: ReadonlySet<Cell>): Cell | null {
+  return bestGuess(game, allConstraints(game), among);
 }
 
 /**
@@ -418,13 +433,15 @@ function safeToOpen(game: Game, constraints: Constraint[]): Cell[] {
  * is meant to be an honest player and a real one cannot gamble on a room they
  * have not reached yet. `inReach` is free on every board without a rule.
  */
-function bestGuess(game: Game, constraints: Constraint[]): Cell | null {
+function bestGuess(game: Game, constraints: Constraint[], among?: ReadonlySet<Cell>): Cell | null {
   const board = game.config;
   const total = board.quantity.reduce((s, n, i) => s + n * (i + 1), 0);
   const covered = game.grid.flat()
     .filter((c) => c.present && !c.open && c.mark === 0 && game.inReach(c));
   if (!covered.length) return null;
   const loose = total / Math.max(1, covered.length);
+  // Narrowing the field changes which cell wins, never how each is scored.
+  const field = among ? covered.filter((c) => among.has(c)) : covered;
 
   // Two numbers per cell: the most tier it could possibly be hiding, and the
   // average if the residual were spread evenly. Damage is convex in tier, so
@@ -456,7 +473,7 @@ function bestGuess(game: Game, constraints: Constraint[]): Cell | null {
 
   let best: Cell | null = null;
   let bestKey: [number, number] = [Infinity, Infinity];
-  for (const cell of covered) {
+  for (const cell of field) {
     const key: [number, number] = [ceiling.get(cell) ?? loose * 2, mean.get(cell) ?? loose];
     if (key[0] < bestKey[0] || (key[0] === bestKey[0] && key[1] < bestKey[1])) {
       best = cell;
@@ -586,7 +603,7 @@ export function play(
       }
     }
 
-    const guess = bestGuess(game, constraints);
+    const guess = options.guess ? options.guess(game) : bestGuess(game, constraints);
     if (!guess) break;
     run.stuckPoints++;
     if (options.rescue && options.observe && freeMoves().length) run.couldRescue++;
