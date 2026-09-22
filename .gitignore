@@ -1,7 +1,6 @@
 # Third-party reference material — see design/original-reference/README.md.
 # Kept locally for verifying mechanics, deliberately not tracked: this project
 # is intended for public release and that folder is not our code.
-# Remove this line if you decide to track it, but keep it out of build output.
 design/original-reference/
 
 __pycache__/
