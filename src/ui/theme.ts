@@ -83,9 +83,15 @@ export const THEMES: Record<string, TypeTheme> = {
   // the floor and 103 clear of every tier colour. A mark on a covered tile is
   // 3.0:1, in PAIRS's range. No spells here, so no gold annotation either.
   congo: { tile: '#c2410c', tileEdge: '#8a2e08', floor: '#1f0d05', ink: '#fde3cf', hot: '#a78bfa', pip: 'ring', accent: '#ea6a2c' },
-  hive: { tile: '#a8324f', tileEdge: '#78203a', floor: '#260a13', ink: '#f2c9d3', hot: '#ff7a9c', pip: 'hex', accent: '#d4536f' },
+  // HIVE and DONUT traded palettes, by request: honey amber for the hive, and
+  // DONUT in strawberry frosting. Only the colours moved — each kept its own
+  // pip. The trade also fixed DONUT's `hot`: that ladder carries Reveal, and
+  // the amber it had sat 27 units from GIVEN_COLOR's gold; the rose it has now
+  // is 108 clear, and 97 from its own `ink`. HIVE has no spells, so amber is
+  // safe there, 114 from `ink`.
+  hive: { tile: '#b06a1d', tileEdge: '#7d4711', floor: '#251505', ink: '#f7dcb6', hot: '#ffab4f', pip: 'hex', accent: '#d68a33' },
   wraparound: { tile: '#1d6a9e', tileEdge: '#134a70', floor: '#061622', ink: '#c6e4f5', hot: '#4fb8f0', pip: 'circle', accent: '#3b93c4' },
-  donut: { tile: '#b06a1d', tileEdge: '#7d4711', floor: '#251505', ink: '#f7dcb6', hot: '#ffab4f', pip: 'ring', accent: '#d68a33' },
+  donut: { tile: '#a8324f', tileEdge: '#78203a', floor: '#260a13', ink: '#f2c9d3', hot: '#ff7a9c', pip: 'ring', accent: '#d4536f' },
   cross: { tile: '#4a8f3a', tileEdge: '#316526', floor: '#0c2108', ink: '#d2eec7', hot: '#8ce06a', pip: 'square', accent: '#6bb054' },
   wrapped_cross: { tile: '#2f8f7e', tileEdge: '#1f6356', floor: '#08211c', ink: '#c9eee4', hot: '#4fe0b8', pip: 'cross', accent: '#4fb39c' },
   diamond: { tile: '#8f3fa0', tileEdge: '#652a73', floor: '#210a26', ink: '#f0cdf7', hot: '#e072ff', pip: 'diamond', accent: '#b45cc4' },

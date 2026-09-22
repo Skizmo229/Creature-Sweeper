@@ -1132,7 +1132,7 @@ covered in, trading a collision with `ink` for a worse one. BLIND is the opposit
 is a neutral near-white, so nothing separates from it by HUE and only saturation does. Three
 constraints, then, not one — `ink`, the floor, and whichever annotation colours that ladder
 actually puts on screen. Distinctness from OTHER palettes is not a fourth: they are worn one at a
-time, and the shipped set never respected it anyway (CAVE and DONUT are 5 units apart).
+time, and the shipped set never respected it anyway (CAVE and HIVE are 5 units apart, since HIVE and DONUT traded palettes).
 
 **The "Hovering a creature you have beaten" setting is DISABLED, and the next three notes describe
 it as it was.** Hover now shows the number under a beaten creature (see the PAIRS note), and the
