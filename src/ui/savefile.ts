@@ -55,6 +55,14 @@ function fromBase64(code: string): string {
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
+/** A calendar date in the player's own time zone, as YYYY-MM-DD. The obvious
+ *  `toISOString().slice(0, 10)` is the UTC date, which names a save made on
+ *  an evening in the Americas after the following day. */
+export function localDate(d: Date): string {
+  const two = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`;
+}
+
 /** The stored strings as a pasteable code. Unparseable stored data is dropped
  *  rather than exported, so a corrupt save cannot be carried to a new device. */
 export function encodeSave(bundle: SaveBundle, now: Date = new Date()): string {
@@ -94,7 +102,11 @@ export function decodeSave(text: string): DecodeResult {
   if (trimmed.startsWith('{')) {
     json = trimmed;
   } else {
-    const compact = trimmed.replace(/\s+/g, '');
+    // Whitespace, plus the invisible characters some apps slip into a long
+    // unbroken string so that it can wrap — zero-width space, non-joiner and
+    // joiner, word joiner, soft hyphen. `\s` covers none of them, none is
+    // base64, and any one left in makes the code read as damaged.
+    const compact = trimmed.replace(/[\s­​-‍⁠]+/g, '');
     if (!compact.startsWith(PREFIX)) {
       return { ok: false, error: 'That is not a Creature Sweeper save code.' };
     }
@@ -131,7 +143,9 @@ export function decodeSave(text: string): DecodeResult {
       progress: JSON.stringify(progress),
       settings: isRecord(settings) ? JSON.stringify(settings) : null,
     },
-    exported: typeof envelope.exported === 'string' ? envelope.exported : null,
+    exported: typeof envelope.exported === 'string' && !Number.isNaN(Date.parse(envelope.exported))
+      ? envelope.exported
+      : null,
   };
 }
 

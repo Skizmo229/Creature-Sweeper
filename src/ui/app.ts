@@ -14,7 +14,7 @@ import { BoardView, type BoardDisplay } from './boardview.js';
 import { ladders } from './ladders.js';
 import { Progress } from './progress.js';
 import {
-  PROGRESS_KEY, SETTINGS_KEY, type SaveBundle, decodeSave, describeSave, encodeSave,
+  PROGRESS_KEY, SETTINGS_KEY, type SaveBundle, decodeSave, describeSave, encodeSave, localDate,
 } from './savefile.js';
 import { themeFor } from './theme.js';
 import { SPELLS, spellKey, spellLabel, type SpellId } from '../engine/spells.js';
@@ -1028,7 +1028,7 @@ export class App {
       const url = URL.createObjectURL(blob);
       const a = el('a');
       a.href = url;
-      a.download = `creature-sweeper-save-${new Date().toISOString().slice(0, 10)}.txt`;
+      a.download = `creature-sweeper-save-${localDate(new Date())}.txt`;
       document.body.append(a);
       a.click();
       a.remove();
@@ -1063,7 +1063,7 @@ export class App {
     restore.addEventListener('click', () => {
       const result = decodeSave(input.value);
       if (!result.ok) { err.textContent = result.error; return; }
-      const from = result.exported ? ` (saved ${result.exported.slice(0, 10)})` : '';
+      const from = result.exported ? ` (saved ${localDate(new Date(result.exported))})` : '';
       this.ask({
         title: 'REPLACE SAVE?',
         body: `Restoring: ${describeSave(result.bundle)}${from} `

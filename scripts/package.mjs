@@ -111,7 +111,12 @@ try {
   if (dirty) commit += '-dirty';
 } catch { /* not a git checkout; the date still identifies it */ }
 
+// The local date, to agree with the timestamps inside the zip; `toISOString`
+// is the UTC date and names an evening's build after the following day.
+const two = (n) => String(n).padStart(2, '0');
+const stamp = `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
+
 mkdirSync(OUT_DIR, { recursive: true });
-const out = join(OUT_DIR, `creature-sweeper-web-${now.toISOString().slice(0, 10)}-${commit}.zip`);
+const out = join(OUT_DIR, `creature-sweeper-web-${stamp}-${commit}.zip`);
 writeFileSync(out, Buffer.concat([...locals, ...centrals, end]));
 console.log(`${out}  (${centrals.length / 2} files, ${(statSync(out).size / 1024).toFixed(0)} KB)`);

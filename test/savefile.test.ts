@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { decodeSave, describeSave, encodeSave } from '../src/ui/savefile.js';
+import { decodeSave, describeSave, encodeSave, localDate } from '../src/ui/savefile.js';
 
 const progress = JSON.stringify({
   version: 1,
@@ -31,6 +31,31 @@ describe('save codes', () => {
     const code = encodeSave({ progress, settings });
     const mangled = `  ${code.match(/.{1,40}/g)!.join('\n   ')}\n`;
     expect(decodeSave(mangled).ok).toBe(true);
+  });
+
+  it('ignores the invisible characters an app slips into a long string', () => {
+    const code = encodeSave({ progress, settings });
+    const invisible = ['​', '‌', '‍', '⁠', '­'];
+    const mangled = code.match(/.{1,16}/g)!
+      .map((part, i) => part + invisible[i % invisible.length]).join('');
+    expect(decodeSave(mangled).ok).toBe(true);
+  });
+
+  it('dates a save in local time, not UTC', () => {
+    // 23:30 on 21 September wherever the test runs; UTC is already the 22nd
+    // for anyone west of Greenwich, which is the bug this guards.
+    expect(localDate(new Date(2026, 8, 21, 23, 30))).toBe('2026-09-21');
+    const result = decodeSave(encodeSave({ progress, settings }, new Date(2026, 8, 21, 23, 30)));
+    expect(result.ok && localDate(new Date(result.exported!))).toBe('2026-09-21');
+  });
+
+  it('drops an export stamp that is not a date', () => {
+    const envelope = JSON.stringify({
+      format: 'creature-sweeper-save', version: 1, exported: 'yesterday',
+      progress: JSON.parse(progress), settings: null,
+    });
+    const result = decodeSave(envelope);
+    expect(result.ok && result.exported).toBe(null);
   });
 
   it('carries no quotes a chat app could curl', () => {
