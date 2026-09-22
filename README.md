@@ -164,7 +164,7 @@ scroll or `+`/`-` to zoom in, `F` to reset · `Esc` backs out.
 **Settings** are reachable from the ladder list and from the HUD mid-board, and are two separate
 things. The **presentation** half — creature icons, board palette, font (every ladder has a
 typeface of its own, plus Atkinson Hyperlegible for anyone who wants the easiest one to read), sound pack, board-clear
-effect, cursor highlight, the strike through defeated creatures, and the zoom ceiling — touches no
+effect, interface text size, cursor highlight, the strike through defeated creatures, and the zoom ceiling — touches no
 rule, so it can never affect a record; each one is either the game type's own answer, a value you
 pick, or off. Every visual setting shows its options rather than naming them: the examples are real
 boards drawn by the game's own renderer. There are eleven board-clear effects, and seven of them

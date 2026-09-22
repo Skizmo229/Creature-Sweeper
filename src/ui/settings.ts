@@ -99,6 +99,16 @@ export const HOVER_DEFEATED_NAMES: Record<'none' | 'tier', string> = {
   tier: 'Show its level, in that level’s own colour',
 };
 
+/**
+ * How large the interface's text can be set, as a multiple of the browser's
+ * own size. Applied as the root font size, which every size in the stylesheet
+ * is written against, so the HUD, the menus and this screen all follow it and
+ * the board — a canvas, sized by its cells — does not.
+ */
+export const MIN_TEXT_SIZE = 0.75;
+export const MAX_TEXT_SIZE = 1.75;
+export const DEFAULT_TEXT_SIZE = 1;
+
 /** Cell sizes the zoom ceiling can be set to, in CSS pixels. */
 export const MIN_MAX_ZOOM = 24;
 export const MAX_MAX_ZOOM = 128;
@@ -123,6 +133,8 @@ export interface PresentationSettings {
   readonly hoverDefeated: HoverDefeated;
   /** Ceiling for manual zoom, in CSS pixels per cell. */
   readonly maxZoom: number;
+  /** Size of the interface's text — HUD, menus, settings — as a multiple. */
+  readonly textSize: number;
   /**
    * Silence everything, from the always-present speaker in the corner.
    *
@@ -146,6 +158,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   strikeDefeated: true,
   hoverDefeated: 'tier',
   maxZoom: DEFAULT_MAX_ZOOM,
+  textSize: DEFAULT_TEXT_SIZE,
   muted: false,
 };
 
@@ -205,6 +218,9 @@ function readPresentation(raw: unknown): PresentationSettings {
     // so a save that has touched any setting carries its own value here.
     hoverDefeated: str('hoverDefeated', 'tier') as HoverDefeated,
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
+    // A save from before this setting has no field, and reads as the size the
+    // game always had.
+    textSize: num(p.textSize, MIN_TEXT_SIZE, MAX_TEXT_SIZE, DEFAULT_TEXT_SIZE),
     // Defaults to unmuted, so a save written before the speaker existed opens
     // with sound on — which is the state that save was actually played in.
     muted: typeof p.muted === 'boolean' ? p.muted : false,

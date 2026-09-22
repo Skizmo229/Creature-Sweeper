@@ -155,7 +155,9 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
   border: 1px solid var(--line);
   border-radius: 4px;
   padding: 10px 14px;
-  font-size: 0.95rem;
+  /* --demo-scale is set only on the Text size example in settings, which has
+     to show a size before the whole page has been switched to it. */
+  font-size: calc(0.95rem * var(--demo-scale, 1));
   letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
 }
@@ -169,8 +171,8 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
  * 0007" reads as a part number. Widths are per readout rather than one blanket
  * minimum, since what each has to absorb differs — HP only ever shrinks, EXP
  * climbs into four digits, and Next Level carries the longest label in the row
- * as well as the number. `ch` is exact here because the HUD is set in the
- * board's mono stack.
+ * as well as the number. `ch` is the width of a zero in whichever face the
+ * ladder wears, at whatever text size is set, so the reservation follows both.
  */
 .hud-hp { min-width: 6ch; }
 .hud-lv { min-width: 9ch; }
@@ -397,7 +399,7 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
 
 @media (max-width: 540px) {
   .screen { padding: 14px 12px 28px; }
-  .hud { gap: 12px; font-size: 0.85rem; }
+  .hud { gap: 12px; font-size: calc(0.85rem * var(--demo-scale, 1)); }
   .sweep { margin-left: 0; }
 }
 
@@ -554,10 +556,12 @@ button.small { padding: 4px 10px; font-size: 0.75rem; }
 }
 
 .settings-stack { display: flex; flex-direction: column; gap: 8px; }
-.settings-subrow { display: flex; align-items: center; gap: 10px; }
+/* Wraps, so a label and its slider stack once they cannot share a line — at a
+   large text size in a wide face they overran a phone's width. */
+.settings-subrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .settings-subrow[hidden] { display: none; }
 .settings-sub-name { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
-.settings-subrow .settings-slider { flex: 1; min-width: 0; }
+.settings-subrow .settings-slider { flex: 1 1 160px; min-width: 0; }
 
 .settings-status {
   margin: 14px 0 0;

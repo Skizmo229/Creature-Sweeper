@@ -722,7 +722,7 @@ in 13 of 40 boards before this was caught.
 24 game types × 10 tuned boards, plus a scaling continuation to board 13–40 depending on type
 (689 boards in all). 395 tests. Playable prototype with canvas board, HUD, marks,
 pencil marks, two Sweep modes, magic, Full Run, the full unlock chain, a rules card, an
-always-present mute toggle, and a settings menu with eight presentation options and seven
+always-present mute toggle, and a settings menu with nine presentation options and seven
 gameplay dials. Sweep defaults to CHARGED, ten hand-opened cells a sweep.
 
 ```
@@ -1087,6 +1087,16 @@ an overlay inset to it centred its card at y=720 against an 812px window and lef
 the top edge showing. That was already true of the "ERASE PROGRESS?" confirmation before any rules
 card existed. Safe as `fixed` because the one animated transform is on `.stage`, the overlay's
 SIBLING — a transformed ancestor would capture it and quietly turn this back into `absolute`.
+
+**Text size scales the interface and nothing else, and it is applied on release.** It is the root
+font size, as a percentage so a browser already set larger keeps its own base, and every size in
+the stylesheet is rem, so the HUD, the menus and the settings screen all follow it while the board —
+a canvas sized by its cells — does not. Resizing the whole page on every frame of a drag moves the
+slider out from under the pointer, so a copy of the HUD follows the thumb (`--demo-scale`, read by
+`.hud` and set only on that copy) and the page switches once, with the row held where it was.
+**On a phone it runs out of room fast**: past about 125% on a 375px screen the enlarged HUD and
+buttons squeeze the board to the stage's 180px floor and the game screen scrolls. Measured, and
+left alone — the range is for desktops too, and a phone player can simply choose less.
 
 **The zoom ceiling caps magnification only.** A small board is held at the player's limit instead
 of being blown up to fill the stage — which is what the old `MAX_CELL = 48` constant already did

@@ -40,7 +40,9 @@ import {
 import {
   DEFAULT,
   MAX_MAX_ZOOM,
+  MAX_TEXT_SIZE,
   MIN_MAX_ZOOM,
+  MIN_TEXT_SIZE,
   OFF,
   HIGHLIGHT_NAMES,
   // HOVER_DEFEATED_NAMES,   // the disabled hover row, below
@@ -269,12 +271,14 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
    *
    * `input` rather than `change`, so the number under the thumb tracks the
    * drag — a ratio slider whose readout only lands on mouse-up is a slider you
-   * have to aim blind.
+   * have to aim blind. `onCommit`, if given, fires once on release, for a
+   * setting too big to apply on every frame of a drag.
    */
   const slider = (
     min: number, max: number, step: number, current: number,
     format: (v: number) => string,
     onSet: (value: number) => void,
+    onCommit?: (value: number) => void,
   ): HTMLElement => {
     const box = el('div', 'settings-slider');
     const input = el('input');
@@ -289,6 +293,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
       read.textContent = format(v);
       onSet(v);
     });
+    if (onCommit) input.addEventListener('change', () => onCommit(Number(input.value)));
     box.append(input, read);
     return box;
   };
@@ -406,6 +411,41 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
       p.font,
       (v) => pick({ font: v as FontId | typeof DEFAULT }),
     ));
+
+  // --- text size
+  //
+  // The whole page is the example, but not DURING a drag: resizing every line
+  // on the screen moves the slider out from under the pointer mid-drag. So a
+  // copy of the HUD follows the thumb, and the page itself changes once, on
+  // release.
+  const textDemo = el('div', 'hud text-size-demo');
+  // The real HUD's own classes, so each readout reserves the width it does in play.
+  for (const [key, item] of [['hp', 'HP 10'], ['lv', 'Level 1'], ['ex', 'EXP 0'], ['ne', 'Next Level 6']]) {
+    textDemo.append(el('span', `hud-item hud-${key}`, item));
+  }
+  const showTextSize = (size: number): void => {
+    // Relative to what the page is already set at, which is what rem means.
+    textDemo.style.setProperty('--demo-scale', String(size / p.textSize));
+  };
+  const textControl = el('div', 'settings-stack');
+  textControl.dataset.setting = 'textSize';
+  textControl.append(slider(MIN_TEXT_SIZE, MAX_TEXT_SIZE, 0.05, p.textSize,
+    (v) => `${Math.round(v * 100)}%`,
+    showTextSize,
+    (v) => {
+      // Rebuilding reflows everything above this row, so hold the row where
+      // the player's pointer left it rather than where the scroll offset says.
+      const before = textControl.getBoundingClientRect().top;
+      pick({ textSize: v });
+      const after = document.querySelector('[data-setting="textSize"]')?.getBoundingClientRect().top;
+      if (after !== undefined) window.scrollBy(0, after - before);
+    }));
+  textControl.append(textDemo);
+
+  wideRow(look, 'Text size',
+    'The HUD, the menus and this screen. The board is left alone — it is sized by its cells, ' +
+    'which the zoom controls.',
+    textControl);
 
   // --- cursor highlight
   //
