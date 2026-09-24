@@ -11,25 +11,41 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   types.ts        Cell, BoardConfig, the event and block-reason unions
   rng.ts          mulberry32; boards are pure functions of (config, seed)
   combat.ts       damage, EXP, mana rewards, the Progression (level/thresholds)
-  board.ts        cells, neighbours(), computeNumbers, shapes and the cave, generateGrid, the opening
+  grid.ts         cells, neighbours() (the one adjacency function), computeNumbers, masks
+  shape.ts        which cells exist for a shape; presentCellCount; buildShape
+  cave.ts         the ragged cave generator
   dungeon.ts      the dungeon map: rooms, one-cell hallways, doorways and their pockets
+  generate.ts     dealing the creatures: shape, then placement rule, then numbers
+  opening.ts      choosing the opening
   notes.ts        pencil marks as a bitmask
   spells.ts       the four spells, their prices, the mana economy, spellKey
+  cast.ts         what each spell does, behind the SpellHost interface
+  sweep.ts        Sweep's proof: safeCells and its named proofs; the Sudoku harvest
+  reach.ts        the crawl rule: withinReach and computeSealed
   sudoku.ts       the Sudoku placement and its guess-free generator
   checker.ts      the checkerboard placement: colour fixes a tier's parity; hiddenCap
   pairs.ts        the pairing placement: non-touching dominoes; ringIsFree; isPaired
   dominoes.ts     pairs dealt as a full domino set
   packs.ts        non-touching packs of one-of-every-tier; missingFrom; isPacked
   congo.ts        packs strung into orthogonal lines led by the top tier
-  game.ts         the state machine: open, mark, note, sweep, cast, forfeit; safeCells
+  game.ts         the state machine: open, mark, note, sweep, cast, forfeit, fight
   run.ts          Full Run: ten boards, one HP pool
   settings.ts     the gameplay dials, their defaults and directions
   config.ts       reads ladders.json rows into BoardConfig; validates each placement
 src/ui/         the prototype
-  app.ts          screens, input routing, HUD, overlays, persistence (the router-to-be)
-  boardview.ts    the canvas renderer, layout/zoom and pointer input
+  app.ts          the router: screens, the cross-screen state, the keyboard, the actions
+  dom.ts          el(), the one DOM helper
+  mute.ts         the always-present speaker
+  screens/        one builder per screen: ladders, boards, howto, backup
+  overlays/ask.ts the in-page yes/no question (never window.confirm)
+  game/           the game screen: screen.ts (furniture), hud.ts (filling it in), mode.ts
+                  (what a click does: tier, pencil, spell), hint.ts, sound.ts, clock.ts,
+                  outcome.ts (the clear, loss and run overlays)
+  board/          the canvas: view.ts (state, fit, zoom, render order), geometry.ts,
+                  digits.ts, paint.ts (cell painters), overlays.ts (silhouette, seams, bonds,
+                  highlight), input.ts (pointer, wheel, pinch)
   settings.ts     the presentation settings and the store
-  settingsscreen.ts  the settings form
+  settingsscreen/ the settings form: context, widgets, look, effects, gameplay, screen
   preview.ts      the settings screen's example boards (no rendering, so tests can build them)
   theme.ts        palettes, creature glyphs, per-type identity
   typefaces.ts    the bundled faces and which ladder wears which
@@ -41,7 +57,8 @@ src/ui/         the prototype
 src/sim/        headless measurement, all driving the real engine (see docs/tuning.md)
 src/data.ts     Node-only loader for ladders.json; CS_LADDERS points it at a candidate file
 src/main.ts     browser entry; window.cs in dev
-test/           vitest; test/helpers.ts holds the shared fixtures; test/golden/ the sim fingerprints
+test/           vitest; test/helpers.ts holds the shared fixtures; test/golden/ the sim
+                fingerprints; test/ui/ the browser-environment smoke test (happy-dom)
 scripts/        golden.mjs (the golden harness), package.mjs (the itch.io zip)
 design/         ladders.py (the generator), data/ (its output), the design reference page
 docs/           this folder
@@ -58,7 +75,7 @@ in Node. Anything a test needs to import therefore has to be DOM-free too, which
 `preview.ts` builds boards and renders nothing, why `pinch.ts` and `hexgeom.ts` are separate from
 `boardview.ts`, and why the font table is in `typefaces.ts` rather than `theme.ts`.
 
-**Adjacency lives in exactly one function**: `neighbours()` in `src/engine/board.ts`. Numbers,
+**Adjacency lives in exactly one function**: `neighbours()` in `src/engine/grid.ts`. Numbers,
 cascades, the opening, Sweep's proofs, Census, the crawl rule and the honest player all read
 through it. That is why hex grids, wrapped edges and cut-out shapes each cost almost nothing in the
 engine. Anything that *iterates* the grid instead (creature placement, the search-mode empty count,
@@ -91,12 +108,13 @@ would leave the rest unreachable.
 
 ## How a click flows
 
-`BoardView` turns pointer events into four callbacks (open, mark, hover, and whether a click would
-land). `App` decides what the click means from its mode state (an armed tier, pencil mode, an armed
-spell) and calls one engine method: `game.open`, `game.setMark`, `game.toggleNote`, `game.cast` or
-`game.sweep`. Every engine action returns the events it caused (`GameEvent[]`: revealed, battle,
-levelUp, marked, noted, blocked, won, lost, spell, exercised). `App.apply` hands them to the sound,
-the celebration and the HUD; the renderer repaints from the grid. The engine holds no clock: the UI
+`BoardInput` (in `src/ui/board/input.ts`) turns pointer events into the view's four callbacks
+(open, mark, hover, and whether a click would land). `App` decides what the click means from its
+`EntryMode` (an armed tier, pencil mode, an armed spell) and calls one engine method: `game.open`,
+`game.setMark`, `game.toggleNote`, `game.cast` or `game.sweep`. Every engine action returns the
+events it caused (`GameEvent[]`: revealed, battle, levelUp, marked, noted, blocked, won, lost,
+spell, exercised). `App.apply` hands them to the sound (`game/sound.ts`), the celebration and the
+HUD (`game/hud.ts`); the renderer repaints from the grid. The engine holds no clock: the UI
 owns elapsed time, and Time Attack reports expiry back through `game.forfeit`.
 
 A Full Run is engine state, not UI state: `FullRun` in `run.ts` owns the ten-board sequence, the
