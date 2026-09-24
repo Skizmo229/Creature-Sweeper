@@ -24,7 +24,8 @@
     "sim:golden": "node scripts/golden.mjs",
     "sim:golden:check": "node scripts/golden.mjs --check",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "lint": "eslint ."
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

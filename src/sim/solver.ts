@@ -210,7 +210,10 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
   const checker = game.config.placement === 'checker';
   let capLight = 0;
   let capDark = 0;
-  for (const c of interior) (c.x + c.y) % 2 === 0 ? capLight++ : capDark++;
+  for (const c of interior) {
+    if ((c.x + c.y) % 2 === 0) capLight++;
+    else capDark++;
+  }
   const leftover = (t: number): number => remaining[t]! - counts[t]!;
   const interiorFits = (): boolean => {
     if (!checker) {
@@ -220,7 +223,10 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
     }
     let even = 0;
     let odd = 0;
-    for (let t = 1; t <= tiers; t++) t % 2 === 0 ? (even += leftover(t)) : (odd += leftover(t));
+    for (let t = 1; t <= tiers; t++) {
+      if (t % 2 === 0) even += leftover(t);
+      else odd += leftover(t);
+    }
     return even <= capLight && odd <= capDark;
   };
 

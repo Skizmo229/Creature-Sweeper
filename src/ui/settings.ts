@@ -335,7 +335,7 @@ export class Settings {
   }
 
   /** How the cursor lights the board, or null for no highlight at all. */
-  highlightStyle(typeId: string): HighlightStyle | null {
+  highlightStyle(_typeId: string): HighlightStyle | null {
     const choice = this.data.presentation.highlight;
     if (choice === OFF) return null;
     // No type currently overrides this, but resolving through `identityFor`'s

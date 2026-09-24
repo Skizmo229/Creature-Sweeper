@@ -109,7 +109,7 @@ export function decodeSave(text: string): DecodeResult {
     // unbroken string so that it can wrap — zero-width space, non-joiner and
     // joiner, word joiner, soft hyphen. `\s` covers none of them, none is
     // base64, and any one left in makes the code read as damaged.
-    const compact = trimmed.replace(/[\s­​-‍⁠]+/g, '');
+    const compact = trimmed.replace(/[\s\u00ad\u200b-\u200d\u2060]+/g, '');
     if (!compact.startsWith(PREFIX)) {
       return { ok: false, error: 'That is not a Creature Sweeper save code.' };
     }

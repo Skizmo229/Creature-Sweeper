@@ -618,7 +618,7 @@ describe('the dungeon', () => {
     ] as const;
     const RING = [...ORTHO, [1, 1], [1, -1], [-1, 1], [-1, -1]] as const;
     let pockets = 0;
-    eachBoard(({ cfg, grid, map }, label) => {
+    eachBoard(({ grid, map }, label) => {
       const isDoor = (x: number, y: number) =>
         map.present[y]?.[x] === true &&
         map.hall[y]?.[x] !== true &&
