@@ -1,0 +1,112 @@
+# Tuning: the instruments, the method, and the open questions
+
+Every density, lock depth and HP value in the game is derived by `design/ladders.py` and checked
+by simulation. This page is how that is done and what is still unsettled. The full derivations
+and the per-ladder findings are in the design reference (`design/reference.html`).
+
+## The instruments
+
+All in `src/sim/`, all driving the real engine with fixed seeds, all deterministic.
+
+| Command | What it measures |
+| --- | --- |
+| `npm run sim [-- seeds]` | Clears every one of the 689 boards with the omniscient tier-order player. Reports the opening and HP lost; exits non-zero if any board cannot be cleared at full HP. The regression gate for `ladders.py`. |
+| `npm run sim:run` | Completes every type's Full Run ten boards deep on one HP pool. |
+| `npm run sim:spells -- N [ladder]` | The honest player, spell-less and with each spell policy: forced guesses, HP lost, clear rate, HP saved per cast and per mana. `POLICY=gym` plays WORKOUT as a farmer. |
+| `npm run sim:forced -- N [ladder] [a-b]` | The honest player beside a player that also takes the complete deducer's free moves, on the same seeds: what share of stuck points had a free move, how often a perfect deducer is still cornered, what share of boards is guess-free. Its `bad` and `hurt` columns must be zero. |
+| `npm run sim:lethal -- N ladders` | The perfect deducer guessing the cell with the lowest proven worst case: could any forced guess kill? |
+| `npm run sim:sudoku -- N [--sweep]` | SUDOKU build cost per givens count and the tightest round of each board. |
+| `npx tsx src/sim/opening.ts`, `placement.ts`, `topology.ts` | The opening, placement and topology experiments; the first two write `design/data/*.json` for the reference page. |
+| `npm run sim:golden` / `sim:golden:check` | Records or diffs the text of fourteen small runs of the above: the behaviour-preservation harness. |
+
+The **honest player** (`src/sim/honest.ts`) reads only what a player can see and deduces locally,
+so every "cornered" figure it gives is an upper bound. The **complete deducer**
+(`src/sim/solver.ts`) is the floor. At 57 to 97% of the honest player's stuck points the solver had
+a free move; a perfect deducer is cornered 31 to 59% less on the plain and shaped ladders and 68 to
+85% less on the placement-rule ladders, whose rules combine across numbers in ways local reading
+never reaches. The honest player still ranks the plain and shaped ladders consistently with each
+other; it does not rank the placement-rule ladders against them.
+
+## The method
+
+1. **Retune on a candidate file, never the real one.** Build a candidate `ladders.json` (import
+   `ladders.py`, shift a schedule in memory, call `build()`), point the sims at it with
+   `CS_LADDERS=path`, measure, and only then replace the real file, checked byte for byte against
+   the candidate that was measured.
+2. **Match a curve, and say which.** Every retune so far matched the honest player's forced-guess
+   curve of a reference ladder (ARCANE's, HIVE's, CROSS's), because that is what "as puzzling as"
+   means. A ladder meant to be as *deadly* would match the clear rate instead and land elsewhere;
+   the two disagree wherever a forced guess is cheap.
+3. **Teach the instrument the rule first.** A player who cannot see the checkerboard's colours, or
+   walk the dungeon, measures a different game and tunes it far too sparse.
+4. **Measure, don't argue.** Several findings contradicted the intuition: WRAPAROUND is the
+   gentlest counted ladder; PAIRS opens smaller, not larger; the crawl rule costs HP, not deduction;
+   the doorway pocket made DUNGEON easier; the lock, not HP or density, makes the hard ladders'
+   top boards guess-decided.
+5. **Diff the sim output when a refactor is meant to change nothing.** That is `sim:golden:check`.
+
+## Ceilings and constants
+
+- 34% density is the battle ceiling: past it a board stops being a puzzle. HIVE (35%), ARCANE
+  (34.5%) and CHECKERBOARD (38.5%) sit past it for stated reasons (`docs/modes.md`).
+- Placement ceilings: PAIRS 26% (`PAIR` jams at 24.8 to 25.6%), PACKS 36%, CONGO 34%.
+- Spell prices 30 / 75 / 150 / 300 (Census, Reveal, Exercise, Beacon), one global table on purpose:
+  income (pools span 150 to 1,233) and demand (forced guesses 0.1 to 6.0 a board) already carry the
+  variation between ladders. Starting mana is 75 because it is "one Reveal exactly"; anything that
+  changes Reveal's price has to move it.
+- `MANA_PER_EMPTY_CELLS = 4` is an untuned first guess. `EXERCISE_LEVELS` is 1 and must stay 1:
+  damage is a staircase, so two levels clears two steps at once.
+- The Full Run heal is half the pool, rounded down (so BLIND's pool of 1 heals nothing). A first
+  guess; both ends are one number away in `run.ts`.
+- The counted unlock schedule steps by five from 15 to 80, in a hand-set order that does not
+  follow difficulty. `test/unlocks.test.ts` walks it and fails if any gate is unreachable on tuned
+  boards alone.
+
+## What the spells are worth, measured
+
+- Reveal is worth 60 to 70 times Census as played: 0.94 HP saved per cast against 0.01, 0.0126
+  per mana against 0.0003. Census is not weak, it is unaimable: cast where it demonstrably unlocks
+  something it is worth 0.28 HP, but such a spot exists 0.1 to 0.3 times a board and a player hits
+  it 2 to 9% of the time.
+- Reveal's ring (the empty ground around its target) is 45% of the spell and gives nothing away.
+  It cannot cascade off a creature, because every neighbour of a tier-N cell carries at least N.
+- Exercise is the best spell per cast (0.91 HP) and the worst per mana; it lifts the clear rate
+  more than Reveal because it makes the unavoidable guess survivable. At 150 it is out of reach on
+  DUNGEON's first boards.
+- Spell value is a hump: a spell only pays where a board is hard enough to corner the player and
+  still winnable. ARCANE was retuned (26.5 to 34.5%) so its late boards have something to fix.
+- The affordability test says three things: the cheapest spell is castable many times (floor 15),
+  the dearest at least twice (floor 3), and the pool covers one of everything (floor 1.8); DUNGEON
+  board 1 sets all three floors.
+- "Share of the pool spent" is the wrong measure of scarcity; the right one is what it would cost
+  to buy out every moment a deductive player is cornered, as a share of the pool: 40 to 86% on the
+  late boards, 2 to 30% on the early ones.
+
+## Open questions, in order of weight
+
+1. **The ladders have never been played.** Everything is derived and simulation-checked, not
+   playtested. Playtesting may run alongside the refactor; tuning changes live in `ladders.py`.
+2. **Boards contain unresolvable 50/50s, and the solver can say which.** Guess-free
+   generate-and-test is affordable early and impossible late: a perfect deducer finishes NORMAL
+   94% guess-free, ARCANE 73%, DUNGEON 59%, DONUT 36%, and 0% of board 10 on EXTREME, HUGE x
+   EXTREME and ORACLE. The weaker target, no forced guess that can *kill*, rescues ARCANE (97%)
+   and DONUT (73%) but not EXTREME (7%) or the other two (0%). The top of the hard ladders needs
+   construction, or a schedule change.
+3. **The lock is what makes the hard ladders' top boards guess-decided.** Held one short of
+   maximum, ORACLE 7 to 10 go from 23 / 3 / 0 / 3% cleared by a perfect player to 97 / 63 / 40 /
+   47%, and EXTREME 9 to 10 from 20 / 7% to 60 / 60%; two more HP barely moves ORACLE; two short of
+   maximum buys nothing more and runs the dial backwards. HUGE x EXTREME is deep everywhere and was
+   retuned (lock 7 on boards 7 to 10 and density stepped back) to make board 10 winnable. EXTREME
+   and ORACLE are left as they are pending a decision; the advice given was one short on both, with
+   two more HP on ORACLE 7 to 10.
+4. **The placement-rule ladders play easier than their tuning says**, because they were tuned
+   against the honest player, which understands their rules worse than a strong human. Re-deriving
+   CHECKERBOARD, PAIRS, DOMINOES, PACKS and CONGO LINE against the solver is open. PAIRS and
+   DOMINOES also no longer show a beaten creature's number, which the instrument still reads.
+5. **Reveal buys twice what Exercise does per mana** since the ring; pricing Reveal at 100 would
+   level them. Left alone deliberately.
+6. **Marks are not gated the way the pencil is** (a mark may claim the wrong parity on
+   CHECKERBOARD). A decision, left open.
+7. **Smaller:** BLIND's unlock timing (three Full Runs) is a guess; pinch-zoom has only met
+   synthetic touch events; touch has no hover, so a beaten creature's number is unreachable on a
+   phone.
