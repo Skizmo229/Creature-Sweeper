@@ -1,0 +1,142 @@
+# Architecture
+
+How the code is laid out, which way the data flows, and the few structural rules that everything
+else depends on. Read `docs/invariants.md` alongside this; the two together are what CLAUDE.md used
+to be.
+
+## The map
+
+```
+src/engine/     the rules engine: no DOM, no I/O, no timers
+  types.ts        Cell, BoardConfig, the event and block-reason unions
+  rng.ts          mulberry32; boards are pure functions of (config, seed)
+  combat.ts       damage, EXP, mana rewards, the Progression (level/thresholds)
+  board.ts        cells, neighbours(), computeNumbers, shapes and the cave, generateGrid, the opening
+  dungeon.ts      the dungeon map: rooms, one-cell hallways, doorways and their pockets
+  notes.ts        pencil marks as a bitmask
+  spells.ts       the four spells, their prices, the mana economy, spellKey
+  sudoku.ts       the Sudoku placement and its guess-free generator
+  checker.ts      the checkerboard placement: colour fixes a tier's parity; hiddenCap
+  pairs.ts        the pairing placement: non-touching dominoes; ringIsFree; isPaired
+  dominoes.ts     pairs dealt as a full domino set
+  packs.ts        non-touching packs of one-of-every-tier; missingFrom; isPacked
+  congo.ts        packs strung into orthogonal lines led by the top tier
+  game.ts         the state machine: open, mark, note, sweep, cast, forfeit; safeCells
+  run.ts          Full Run: ten boards, one HP pool
+  settings.ts     the gameplay dials, their defaults and directions
+  config.ts       reads ladders.json rows into BoardConfig; validates each placement
+src/ui/         the prototype
+  app.ts          screens, input routing, HUD, overlays, persistence (the router-to-be)
+  boardview.ts    the canvas renderer, layout/zoom and pointer input
+  settings.ts     the presentation settings and the store
+  settingsscreen.ts  the settings form
+  preview.ts      the settings screen's example boards (no rendering, so tests can build them)
+  theme.ts        palettes, creature glyphs, per-type identity
+  typefaces.ts    the bundled faces and which ladder wears which
+  progress.ts     the save: clears, best times, unlocks
+  savefile.ts     the CS1: backup code
+  sfx.ts          synthesised sound packs
+  victory.ts      the board-clear effects
+  pinch.ts, hexgeom.ts   arithmetic kept DOM-free so tests can reach it
+src/sim/        headless measurement, all driving the real engine (see docs/tuning.md)
+src/data.ts     Node-only loader for ladders.json; CS_LADDERS points it at a candidate file
+src/main.ts     browser entry; window.cs in dev
+test/           vitest; test/helpers.ts holds the shared fixtures; test/golden/ the sim fingerprints
+scripts/        golden.mjs (the golden harness), package.mjs (the itch.io zip)
+design/         ladders.py (the generator), data/ (its output), the design reference page
+docs/           this folder
+```
+
+## Three rules the layout enforces
+
+**The engine is headless and must stay that way.** Over every import in `src/`, `src/engine`
+imports nothing outside itself; `src/sim` never imports `src/ui`; `src/ui` never imports
+`src/sim`. `npm run typecheck` runs `tsc` twice on purpose: the second pass uses
+`tsconfig.engine.json`, which compiles the engine, the sims and the tests with **no DOM library at
+all**, so a stray `window` is a build error rather than something discovered when it fails to run
+in Node. Anything a test needs to import therefore has to be DOM-free too, which is why
+`preview.ts` builds boards and renders nothing, why `pinch.ts` and `hexgeom.ts` are separate from
+`boardview.ts`, and why the font table is in `typefaces.ts` rather than `theme.ts`.
+
+**Adjacency lives in exactly one function**: `neighbours()` in `src/engine/board.ts`. Numbers,
+cascades, the opening, Sweep's proofs, Census, the crawl rule and the honest player all read
+through it. That is why hex grids, wrapped edges and cut-out shapes each cost almost nothing in the
+engine. Anything that *iterates* the grid instead (creature placement, the search-mode empty count,
+`safeCells`, the renderer) is where a new board feature actually costs work. A hole (`present:
+false`) neighbours nothing in both directions, guarded at the top of `neighbours()`.
+
+**Tuning data flows one way**: `design/ladders.py` writes `design/data/ladders.json`, `config.ts`
+reads it, and the engine never duplicates a number from it. `ladders.py` does carry its own copy of
+the shape predicates, because it must count a shape's cells before it can apportion creatures;
+that duplication is guarded by a test that the engine's mask leaves exactly the cell count the
+ladder recorded. CI regenerates the JSON and fails on any difference.
+
+## How a board is born
+
+`Game.create(config, seed)`:
+
+1. `generateGrid` makes the cells, then applies the shape. Every shape but the cave and the
+   dungeon is a per-cell predicate; those two are grown from the seed to an exact cell count that
+   the ladder chose (`shapeParam`), because `C_k` needs the quota fixed before the board exists.
+   The dungeon also returns which cells are room floor (the only cells a creature may stand on).
+2. The placement deals the tiers into the spawnable cells. Uniform is shuffle-and-take; the
+   checkerboard keeps one pool per colour; pairs and packs pick *where* first and deal into those
+   cells; dominoes and packs deal their own tiers because their grouping must survive the deal;
+   sudoku fills a solved grid. A placement never changes the quantities.
+3. `computeNumbers` writes every cell's number through `neighbours()`.
+4. The opening rule reveals the first cells, and the clock starts.
+
+Connectivity is asserted, not assumed: the opening reveals one region, so a fragmented board
+would leave the rest unreachable.
+
+## How a click flows
+
+`BoardView` turns pointer events into four callbacks (open, mark, hover, and whether a click would
+land). `App` decides what the click means from its mode state (an armed tier, pencil mode, an armed
+spell) and calls one engine method: `game.open`, `game.setMark`, `game.toggleNote`, `game.cast` or
+`game.sweep`. Every engine action returns the events it caused (`GameEvent[]`: revealed, battle,
+levelUp, marked, noted, blocked, won, lost, spell, exercised). `App.apply` hands them to the sound,
+the celebration and the HUD; the renderer repaints from the grid. The engine holds no clock: the UI
+owns elapsed time, and Time Attack reports expiry back through `game.forfeit`.
+
+A Full Run is engine state, not UI state: `FullRun` in `run.ts` owns the ten-board sequence, the
+HP pool and the heal, and `App` only ever renders `run.game`, an ordinary `Game`. That is why a
+run needed no changes to input, rendering, Sweep, spells or the HUD, and why `npm run sim:run` can
+play whole runs headlessly.
+
+## Settings
+
+Two halves that behave completely differently. `src/engine/settings.ts` holds the **gameplay
+dials**: they change rules, so they are engine state, and they decide whether a board counts for
+a record (`isAtLeastAsHard`: harder records, easier records nothing, unlocks included).
+`src/ui/settings.ts` holds the **presentation settings** and the store; none of those touches a
+rule. `settingsscreen.ts` is the form, built detached and handed back to `App`.
+
+## Where knowledge lives
+
+| Kind of knowledge | Home |
+| --- | --- |
+| What a function does and its contract | its docblock |
+| Why it is done that way, in a paragraph | beside the code |
+| The history: what was tried, what changed, what was asked for | `docs/decisions/` |
+| What each mode's rule is, what it proves, what it must never do | `docs/modes.md` |
+| What was measured, and the open tuning questions | `docs/tuning.md` and the design reference |
+| Presentation rules (fonts, effects, settings galleries) | `docs/ui.md` |
+| How to add a spell, a rule, a shape, a ladder, a setting | `docs/extending.md` |
+| Vocabulary | `docs/glossary.md` |
+| The notes all of the above were condensed from, verbatim and unmaintained | `docs/archive/` |
+
+The design reference (`design/page.template.html`, built to `reference.html` by
+`design/build.py`) is where design *findings* are written up in full; `reference.html` is
+generated and never hand-edited.
+
+## Dev conveniences
+
+`window.cs` in dev exposes the running `App`: `cs.play('donut', 1)`, `cs.current` (the game),
+`cs.sync()`, `cs.cellSize`, `cs.runFull('normal')`, `cs.currentRun`. Stripped from production
+builds. Private methods are reachable at runtime, which is how a UI change can be verified from
+the console without clicking.
+
+The web build ships to itch.io: `base: './'` in `vite.config.ts` because itch serves from a
+per-upload subfolder, and `npm run package` zips `dist/` with `index.html` at the root and refuses
+a build with absolute paths.
