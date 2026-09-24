@@ -30,7 +30,7 @@ export interface TypeTheme {
   accent: string;
 }
 
-export const THEMES: Record<string, TypeTheme> = {
+const THEMES: Record<string, TypeTheme> = {
   easy: {
     tile: '#b3ab1e',
     tileEdge: '#857f10',
@@ -405,7 +405,7 @@ const FALLBACK_IDENTITY: Omit<TypeIdentity, 'font'> = { sfx: 'blip', victory: 'c
  * `test/fonts.test.ts` holds that. The reasons are the look, not the reading:
  * each was checked on its own palette at a 16px cell before it was chosen.
  */
-export const TYPE_IDENTITY: Record<string, Omit<TypeIdentity, 'font'>> = {
+const TYPE_IDENTITY: Record<string, Omit<TypeIdentity, 'font'>> = {
   easy: { sfx: 'chime', victory: 'confetti' },
   // The original's own clear, on the ladder that is the original.
   normal: { sfx: 'blip', victory: 'tumble' },

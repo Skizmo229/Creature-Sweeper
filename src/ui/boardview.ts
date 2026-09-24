@@ -171,7 +171,7 @@ export interface BoardDisplay {
   strikeDefeated: boolean;
 }
 
-export const DEFAULT_DISPLAY: BoardDisplay = {
+const DEFAULT_DISPLAY: BoardDisplay = {
   maxCell: DEFAULT_MAX_ZOOM,
   font: FONTS['jetbrains-mono'],
   highlight: 'neighbours',

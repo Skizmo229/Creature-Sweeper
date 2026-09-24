@@ -84,7 +84,7 @@ function emptySave(): SaveData {
   };
 }
 
-export function boardKey(typeId: string, board: number): string {
+function boardKey(typeId: string, board: number): string {
   return `${typeId}#${board}`;
 }
 

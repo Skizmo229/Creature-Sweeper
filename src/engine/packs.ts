@@ -120,7 +120,7 @@ export function packCandidates(
  * greedy lay-down that ends short has spent its early packs badly all over the
  * board, and unwinding the last few would not reach the ones that cost it.
  */
-export const PACK_ATTEMPTS = 60;
+const PACK_ATTEMPTS = 60;
 
 /**
  * The most creatures a pack board may be asked for, as a share of the cells

@@ -27,8 +27,6 @@ import { expForTier } from './combat.js';
 
 export const SUDOKU_SIZE = 9;
 export const SUDOKU_BOX = 3;
-/** Digits 0-8, so tiers 1-8 are creatures and tier 0 is ground. */
-export const SUDOKU_TIERS = 8;
 const DIGITS = SUDOKU_SIZE;
 const ALL = (1 << DIGITS) - 1;
 
@@ -40,7 +38,7 @@ function idx(x: number, y: number): number {
 }
 
 /** The 27 units — nine rows, nine columns, nine boxes. */
-export const SUDOKU_UNITS: ReadonlyArray<ReadonlyArray<number>> = (() => {
+const SUDOKU_UNITS: ReadonlyArray<ReadonlyArray<number>> = (() => {
   const units: number[][] = [];
   for (let i = 0; i < SUDOKU_SIZE; i++) {
     units.push(Array.from({ length: SUDOKU_SIZE }, (_, k) => idx(k, i)));
@@ -59,7 +57,7 @@ export const SUDOKU_UNITS: ReadonlyArray<ReadonlyArray<number>> = (() => {
 })();
 
 /** Every cell sharing a row, column or box with this one. */
-export const SUDOKU_PEERS: ReadonlyArray<ReadonlyArray<number>> = (() => {
+const SUDOKU_PEERS: ReadonlyArray<ReadonlyArray<number>> = (() => {
   const peers: Set<number>[] = Array.from({ length: 81 }, () => new Set<number>());
   for (const unit of SUDOKU_UNITS) {
     for (const a of unit) for (const b of unit) if (a !== b) peers[a]!.add(b);

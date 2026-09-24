@@ -6,7 +6,7 @@
  * test can assert on them. Elapsed time is entirely the caller's business.
  */
 
-import type { BoardConfig, Cell, GameEvent, SweepOptions } from './types.js';
+import type { BoardConfig, Cell, GameEvent, GameStatus, SweepOptions } from './types.js';
 import { Progression, resolveBattle, expForTier } from './combat.js';
 import { EXERCISE_LEVELS, SPELLS, type SpellId } from './spells.js';
 import {
@@ -64,7 +64,7 @@ export class Game {
   /** After the HP dial. The board's own `config.hp` is left alone. */
   readonly maxHp: number;
   hp: number;
-  status: 'playing' | 'won' | 'lost' = 'playing';
+  status: GameStatus = 'playing';
 
   /** Undefeated creatures per tier; index 0 is tier 1. */
   readonly remaining: number[];

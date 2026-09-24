@@ -57,7 +57,7 @@ import type { Cell } from './types.js';
 import { type Rng, randInt, shuffle } from './rng.js';
 
 /** Restarts allowed before a board is refused. PACKS's argument. */
-export const CONGO_ATTEMPTS = 60;
+const CONGO_ATTEMPTS = 60;
 
 /**
  * The most creatures a congo board may be asked for, as a share of its cells.
@@ -82,7 +82,7 @@ const ORTHO: ReadonlyArray<readonly [number, number]> = [
  * refuses anything else — so this does not need to go through `neighbours()`.
  * The eight-way adjacency the numbers are summed over still does.
  */
-export function orthoFlat(flat: number, width: number, height: number): number[] {
+function orthoFlat(flat: number, width: number, height: number): number[] {
   const x = flat % width;
   const y = Math.floor(flat / width);
   const out: number[] = [];

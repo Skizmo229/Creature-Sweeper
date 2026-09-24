@@ -80,7 +80,7 @@ export const HIGHLIGHT_NAMES: Record<HighlightStyle, string> = {
  */
 export const MIN_TEXT_SIZE = 0.75;
 export const MAX_TEXT_SIZE = 1.75;
-export const DEFAULT_TEXT_SIZE = 1;
+const DEFAULT_TEXT_SIZE = 1;
 
 /** Cell sizes the zoom ceiling can be set to, in CSS pixels. */
 export const MIN_MAX_ZOOM = 24;
@@ -119,7 +119,7 @@ export interface PresentationSettings {
   readonly muted: boolean;
 }
 
-export const DEFAULT_PRESENTATION: PresentationSettings = {
+const DEFAULT_PRESENTATION: PresentationSettings = {
   icons: DEFAULT,
   palette: DEFAULT,
   font: DEFAULT,

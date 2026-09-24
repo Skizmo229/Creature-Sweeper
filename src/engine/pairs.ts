@@ -89,7 +89,7 @@ export function isPaired(placement: Placement): boolean {
  * schedule should not have asked for, and the ceiling below is where that is
  * said.
  */
-export const PAIR_ATTEMPTS = 60;
+const PAIR_ATTEMPTS = 60;
 
 /**
  * The most creatures a pairing board may be asked for, as a share of the

@@ -17,7 +17,7 @@ import { choosePacks, dealPacks, isPacked, packsIn } from './packs.js';
 import { chooseLines, dealLines } from './congo.js';
 
 /** All eight surrounding cells. */
-export const DIRS: ReadonlyArray<readonly [number, number]> = [
+const DIRS: ReadonlyArray<readonly [number, number]> = [
   [-1, -1],
   [0, -1],
   [1, -1],
@@ -55,7 +55,7 @@ const HEX_DIRS: ReadonlyArray<ReadonlyArray<readonly [number, number]>> = [
   ],
 ];
 
-export function dirsFor(topology: Topology, y: number): ReadonlyArray<readonly [number, number]> {
+function dirsFor(topology: Topology, y: number): ReadonlyArray<readonly [number, number]> {
   return topology === 'hex' ? HEX_DIRS[y & 1]! : DIRS;
 }
 
@@ -87,7 +87,7 @@ export function makeCell(x: number, y: number): Cell {
  * seed, so they are not per-cell predicates at all. Everything that needs a
  * mask goes through `buildMask`, which is the only caller of this function.
  */
-export function isPresent(
+function isPresent(
   shape: BoardShape,
   param: number,
   w: number,
@@ -521,7 +521,7 @@ function growCave(space: Mask, w: number, h: number, target: number, rng: Rng): 
   return placed;
 }
 
-export function caveMask(w: number, h: number, target: number, rng: Rng): Mask {
+function caveMask(w: number, h: number, target: number, rng: Rng): Mask {
   const usable = (w - 2 * CAVE_MARGIN) * (h - 2 * CAVE_MARGIN);
   if (target > usable) {
     throw new Error(`cave ${w}x${h}: ${target} cells asked for, only ${usable} inside the margin`);
@@ -539,16 +539,6 @@ export function caveMask(w: number, h: number, target: number, rng: Rng): Mask {
 }
 
 /**
- * Which cells of the bounding box exist. The one place a mask is decided.
- *
- * Analytic shapes ignore the rng entirely, so their boards are byte-identical
- * to what they were before cave existed.
- */
-export function buildMask(shape: BoardShape, param: number, w: number, h: number, rng: Rng): Mask {
-  return buildShape(shape, param, w, h, rng).present;
-}
-
-/**
  * Which cells exist, and which of those a creature may be dealt into.
  *
  * The two are the same thing on every shape but the dungeon, where hallways
@@ -557,7 +547,7 @@ export function buildMask(shape: BoardShape, param: number, w: number, h: number
  * on the cell: a `Cell` would then have a field that is a copy of `present` on
  * sixteen of seventeen ladders.
  */
-export function buildShape(
+function buildShape(
   shape: BoardShape,
   param: number,
   w: number,

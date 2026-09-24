@@ -39,8 +39,11 @@ Removed in the commit that adopts this record:
   comes back, the design it encoded was: draw the level in the tier's own colour so it can never
   be misread as the cell's number, and let one option restyle the hovered glyph's pip shape.
 - **`seedFromString` (`src/engine/rng.ts`), `hasFullRun` (`run.ts`), `fullRunHp` and
-  `allBoards` (`config.ts`), `neighbourCount` (`board.ts`), `mixHex` (`src/ui/theme.ts`).**
-  Utilities with no caller.
+  `allBoards` (`config.ts`), `neighbourCount` and `buildMask` (`board.ts`), `SUDOKU_TIERS`
+  (`sudoku.ts`), `mixHex` (`src/ui/theme.ts`).** Utilities with no caller. The last two only
+  surfaced once `knip` had the twenty-one exports with no consumer outside their own file
+  un-exported, which the same commit does: a module's export list now says what other modules
+  actually use.
 - **`src/engine/index.ts`.** A barrel nobody imported; every consumer imports engine modules
   directly, which is also what the dependency graph in the plan measures.
 

@@ -82,7 +82,7 @@ export const DEFAULT_GAMEPLAY: GameplaySettings = {
 };
 
 /** The step every ratio slider moves in. */
-export const RATIO_STEP = 0.05;
+const RATIO_STEP = 0.05;
 
 /**
  * True when nothing here makes the game easier than the tuned default.
