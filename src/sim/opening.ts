@@ -37,9 +37,15 @@ const ladders = loadLadders();
 const rows: Row[] = [];
 
 console.log(
-  'type'.padEnd(16) + 'bd'.padStart(3) + 'dens'.padStart(7) + 'cells'.padStart(7) +
-  'median'.padStart(8) + 'p05'.padStart(6) + 'worst'.padStart(7) +
-  '%board'.padStart(8) + 'no-zero'.padStart(9),
+  'type'.padEnd(16) +
+    'bd'.padStart(3) +
+    'dens'.padStart(7) +
+    'cells'.padStart(7) +
+    'median'.padStart(8) +
+    'p05'.padStart(6) +
+    'worst'.padStart(7) +
+    '%board'.padStart(8) +
+    'no-zero'.padStart(9),
 );
 console.log('-'.repeat(71));
 
@@ -71,11 +77,15 @@ for (const type of ladders) {
     rows.push(row);
 
     console.log(
-      type.name.padEnd(16) + String(board.n).padStart(3) +
-      `${board.density.toFixed(1)}%`.padStart(7) + String(board.cells).padStart(7) +
-      String(row.median).padStart(8) + String(row.p05).padStart(6) +
-      String(row.worst).padStart(7) + `${row.pct.toFixed(1)}%`.padStart(8) +
-      `${row.nozero.toFixed(1)}%`.padStart(9),
+      type.name.padEnd(16) +
+        String(board.n).padStart(3) +
+        `${board.density.toFixed(1)}%`.padStart(7) +
+        String(board.cells).padStart(7) +
+        String(row.median).padStart(8) +
+        String(row.p05).padStart(6) +
+        String(row.worst).padStart(7) +
+        `${row.pct.toFixed(1)}%`.padStart(8) +
+        `${row.nozero.toFixed(1)}%`.padStart(9),
     );
   }
 }
@@ -85,7 +95,7 @@ const worst = Math.min(...rows.map((r) => r.worst));
 const anyEmpty = Math.max(...rows.map((r) => r.nozero));
 console.log(
   `\n${rows.length} boards x ${TRIALS} seeds. ` +
-  `Smallest opening ever produced: ${worst} cells. ` +
-  `Boards with no opening at all: ${anyEmpty.toFixed(2)}%.`,
+    `Smallest opening ever produced: ${worst} cells. ` +
+    `Boards with no opening at all: ${anyEmpty.toFixed(2)}%.`,
 );
 console.log(`wrote ${OUT}`);

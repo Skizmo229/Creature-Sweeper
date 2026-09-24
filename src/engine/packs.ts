@@ -102,7 +102,11 @@ export function packCandidates(
     for (let i = 0; i < piece.length; i++) {
       const p = piece[i]!;
       mask |= 1 << p.tier;
-      for (const m of neighboursOf(p)) if (known(m) && !seen.has(m)) { seen.add(m); piece.push(m); }
+      for (const m of neighboursOf(p))
+        if (known(m) && !seen.has(m)) {
+          seen.add(m);
+          piece.push(m);
+        }
     }
     if (shown & mask) return noteBit(0);
     shown |= mask;
@@ -200,8 +204,8 @@ export function choosePacks(
 
   throw new Error(
     `packs: could not place ${count} packs of ${size} in ${candidates.length} cells ` +
-    `in ${PACK_ATTEMPTS} attempts (${(100 * count * size / candidates.length).toFixed(1)}% ` +
-    `density)`,
+      `in ${PACK_ATTEMPTS} attempts (${((100 * count * size) / candidates.length).toFixed(1)}% ` +
+      `density)`,
   );
 }
 
@@ -211,14 +215,21 @@ export function choosePacks(
  * the pack happened to grow in.
  */
 export function dealPacks(
-  packs: readonly (readonly number[])[], tiers: number, rng: Rng,
+  packs: readonly (readonly number[])[],
+  tiers: number,
+  rng: Rng,
 ): Map<number, number> {
   const out = new Map<number, number>();
   for (const pack of packs) {
     if (pack.length !== tiers) {
-      throw new Error(`pack deal: a pack of ${pack.length} cannot hold one of each of ${tiers} tiers`);
+      throw new Error(
+        `pack deal: a pack of ${pack.length} cannot hold one of each of ${tiers} tiers`,
+      );
     }
-    const hand = shuffle(Array.from({ length: tiers }, (_, i) => i + 1), rng);
+    const hand = shuffle(
+      Array.from({ length: tiers }, (_, i) => i + 1),
+      rng,
+    );
     pack.forEach((flat, i) => out.set(flat, hand[i]!));
   }
   return out;
@@ -265,12 +276,19 @@ export function missingFrom(
     const seen = new Set<Cell>(piece);
     for (let i = 0; i < piece.length; i++) {
       for (const n of neighboursOf(piece[i]!)) {
-        if (known(n) && !seen.has(n)) { seen.add(n); piece.push(n); }
+        if (known(n) && !seen.has(n)) {
+          seen.add(n);
+          piece.push(n);
+        }
       }
     }
     const found = new Set(piece.map((c) => c.tier));
     let top = 0;
-    for (let t = tiers; t >= 1; t--) if (!found.has(t)) { top = t; break; }
+    for (let t = tiers; t >= 1; t--)
+      if (!found.has(t)) {
+        top = t;
+        break;
+      }
     for (const c of piece) out.set(c, top);
   }
   return out;
@@ -293,7 +311,10 @@ export function packFault(
     seen.add(start);
     for (let i = 0; i < comp.length; i++) {
       for (const n of neighboursOf(comp[i]!)) {
-        if (tierAt.has(n) && !seen.has(n)) { seen.add(n); comp.push(n); }
+        if (tierAt.has(n) && !seen.has(n)) {
+          seen.add(n);
+          comp.push(n);
+        }
       }
     }
     if (comp.length !== tiers) {

@@ -135,7 +135,10 @@ export function sudokuSolution(rng: Rng): SudokuGrid {
     for (const d of order[at]!) {
       let clash = false;
       for (const p of SUDOKU_PEERS[at]!) {
-        if (cells[p] === d) { clash = true; break; }
+        if (cells[p] === d) {
+          clash = true;
+          break;
+        }
       }
       if (clash) continue;
       cells[at] = d;
@@ -160,9 +163,10 @@ export function sudokuSolution(rng: Rng): SudokuGrid {
 /** The eight-way neighbour sum of every cell — the board's numbers. */
 function numbersOf(grid: SudokuGrid): number[] {
   const flat: number[] = [];
-  for (let y = 0; y < SUDOKU_SIZE; y++) for (let x = 0; x < SUDOKU_SIZE; x++) {
-    flat.push(grid[y]![x]!);
-  }
+  for (let y = 0; y < SUDOKU_SIZE; y++)
+    for (let x = 0; x < SUDOKU_SIZE; x++) {
+      flat.push(grid[y]![x]!);
+    }
   return flat.map((_, i) => SUDOKU_NBRS[i]!.reduce((a, n) => a + flat[n]!, 0));
 }
 
@@ -202,7 +206,10 @@ function propagate(cand: number[], open: boolean[], nums: number[]): boolean {
         let home = -1;
         let count = 0;
         for (const c of unit) {
-          if (cand[c]! & bit(d)) { home = c; count++; }
+          if (cand[c]! & bit(d)) {
+            home = c;
+            count++;
+          }
         }
         if (count === 0) return false;
         if (count === 1 && popCount(cand[home]!) > 1) {
@@ -233,7 +240,10 @@ function propagate(cand: number[], open: boolean[], nums: number[]): boolean {
           if (rest >= othersLo && rest <= othersHi) keep |= bit(d);
         }
         if (!keep) return false;
-        if (keep !== cand[n]) { cand[n] = keep; changed = true; }
+        if (keep !== cand[n]) {
+          cand[n] = keep;
+          changed = true;
+        }
       }
     }
   }
@@ -256,13 +266,16 @@ function propagate(cand: number[], open: boolean[], nums: number[]): boolean {
  * it fails may merely be harder than it is.
  */
 export function clearableWithoutGuessing(
-  grid: SudokuGrid, givens: ReadonlyArray<number>, thresholds: ReadonlyArray<number>,
+  grid: SudokuGrid,
+  givens: ReadonlyArray<number>,
+  thresholds: ReadonlyArray<number>,
   startLevel = 1,
 ): boolean {
   const flat: number[] = [];
-  for (let y = 0; y < SUDOKU_SIZE; y++) for (let x = 0; x < SUDOKU_SIZE; x++) {
-    flat.push(grid[y]![x]!);
-  }
+  for (let y = 0; y < SUDOKU_SIZE; y++)
+    for (let x = 0; x < SUDOKU_SIZE; x++) {
+      flat.push(grid[y]![x]!);
+    }
   const nums = numbersOf(grid);
   const cand: number[] = new Array(81).fill(ALL);
   const open: boolean[] = new Array(81).fill(false);
@@ -271,7 +284,11 @@ export function clearableWithoutGuessing(
   // The opening: every empty cell, free and by construction.
   let openCount = 0;
   for (let i = 0; i < 81; i++) {
-    if (flat[i] === 0) { open[i] = true; cand[i] = bit(0); openCount++; }
+    if (flat[i] === 0) {
+      open[i] = true;
+      cand[i] = bit(0);
+      openCount++;
+    }
   }
 
   let level = startLevel;
@@ -372,14 +389,18 @@ const SUDOKU_ATTEMPTS = 4000;
  * move.
  */
 export function generateSudokuBoard(
-  rng: Rng, givens: number, thresholds: ReadonlyArray<number>, startLevel = 1,
+  rng: Rng,
+  givens: number,
+  thresholds: ReadonlyArray<number>,
+  startLevel = 1,
 ): SudokuBoard {
   for (let attempt = 0; attempt < SUDOKU_ATTEMPTS; attempt++) {
     const grid = sudokuSolution(rng);
     const creatures: number[] = [];
-    for (let y = 0; y < SUDOKU_SIZE; y++) for (let x = 0; x < SUDOKU_SIZE; x++) {
-      if (grid[y]![x]! > 0) creatures.push(idx(x, y));
-    }
+    for (let y = 0; y < SUDOKU_SIZE; y++)
+      for (let x = 0; x < SUDOKU_SIZE; x++) {
+        if (grid[y]![x]! > 0) creatures.push(idx(x, y));
+      }
     for (let k = creatures.length - 1; k > 0; k--) {
       const j = Math.floor(rng() * (k + 1));
       [creatures[k], creatures[j]] = [creatures[j]!, creatures[k]!];
@@ -391,6 +412,6 @@ export function generateSudokuBoard(
   }
   throw new Error(
     `sudoku: no guess-free board with ${givens} givens in ${SUDOKU_ATTEMPTS} attempts — ` +
-    `the givens schedule in ladders.py is below what the propagator can carry`,
+      `the givens schedule in ladders.py is below what the propagator can carry`,
   );
 }

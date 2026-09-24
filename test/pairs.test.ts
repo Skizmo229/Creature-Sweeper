@@ -65,8 +65,13 @@ describe('the rule itself', () => {
         const occupied = creatureCells(game).map((c) => c.y * cfg.width + c.x);
         const fault = pairingFault(occupied, (flat) =>
           neighbours(
-            game.grid, flat % cfg.width, Math.floor(flat / cfg.width), cfg.topology, cfg.wrap,
-          ).map((n) => n.y * cfg.width + n.x));
+            game.grid,
+            flat % cfg.width,
+            Math.floor(flat / cfg.width),
+            cfg.topology,
+            cfg.wrap,
+          ).map((n) => n.y * cfg.width + n.x),
+        );
         expect(fault, `PAIRS#${row.n} seed ${seed}`).toBeNull();
       }
     }
@@ -82,8 +87,9 @@ describe('the rule itself', () => {
         const game = Game.create(cfg, seed);
         expect(creatureCells(game)).toHaveLength(row.monsters);
         for (let t = 1; t <= cfg.tiers; t++) {
-          expect(creatureCells(game).filter((c) => c.tier === t))
-            .toHaveLength(cfg.quantity[t - 1]!);
+          expect(creatureCells(game).filter((c) => c.tier === t)).toHaveLength(
+            cfg.quantity[t - 1]!,
+          );
         }
       }
     }
@@ -119,8 +125,7 @@ describe("a creature's number is its partner's tier", () => {
         const game = Game.create(cfg, seed);
         for (const cell of creatureCells(game)) {
           const partner = game.neighboursOf(cell).find((n) => n.tier > 0)!;
-          expect(cell.num, `PAIRS#${row.n} seed ${seed} at ${cell.x},${cell.y}`)
-            .toBe(partner.tier);
+          expect(cell.num, `PAIRS#${row.n} seed ${seed} at ${cell.x},${cell.y}`).toBe(partner.tier);
         }
       }
     }
@@ -206,13 +211,13 @@ describe('the boundary refuses what it cannot build', () => {
   it('refuses an odd total, because one creature would have nobody', () => {
     const q = [...base.boards[0]!.quantity];
     q[0] = q[0]! + 1;
-    expect(() => boardConfig([bend({ quantity: q })], 'bent', 1))
-      .toThrow(/cannot pair up/);
+    expect(() => boardConfig([bend({ quantity: q })], 'bent', 1)).toThrow(/cannot pair up/);
   });
 
   it('refuses a density the packing cannot reach', () => {
-    expect(() => boardConfig([bend({ quantity: [80, 60, 40, 20, 10] })], 'bent', 1))
-      .toThrow(/non-touching domino packing/);
+    expect(() => boardConfig([bend({ quantity: [80, 60, 40, 20, 10] })], 'bent', 1)).toThrow(
+      /non-touching domino packing/,
+    );
   });
 });
 
@@ -224,12 +229,13 @@ describe('choosePairs on its own', () => {
       const x = flat % w;
       const y = Math.floor(flat / w);
       const out: number[] = [];
-      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-        if (!dx && !dy) continue;
-        const nx = x + dx;
-        const ny = y + dy;
-        if (nx >= 0 && nx < w && ny >= 0 && ny < h) out.push(ny * w + nx);
-      }
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx >= 0 && nx < w && ny >= 0 && ny < h) out.push(ny * w + nx);
+        }
       return out;
     };
     return { cells, near };

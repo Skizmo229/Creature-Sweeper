@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { hexAt, hexBoardSize, hexCentre, hexPoints, hexRadius, hexRowStep } from '../src/ui/hexgeom.js';
+import {
+  hexAt,
+  hexBoardSize,
+  hexCentre,
+  hexPoints,
+  hexRadius,
+  hexRowStep,
+} from '../src/ui/hexgeom.js';
 import { neighbours, makeCell, type Grid } from '../src/engine/board.js';
 
 const SIZES = [8, 13, 21, 32, 48];
@@ -35,8 +42,10 @@ describe('hex hit testing', () => {
       for (let col = 0; col < COLS; col++) {
         const { cx, cy } = hexCentre(col, row, cellPx);
         for (const [dx, dy] of offsets) {
-          expect(hexAt(cx + dx, cy + dy, cellPx), `(${col},${row}) +(${dx},${dy})`)
-            .toEqual({ col, row });
+          expect(hexAt(cx + dx, cy + dy, cellPx), `(${col},${row}) +(${dx},${dy})`).toEqual({
+            col,
+            row,
+          });
         }
       }
     }
@@ -106,7 +115,8 @@ describe('drawn geometry agrees with engine adjacency', () => {
     for (let row = 2; row < ROWS - 2; row++) {
       for (let col = 2; col < COLS - 2; col++) {
         const me = hexCentre(col, row, cellPx);
-        const ranked = grid.flat()
+        const ranked = grid
+          .flat()
           .filter((c) => !(c.x === col && c.y === row))
           .map((c) => {
             const p = hexCentre(c.x, c.y, cellPx);

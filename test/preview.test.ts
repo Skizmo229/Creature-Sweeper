@@ -28,14 +28,19 @@ import {
 import type { Game } from '../src/engine/game.js';
 
 const tiersOn = (game: Game): Set<number> =>
-  new Set(game.grid.flat().filter((c) => c.present && c.tier > 0).map((c) => c.tier));
+  new Set(
+    game.grid
+      .flat()
+      .filter((c) => c.present && c.tier > 0)
+      .map((c) => c.tier),
+  );
 
 const creatures = (game: Game) => game.grid.flat().filter((c) => c.present && c.tier > 0);
 
 /** Every tier count the real ladders actually deal, across all 461 boards. */
-const LADDER_TIER_COUNTS: number[] = [...new Set(
-  loadLadders().flatMap((t) => [...t.boards, ...t.extended].map((b) => b.tiers)),
-)].sort((a, b) => a - b);
+const LADDER_TIER_COUNTS: number[] = [
+  ...new Set(loadLadders().flatMap((t) => [...t.boards, ...t.extended].map((b) => b.tiers))),
+].sort((a, b) => a - b);
 
 describe('the board-clear example', () => {
   it('carries one of every tier the real board uses, and none above', () => {
@@ -48,8 +53,9 @@ describe('the board-clear example', () => {
       for (const seed of [PREVIEW_SEED, 1, 99, 0xc0ffee]) {
         const board = clearedBoard(seed, tiers);
         expect(board.config.tiers).toBe(tiers);
-        expect([...tiersOn(board)].sort((a, b) => a - b))
-          .toEqual(Array.from({ length: tiers }, (_, i) => i + 1));
+        expect([...tiersOn(board)].sort((a, b) => a - b)).toEqual(
+          Array.from({ length: tiers }, (_, i) => i + 1),
+        );
       }
     }
   });
@@ -95,7 +101,10 @@ describe('the board-clear example', () => {
     // Test deals a new board on every press; the screen must not reshuffle on
     // an unrelated rebuild. Both need the seed to be the only thing deciding.
     const layout = (seed: number) =>
-      clearedBoard(seed, 5).grid.flat().map((c) => c.tier).join(',');
+      clearedBoard(seed, 5)
+        .grid.flat()
+        .map((c) => c.tier)
+        .join(',');
     expect(layout(101)).toBe(layout(101));
     expect(layout(101)).not.toBe(layout(102));
   });
@@ -136,7 +145,9 @@ describe('the gallery examples', () => {
       // The pin is interior, so its whole ring is on the board and the square
       // gallery shows a full 3x3 box rather than one clipped by an edge.
       const { x, y } = HIGHLIGHT_PIN;
-      const ring = board.grid.flat().filter((c) => Math.abs(c.x - x) <= 1 && Math.abs(c.y - y) <= 1);
+      const ring = board.grid
+        .flat()
+        .filter((c) => Math.abs(c.x - x) <= 1 && Math.abs(c.y - y) <= 1);
       expect(ring.length).toBe(9);
     }
     expect(hexSampleBoard()).toBe(highlightSampleBoard('hex'));
@@ -159,7 +170,11 @@ describe('the gallery examples', () => {
     // the glyph with the most of them — and a shape swap reads there too.
     const board = sampleBoard();
     const { x, y } = topDefeatedCell(board);
-    const best = Math.max(...creatures(board).filter((c) => c.open).map((c) => c.tier));
+    const best = Math.max(
+      ...creatures(board)
+        .filter((c) => c.open)
+        .map((c) => c.tier),
+    );
     expect(board.cellAt(x, y)!.tier).toBe(best);
   });
 

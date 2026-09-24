@@ -25,7 +25,7 @@ export function hexRowStep(cellPx: number): number {
 
 /** Centre of a cell, relative to the board's top-left. */
 export function hexCentre(col: number, row: number, cellPx: number): { cx: number; cy: number } {
-  const indent = (row & 1) ? cellPx / 2 : 0;
+  const indent = row & 1 ? cellPx / 2 : 0;
   return {
     cx: indent + col * cellPx + cellPx / 2,
     cy: row * hexRowStep(cellPx) + hexRadius(cellPx),

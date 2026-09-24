@@ -25,7 +25,12 @@ function saveWith(
   ranTypes: string[] = [],
 ) {
   const data: SaveData = {
-    version: 1, types: {}, boards: {}, runs: {}, scaling: {}, unlockAll: false,
+    version: 1,
+    types: {},
+    boards: {},
+    runs: {},
+    scaling: {},
+    unlockAll: false,
     seenHowTo: true,
   };
   for (const id of clearedTypes) {
@@ -47,7 +52,8 @@ function saveWith(
 describe('the shape of the graph', () => {
   it('starts somewhere', () => {
     const open = ladders.filter(
-      (t) => !t.requires.length && !t.requires_boards && !t.requires_runs);
+      (t) => !t.requires.length && !t.requires_boards && !t.requires_runs,
+    );
     expect(open.map((t) => t.id)).toEqual(['easy']);
   });
 
@@ -76,12 +82,15 @@ describe('the shape of the graph', () => {
   it('gives the combined types both of their parents', () => {
     // A ladder that is two ladders at once should not be reachable without
     // having played the things it combines.
-    expect(ladders.find((t) => t.id === 'huge_extreme')!.requires.sort())
-      .toEqual(['extreme', 'huge']);
-    expect(ladders.find((t) => t.id === 'huge_blind')!.requires.sort())
-      .toEqual(['blind', 'huge']);
-    expect(ladders.find((t) => t.id === 'wrapped_cross')!.requires.sort())
-      .toEqual(['cross', 'wraparound']);
+    expect(ladders.find((t) => t.id === 'huge_extreme')!.requires.sort()).toEqual([
+      'extreme',
+      'huge',
+    ]);
+    expect(ladders.find((t) => t.id === 'huge_blind')!.requires.sort()).toEqual(['blind', 'huge']);
+    expect(ladders.find((t) => t.id === 'wrapped_cross')!.requires.sort()).toEqual([
+      'cross',
+      'wraparound',
+    ]);
     // And it is gated on those two alone. A combined type taking a board
     // count as well would be spending the one budget in this file that can
     // deadlock a save, to say a thing its parents already say.
@@ -105,13 +114,26 @@ describe('the shape of the graph', () => {
     // in the order a player will actually meet it.
     const counted = ladders.filter((t) => t.requires_boards > 0);
     for (let i = 1; i < counted.length; i++) {
-      expect(counted[i]!.requires_boards, `${counted[i]!.id} is out of order`)
-        .toBeGreaterThan(counted[i - 1]!.requires_boards);
+      expect(counted[i]!.requires_boards, `${counted[i]!.id} is out of order`).toBeGreaterThan(
+        counted[i - 1]!.requires_boards,
+      );
     }
-    expect(counted.map((t) => t.id)).toEqual(
-      ['wraparound', 'cross', 'hive', 'diamond', 'pairs', 'dominoes', 'workout', 'packs', 'donut',
-        'checker', 'congo', 'cave', 'dungeon', 'sudoku'],
-    );
+    expect(counted.map((t) => t.id)).toEqual([
+      'wraparound',
+      'cross',
+      'hive',
+      'diamond',
+      'pairs',
+      'dominoes',
+      'workout',
+      'packs',
+      'donut',
+      'checker',
+      'congo',
+      'cave',
+      'dungeon',
+      'sudoku',
+    ]);
   });
 });
 
@@ -132,8 +154,8 @@ describe('every gate can actually be met', () => {
    */
   function walkCountedGates(): { reached: Set<string>; budget: number } {
     const reached = new Set<string>();
-    const tuned = () => [...reached]
-      .reduce((sum, id) => sum + ladders.find((t) => t.id === id)!.boards.length, 0);
+    const tuned = () =>
+      [...reached].reduce((sum, id) => sum + ladders.find((t) => t.id === id)!.boards.length, 0);
     for (;;) {
       const before = reached.size;
       for (const type of ladders) {
@@ -150,13 +172,16 @@ describe('every gate can actually be met', () => {
   it('meets every board-count gate on tuned boards alone, taking them in order', () => {
     const { reached } = walkCountedGates();
     for (const type of ladders.filter((t) => t.requires_boards > 0)) {
-      expect(reached.has(type.id), `${type.id} (${type.requires_boards}) cannot be reached`)
-        .toBe(true);
+      expect(reached.has(type.id), `${type.id} (${type.requires_boards}) cannot be reached`).toBe(
+        true,
+      );
     }
   });
 
   it('steps the board-count schedule by exactly five', () => {
-    const gates = ladders.map((t) => t.requires_boards).filter((n) => n > 0)
+    const gates = ladders
+      .map((t) => t.requires_boards)
+      .filter((n) => n > 0)
       .sort((a, b) => a - b);
     for (let i = 1; i < gates.length; i++) {
       expect(gates[i]! - gates[i - 1]!, `gap after ${gates[i - 1]}`).toBe(5);
@@ -176,8 +201,9 @@ describe('every gate can actually be met', () => {
       if (reachable.size === before) break;
     }
     for (const type of ladders) {
-      expect(type.requires_runs, `${type.id} cannot be unlocked by any player`)
-        .toBeLessThanOrEqual(reachable.size);
+      expect(type.requires_runs, `${type.id} cannot be unlocked by any player`).toBeLessThanOrEqual(
+        reachable.size,
+      );
     }
   });
 
@@ -206,7 +232,13 @@ describe('the gates as the game applies them', () => {
   });
 
   it('counts every cleared board once, scaling boards included', () => {
-    const progress = saveWith(['easy'], [['easy', 11], ['easy', 12]]);
+    const progress = saveWith(
+      ['easy'],
+      [
+        ['easy', 11],
+        ['easy', 12],
+      ],
+    );
     expect(progress.boardsCleared()).toBe(12);
   });
 
@@ -215,13 +247,28 @@ describe('the gates as the game applies them', () => {
     expect(hive.requires_boards).toBe(25);
 
     // 24 boards: EASY's ten, NORMAL's ten, four of HUGE.
-    const short = saveWith(['easy', 'normal'],
-      [['huge', 1], ['huge', 2], ['huge', 3], ['huge', 4]]);
+    const short = saveWith(
+      ['easy', 'normal'],
+      [
+        ['huge', 1],
+        ['huge', 2],
+        ['huge', 3],
+        ['huge', 4],
+      ],
+    );
     expect(short.boardsCleared()).toBe(24);
     expect(short.isTypeUnlocked(ladders, 'hive')).toBe(false);
 
-    const enough = saveWith(['easy', 'normal'],
-      [['huge', 1], ['huge', 2], ['huge', 3], ['huge', 4], ['huge', 5]]);
+    const enough = saveWith(
+      ['easy', 'normal'],
+      [
+        ['huge', 1],
+        ['huge', 2],
+        ['huge', 3],
+        ['huge', 4],
+        ['huge', 5],
+      ],
+    );
     expect(enough.boardsCleared()).toBe(25);
     expect(enough.isTypeUnlocked(ladders, 'hive')).toBe(true);
   });

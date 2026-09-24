@@ -25,11 +25,31 @@
  * `BoardView` repaints itself once its face has loaded.
  */
 export type FontId =
-  | 'atkinson' | 'fredoka' | 'jetbrains-mono' | 'barlow-condensed' | 'chakra-petch'
-  | 'anton' | 'aladin' | 'cinzel' | 'comfortaa' | 'overpass' | 'exo-2' | 'gluten'
-  | 'abril-fatface' | 'baloo-2' | 'alfa-slab-one' | 'black-ops-one' | 'russo-one'
-  | 'sniglet' | 'libre-baskerville' | 'bungee' | 'rubik' | 'pirata-one'
-  | 'libre-franklin' | 'space-mono' | 'big-shoulders';
+  | 'atkinson'
+  | 'fredoka'
+  | 'jetbrains-mono'
+  | 'barlow-condensed'
+  | 'chakra-petch'
+  | 'anton'
+  | 'aladin'
+  | 'cinzel'
+  | 'comfortaa'
+  | 'overpass'
+  | 'exo-2'
+  | 'gluten'
+  | 'abril-fatface'
+  | 'baloo-2'
+  | 'alfa-slab-one'
+  | 'black-ops-one'
+  | 'russo-one'
+  | 'sniglet'
+  | 'libre-baskerville'
+  | 'bungee'
+  | 'rubik'
+  | 'pirata-one'
+  | 'libre-franklin'
+  | 'space-mono'
+  | 'big-shoulders';
 
 export interface GameFont {
   /** The face's own name, as the picker shows it. */
@@ -82,14 +102,27 @@ export const FONTS: Record<FontId, GameFont> = {
   // Designed by the Braille Institute for readers with low vision, with every
   // digit pair a reader might confuse (1/7, 3/8, 6/8/9/0) pulled apart on
   // purpose. No ladder defaults to it: it is the one to reach for, not a look.
-  atkinson: { name: 'Atkinson Hyperlegible Next', stack: `"Atkinson Hyperlegible Next", ${SANS}`, weight: 700 },
+  atkinson: {
+    name: 'Atkinson Hyperlegible Next',
+    stack: `"Atkinson Hyperlegible Next", ${SANS}`,
+    weight: 700,
+  },
   fredoka: { name: 'Fredoka', stack: `Fredoka, ${SANS}`, weight: 600 },
   'jetbrains-mono': { name: 'JetBrains Mono', stack: `"JetBrains Mono", ${MONO}`, weight: 700 },
-  'barlow-condensed': { name: 'Barlow Condensed', stack: `"Barlow Condensed", ${SANS}`, weight: 600 },
+  'barlow-condensed': {
+    name: 'Barlow Condensed',
+    stack: `"Barlow Condensed", ${SANS}`,
+    weight: 600,
+  },
   'chakra-petch': { name: 'Chakra Petch', stack: `"Chakra Petch", ${SANS}`, weight: 700 },
   anton: { name: 'Anton', stack: `Anton, ${SANS}`, weight: 400 },
-  aladin: { name: 'Aladin', stack: `Aladin, ${SERIF}`, weight: 400,
-    capHeightFix: 387 / 716, exHeightFix: 337 / 460 },
+  aladin: {
+    name: 'Aladin',
+    stack: `Aladin, ${SERIF}`,
+    weight: 400,
+    capHeightFix: 387 / 716,
+    exHeightFix: 337 / 460,
+  },
   cinzel: { name: 'Cinzel', stack: `Cinzel, ${SERIF}`, weight: 700 },
   comfortaa: { name: 'Comfortaa', stack: `Comfortaa, ${SANS}`, weight: 700 },
   overpass: { name: 'Overpass', stack: `Overpass, ${SANS}`, weight: 700 },
@@ -101,13 +134,21 @@ export const FONTS: Record<FontId, GameFont> = {
   'black-ops-one': { name: 'Black Ops One', stack: `"Black Ops One", ${SANS}`, weight: 400 },
   'russo-one': { name: 'Russo One', stack: `"Russo One", ${SANS}`, weight: 400 },
   sniglet: { name: 'Sniglet', stack: `Sniglet, ${SANS}`, weight: 800 },
-  'libre-baskerville': { name: 'Libre Baskerville', stack: `"Libre Baskerville", ${SERIF}`, weight: 700 },
+  'libre-baskerville': {
+    name: 'Libre Baskerville',
+    stack: `"Libre Baskerville", ${SERIF}`,
+    weight: 700,
+  },
   bungee: { name: 'Bungee', stack: `Bungee, ${SANS}`, weight: 400 },
   rubik: { name: 'Rubik', stack: `Rubik, ${SANS}`, weight: 700 },
   'pirata-one': { name: 'Pirata One', stack: `"Pirata One", ${SERIF}`, weight: 400 },
   'libre-franklin': { name: 'Libre Franklin', stack: `"Libre Franklin", ${SANS}`, weight: 700 },
   'space-mono': { name: 'Space Mono', stack: `"Space Mono", ${MONO}`, weight: 700 },
-  'big-shoulders': { name: 'Big Shoulders Display', stack: `"Big Shoulders Display", ${SANS}`, weight: 800 },
+  'big-shoulders': {
+    name: 'Big Shoulders Display',
+    stack: `"Big Shoulders Display", ${SANS}`,
+    weight: 800,
+  },
 };
 
 export const FONT_IDS = Object.keys(FONTS) as FontId[];

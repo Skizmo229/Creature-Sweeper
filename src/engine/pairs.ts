@@ -132,7 +132,7 @@ export function choosePairs(
   if (total % 2 !== 0) {
     throw new Error(
       `pairing needs an even number of creatures, asked for ${total} — ` +
-      `every creature has exactly one partner, so an odd one has nobody`,
+        `every creature has exactly one partner, so an odd one has nobody`,
     );
   }
   if (total === 0) return [];
@@ -170,8 +170,8 @@ export function choosePairs(
 
   throw new Error(
     `pairing: could not place ${total} creatures in ${candidates.length} cells ` +
-    `in ${PAIR_ATTEMPTS} attempts (${(100 * total / candidates.length).toFixed(1)}% ` +
-    `density; a random lay-down jams around 25%)`,
+      `in ${PAIR_ATTEMPTS} attempts (${((100 * total) / candidates.length).toFixed(1)}% ` +
+      `density; a random lay-down jams around 25%)`,
   );
 }
 

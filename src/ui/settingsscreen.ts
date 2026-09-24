@@ -64,7 +64,14 @@ import {
   themeFor,
   tierColor,
 } from './theme.js';
-import { FONTS, FONT_IDS, type FontId, type GameFont, LEGIBLE_FONT, TYPE_FONTS } from './typefaces.js';
+import {
+  FONTS,
+  FONT_IDS,
+  type FontId,
+  type GameFont,
+  LEGIBLE_FONT,
+  TYPE_FONTS,
+} from './typefaces.js';
 import { BoardView, type BoardDisplay } from './boardview.js';
 import {
   PREVIEW_SEED,
@@ -82,7 +89,9 @@ import { ladders } from './ladders.js';
 import type { SfxEvent } from './sfx.js';
 
 const el = <K extends keyof HTMLElementTagNameMap>(
-  tag: K, cls?: string, text?: string,
+  tag: K,
+  cls?: string,
+  text?: string,
 ): HTMLElementTagNameMap[K] => {
   const node = document.createElement(tag);
   if (cls) node.className = cls;
@@ -136,14 +145,27 @@ interface PreviewOptions {
  * effect.
  */
 function renderPreview(
-  game: Game, theme: TypeTheme, display: BoardDisplay, opts: PreviewOptions,
+  game: Game,
+  theme: TypeTheme,
+  display: BoardDisplay,
+  opts: PreviewOptions,
 ): { canvas: HTMLCanvasElement; view: BoardView } {
   const canvas = document.createElement('canvas');
-  const view = new BoardView(canvas, {
-    onOpen: () => { /* an example is not playable */ },
-    onCycleMark: () => { /* nor markable */ },
-    onHover: () => { /* nor hovered */ },
-  }, { interactive: false, fixedCell: opts.cell });
+  const view = new BoardView(
+    canvas,
+    {
+      onOpen: () => {
+        /* an example is not playable */
+      },
+      onCycleMark: () => {
+        /* nor markable */
+      },
+      onHover: () => {
+        /* nor hovered */
+      },
+    },
+    { interactive: false, fixedCell: opts.cell },
+  );
   view.setGame(game, theme, display);
   if (opts.pin) view.pinHover(opts.pin.x, opts.pin.y);
   return { canvas, view };
@@ -203,8 +225,13 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   back.addEventListener('click', onBack);
   head.append(back);
   head.append(el('h1', undefined, 'Settings'));
-  head.append(el('p', 'sub',
-    `“Game type default” follows whichever ladder you are on — shown here for ${typeName(typeId)}.`));
+  head.append(
+    el(
+      'p',
+      'sub',
+      `“Game type default” follows whichever ladder you are on — shown here for ${typeName(typeId)}.`,
+    ),
+  );
   wrap.append(head);
 
   // --------------------------------------------------------------- helpers
@@ -246,7 +273,9 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
    * on the spot rather than replacing the element mid-demonstration.
    */
   const gallery = (
-    choices: Choice[], current: string, onPick: (value: string) => void,
+    choices: Choice[],
+    current: string,
+    onPick: (value: string) => void,
     live = false,
   ): HTMLElement => {
     const box = el('div', 'settings-gallery');
@@ -265,7 +294,10 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
       chip.append(caption);
       if (c.open) chip.setAttribute('aria-haspopup', 'dialog');
       chip.addEventListener('click', () => {
-        if (c.open) { c.open(); return; }
+        if (c.open) {
+          c.open();
+          return;
+        }
         if (live) {
           for (const other of box.children) {
             const on = other === chip;
@@ -292,7 +324,10 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
    * thumbnails nobody was looking at.
    */
   const openPicker = (
-    title: string, options: Choice[], current: string, onPick: (value: string) => void,
+    title: string,
+    options: Choice[],
+    current: string,
+    onPick: (value: string) => void,
   ): void => {
     const overlay = el('div', 'overlay picker');
     overlay.setAttribute('role', 'dialog');
@@ -308,7 +343,10 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
       window.removeEventListener('keydown', onKey, true);
     };
     const onKey = (e: KeyboardEvent): void => {
-      if (!overlay.isConnected) { window.removeEventListener('keydown', onKey, true); return; }
+      if (!overlay.isConnected) {
+        window.removeEventListener('keydown', onKey, true);
+        return;
+      }
       if (e.key !== 'Escape') return;
       e.preventDefault();
       // Immediate as well: an event dispatched at the window itself would
@@ -318,10 +356,18 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
     };
     close.addEventListener('click', dismiss);
     // A click on the dimmed backdrop, not on the card, closes it too.
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) dismiss();
+    });
     window.addEventListener('keydown', onKey, true);
 
-    card.append(head, gallery(options, current, (v) => { dismiss(); onPick(v); }));
+    card.append(
+      head,
+      gallery(options, current, (v) => {
+        dismiss();
+        onPick(v);
+      }),
+    );
     overlay.append(card);
     wrap.append(overlay);
     (card.querySelector<HTMLElement>('.preview-chip.active') ?? close).focus();
@@ -334,20 +380,22 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
    * still show what they do; before anything is chosen it says how many
    * there are to choose from.
    */
-  const choiceRow = (host: HTMLElement, spec: {
-    label: string;
-    hint: string;
-    /** What the window is titled — "Choose a font". */
-    title: string;
-    current: string;
-    /** The game type default, already naming what it resolves to. */
-    fallback: Choice;
-    options: Choice[];
-    onPick: (value: string) => void;
-  }): void => {
-    const chosen = spec.current === DEFAULT
-      ? undefined
-      : spec.options.find((o) => o.value === spec.current);
+  const choiceRow = (
+    host: HTMLElement,
+    spec: {
+      label: string;
+      hint: string;
+      /** What the window is titled — "Choose a font". */
+      title: string;
+      current: string;
+      /** The game type default, already naming what it resolves to. */
+      fallback: Choice;
+      options: Choice[];
+      onPick: (value: string) => void;
+    },
+  ): void => {
+    const chosen =
+      spec.current === DEFAULT ? undefined : spec.options.find((o) => o.value === spec.current);
     const placeholder = (): HTMLElement =>
       el('div', 'picker-placeholder', `${spec.options.length} to choose from`);
     const user: Choice = {
@@ -359,8 +407,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
       ...(chosen?.labelFont ? { labelFont: chosen.labelFont } : {}),
       open: () => openPicker(spec.title, spec.options, spec.current, spec.onPick),
     };
-    wideRow(host, spec.label, spec.hint,
-      gallery([spec.fallback, user], spec.current, spec.onPick));
+    wideRow(host, spec.label, spec.hint, gallery([spec.fallback, user], spec.current, spec.onPick));
   };
 
   /**
@@ -372,7 +419,10 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
    * setting too big to apply on every frame of a drag.
    */
   const slider = (
-    min: number, max: number, step: number, current: number,
+    min: number,
+    max: number,
+    step: number,
+    current: number,
     format: (v: number) => string,
     onSet: (value: number) => void,
     onCommit?: (value: number) => void,
@@ -427,12 +477,16 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   });
 
   /** One thumbnail of the standard example board. */
-  const chipBoard = (theme: TypeTheme, over: Partial<BoardDisplay> = {}) => () =>
-    renderPreview(sampleBoard(), theme, display(over), { cell: CHIP_CELL }).canvas;
+  const chipBoard =
+    (theme: TypeTheme, over: Partial<BoardDisplay> = {}) =>
+    () =>
+      renderPreview(sampleBoard(), theme, display(over), { cell: CHIP_CELL }).canvas;
 
-  const look = section('Presentation',
+  const look = section(
+    'Presentation',
     'None of this touches a rule, so none of it affects whether a board counts. ' +
-    'Every example below is a real board drawn by the game’s own renderer.');
+      'Every example below is a real board drawn by the game’s own renderer.',
+  );
 
   // --- creature icons
   //
@@ -440,7 +494,8 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   // choice, with every option in a window behind the second — see `choiceRow`.
   choiceRow(look, {
     label: 'Creature icons',
-    hint: 'The shape of a creature’s pips. Pip colour stays global — a tier 4 is the same ' +
+    hint:
+      'The shape of a creature’s pips. Pip colour stays global — a tier 4 is the same ' +
       'colour everywhere — and a creature is only ever visible once you have beaten it, which ' +
       'is why the examples show defeated ones.',
     title: 'Choose creature icons',
@@ -461,7 +516,8 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   // --- board palette
   choiceRow(look, {
     label: 'Board palette',
-    hint: 'Borrow another ladder’s colours for the board. The menus keep this ladder’s own ' +
+    hint:
+      'Borrow another ladder’s colours for the board. The menus keep this ladder’s own ' +
       'accent, so the game stays navigable however far the board is repainted.',
     title: 'Choose a board palette',
     current: p.palette,
@@ -489,7 +545,8 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   };
   choiceRow(look, {
     label: 'Font',
-    hint: 'Board numbers, marks and the whole interface. Every ladder has a face of its own; ' +
+    hint:
+      'Board numbers, marks and the whole interface. Every ladder has a face of its own; ' +
       `${FONTS[LEGIBLE_FONT].name} belongs to none of them — it was designed for readers with ` +
       'low vision, and keeps every digit easy to tell apart. The game’s title keeps its own ' +
       'face unless you choose one.',
@@ -518,7 +575,12 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   // release.
   const textDemo = el('div', 'hud text-size-demo');
   // The real HUD's own classes, so each readout reserves the width it does in play.
-  for (const [key, item] of [['hp', 'HP 10'], ['lv', 'Level '], ['ex', 'EXP 0'], ['ne', 'Next Level 6']]) {
+  for (const [key, item] of [
+    ['hp', 'HP 10'],
+    ['lv', 'Level '],
+    ['ex', 'EXP 0'],
+    ['ne', 'Next Level 6'],
+  ]) {
     textDemo.append(el('span', `hud-item hud-${key}`, item));
   }
   // Level 1, in tier 1's colour, as the real readout draws it.
@@ -531,23 +593,35 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   };
   const textControl = el('div', 'settings-stack');
   textControl.dataset.setting = 'textSize';
-  textControl.append(slider(MIN_TEXT_SIZE, MAX_TEXT_SIZE, 0.05, p.textSize,
-    (v) => `${Math.round(v * 100)}%`,
-    showTextSize,
-    (v) => {
-      // Rebuilding reflows everything above this row, so hold the row where
-      // the player's pointer left it rather than where the scroll offset says.
-      const before = textControl.getBoundingClientRect().top;
-      pick({ textSize: v });
-      const after = document.querySelector('[data-setting="textSize"]')?.getBoundingClientRect().top;
-      if (after !== undefined) window.scrollBy(0, after - before);
-    }));
+  textControl.append(
+    slider(
+      MIN_TEXT_SIZE,
+      MAX_TEXT_SIZE,
+      0.05,
+      p.textSize,
+      (v) => `${Math.round(v * 100)}%`,
+      showTextSize,
+      (v) => {
+        // Rebuilding reflows everything above this row, so hold the row where
+        // the player's pointer left it rather than where the scroll offset says.
+        const before = textControl.getBoundingClientRect().top;
+        pick({ textSize: v });
+        const after = document
+          .querySelector('[data-setting="textSize"]')
+          ?.getBoundingClientRect().top;
+        if (after !== undefined) window.scrollBy(0, after - before);
+      },
+    ),
+  );
   textControl.append(textDemo);
 
-  wideRow(look, 'Text size',
+  wideRow(
+    look,
+    'Text size',
     'The HUD, the menus and this screen. The board is left alone — it is sized by its cells, ' +
-    'which the zoom controls.',
-    textControl);
+      'which the zoom controls.',
+    textControl,
+  );
 
   // --- cursor highlight
   //
@@ -555,17 +629,23 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   // boxes everywhere else. See `highlightSampleBoard`.
   const hex = ladders.find((t) => t.id === typeId)?.topology === 'hex';
   const highlightChip = (highlight: HighlightStyle | null) => () =>
-    renderPreview(highlightSampleBoard(hex ? 'hex' : 'square'), currentTheme,
-      display({ highlight }), { cell: CHIP_CELL, pin: HIGHLIGHT_PIN }).canvas;
+    renderPreview(
+      highlightSampleBoard(hex ? 'hex' : 'square'),
+      currentTheme,
+      display({ highlight }),
+      { cell: CHIP_CELL, pin: HIGHLIGHT_PIN },
+    ).canvas;
 
-  wideRow(look, '3×3 cursor highlight',
+  wideRow(
+    look,
+    '3×3 cursor highlight',
     hex
       ? 'What the cell under the cursor lights up, on this ladder’s hexagons. The default follows ' +
-        'real adjacency, so it lights the six cells around it, where the flat block is always ' +
-        'the same eight.'
+          'real adjacency, so it lights the six cells around it, where the flat block is always ' +
+          'the same eight.'
       : 'What the cell under the cursor lights up. On square cells the default and the flat block ' +
-        'light the same eight; they part on a hex board, where the default lights six, and across ' +
-        'a wrapped edge, which only the default jumps.',
+          'light the same eight; they part on a hex board, where the default lights six, and across ' +
+          'a wrapped edge, which only the default jumps.',
     gallery(
       [
         {
@@ -582,13 +662,16 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
       ],
       p.highlight,
       (v) => pick({ highlight: v as HighlightStyle | typeof DEFAULT | typeof OFF }),
-    ));
+    ),
+  );
 
   // --- strike through defeated creatures
-  wideRow(look, 'Strike out defeated creatures',
+  wideRow(
+    look,
+    'Strike out defeated creatures',
     'The diagonal line across a creature you have beaten. With it off, the dimmed glyph carries ' +
-    '“dealt with” on its own — which reads more cleanly at small cell sizes, where the stroke ' +
-    'crosses the pips.',
+      '“dealt with” on its own — which reads more cleanly at small cell sizes, where the stroke ' +
+      'crosses the pips.',
     gallery(
       [
         {
@@ -604,7 +687,8 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
       ],
       p.strikeDefeated ? 'on' : 'off',
       (v) => pick({ strikeDefeated: v === 'on' }),
-    ));
+    ),
+  );
 
   // --- what the cursor does to a beaten creature — DISABLED
   //
@@ -669,34 +753,48 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   drawZoom(p.maxZoom);
 
   const zoomControl = el('div', 'settings-stack');
-  zoomControl.append(slider(MIN_MAX_ZOOM, MAX_MAX_ZOOM, 4, p.maxZoom,
-    (v) => `${Math.round(v)}px per cell`,
-    (v) => {
-      const cell = Math.round(v);
-      // Redrawn in place rather than rebuilding the screen: this fires on
-      // every frame of a drag, and forty thumbnails a frame is not a slider.
-      drawZoom(cell);
-      settings.setPresentation({ maxZoom: cell });
-    }));
+  zoomControl.append(
+    slider(
+      MIN_MAX_ZOOM,
+      MAX_MAX_ZOOM,
+      4,
+      p.maxZoom,
+      (v) => `${Math.round(v)}px per cell`,
+      (v) => {
+        const cell = Math.round(v);
+        // Redrawn in place rather than rebuilding the screen: this fires on
+        // every frame of a drag, and forty thumbnails a frame is not a slider.
+        drawZoom(cell);
+        settings.setPresentation({ maxZoom: cell });
+      },
+    ),
+  );
   zoomControl.append(zoomBox);
 
-  wideRow(look, 'Maximum zoom in',
+  wideRow(
+    look,
+    'Maximum zoom in',
     'How far scroll and +/- can magnify a board, shown here at actual size. Zooming out is ' +
-    'limited by what fits on screen, never by this — a board too big for the stage always shrinks ' +
-    'past it.',
-    zoomControl);
+      'limited by what fits on screen, never by this — a board too big for the stage always shrinks ' +
+      'past it.',
+    zoomControl,
+  );
 
   // --- sound
   //
   // The example is the sound itself, so picking one plays it.
-  wideRow(look, 'Sound effects',
+  wideRow(
+    look,
+    'Sound effects',
     'Synthesised rather than sampled — a pack is a table of tones, not a folder of files. ' +
-    'Picking one plays it.',
+      'Picking one plays it.',
     gallery(
       [
         { value: DEFAULT, label: `Game type default — ${SFX_NAMES[ident.sfx]}` },
-        ...(Object.keys(SFX_NAMES) as SfxPackId[]).map((id): Choice =>
-          ({ value: id, label: SFX_NAMES[id] })),
+        ...(Object.keys(SFX_NAMES) as SfxPackId[]).map((id): Choice => ({
+          value: id,
+          label: SFX_NAMES[id],
+        })),
         { value: OFF, label: 'Off — silent' },
       ],
       p.sfx,
@@ -707,16 +805,17 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
         onPreview('levelup');
       },
       true,
-    ));
+    ),
+  );
 
   // --- board clear effect
   //
   // The demo board is kept, rather than rebuilt per play, because half these
   // effects animate its creatures and need to borrow the glyphs off the view
   // that is drawing them.
-  const demo = renderPreview(
-    clearedBoard(demoSeed, tiers), currentTheme, display(), { cell: DEMO_CELL },
-  );
+  const demo = renderPreview(clearedBoard(demoSeed, tiers), currentTheme, display(), {
+    cell: DEMO_CELL,
+  });
   const demoBox = el('div', 'clear-demo');
   demoBox.append(demo.canvas);
 
@@ -725,9 +824,10 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   const syncTest = (): void => {
     const effect = settings.victoryEffect(typeId);
     testBtn.disabled = effect === null;
-    testBtn.title = effect === null
-      ? 'The clear effect is off, so there is nothing to play.'
-      : 'Clear a freshly generated board and play the effect over it.';
+    testBtn.title =
+      effect === null
+        ? 'The clear effect is off, so there is nothing to play.'
+        : 'Clear a freshly generated board and play the effect over it.';
   };
 
   const runDemo = (): void => {
@@ -766,8 +866,10 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
     gallery(
       [
         { value: DEFAULT, label: `Game type default — ${VICTORY_NAMES[ident.victory]}` },
-        ...(Object.keys(VICTORY_NAMES) as VictoryId[]).map((id): Choice =>
-          ({ value: id, label: VICTORY_NAMES[id] })),
+        ...(Object.keys(VICTORY_NAMES) as VictoryId[]).map((id): Choice => ({
+          value: id,
+          label: VICTORY_NAMES[id],
+        })),
         { value: OFF, label: 'Off — no effect' },
       ],
       p.victory,
@@ -786,19 +888,24 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
     testBtn,
   );
 
-  wideRow(look, 'Board clear effect',
+  wideRow(
+    look,
+    'Board clear effect',
     'Picking one plays it below, over a board that is genuinely finished — every creature on it ' +
-    'has been beaten — so you are seeing it over exactly what it runs over in play. The last ' +
-    `seven take the board’s own creatures rather than drawing over the top of them, and the ` +
-    `example carries one of each of the ${tiers} creature tiers ${typeName(typeId)} uses. ` +
-    'Picking replays on the same board so the effects can be compared; Test deals a new one.',
-    demoWrap);
+      'has been beaten — so you are seeing it over exactly what it runs over in play. The last ' +
+      `seven take the board’s own creatures rather than drawing over the top of them, and the ` +
+      `example carries one of each of the ${tiers} creature tiers ${typeName(typeId)} uses. ` +
+      'Picking replays on the same board so the effects can be compared; Test deals a new one.',
+    demoWrap,
+  );
 
   // -------------------------------------------------------------- gameplay
 
-  const play = section('Gameplay',
+  const play = section(
+    'Gameplay',
     'These change the rules. Settings that make the game HARDER record normally; ' +
-    'any setting easier than the tuned game means a clear is not written down at all.');
+      'any setting easier than the tuned game means a clear is not written down at all.',
+  );
 
   const g = () => settings.gameplay;
 
@@ -822,29 +929,53 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   };
 
   const gameplayRow = (
-    label: string, key: 'hpRatio' | 'hpRegenRatio' | 'enemyDamageRatio'
-      | 'manaRegenRatio' | 'manaRewardRatio',
-    max: number, hint: string,
+    label: string,
+    key: 'hpRatio' | 'hpRegenRatio' | 'enemyDamageRatio' | 'manaRegenRatio' | 'manaRewardRatio',
+    max: number,
+    hint: string,
   ): void => {
-    row(play, label,
+    row(
+      play,
+      label,
       slider(0, max, 0.05, g()[key], ratio, (v) => {
         settings.setGameplay({ [key]: Math.round(v * 100) / 100 });
         refreshStatus();
       }),
-      hint);
+      hint,
+    );
   };
 
-  gameplayRow('Player HP', 'hpRatio', 3,
-    'Scales the board’s HP pool. Never below 1 — a board entered at 0 HP is not a board.');
-  gameplayRow('Full run HP regen', 'hpRegenRatio', 1,
+  gameplayRow(
+    'Player HP',
+    'hpRatio',
+    3,
+    'Scales the board’s HP pool. Never below 1 — a board entered at 0 HP is not a board.',
+  );
+  gameplayRow(
+    'Full run HP regen',
+    'hpRegenRatio',
+    1,
     'Fraction of the pool healed after each cleared board of a Full Run, rounded down. ' +
-    'Nothing heals inside a board: HP is a guess budget, not a combat resource. Default ×0.50.');
-  gameplayRow('Creature damage', 'enemyDamageRatio', 3,
-    'Scales what a creature’s retaliation costs. A fight at or below your level is free at any setting.');
-  gameplayRow('Mana regen', 'manaRegenRatio', 3,
-    'Scales the exploration trickle — mana earned per empty cell you uncover yourself. ×0 switches it off.');
-  gameplayRow('Mana per creature', 'manaRewardRatio', 3,
-    'Scales the mana a defeated creature pays. Its EXP is never scaled — the level gates are exact totals.');
+      'Nothing heals inside a board: HP is a guess budget, not a combat resource. Default ×0.50.',
+  );
+  gameplayRow(
+    'Creature damage',
+    'enemyDamageRatio',
+    3,
+    'Scales what a creature’s retaliation costs. A fight at or below your level is free at any setting.',
+  );
+  gameplayRow(
+    'Mana regen',
+    'manaRegenRatio',
+    3,
+    'Scales the exploration trickle — mana earned per empty cell you uncover yourself. ×0 switches it off.',
+  );
+  gameplayRow(
+    'Mana per creature',
+    'manaRewardRatio',
+    3,
+    'Scales the mana a defeated creature pays. Its EXP is never scaled — the level gates are exact totals.',
+  );
 
   const sweepBox = el('div', 'settings-stack');
   const chargeRow = el('div', 'settings-subrow');
@@ -869,19 +1000,39 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   });
   sweepBox.append(sweepSelect);
   chargeRow.append(el('span', 'settings-sub-name', 'Cells per sweep'));
-  chargeRow.append(slider(1, 50, 1, g().sweepChargeClicks,
-    (v) => `${Math.round(v)} cells`,
-    (v) => { settings.setGameplay({ sweepChargeClicks: Math.round(v) }); refreshStatus(); }));
+  chargeRow.append(
+    slider(
+      1,
+      50,
+      1,
+      g().sweepChargeClicks,
+      (v) => `${Math.round(v)} cells`,
+      (v) => {
+        settings.setGameplay({ sweepChargeClicks: Math.round(v) });
+        refreshStatus();
+      },
+    ),
+  );
   sweepBox.append(chargeRow);
   drawCharge();
-  row(play, 'Sweep', sweepBox,
+  row(
+    play,
+    'Sweep',
+    sweepBox,
     'Charged mode banks one charge per cell you open by hand. Cells a sweep opens never charge it, ' +
-    'or a sweep would pay for the next one.');
+      'or a sweep would pay for the next one.',
+  );
 
-  row(play, 'Time attack',
-    toggle(g().timeAttack, (v) => { settings.setGameplay({ timeAttack: v }); refreshStatus(); }),
+  row(
+    play,
+    'Time attack',
+    toggle(g().timeAttack, (v) => {
+      settings.setGameplay({ timeAttack: v });
+      refreshStatus();
+    }),
     'Replaying a board you have a best time on counts DOWN from it, and reaching zero loses the board. ' +
-    'A board with no best time has nothing to race, and plays normally.');
+      'A board with no best time has nothing to race, and plays normally.',
+  );
 
   refreshStatus();
   play.append(status);
@@ -890,9 +1041,15 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
 
   const tools = el('div', 'tools');
   const resetLook = el('button', 'ghost', 'Reset presentation');
-  resetLook.addEventListener('click', () => { settings.resetPresentation(); rebuild(); });
+  resetLook.addEventListener('click', () => {
+    settings.resetPresentation();
+    rebuild();
+  });
   const resetPlay = el('button', 'ghost', 'Reset gameplay');
-  resetPlay.addEventListener('click', () => { settings.resetGameplay(); rebuild(); });
+  resetPlay.addEventListener('click', () => {
+    settings.resetGameplay();
+    rebuild();
+  });
   tools.append(resetLook, resetPlay);
   wrap.append(tools);
 

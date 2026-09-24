@@ -183,7 +183,7 @@ const SWEEP_MODES: readonly SweepMode[] = ['on', 'off', 'charge'];
 
 function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
   return typeof value === 'string' && (allowed as readonly string[]).includes(value)
-    ? value as T
+    ? (value as T)
     : fallback;
 }
 
@@ -196,7 +196,7 @@ function num(value: unknown, min: number, max: number, fallback: number): number
 function readPresentation(raw: unknown): PresentationSettings {
   const p = (raw ?? {}) as Record<string, unknown>;
   const str = (k: string, fallback: string): string =>
-    typeof p[k] === 'string' ? p[k] as string : fallback;
+    typeof p[k] === 'string' ? (p[k] as string) : fallback;
   return {
     // Not validated against the shape list on purpose: an unknown pip falls
     // through `drawCreature`'s own default, and rejecting it here would lose a
@@ -236,12 +236,11 @@ function readGameplay(raw: unknown): GameplaySettings {
     manaRegenRatio: num(g.manaRegenRatio, 0, 3, DEFAULT_GAMEPLAY.manaRegenRatio),
     manaRewardRatio: num(g.manaRewardRatio, 0, 3, DEFAULT_GAMEPLAY.manaRewardRatio),
     sweep: oneOf(g.sweep, SWEEP_MODES, DEFAULT_GAMEPLAY.sweep),
-    sweepChargeClicks: typeof g.sweepChargeClicks === 'number'
-      ? Math.min(50, Math.max(1, Math.round(g.sweepChargeClicks)))
-      : DEFAULT_GAMEPLAY.sweepChargeClicks,
-    timeAttack: typeof g.timeAttack === 'boolean'
-      ? g.timeAttack
-      : DEFAULT_GAMEPLAY.timeAttack,
+    sweepChargeClicks:
+      typeof g.sweepChargeClicks === 'number'
+        ? Math.min(50, Math.max(1, Math.round(g.sweepChargeClicks)))
+        : DEFAULT_GAMEPLAY.sweepChargeClicks,
+    timeAttack: typeof g.timeAttack === 'boolean' ? g.timeAttack : DEFAULT_GAMEPLAY.timeAttack,
   };
 }
 

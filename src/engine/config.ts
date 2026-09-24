@@ -137,7 +137,7 @@ function readSpells(type: LadderType): SpellId[] {
   if (bad.length) {
     throw new Error(
       `${type.id}: unknown spell(s) ${bad.join(', ')} ` +
-      `(have: ${Object.keys(SPELLS).join(', ')})`,
+        `(have: ${Object.keys(SPELLS).join(', ')})`,
     );
   }
   // Sorted by price here rather than wherever the ladder listed them, so a
@@ -160,7 +160,11 @@ function readWorkout(type: LadderType, spells: readonly string[]): WorkoutRule |
     throw new Error(`${type.id}: a workout rule needs Exercise in the loadout`);
   }
   const { base, step, relief, exp_multiplier: expMultiplier } = raw;
-  for (const [name, v] of [['base', base], ['step', step], ['relief', relief]] as const) {
+  for (const [name, v] of [
+    ['base', base],
+    ['step', step],
+    ['relief', relief],
+  ] as const) {
     if (!Number.isInteger(v) || v < 0) {
       throw new Error(`${type.id}: workout ${name} is ${v}; it must be a whole number of mana`);
     }
@@ -169,7 +173,7 @@ function readWorkout(type: LadderType, spells: readonly string[]): WorkoutRule |
   if (!Number.isInteger(expMultiplier) || expMultiplier < 1) {
     throw new Error(
       `${type.id}: workout exp_multiplier is ${expMultiplier}; below 1 a kill pays short ` +
-      `of the EXP its C_k gate was built from`,
+        `of the EXP its C_k gate was built from`,
     );
   }
   return { base, step, relief, expMultiplier };
@@ -270,13 +274,13 @@ function readChecker(type: LadderType, row: LadderBoard): 'checker' {
   if (type.shape && type.shape !== 'rect') {
     throw new Error(
       `${type.id}: the checkerboard needs a rectangle — a "${type.shape}" mask splits ` +
-      `between the colours by its silhouette, and the mode promises an even split`,
+        `between the colours by its silhouette, and the mode promises an even split`,
     );
   }
   if ((row.w * row.h) % 2 !== 0) {
     throw new Error(
       `${where}: ${row.w}x${row.h} is an odd number of cells, so one colour has ` +
-      `a square more than the other`,
+        `a square more than the other`,
     );
   }
   const wrap = type.wrap ?? 'none';
@@ -295,14 +299,14 @@ function readChecker(type: LadderType, row: LadderBoard): 'checker' {
   if (Math.abs(light - dark) > 1) {
     throw new Error(
       `${where}: ${dark} odd-tier creatures against ${light} even-tier ones. ` +
-      `The colours must carry within one of each other`,
+        `The colours must carry within one of each other`,
     );
   }
   const half = (row.w * row.h) / 2;
   if (dark > half || light > half) {
     throw new Error(
       `${where}: ${Math.max(light, dark)} creatures of one parity want ` +
-      `${half} squares of that colour`,
+        `${half} squares of that colour`,
     );
   }
   return 'checker';
@@ -335,7 +339,7 @@ function readPairs(type: LadderType, row: LadderBoard): 'pairs' {
   if (total % 2 !== 0) {
     throw new Error(
       `${where}: ${total} creatures cannot pair up — every creature has ` +
-      `exactly one partner, so the total must be even`,
+        `exactly one partner, so the total must be even`,
     );
   }
   // Against the cells a creature may actually stand on, which on a shaped
@@ -344,8 +348,8 @@ function readPairs(type: LadderType, row: LadderBoard): 'pairs' {
   if (share > PAIR_MAX_DENSITY) {
     throw new Error(
       `${where}: ${total} creatures on ${row.cells} cells is ` +
-      `${(100 * share).toFixed(1)}%, past the ${(100 * PAIR_MAX_DENSITY).toFixed(0)}% ` +
-      `a non-touching domino packing can be laid down reliably`,
+        `${(100 * share).toFixed(1)}%, past the ${(100 * PAIR_MAX_DENSITY).toFixed(0)}% ` +
+        `a non-touching domino packing can be laid down reliably`,
     );
   }
   return 'pairs';
@@ -371,8 +375,8 @@ function readDominoes(type: LadderType, row: LadderBoard): 'dominoes' {
     const per = row.tiers + 1;
     throw new Error(
       `${where}: quantity [${row.quantity.join(',')}] is not a whole number of ` +
-      `double-${row.tiers} domino sets — a set is ${per} of every tier, so the ` +
-      `quantity has to be flat and a multiple of ${per}`,
+        `double-${row.tiers} domino sets — a set is ${per} of every tier, so the ` +
+        `quantity has to be flat and a multiple of ${per}`,
     );
   }
   readPairs(type, row);
@@ -393,15 +397,15 @@ function readPacks(type: LadderType, row: LadderBoard): 'packs' {
   if (packsIn(row.tiers, row.quantity) === null) {
     throw new Error(
       `${where}: quantity [${row.quantity.join(',')}] is not a whole number of packs — ` +
-      `a pack is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
+        `a pack is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
     );
   }
   const share = row.monsters / row.cells;
   if (share > PACK_MAX_DENSITY) {
     throw new Error(
       `${where}: ${row.monsters} creatures on ${row.cells} cells is ` +
-      `${(100 * share).toFixed(1)}%, past the ${(100 * PACK_MAX_DENSITY).toFixed(0)}% ` +
-      `non-touching packs can be laid down reliably`,
+        `${(100 * share).toFixed(1)}%, past the ${(100 * PACK_MAX_DENSITY).toFixed(0)}% ` +
+        `non-touching packs can be laid down reliably`,
     );
   }
   return 'packs';
@@ -417,20 +421,22 @@ function readPacks(type: LadderType, row: LadderBoard): 'packs' {
 function readCongo(type: LadderType, row: LadderBoard): 'congo' {
   const where = `${type.id}#${row.n}`;
   if (type.topology === 'hex' || (type.wrap && type.wrap !== 'none')) {
-    throw new Error(`${where}: congo lines step orthogonally, so they need an unwrapped square board`);
+    throw new Error(
+      `${where}: congo lines step orthogonally, so they need an unwrapped square board`,
+    );
   }
   if (packsIn(row.tiers, row.quantity) === null) {
     throw new Error(
       `${where}: quantity [${row.quantity.join(',')}] is not a whole number of lines — ` +
-      `a line is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
+        `a line is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
     );
   }
   const share = row.monsters / row.cells;
   if (share > CONGO_MAX_DENSITY) {
     throw new Error(
       `${where}: ${row.monsters} creatures on ${row.cells} cells is ` +
-      `${(100 * share).toFixed(1)}%, past the ${(100 * CONGO_MAX_DENSITY).toFixed(0)}% ` +
-      `non-touching lines can be laid down reliably`,
+        `${(100 * share).toFixed(1)}%, past the ${(100 * CONGO_MAX_DENSITY).toFixed(0)}% ` +
+        `non-touching lines can be laid down reliably`,
     );
   }
   return 'congo';
@@ -445,11 +451,18 @@ function readCongo(type: LadderType, row: LadderBoard): 'congo' {
  */
 function readPlacement(type: LadderType, row: LadderBoard): Placement {
   const raw = type.placement ?? 'uniform';
-  if (raw !== 'uniform' && raw !== 'sudoku' && raw !== 'checker' && raw !== 'pairs'
-      && raw !== 'dominoes' && raw !== 'packs' && raw !== 'congo') {
+  if (
+    raw !== 'uniform' &&
+    raw !== 'sudoku' &&
+    raw !== 'checker' &&
+    raw !== 'pairs' &&
+    raw !== 'dominoes' &&
+    raw !== 'packs' &&
+    raw !== 'congo'
+  ) {
     throw new Error(
       `${type.id}: unknown placement "${raw}" ` +
-      `(uniform | sudoku | checker | pairs | dominoes | packs | congo)`,
+        `(uniform | sudoku | checker | pairs | dominoes | packs | congo)`,
     );
   }
   if (raw === 'checker') return readChecker(type, row);
@@ -465,24 +478,27 @@ function readPlacement(type: LadderType, row: LadderBoard): Placement {
   if (row.tiers !== 8) {
     throw new Error(
       `${type.id}#${row.n}: sudoku uses the nine digits 0-8, so 8 creature ` +
-      `tiers plus empty ground — got ${row.tiers}`,
+        `tiers plus empty ground — got ${row.tiers}`,
     );
   }
   if (row.quantity.length !== 8 || row.quantity.some((n) => n !== 9)) {
     throw new Error(
       `${type.id}#${row.n}: sudoku places each tier exactly nine times; ` +
-      `quantity is [${row.quantity.join(',')}]`,
+        `quantity is [${row.quantity.join(',')}]`,
     );
   }
-  if (type.topology === 'hex' || (type.wrap && type.wrap !== 'none') ||
-      (type.shape && type.shape !== 'rect')) {
+  if (
+    type.topology === 'hex' ||
+    (type.wrap && type.wrap !== 'none') ||
+    (type.shape && type.shape !== 'rect')
+  ) {
     throw new Error(`${type.id}: sudoku's rows, columns and boxes need a plain square 9x9`);
   }
   const givens = row.givens ?? 0;
   if (givens < 1 || givens > 72) {
     throw new Error(
       `${type.id}#${row.n}: givens is ${givens}; it must be between 1 and 72 ` +
-      `(the creatures — a given on empty ground says nothing, since the opening reveals it)`,
+        `(the creatures — a given on empty ground says nothing, since the opening reveals it)`,
     );
   }
   return raw;
@@ -500,9 +516,7 @@ export function isExtendedBoard(ladders: Ladders, typeId: string, board: number)
 }
 
 /** The row for a board index, from the ladder or from its continuation. */
-export function boardRow(
-  ladders: Ladders, typeId: string, board: number,
-): LadderBoard | undefined {
+export function boardRow(ladders: Ladders, typeId: string, board: number): LadderBoard | undefined {
   const type = findType(ladders, typeId);
   return board <= type.boards.length
     ? type.boards[board - 1]
@@ -529,8 +543,8 @@ export function boardConfig(
   if (!row) {
     throw new Error(
       `${typeId} has no board ${board} ` +
-      `(ladder 1..${type.boards.length}` +
-      (type.extended.length ? `, scaling to ${maxBoard(ladders, typeId)})` : ')'),
+        `(ladder 1..${type.boards.length}` +
+        (type.extended.length ? `, scaling to ${maxBoard(ladders, typeId)})` : ')'),
     );
   }
 
@@ -571,9 +585,7 @@ export function boardConfig(
     // it differs per board, so it is read from the board's own row. That row is
     // the same `cells` figure `ladders.py` apportioned the creatures against,
     // which is what keeps C_k and the thresholds true on every seed.
-    shapeParam: (CARVED as readonly string[]).includes(shape)
-      ? row.cells
-      : type.shape_param ?? 0,
+    shapeParam: (CARVED as readonly string[]).includes(shape) ? row.cells : (type.shape_param ?? 0),
   };
 }
 
@@ -601,8 +613,9 @@ export function allBoards(
 ): BoardConfig[] {
   const { scaling = true, ...boardOptions } = options;
   return ladders.flatMap((type) =>
-    [...type.boards, ...(scaling ? type.extended : [])]
-      .map((row) => boardConfig(ladders, type.id, row.n, boardOptions)),
+    [...type.boards, ...(scaling ? type.extended : [])].map((row) =>
+      boardConfig(ladders, type.id, row.n, boardOptions),
+    ),
   );
 }
 

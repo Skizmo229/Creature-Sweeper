@@ -18,9 +18,14 @@ import { chooseLines, dealLines } from './congo.js';
 
 /** All eight surrounding cells. */
 export const DIRS: ReadonlyArray<readonly [number, number]> = [
-  [-1, -1], [0, -1], [1, -1],
-  [-1, 0], [1, 0],
-  [-1, 1], [0, 1], [1, 1],
+  [-1, -1],
+  [0, -1],
+  [1, -1],
+  [-1, 0],
+  [1, 0],
+  [-1, 1],
+  [0, 1],
+  [1, 1],
 ];
 
 /**
@@ -31,9 +36,23 @@ export const DIRS: ReadonlyArray<readonly [number, number]> = [
  */
 const HEX_DIRS: ReadonlyArray<ReadonlyArray<readonly [number, number]>> = [
   // even rows
-  [[-1, 0], [1, 0], [-1, -1], [0, -1], [-1, 1], [0, 1]],
+  [
+    [-1, 0],
+    [1, 0],
+    [-1, -1],
+    [0, -1],
+    [-1, 1],
+    [0, 1],
+  ],
   // odd rows
-  [[-1, 0], [1, 0], [0, -1], [1, -1], [0, 1], [1, 1]],
+  [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [1, -1],
+    [0, 1],
+    [1, 1],
+  ],
 ];
 
 export function dirsFor(topology: Topology, y: number): ReadonlyArray<readonly [number, number]> {
@@ -49,8 +68,17 @@ export type Grid = Cell[][];
 
 export function makeCell(x: number, y: number): Cell {
   return {
-    x, y, tier: 0, num: 0, open: false, alive: false,
-    present: true, mark: 0, given: false, notes: 0, census: null,
+    x,
+    y,
+    tier: 0,
+    num: 0,
+    open: false,
+    alive: false,
+    present: true,
+    mark: 0,
+    given: false,
+    notes: 0,
+    census: null,
   };
 }
 
@@ -65,7 +93,12 @@ export function makeCell(x: number, y: number): Cell {
  * mask goes through `buildMask`, which is the only caller of this function.
  */
 export function isPresent(
-  shape: BoardShape, param: number, w: number, h: number, x: number, y: number,
+  shape: BoardShape,
+  param: number,
+  w: number,
+  h: number,
+  x: number,
+  y: number,
 ): boolean {
   const cx = (w - 1) / 2;
   const cy = (h - 1) / 2;
@@ -92,14 +125,13 @@ export function isPresent(
  * anything: the mask is built to hit that number exactly, on every seed. See
  * `caveMask` and `dungeonMask`.
  */
-export function presentCellCount(
-  shape: BoardShape, param: number, w: number, h: number,
-): number {
+export function presentCellCount(shape: BoardShape, param: number, w: number, h: number): number {
   if (shape === 'cave' || shape === 'dungeon') return param;
   let n = 0;
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    if (isPresent(shape, param, w, h, x, y)) n++;
-  }
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (isPresent(shape, param, w, h, x, y)) n++;
+    }
   return n;
 }
 
@@ -191,9 +223,10 @@ function rimLimit(rng: Rng): (angle: number) => number {
   const p1 = rng() * Math.PI * 2;
   const p2 = rng() * Math.PI * 2;
   const p3 = rng() * Math.PI * 2;
-  return (a) => 1 - CAVE_RIM_WOBBLE * (
-    0.5 + 0.2 * Math.sin(2 * a + p1) + 0.2 * Math.sin(3 * a + p2) + 0.1 * Math.sin(5 * a + p3)
-  );
+  return (a) =>
+    1 -
+    CAVE_RIM_WOBBLE *
+      (0.5 + 0.2 * Math.sin(2 * a + p1) + 0.2 * Math.sin(3 * a + p2) + 0.1 * Math.sin(5 * a + p3));
 }
 
 /**
@@ -229,8 +262,8 @@ function caveSpace(w: number, h: number, target: number, rng: Rng): Mask {
     for (let x = 0; x < w; x++) {
       const dx = (x - cx) / a;
       const dy = (y - cy) / b;
-      const r = (Math.abs(dx) ** CAVE_RIM_POWER + Math.abs(dy) ** CAVE_RIM_POWER)
-        ** (1 / CAVE_RIM_POWER);
+      const r =
+        (Math.abs(dx) ** CAVE_RIM_POWER + Math.abs(dy) ** CAVE_RIM_POWER) ** (1 / CAVE_RIM_POWER);
       if (r <= limit(Math.atan2(dy, dx))) space[y]![x] = true;
     }
   }
@@ -243,8 +276,8 @@ function caveSpace(w: number, h: number, target: number, rng: Rng): Mask {
       if (!space[y]![x]) continue;
       const dx = (x - cx) / a;
       const dy = (y - cy) / b;
-      const r = (Math.abs(dx) ** CAVE_RIM_POWER + Math.abs(dy) ** CAVE_RIM_POWER)
-        ** (1 / CAVE_RIM_POWER);
+      const r =
+        (Math.abs(dx) ** CAVE_RIM_POWER + Math.abs(dy) ** CAVE_RIM_POWER) ** (1 / CAVE_RIM_POWER);
       if (r <= CAVE_VOID_REACH) inner.push(y * w + x);
     }
   }
@@ -289,9 +322,7 @@ function caveSpace(w: number, h: number, target: number, rng: Rng): Mask {
  * this is a flood over squares rather than over cells: a corridor one cell
  * wide joins nothing here, because nothing two cells wide can get down it.
  */
-function largestChamber(
-  space: Mask, w: number, h: number,
-): { origins: number[]; cells: number } {
+function largestChamber(space: Mask, w: number, h: number): { origins: number[]; cells: number } {
   const origins = stampOrigins(space, w, h);
   const known = new Set(origins);
   const seen = new Set<number>();
@@ -306,7 +337,11 @@ function largestChamber(
       const idx = queue[head]!;
       const ox = idx % w;
       const oy = (idx - ox) / w;
-      cells.add(idx).add(idx + 1).add(idx + w).add(idx + w + 1);
+      cells
+        .add(idx)
+        .add(idx + 1)
+        .add(idx + w)
+        .add(idx + w + 1);
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           const next = (oy + dy) * w + ox + dx;
@@ -347,15 +382,24 @@ function stampOrigins(space: Mask, w: number, h: number): number[] {
  * looked at twice.
  */
 function cornerTouch(placed: Mask, w: number, h: number, ox: number, oy: number): boolean {
-  const on = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h
-    && (placed[y]![x] === true || (x >= ox && x <= ox + 1 && y >= oy && y <= oy + 1));
+  const on = (x: number, y: number) =>
+    x >= 0 &&
+    y >= 0 &&
+    x < w &&
+    y < h &&
+    (placed[y]![x] === true || (x >= ox && x <= ox + 1 && y >= oy && y <= oy + 1));
 
   for (let dy = 0; dy <= 1; dy++) {
     for (let dx = 0; dx <= 1; dx++) {
       const x = ox + dx;
       const y = oy + dy;
       if (placed[y]![x]) continue;
-      for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
+      for (const [sx, sy] of [
+        [-1, -1],
+        [1, -1],
+        [-1, 1],
+        [1, 1],
+      ] as const) {
         if (on(x + sx, y + sy) && !on(x + sx, y) && !on(x, y + sy)) return true;
       }
     }
@@ -366,9 +410,10 @@ function cornerTouch(placed: Mask, w: number, h: number, ox: number, oy: number)
 /** Cells this square would add that are not already there. */
 function stampGain(placed: Mask, w: number, ox: number, oy: number): number {
   let n = 0;
-  for (let dy = 0; dy <= 1; dy++) for (let dx = 0; dx <= 1; dx++) {
-    if (!placed[oy + dy]![ox + dx]) n++;
-  }
+  for (let dy = 0; dy <= 1; dy++)
+    for (let dx = 0; dx <= 1; dx++) {
+      if (!placed[oy + dy]![ox + dx]) n++;
+    }
   return n;
 }
 
@@ -392,14 +437,20 @@ function growCave(space: Mask, w: number, h: number, target: number, rng: Rng): 
   // once rather than crawling out from a wall.
   let sumX = 0;
   let sumY = 0;
-  for (const idx of room.origins) { sumX += idx % w; sumY += (idx - (idx % w)) / w; }
+  for (const idx of room.origins) {
+    sumX += idx % w;
+    sumY += (idx - (idx % w)) / w;
+  }
   const midX = sumX / room.origins.length;
   const midY = sumY / room.origins.length;
   const central = [...room.origins].sort((p, q) => {
     const px = p % w;
     const qx = q % w;
-    return ((px - midX) ** 2 + ((p - px) / w - midY) ** 2)
-      - ((qx - midX) ** 2 + ((q - qx) / w - midY) ** 2);
+    return (
+      (px - midX) ** 2 +
+      ((p - px) / w - midY) ** 2 -
+      ((qx - midX) ** 2 + ((q - qx) / w - midY) ** 2)
+    );
   });
   const seed = central[randInt(rng, Math.max(1, Math.floor(central.length / 8)))]!;
 
@@ -411,9 +462,13 @@ function growCave(space: Mask, w: number, h: number, target: number, rng: Rng): 
   const lay = (idx: number): void => {
     const ox = idx % w;
     const oy = (idx - ox) / w;
-    for (let dy = 0; dy <= 1; dy++) for (let dx = 0; dx <= 1; dx++) {
-      if (!placed[oy + dy]![ox + dx]) { placed[oy + dy]![ox + dx] = true; count++; }
-    }
+    for (let dy = 0; dy <= 1; dy++)
+      for (let dx = 0; dx <= 1; dx++) {
+        if (!placed[oy + dy]![ox + dx]) {
+          placed[oy + dy]![ox + dx] = true;
+          count++;
+        }
+      }
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
         const next = (oy + dy) * w + ox + dx;
@@ -438,7 +493,10 @@ function growCave(space: Mask, w: number, h: number, target: number, rng: Rng): 
 
     for (let probe = 0; probe < CAVE_PROBES && budget >= 4; probe++) {
       const idx = frontier[randInt(rng, frontier.length)]!;
-      if (fits(idx, budget)) { chosen = idx; break; }
+      if (fits(idx, budget)) {
+        chosen = idx;
+        break;
+      }
     }
 
     if (chosen < 0) {
@@ -491,9 +549,7 @@ export function caveMask(w: number, h: number, target: number, rng: Rng): Mask {
  * Analytic shapes ignore the rng entirely, so their boards are byte-identical
  * to what they were before cave existed.
  */
-export function buildMask(
-  shape: BoardShape, param: number, w: number, h: number, rng: Rng,
-): Mask {
+export function buildMask(shape: BoardShape, param: number, w: number, h: number, rng: Rng): Mask {
   return buildShape(shape, param, w, h, rng).present;
 }
 
@@ -507,14 +563,19 @@ export function buildMask(
  * sixteen of seventeen ladders.
  */
 export function buildShape(
-  shape: BoardShape, param: number, w: number, h: number, rng: Rng,
+  shape: BoardShape,
+  param: number,
+  w: number,
+  h: number,
+  rng: Rng,
 ): { present: Mask; spawnable: Mask; hall: Mask } {
   if (shape === 'dungeon') return dungeonMap(w, h, param, rng);
   const present = shape === 'cave' ? caveMask(w, h, param, rng) : blankMask(w, h);
   if (shape !== 'cave') {
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      present[y]![x] = isPresent(shape, param, w, h, x, y);
-    }
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        present[y]![x] = isPresent(shape, param, w, h, x, y);
+      }
   }
   return { present, spawnable: present, hall: blankMask(w, h) };
 }
@@ -531,7 +592,11 @@ export function inBounds(cfg: BoardConfig, x: number, y: number): boolean {
  * shape or a wrapped edge costs almost nothing.
  */
 export function neighbours(
-  grid: Grid, x: number, y: number, topology: Topology = 'square', wrap: Wrap = 'none',
+  grid: Grid,
+  x: number,
+  y: number,
+  topology: Topology = 'square',
+  wrap: Wrap = 'none',
 ): Cell[] {
   const out: Cell[] = [];
   const h = grid.length;
@@ -573,7 +638,9 @@ export function neighbours(
  * its own number.
  */
 export function computeNumbers(
-  grid: Grid, topology: Topology = 'square', wrap: Wrap = 'none',
+  grid: Grid,
+  topology: Topology = 'square',
+  wrap: Wrap = 'none',
 ): void {
   for (const row of grid) {
     for (const cell of row) {
@@ -615,9 +682,10 @@ export function generateGrid(cfg: BoardConfig, rng: Rng): Grid {
   let spawnable: Mask | null = null;
   if (cfg.shape !== 'rect') {
     const shape = buildShape(cfg.shape, cfg.shapeParam, cfg.width, cfg.height, rng);
-    for (let y = 0; y < cfg.height; y++) for (let x = 0; x < cfg.width; x++) {
-      grid[y]![x]!.present = shape.present[y]![x]!;
-    }
+    for (let y = 0; y < cfg.height; y++)
+      for (let x = 0; x < cfg.width; x++) {
+        grid[y]![x]!.present = shape.present[y]![x]!;
+      }
     spawnable = shape.spawnable;
   }
 
@@ -652,20 +720,35 @@ export function generateGrid(cfg: BoardConfig, rng: Rng): Grid {
     if (count === null) {
       throw new Error(
         `board ${cfg.typeId}#${cfg.board}: quantity [${cfg.quantity.join(',')}] is not ` +
-        `a whole number of packs — a pack is one of each of the ${cfg.tiers} tiers`,
+          `a whole number of packs — a pack is one of each of the ${cfg.tiers} tiers`,
       );
     }
     const flatNeighbours = (flat: number): number[] =>
-      neighbours(
-        grid, flat % cfg.width, Math.floor(flat / cfg.width), cfg.topology, cfg.wrap,
-      ).map((n) => n.y * cfg.width + n.x);
+      neighbours(grid, flat % cfg.width, Math.floor(flat / cfg.width), cfg.topology, cfg.wrap).map(
+        (n) => n.y * cfg.width + n.x,
+      );
     // A congo line is a pack with a shape and an order, and it comes back
     // leader first so the deal can put the strongest tier at the front.
-    const dealt = cfg.placement === 'congo'
-      ? dealLines(
-        chooseLines(poolFor('any'), flatNeighbours, cfg.width, cfg.height, count, cfg.tiers, rng),
-        cfg.tiers, rng)
-      : dealPacks(choosePacks(poolFor('any'), flatNeighbours, count, cfg.tiers, rng), cfg.tiers, rng);
+    const dealt =
+      cfg.placement === 'congo'
+        ? dealLines(
+            chooseLines(
+              poolFor('any'),
+              flatNeighbours,
+              cfg.width,
+              cfg.height,
+              count,
+              cfg.tiers,
+              rng,
+            ),
+            cfg.tiers,
+            rng,
+          )
+        : dealPacks(
+            choosePacks(poolFor('any'), flatNeighbours, count, cfg.tiers, rng),
+            cfg.tiers,
+            rng,
+          );
     for (const [flat, tier] of dealt) {
       const cell = grid[Math.floor(flat / cfg.width)]![flat % cfg.width]!;
       cell.tier = tier;
@@ -685,9 +768,9 @@ export function generateGrid(cfg: BoardConfig, rng: Rng): Grid {
   if (paired) {
     const total = cfg.quantity.reduce((a, b) => a + b, 0);
     const flatNeighbours = (flat: number): number[] =>
-      neighbours(
-        grid, flat % cfg.width, Math.floor(flat / cfg.width), cfg.topology, cfg.wrap,
-      ).map((n) => n.y * cfg.width + n.x);
+      neighbours(grid, flat % cfg.width, Math.floor(flat / cfg.width), cfg.topology, cfg.wrap).map(
+        (n) => n.y * cfg.width + n.x,
+      );
     const chosen = choosePairs(poolFor('any'), flatNeighbours, total, rng);
 
     // A domino board deals TILES, not tiers, so it must keep the pair order
@@ -699,7 +782,7 @@ export function generateGrid(cfg: BoardConfig, rng: Rng): Grid {
       if (sets === null) {
         throw new Error(
           `board ${cfg.typeId}#${cfg.board}: quantity [${cfg.quantity.join(',')}] is not ` +
-          `a whole number of double-${cfg.tiers} domino sets`,
+            `a whole number of double-${cfg.tiers} domino sets`,
         );
       }
       for (const [flat, tier] of dealTiles(chosen, cfg.tiers, sets, rng)) {
@@ -723,11 +806,11 @@ export function generateGrid(cfg: BoardConfig, rng: Rng): Grid {
     if (at + count > pool.length) {
       throw new Error(
         `board ${cfg.typeId}#${cfg.board}: tier ${tier} does not fit — ` +
-        `${at + count} creatures want ${pool.length} cells` +
-        (checker
-          ? ` on the ${key} squares, which is every tier of that parity`
-          : ` shape "${cfg.shape}" leaves them, and a dungeon keeps its ` +
-            `hallways and doorways clear`),
+          `${at + count} creatures want ${pool.length} cells` +
+          (checker
+            ? ` on the ${key} squares, which is every tier of that parity`
+            : ` shape "${cfg.shape}" leaves them, and a dungeon keeps its ` +
+              `hallways and doorways clear`),
       );
     }
     for (let k = 0; k < count; k++) {
@@ -756,7 +839,7 @@ function fillSudoku(cfg: BoardConfig, grid: Grid, rng: Rng): void {
   if (cfg.width !== SUDOKU_SIZE || cfg.height !== SUDOKU_SIZE) {
     throw new Error(
       `${cfg.typeId}#${cfg.board}: sudoku placement needs a ` +
-      `${SUDOKU_SIZE}x${SUDOKU_SIZE} board, got ${cfg.width}x${cfg.height}`,
+        `${SUDOKU_SIZE}x${SUDOKU_SIZE} board, got ${cfg.width}x${cfg.height}`,
     );
   }
   // The gates the generator has to prove a guess-free path through. Thresholds
@@ -794,7 +877,10 @@ export interface Opening {
  * neighbours are all empty too, so a cascade can never uncover a creature.
  */
 export function findBestOpening(
-  grid: Grid, coveredOnly = false, topology: Topology = 'square', wrap: Wrap = 'none',
+  grid: Grid,
+  coveredOnly = false,
+  topology: Topology = 'square',
+  wrap: Wrap = 'none',
 ): Opening | null {
   const h = grid.length;
   const w = grid[0]!.length;
@@ -843,7 +929,9 @@ export function findBestOpening(
  * number, then most empty neighbours.
  */
 export function findFallbackOpening(
-  grid: Grid, topology: Topology = 'square', wrap: Wrap = 'none',
+  grid: Grid,
+  topology: Topology = 'square',
+  wrap: Wrap = 'none',
 ): Cell | null {
   let best: Cell | null = null;
   let bestKey = [Infinity, -Infinity] as [number, number];

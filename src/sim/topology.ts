@@ -25,7 +25,13 @@ function quantityFor(cells: number, density: number, tiers = 5): number[] {
   return q;
 }
 
-function config(topology: Topology, wrap: Wrap, w: number, h: number, density: number): BoardConfig {
+function config(
+  topology: Topology,
+  wrap: Wrap,
+  w: number,
+  h: number,
+  density: number,
+): BoardConfig {
   const q = quantityFor(w * h, density);
   return {
     typeId: `probe-${topology}-${wrap}`,
@@ -96,7 +102,8 @@ console.log(`${W}x${H}, ${TRIALS} boards per point`);
 console.log('blank% = cells with no creature neighbours; open = median auto-opening');
 console.log('');
 
-const head = 'density'.padStart(8) +
+const head =
+  'density'.padStart(8) +
   VARIANTS.map(([n]) => `${n} blank`.padStart(14) + 'open'.padStart(6)).join('');
 console.log(head);
 console.log('-'.repeat(head.length));
@@ -120,9 +127,9 @@ for (const d of [0.206, 0.24, 0.27]) {
   const pct = (a: number, b: number) => `${(((a - b) / b) * 100).toFixed(0)}%`;
   console.log(
     `  ${(d * 100).toFixed(1)}%: blank ${base.blankPct.toFixed(1)}% -> ` +
-    `cyl ${cyl.blankPct.toFixed(1)}% (${pct(cyl.blankPct, base.blankPct)}), ` +
-    `torus ${tor.blankPct.toFixed(1)}% (${pct(tor.blankPct, base.blankPct)}) | ` +
-    `opening ${base.opening} -> ${cyl.opening} -> ${tor.opening}`,
+      `cyl ${cyl.blankPct.toFixed(1)}% (${pct(cyl.blankPct, base.blankPct)}), ` +
+      `torus ${tor.blankPct.toFixed(1)}% (${pct(tor.blankPct, base.blankPct)}) | ` +
+      `opening ${base.opening} -> ${cyl.opening} -> ${tor.opening}`,
   );
 }
 
@@ -135,10 +142,13 @@ for (const dSq of [0.206, 0.24, 0.27]) {
   let bestGap = Infinity;
   for (let dt = Math.max(0.05, dSq - 0.06); dt <= dSq + 0.01; dt += 0.005) {
     const gap = Math.abs(probe('square', 'both', W, H, dt).blankPct - target);
-    if (gap < bestGap) { bestGap = gap; best = dt; }
+    if (gap < bestGap) {
+      bestGap = gap;
+      best = dt;
+    }
   }
   console.log(
     `  square ${(dSq * 100).toFixed(1)}% -> torus ${(best * 100).toFixed(1)}%` +
-    `   (${((best - dSq) * 100).toFixed(1)} points)`,
+      `   (${((best - dSq) * 100).toFixed(1)} points)`,
   );
 }

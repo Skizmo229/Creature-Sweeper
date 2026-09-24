@@ -91,16 +91,19 @@ function everyOpeningSize(grid: Game['grid']): number[] {
 describe('numbers', () => {
   it('sums neighbouring tiers rather than counting creatures', () => {
     const game = Game.create(tinyConfig(), 1);
-    paint(game, [
-      '........',
-      '.1.1....',
-      '..X.....', // X marks the cell under test; painted as empty below
-      '.2......',
-      '........',
-      '........',
-      '........',
-      '........',
-    ].map((r) => r.replace('X', '.')));
+    paint(
+      game,
+      [
+        '........',
+        '.1.1....',
+        '..X.....', // X marks the cell under test; painted as empty below
+        '.2......',
+        '........',
+        '........',
+        '........',
+        '........',
+      ].map((r) => r.replace('X', '.')),
+    );
     // neighbours of (2,2): 1 at (1,1), 1 at (3,1), 2 at (1,3) -> 4, from 3 creatures
     expect(game.grid[2]![2]!.num).toBe(4);
   });
@@ -162,8 +165,16 @@ describe('open()', () => {
 
   it('fights an alive creature and awards EXP', () => {
     const game = Game.create(tinyConfig(), 7);
-    paint(game, ['........', '.1......', '........', '........',
-                 '........', '........', '........', '........']);
+    paint(game, [
+      '........',
+      '.1......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
     const events = game.open(1, 1);
     expect(events.some((e) => e.type === 'battle' && e.defeated)).toBe(true);
     expect(game.ex).toBe(1);
@@ -177,8 +188,16 @@ describe('open()', () => {
     // open ground: refused, and nothing about the cell changes.
     const game = Game.create(tinyConfig(), 7);
     // two creatures, so defeating one does not end the board
-    paint(game, ['........', '.1......', '........', '........',
-                 '........', '........', '......1.', '........']);
+    paint(game, [
+      '........',
+      '.1......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '......1.',
+      '........',
+    ]);
     game.open(1, 1);
     expect(game.status).toBe('playing');
     const before = { ...game.grid[1]![1]! };
@@ -188,8 +207,16 @@ describe('open()', () => {
 
   it('ends the game when HP runs out', () => {
     const game = Game.create(tinyConfig({ hp: 2 }), 7);
-    paint(game, ['........', '.3......', '........', '........',
-                 '........', '........', '........', '........']);
+    paint(game, [
+      '........',
+      '.3......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
     game.open(1, 1); // level 1 vs tier 3 costs 6 — fatal at 2 HP
     expect(game.status).toBe('lost');
     expect(game.hp).toBe(0);
@@ -197,8 +224,16 @@ describe('open()', () => {
 
   it('wins a battle board once the last creature falls', () => {
     const game = Game.create(tinyConfig(), 7);
-    paint(game, ['1.......', '........', '........', '........',
-                 '........', '........', '........', '........']);
+    paint(game, [
+      '1.......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
     const events = game.open(0, 0);
     expect(events.some((e) => e.type === 'won')).toBe(true);
     expect(game.status).toBe('won');
@@ -207,8 +242,16 @@ describe('open()', () => {
   it('wins a search board once every empty cell is open', () => {
     const cfg = tinyConfig({ search: true, startLevel: 0, exp: [9999, 9999] });
     const game = Game.create(cfg, 7);
-    paint(game, ['1.......', '........', '........', '........',
-                 '........', '........', '........', '........']);
+    paint(game, [
+      '1.......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
     for (const row of game.grid) {
       for (const cell of row) if (cell.tier === 0) game.open(cell.x, cell.y);
     }
@@ -227,8 +270,16 @@ describe('marks', () => {
 
   it('blocks clicks on a cell marked above your level', () => {
     const game = Game.create(tinyConfig(), 7);
-    paint(game, ['........', '.3......', '........', '........',
-                 '........', '........', '........', '........']);
+    paint(game, [
+      '........',
+      '.3......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
     game.setMark(1, 1, 3); // level is 1, so this locks the cell
     expect(game.open(1, 1)[0]).toMatchObject({ type: 'blocked', reason: 'mark-guard' });
     expect(game.grid[1]![1]!.open).toBe(false);
@@ -236,8 +287,16 @@ describe('marks', () => {
 
   it('lets a mark at or below your level through', () => {
     const game = Game.create(tinyConfig(), 7);
-    paint(game, ['........', '.1......', '........', '........',
-                 '........', '........', '........', '........']);
+    paint(game, [
+      '........',
+      '.1......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
     game.setMark(1, 1, 1);
     game.open(1, 1);
     expect(game.grid[1]![1]!.open).toBe(true);
@@ -258,7 +317,10 @@ describe('marks', () => {
 describe('determinism', () => {
   it('produces an identical board from the same seed', () => {
     const layout = (seed: number) =>
-      Game.create(tinyConfig({ opening: 'auto' }), seed).grid.flat().map((c) => c.tier).join('');
+      Game.create(tinyConfig({ opening: 'auto' }), seed)
+        .grid.flat()
+        .map((c) => c.tier)
+        .join('');
     expect(layout(12345)).toBe(layout(12345));
     expect(layout(12345)).not.toBe(layout(54321));
   });
@@ -267,8 +329,16 @@ describe('determinism', () => {
 describe('sweep and marks', () => {
   it('subtracts creatures you can already see, not just the raw number', () => {
     const game = Game.create(tinyConfig(), 7);
-    paint(game, ['3.......', '........', '........', '........',
-                 '........', '........', '........', '........']);
+    paint(game, [
+      '3.......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
     // (1,1) sees a 3, so nothing around it is provably free at LV1...
     expect(game.safeCells()).toHaveLength(0);
     // ...but once that tier-3 is dead and visible, the 3 hides nothing at all.
@@ -279,9 +349,17 @@ describe('sweep and marks', () => {
 
   it('uses the marked value to reach further', () => {
     const game = Game.create(tinyConfig({ tiers: 5, quantity: [1, 0, 0, 1, 0] }), 7);
-    paint(game, ['4.......', '........', '..1.....', '........',
-                 '........', '........', '........', '........']);
-    game.open(1, 1);                       // reveals a 5: the tier-4 plus the tier-1
+    paint(game, [
+      '4.......',
+      '........',
+      '..1.....',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
+    game.open(1, 1); // reveals a 5: the tier-4 plus the tier-1
     expect(game.grid[1]![1]!.num).toBe(5);
 
     // 5 hides more than LV1 can promise, so nothing is provable yet.
@@ -291,15 +369,23 @@ describe('sweep and marks', () => {
     game.setMark(0, 0, 4);
     const assisted = game.safeCells();
     expect(assisted.length).toBeGreaterThan(0);
-    expect(assisted.every((c) => c.mark === 0)).toBe(true);   // never the claim itself
+    expect(assisted.every((c) => c.mark === 0)).toBe(true); // never the claim itself
     expect(assisted).not.toContain(game.grid[0]![0]);
   });
 
   it('ignores marks that contradict the number', () => {
     const game = Game.create(tinyConfig(), 7);
-    paint(game, ['1.......', '........', '........', '........',
-                 '........', '........', '........', '........']);
-    game.setMark(0, 1, 5);   // claims 5 beside a cell whose whole number is 1
+    paint(game, [
+      '1.......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
+    game.setMark(0, 1, 5); // claims 5 beside a cell whose whole number is 1
     const cell = game.grid[1]![1]!;
     expect(cell.num).toBe(1);
     // Over-claiming must not make everything look safe.
@@ -308,8 +394,16 @@ describe('sweep and marks', () => {
 
   it('never opens a cell marked above your level, even mark-assisted', () => {
     const game = Game.create(tinyConfig(), 7);
-    paint(game, ['........', '........', '........', '........',
-                 '........', '........', '........', '........']);
+    paint(game, [
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
     game.setMark(3, 3, 5);
     game.open(0, 0);
     expect(game.safeCells()).not.toContain(game.grid[3]![3]);
@@ -318,9 +412,17 @@ describe('sweep and marks', () => {
   it('can cost HP when a mark is wrong — the price of the assumption', () => {
     const build = () => {
       const g = Game.create(tinyConfig(), 7, UNGATED_SWEEP);
-      paint(g, ['........', '.3......', '........', '........',
-                '........', '........', '........', '........']);
-      g.open(2, 2);              // reveals a 3: the tier-3 at (1,1)
+      paint(g, [
+        '........',
+        '.3......',
+        '........',
+        '........',
+        '........',
+        '........',
+        '........',
+        '........',
+      ]);
+      g.open(2, 2); // reveals a 3: the tier-3 at (1,1)
       expect(g.grid[2]![2]!.num).toBe(3);
       return g;
     };
@@ -337,7 +439,7 @@ describe('sweep and marks', () => {
     lied.sweep();
     // The bad claim made the real tier-3 look free, and it charged for it.
     expect(lied.grid[1]![1]!.alive).toBe(false);
-    expect(lied.hp).toBe(lied.maxHp - 6);   // damage(level 1, tier 3) === 6
+    expect(lied.hp).toBe(lied.maxHp - 6); // damage(level 1, tier 3) === 6
   });
 });
 
@@ -364,8 +466,16 @@ describe('notes — candidate-set pencil marks', () => {
 
   it('blocks a click only when EVERY candidate is out of reach', () => {
     const game = Game.create(tinyConfig(), 7);
-    paint(game, ['........', '.3......', '..2.....', '........',
-                 '........', '........', '........', '........']);
+    paint(game, [
+      '........',
+      '.3......',
+      '..2.....',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
     // Level 1. "This is a 2 or a 3" — both fatal to touch, so the guard holds.
     game.toggleNote(1, 1, 2);
     game.toggleNote(1, 1, 3);
@@ -382,10 +492,18 @@ describe('notes — candidate-set pencil marks', () => {
 
   it('an empty note mask is "no notes", never "nothing is possible"', () => {
     const game = Game.create(tinyConfig(), 7);
-    paint(game, ['........', '.3......', '........', '........',
-                 '........', '........', '........', '........']);
+    paint(game, [
+      '........',
+      '.3......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
     game.toggleNote(1, 1, 3);
-    game.toggleNote(1, 1, 3);   // back to blank
+    game.toggleNote(1, 1, 3); // back to blank
     expect(game.grid[1]![1]!.notes).toBe(0);
     // Neither guarded nor swept: a blank cell is simply unannotated.
     expect(game.sweep().some((e) => e.type === 'battle')).toBe(false);
@@ -394,8 +512,16 @@ describe('notes — candidate-set pencil marks', () => {
 
   it('never makes a cell sweepable, however low the candidates are', () => {
     const game = Game.create(tinyConfig(), 7);
-    paint(game, ['........', '.1......', '........', '........',
-                 '........', '........', '........', '........']);
+    paint(game, [
+      '........',
+      '.1......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
     // A pencil mark says "I have not ruled these out", not "it is one of
     // these". Acting on it charges the player for thinking out loud.
     game.toggleNote(1, 1, 0);
@@ -411,9 +537,17 @@ describe('notes — candidate-set pencil marks', () => {
     // The asymmetry that makes notes safe to use as scratch work: the guard
     // reads them, Sweep does not.
     const game = Game.create(tinyConfig(), 7);
-    paint(game, ['........', '.3......', '........', '........',
-                 '........', '........', '........', '........']);
-    game.toggleNote(1, 1, 1);            // it is really a 3
+    paint(game, [
+      '........',
+      '.3......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
+    game.toggleNote(1, 1, 1); // it is really a 3
     game.sweep();
     expect(game.grid[1]![1]!.alive).toBe(true);
     expect(game.hp).toBe(game.maxHp);
@@ -421,17 +555,24 @@ describe('notes — candidate-set pencil marks', () => {
 
   it('never sweeps a cell its own notes rule out, even when the number proves it', () => {
     const game = Game.create(tinyConfig(), 7);
-    paint(game, ['........', '.1......', '........', '........',
-                 '........', '........', '........', '........']);
-    game.open(2, 2);                     // a 1: the number alone proves (1,1) free
+    paint(game, [
+      '........',
+      '.1......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
+    game.open(2, 2); // a 1: the number alone proves (1,1) free
     expect(game.safeCells({ useMarks: false }).map((c) => [c.x, c.y])).toContainEqual([1, 1]);
 
-    game.toggleNote(1, 1, 3);            // the player insists it is a 3
+    game.toggleNote(1, 1, 3); // the player insists it is a 3
     expect(game.safeCells().map((c) => [c.x, c.y])).not.toContainEqual([1, 1]);
     game.sweep();
     expect(game.grid[1]![1]!.alive).toBe(true);
   });
-
 });
 
 /**
@@ -447,8 +588,14 @@ describe('the crawl rule', () => {
   function crawlBoard(over: Partial<BoardConfig> = {}): Game {
     const game = Game.create(tinyConfig({ reach: 2, startLevel: 3, ...over }), 7);
     paint(game, [
-      '........', '........', '........', '........',
-      '........', '........', '........', '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
     ]);
     game.grid[0]![0]!.open = true;
     return game;
@@ -502,8 +649,14 @@ describe('the crawl rule', () => {
   it('does not apply to a board that has none', () => {
     const game = Game.create(tinyConfig({ reach: 0 }), 7);
     paint(game, [
-      '........', '........', '........', '........',
-      '........', '........', '........', '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
     ]);
     expect(game.inReach(game.grid[7]![7]!)).toBe(true);
     expect(game.sealedIn()).toBe(false);
@@ -524,8 +677,14 @@ describe('the crawl rule', () => {
     function sealed(): Game {
       const game = Game.create(tinyConfig({ reach: 2, startLevel: 1, tiers: 3 }), 7);
       paint(game, [
-        '.33.....', '333.....', '333.....', '........',
-        '........', '........', '........', '........',
+        '.33.....',
+        '333.....',
+        '333.....',
+        '........',
+        '........',
+        '........',
+        '........',
+        '........',
       ]);
       game.grid[0]![0]!.open = true;
       return game;
@@ -567,8 +726,9 @@ describe('the crawl rule', () => {
     it('reads the level, not a spell the player happens to be holding', () => {
       const game = sealed();
       game.exerciseCharge = 2;
-      expect(game.sealedIn(), 'a purchase should never be the thing that unsticks a run')
-        .toBe(true);
+      expect(game.sealedIn(), 'a purchase should never be the thing that unsticks a run').toBe(
+        true,
+      );
     });
 
     it('is not sealed before anything is open at all', () => {

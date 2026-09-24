@@ -49,7 +49,13 @@ export interface VictorySource {
 
 /** The effects that animate the board's creatures rather than covering them. */
 const ICON_EFFECTS: ReadonlySet<string> = new Set<VictoryId>([
-  'tumble', 'cascade', 'pop', 'burn', 'wipe', 'wipeDown', 'wipeRadial',
+  'tumble',
+  'cascade',
+  'pop',
+  'burn',
+  'wipe',
+  'wipeDown',
+  'wipeRadial',
 ]);
 
 /**
@@ -153,7 +159,9 @@ function buildAtlas(theme: TypeTheme, sprites: VictorySprite[]): Atlas {
 }
 
 function blit(
-  ctx: CanvasRenderingContext2D, atlas: Atlas, m: Mover,
+  ctx: CanvasRenderingContext2D,
+  atlas: Atlas,
+  m: Mover,
   opts: { scale?: number; alpha?: number; dx?: number; dy?: number } = {},
 ): void {
   const glyph = atlas.get(m.sprite.tier);
@@ -177,7 +185,10 @@ function blit(
  * finished would leave the board's own creatures hidden for good.
  */
 export function playVictory(
-  host: HTMLElement, effect: VictoryId, theme: TypeTheme, source?: VictorySource,
+  host: HTMLElement,
+  effect: VictoryId,
+  theme: TypeTheme,
+  source?: VictorySource,
 ): () => void {
   const canvas = document.createElement('canvas');
   canvas.className = 'victory-layer';
@@ -192,7 +203,12 @@ export function playVictory(
   host.append(canvas);
 
   const ctx = canvas.getContext('2d');
-  if (!ctx) { canvas.remove(); return () => { /* nothing started */ }; }
+  if (!ctx) {
+    canvas.remove();
+    return () => {
+      /* nothing started */
+    };
+  }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   // The tier palette plus the type's own accent: bright against every floor
@@ -222,7 +238,11 @@ export function playVictory(
 
   const duration = DURATION[chosen];
   const stage: Stage = {
-    w, h, theme, colors, sprites,
+    w,
+    h,
+    theme,
+    colors,
+    sprites,
     atlas: sprites.length ? buildAtlas(theme, sprites) : new Map(),
     seconds: duration / 1000,
   };
@@ -241,7 +261,10 @@ export function playVictory(
     // an unclamped step would teleport everything through the floor.
     const dt = Math.min(1 / 20, Math.max(0, (now - last) / 1000));
     last = now;
-    if (stopped || t >= 1) { finish(); return; }
+    if (stopped || t >= 1) {
+      finish();
+      return;
+    }
 
     if (painter.accumulates) {
       // The trail is the effect, so the canvas is never cleared and the fade
@@ -272,7 +295,10 @@ export function playVictory(
   };
 
   raf = requestAnimationFrame(frame);
-  return () => { stopped = true; finish(); };
+  return () => {
+    stopped = true;
+    finish();
+  };
 }
 
 // ----------------------------------------------------------------- ambient
@@ -380,8 +406,11 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, effect: Victor
 /** Three rings leaving the centre, staggered so they read as a sequence. */
 function drawRipple(
   ctx: CanvasRenderingContext2D,
-  cx: number, cy: number, maxR: number,
-  t: number, colors: readonly string[],
+  cx: number,
+  cy: number,
+  maxR: number,
+  t: number,
+  colors: readonly string[],
 ): void {
   for (let i = 0; i < 3; i++) {
     const local = t * 1.6 - i * 0.18;
@@ -401,11 +430,16 @@ function drawRipple(
 
 function iconPainter(effect: VictoryId, stage: Stage): Painter {
   switch (effect) {
-    case 'tumble': return tumble(stage);
-    case 'cascade': return cascade(stage);
-    case 'pop': return pop(stage);
-    case 'burn': return burn(stage);
-    default: return wipe(effect, stage);
+    case 'tumble':
+      return tumble(stage);
+    case 'cascade':
+      return cascade(stage);
+    case 'pop':
+      return pop(stage);
+    case 'burn':
+      return burn(stage);
+    default:
+      return wipe(effect, stage);
   }
 }
 
@@ -549,7 +583,10 @@ function pop(stage: Stage): Painter {
   const paint = (ctx: CanvasRenderingContext2D, t: number): void => {
     for (const m of items) {
       const local = (t - m.delay) / 0.3;
-      if (local <= 0) { blit(ctx, stage.atlas, m); continue; }
+      if (local <= 0) {
+        blit(ctx, stage.atlas, m);
+        continue;
+      }
       if (local >= 1) continue;
       if (local < 0.55) {
         blit(ctx, stage.atlas, m, { scale: 1 + 0.62 * (local / 0.55) });
@@ -589,7 +626,10 @@ function burn(stage: Stage): Painter {
   const paint = (ctx: CanvasRenderingContext2D, t: number): void => {
     for (const m of items) {
       const local = (t - m.delay) / 0.34;
-      if (local <= 0) { blit(ctx, stage.atlas, m); continue; }
+      if (local <= 0) {
+        blit(ctx, stage.atlas, m);
+        continue;
+      }
 
       const size = m.sprite.size;
       const top = m.y - size / 2;
@@ -628,7 +668,12 @@ function burn(stage: Stage): Painter {
         for (let i = 0; i < 3; i++) {
           const drift = Math.sin(ash * 6 + i * 2.1) * size * 0.22;
           const mote = Math.max(1, size * 0.09);
-          ctx.fillRect(left + size * (0.3 + i * 0.2) + drift, top + size * (0.5 - ash * 0.8), mote, mote);
+          ctx.fillRect(
+            left + size * (0.3 + i * 0.2) + drift,
+            top + size * (0.5 - ash * 0.8),
+            mote,
+            mote,
+          );
         }
         ctx.restore();
       }
@@ -653,11 +698,12 @@ function wipe(effect: VictoryId, stage: Stage): Painter {
   const cx = stage.w / 2;
   const cy = stage.h / 2;
   const maxD = Math.max(1, Math.hypot(cx, cy));
-  const axisOf = effect === 'wipeDown'
-    ? (s: VictorySprite) => s.y / Math.max(1, stage.h)
-    : effect === 'wipeRadial'
-      ? (s: VictorySprite) => Math.hypot(s.x - cx, s.y - cy) / maxD
-      : (s: VictorySprite) => s.x / Math.max(1, stage.w);
+  const axisOf =
+    effect === 'wipeDown'
+      ? (s: VictorySprite) => s.y / Math.max(1, stage.h)
+      : effect === 'wipeRadial'
+        ? (s: VictorySprite) => Math.hypot(s.x - cx, s.y - cy) / maxD
+        : (s: VictorySprite) => s.x / Math.max(1, stage.w);
   const items = movers(stage, axisOf);
 
   const paint = (ctx: CanvasRenderingContext2D, t: number): void => {
@@ -669,14 +715,15 @@ function wipe(effect: VictoryId, stage: Stage): Painter {
     for (const m of items) {
       const local = Math.min(1, Math.max(0, (front - m.axis) / band));
       if (local >= 1) continue;
-      if (local <= 0) { blit(ctx, stage.atlas, m); continue; }
+      if (local <= 0) {
+        blit(ctx, stage.atlas, m);
+        continue;
+      }
       const push = local * m.sprite.size * 0.8;
-      const dx = effect === 'wipeDown' ? 0
-        : effect === 'wipeRadial' ? ((m.x - cx) / maxD) * push * 2
-          : push;
-      const dy = effect === 'wipeDown' ? push
-        : effect === 'wipeRadial' ? ((m.y - cy) / maxD) * push * 2
-          : 0;
+      const dx =
+        effect === 'wipeDown' ? 0 : effect === 'wipeRadial' ? ((m.x - cx) / maxD) * push * 2 : push;
+      const dy =
+        effect === 'wipeDown' ? push : effect === 'wipeRadial' ? ((m.y - cy) / maxD) * push * 2 : 0;
       blit(ctx, stage.atlas, m, { alpha: 1 - local, scale: 1 + 0.45 * local, dx, dy });
     }
 

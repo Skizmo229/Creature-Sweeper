@@ -22,7 +22,9 @@
     "sim:forced": "tsx src/sim/forced.ts",
     "sim:lethal": "tsx src/sim/lethal.ts",
     "sim:golden": "node scripts/golden.mjs",
-    "sim:golden:check": "node scripts/golden.mjs --check"
+    "sim:golden:check": "node scripts/golden.mjs --check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

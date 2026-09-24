@@ -34,7 +34,13 @@ import { writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadLadders } from '../data.js';
-import { type Grid, computeNumbers, findBestOpening, generateGrid, makeCell } from '../engine/board.js';
+import {
+  type Grid,
+  computeNumbers,
+  findBestOpening,
+  generateGrid,
+  makeCell,
+} from '../engine/board.js';
 import { boardConfig } from '../engine/config.js';
 import { mulberry32, type Rng } from '../engine/rng.js';
 import type { BoardConfig } from '../engine/types.js';
@@ -49,11 +55,16 @@ const rng: Rng = mulberry32(31415);
 type Layout = number[][];
 
 const int = (n: number): number => Math.floor(rng() * n);
-const blank = (h: number, w: number): Layout => Array.from({ length: h }, () => new Array<number>(w).fill(0));
+const blank = (h: number, w: number): Layout =>
+  Array.from({ length: h }, () => new Array<number>(w).fill(0));
 
 function free(g: Layout): Array<[number, number]> {
   const out: Array<[number, number]> = [];
-  g.forEach((row, y) => row.forEach((t, x) => { if (t === 0) out.push([y, x]); }));
+  g.forEach((row, y) =>
+    row.forEach((t, x) => {
+      if (t === 0) out.push([y, x]);
+    }),
+  );
   return out;
 }
 
@@ -167,7 +178,9 @@ function banded(h: number, w: number, q: readonly number[]): Layout {
     // Weighted picks without replacement, by the exponential falloff the
     // original used: exp(-|centrality - target| / 0.22).
     const spots = free(g).map(([y, x]) => ({
-      y, x, wgt: Math.exp(-Math.abs(edge(y, x) / Math.max(1, deepest) - target) / 0.22),
+      y,
+      x,
+      wgt: Math.exp(-Math.abs(edge(y, x) / Math.max(1, deepest) - target) / 0.22),
     }));
     let placed = 0;
     for (let k = 0; k < n && spots.length; k++) {
@@ -187,7 +200,12 @@ function banded(h: number, w: number, q: readonly number[]): Layout {
 
 // ---------- measurement: the engine's own numbers and opening ----------
 
-interface Measure { opening: number; zeros: number; avgNum: number; maxNum: number }
+interface Measure {
+  opening: number;
+  zeros: number;
+  avgNum: number;
+  maxNum: number;
+}
 
 function measure(grid: Grid, cfg: BoardConfig): Measure {
   const opening = findBestOpening(grid, false, cfg.topology, cfg.wrap);
@@ -202,21 +220,33 @@ function measure(grid: Grid, cfg: BoardConfig): Measure {
     max = Math.max(max, cell.num);
     if (cell.num === 0) zeros++;
   }
-  return { opening: opening ? opening.cells.length : 0, zeros, avgNum: empty ? sum / empty : 0, maxNum: max };
+  return {
+    opening: opening ? opening.cells.length : 0,
+    zeros,
+    avgNum: empty ? sum / empty : 0,
+    maxNum: max,
+  };
 }
 
 /** Hand a layout to the engine: real cells, real numbers, real adjacency. */
 function fromLayout(layout: Layout, cfg: BoardConfig): Grid {
-  const grid: Grid = layout.map((row, y) => row.map((tier, x) => {
-    const cell = makeCell(x, y);
-    cell.tier = tier;
-    return cell;
-  }));
+  const grid: Grid = layout.map((row, y) =>
+    row.map((tier, x) => {
+      const cell = makeCell(x, y);
+      cell.tier = tier;
+      return cell;
+    }),
+  );
   computeNumbers(grid, cfg.topology, cfg.wrap);
   return grid;
 }
 
-interface Summary { opening: number; zeros: number; avg_num: number; max_num: number }
+interface Summary {
+  opening: number;
+  zeros: number;
+  avg_num: number;
+  max_num: number;
+}
 
 function summarise(runs: Measure[]): Summary {
   const median = (xs: number[]): number => {
@@ -227,7 +257,7 @@ function summarise(runs: Measure[]): Summary {
   return {
     opening: median(runs.map((r) => r.opening)),
     zeros: median(runs.map((r) => r.zeros)),
-    avg_num: Math.round(100 * runs.reduce((s, r) => s + r.avgNum, 0) / runs.length) / 100,
+    avg_num: Math.round((100 * runs.reduce((s, r) => s + r.avgNum, 0)) / runs.length) / 100,
     max_num: median(runs.map((r) => r.maxNum)),
   };
 }
@@ -236,26 +266,39 @@ function summarise(runs: Measure[]): Summary {
 function trial(cfg: BoardConfig, make: () => Grid): Summary | null {
   const runs: Measure[] = [];
   for (let t = 0; t < TRIALS; t++) {
-    try { runs.push(measure(make(), cfg)); } catch { return null; }
+    try {
+      runs.push(measure(make(), cfg));
+    } catch {
+      return null;
+    }
   }
   return summarise(runs);
 }
 
 const ladders = loadLadders();
 const engine = (cfg: BoardConfig) => () => generateGrid(cfg, rng);
-const layout = (cfg: BoardConfig, fn: (h: number, w: number, q: readonly number[]) => Layout) =>
-  () => fromLayout(fn(cfg.height, cfg.width, cfg.quantity), cfg);
+const layout =
+  (cfg: BoardConfig, fn: (h: number, w: number, q: readonly number[]) => Layout) => () =>
+    fromLayout(fn(cfg.height, cfg.width, cfg.quantity), cfg);
 
 // ---------- the original experiment, on three beds ----------
 
-const beds: Array<[string, string]> = [['NORMAL board 5', 'normal'], ['EXTREME board 5', 'extreme'], ['HUGE board 5', 'huge']];
+const beds: Array<[string, string]> = [
+  ['NORMAL board 5', 'normal'],
+  ['EXTREME board 5', 'extreme'],
+  ['HUGE board 5', 'huge'],
+];
 const rows: object[] = [];
 for (const [name, id] of beds) {
   const cfg = boardConfig(ladders, id, 5);
   const creatures = cfg.quantity.reduce((a, b) => a + b, 0);
-  console.log(`\n=== ${name} — ${cfg.width}×${cfg.height}, ${creatures} creatures, ${cfg.quantity.length} tiers ===`);
-  console.log(`${'placement'.padEnd(30)}${'opening'.padStart(9)}${'vs base'.padStart(9)}${'zeros'.padStart(8)}` +
-    `${'avg num'.padStart(9)}${'max num'.padStart(9)}`);
+  console.log(
+    `\n=== ${name} — ${cfg.width}×${cfg.height}, ${creatures} creatures, ${cfg.quantity.length} tiers ===`,
+  );
+  console.log(
+    `${'placement'.padEnd(30)}${'opening'.padStart(9)}${'vs base'.padStart(9)}${'zeros'.padStart(8)}` +
+      `${'avg num'.padStart(9)}${'max num'.padStart(9)}`,
+  );
   const strategies: Array<[string, BoardConfig, () => Grid]> = [
     ['Scatter (current)', cfg, engine(cfg)],
     ['Tier-1 triads in 3×3', cfg, layout(cfg, triads)],
@@ -264,16 +307,25 @@ for (const [name, id] of beds) {
     ['Banded (low rim→high core)', cfg, layout(cfg, banded)],
     ['Scatter + wrap-around', { ...cfg, wrap: 'both' }, engine({ ...cfg, wrap: 'both' })],
     ['Scatter on a hex grid', { ...cfg, topology: 'hex' }, engine({ ...cfg, topology: 'hex' })],
-    ['Checkerboard colours', { ...cfg, placement: 'checker' }, engine({ ...cfg, placement: 'checker' })],
+    [
+      'Checkerboard colours',
+      { ...cfg, placement: 'checker' },
+      engine({ ...cfg, placement: 'checker' }),
+    ],
   ];
   let base = 0;
   for (const [label, c, make] of strategies) {
     const s = trial(c, make);
-    if (!s) { console.log(`${label.padEnd(30)}   cannot be dealt on this bed`); continue; }
+    if (!s) {
+      console.log(`${label.padEnd(30)}   cannot be dealt on this bed`);
+      continue;
+    }
     if (!base) base = s.opening;
-    const delta = base ? Math.round(100 * (s.opening - base) / base) : 0;
-    console.log(`${label.padEnd(30)}${s.opening.toFixed(0).padStart(9)}${`${delta >= 0 ? '+' : ''}${delta}%`.padStart(9)}` +
-      `${s.zeros.toFixed(0).padStart(8)}${s.avg_num.toFixed(2).padStart(9)}${s.max_num.toFixed(0).padStart(9)}`);
+    const delta = base ? Math.round((100 * (s.opening - base)) / base) : 0;
+    console.log(
+      `${label.padEnd(30)}${s.opening.toFixed(0).padStart(9)}${`${delta >= 0 ? '+' : ''}${delta}%`.padStart(9)}` +
+        `${s.zeros.toFixed(0).padStart(8)}${s.avg_num.toFixed(2).padStart(9)}${s.max_num.toFixed(0).padStart(9)}`,
+    );
     rows.push({ bed: name, strategy: label, ...s, delta });
   }
 }
@@ -281,9 +333,13 @@ writeFileSync(resolve(DATA, 'placement.json'), JSON.stringify(rows, null, 1));
 
 // ---------- every shipped rule, against its own creatures scattered ----------
 
-console.log('\n=== each shipped placement rule on its own board 5, against the same creatures scattered ===');
-console.log(`${'ladder'.padEnd(14)}${'scatter'.padStart(9)}${'rule'.padStart(7)}${'change'.padStart(9)}` +
-  `${'zeros'.padStart(14)}${'avg num'.padStart(16)}`);
+console.log(
+  '\n=== each shipped placement rule on its own board 5, against the same creatures scattered ===',
+);
+console.log(
+  `${'ladder'.padEnd(14)}${'scatter'.padStart(9)}${'rule'.padStart(7)}${'change'.padStart(9)}` +
+    `${'zeros'.padStart(14)}${'avg num'.padStart(16)}`,
+);
 const ruled: object[] = [];
 for (const type of ladders) {
   const cfg = boardConfig(ladders, type.id, 5);
@@ -292,11 +348,21 @@ for (const type of ladders) {
   const scatter = trial(scatterCfg, engine(scatterCfg));
   const rule = trial(cfg, engine(cfg));
   if (!scatter || !rule) continue;
-  const delta = Math.round(100 * (rule.opening - scatter.opening) / Math.max(1, scatter.opening));
-  console.log(`${type.name.padEnd(14)}${scatter.opening.toFixed(0).padStart(9)}${rule.opening.toFixed(0).padStart(7)}` +
-    `${`${delta >= 0 ? '+' : ''}${delta}%`.padStart(9)}${`${scatter.zeros} → ${rule.zeros}`.padStart(14)}` +
-    `${`${scatter.avg_num.toFixed(2)} → ${rule.avg_num.toFixed(2)}`.padStart(16)}`);
-  ruled.push({ ladder: type.name, id: type.id, rule: cfg.placement, cells: cfg.width * cfg.height,
-    creatures: cfg.quantity.reduce((a, b) => a + b, 0), scatter, shipped: rule, delta });
+  const delta = Math.round((100 * (rule.opening - scatter.opening)) / Math.max(1, scatter.opening));
+  console.log(
+    `${type.name.padEnd(14)}${scatter.opening.toFixed(0).padStart(9)}${rule.opening.toFixed(0).padStart(7)}` +
+      `${`${delta >= 0 ? '+' : ''}${delta}%`.padStart(9)}${`${scatter.zeros} → ${rule.zeros}`.padStart(14)}` +
+      `${`${scatter.avg_num.toFixed(2)} → ${rule.avg_num.toFixed(2)}`.padStart(16)}`,
+  );
+  ruled.push({
+    ladder: type.name,
+    id: type.id,
+    rule: cfg.placement,
+    cells: cfg.width * cfg.height,
+    creatures: cfg.quantity.reduce((a, b) => a + b, 0),
+    scatter,
+    shipped: rule,
+    delta,
+  });
 }
 writeFileSync(resolve(DATA, 'placement-rules.json'), JSON.stringify(ruled, null, 1));

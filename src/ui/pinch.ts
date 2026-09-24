@@ -26,7 +26,11 @@ export interface PinchView {
 
 /** Record the start of a pinch from the two fingers and the current view. */
 export function pinchStart(
-  ax: number, ay: number, bx: number, by: number, view: PinchView,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  view: PinchView,
 ): PinchStart {
   const mx = (ax + bx) / 2;
   const my = (ay + by) / 2;
@@ -48,12 +52,21 @@ export function pinchStart(
  * board is drawn on a pixel grid and a fractional cell blurs every edge.
  */
 export function pinchTo(
-  start: PinchStart, ax: number, ay: number, bx: number, by: number,
-  minCell: number, maxCell: number,
+  start: PinchStart,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  minCell: number,
+  maxCell: number,
 ): PinchView {
   const dist = Math.max(1, Math.hypot(ax - bx, ay - by));
-  const cell = Math.max(minCell, Math.min(maxCell, Math.round(start.cell * dist / start.dist)));
+  const cell = Math.max(minCell, Math.min(maxCell, Math.round((start.cell * dist) / start.dist)));
   const mx = (ax + bx) / 2;
   const my = (ay + by) / 2;
-  return { cell, originX: Math.round(mx - start.bx * cell), originY: Math.round(my - start.by * cell) };
+  return {
+    cell,
+    originX: Math.round(mx - start.bx * cell),
+    originY: Math.round(my - start.by * cell),
+  };
 }

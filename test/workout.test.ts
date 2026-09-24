@@ -64,8 +64,16 @@ function paint(game: Game, rows: string[]): void {
   }
 }
 
-const EMPTY = ['........', '........', '........', '........',
-  '........', '........', '........', '........'];
+const EMPTY = [
+  '........',
+  '........',
+  '........',
+  '........',
+  '........',
+  '........',
+  '........',
+  '........',
+];
 
 describe('the rising price', () => {
   it('starts at the base and rises a step with every cast', () => {
@@ -77,7 +85,7 @@ describe('the rising price', () => {
       expect(game.spellCost('exercise')).toBe(30 + 10 * paid.length);
       game.cast('exercise');
       paid.push(before - game.mana);
-      game.open(x, 0);                     // spends the charge on a tier 1
+      game.open(x, 0); // spends the charge on a tier 1
     }
     expect(paid).toEqual([30, 40, 50]);
   });
@@ -88,11 +96,11 @@ describe('the rising price', () => {
     paint(game, ['1......1', ...EMPTY.slice(1)]);
     game.cast('exercise');
     game.open(0, 0);
-    game.mana = 39;                        // enough for the base, not the price
+    game.mana = 39; // enough for the base, not the price
     expect(game.spellCost('exercise')).toBe(40);
     expect(game.canCast('exercise')).toBe(false);
     expect(game.cast('exercise')[0]).toMatchObject({ type: 'blocked', reason: 'no-mana' });
-    expect(game.spellCost('exercise')).toBe(40);   // a refusal does not raise it
+    expect(game.spellCost('exercise')).toBe(40); // a refusal does not raise it
   });
 
   it('does not stack, and a refused second cast neither charges nor raises the price', () => {
@@ -109,9 +117,9 @@ describe('the rising price', () => {
     // A tier 1 pays 1 EXP, doubled to 2 on a borrowed level: exactly LV2.
     const game = Game.create(workoutConfig({ exp: [2, 999, 999, 999] }), 7);
     paint(game, ['1.1.....', ...EMPTY.slice(1)]);
-    game.cast('exercise');                 // 30 -> price 40
-    game.cast('exercise');                 // refused, still 40
-    game.open(0, 0);                       // 2 EXP -> LV2, price back to 30
+    game.cast('exercise'); // 30 -> price 40
+    game.cast('exercise'); // refused, still 40
+    game.open(0, 0); // 2 EXP -> LV2, price back to 30
     expect(game.level).toBe(2);
     expect(game.spellCost('exercise')).toBe(30);
   });
@@ -119,7 +127,7 @@ describe('the rising price', () => {
   it('never goes below the base, however many levels are gained', () => {
     const game = Game.create(workoutConfig({ exp: [2, 3, 999, 999] }), 7);
     paint(game, ['3.......', ...EMPTY.slice(1)]);
-    game.open(0, 0);                       // tier 3 unaided: 4 EXP, LV1 -> LV3
+    game.open(0, 0); // tier 3 unaided: 4 EXP, LV1 -> LV3
     expect(game.level).toBe(3);
     expect(game.exerciseSurcharge).toBe(0);
     expect(game.spellCost('exercise')).toBe(30);
@@ -129,8 +137,8 @@ describe('the rising price', () => {
     const game = Game.create(workoutConfig({ exp: [2, 3, 4, 999] }), 7);
     paint(game, ['3.......', ...EMPTY.slice(1)]);
     game.exerciseSurcharge = 50;
-    game.cast('exercise');                 // pays 80, surcharge 60
-    game.open(0, 0);                       // tier 3 pays 4 x2 = 8 EXP: LV1 -> LV4
+    game.cast('exercise'); // pays 80, surcharge 60
+    game.open(0, 0); // tier 3 pays 4 x2 = 8 EXP: LV1 -> LV4
     expect(game.level).toBe(4);
     expect(game.exerciseSurcharge).toBe(60 - 3 * RULE.relief);
   });
@@ -143,7 +151,7 @@ describe('the rising price', () => {
     game.cast('exercise');
     game.open(0, 0);
     expect(game.spellCost('exercise')).toBe(SPELLS.exercise.cost);
-    expect(game.ex).toBe(1);               // and no bonus EXP either
+    expect(game.ex).toBe(1); // and no bonus EXP either
   });
 });
 
@@ -153,7 +161,7 @@ describe('double EXP', () => {
     paint(game, ['........', '.4......', ...EMPTY.slice(2)]);
     game.cast('exercise');
     const events = game.open(1, 1);
-    expect(game.ex).toBe(16);              // 2^(4-1), doubled
+    expect(game.ex).toBe(16); // 2^(4-1), doubled
     expect(events.some((e) => e.type === 'exercised' && e.bonusExp === 8)).toBe(true);
   });
 

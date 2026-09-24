@@ -13,9 +13,20 @@
 import type { Cell } from '../engine/types.js';
 import type { Game } from '../engine/game.js';
 import {
-  BOARD_OUTLINE, BOND_COLOR, BOX_RULE, CENSUS_COLOR, GIVEN_COLOR, MARK_COLOR, MARK_OUTLINE,
-  NOTE_COLOR, OUT_OF_REACH_COLOR, PIP_SHAPES,
-  type PipShape, type TypeTheme, drawCreature, tierColor,
+  BOARD_OUTLINE,
+  BOND_COLOR,
+  BOX_RULE,
+  CENSUS_COLOR,
+  GIVEN_COLOR,
+  MARK_COLOR,
+  MARK_OUTLINE,
+  NOTE_COLOR,
+  OUT_OF_REACH_COLOR,
+  PIP_SHAPES,
+  type PipShape,
+  type TypeTheme,
+  drawCreature,
+  tierColor,
 } from './theme.js';
 import { FONTS, type GameFont } from './typefaces.js';
 import { hexAt, hexBoardSize, hexCentre, hexPoints, hexRadius, hexRowStep } from './hexgeom.js';
@@ -51,7 +62,10 @@ const GHOST_CELLS = 1;
  * Squares: top, right, bottom, left.
  */
 const SQUARE_EDGE_DIRS: ReadonlyArray<readonly [number, number]> = [
-  [0, -1], [1, 0], [0, 1], [-1, 0],
+  [0, -1],
+  [1, 0],
+  [0, 1],
+  [-1, 0],
 ];
 
 /**
@@ -62,9 +76,23 @@ const SQUARE_EDGE_DIRS: ReadonlyArray<readonly [number, number]> = [
  */
 const HEX_EDGE_DIRS: ReadonlyArray<ReadonlyArray<readonly [number, number]>> = [
   // even rows
-  [[0, -1], [1, 0], [0, 1], [-1, 1], [-1, 0], [-1, -1]],
+  [
+    [0, -1],
+    [1, 0],
+    [0, 1],
+    [-1, 1],
+    [-1, 0],
+    [-1, -1],
+  ],
   // odd rows
-  [[1, -1], [1, 0], [1, 1], [0, 1], [-1, 0], [0, -1]],
+  [
+    [1, -1],
+    [1, 0],
+    [1, 1],
+    [0, 1],
+    [-1, 0],
+    [0, -1],
+  ],
 ];
 
 /**
@@ -131,8 +159,10 @@ function digitMetrics(ctx: CanvasRenderingContext2D, face: GameFont): DigitMetri
 /** A square cell's corners, clockwise from the top-left. */
 function squareCorners(cx: number, cy: number, half: number): Array<[number, number]> {
   return [
-    [cx - half, cy - half], [cx + half, cy - half],
-    [cx + half, cy + half], [cx - half, cy + half],
+    [cx - half, cy - half],
+    [cx + half, cy - half],
+    [cx + half, cy + half],
+    [cx - half, cy + half],
   ];
 }
 
@@ -282,9 +312,7 @@ export class BoardView {
    */
   private stageWatch: ResizeObserver | null = null;
 
-  constructor(
-    canvas: HTMLCanvasElement, cb: BoardViewCallbacks, options: BoardViewOptions = {},
-  ) {
+  constructor(canvas: HTMLCanvasElement, cb: BoardViewCallbacks, options: BoardViewOptions = {}) {
     this.canvas = canvas;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('canvas 2d context unavailable');
@@ -384,7 +412,7 @@ export class BoardView {
     // Invert hexBoardSize for height: rows nest, so solve for the width that
     // makes the stacked rows plus one overhang fit.
     const byH = hex
-      ? availH / ((hexRowStep(1) * (game.config.height - 1)) + 2 * hexRadius(1))
+      ? availH / (hexRowStep(1) * (game.config.height - 1) + 2 * hexRadius(1))
       : availH / (game.config.height + padY);
     const fitted = Math.floor(Math.min(byW, byH));
     // The ceiling caps magnification only. A small board is held at the
@@ -394,7 +422,10 @@ export class BoardView {
     const zoomed = keepZoom && this.cellPx > this.fittedCell;
     this.fittedCell = Math.max(MIN_CELL, Math.min(this.display.maxCell, fitted));
     this.cellPx = zoomed
-      ? Math.max(this.fittedCell, Math.min(this.cellPx, Math.max(this.fittedCell, this.display.maxCell)))
+      ? Math.max(
+          this.fittedCell,
+          Math.min(this.cellPx, Math.max(this.fittedCell, this.display.maxCell)),
+        )
       : this.fittedCell;
 
     this.resizeCanvas(availW, availH);
@@ -484,7 +515,8 @@ export class BoardView {
     }
     const pts = hexPoints(cx, cy, hexRadius(this.cellPx) - inset);
     pts.forEach(([px, py], i) => {
-      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
     });
     ctx.closePath();
   }
@@ -508,12 +540,10 @@ export class BoardView {
     const w = this.boardW;
     const h = this.boardH;
 
-    this.originX = w <= availW
-      ? Math.round((availW - w) / 2)
-      : Math.min(0, Math.max(availW - w, this.originX));
-    this.originY = h <= availH
-      ? Math.round((availH - h) / 2)
-      : Math.min(0, Math.max(availH - h, this.originY));
+    this.originX =
+      w <= availW ? Math.round((availW - w) / 2) : Math.min(0, Math.max(availW - w, this.originX));
+    this.originY =
+      h <= availH ? Math.round((availH - h) / 2) : Math.min(0, Math.max(availH - h, this.originY));
 
     this.canPan = w > availW || h > availH;
     this.canvas.style.cursor = this.canPan ? 'grab' : 'pointer';
@@ -552,9 +582,7 @@ export class BoardView {
     const py = clientY - rect.top - this.originY;
 
     if (!this.isHex) {
-      return this.resolve(
-        game, Math.floor(px / this.cellPx), Math.floor(py / this.cellPx),
-      );
+      return this.resolve(game, Math.floor(px / this.cellPx), Math.floor(py / this.cellPx));
     }
 
     // Hexes do not tile a rectangle, so flooring cannot work. hexgeom does the
@@ -597,7 +625,7 @@ export class BoardView {
     const size = Math.max(1, Math.round(px * m.scale));
     this.ctx.font = `${face.weight} ${size}px ${face.stack}`;
     this.ctx.textBaseline = 'alphabetic';
-    return { centre: (m.ascent - m.descent) / 2 * size, ascent: m.ascent * size };
+    return { centre: ((m.ascent - m.descent) / 2) * size, ascent: m.ascent * size };
   }
 
   /**
@@ -615,11 +643,13 @@ export class BoardView {
     this.awaitingFont = probe;
     document.fonts.load(probe).then(
       () => {
-        if (this.awaitingFont !== probe) return;   // the face changed meanwhile
+        if (this.awaitingFont !== probe) return; // the face changed meanwhile
         this.awaitingFont = null;
         this.render();
       },
-      () => { this.awaitingFont = null; },
+      () => {
+        this.awaitingFont = null;
+      },
     );
   }
 
@@ -636,7 +666,7 @@ export class BoardView {
 
     for (const row of game.grid) {
       for (const cell of row) {
-        if (!cell.present) continue;   // a hole is drawn as nothing at all
+        if (!cell.present) continue; // a hole is drawn as nothing at all
         const { cx, cy } = this.centreOf(cell.x, cell.y);
         if (cell.open) this.drawOpen(cell, cx, cy, theme, game);
         else this.drawCovered(cell, cx, cy, theme);
@@ -787,7 +817,10 @@ export class BoardView {
     if (wrap === 'none') return;
     const wrapY = wrap === 'both';
 
-    const offsets: Array<[number, number]> = [[-1, 0], [1, 0]];
+    const offsets: Array<[number, number]> = [
+      [-1, 0],
+      [1, 0],
+    ];
     if (wrapY) offsets.push([0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]);
 
     const ctx = this.ctx;
@@ -899,8 +932,8 @@ export class BoardView {
           // screen, so joining the two centres would draw a line straight
           // across the board. Only the near case is drawn; the seam itself
           // already says the edges are joined.
-          if (Math.abs(a.cx - b.cx) > this.cellPx * 2
-            || Math.abs(a.cy - b.cy) > this.cellPx * 2) continue;
+          if (Math.abs(a.cx - b.cx) > this.cellPx * 2 || Math.abs(a.cy - b.cy) > this.cellPx * 2)
+            continue;
           // Inset off both centres rather than joining them, so the tie sits
           // in the gap between the two cells and neither glyph is painted
           // over. The number a creature here flips to is its partner's tier,
@@ -1018,7 +1051,11 @@ export class BoardView {
     ctx.fillStyle = CENSUS_COLOR;
     const { ascent } = this.numberFont(size * 0.32);
     ctx.textAlign = 'left';
-    ctx.fillText(String(cell.census), x + Math.max(1, size * 0.04), y + Math.max(0, size * 0.02) + ascent);
+    ctx.fillText(
+      String(cell.census),
+      x + Math.max(1, size * 0.04),
+      y + Math.max(0, size * 0.02) + ascent,
+    );
     ctx.restore();
   }
 
@@ -1077,7 +1114,7 @@ export class BoardView {
     const w = (box.size - pad * 2) / cols;
     const h = (box.size - pad * 2) / rows;
     const font = Math.round(Math.min(w, h) * 0.86);
-    if (font < 5) return;   // below this the pips are noise, not information
+    if (font < 5) return; // below this the pips are noise, not information
 
     ctx.save();
     const { centre } = this.numberFont(font);
@@ -1107,9 +1144,7 @@ export class BoardView {
     ctx.restore();
   }
 
-  private drawOpen(
-    cell: Cell, cx: number, cy: number, theme: TypeTheme, game: Game,
-  ): void {
+  private drawOpen(cell: Cell, cx: number, cy: number, theme: TypeTheme, game: Game): void {
     const ctx = this.ctx;
     const box = this.contentBox(cx, cy);
 
@@ -1130,8 +1165,12 @@ export class BoardView {
     // Never on a pairing board, by request. The number there is the PARTNER'S
     // tier, and a lone digit over a creature reads as that creature's own
     // level — it confused more than it told.
-    const hoverNumber = cell.tier > 0 && !cell.alive && cell === this.hovered
-      && !this.creaturesHidden && !isPaired(game.config.placement);
+    const hoverNumber =
+      cell.tier > 0 &&
+      !cell.alive &&
+      cell === this.hovered &&
+      !this.creaturesHidden &&
+      !isPaired(game.config.placement);
 
     // DISABLED, with its settings row: "Hovering a creature you have beaten".
     // The cursor over a beaten creature now shows the number underneath, and
@@ -1219,13 +1258,17 @@ export class BoardView {
     c.addEventListener('contextmenu', (e) => e.preventDefault());
 
     // Auto-fit picks a sensible size, but big boards still reward leaning in.
-    c.addEventListener('wheel', (e) => {
-      if (!this.game) return;
-      e.preventDefault();
-      const rect = this.canvas.getBoundingClientRect();
-      const step = e.deltaY < 0 ? 2 : -2;
-      this.zoomAt(this.cellPx + step, e.clientX - rect.left, e.clientY - rect.top);
-    }, { passive: false });
+    c.addEventListener(
+      'wheel',
+      (e) => {
+        if (!this.game) return;
+        e.preventDefault();
+        const rect = this.canvas.getBoundingClientRect();
+        const step = e.deltaY < 0 ? 2 : -2;
+        this.zoomAt(this.cellPx + step, e.clientX - rect.left, e.clientY - rect.top);
+      },
+      { passive: false },
+    );
 
     c.addEventListener('pointerdown', (e) => {
       if (e.button === 2) {
@@ -1236,7 +1279,10 @@ export class BoardView {
       if (e.pointerType === 'touch') {
         if (!this.touches.size) this.gesture = false;
         this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-        if (this.touches.size === 2) { this.beginPinch(); return; }
+        if (this.touches.size === 2) {
+          this.beginPinch();
+          return;
+        }
         if (this.touches.size > 2) return;
       }
       this.dragMoved = false;
@@ -1257,7 +1303,10 @@ export class BoardView {
     c.addEventListener('pointermove', (e) => {
       if (this.touches.has(e.pointerId)) {
         this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-        if (this.pinch && this.touches.size >= 2) { this.movePinch(); return; }
+        if (this.pinch && this.touches.size >= 2) {
+          this.movePinch();
+          return;
+        }
         if (this.gesture) return;
       }
       if (this.dragging) {
@@ -1326,13 +1375,20 @@ export class BoardView {
   private beginPinch(): void {
     const [a, b] = [...this.touches.values()];
     const rect = this.canvas.getBoundingClientRect();
-    this.pinch = pinchStart(a!.x - rect.left, a!.y - rect.top, b!.x - rect.left, b!.y - rect.top,
-      { cell: this.cellPx, originX: this.originX, originY: this.originY });
+    this.pinch = pinchStart(a!.x - rect.left, a!.y - rect.top, b!.x - rect.left, b!.y - rect.top, {
+      cell: this.cellPx,
+      originX: this.originX,
+      originY: this.originY,
+    });
     this.gesture = true;
     this.dragging = false;
     this.dragMoved = true;
     for (const id of this.touches.keys()) {
-      try { this.canvas.setPointerCapture(id); } catch { /* already released */ }
+      try {
+        this.canvas.setPointerCapture(id);
+      } catch {
+        /* already released */
+      }
     }
   }
 
@@ -1340,8 +1396,15 @@ export class BoardView {
     if (!this.pinch) return;
     const [a, b] = [...this.touches.values()];
     const rect = this.canvas.getBoundingClientRect();
-    const next = pinchTo(this.pinch, a!.x - rect.left, a!.y - rect.top, b!.x - rect.left, b!.y - rect.top,
-      this.fittedCell, Math.max(this.fittedCell, this.display.maxCell));
+    const next = pinchTo(
+      this.pinch,
+      a!.x - rect.left,
+      a!.y - rect.top,
+      b!.x - rect.left,
+      b!.y - rect.top,
+      this.fittedCell,
+      Math.max(this.fittedCell, this.display.maxCell),
+    );
     this.cellPx = next.cell;
     this.originX = next.originX;
     this.originY = next.originY;

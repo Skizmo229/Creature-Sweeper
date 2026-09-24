@@ -109,7 +109,8 @@ function check(names) {
     });
     const lines = (diff.stdout || '').split('\n');
     console.log(lines.slice(0, 80).join('\n'));
-    if (lines.length > 80) console.log(`... (${lines.length - 80} more lines; full output at ${actual})`);
+    if (lines.length > 80)
+      console.log(`... (${lines.length - 80} more lines; full output at ${actual})`);
     else fs.unlinkSync(actual);
   }
   console.log(failed === 0 ? '\nall golden outputs match' : `\n${failed} golden output(s) differ`);

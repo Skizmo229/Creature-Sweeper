@@ -12,7 +12,13 @@ import { describe, expect, it } from 'vitest';
 import { loadLadders } from '../src/data.js';
 import { boardConfig, findType, type LadderType } from '../src/engine/config.js';
 import {
-  dealTiles, dominoCreatures, dominoFault, dominoQuantity, dominoSet, setsIn, type Tile,
+  dealTiles,
+  dominoCreatures,
+  dominoFault,
+  dominoQuantity,
+  dominoSet,
+  setsIn,
+  type Tile,
 } from '../src/engine/dominoes.js';
 import { isPaired } from '../src/engine/pairs.js';
 import { mulberry32 } from '../src/engine/rng.js';
@@ -38,7 +44,10 @@ function tilesOn(game: Game): Tile[] {
   for (const cell of game.grid.flat()) {
     if (!cell.present || cell.tier === 0) continue;
     const partner = game.neighboursOf(cell).find((n) => n.tier > 0)!;
-    const key = [cell, partner].map((c) => `${c.x},${c.y}`).sort().join('|');
+    const key = [cell, partner]
+      .map((c) => `${c.x},${c.y}`)
+      .sort()
+      .join('|');
     if (seen.has(key)) continue;
     seen.add(key);
     out.push([cell.tier, partner.tier]);
@@ -78,16 +87,16 @@ describe('a full domino set', () => {
 
   it('recovers the set count from a quantity, and refuses one that is not a set', () => {
     expect(setsIn(6, dominoQuantity(6, 3))).toBe(3);
-    expect(setsIn(6, [7, 7, 7, 7, 7, 8])).toBeNull();   // not flat
-    expect(setsIn(6, [6, 6, 6, 6, 6, 6])).toBeNull();   // flat, but not a multiple of 7
-    expect(setsIn(6, [7, 7, 7])).toBeNull();            // wrong length
+    expect(setsIn(6, [7, 7, 7, 7, 7, 8])).toBeNull(); // not flat
+    expect(setsIn(6, [6, 6, 6, 6, 6, 6])).toBeNull(); // flat, but not a multiple of 7
+    expect(setsIn(6, [7, 7, 7])).toBeNull(); // wrong length
   });
 });
 
 describe('the dealer', () => {
   it('puts both ends of a tile on the two halves of one domino', () => {
     // `choosePairs` returns partner-adjacent cells; the deal has to respect it.
-    const pairs = [...Array(dominoCreatures(5) ).keys()];
+    const pairs = [...Array(dominoCreatures(5)).keys()];
     const dealt = dealTiles(pairs, 5, 1, mulberry32(7));
     const tiles: Tile[] = [];
     for (let i = 0; i < pairs.length; i += 2) tiles.push([dealt.get(i)!, dealt.get(i + 1)!]);
@@ -208,7 +217,9 @@ describe('it inherits every pairing proof', () => {
 
 describe('the boundary', () => {
   const bend = (quantity: number[]): LadderType => ({
-    ...dominoes, id: 'bent', extended: [],
+    ...dominoes,
+    id: 'bent',
+    extended: [],
     boards: [{ ...dominoes.boards[0]!, quantity, tiers: quantity.length }],
   });
 

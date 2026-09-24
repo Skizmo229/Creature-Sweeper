@@ -37,29 +37,38 @@ interface TypeResult {
 let failures = 0;
 
 console.log(
-  'type'.padEnd(15) + 'pool'.padStart(6) + 'heal'.padStart(6) +
-  'boards'.padStart(8) + 'completed'.padStart(11) + 'hp lost'.padStart(9) +
-  'min hp'.padStart(8) + 'first stall'.padStart(13),
+  'type'.padEnd(15) +
+    'pool'.padStart(6) +
+    'heal'.padStart(6) +
+    'boards'.padStart(8) +
+    'completed'.padStart(11) +
+    'hp lost'.padStart(9) +
+    'min hp'.padStart(8) +
+    'first stall'.padStart(13),
 );
 
 for (const type of ladders) {
   const result: TypeResult = {
-    completed: 0, hpLost: 0, worstBoard: type.boards.length, minHpSeen: type.run_hp,
+    completed: 0,
+    hpLost: 0,
+    worstBoard: type.boards.length,
+    minHpSeen: type.run_hp,
   };
 
   for (let r = 0; r < runs; r++) {
     const run = FullRun.start(ladders, type.id, 0x5eed0000 + r);
     for (;;) {
       result.minHpSeen = Math.min(result.minHpSeen, run.hp);
-      const board = type.search
-        ? autoplaySearch(run.game)
-        : autoplayTierOrder(run.game);
+      const board = type.search ? autoplaySearch(run.game) : autoplayTierOrder(run.game);
       result.hpLost += board.hpLost;
       if (!board.cleared) {
         result.worstBoard = Math.min(result.worstBoard, run.boardIndex);
         break;
       }
-      if (run.status === 'won') { result.completed++; break; }
+      if (run.status === 'won') {
+        result.completed++;
+        break;
+      }
       run.advance();
     }
   }
@@ -68,23 +77,23 @@ for (const type of ladders) {
   if (!ok) failures++;
   console.log(
     type.name.padEnd(15) +
-    String(type.run_hp).padStart(6) +
-    String(Math.floor(type.run_hp / 2)).padStart(6) +
-    String(type.boards.length).padStart(8) +
-    `${result.completed}/${runs}`.padStart(11) +
-    String(result.hpLost).padStart(9) +
-    String(result.minHpSeen).padStart(8) +
-    (result.completed === runs ? '-' : String(result.worstBoard)).padStart(13) +
-    (ok ? '' : '   <-- FAILED'),
+      String(type.run_hp).padStart(6) +
+      String(Math.floor(type.run_hp / 2)).padStart(6) +
+      String(type.boards.length).padStart(8) +
+      `${result.completed}/${runs}`.padStart(11) +
+      String(result.hpLost).padStart(9) +
+      String(result.minHpSeen).padStart(8) +
+      (result.completed === runs ? '-' : String(result.worstBoard)).padStart(13) +
+      (ok ? '' : '   <-- FAILED'),
   );
 }
 
 console.log(
   `\n${ladders.length - failures}/${ladders.length} full runs completed by every seed ` +
-  `at full HP (${runs} runs each, ${runs * ladders.length * 10} boards simulated).`,
+    `at full HP (${runs} runs each, ${runs * ladders.length * 10} boards simulated).`,
 );
 console.log(
   'A full pool at the end means the heal was never needed — which is the ' +
-  'zero-damage guarantee still holding ten boards deep.',
+    'zero-damage guarantee still holding ten boards deep.',
 );
 process.exit(failures === 0 ? 0 : 1);
