@@ -554,21 +554,6 @@ export function tierGilded(tier: number): boolean {
   return tier > TIER_COLORS.length;
 }
 
-function hexToRgb(hex: string): [number, number, number] {
-  return [
-    parseInt(hex.slice(1, 3), 16),
-    parseInt(hex.slice(3, 5), 16),
-    parseInt(hex.slice(5, 7), 16),
-  ];
-}
-
-export function mixHex(a: string, b: string, t: number): string {
-  const [ar, ag, ab] = hexToRgb(a);
-  const [br, bg, bb] = hexToRgb(b);
-  const to = (x: number) => Math.round(x).toString(16).padStart(2, '0');
-  return `#${to(ar + (br - ar) * t)}${to(ag + (bg - ag) * t)}${to(ab + (bb - ab) * t)}`;
-}
-
 /** Which of the nine grid positions are lit, per die face. */
 const DIE_FACES: Record<number, readonly number[]> = {
   1: [4],

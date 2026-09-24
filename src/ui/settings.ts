@@ -73,33 +73,6 @@ export const HIGHLIGHT_NAMES: Record<HighlightStyle, string> = {
 };
 
 /**
- * What the cursor does to a creature you have already beaten.
- *
- * 'none' is the game as it was before this setting existed: hovering a
- * defeated creature changes nothing about it.
- *
- * 'tier' is the default. It writes that creature's level over its glyph, in
- * the level's own colour, and reveals NOTHING — the pips already say the
- * tier, and this is the same fact written as a digit instead of counted —
- * which is why it belongs here among the presentation settings and can never
- * touch a record. What it saves is the counting: at nine tiers a glyph is
- * nine pips, and telling eight from nine at a glance is genuinely slow, which
- * is why it is the default rather than 'none'.
- *
- * Anything else is a PipShape, and restyles the hovered glyph into that shape.
- * It is the thinnest of the three today, because every tier of every type is
- * drawn from the same die-face pips and the shape is decoration — it earns its
- * place when there is real per-creature art to swap to, and the option exists
- * now so that the setting does not have to be invented then.
- */
-export type HoverDefeated = 'none' | 'tier' | PipShape;
-
-export const HOVER_DEFEATED_NAMES: Record<'none' | 'tier', string> = {
-  none: 'Nothing — leave it as it is',
-  tier: 'Show its level, in that level’s own colour',
-};
-
-/**
  * How large the interface's text can be set, as a multiple of the browser's
  * own size. Applied as the root font size, which every size in the stylesheet
  * is written against, so the HUD, the menus and this screen all follow it and
@@ -129,8 +102,6 @@ export interface PresentationSettings {
    * the stroke crosses the pips and some players read it as clutter.
    */
   readonly strikeDefeated: boolean;
-  /** What the cursor does to a creature you have already beaten. */
-  readonly hoverDefeated: HoverDefeated;
   /** Ceiling for manual zoom, in CSS pixels per cell. */
   readonly maxZoom: number;
   /** Size of the interface's text — HUD, menus, settings — as a multiple. */
@@ -156,7 +127,6 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   victory: DEFAULT,
   highlight: DEFAULT,
   strikeDefeated: true,
-  hoverDefeated: 'tier',
   maxZoom: DEFAULT_MAX_ZOOM,
   textSize: DEFAULT_TEXT_SIZE,
   muted: false,
@@ -211,12 +181,6 @@ function readPresentation(raw: unknown): PresentationSettings {
     victory: str('victory', DEFAULT) as VictoryChoice,
     highlight: str('highlight', DEFAULT) as HighlightChoice,
     strikeDefeated: typeof p.strikeDefeated === 'boolean' ? p.strikeDefeated : true,
-    // Same argument as `icons` above: an unknown pip shape falls through
-    // `drawCreature`'s own default, so a value written by a newer build is
-    // kept rather than thrown away. Only a save that never wrote this field
-    // takes the default; `persist` writes every field whenever it writes one,
-    // so a save that has touched any setting carries its own value here.
-    hoverDefeated: str('hoverDefeated', 'tier') as HoverDefeated,
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
     // A save from before this setting has no field, and reads as the size the
     // game always had.

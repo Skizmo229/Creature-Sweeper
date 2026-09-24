@@ -207,8 +207,3 @@ export class FullRun {
     return Game.create(cfg, this.boardSeed(board), { startHp, settings: this.settings });
   }
 }
-
-/** Whether a type can be run at all — a run needs a ladder to run down. */
-export function hasFullRun(ladders: Ladders, typeId: string): boolean {
-  return findType(ladders, typeId).boards.length > 1;
-}

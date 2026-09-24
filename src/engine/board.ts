@@ -59,11 +59,6 @@ export function dirsFor(topology: Topology, y: number): ReadonlyArray<readonly [
   return topology === 'hex' ? HEX_DIRS[y & 1]! : DIRS;
 }
 
-/** How many neighbours a cell has away from the edges. */
-export function neighbourCount(topology: Topology): number {
-  return topology === 'hex' ? 6 : 8;
-}
-
 export type Grid = Cell[][];
 
 export function makeCell(x: number, y: number): Cell {

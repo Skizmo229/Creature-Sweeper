@@ -85,21 +85,6 @@ export class Game {
   private exploreProgress = 0;
 
   /**
-   * False until the player's first real action on this board.
-   *
-   * It is NOT what starts the clock, and deliberately so. A board deals its
-   * opening before the player touches anything, and reading that opening is
-   * the first thing you do — so the clock starts when the board is dealt and
-   * this flag answers a different question: whether the player has done
-   * anything here yet.
-   *
-   * No caller today. Kept because "untouched board" is a real distinction the
-   * engine is the only thing that can make, and because the alternative is for
-   * the next feature that wants it to re-derive it from the grid.
-   */
-  started = false;
-
-  /**
    * Cells opened BY HAND since the last sweep, for the charge gate.
    *
    * Only hand-opened cells count, which is what stops the meter feeding
@@ -466,7 +451,6 @@ export class Game {
       return [{ type: 'blocked', reason: 'note-guard' }];
     }
 
-    this.started = true;
     if (!this.sweeping) this.sweepCharge++;
     const events: GameEvent[] = [];
     const revealed = this.reveal(cell);
@@ -652,7 +636,6 @@ export class Game {
     if (from === to) return [];
 
     this.applyMark(cell, to);
-    this.started = true;
     return [{ type: 'marked', x, y, from, to }];
   }
 
@@ -688,7 +671,6 @@ export class Game {
     const to = toggleNoteBit(from, tier);
     if (from === to) return events;
     cell.notes = to;
-    this.started = true;
     events.push({ type: 'noted', x, y, from, to });
     return events;
   }
@@ -982,7 +964,6 @@ export class Game {
     if (id === 'exercise' && this.config.workout) {
       this.exerciseSurcharge += this.config.workout.step;
     }
-    this.started = true;
     events.push(
       target
         ? { type: 'spell', id, x: target.x, y: target.y, detail }
