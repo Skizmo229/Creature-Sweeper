@@ -11,7 +11,6 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { boardConfig, findType, type LadderType } from '../src/engine/config.js';
 import { neighbours } from '../src/engine/board.js';
 import {
@@ -25,14 +24,10 @@ import { packsIn } from '../src/engine/packs.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import { Game } from '../src/engine/game.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';
-import { DEFAULT_GAMEPLAY } from '../src/engine/settings.js';
 import type { Cell } from '../src/engine/types.js';
+import { ladders, PLACEMENT_SEEDS as SEEDS, UNGATED_SWEEP } from './helpers.js';
 
-const UNGATED_SWEEP = { settings: { ...DEFAULT_GAMEPLAY, sweep: 'on' as const } };
-
-const ladders = loadLadders();
 const congo = findType(ladders, 'congo');
-const SEEDS = [0xc0ffee, 0x5eed, 0xbeef, 0x1d10, 0xfeed];
 
 function allRows(type: LadderType) {
   return [...type.boards, ...type.extended];

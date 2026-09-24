@@ -10,13 +10,12 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { boardConfig, findType } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
 import { FullRun } from '../src/engine/run.js';
 import { autoplaySearch, autoplayTierOrder } from '../src/sim/autoplay.js';
+import { ladders } from './helpers.js';
 
-const ladders = loadLadders();
 const SEED = 0x5eed;
 
 /** Play a run to its end with the omniscient tier-order player. */

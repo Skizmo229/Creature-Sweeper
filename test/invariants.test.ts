@@ -6,7 +6,6 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { boardConfig, cumulativeExp, findType } from '../src/engine/config.js';
 import { presentCellCount } from '../src/engine/board.js';
 import { dungeonMap } from '../src/engine/dungeon.js';
@@ -15,25 +14,7 @@ import { Game } from '../src/engine/game.js';
 import { autoplaySearch, autoplayTierOrder } from '../src/sim/autoplay.js';
 import { clearableWithoutGuessing } from '../src/engine/sudoku.js';
 import { hiddenCap, shadeForTier, shadeOf } from '../src/engine/checker.js';
-import { DEFAULT_GAMEPLAY } from '../src/engine/settings.js';
-
-/**
- * Settings with the Sweep gate taken off.
- *
- * The tuned default charges Sweep by ten hand-opened cells. A test about what
- * a sweep FINDS says so explicitly rather than opening ten unrelated cells
- * first — which on a Sudoku board would also change what there is to find.
- */
-const UNGATED_SWEEP = { settings: { ...DEFAULT_GAMEPLAY, sweep: 'on' as const } };
-
-const ladders = loadLadders();
-const battleTypes = ladders.filter((t) => !t.search);
-const SEEDS = [0xc0ffee, 0x5eed, 0xbeef];
-
-/** Every board config of one game type. */
-function boardsOf(typeId: string) {
-  return findType(ladders, typeId).boards.map((row) => boardConfig(ladders, typeId, row.n));
-}
+import { ladders, battleTypes, boardsOf, SEEDS, UNGATED_SWEEP } from './helpers.js';
 
 describe('ladder data', () => {
   it('has twenty-four types of ten boards', () => {

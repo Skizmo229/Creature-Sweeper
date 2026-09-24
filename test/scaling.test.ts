@@ -13,7 +13,6 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import {
   boardConfig,
   cumulativeExp,
@@ -24,8 +23,8 @@ import {
 import { presentCellCount } from '../src/engine/board.js';
 import { Game } from '../src/engine/game.js';
 import { autoplaySearch, autoplayTierOrder } from '../src/sim/autoplay.js';
+import { ladders } from './helpers.js';
 
-const ladders = loadLadders();
 const SEEDS = [0xc0ffee, 0x5eed];
 
 /** Every board past the tuned ladder, as configs. */

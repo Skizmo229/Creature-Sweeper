@@ -11,7 +11,6 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { boardConfig } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
 import { hasNote, noteTiers } from '../src/engine/notes.js';
@@ -19,9 +18,7 @@ import { packCandidates } from '../src/engine/packs.js';
 import { pairCandidates } from '../src/engine/pairs.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import type { Cell } from '../src/engine/types.js';
-
-const ladders = loadLadders();
-const SEEDS = [0xc0ffee, 0x5eed, 0xbeef];
+import { ladders, SEEDS } from './helpers.js';
 
 /** Every placement the gate knows about, on boards from both ends of each
  *  ladder. Sudoku stops at board 5 because the late boards are slow to deal. */

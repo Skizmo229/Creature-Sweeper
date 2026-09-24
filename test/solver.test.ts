@@ -10,15 +10,14 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { boardConfig } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import type { Cell } from '../src/engine/types.js';
 import { play } from '../src/sim/honest.js';
 import { solve } from '../src/sim/solver.js';
+import { ladders } from './helpers.js';
 
-const ladders = loadLadders();
 const covered = (game: Game): Cell[] => game.grid.flat().filter((c) => c.present && !c.open);
 
 describe('the complete deducer', () => {

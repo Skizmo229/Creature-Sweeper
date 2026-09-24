@@ -10,7 +10,6 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { boardConfig, findType } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
 import { FullRun } from '../src/engine/run.js';
@@ -27,8 +26,8 @@ import {
   snapRatio,
 } from '../src/engine/settings.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';
+import { ladders } from './helpers.js';
 
-const ladders = loadLadders();
 const SEED = 0x5eed;
 
 const dials = (patch: Partial<GameplaySettings>): GameplaySettings => ({

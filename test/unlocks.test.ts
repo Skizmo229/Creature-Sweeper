@@ -10,10 +10,8 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { Progress, type SaveData } from '../src/ui/progress.js';
-
-const ladders = loadLadders();
+import { ladders } from './helpers.js';
 
 /**
  * A save with a given set of types fully cleared and their boards recorded,
