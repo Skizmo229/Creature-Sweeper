@@ -1,0 +1,104 @@
+// @vitest-environment happy-dom
+/**
+ * A smoke test of the screens: boots the app in a DOM, starts boards, drives the keyboard and
+ * the mode toggles, and reads the HUD and hint back. It exists so the app.ts split (and anything
+ * after it) can be checked against what the screens say, not only against the engine.
+ */
+
+import './setup.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import type { Game } from '../../src/engine/game.js';
+import { App } from '../../src/ui/app.js';
+
+/** The app's surface as the test drives it, private members included, the way the dev console does. */
+interface Driver {
+  play(typeId: string, board: number, seed?: number): void;
+  readonly current: Game | null;
+  pickSpell(id: string): void;
+  onCellPrimary(x: number, y: number): void;
+  showSettings(back: () => void): void;
+  buildGameScreen(): void;
+  pendingSpell: string | null;
+  notesMode: boolean;
+  markMode: number;
+}
+
+const key = (k: string, extra: KeyboardEventInit = {}): void => {
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, ...extra }));
+};
+
+const text = (selector: string): string =>
+  document.querySelector<HTMLElement>(selector)?.textContent ?? '';
+
+let app: Driver;
+
+beforeEach(() => {
+  localStorage.clear();
+  document.body.innerHTML = '<div id="app"></div>';
+  app = new App(document.getElementById('app')!) as unknown as Driver;
+});
+
+describe('the app', () => {
+  it('boots to the ladder list with every type on it', () => {
+    expect(document.querySelectorAll('.type-card').length).toBe(24);
+    expect(text('h1')).toContain('Creature Sweeper');
+    expect(document.querySelector('.mute-toggle')).not.toBeNull();
+  });
+
+  it('starts a board and shows the HUD and the hint', () => {
+    app.play('normal', 1, 7);
+    expect(document.querySelector('.screen.game')).not.toBeNull();
+    expect(text('.hud')).toContain('HP');
+    expect(text('.hud')).toContain('Level');
+    expect(text('.hint')).toMatch(/^Click to open/);
+    expect(app.current?.status).toBe('playing');
+  });
+
+  it('opens a cell the engine proves safe', () => {
+    app.play('normal', 1, 7);
+    const game = app.current!;
+    const before = game.grid.flat().filter((c) => c.open).length;
+    const safe = game.safeCells({ useMarks: false })[0]!;
+    app.onCellPrimary(safe.x, safe.y);
+    expect(game.grid.flat().filter((c) => c.open).length).toBeGreaterThan(before);
+    expect(game.hp).toBe(game.maxHp);
+  });
+
+  it('N switches the entry mode and arms a pencil tier', () => {
+    app.play('normal', 1, 7);
+    key('n');
+    expect(app.notesMode).toBe(true);
+    expect(app.markMode).toBe(1);
+    expect(text('.hint')).toMatch(/^PENCIL/);
+    key('n');
+    expect(app.notesMode).toBe(false);
+    expect(app.markMode).toBe(-1);
+    expect(text('.hint')).toMatch(/^Click to open/);
+  });
+
+  it('Escape cancels an armed spell, and pencil mode clears one too', () => {
+    app.play('arcane', 1, 7);
+    app.pickSpell('reveal');
+    expect(app.pendingSpell).toBe('reveal');
+    expect(text('.hint')).toContain('Reveal is armed');
+    key('Escape');
+    expect(app.pendingSpell).toBeNull();
+    expect(text('.hint')).toMatch(/^Click to open/);
+
+    app.pickSpell('reveal');
+    key('n');
+    expect(app.pendingSpell).toBeNull();
+    expect(app.notesMode).toBe(true);
+  });
+
+  it('opens the settings screen from a board and comes back to the same board', () => {
+    app.play('normal', 2, 7);
+    const game = app.current;
+    app.showSettings(() => app.buildGameScreen());
+    expect(document.querySelector('.settings-screen')).not.toBeNull();
+    expect(document.querySelectorAll('.settings-row').length).toBeGreaterThan(10);
+    document.querySelector<HTMLButtonElement>('.settings-screen .title-bar button')!.click();
+    expect(document.querySelector('.screen.game')).not.toBeNull();
+    expect(app.current).toBe(game);
+  });
+});
