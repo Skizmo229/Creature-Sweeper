@@ -23,9 +23,15 @@
     "sim:lethal": "tsx src/sim/lethal.ts"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/node": "^22.10.2",
+    "eslint": "^9.39.5",
+    "globals": "^17.12.0",
+    "knip": "^5.88.1",
+    "prettier": "^3.9.9",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
+    "typescript-eslint": "^8.70.1",
     "vite": "^6.4.3",
     "vitest": "^2.1.8"
   }
