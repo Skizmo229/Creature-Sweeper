@@ -59,6 +59,7 @@
 import type { Cell, Placement } from '../types.js';
 import { noteBit } from '../notes.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
+import { type PlacementRow, type PlacementRule, boardName } from './rule.js';
 
 /**
  * Does the pairing rule hold on a board with this placement?
@@ -101,7 +102,7 @@ const PAIR_ATTEMPTS = 60;
  * HERE, at the config boundary with the arithmetic in the message, rather than
  * as an occasional seed that cannot be placed.
  */
-export const PAIR_MAX_DENSITY = 0.26;
+const PAIR_MAX_DENSITY = 0.26;
 
 /**
  * Lay down `total / 2` dominoes among `candidates`, no two touching.
@@ -260,3 +261,36 @@ export function pairingFault(
   }
   return null;
 }
+
+/**
+ * The pairing rule's structural requirements. An even total, because every creature has exactly
+ * one partner; it is the only constraint pairing puts on `quantity`, and `ladders.py` rounds its
+ * quota down to meet it. And a density the packing can reach, against the cells a creature may
+ * stand on: the quota has to land exactly because C_k assumed it, so a schedule asking for too
+ * many would not make a hard board, it would make one that fails on some seeds and is mistuned on
+ * the rest.
+ */
+function validatePairs(row: PlacementRow): void {
+  const where = boardName(row);
+  const total = row.quantity.reduce((a, b) => a + b, 0);
+  if (total % 2 !== 0) {
+    throw new Error(
+      `${where}: ${total} creatures cannot pair up — every creature has ` +
+        `exactly one partner, so the total must be even`,
+    );
+  }
+  const share = total / row.cells;
+  if (share > PAIR_MAX_DENSITY) {
+    throw new Error(
+      `${where}: ${total} creatures on ${row.cells} cells is ` +
+        `${(100 * share).toFixed(1)}%, past the ${(100 * PAIR_MAX_DENSITY).toFixed(0)}% ` +
+        `a non-touching domino packing can be laid down reliably`,
+    );
+  }
+}
+
+export const PAIRS_RULE: PlacementRule = {
+  id: 'pairs',
+  validate: validatePairs,
+  opening: 'auto',
+};

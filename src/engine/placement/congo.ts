@@ -55,6 +55,8 @@
 
 import type { Cell } from '../types.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
+import { type PlacementRow, type PlacementRule, boardName } from './rule.js';
+import { packsIn } from './packs.js';
 
 /** Restarts allowed before a board is refused. PACKS's argument. */
 const CONGO_ATTEMPTS = 60;
@@ -436,3 +438,38 @@ export function congoFault(
   }
   return null;
 }
+
+/**
+ * The congo rule's requirements: PACKS's, plus a plain square board. A line is defined by
+ * orthogonal steps, which hex does not have, and a wrapped seam would let a line step off one edge
+ * and on at the other: legal to `neighbours()`, invisible as a line on screen, and a case the
+ * "no 2x2" proof would have to be re-argued for. Refused rather than half-supported.
+ */
+function validateCongo(row: PlacementRow): void {
+  const where = boardName(row);
+  if (row.topology === 'hex' || (row.wrap && row.wrap !== 'none')) {
+    throw new Error(
+      `${where}: congo lines step orthogonally, so they need an unwrapped square board`,
+    );
+  }
+  if (packsIn(row.tiers, row.quantity) === null) {
+    throw new Error(
+      `${where}: quantity [${row.quantity.join(',')}] is not a whole number of lines — ` +
+        `a line is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
+    );
+  }
+  const share = row.monsters / row.cells;
+  if (share > CONGO_MAX_DENSITY) {
+    throw new Error(
+      `${where}: ${row.monsters} creatures on ${row.cells} cells is ` +
+        `${(100 * share).toFixed(1)}%, past the ${(100 * CONGO_MAX_DENSITY).toFixed(0)}% ` +
+        `non-touching lines can be laid down reliably`,
+    );
+  }
+}
+
+export const CONGO_RULE: PlacementRule = {
+  id: 'congo',
+  validate: validateCongo,
+  opening: 'auto',
+};

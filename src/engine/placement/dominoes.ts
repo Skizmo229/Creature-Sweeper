@@ -43,6 +43,8 @@
  */
 
 import { type Rng, randInt, shuffle } from '../rng.js';
+import { type PlacementRow, type PlacementRule, boardName } from './rule.js';
+import { PAIRS_RULE } from './pairs.js';
 
 /** One tile: two tiers, in no particular order. */
 export type Tile = readonly [number, number];
@@ -176,3 +178,27 @@ export function dominoFault(
   }
   return null;
 }
+
+/**
+ * The domino rule's structural requirements: everything PAIRS requires, checked by the pairing
+ * rule itself so the two cannot drift, plus the set. `quantity` must be exactly a whole number of
+ * double-T sets, flat at T+1 of each tier per set; a quantity merely close to one would generate
+ * and be tuned correctly, and would not be the mode, because the dealer could not lay a full set.
+ */
+function validateDominoes(row: PlacementRow): void {
+  if (setsIn(row.tiers, row.quantity) === null) {
+    const per = row.tiers + 1;
+    throw new Error(
+      `${boardName(row)}: quantity [${row.quantity.join(',')}] is not a whole number of ` +
+        `double-${row.tiers} domino sets — a set is ${per} of every tier, so the ` +
+        `quantity has to be flat and a multiple of ${per}`,
+    );
+  }
+  PAIRS_RULE.validate(row);
+}
+
+export const DOMINOES_RULE: PlacementRule = {
+  id: 'dominoes',
+  validate: validateDominoes,
+  opening: 'auto',
+};

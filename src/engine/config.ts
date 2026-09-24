@@ -7,11 +7,7 @@
  */
 
 import type { BoardConfig, OpeningRule, Placement, WorkoutRule } from './types.js';
-import { sideTotals } from './placement/checker.js';
-import { PAIR_MAX_DENSITY } from './placement/pairs.js';
-import { setsIn } from './placement/dominoes.js';
-import { PACK_MAX_DENSITY, packsIn } from './placement/packs.js';
-import { CONGO_MAX_DENSITY } from './placement/congo.js';
+import { RULES, isPlacement, placementRule } from './placement/registry.js';
 import { SPELLS, type SpellId, isSpellId, orderSpells } from './spells.js';
 
 /** One board's row as `ladders.py` emits it. */
@@ -62,10 +58,7 @@ export interface LadderType {
    * Absent or 0 means the whole board, which is every type but DUNGEON.
    */
   reach?: number;
-  /**
-   * 'sudoku' constrains tiers to a Sudoku solution; 'checker' sends even
-   * tiers to the light squares and odd ones to the dark. Absent is uniform.
-   */
+  /** A key of the placement registry (`src/engine/placement/registry.ts`). Absent is uniform. */
   placement?: string;
   /**
    * The HP pool a Full Run gets for all ten boards, taken from board 1.
@@ -244,263 +237,29 @@ function readShape(type: LadderType): (typeof SHAPES)[number] {
 }
 
 /**
- * The checkerboard rule's structural requirements.
- *
- * Same argument as the Sudoku block below and the cave's cell count: none of
- * these would throw on a board, they would just quietly produce a different
- * mode from the one that was tuned, and a player cannot tell which one they
- * are on.
- *
- * Two colours, so a hex grid is out on arithmetic rather than on taste — a
- * hexagonal tiling cannot be two-coloured at all, so there is no rule to
- * apply. A carved or cut-out shape is out because the colour split of a mask
- * is not the colour split of its bounding box: the mode promises the two sides
- * hold the same number of enemies, and on a shape that promise would depend on
- * the silhouette, which for a cave depends on the seed.
- *
- * An even cell count is what makes the two colours exactly equal, so the
- * balance below is a statement about the creatures alone and never about
- * having one more square to put them on.
- *
- * And a wrapped axis must be even in cells, or the seam joins two squares of
- * the same colour and the colouring stops being a colouring. No ladder wraps
- * one today; the condition is cheap to state and silent to get wrong.
- */
-function readChecker(type: LadderType, row: LadderBoard): 'checker' {
-  const where = `${type.id}#${row.n}`;
-  if (type.topology === 'hex') {
-    throw new Error(`${type.id}: a hex tiling has no two-colouring, so there is no checkerboard`);
-  }
-  if (type.shape && type.shape !== 'rect') {
-    throw new Error(
-      `${type.id}: the checkerboard needs a rectangle — a "${type.shape}" mask splits ` +
-        `between the colours by its silhouette, and the mode promises an even split`,
-    );
-  }
-  if ((row.w * row.h) % 2 !== 0) {
-    throw new Error(
-      `${where}: ${row.w}x${row.h} is an odd number of cells, so one colour has ` +
-        `a square more than the other`,
-    );
-  }
-  const wrap = type.wrap ?? 'none';
-  if (wrap !== 'none' && row.w % 2 !== 0) {
-    throw new Error(`${where}: joining left to right across an odd width meets two light squares`);
-  }
-  if (wrap === 'both' && row.h % 2 !== 0) {
-    throw new Error(`${where}: joining top to bottom across an odd height meets two light squares`);
-  }
-
-  // The balance promise, checked rather than assumed. `ladders.py` apportions
-  // each parity its own half of the creature budget to hit this; a ladder that
-  // stopped doing so would still generate, and would still be tuned correctly,
-  // but it would no longer be the mode.
-  const { light, dark } = sideTotals(row.quantity);
-  if (Math.abs(light - dark) > 1) {
-    throw new Error(
-      `${where}: ${dark} odd-tier creatures against ${light} even-tier ones. ` +
-        `The colours must carry within one of each other`,
-    );
-  }
-  const half = (row.w * row.h) / 2;
-  if (dark > half || light > half) {
-    throw new Error(
-      `${where}: ${Math.max(light, dark)} creatures of one parity want ` +
-        `${half} squares of that colour`,
-    );
-  }
-  return 'checker';
-}
-
-/**
- * The pairing rule's structural requirements.
- *
- * Same argument as the checkerboard block above and the cave's cell count:
- * neither of these would throw on a board, they would quietly produce a
- * different mode from the one that was tuned, and a player cannot tell which
- * one they are on.
- *
- * An EVEN total, because every creature has exactly one partner and an odd one
- * has nobody. This is the only constraint pairing puts on `quantity`, and it
- * is a much lighter one than the checkerboard's — pairing ignores tiers, so a
- * tier 2 may partner a tier 7 and the distribution is left entirely alone.
- * `ladders.py` rounds its quota down to even to meet it.
- *
- * And a density the packing can actually reach. Dominoes that may not touch
- * jam well below a board's capacity, and the quota has to be hit EXACTLY
- * because C_k assumed it — so a schedule that asked for too many would not
- * produce a hard board, it would produce a board that fails to generate on
- * some seeds and is mistuned on the rest. Refused here, with the arithmetic in
- * the message, rather than deep inside a lay-down that ran out of room.
- */
-function readPairs(type: LadderType, row: LadderBoard): 'pairs' {
-  const where = `${type.id}#${row.n}`;
-  const total = row.quantity.reduce((a, b) => a + b, 0);
-  if (total % 2 !== 0) {
-    throw new Error(
-      `${where}: ${total} creatures cannot pair up — every creature has ` +
-        `exactly one partner, so the total must be even`,
-    );
-  }
-  // Against the cells a creature may actually stand on, which on a shaped
-  // board is fewer than the bounding box and on a dungeon fewer again.
-  const share = total / row.cells;
-  if (share > PAIR_MAX_DENSITY) {
-    throw new Error(
-      `${where}: ${total} creatures on ${row.cells} cells is ` +
-        `${(100 * share).toFixed(1)}%, past the ${(100 * PAIR_MAX_DENSITY).toFixed(0)}% ` +
-        `a non-touching domino packing can be laid down reliably`,
-    );
-  }
-  return 'pairs';
-}
-
-/**
- * The domino rule's structural requirements.
- *
- * Everything PAIRS requires, because a domino board IS a pairing board — the
- * even total and the packing ceiling are checked by `readPairs` itself rather
- * than restated here, so the two cannot drift. What this adds is the set.
- *
- * `quantity` must be exactly a whole number of double-T sets: flat, at T+1 of
- * each tier per set. Same argument as the Sudoku block below and the
- * checkerboard's balance: a board whose quantity were merely CLOSE to a set
- * would still generate and still be tuned correctly — and would not be the
- * mode, because the dealer could not lay a full set onto it. It is refused
- * here, with the arithmetic, rather than on the first seed that tries.
- */
-function readDominoes(type: LadderType, row: LadderBoard): 'dominoes' {
-  const where = `${type.id}#${row.n}`;
-  if (setsIn(row.tiers, row.quantity) === null) {
-    const per = row.tiers + 1;
-    throw new Error(
-      `${where}: quantity [${row.quantity.join(',')}] is not a whole number of ` +
-        `double-${row.tiers} domino sets — a set is ${per} of every tier, so the ` +
-        `quantity has to be flat and a multiple of ${per}`,
-    );
-  }
-  readPairs(type, row);
-  return 'dominoes';
-}
-
-/**
- * The pack rule's structural requirements, for the same reason as the domino
- * set's: a quantity merely CLOSE to whole packs would still be tuned correctly
- * and still generate — and would not be the mode, because the dealer could not
- * put one of every tier into every pack.
- *
- * `quantity` must be flat, n of every tier for n packs. And the density must be
- * one the packing can reach, because the quota has to be landed exactly.
- */
-function readPacks(type: LadderType, row: LadderBoard): 'packs' {
-  const where = `${type.id}#${row.n}`;
-  if (packsIn(row.tiers, row.quantity) === null) {
-    throw new Error(
-      `${where}: quantity [${row.quantity.join(',')}] is not a whole number of packs — ` +
-        `a pack is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
-    );
-  }
-  const share = row.monsters / row.cells;
-  if (share > PACK_MAX_DENSITY) {
-    throw new Error(
-      `${where}: ${row.monsters} creatures on ${row.cells} cells is ` +
-        `${(100 * share).toFixed(1)}%, past the ${(100 * PACK_MAX_DENSITY).toFixed(0)}% ` +
-        `non-touching packs can be laid down reliably`,
-    );
-  }
-  return 'packs';
-}
-
-/**
- * The congo rule's requirements: PACKS's, plus a plain square board. A line is
- * defined by ORTHOGONAL steps, which hex does not have, and a wrapped seam
- * would let a line step off one edge and on at the other — legal to
- * `neighbours()`, invisible as a line on screen, and a case the "no 2x2" proof
- * would have to be re-argued for. Refused rather than half-supported.
- */
-function readCongo(type: LadderType, row: LadderBoard): 'congo' {
-  const where = `${type.id}#${row.n}`;
-  if (type.topology === 'hex' || (type.wrap && type.wrap !== 'none')) {
-    throw new Error(
-      `${where}: congo lines step orthogonally, so they need an unwrapped square board`,
-    );
-  }
-  if (packsIn(row.tiers, row.quantity) === null) {
-    throw new Error(
-      `${where}: quantity [${row.quantity.join(',')}] is not a whole number of lines — ` +
-        `a line is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
-    );
-  }
-  const share = row.monsters / row.cells;
-  if (share > CONGO_MAX_DENSITY) {
-    throw new Error(
-      `${where}: ${row.monsters} creatures on ${row.cells} cells is ` +
-        `${(100 * share).toFixed(1)}%, past the ${(100 * CONGO_MAX_DENSITY).toFixed(0)}% ` +
-        `non-touching lines can be laid down reliably`,
-    );
-  }
-  return 'congo';
-}
-
-/**
- * Sudoku placement carries hard structural requirements, because the rule is
- * what fixes the quantities and therefore C_k. A board that failed any of
- * these would not throw during generation — it would just be tuned against
- * numbers its own layout cannot produce, and the top gate would sit one kill
- * out of reach. Same argument as the cave's cell count.
+ * The board's placement, refusing a row its rule could not honour (each rule's `validate`).
+ * Topology, wrap and shape are passed as the ladder spells them, so a rule's message names what
+ * the data said.
  */
 function readPlacement(type: LadderType, row: LadderBoard): Placement {
   const raw = type.placement ?? 'uniform';
-  if (
-    raw !== 'uniform' &&
-    raw !== 'sudoku' &&
-    raw !== 'checker' &&
-    raw !== 'pairs' &&
-    raw !== 'dominoes' &&
-    raw !== 'packs' &&
-    raw !== 'congo'
-  ) {
-    throw new Error(
-      `${type.id}: unknown placement "${raw}" ` +
-        `(uniform | sudoku | checker | pairs | dominoes | packs | congo)`,
-    );
+  if (!isPlacement(raw)) {
+    throw new Error(`${type.id}: unknown placement "${raw}" (${Object.keys(RULES).join(' | ')})`);
   }
-  if (raw === 'checker') return readChecker(type, row);
-  if (raw === 'pairs') return readPairs(type, row);
-  if (raw === 'dominoes') return readDominoes(type, row);
-  if (raw === 'packs') return readPacks(type, row);
-  if (raw === 'congo') return readCongo(type, row);
-  if (raw !== 'sudoku') return raw;
-
-  if (row.w !== 9 || row.h !== 9) {
-    throw new Error(`${type.id}#${row.n}: sudoku needs a 9x9 board, got ${row.w}x${row.h}`);
-  }
-  if (row.tiers !== 8) {
-    throw new Error(
-      `${type.id}#${row.n}: sudoku uses the nine digits 0-8, so 8 creature ` +
-        `tiers plus empty ground — got ${row.tiers}`,
-    );
-  }
-  if (row.quantity.length !== 8 || row.quantity.some((n) => n !== 9)) {
-    throw new Error(
-      `${type.id}#${row.n}: sudoku places each tier exactly nine times; ` +
-        `quantity is [${row.quantity.join(',')}]`,
-    );
-  }
-  if (
-    type.topology === 'hex' ||
-    (type.wrap && type.wrap !== 'none') ||
-    (type.shape && type.shape !== 'rect')
-  ) {
-    throw new Error(`${type.id}: sudoku's rows, columns and boxes need a plain square 9x9`);
-  }
-  const givens = row.givens ?? 0;
-  if (givens < 1 || givens > 72) {
-    throw new Error(
-      `${type.id}#${row.n}: givens is ${givens}; it must be between 1 and 72 ` +
-        `(the creatures — a given on empty ground says nothing, since the opening reveals it)`,
-    );
-  }
+  placementRule(raw).validate({
+    typeId: type.id,
+    n: row.n,
+    width: row.w,
+    height: row.h,
+    tiers: row.tiers,
+    quantity: row.quantity,
+    cells: row.cells,
+    monsters: row.monsters,
+    givens: row.givens,
+    topology: type.topology,
+    wrap: type.wrap,
+    shape: type.shape,
+  });
   return raw;
 }
 
@@ -568,11 +327,7 @@ export function boardConfig(
     search: type.search,
     placement,
     givens: row.givens ?? 0,
-    // The Sudoku opening is its nine empty cells. The cascade rule cannot
-    // produce it: a cascade needs a zero cell with no creature neighbours, and
-    // at 100% density there is no such cell, so 'auto' would silently fall
-    // through to the single-cell fallback.
-    opening: options.opening ?? (placement === 'sudoku' ? 'empties' : 'auto'),
+    opening: options.opening ?? placementRule(placement).opening,
     reach: readReach(type),
     spells,
     startMana: type.start_mana ?? 0,

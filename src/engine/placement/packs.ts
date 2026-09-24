@@ -55,6 +55,7 @@
 import type { Cell, Placement } from '../types.js';
 import { noteBit } from '../notes.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
+import { type PlacementRow, type PlacementRule, boardName } from './rule.js';
 
 /**
  * Does the pack rule hold on a board with this placement?
@@ -327,3 +328,33 @@ export function packFault(
   }
   return null;
 }
+
+/**
+ * The pack rule's structural requirements. `quantity` must be flat, n of every tier for n packs;
+ * a quantity merely close to whole packs would still generate and be tuned correctly, and would
+ * not be the mode. And the density must be one the packing can reach, because the quota has to
+ * land exactly.
+ */
+function validatePacks(row: PlacementRow): void {
+  const where = boardName(row);
+  if (packsIn(row.tiers, row.quantity) === null) {
+    throw new Error(
+      `${where}: quantity [${row.quantity.join(',')}] is not a whole number of packs — ` +
+        `a pack is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
+    );
+  }
+  const share = row.monsters / row.cells;
+  if (share > PACK_MAX_DENSITY) {
+    throw new Error(
+      `${where}: ${row.monsters} creatures on ${row.cells} cells is ` +
+        `${(100 * share).toFixed(1)}%, past the ${(100 * PACK_MAX_DENSITY).toFixed(0)}% ` +
+        `non-touching packs can be laid down reliably`,
+    );
+  }
+}
+
+export const PACKS_RULE: PlacementRule = {
+  id: 'packs',
+  validate: validatePacks,
+  opening: 'auto',
+};
