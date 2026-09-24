@@ -221,4 +221,11 @@ export const DOMINOES_RULE: PlacementRule = {
   validate: validateDominoes,
   opening: 'auto',
   deal: dealDominoes,
+  // A domino board is a pairing board: everything the pairing rule reads, it reads here.
+  coveredCanBeEmpty: PAIRS_RULE.coveredCanBeEmpty,
+  candidates: PAIRS_RULE.candidates,
+  guessFree: PAIRS_RULE.guessFree,
+  cap: PAIRS_RULE.cap,
+  ringProof: PAIRS_RULE.ringProof,
+  emptied: PAIRS_RULE.emptied,
 };

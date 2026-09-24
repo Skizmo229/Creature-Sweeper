@@ -18,9 +18,7 @@ import {
   manaRewardFor,
 } from './settings.js';
 import { hasNote, hasNotes, lowestNote, noteBit, toggleNote as toggleNoteBit } from './notes.js';
-import { allowsTier } from './placement/checker.js';
-import { isPaired, pairCandidates } from './placement/pairs.js';
-import { isPacked, packCandidates } from './placement/packs.js';
+import { placementRule } from './placement/registry.js';
 import { mulberry32 } from './rng.js';
 import { SPELL_EFFECTS } from './cast.js';
 import { computeSealed, withinReach } from './reach.js';
@@ -338,42 +336,22 @@ export class Game {
 
   /**
    * The tiers this covered cell could still be holding by the placement rule
-   * alone, as a note mask — what the pencil may offer here.
+   * alone, as a note mask: what the pencil may offer here. The rule's own
+   * `candidates`, read off what is on screen, and tier 0 refused where the
+   * opening uncovered every empty cell.
    *
-   * Only what the rule says outright, read off what is already on screen: the
-   * square's colour on CHECKERBOARD, the partner's number beside a defeated
-   * creature on a pairing board (`pairCandidates`), the tiers the neighbouring
-   * pack has not shown yet on PACKS and CONGO LINE (`packCandidates`), and on
-   * SUDOKU the fact that the opening uncovered every empty cell, so nothing
-   * covered can be tier 0.
-   * Deliberately NOT anything that takes deduction — a Sudoku row already
-   * holding a 3 does not strike the 3 here. Pencil marks are where the player
-   * does that work, and a pencil that did it for them would be the
+   * Deliberately not anything that takes deduction, or it becomes the
    * auto-candidates convenience that turns Sweep back into a solve button.
-   *
-   * Sound one way only, which is the way that matters: a tier the rule has
-   * not refused stays in even when the numbers could rule it out, and the tier
-   * a cell really holds is never taken out. The tests check the second half on
-   * every covered cell of real boards played part-way.
+   * Sound one way only: the tier a cell really holds is never taken out, which
+   * the tests check on every covered cell of real boards played part-way
+   * (decision 0010).
    */
   noteCandidates(cell: Cell): number {
-    const tiers = this.config.tiers;
-    let mask = (1 << (tiers + 1)) - 1;
-    const { placement } = this.config;
-    if (placement === 'sudoku') mask &= ~noteBit(0);
-    if (placement === 'checker') {
-      for (let t = 1; t <= tiers; t++) {
-        if (!allowsTier(cell.x, cell.y, t)) mask &= ~noteBit(t);
-      }
-    }
-    if (isPaired(placement)) {
-      const pair = pairCandidates(cell, (c) => this.neighboursOf(c));
-      if (pair !== null) mask &= pair;
-    }
-    if (isPacked(placement)) {
-      const pack = packCandidates(cell, (c) => this.neighboursOf(c), tiers);
-      if (pack !== null) mask &= pack;
-    }
+    const rule = placementRule(this.config.placement);
+    let mask = (1 << (this.config.tiers + 1)) - 1;
+    if (!rule.coveredCanBeEmpty) mask &= ~noteBit(0);
+    const allowed = rule.candidates(cell, this);
+    if (allowed !== null) mask &= allowed;
     return mask;
   }
 

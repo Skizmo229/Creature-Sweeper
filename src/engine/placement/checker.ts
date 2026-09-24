@@ -37,7 +37,14 @@
 
 import type { Cell } from '../types.js';
 import { dealByPool } from './deal.js';
-import { type PlacementRow, type PlacementRule, type Pools, boardName } from './rule.js';
+import {
+  NOTHING_EMPTIED,
+  NO_RING_PROOF,
+  type PlacementRow,
+  type PlacementRule,
+  type Pools,
+  boardName,
+} from './rule.js';
 
 /**
  * A cell's colour. Light squares take even tiers, dark squares take odd.
@@ -62,7 +69,7 @@ export function shadeForTier(tier: number): Shade {
 }
 
 /** Could this cell be holding this tier, by the colour rule alone? */
-export function allowsTier(x: number, y: number, tier: number): boolean {
+function allowsTier(x: number, y: number, tier: number): boolean {
   return tier === 0 || shadeForTier(tier) === shadeAt(x, y);
 }
 
@@ -188,4 +195,18 @@ export const CHECKER_RULE: PlacementRule = {
       COLOURS,
       (shade) => ` on the ${shade} squares, which is every tier of that parity`,
     ),
+  coveredCanBeEmpty: true,
+  // The square's colour: the pencil refuses the other parity. Marks are not refused, by decision.
+  candidates: (cell, view) => {
+    let mask = 0;
+    for (let t = 0; t <= view.config.tiers; t++) if (allowsTier(cell.x, cell.y, t)) mask |= 1 << t;
+    return mask;
+  },
+  guessFree: false,
+  // Counted over every cell sharing the sum, marked or not: the parity argument is about what the
+  // cells are, and leaving the marked ones out would make a proof depend on annotation.
+  cap: (cell, hidden, among) =>
+    hiddenCap(shadeOf(cell), hidden, among.filter((c) => shadeOf(c) === 'dark').length),
+  ringProof: NO_RING_PROOF,
+  emptied: NOTHING_EMPTIED,
 };

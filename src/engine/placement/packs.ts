@@ -56,7 +56,16 @@ import type { Cell, Placement } from '../types.js';
 import { noteBit } from '../notes.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
 import { placeDealt, shuffledPool } from './deal.js';
-import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
+import {
+  type Deal,
+  NOTHING_EMPTIED,
+  type PlacementRow,
+  type PlacementRule,
+  type RingProof,
+  type RuleView,
+  WHOLE_SUM,
+  boardName,
+} from './rule.js';
 
 /**
  * Does the pack rule hold on a board with this placement?
@@ -372,6 +381,20 @@ export function packPoolAndCount(d: Deal): { pool: number[]; count: number } {
   return { pool, count };
 }
 
+/**
+ * The pack ring: every covered neighbour of an open creature is a packmate or empty ground, and a
+ * packmate is a tier its pack has not shown, so the ring is free once the strongest of those is
+ * within `level`, and at any level once nothing is missing. Worked out once per sweep, because a
+ * pack's piece is shared by every creature in it.
+ */
+function packRingProof(view: RuleView, level: number): RingProof {
+  const gaps = missingFrom(view.grid.flat(), (c) => view.neighboursOf(c), view.config.tiers);
+  return (cell) => {
+    const gap = gaps.get(cell);
+    return gap !== undefined && gap <= level;
+  };
+}
+
 function dealPackBoard(d: Deal): void {
   const { pool, count } = packPoolAndCount(d);
   const packs = choosePacks(pool, (flat) => d.neighboursOf(flat), count, d.cfg.tiers, d.rng);
@@ -383,4 +406,10 @@ export const PACKS_RULE: PlacementRule = {
   validate: validatePacks,
   opening: 'auto',
   deal: dealPackBoard,
+  coveredCanBeEmpty: true,
+  candidates: (cell, view) => packCandidates(cell, (c) => view.neighboursOf(c), view.config.tiers),
+  guessFree: false,
+  cap: WHOLE_SUM,
+  ringProof: packRingProof,
+  emptied: NOTHING_EMPTIED,
 };

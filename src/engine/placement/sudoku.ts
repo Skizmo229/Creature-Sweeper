@@ -24,7 +24,15 @@
 
 import type { Rng } from '../rng.js';
 import { expForTier } from '../combat.js';
-import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
+import {
+  type Deal,
+  NOTHING_EMPTIED,
+  NO_RING_PROOF,
+  type PlacementRow,
+  type PlacementRule,
+  WHOLE_SUM,
+  boardName,
+} from './rule.js';
 
 export const SUDOKU_SIZE = 9;
 export const SUDOKU_BOX = 3;
@@ -497,4 +505,12 @@ export const SUDOKU_RULE: PlacementRule = {
   // through to the single-cell fallback.
   opening: 'empties',
   deal: fillSudoku,
+  // The opening uncovered every empty cell, so nothing covered can be tier 0. The pencil refuses
+  // nothing else: a row already holding a 3 does not strike the 3, that is the player's work.
+  coveredCanBeEmpty: false,
+  candidates: () => null,
+  guessFree: true,
+  cap: WHOLE_SUM,
+  ringProof: NO_RING_PROOF,
+  emptied: NOTHING_EMPTIED,
 };

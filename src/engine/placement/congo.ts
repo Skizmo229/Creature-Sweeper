@@ -57,7 +57,7 @@ import type { Cell } from '../types.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
 import { placeDealt } from './deal.js';
 import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
-import { packPoolAndCount, packsIn } from './packs.js';
+import { PACKS_RULE, packPoolAndCount, packsIn } from './packs.js';
 
 /** Restarts allowed before a board is refused. PACKS's argument. */
 const CONGO_ATTEMPTS = 60;
@@ -483,4 +483,11 @@ export const CONGO_RULE: PlacementRule = {
   validate: validateCongo,
   opening: 'auto',
   deal: dealCongo,
+  // A congo line is a pack, so every pack reading holds; the line's shape adds `emptied`.
+  coveredCanBeEmpty: PACKS_RULE.coveredCanBeEmpty,
+  candidates: PACKS_RULE.candidates,
+  guessFree: PACKS_RULE.guessFree,
+  cap: PACKS_RULE.cap,
+  ringProof: PACKS_RULE.ringProof,
+  emptied: (view) => congoClear(view.grid, view.config.tiers),
 };

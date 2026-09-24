@@ -60,7 +60,14 @@ import type { Cell, Placement } from '../types.js';
 import { noteBit } from '../notes.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
 import { ONE_POOL, shapeLeftTooFew, shuffledPool, takeInOrder } from './deal.js';
-import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
+import {
+  type Deal,
+  NOTHING_EMPTIED,
+  type PlacementRow,
+  type PlacementRule,
+  WHOLE_SUM,
+  boardName,
+} from './rule.js';
 
 /**
  * Does the pairing rule hold on a board with this placement?
@@ -315,4 +322,10 @@ export const PAIRS_RULE: PlacementRule = {
   validate: validatePairs,
   opening: 'auto',
   deal: dealPairs,
+  coveredCanBeEmpty: true,
+  candidates: (cell, view) => pairCandidates(cell, (c) => view.neighboursOf(c)),
+  guessFree: false,
+  cap: WHOLE_SUM,
+  ringProof: (_view, level) => (cell, ring) => ringIsFree(cell, ring, level),
+  emptied: NOTHING_EMPTIED,
 };
