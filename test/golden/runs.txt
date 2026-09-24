@@ -1,0 +1,31 @@
+$ src/sim/run.ts 3
+type             pool  heal  boards  completed  hp lost  min hp  first stall
+EASY               10     5      10        3/3        0      10            -
+NORMAL             10     5      10        3/3        0      10            -
+HUGE               30    15      10        3/3        0      30            -
+EXTREME            10     5      10        3/3        0      10            -
+HUGE x EXTREME     10     5      10        3/3        0      10            -
+ARCANE             10     5      10        3/3        0      10            -
+ORACLE              8     4      10        3/3        0       8            -
+WRAPAROUND         10     5      10        3/3        0      10            -
+CROSS              10     5      10        3/3        0      10            -
+WRAPPED CROSS      10     5      10        3/3        0      10            -
+HIVE               10     5      10        3/3        0      10            -
+DIAMOND            10     5      10        3/3        0      10            -
+PAIRS              10     5      10        3/3        0      10            -
+DOMINOES           10     5      10        3/3        0      10            -
+WORKOUT            10     5      10        3/3        0      10            -
+PACKS              10     5      10        3/3        0      10            -
+DONUT              10     5      10        3/3        0      10            -
+CHECKERBOARD       10     5      10        3/3        0      10            -
+CONGO LINE         10     5      10        3/3        0      10            -
+RAGGED CAVE        10     5      10        3/3        0      10            -
+DUNGEON            10     5      10        3/3        0      10            -
+SUDOKU             20    10      10        3/3        0      20            -
+BLIND               1     0      10        3/3        0       1            -
+HUGE x BLIND        1     0      10        3/3        0       1            -
+
+24/24 full runs completed by every seed at full HP (3 runs each, 720 boards simulated).
+A full pool at the end means the heal was never needed — which is the zero-damage guarantee still holding ten boards deep.
+
+[exit 0]

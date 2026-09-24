@@ -1,0 +1,9 @@
+$ src/sim/forced.ts 3 arcane 8-10
+ARCANE, board by board, 3 seeds each.
+
+board  density |  honest: stuck  clear   free | complete: forced  clear*  no guess |  undecided  bad  hurt
+   8    32.7% |           9.3    33%   100% |             4.7     67%        0% |          1    0     0
+   9    33.8% |           7.3    67%   100% |             4.7     67%       33% |          0    0     0
+  10    34.5% |           3.3    67%   100% |             0.3    100%       67% |          0    0     0
+
+[exit 0]

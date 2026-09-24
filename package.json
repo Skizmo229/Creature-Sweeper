@@ -20,7 +20,9 @@
     "sim:spells": "tsx src/sim/spellvalue.ts",
     "sim:sudoku": "tsx src/sim/sudoku.ts",
     "sim:forced": "tsx src/sim/forced.ts",
-    "sim:lethal": "tsx src/sim/lethal.ts"
+    "sim:lethal": "tsx src/sim/lethal.ts",
+    "sim:golden": "node scripts/golden.mjs",
+    "sim:golden:check": "node scripts/golden.mjs --check"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
