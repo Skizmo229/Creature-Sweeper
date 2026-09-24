@@ -1,0 +1,35 @@
+# Every push to main and every pull request: the whole check the repo asks of a change
+# (`npm run check`), plus proof that the committed ladder data is what the generator produces.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    name: typecheck, lint, tests, golden sims
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+
+  ladders:
+    # Tuning data flows one way, ladders.py -> design/data/ladders.json -> the engine, and the
+    # engine never copies a number out of it. This proves the committed JSON is the generator's
+    # output and not a hand edit.
+    name: ladders.json is what ladders.py produces
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python design/ladders.py
+      - run: git diff --exit-code -- design/data

@@ -26,7 +26,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
-    "knip": "knip"
+    "knip": "knip",
+    "check": "npm run typecheck && npm run lint && npm run knip && npm run format:check && npm test && npm run sim:golden:check"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
