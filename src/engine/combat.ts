@@ -62,7 +62,10 @@ export interface BattleResult {
  * actually took off you.
  */
 export function resolveBattle(
-  level: number, hp: number, tier: Tier, bite: number = tier,
+  level: number,
+  hp: number,
+  tier: Tier,
+  bite: number = tier,
 ): BattleResult {
   if (tier <= 0) throw new Error('resolveBattle called on empty ground');
 

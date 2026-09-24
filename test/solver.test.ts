@@ -10,22 +10,31 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { boardConfig } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import type { Cell } from '../src/engine/types.js';
 import { play } from '../src/sim/honest.js';
 import { solve } from '../src/sim/solver.js';
+import { ladders } from './helpers.js';
 
-const ladders = loadLadders();
 const covered = (game: Game): Cell[] => game.grid.flat().filter((c) => c.present && !c.open);
 
 describe('the complete deducer', () => {
   it('never calls a cell free that is not, wherever the honest player gets stuck', () => {
     // Every placement rule the solver reads, and a hex grid and a torus, since
     // adjacency is where a model like this goes wrong without failing.
-    const LADDERS = ['extreme', 'oracle', 'hive', 'wraparound', 'checker', 'pairs', 'packs', 'congo', 'dungeon'];
+    const LADDERS = [
+      'extreme',
+      'oracle',
+      'hive',
+      'wraparound',
+      'checker',
+      'pairs',
+      'packs',
+      'congo',
+      'dungeon',
+    ];
     const wrong: string[] = [];
     let freed = 0;
     let hurt = 0;
@@ -67,7 +76,8 @@ describe('the complete deducer', () => {
           for (let k = g.level + 1; k < g.config.tiers; k++) {
             for (const c of solve(g, { threshold: k, budget: 3000 }).safe) {
               asked++;
-              if (!c.open && c.tier > k) wrong.push(`${id}: (${c.x},${c.y}) is a ${c.tier}, proven <= ${k}`);
+              if (!c.open && c.tier > k)
+                wrong.push(`${id}: (${c.x},${c.y}) is a ${c.tier}, proven <= ${k}`);
             }
           }
           return solve(g).safe;
@@ -84,8 +94,14 @@ describe('the complete deducer', () => {
     // kept small enough to settle every question.
     const missed: string[] = [];
     let checked = 0;
-    for (const [id, board] of [['cross', 1], ['packs', 1], ['congo', 1], ['dominoes', 1],
-      ['dungeon', 6], ['wraparound', 1]] as const) {
+    for (const [id, board] of [
+      ['cross', 1],
+      ['packs', 1],
+      ['congo', 1],
+      ['dominoes', 1],
+      ['dungeon', 6],
+      ['wraparound', 1],
+    ] as const) {
       const seed = 0x5eed + board;
       const game = Game.create(boardConfig(ladders, id, board), seed);
       const rng = mulberry32(seed);
@@ -98,12 +114,14 @@ describe('the complete deducer', () => {
         if (++step % 15 !== 0) continue;
         const r = solve(game, { budget: 3000 });
         expect(r.inconsistent).toBe(false);
-        for (const c of r.safe) expect(c.tier, `${id} (${c.x},${c.y})`).toBeLessThanOrEqual(game.level);
+        for (const c of r.safe)
+          expect(c.tier, `${id} (${c.x},${c.y})`).toBeLessThanOrEqual(game.level);
         if (r.undecided) continue;
         checked++;
         const found = new Set(r.safe);
         for (const c of game.safeCells({ useMarks: false })) {
-          if (!found.has(c)) missed.push(`${id} #${board} step ${step}: Sweep opens (${c.x},${c.y})`);
+          if (!found.has(c))
+            missed.push(`${id} #${board} step ${step}: Sweep opens (${c.x},${c.y})`);
         }
       }
     }

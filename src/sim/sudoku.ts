@@ -27,7 +27,11 @@ import { boardConfig, findType } from '../engine/config.js';
 import { Game } from '../engine/game.js';
 import { mulberry32 } from '../engine/rng.js';
 import {
-  SUDOKU_SIZE, clearableWithoutGuessing, sudokuCeiling, sudokuDeduction, sudokuSolution,
+  SUDOKU_SIZE,
+  clearableWithoutGuessing,
+  sudokuCeiling,
+  sudokuDeduction,
+  sudokuSolution,
 } from '../engine/sudoku.js';
 
 const perRung = Number(process.argv[2] ?? 20);
@@ -43,9 +47,10 @@ function attemptsPerBoard(givens: number, thresholds: readonly number[], want: n
     tried++;
     const grid = sudokuSolution(rng);
     const creatures: number[] = [];
-    for (let y = 0; y < SUDOKU_SIZE; y++) for (let x = 0; x < SUDOKU_SIZE; x++) {
-      if (grid[y]![x]! > 0) creatures.push(y * SUDOKU_SIZE + x);
-    }
+    for (let y = 0; y < SUDOKU_SIZE; y++)
+      for (let x = 0; x < SUDOKU_SIZE; x++) {
+        if (grid[y]![x]! > 0) creatures.push(y * SUDOKU_SIZE + x);
+      }
     for (let k = creatures.length - 1; k > 0; k--) {
       const j = Math.floor(rng() * (k + 1));
       [creatures[k], creatures[j]] = [creatures[j]!, creatures[k]!];
@@ -89,7 +94,7 @@ function play(game: Game): Play {
     }
 
     const cand = sudokuDeduction(openTiers, nums, marks);
-    if (!cand) break;                       // contradiction: the board lied
+    if (!cand) break; // contradiction: the board lied
 
     const safe: Array<[number, number]> = [];
     for (let i = 0; i < 81; i++) {
@@ -157,7 +162,7 @@ if (process.argv.includes('--sweep')) {
     tightest = (tightest / built) * perRung;
     console.log(
       `${String(givens).padStart(6)}${cost.toFixed(1).padStart(17)}` +
-      `${(rounds / perRung).toFixed(1).padStart(9)}${(tightest / perRung).toFixed(1).padStart(10)}`,
+        `${(rounds / perRung).toFixed(1).padStart(9)}${(tightest / perRung).toFixed(1).padStart(10)}`,
     );
   }
   process.exit(0);
@@ -190,9 +195,9 @@ for (const row of type.boards) {
 
   console.log(
     `${String(row.n).padStart(4)}${String(cfg.givens).padStart(8)}${String(row.lock).padStart(6)}` +
-    `${cost.toFixed(1).padStart(15)}${(rounds / perRung).toFixed(1).padStart(9)}` +
-    `${(tightest / perRung).toFixed(1).padStart(10)}` +
-    `${`${cleared}/${perRung}`.padStart(11)}${(hpLost / perRung).toFixed(2).padStart(10)}`,
+      `${cost.toFixed(1).padStart(15)}${(rounds / perRung).toFixed(1).padStart(9)}` +
+      `${(tightest / perRung).toFixed(1).padStart(10)}` +
+      `${`${cleared}/${perRung}`.padStart(11)}${(hpLost / perRung).toFixed(2).padStart(10)}`,
   );
 }
 

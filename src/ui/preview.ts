@@ -77,10 +77,13 @@ function previewConfig(over: Partial<BoardConfig> = {}): BoardConfig {
 }
 
 /** Grid order, so "the first two creatures" means the same thing every time. */
-const inReadingOrder = (a: Cell, b: Cell) => (a.y - b.y) || (a.x - b.x);
+const inReadingOrder = (a: Cell, b: Cell) => a.y - b.y || a.x - b.x;
 
 function cellsOf(game: Game, pick: (c: Cell) => boolean): Cell[] {
-  return game.grid.flat().filter((c) => c.present && pick(c)).sort(inReadingOrder);
+  return game.grid
+    .flat()
+    .filter((c) => c.present && pick(c))
+    .sort(inReadingOrder);
 }
 
 /**
@@ -145,8 +148,7 @@ export function sampleBoard(): Game {
  * coordinate; the pinning itself is the renderer's job.
  */
 export function topDefeatedCell(game: Game): { x: number; y: number } {
-  const best = cellsOf(game, (c) => c.open && c.tier > 0)
-    .sort((a, b) => b.tier - a.tier)[0];
+  const best = cellsOf(game, (c) => c.open && c.tier > 0).sort((a, b) => b.tier - a.tier)[0];
   return best ? { x: best.x, y: best.y } : { x: 0, y: 0 };
 }
 
@@ -164,9 +166,9 @@ export function topDefeatedCell(game: Game): { x: number; y: number } {
  * is on the board whichever grid is drawn.
  */
 export function highlightSampleBoard(topology: 'square' | 'hex'): Game {
-  return once(`highlight-${topology}`, () => buildSample(
-    previewConfig({ width: 5, height: 4, quantity: [1, 1, 1, 1], topology }), 1, 4,
-  ));
+  return once(`highlight-${topology}`, () =>
+    buildSample(previewConfig({ width: 5, height: 4, quantity: [1, 1, 1, 1], topology }), 1, 4),
+  );
 }
 
 /** The cell the highlight examples hold lit: interior on both grids. */
@@ -180,9 +182,7 @@ export function hexSampleBoard(): Game {
 /** Two cells at whatever the zoom ceiling is, so the setting is in real units. */
 export function zoomSampleBoard(): Game {
   return once('zoom', () => {
-    const game = Game.create(
-      previewConfig({ width: 2, height: 1, quantity: [0, 0, 0, 1] }), SEED,
-    );
+    const game = Game.create(previewConfig({ width: 2, height: 1, quantity: [0, 0, 0, 1] }), SEED);
     for (const cell of game.grid.flat()) game.open(cell.x, cell.y);
     return game;
   });
@@ -240,9 +240,15 @@ const CLEARED_QUANTITY: readonly number[] = [4, 3, 3, 2, 2, 2, 1, 1, 1];
 
 export function clearedBoard(seed: number = SEED, tiers = 5): Game {
   const count = Math.max(1, Math.min(CLEARED_QUANTITY.length, Math.round(tiers)));
-  const game = Game.create(previewConfig({
-    width: 10, height: 6, tiers: count, quantity: CLEARED_QUANTITY.slice(0, count),
-  }), seed);
+  const game = Game.create(
+    previewConfig({
+      width: 10,
+      height: 6,
+      tiers: count,
+      quantity: CLEARED_QUANTITY.slice(0, count),
+    }),
+    seed,
+  );
   for (const cell of cellsOf(game, (c) => c.tier === 0)) game.open(cell.x, cell.y);
   for (const cell of cellsOf(game, (c) => c.tier > 0)) game.open(cell.x, cell.y);
   return game;

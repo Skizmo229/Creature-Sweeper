@@ -31,7 +31,9 @@ export interface AutoplayResult {
  */
 export function autoplayTierOrder(game: Game): AutoplayResult {
   if (game.config.search) {
-    throw new Error('autoplayTierOrder is for battle boards; search boards cannot be cleared by combat');
+    throw new Error(
+      'autoplayTierOrder is for battle boards; search boards cannot be cleared by combat',
+    );
   }
 
   const startHp = game.hp;

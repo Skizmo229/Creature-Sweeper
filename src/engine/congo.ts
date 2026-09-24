@@ -57,7 +57,7 @@ import type { Cell } from './types.js';
 import { type Rng, randInt, shuffle } from './rng.js';
 
 /** Restarts allowed before a board is refused. PACKS's argument. */
-export const CONGO_ATTEMPTS = 60;
+const CONGO_ATTEMPTS = 60;
 
 /**
  * The most creatures a congo board may be asked for, as a share of its cells.
@@ -69,7 +69,12 @@ export const CONGO_ATTEMPTS = 60;
  */
 export const CONGO_MAX_DENSITY = 0.34;
 
-const ORTHO: ReadonlyArray<readonly [number, number]> = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+const ORTHO: ReadonlyArray<readonly [number, number]> = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+];
 
 /**
  * The orthogonal neighbours of a flat index on a plain `width` x `height`
@@ -77,7 +82,7 @@ const ORTHO: ReadonlyArray<readonly [number, number]> = [[1, 0], [-1, 0], [0, 1]
  * refuses anything else — so this does not need to go through `neighbours()`.
  * The eight-way adjacency the numbers are summed over still does.
  */
-export function orthoFlat(flat: number, width: number, height: number): number[] {
+function orthoFlat(flat: number, width: number, height: number): number[] {
   const x = flat % width;
   const y = Math.floor(flat / width);
   const out: number[] = [];
@@ -139,9 +144,13 @@ export function chooseLines(
       // A step is legal onto a free cell that touches the line orthogonally
       // at the end being extended and nowhere else.
       const stepsFrom = (end: number): number[] =>
-        orthoFlat(end, width, height).filter((n) =>
-          allowed.has(n) && !blocked.has(n) && !inLine.has(n) &&
-          orthoFlat(n, width, height).every((m) => m === end || !inLine.has(m)));
+        orthoFlat(end, width, height).filter(
+          (n) =>
+            allowed.has(n) &&
+            !blocked.has(n) &&
+            !inLine.has(n) &&
+            orthoFlat(n, width, height).every((m) => m === end || !inLine.has(m)),
+        );
 
       while (line.length < length) {
         const ends = line.length === 1 ? [0] : shuffle([0, line.length - 1], rng);
@@ -150,7 +159,8 @@ export function chooseLines(
           const options = stepsFrom(line[i]!);
           if (!options.length) continue;
           const next = options[randInt(rng, options.length)]!;
-          if (i === 0) line.unshift(next); else line.push(next);
+          if (i === 0) line.unshift(next);
+          else line.push(next);
           inLine.add(next);
           stepped = true;
           break;
@@ -172,8 +182,8 @@ export function chooseLines(
 
   throw new Error(
     `congo: could not place ${count} lines of ${length} in ${candidates.length} cells ` +
-    `in ${CONGO_ATTEMPTS} attempts (${(100 * count * length / candidates.length).toFixed(1)}% ` +
-    `density)`,
+      `in ${CONGO_ATTEMPTS} attempts (${((100 * count * length) / candidates.length).toFixed(1)}% ` +
+      `density)`,
   );
 }
 
@@ -182,14 +192,21 @@ export function chooseLines(
  * per line. `lines` arrive leader first, as `chooseLines` returns them.
  */
 export function dealLines(
-  lines: readonly (readonly number[])[], tiers: number, rng: Rng,
+  lines: readonly (readonly number[])[],
+  tiers: number,
+  rng: Rng,
 ): Map<number, number> {
   const out = new Map<number, number>();
   for (const line of lines) {
     if (line.length !== tiers) {
-      throw new Error(`congo deal: a line of ${line.length} cannot hold one of each of ${tiers} tiers`);
+      throw new Error(
+        `congo deal: a line of ${line.length} cannot hold one of each of ${tiers} tiers`,
+      );
     }
-    const followers = shuffle(Array.from({ length: tiers - 1 }, (_, i) => i + 1), rng);
+    const followers = shuffle(
+      Array.from({ length: tiers - 1 }, (_, i) => i + 1),
+      rng,
+    );
     out.set(line[0]!, tiers);
     followers.forEach((tier, i) => out.set(line[i + 1]!, tier));
   }
@@ -204,9 +221,7 @@ export function dealLines(
  * see — and a covered cell it names is never a creature, whatever the
  * player's level.
  */
-export function congoClear(
-  grid: readonly (readonly Cell[])[], tiers: number,
-): Set<Cell> {
+export function congoClear(grid: readonly (readonly Cell[])[], tiers: number): Set<Cell> {
   const height = grid.length;
   const width = grid[0]?.length ?? 0;
   const at = (x: number, y: number): Cell | null =>
@@ -280,11 +295,12 @@ function beyondReach(grid: readonly (readonly Cell[])[], tiers: number): Cell[] 
   const openCreature = (c: Cell): boolean => c.open && c.tier > 0;
   const ring = (c: Cell): Cell[] => {
     const out: Cell[] = [];
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-      if (!dx && !dy) continue;
-      const n = at(c.x + dx, c.y + dy);
-      if (n) out.push(n);
-    }
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        const n = at(c.x + dx, c.y + dy);
+        if (n) out.push(n);
+      }
     return out;
   };
   const ortho = (c: Cell): Cell[] =>
@@ -299,7 +315,10 @@ function beyondReach(grid: readonly (readonly Cell[])[], tiers: number): Cell[] 
       done.add(seed);
       for (let i = 0; i < piece.length; i++) {
         for (const n of ring(piece[i]!)) {
-          if (openCreature(n) && !done.has(n)) { done.add(n); piece.push(n); }
+          if (openCreature(n) && !done.has(n)) {
+            done.add(n);
+            piece.push(n);
+          }
         }
       }
       const missing = tiers - piece.length;
@@ -312,14 +331,15 @@ function beyondReach(grid: readonly (readonly Cell[])[], tiers: number): Cell[] 
       const queue = [seed];
       for (let i = 0; i < queue.length; i++) {
         for (const n of ortho(queue[i]!)) {
-          if (inPiece.has(n) && !walked.has(n)) { walked.add(n); queue.push(n); }
+          if (inPiece.has(n) && !walked.has(n)) {
+            walked.add(n);
+            queue.push(n);
+          }
         }
       }
       if (walked.size !== piece.length) continue;
       const ends = piece.length === 1 ? piece : piece.filter((c) => degree(c) === 1);
-      const growing = piece.length === 1
-        ? ends
-        : ends.filter((c) => c.tier !== tiers);
+      const growing = piece.length === 1 ? ends : ends.filter((c) => c.tier !== tiers);
 
       // Every cell the missing members could stand on: up to `missing`
       // orthogonal steps out from a growing end.
@@ -366,7 +386,10 @@ export function congoFault(
     seen.add(start);
     for (let i = 0; i < comp.length; i++) {
       for (const n of neighboursOf(comp[i]!)) {
-        if (tierAt.has(n) && !seen.has(n)) { seen.add(n); comp.push(n); }
+        if (tierAt.has(n) && !seen.has(n)) {
+          seen.add(n);
+          comp.push(n);
+        }
       }
     }
     if (comp.length !== tiers) {
@@ -389,7 +412,10 @@ export function congoFault(
     const walked = new Set(walk);
     for (let i = 0; i < walk.length; i++) {
       for (const n of orthoFlat(walk[i]!, width, height)) {
-        if (inComp.has(n) && !walked.has(n)) { walked.add(n); walk.push(n); }
+        if (inComp.has(n) && !walked.has(n)) {
+          walked.add(n);
+          walk.push(n);
+        }
       }
     }
     if (walk.length !== tiers) {

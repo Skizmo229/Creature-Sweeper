@@ -11,24 +11,23 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { boardConfig, findType, type LadderType } from '../src/engine/config.js';
 import { neighbours } from '../src/engine/board.js';
 import {
-  CONGO_MAX_DENSITY, chooseLines, congoClear, congoFault, dealLines,
+  CONGO_MAX_DENSITY,
+  chooseLines,
+  congoClear,
+  congoFault,
+  dealLines,
 } from '../src/engine/congo.js';
 import { packsIn } from '../src/engine/packs.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import { Game } from '../src/engine/game.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';
-import { DEFAULT_GAMEPLAY } from '../src/engine/settings.js';
 import type { Cell } from '../src/engine/types.js';
+import { ladders, PLACEMENT_SEEDS as SEEDS, UNGATED_SWEEP } from './helpers.js';
 
-const UNGATED_SWEEP = { settings: { ...DEFAULT_GAMEPLAY, sweep: 'on' as const } };
-
-const ladders = loadLadders();
 const congo = findType(ladders, 'congo');
-const SEEDS = [0xc0ffee, 0x5eed, 0xbeef, 0x1d10, 0xfeed];
 
 function allRows(type: LadderType) {
   return [...type.boards, ...type.extended];
@@ -45,10 +44,20 @@ function creatureCells(game: Game): Cell[] {
 function faultOf(game: Game): string | null {
   const cfg = game.config;
   const tierAt = new Map(creatureCells(game).map((c) => [c.y * cfg.width + c.x, c.tier]));
-  return congoFault(tierAt, (flat) =>
-    neighbours(
-      game.grid, flat % cfg.width, Math.floor(flat / cfg.width), cfg.topology, cfg.wrap,
-    ).map((n) => n.y * cfg.width + n.x), cfg.width, cfg.height, cfg.tiers);
+  return congoFault(
+    tierAt,
+    (flat) =>
+      neighbours(
+        game.grid,
+        flat % cfg.width,
+        Math.floor(flat / cfg.width),
+        cfg.topology,
+        cfg.wrap,
+      ).map((n) => n.y * cfg.width + n.x),
+    cfg.width,
+    cfg.height,
+    cfg.tiers,
+  );
 }
 
 /** A plain w x h grid of flat indices, with eight-way adjacency. */
@@ -58,12 +67,13 @@ function square(w: number, h: number) {
     const x = flat % w;
     const y = Math.floor(flat / w);
     const out: number[] = [];
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-      if (!dx && !dy) continue;
-      const nx = x + dx;
-      const ny = y + dy;
-      if (nx >= 0 && nx < w && ny >= 0 && ny < h) out.push(ny * w + nx);
-    }
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx >= 0 && nx < w && ny >= 0 && ny < h) out.push(ny * w + nx);
+      }
     return out;
   };
   return { cells, near };
@@ -75,11 +85,13 @@ function square(w: number, h: number) {
  * open empty ground.
  */
 function drawn(rows: string[]): Cell[][] {
-  return rows.map((row, y) => [...row].map((ch, x) => {
-    const upper = ch >= 'A' && ch <= 'F';
-    const tier = upper ? ch.charCodeAt(0) - 64 : ch >= '1' && ch <= '9' ? Number(ch) : 0;
-    return { x, y, tier, open: upper || ch === '_', present: true } as Cell;
-  }));
+  return rows.map((row, y) =>
+    [...row].map((ch, x) => {
+      const upper = ch >= 'A' && ch <= 'F';
+      const tier = upper ? ch.charCodeAt(0) - 64 : ch >= '1' && ch <= '9' ? Number(ch) : 0;
+      return { x, y, tier, open: upper || ch === '_', present: true } as Cell;
+    }),
+  );
 }
 
 describe('the ladder data congo lines need', () => {
@@ -112,8 +124,9 @@ describe('the rule itself', () => {
       for (const seed of SEEDS) {
         const game = Game.create(cfg, seed);
         for (let t = 1; t <= cfg.tiers; t++) {
-          expect(creatureCells(game).filter((c) => c.tier === t))
-            .toHaveLength(cfg.quantity[t - 1]!);
+          expect(creatureCells(game).filter((c) => c.tier === t)).toHaveLength(
+            cfg.quantity[t - 1]!,
+          );
         }
       }
     }
@@ -132,7 +145,10 @@ describe('the rule itself', () => {
       seen.add(start);
       for (let i = 0; i < line.length; i++) {
         for (const n of game.neighboursOf(line[i]!)) {
-          if (n.tier > 0 && !seen.has(n)) { seen.add(n); line.push(n); }
+          if (n.tier > 0 && !seen.has(n)) {
+            seen.add(n);
+            line.push(n);
+          }
         }
       }
       const xs = new Set(line.map((c) => c.x));
@@ -147,55 +163,42 @@ describe('the rule itself', () => {
   it('is caught by the fault check when it breaks', () => {
     // The checker has to be able to fail, or the test above proves nothing.
     const { near } = square(6, 3);
-    const line = (cells: number[], tiers: number[]) =>
-      new Map(cells.map((c, i) => [c, tiers[i]!]));
+    const line = (cells: number[], tiers: number[]) => new Map(cells.map((c, i) => [c, tiers[i]!]));
     // A 2x2 inside the line.
-    expect(congoFault(line([0, 1, 7, 6, 12, 13], [6, 1, 2, 3, 4, 5]), near, 6, 3, 6))
-      .toMatch(/not a line|2x2/);
+    expect(congoFault(line([0, 1, 7, 6, 12, 13], [6, 1, 2, 3, 4, 5]), near, 6, 3, 6)).toMatch(
+      /not a line|2x2/,
+    );
     // Leader in the middle.
-    expect(congoFault(line([0, 1, 2, 3, 4, 5], [1, 2, 6, 3, 4, 5]), near, 6, 3, 6))
-      .toMatch(/front/);
+    expect(congoFault(line([0, 1, 2, 3, 4, 5], [1, 2, 6, 3, 4, 5]), near, 6, 3, 6)).toMatch(
+      /front/,
+    );
     // A straight line, leader first: fine.
     expect(congoFault(line([0, 1, 2, 3, 4, 5], [6, 1, 2, 3, 4, 5]), near, 6, 3, 6)).toBeNull();
   });
 });
 
 describe('what Sweep may conclude from the lines', () => {
-  const opened = (grid: Cell[][]) =>
-    [...congoClear(grid, 6)].map((c) => `${c.x},${c.y}`).sort();
+  const opened = (grid: Cell[][]) => [...congoClear(grid, 6)].map((c) => `${c.x},${c.y}`).sort();
 
   it('empties the rest of the leader once a follower is found', () => {
-    const grid = drawn([
-      '.....',
-      '.FA..',
-      '.....',
-    ]);
+    const grid = drawn(['.....', '.FA..', '.....']);
     // The 6 at (1,1) leads the 1 at (2,1): its other three sides are empty.
     expect(opened(grid)).toEqual(expect.arrayContaining(['0,1', '1,0', '1,2']));
   });
 
   it('empties the fourth cell of a 2x2 three members already fill', () => {
-    const grid = drawn([
-      '......',
-      '..AB..',
-      '...C..',
-      '......',
-    ]);
+    const grid = drawn(['......', '..AB..', '...C..', '......']);
     expect(opened(grid)).toContain('2,2');
   });
 
   it('empties everything the rest of a line cannot reach from its ends', () => {
     // Five found, led by the 6 — so the missing member is orthogonally off
     // the tail end, and every other cell around the line is empty ground.
-    const grid = drawn([
-      '.......',
-      '.FABCD.',
-      '.......',
-    ]);
+    const grid = drawn(['.......', '.FABCD.', '.......']);
     const out = opened(grid);
-    expect(out).not.toContain('6,1');      // straight on from the tail
-    expect(out).not.toContain('5,0');      // turning up off the tail
-    expect(out).not.toContain('5,2');      // turning down off the tail
+    expect(out).not.toContain('6,1'); // straight on from the tail
+    expect(out).not.toContain('5,0'); // turning up off the tail
+    expect(out).not.toContain('5,2'); // turning down off the tail
     expect(out).toEqual(expect.arrayContaining(['2,0', '3,2', '0,1', '6,0', '6,2']));
   });
 
@@ -255,7 +258,10 @@ describe('the four load-bearing facts survive it', () => {
 });
 
 describe('the boundary refuses what it cannot build', () => {
-  const bend = (over: Partial<(typeof congo.boards)[0]>, type: Partial<LadderType> = {}): LadderType => ({
+  const bend = (
+    over: Partial<(typeof congo.boards)[0]>,
+    type: Partial<LadderType> = {},
+  ): LadderType => ({
     ...congo,
     ...type,
     id: 'bent',
@@ -266,18 +272,22 @@ describe('the boundary refuses what it cannot build', () => {
   it('refuses a quantity that is not whole lines', () => {
     const q = [...congo.boards[0]!.quantity];
     q[5] = q[5]! - 1;
-    expect(() => boardConfig([bend({ quantity: q, monsters: q.reduce((a, b) => a + b) })], 'bent', 1))
-      .toThrow(/whole number of lines/);
+    expect(() =>
+      boardConfig([bend({ quantity: q, monsters: q.reduce((a, b) => a + b) })], 'bent', 1),
+    ).toThrow(/whole number of lines/);
   });
 
   it('refuses a density the lines cannot reach', () => {
     const q = Array(6).fill(28);
-    expect(() => boardConfig([bend({ quantity: q, monsters: 168 })], 'bent', 1))
-      .toThrow(/non-touching lines/);
+    expect(() => boardConfig([bend({ quantity: q, monsters: 168 })], 'bent', 1)).toThrow(
+      /non-touching lines/,
+    );
   });
 
   it('refuses a hex or wrapped board, where a line has no orthogonal steps to take', () => {
-    expect(() => boardConfig([bend({}, { topology: 'hex' })], 'bent', 1)).toThrow(/unwrapped square/);
+    expect(() => boardConfig([bend({}, { topology: 'hex' })], 'bent', 1)).toThrow(
+      /unwrapped square/,
+    );
     expect(() => boardConfig([bend({}, { wrap: 'both' })], 'bent', 1)).toThrow(/unwrapped square/);
   });
 });

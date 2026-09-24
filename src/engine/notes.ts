@@ -30,14 +30,6 @@ export function hasNote(mask: number, tier: number): boolean {
   return (mask & noteBit(tier)) !== 0;
 }
 
-export function withNote(mask: number, tier: number): number {
-  return mask | noteBit(tier);
-}
-
-export function withoutNote(mask: number, tier: number): number {
-  return mask & ~noteBit(tier);
-}
-
 export function toggleNote(mask: number, tier: number): number {
   return mask ^ noteBit(tier);
 }
@@ -47,23 +39,6 @@ export function noteTiers(mask: number): number[] {
   const out: number[] = [];
   for (let t = 0; mask >>> t; t++) if (hasNote(mask, t)) out.push(t);
   return out;
-}
-
-export function noteCount(mask: number): number {
-  let n = 0;
-  for (let m = mask; m; m >>>= 1) n += m & 1;
-  return n;
-}
-
-/**
- * The strongest tier the player thinks this cell might hold — the bound that
- * decides whether the cell is safe. Returns -1 for an empty mask, which is
- * never a valid tier, so a caller that forgets `hasNotes` fails closed.
- */
-export function highestNote(mask: number): number {
-  let hi = -1;
-  for (let t = 0; mask >>> t; t++) if (hasNote(mask, t)) hi = t;
-  return hi;
 }
 
 /**
@@ -77,6 +52,3 @@ export function lowestNote(mask: number): number {
 }
 
 /** Exactly one candidate left, which is a claim in all but name. */
-export function soleNote(mask: number): number | null {
-  return mask !== 0 && (mask & (mask - 1)) === 0 ? lowestNote(mask) : null;
-}

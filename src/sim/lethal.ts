@@ -95,20 +95,28 @@ const pct = (x: number): string => `${(100 * x).toFixed(0)}%`;
 function byBoard(type: LadderType, seeds: number): void {
   const ladders = loadLadders();
   console.log(`\n${type.name}, ${seeds} seeds a board — perfect deduction, safest guessing\n`);
-  console.log('board  density  hp |  forced  could kill | no guess  no lethal guess  cleared  hp lost');
+  console.log(
+    'board  density  hp |  forced  could kill | no guess  no lethal guess  cleared  hp lost',
+  );
   for (const b of type.boards) {
     const cfg = boardConfig(ladders, type.id, b.n);
     const boards = Array.from({ length: seeds }, (_, s) => playBoard(cfg, seedAt(s)));
     console.log(
       `${String(b.n).padStart(4)}  ${b.density.toFixed(1).padStart(6)}% ${String(b.hp).padStart(3)} |` +
-      `${mean(boards.map((x) => x.run.stuckPoints)).toFixed(1).padStart(8)}` +
-      `${mean(boards.map((x) => x.risky)).toFixed(1).padStart(12)} |` +
-      `${pct(mean(boards.map((x) => (x.run.stuckPoints === 0 ? 1 : 0)))).padStart(9)}` +
-      `${pct(mean(boards.map((x) => (x.risky === 0 ? 1 : 0)))).padStart(16)}` +
-      `${pct(mean(boards.map((x) => (x.run.cleared ? 1 : 0)))).padStart(9)}` +
-      `${mean(boards.map((x) => x.run.hpLost)).toFixed(2).padStart(9)}` +
-      (boards.some((x) => x.run.rescueDamage) ? '   SOLVER CALLED A HARMFUL CELL FREE' : '') +
-      (boards.some((x) => x.unsound) ? '   A GUESS BROKE ITS PROVEN BOUND' : ''),
+        `${mean(boards.map((x) => x.run.stuckPoints))
+          .toFixed(1)
+          .padStart(8)}` +
+        `${mean(boards.map((x) => x.risky))
+          .toFixed(1)
+          .padStart(12)} |` +
+        `${pct(mean(boards.map((x) => (x.run.stuckPoints === 0 ? 1 : 0)))).padStart(9)}` +
+        `${pct(mean(boards.map((x) => (x.risky === 0 ? 1 : 0)))).padStart(16)}` +
+        `${pct(mean(boards.map((x) => (x.run.cleared ? 1 : 0)))).padStart(9)}` +
+        `${mean(boards.map((x) => x.run.hpLost))
+          .toFixed(2)
+          .padStart(9)}` +
+        (boards.some((x) => x.run.rescueDamage) ? '   SOLVER CALLED A HARMFUL CELL FREE' : '') +
+        (boards.some((x) => x.unsound) ? '   A GUESS BROKE ITS PROVEN BOUND' : ''),
     );
   }
 }

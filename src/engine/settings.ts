@@ -82,7 +82,7 @@ export const DEFAULT_GAMEPLAY: GameplaySettings = {
 };
 
 /** The step every ratio slider moves in. */
-export const RATIO_STEP = 0.05;
+const RATIO_STEP = 0.05;
 
 /**
  * True when nothing here makes the game easier than the tuned default.
@@ -97,13 +97,15 @@ export const RATIO_STEP = 0.05;
  * their times thrown away for it.
  */
 export function isAtLeastAsHard(s: GameplaySettings): boolean {
-  return s.hpRatio <= DEFAULT_GAMEPLAY.hpRatio
-    && s.hpRegenRatio <= DEFAULT_GAMEPLAY.hpRegenRatio
-    && s.enemyDamageRatio >= DEFAULT_GAMEPLAY.enemyDamageRatio
-    && s.manaRegenRatio <= DEFAULT_GAMEPLAY.manaRegenRatio
-    && s.manaRewardRatio <= DEFAULT_GAMEPLAY.manaRewardRatio
-    && sweepRank(s) >= sweepRank(DEFAULT_GAMEPLAY)
-    && s.sweepChargeClicks >= DEFAULT_GAMEPLAY.sweepChargeClicks;
+  return (
+    s.hpRatio <= DEFAULT_GAMEPLAY.hpRatio &&
+    s.hpRegenRatio <= DEFAULT_GAMEPLAY.hpRegenRatio &&
+    s.enemyDamageRatio >= DEFAULT_GAMEPLAY.enemyDamageRatio &&
+    s.manaRegenRatio <= DEFAULT_GAMEPLAY.manaRegenRatio &&
+    s.manaRewardRatio <= DEFAULT_GAMEPLAY.manaRewardRatio &&
+    sweepRank(s) >= sweepRank(DEFAULT_GAMEPLAY) &&
+    s.sweepChargeClicks >= DEFAULT_GAMEPLAY.sweepChargeClicks
+  );
 }
 
 /**
@@ -124,8 +126,9 @@ function sweepRank(s: GameplaySettings): number {
 
 /** True when every dial sits exactly where the ladder was tuned. */
 export function isDefaultGameplay(s: GameplaySettings): boolean {
-  return (Object.keys(DEFAULT_GAMEPLAY) as Array<keyof GameplaySettings>)
-    .every((k) => s[k] === DEFAULT_GAMEPLAY[k]);
+  return (Object.keys(DEFAULT_GAMEPLAY) as Array<keyof GameplaySettings>).every(
+    (k) => s[k] === DEFAULT_GAMEPLAY[k],
+  );
 }
 
 /**

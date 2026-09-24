@@ -20,7 +20,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
  * done, since the file is read once per process and every sim running at the
  * time would otherwise pick up a half-finished edit.
  */
-export const LADDERS_PATH = process.env.CS_LADDERS
+const LADDERS_PATH = process.env.CS_LADDERS
   ? resolve(process.env.CS_LADDERS)
   : resolve(HERE, '..', 'design', 'data', 'ladders.json');
 

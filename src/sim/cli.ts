@@ -28,12 +28,19 @@ for (const type of ladders) {
   // satisfy the same invariants, so it is swept with the rest rather than
   // taken on trust.
   const rows = [...type.boards, ...type.extended];
-  console.log(`\n=== ${type.name} === ladder 1-${type.boards.length}` +
-    (type.extended.length ? `, scaling 11-${rows[rows.length - 1]!.n}` : ''));
   console.log(
-    'bd'.padStart(3) + 'grid'.padStart(9) + 'creat.'.padStart(8) +
-    'opening'.padStart(9) + 'worst'.padStart(7) +
-    'cleared'.padStart(9) + 'hp lost'.padStart(9) + 'max lv'.padStart(8),
+    `\n=== ${type.name} === ladder 1-${type.boards.length}` +
+      (type.extended.length ? `, scaling 11-${rows[rows.length - 1]!.n}` : ''),
+  );
+  console.log(
+    'bd'.padStart(3) +
+      'grid'.padStart(9) +
+      'creat.'.padStart(8) +
+      'opening'.padStart(9) +
+      'worst'.padStart(7) +
+      'cleared'.padStart(9) +
+      'hp lost'.padStart(9) +
+      'max lv'.padStart(8),
   );
 
   for (const row of rows) {
@@ -56,14 +63,14 @@ for (const type of ladders) {
     const ok = cleared === seeds && hpLost === 0;
     console.log(
       String(row.n).padStart(3) +
-      `${row.w}x${row.h}`.padStart(9) +
-      String(row.monsters).padStart(8) +
-      String(median(openings)).padStart(9) +
-      String(Math.min(...openings)).padStart(7) +
-      `${cleared}/${seeds}`.padStart(9) +
-      String(hpLost).padStart(9) +
-      String(maxLevel).padStart(8) +
-      (ok ? '' : '   <-- FAILED'),
+        `${row.w}x${row.h}`.padStart(9) +
+        String(row.monsters).padStart(8) +
+        String(median(openings)).padStart(9) +
+        String(Math.min(...openings)).padStart(7) +
+        `${cleared}/${seeds}`.padStart(9) +
+        String(hpLost).padStart(9) +
+        String(maxLevel).padStart(8) +
+        (ok ? '' : '   <-- FAILED'),
     );
   }
 }
@@ -71,6 +78,6 @@ for (const type of ladders) {
 const total = ladders.reduce((a, t) => a + t.boards.length + t.extended.length, 0);
 console.log(
   `\n${total - failures}/${total} boards cleared by every seed at full HP ` +
-  `(${seeds} seeds each, ${total * seeds} boards simulated).`,
+    `(${seeds} seeds each, ${total * seeds} boards simulated).`,
 );
 process.exit(failures === 0 ? 0 : 1);

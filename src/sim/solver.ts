@@ -131,12 +131,22 @@ function buildModel(game: Game): Model | null {
     const vs: number[] = [];
     for (const n of game.neighboursOf(c)) {
       const k = known(n);
-      if (k !== null) { target -= k; continue; }
+      if (k !== null) {
+        target -= k;
+        continue;
+      }
       let i = index.get(n);
-      if (i === undefined) { i = vars.length; vars.push(n); index.set(n, i); }
+      if (i === undefined) {
+        i = vars.length;
+        vars.push(n);
+        index.set(n, i);
+      }
       vs.push(i);
     }
-    if (!vs.length) { if (target !== 0) return null; continue; }
+    if (!vs.length) {
+      if (target !== 0) return null;
+      continue;
+    }
     if (target < 0) return null;
     cons.push({ vars: vs, target });
   }
@@ -144,7 +154,9 @@ function buildModel(game: Game): Model | null {
   const dom = vars.map(domOf);
   if (dom.some((d) => d === 0)) return null;
   const consOf: number[][] = vars.map(() => []);
-  cons.forEach((c, i) => { for (const v of c.vars) consOf[v]!.push(i); });
+  cons.forEach((c, i) => {
+    for (const v of c.vars) consOf[v]!.push(i);
+  });
 
   const interior = all.filter((c) => known(c) === null && !index.has(c));
   return { tiers, vars, dom, cons, consOf, remaining, interior, interiorDom: interior.map(domOf) };
@@ -198,7 +210,10 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
   const checker = game.config.placement === 'checker';
   let capLight = 0;
   let capDark = 0;
-  for (const c of interior) ((c.x + c.y) % 2 === 0 ? capLight++ : capDark++);
+  for (const c of interior) {
+    if ((c.x + c.y) % 2 === 0) capLight++;
+    else capDark++;
+  }
   const leftover = (t: number): number => remaining[t]! - counts[t]!;
   const interiorFits = (): boolean => {
     if (!checker) {
@@ -208,7 +223,10 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
     }
     let even = 0;
     let odd = 0;
-    for (let t = 1; t <= tiers; t++) (t % 2 === 0 ? (even += leftover(t)) : (odd += leftover(t)));
+    for (let t = 1; t <= tiers; t++) {
+      if (t % 2 === 0) even += leftover(t);
+      else odd += leftover(t);
+    }
     return even <= capLight && odd <= capDark;
   };
 
@@ -235,8 +253,13 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
     limit = budget,
   ): boolean | null {
     const { members, sums } = p;
-    for (const w of members) { cur[w] = d[w]!; sumsOf[w] = []; }
-    sums.forEach((s, i) => { for (const w of s.vars) sumsOf[w]!.push(i); });
+    for (const w of members) {
+      cur[w] = d[w]!;
+      sumsOf[w] = [];
+    }
+    sums.forEach((s, i) => {
+      for (const w of s.vars) sumsOf[w]!.push(i);
+    });
     if (queued.length < sums.length) queued = new Uint8Array(sums.length * 2);
     queued.fill(0, 0, sums.length);
     queue.length = 0;
@@ -251,15 +274,26 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
       if (could > remaining[t]!) bindable |= 1 << t;
     }
 
-    const enqueue = (s: number): void => { if (!queued[s]) { queued[s] = 1; queue.push(s); } };
-    const flush = (): void => { for (const s of queue) queued[s] = 0; queue.length = 0; };
+    const enqueue = (s: number): void => {
+      if (!queued[s]) {
+        queued[s] = 1;
+        queue.push(s);
+      }
+    };
+    const flush = (): void => {
+      for (const s of queue) queued[s] = 0;
+      queue.length = 0;
+    };
     const narrow = (w: number, nd: number): void => {
       trail.push(w, cur[w]!);
       cur[w] = nd;
       for (const s of sumsOf[w]!) enqueue(s);
     };
     const undo = (mark: number): void => {
-      while (trail.length > mark) { const old = trail.pop()!; cur[trail.pop()!] = old; }
+      while (trail.length > mark) {
+        const old = trail.pop()!;
+        cur[trail.pop()!] = old;
+      }
     };
 
     // Bounds propagation: every cell behind a number lies between what the
@@ -273,8 +307,14 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
         const s = sums[i]!;
         let lo = 0;
         let hi = 0;
-        for (const w of s.vars) { lo += lowest(cur[w]!); hi += highest(cur[w]!); }
-        if (s.hi < lo || s.lo > hi) { flush(); return false; }
+        for (const w of s.vars) {
+          lo += lowest(cur[w]!);
+          hi += highest(cur[w]!);
+        }
+        if (s.hi < lo || s.lo > hi) {
+          flush();
+          return false;
+        }
         for (const w of s.vars) {
           const m = cur[w]!;
           if (single(m)) continue;
@@ -284,7 +324,10 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
           const max = s.hi - (lo - wl);
           if (min <= wl && max >= wh) continue;
           const nd = m & span(min, max);
-          if (!nd) { flush(); return false; }
+          if (!nd) {
+            flush();
+            return false;
+          }
           narrow(w, nd);
         }
       }
@@ -293,7 +336,10 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
 
     const countAll = (): void => {
       counts.fill(0);
-      for (const w of members) { const m = cur[w]!; if (single(m) && m > 1) counts[lowest(m)]!++; }
+      for (const w of members) {
+        const m = cur[w]!;
+        if (single(m) && m > 1) counts[lowest(m)]!++;
+      }
     };
 
     // The tier counts: none exceeded, and a tier used up is out of every other cell.
@@ -303,7 +349,7 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
       let spent = 0;
       for (let t = 1; t <= tiers; t++) {
         if (counts[t]! > remaining[t]!) return false;
-        if (counts[t] === remaining[t] && (bindable & (1 << t))) spent |= 1 << t;
+        if (counts[t] === remaining[t] && bindable & (1 << t)) spent |= 1 << t;
       }
       if (!spent) return true;
       for (const w of members) {
@@ -319,7 +365,10 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
     const settle = (): boolean => {
       do {
         if (!propagate()) return false;
-        if (!tally()) { flush(); return false; }
+        if (!tally()) {
+          flush();
+          return false;
+        }
       } while (queue.length);
       return true;
     };
@@ -336,7 +385,12 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
     // met near the root rather than after the far side of the board is laid.
     const order: number[] = [];
     const put = new Set<number>();
-    const visit = (w: number): void => { if (!put.has(w)) { put.add(w); order.push(w); } };
+    const visit = (w: number): void => {
+      if (!put.has(w)) {
+        put.add(w);
+        order.push(w);
+      }
+    };
     visit(start >= 0 ? start : members[0]!);
     for (let i = 0; i < order.length; i++) {
       for (const s of sumsOf[order[i]!]!) for (const w of sums[s]!.vars) visit(w);
@@ -363,7 +417,10 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
         if (settle()) {
           const r = dfs(i + 1);
           if (r === true) return true;
-          if (r === null) { undo(mark); return null; }
+          if (r === null) {
+            undo(mark);
+            return null;
+          }
         }
         undo(mark);
       }
@@ -385,13 +442,18 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
   const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i]!)));
   for (const c of cons) for (const v of c.vars.slice(1)) parent[find(v)] = find(c.vars[0]!);
   const groups = new Map<number, number[]>();
-  for (let v = 0; v < n; v++) (groups.get(find(v)) ?? groups.set(find(v), []).get(find(v))!).push(v);
+  for (let v = 0; v < n; v++)
+    (groups.get(find(v)) ?? groups.set(find(v), []).get(find(v))!).push(v);
 
   const exact = (members: number[]): Problem => {
     const inside = new Set(members);
     const touched = new Set<number>();
     for (const w of members) for (const c of consOf[w]!) touched.add(c);
-    const sums = [...touched].map((c) => ({ vars: cons[c]!.vars, lo: cons[c]!.target, hi: cons[c]!.target }));
+    const sums = [...touched].map((c) => ({
+      vars: cons[c]!.vars,
+      lo: cons[c]!.target,
+      hi: cons[c]!.target,
+    }));
     for (const s of sums) if (!s.vars.every((w) => inside.has(w))) throw new Error('piece leaks');
     return { members, sums };
   };
@@ -409,7 +471,12 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
     for (let r = 0; r < radius; r++) {
       const next: number[] = [];
       for (const w of ring) {
-        for (const c of consOf[w]!) for (const u of cons[c]!.vars) if (!inside.has(u)) { inside.add(u); next.push(u); }
+        for (const c of consOf[w]!)
+          for (const u of cons[c]!.vars)
+            if (!inside.has(u)) {
+              inside.add(u);
+              next.push(u);
+            }
       }
       ring = next;
     }
@@ -423,7 +490,10 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
       let oHi = 0;
       for (const w of vs) {
         if (inside.has(w)) own.push(w);
-        else { oLo += lowest(d[w]!); oHi += highest(d[w]!); }
+        else {
+          oLo += lowest(d[w]!);
+          oHi += highest(d[w]!);
+        }
       }
       sums.push({ vars: own, lo: target - oHi, hi: target - oLo });
     }
@@ -431,7 +501,8 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
   };
 
   // A given at or below your level is a free kill with its tier already on it.
-  const safe: Cell[] = game.grid.flat()
+  const safe: Cell[] = game.grid
+    .flat()
     .filter((c) => c.present && !c.open && c.given && c.mark <= level);
   let undecided = 0;
   const leaf = joint ? interiorFits : null;
@@ -444,7 +515,10 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
   }
 
   for (let v = 0; v < n; v++) {
-    if (!(dom[v]! & above)) { safe.push(vars[v]!); continue; }
+    if (!(dom[v]! & above)) {
+      safe.push(vars[v]!);
+      continue;
+    }
     if (seen[v]! & above) continue;
     const d = dom.slice();
     d[v] = dom[v]! & above;
@@ -459,7 +533,11 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
       const local = window(v, radius, d);
       if (local.members.length >= p.members.length) break;
       const r = feasible(local, d, v, null, true, budget >> 2);
-      if (r === false) { safe.push(vars[v]!); settled = true; break; }
+      if (r === false) {
+        safe.push(vars[v]!);
+        settled = true;
+        break;
+      }
       if (r !== true) continue;
       const fixed = d.slice();
       for (const w of local.members) fixed[w] = cur[w]!;
@@ -483,14 +561,17 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
   const classes = new Map<number, Cell[]>();
   interior.forEach((c, i) => {
     const d = interiorDom[i]! & above;
-    if (!d) { safe.push(c); return; }
+    if (!d) {
+      safe.push(c);
+      return;
+    }
     (classes.get(d) ?? classes.set(d, []).get(d)!).push(c);
   });
   for (const [d, cells] of classes) {
-    if (!joint || (interiorSeen & d)) continue;
+    if (!joint || interiorSeen & d) continue;
     const r = feasible(whole[0]!, dom, -1, () => {
       if (!interiorFits()) return false;
-      for (let t = 1; t <= tiers; t++) if ((d & (1 << t)) && leftover(t) > 0) return true;
+      for (let t = 1; t <= tiers; t++) if (d & (1 << t) && leftover(t) > 0) return true;
       return false;
     });
     if (r === true) record(whole[0]!);

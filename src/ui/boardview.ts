@@ -13,14 +13,22 @@
 import type { Cell } from '../engine/types.js';
 import type { Game } from '../engine/game.js';
 import {
-  BOARD_OUTLINE, BOND_COLOR, BOX_RULE, CENSUS_COLOR, GIVEN_COLOR, MARK_COLOR, MARK_OUTLINE,
-  NOTE_COLOR, OUT_OF_REACH_COLOR, PIP_SHAPES,
-  type PipShape, type TypeTheme, drawCreature, tierColor,
+  BOARD_OUTLINE,
+  BOND_COLOR,
+  BOX_RULE,
+  CENSUS_COLOR,
+  GIVEN_COLOR,
+  MARK_COLOR,
+  MARK_OUTLINE,
+  NOTE_COLOR,
+  OUT_OF_REACH_COLOR,
+  type TypeTheme,
+  drawCreature,
 } from './theme.js';
 import { FONTS, type GameFont } from './typefaces.js';
 import { hexAt, hexBoardSize, hexCentre, hexPoints, hexRadius, hexRowStep } from './hexgeom.js';
 import { type PinchStart, pinchStart, pinchTo } from './pinch.js';
-import { DEFAULT_MAX_ZOOM, type HighlightStyle, type HoverDefeated } from './settings.js';
+import { DEFAULT_MAX_ZOOM, type HighlightStyle } from './settings.js';
 import type { VictorySource, VictorySprite } from './victory.js';
 import { hasNote } from '../engine/notes.js';
 import { SUDOKU_BOX, SUDOKU_SIZE } from '../engine/sudoku.js';
@@ -51,7 +59,10 @@ const GHOST_CELLS = 1;
  * Squares: top, right, bottom, left.
  */
 const SQUARE_EDGE_DIRS: ReadonlyArray<readonly [number, number]> = [
-  [0, -1], [1, 0], [0, 1], [-1, 0],
+  [0, -1],
+  [1, 0],
+  [0, 1],
+  [-1, 0],
 ];
 
 /**
@@ -62,19 +73,24 @@ const SQUARE_EDGE_DIRS: ReadonlyArray<readonly [number, number]> = [
  */
 const HEX_EDGE_DIRS: ReadonlyArray<ReadonlyArray<readonly [number, number]>> = [
   // even rows
-  [[0, -1], [1, 0], [0, 1], [-1, 1], [-1, 0], [-1, -1]],
+  [
+    [0, -1],
+    [1, 0],
+    [0, 1],
+    [-1, 1],
+    [-1, 0],
+    [-1, -1],
+  ],
   // odd rows
-  [[1, -1], [1, 0], [1, 1], [0, 1], [-1, 0], [0, -1]],
+  [
+    [1, -1],
+    [1, 0],
+    [1, 1],
+    [0, 1],
+    [-1, 0],
+    [0, -1],
+  ],
 ];
-
-/**
- * Narrow the hover setting to the branch that restyles the glyph.
- *
- * No caller while the hover setting is disabled — see `drawOpen`.
- */
-function isPipShape(value: HoverDefeated): value is PipShape {
-  return (PIP_SHAPES as readonly string[]).includes(value);
-}
 
 /**
  * How tall a digit stands, as a share of the font size, in the face every
@@ -131,8 +147,10 @@ function digitMetrics(ctx: CanvasRenderingContext2D, face: GameFont): DigitMetri
 /** A square cell's corners, clockwise from the top-left. */
 function squareCorners(cx: number, cy: number, half: number): Array<[number, number]> {
   return [
-    [cx - half, cy - half], [cx + half, cy - half],
-    [cx + half, cy + half], [cx - half, cy + half],
+    [cx - half, cy - half],
+    [cx + half, cy - half],
+    [cx + half, cy + half],
+    [cx - half, cy + half],
   ];
 }
 
@@ -151,19 +169,13 @@ export interface BoardDisplay {
   highlight: HighlightStyle | null;
   /** Whether a defeated creature keeps its struck-through corner. */
   strikeDefeated: boolean;
-  /**
-   * What the cursor does to a creature already beaten. Not read while the
-   * setting is disabled: the cursor shows the number underneath instead.
-   */
-  hoverDefeated: HoverDefeated;
 }
 
-export const DEFAULT_DISPLAY: BoardDisplay = {
+const DEFAULT_DISPLAY: BoardDisplay = {
   maxCell: DEFAULT_MAX_ZOOM,
   font: FONTS['jetbrains-mono'],
   highlight: 'neighbours',
   strikeDefeated: true,
-  hoverDefeated: 'tier',
 };
 
 /**
@@ -282,9 +294,7 @@ export class BoardView {
    */
   private stageWatch: ResizeObserver | null = null;
 
-  constructor(
-    canvas: HTMLCanvasElement, cb: BoardViewCallbacks, options: BoardViewOptions = {},
-  ) {
+  constructor(canvas: HTMLCanvasElement, cb: BoardViewCallbacks, options: BoardViewOptions = {}) {
     this.canvas = canvas;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('canvas 2d context unavailable');
@@ -384,7 +394,7 @@ export class BoardView {
     // Invert hexBoardSize for height: rows nest, so solve for the width that
     // makes the stacked rows plus one overhang fit.
     const byH = hex
-      ? availH / ((hexRowStep(1) * (game.config.height - 1)) + 2 * hexRadius(1))
+      ? availH / (hexRowStep(1) * (game.config.height - 1) + 2 * hexRadius(1))
       : availH / (game.config.height + padY);
     const fitted = Math.floor(Math.min(byW, byH));
     // The ceiling caps magnification only. A small board is held at the
@@ -394,7 +404,10 @@ export class BoardView {
     const zoomed = keepZoom && this.cellPx > this.fittedCell;
     this.fittedCell = Math.max(MIN_CELL, Math.min(this.display.maxCell, fitted));
     this.cellPx = zoomed
-      ? Math.max(this.fittedCell, Math.min(this.cellPx, Math.max(this.fittedCell, this.display.maxCell)))
+      ? Math.max(
+          this.fittedCell,
+          Math.min(this.cellPx, Math.max(this.fittedCell, this.display.maxCell)),
+        )
       : this.fittedCell;
 
     this.resizeCanvas(availW, availH);
@@ -484,7 +497,8 @@ export class BoardView {
     }
     const pts = hexPoints(cx, cy, hexRadius(this.cellPx) - inset);
     pts.forEach(([px, py], i) => {
-      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
     });
     ctx.closePath();
   }
@@ -508,12 +522,10 @@ export class BoardView {
     const w = this.boardW;
     const h = this.boardH;
 
-    this.originX = w <= availW
-      ? Math.round((availW - w) / 2)
-      : Math.min(0, Math.max(availW - w, this.originX));
-    this.originY = h <= availH
-      ? Math.round((availH - h) / 2)
-      : Math.min(0, Math.max(availH - h, this.originY));
+    this.originX =
+      w <= availW ? Math.round((availW - w) / 2) : Math.min(0, Math.max(availW - w, this.originX));
+    this.originY =
+      h <= availH ? Math.round((availH - h) / 2) : Math.min(0, Math.max(availH - h, this.originY));
 
     this.canPan = w > availW || h > availH;
     this.canvas.style.cursor = this.canPan ? 'grab' : 'pointer';
@@ -552,9 +564,7 @@ export class BoardView {
     const py = clientY - rect.top - this.originY;
 
     if (!this.isHex) {
-      return this.resolve(
-        game, Math.floor(px / this.cellPx), Math.floor(py / this.cellPx),
-      );
+      return this.resolve(game, Math.floor(px / this.cellPx), Math.floor(py / this.cellPx));
     }
 
     // Hexes do not tile a rectangle, so flooring cannot work. hexgeom does the
@@ -597,7 +607,7 @@ export class BoardView {
     const size = Math.max(1, Math.round(px * m.scale));
     this.ctx.font = `${face.weight} ${size}px ${face.stack}`;
     this.ctx.textBaseline = 'alphabetic';
-    return { centre: (m.ascent - m.descent) / 2 * size, ascent: m.ascent * size };
+    return { centre: ((m.ascent - m.descent) / 2) * size, ascent: m.ascent * size };
   }
 
   /**
@@ -615,11 +625,13 @@ export class BoardView {
     this.awaitingFont = probe;
     document.fonts.load(probe).then(
       () => {
-        if (this.awaitingFont !== probe) return;   // the face changed meanwhile
+        if (this.awaitingFont !== probe) return; // the face changed meanwhile
         this.awaitingFont = null;
         this.render();
       },
-      () => { this.awaitingFont = null; },
+      () => {
+        this.awaitingFont = null;
+      },
     );
   }
 
@@ -636,7 +648,7 @@ export class BoardView {
 
     for (const row of game.grid) {
       for (const cell of row) {
-        if (!cell.present) continue;   // a hole is drawn as nothing at all
+        if (!cell.present) continue; // a hole is drawn as nothing at all
         const { cx, cy } = this.centreOf(cell.x, cell.y);
         if (cell.open) this.drawOpen(cell, cx, cy, theme, game);
         else this.drawCovered(cell, cx, cy, theme);
@@ -787,7 +799,10 @@ export class BoardView {
     if (wrap === 'none') return;
     const wrapY = wrap === 'both';
 
-    const offsets: Array<[number, number]> = [[-1, 0], [1, 0]];
+    const offsets: Array<[number, number]> = [
+      [-1, 0],
+      [1, 0],
+    ];
     if (wrapY) offsets.push([0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]);
 
     const ctx = this.ctx;
@@ -899,8 +914,8 @@ export class BoardView {
           // screen, so joining the two centres would draw a line straight
           // across the board. Only the near case is drawn; the seam itself
           // already says the edges are joined.
-          if (Math.abs(a.cx - b.cx) > this.cellPx * 2
-            || Math.abs(a.cy - b.cy) > this.cellPx * 2) continue;
+          if (Math.abs(a.cx - b.cx) > this.cellPx * 2 || Math.abs(a.cy - b.cy) > this.cellPx * 2)
+            continue;
           // Inset off both centres rather than joining them, so the tie sits
           // in the gap between the two cells and neither glyph is painted
           // over. The number a creature here flips to is its partner's tier,
@@ -967,37 +982,6 @@ export class BoardView {
    * Census sits in the top-left corner rather than the middle, so it can never
    * be confused with the cell's own number or a mark, both of which are centred.
    */
-  /**
-   * The hovered creature's level, written over its cell.
-   *
-   * Sized and placed like the cell's own number rather than like the Census
-   * badge, because this one REPLACES what the cell was showing instead of
-   * annotating it — so it should read as the cell's content, at the size the
-   * eye already expects a digit there.
-   *
-   * Two things keep it from being confused with the number it covers. It wears
-   * `tierColor`, the same global encoding the pips underneath it wear, which no
-   * `ink` or `hot` in the set comes near. And it carries a dark backing plate,
-   * because a tier-3 is gold and several floors are light enough that a gold
-   * digit on them alone would be thin.
-   *
-   * No caller while the hover setting is disabled — see `drawOpen`.
-   */
-  private drawTierBadge(cell: Cell, box: { x: number; y: number; size: number }): void {
-    const ctx = this.ctx;
-    const { x, y, size } = box;
-    ctx.save();
-    ctx.fillStyle = 'rgba(6, 6, 10, 0.72)';
-    ctx.beginPath();
-    ctx.arc(x + size / 2, y + size / 2, size * 0.46, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = tierColor(cell.tier);
-    const { centre } = this.numberFont(size * 0.74);
-    ctx.textAlign = 'center';
-    ctx.fillText(String(cell.tier), x + size / 2, y + size / 2 + centre);
-    ctx.restore();
-  }
-
   private drawCensus(cell: Cell, cx: number, cy: number): void {
     const ctx = this.ctx;
     const box = this.contentBox(cx, cy);
@@ -1018,7 +1002,11 @@ export class BoardView {
     ctx.fillStyle = CENSUS_COLOR;
     const { ascent } = this.numberFont(size * 0.32);
     ctx.textAlign = 'left';
-    ctx.fillText(String(cell.census), x + Math.max(1, size * 0.04), y + Math.max(0, size * 0.02) + ascent);
+    ctx.fillText(
+      String(cell.census),
+      x + Math.max(1, size * 0.04),
+      y + Math.max(0, size * 0.02) + ascent,
+    );
     ctx.restore();
   }
 
@@ -1077,7 +1065,7 @@ export class BoardView {
     const w = (box.size - pad * 2) / cols;
     const h = (box.size - pad * 2) / rows;
     const font = Math.round(Math.min(w, h) * 0.86);
-    if (font < 5) return;   // below this the pips are noise, not information
+    if (font < 5) return; // below this the pips are noise, not information
 
     ctx.save();
     const { centre } = this.numberFont(font);
@@ -1107,9 +1095,7 @@ export class BoardView {
     ctx.restore();
   }
 
-  private drawOpen(
-    cell: Cell, cx: number, cy: number, theme: TypeTheme, game: Game,
-  ): void {
+  private drawOpen(cell: Cell, cx: number, cy: number, theme: TypeTheme, game: Game): void {
     const ctx = this.ctx;
     const box = this.contentBox(cx, cy);
 
@@ -1130,33 +1116,12 @@ export class BoardView {
     // Never on a pairing board, by request. The number there is the PARTNER'S
     // tier, and a lone digit over a creature reads as that creature's own
     // level — it confused more than it told.
-    const hoverNumber = cell.tier > 0 && !cell.alive && cell === this.hovered
-      && !this.creaturesHidden && !isPaired(game.config.placement);
-
-    // DISABLED, with its settings row: "Hovering a creature you have beaten".
-    // The cursor over a beaten creature now shows the number underneath, and
-    // the two cannot share it. `display.hoverDefeated` is still plumbed and
-    // saved, only not read, so bringing it back is uncommenting this, the
-    // restyle below, and the gallery in settingsscreen.ts.
-    //
-    // // The cursor, over a creature that is already dealt with. It reveals
-    // // nothing — the pips under the cursor already say the tier — so this is
-    // // presentation and it takes the cell before either branch below, which is
-    // // what makes it one rule rather than two: "while you hover a beaten
-    // // creature, it shows its level", whether the cell was showing its glyph or
-    // // the number it was toggled to.
-    // //
-    // // Drawn in the LEVEL'S OWN COLOUR, which is the part that keeps it safe to
-    // // read. A cell's number and a creature's level are both single digits, and
-    // // on PAIRS both are live at once — the number there is the partner's
-    // // level — so a digit that simply replaced another digit in the same ink
-    // // would be a misread waiting to happen. `tierColor` is already the global
-    // // encoding of a tier, worn by the very pips this is covering.
-    // if (cell.tier > 0 && this.display.hoverDefeated === 'tier' && cell === this.hovered
-    //     && !this.creaturesHidden) {
-    //   this.drawTierBadge(cell, box);
-    //   return;
-    // }
+    const hoverNumber =
+      cell.tier > 0 &&
+      !cell.alive &&
+      cell === this.hovered &&
+      !this.creaturesHidden &&
+      !isPaired(game.config.placement);
 
     // A defeated creature shows its sprite, or its own number while hovered.
     if (cell.tier > 0 && !hoverNumber) {
@@ -1167,16 +1132,6 @@ export class BoardView {
       // Dim the glyph itself rather than washing it out with a floor overlay,
       // which left defeated creatures almost invisible.
       if (!cell.alive) ctx.globalAlpha = 0.55;
-      // DISABLED with the hover setting — see above. A hovered beaten
-      // creature shows its number now, so its glyph is never drawn to restyle.
-      //
-      // // The hovered glyph may be restyled into another shape. `drawCreature`
-      // // reads the shape off the theme, so this is a theme with one field
-      // // changed rather than a second drawing path.
-      // const glyphTheme = cell === this.hovered && isPipShape(this.display.hoverDefeated)
-      //   ? { ...theme, pip: this.display.hoverDefeated }
-      //   : theme;
-      // drawCreature(ctx, box.x, box.y, box.size, cell.tier, glyphTheme);
       drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme);
       ctx.restore();
       // A struck-through corner reads as "dealt with" at a glance. Optional,
@@ -1219,13 +1174,17 @@ export class BoardView {
     c.addEventListener('contextmenu', (e) => e.preventDefault());
 
     // Auto-fit picks a sensible size, but big boards still reward leaning in.
-    c.addEventListener('wheel', (e) => {
-      if (!this.game) return;
-      e.preventDefault();
-      const rect = this.canvas.getBoundingClientRect();
-      const step = e.deltaY < 0 ? 2 : -2;
-      this.zoomAt(this.cellPx + step, e.clientX - rect.left, e.clientY - rect.top);
-    }, { passive: false });
+    c.addEventListener(
+      'wheel',
+      (e) => {
+        if (!this.game) return;
+        e.preventDefault();
+        const rect = this.canvas.getBoundingClientRect();
+        const step = e.deltaY < 0 ? 2 : -2;
+        this.zoomAt(this.cellPx + step, e.clientX - rect.left, e.clientY - rect.top);
+      },
+      { passive: false },
+    );
 
     c.addEventListener('pointerdown', (e) => {
       if (e.button === 2) {
@@ -1236,7 +1195,10 @@ export class BoardView {
       if (e.pointerType === 'touch') {
         if (!this.touches.size) this.gesture = false;
         this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-        if (this.touches.size === 2) { this.beginPinch(); return; }
+        if (this.touches.size === 2) {
+          this.beginPinch();
+          return;
+        }
         if (this.touches.size > 2) return;
       }
       this.dragMoved = false;
@@ -1257,7 +1219,10 @@ export class BoardView {
     c.addEventListener('pointermove', (e) => {
       if (this.touches.has(e.pointerId)) {
         this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-        if (this.pinch && this.touches.size >= 2) { this.movePinch(); return; }
+        if (this.pinch && this.touches.size >= 2) {
+          this.movePinch();
+          return;
+        }
         if (this.gesture) return;
       }
       if (this.dragging) {
@@ -1326,13 +1291,20 @@ export class BoardView {
   private beginPinch(): void {
     const [a, b] = [...this.touches.values()];
     const rect = this.canvas.getBoundingClientRect();
-    this.pinch = pinchStart(a!.x - rect.left, a!.y - rect.top, b!.x - rect.left, b!.y - rect.top,
-      { cell: this.cellPx, originX: this.originX, originY: this.originY });
+    this.pinch = pinchStart(a!.x - rect.left, a!.y - rect.top, b!.x - rect.left, b!.y - rect.top, {
+      cell: this.cellPx,
+      originX: this.originX,
+      originY: this.originY,
+    });
     this.gesture = true;
     this.dragging = false;
     this.dragMoved = true;
     for (const id of this.touches.keys()) {
-      try { this.canvas.setPointerCapture(id); } catch { /* already released */ }
+      try {
+        this.canvas.setPointerCapture(id);
+      } catch {
+        /* already released */
+      }
     }
   }
 
@@ -1340,8 +1312,15 @@ export class BoardView {
     if (!this.pinch) return;
     const [a, b] = [...this.touches.values()];
     const rect = this.canvas.getBoundingClientRect();
-    const next = pinchTo(this.pinch, a!.x - rect.left, a!.y - rect.top, b!.x - rect.left, b!.y - rect.top,
-      this.fittedCell, Math.max(this.fittedCell, this.display.maxCell));
+    const next = pinchTo(
+      this.pinch,
+      a!.x - rect.left,
+      a!.y - rect.top,
+      b!.x - rect.left,
+      b!.y - rect.top,
+      this.fittedCell,
+      Math.max(this.fittedCell, this.display.maxCell),
+    );
     this.cellPx = next.cell;
     this.originX = next.originX;
     this.originY = next.originY;

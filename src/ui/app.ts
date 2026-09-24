@@ -15,7 +15,13 @@ import { BoardView, type BoardDisplay } from './boardview.js';
 import { ladders } from './ladders.js';
 import { Progress } from './progress.js';
 import {
-  PROGRESS_KEY, SETTINGS_KEY, type SaveBundle, decodeSave, describeSave, encodeSave, localDate,
+  PROGRESS_KEY,
+  SETTINGS_KEY,
+  type SaveBundle,
+  decodeSave,
+  describeSave,
+  encodeSave,
+  localDate,
 } from './savefile.js';
 import { TIER_GOLD, themeFor, tierColor, tierGilded } from './theme.js';
 import { SPELLS, spellKey, spellLabel, type SpellId } from '../engine/spells.js';
@@ -26,7 +32,9 @@ import { playVictory } from './victory.js';
 import { buildSettingsScreen } from './settingsscreen.js';
 
 const el = <K extends keyof HTMLElementTagNameMap>(
-  tag: K, cls?: string, text?: string,
+  tag: K,
+  cls?: string,
+  text?: string,
 ): HTMLElementTagNameMap[K] => {
   const node = document.createElement(tag);
   if (cls) node.className = cls;
@@ -37,7 +45,11 @@ const el = <K extends keyof HTMLElementTagNameMap>(
 /** The save exactly as stored. Blocked storage reads as no save at all. */
 function readStoredSave(): SaveBundle {
   const read = (key: string): string | null => {
-    try { return localStorage.getItem(key); } catch { return null; }
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
   };
   return { progress: read(PROGRESS_KEY), settings: read(SETTINGS_KEY) };
 }
@@ -61,8 +73,7 @@ function writeStoredSave(bundle: SaveBundle): boolean {
   }
 }
 
-const pad = (n: number, width: number) =>
-  String(Math.max(0, Math.floor(n))).padStart(width, '0');
+const pad = (n: number, width: number) => String(Math.max(0, Math.floor(n))).padStart(width, '0');
 
 /**
  * The ladder that teaches, and so the only one that explains a death.
@@ -251,8 +262,9 @@ export class App {
         : `<path class="mute-wave" d="M14.5 9a4.5 4.5 0 010 6M17.5 6.8a8 8 0 010 10.4" />`) +
       `</svg>`;
     btn.classList.toggle('is-muted', muted);
-    const label = muted ? 'Sound off — click to turn sound on'
-                        : 'Sound on — click to turn sound off';
+    const label = muted
+      ? 'Sound off — click to turn sound on'
+      : 'Sound on — click to turn sound off';
     btn.title = label;
     btn.setAttribute('aria-label', label);
     btn.setAttribute('aria-pressed', String(muted));
@@ -300,7 +312,6 @@ export class App {
       font: this.settings.font(this.typeId),
       highlight: this.settings.highlightStyle(this.typeId),
       strikeDefeated: p.strikeDefeated,
-      hoverDefeated: p.hoverDefeated,
     };
   }
 
@@ -334,15 +345,19 @@ export class App {
     head.append(el('p', 'sub', 'Prototype — Milestone 3'));
     // Boards cleared is a currency now, so it is shown whether or not
     // anything is currently waiting on it.
-    head.append(el('p', 'sub boards-cleared',
-      `${cleared} board${cleared === 1 ? '' : 's'} cleared`));
+    head.append(
+      el('p', 'sub boards-cleared', `${cleared} board${cleared === 1 ? '' : 's'} cleared`),
+    );
     // A player who left a dial easier than default a week ago should not have
     // to open Settings to find out why nothing is unlocking.
     if (!this.recordsCount) {
       const easier = easierThanDefault(this.settings.gameplay);
-      const warn = el('p', 'sub settings-warn',
+      const warn = el(
+        'p',
+        'sub settings-warn',
         `Nothing is being recorded: ${easier.join(', ')} ` +
-        `${easier.length === 1 ? 'is' : 'are'} set easier than the tuned game.`);
+          `${easier.length === 1 ? 'is' : 'are'} set easier than the tuned game.`,
+      );
       head.append(warn);
     }
     wrap.append(head);
@@ -371,21 +386,26 @@ export class App {
         // number is a dead end; "41 / 45 boards" is a thing to go and do.
         const needs: string[] = [];
         if (type.requires.length) {
-          needs.push(`clear ${type.requires
-            .map((r) => ladders.find((t) => t.id === r)?.name ?? r)
-            .join(' + ')}`);
+          needs.push(
+            `clear ${type.requires
+              .map((r) => ladders.find((t) => t.id === r)?.name ?? r)
+              .join(' + ')}`,
+          );
         }
         if (type.requires_boards > cleared) {
           needs.push(`${cleared} / ${type.requires_boards} boards cleared`);
         }
         const runs = this.progress.fullRunsCompleted();
         if (type.requires_runs > runs) {
-          needs.push(`${runs} / ${type.requires_runs} Full Runs completed, each on a different type`);
+          needs.push(
+            `${runs} / ${type.requires_runs} Full Runs completed, each on a different type`,
+          );
         }
         meta.textContent = `Locked — ${needs.join(' · ')}`;
       } else if (rec.cleared) {
         const run = this.progress.runRecord(type.id);
-        meta.textContent = `Cleared · board ${rec.highestBoard} of ${type.boards.length}` +
+        meta.textContent =
+          `Cleared · board ${rec.highestBoard} of ${type.boards.length}` +
           (run.cleared ? ' · ★ full run' : ' · full run open');
       } else {
         meta.textContent = `Board ${rec.highestBoard} of ${type.boards.length}`;
@@ -627,9 +647,9 @@ export class App {
     card.append(el('span', 'board-n run-n', 'FULL RUN'));
     card.append(el('span', 'board-size', `all ${last} boards`));
     card.append(el('span', 'board-stat', `one pool · HP ${pool}`));
-    card.append(el('span', 'board-stat', heal > 0
-      ? `+${heal} healed per board`
-      : 'no healing at all'));
+    card.append(
+      el('span', 'board-stat', heal > 0 ? `+${heal} healed per board` : 'no healing at all'),
+    );
 
     const badge = el('span', 'board-badge');
     if (!unlocked) badge.textContent = `Locked — clear ${last}`;
@@ -699,9 +719,7 @@ export class App {
    */
   private armTimeAttack(best: number | null): void {
     this.timeExpired = false;
-    this.timeLimit = this.settings.gameplay.timeAttack && best !== null && best > 0
-      ? best
-      : null;
+    this.timeLimit = this.settings.gameplay.timeAttack && best !== null && best > 0 ? best : null;
   }
 
   /**
@@ -758,7 +776,10 @@ export class App {
       hud.append(span);
       return span;
     };
-    mk('hp'); mk('lv'); mk('ex'); mk('ne');
+    mk('hp');
+    mk('lv');
+    mk('ex');
+    mk('ne');
     if (game.spells.length) mk('mp', 'mana');
     // In a run, how far down the ladder you are is the single most important
     // number on screen, because it is the one thing HP alone cannot tell you.
@@ -774,10 +795,12 @@ export class App {
     // exactly as it was. The clock is the one thing that keeps running, which
     // is correct — walking away from a board does not pause it anywhere else
     // either.
-    gear.addEventListener('click', () => this.showSettings(() => {
-      this.buildGameScreen();
-      this.startClock();
-    }));
+    gear.addEventListener('click', () =>
+      this.showSettings(() => {
+        this.buildGameScreen();
+        this.startClock();
+      }),
+    );
     hud.append(gear);
     const back = el('button', 'ghost small', this.run ? 'Abandon' : 'Back');
     back.addEventListener('click', () => this.leaveGame());
@@ -786,11 +809,15 @@ export class App {
 
     const size = `${game.config.width}×${game.config.height}`;
     const creatures = game.config.quantity.reduce((a, b) => a + b, 0);
-    const label = el('div', 'board-label', this.run
-      ? `${type.name} FULL RUN — board ${this.boardIndex} of ${this.run.boardCount} · ` +
-        `${size} · ${creatures} creatures · ` +
-        `pool ${this.run.maxHp}, +${this.run.healPerBoard} between boards`
-      : `${type.name} — board ${this.boardIndex} · ${size} · ${creatures} creatures`);
+    const label = el(
+      'div',
+      'board-label',
+      this.run
+        ? `${type.name} FULL RUN — board ${this.boardIndex} of ${this.run.boardCount} · ` +
+            `${size} · ${creatures} creatures · ` +
+            `pool ${this.run.maxHp}, +${this.run.healPerBoard} between boards`
+        : `${type.name} — board ${this.boardIndex} · ${size} · ${creatures} creatures`,
+    );
     if (this.run) label.classList.add('run');
     wrap.append(label);
 
@@ -854,7 +881,8 @@ export class App {
       palette.append(safe);
 
       const assist = el('button', 'sweep assist', 'Sweep + marks');
-      assist.title = 'Also trust your marks as correct tier claims. ' +
+      assist.title =
+        'Also trust your marks as correct tier claims. ' +
         'Reaches further, but a wrong mark can cost HP.';
       assist.addEventListener('click', () => this.doSweep(true));
       this.sweepMarkBtn = assist;
@@ -874,7 +902,8 @@ export class App {
         // where every other spell explains itself.
         if (id === 'exercise' && game.config.workout) {
           const w = game.config.workout;
-          btn.title = `Fight your next battle 1 level higher, for ${w.expMultiplier}x EXP if you win. ` +
+          btn.title =
+            `Fight your next battle 1 level higher, for ${w.expMultiplier}x EXP if you win. ` +
             `Costs ${w.base} and ${w.step} more each cast; each level-up takes ${w.relief} off ` +
             `(never below ${w.base}). Resets every board. Press ${spellKey(id).toUpperCase()}.`;
         }
@@ -883,7 +912,10 @@ export class App {
         row.append(btn);
       }
       const cancel = el('button', 'ghost small', 'Cancel (Esc)');
-      cancel.addEventListener('click', () => { this.pendingSpell = null; this.refresh(); });
+      cancel.addEventListener('click', () => {
+        this.pendingSpell = null;
+        this.refresh();
+      });
       row.append(cancel);
       wrap.append(row);
     } else {
@@ -920,9 +952,9 @@ export class App {
       return;
     }
     if (this.markMode >= 0) {
-      this.apply(this.notesMode
-        ? game.toggleNote(x, y, this.markMode)
-        : game.setMark(x, y, this.markMode));
+      this.apply(
+        this.notesMode ? game.toggleNote(x, y, this.markMode) : game.setMark(x, y, this.markMode),
+      );
       return;
     }
     // In pencil mode a click annotates or does nothing — never opens. Falling
@@ -946,7 +978,7 @@ export class App {
       return;
     }
     this.pendingSpell = this.pendingSpell === id ? null : id;
-    this.markMode = -1;   // the two targeting modes are mutually exclusive
+    this.markMode = -1; // the two targeting modes are mutually exclusive
     this.refresh();
   }
 
@@ -986,7 +1018,10 @@ export class App {
 
     const row = el('div', 'overlay-actions');
     const yes = el('button', 'primary', opts.confirmLabel);
-    yes.addEventListener('click', () => { this.closeAsk(); opts.onConfirm(); });
+    yes.addEventListener('click', () => {
+      this.closeAsk();
+      opts.onConfirm();
+    });
     const no = el('button', 'ghost', opts.cancelLabel);
     no.addEventListener('click', () => this.closeAsk());
     row.append(yes, no);
@@ -994,7 +1029,10 @@ export class App {
     overlay.append(card);
 
     const screen = this.root.querySelector('.screen');
-    if (!screen) { opts.onConfirm(); return; }
+    if (!screen) {
+      opts.onConfirm();
+      return;
+    }
     screen.append(overlay);
     this.askOverlay = overlay;
     // Cancel is the safe answer, so it is what Enter and a stray click land
@@ -1030,9 +1068,14 @@ export class App {
     const overlay = el('div', 'overlay win');
     const card = el('div', 'overlay-card backup');
     card.append(el('h2', undefined, 'SAVE BACKUP'));
-    card.append(el('p', 'overlay-note',
-      'Your save lives in this browser only. Keep a copy of this code to move it to '
-      + 'another device, or to get it back if the browser clears its data.'));
+    card.append(
+      el(
+        'p',
+        'overlay-note',
+        'Your save lives in this browser only. Keep a copy of this code to move it to ' +
+          'another device, or to get it back if the browser clears its data.',
+      ),
+    );
 
     card.append(el('p', 'backup-label', `This browser — ${describeSave(current)}`));
     const out = el('textarea', 'backup-code');
@@ -1051,7 +1094,11 @@ export class App {
         await navigator.clipboard.writeText(code);
         copied = true;
       } catch {
-        try { copied = document.execCommand('copy'); } catch { /* fall through */ }
+        try {
+          copied = document.execCommand('copy');
+        } catch {
+          /* fall through */
+        }
       }
       copy.textContent = copied ? 'Copied' : 'Select the code and copy it';
     });
@@ -1086,8 +1133,12 @@ export class App {
     file.addEventListener('change', async () => {
       const f = file.files?.[0];
       if (!f) return;
-      try { input.value = await f.text(); err.textContent = ''; }
-      catch { err.textContent = 'That file could not be read.'; }
+      try {
+        input.value = await f.text();
+        err.textContent = '';
+      } catch {
+        err.textContent = 'That file could not be read.';
+      }
     });
     card.append(file);
 
@@ -1095,20 +1146,26 @@ export class App {
     const restore = el('button', 'primary', 'Restore');
     restore.addEventListener('click', () => {
       const result = decodeSave(input.value);
-      if (!result.ok) { err.textContent = result.error; return; }
+      if (!result.ok) {
+        err.textContent = result.error;
+        return;
+      }
       const from = result.exported ? ` (saved ${localDate(new Date(result.exported))})` : '';
       this.ask({
         title: 'REPLACE SAVE?',
-        body: `Restoring: ${describeSave(result.bundle)}${from} `
-          + `This replaces the save in this browser: ${describeSave(current)}`,
+        body:
+          `Restoring: ${describeSave(result.bundle)}${from} ` +
+          `This replaces the save in this browser: ${describeSave(current)}`,
         confirmLabel: 'Replace my save',
         cancelLabel: 'Cancel',
         onConfirm: () => {
           if (writeStoredSave(result.bundle)) {
             window.location.reload();
           } else {
-            this.showSaveBackup(input.value,
-              'This browser is blocking saved data, so nothing could be restored.');
+            this.showSaveBackup(
+              input.value,
+              'This browser is blocking saved data, so nothing could be restored.',
+            );
           }
         },
       });
@@ -1146,43 +1203,65 @@ export class App {
     const overlay = el('div', 'overlay win');
     const card = el('div', 'overlay-card howto');
     card.append(el('h2', undefined, 'HOW TO PLAY'));
-    card.append(el('p', 'overlay-stats',
-      'Minesweeper, except the creatures fight back — and the numbers count differently.'));
+    card.append(
+      el(
+        'p',
+        'overlay-stats',
+        'Minesweeper, except the creatures fight back — and the numbers count differently.',
+      ),
+    );
 
     const rule = (heading: string, body: string) => {
       card.append(el('p', 'howto-rule', heading));
       card.append(el('p', 'overlay-note', body));
     };
 
-    rule('A number is a sum, not a count.',
+    rule(
+      'A number is a sum, not a count.',
       'It is the tiers of the creatures around it added together. A 9 might be two ' +
-      'creatures — a tier 5 beside a tier 4 — or three tier 3s. That is ' +
-      'why a number can be larger than 8 when a cell has only 8 neighbours.');
+        'creatures — a tier 5 beside a tier 4 — or three tier 3s. That is ' +
+        'why a number can be larger than 8 when a cell has only 8 neighbours.',
+    );
 
-    rule('Anything at or below your level dies for free.',
+    rule(
+      'Anything at or below your level dies for free.',
       'Your level is the Level number at the top of the board, drawn in the colour of the ' +
-      'strongest creatures it can beat. A creature of that tier or lower falls in ' +
-      'one blow and costs nothing, and pays EXP. A stronger one fights back, and the ' +
-      'gap is expensive: a tier 5 at LV 1 costs 20 HP.');
+        'strongest creatures it can beat. A creature of that tier or lower falls in ' +
+        'one blow and costs nothing, and pays EXP. A stronger one fights back, and the ' +
+        'gap is expensive: a tier 5 at LV 1 costs 20 HP.',
+    );
 
-    rule('HP is a guess budget.',
+    rule(
+      'HP is a guess budget.',
       'Every board can be cleared without taking a single point of damage — the EXP ' +
-      'needed for each level is always already on the board below it. So HP is not a ' +
-      'combat resource. You spend it when you guess.');
+        'needed for each level is always already on the board below it. So HP is not a ' +
+        'combat resource. You spend it when you guess.',
+    );
 
-    card.append(el('p', 'overlay-note',
-      'Click to open · right-click, or a LV button, to mark what you think a cell is · ' +
-      'S opens what is provably safe.'));
+    card.append(
+      el(
+        'p',
+        'overlay-note',
+        'Click to open · right-click, or a LV button, to mark what you think a cell is · ' +
+          'S opens what is provably safe.',
+      ),
+    );
 
     const row = el('div', 'overlay-actions');
     const go = el('button', 'primary', 'Got it');
-    go.addEventListener('click', () => { this.closeAsk(); onClose?.(); });
+    go.addEventListener('click', () => {
+      this.closeAsk();
+      onClose?.();
+    });
     row.append(go);
     card.append(row);
     overlay.append(card);
 
     const screen = this.root.querySelector('.screen');
-    if (!screen) { onClose?.(); return; }
+    if (!screen) {
+      onClose?.();
+      return;
+    }
     screen.append(overlay);
     this.askOverlay = overlay;
     go.focus();
@@ -1200,7 +1279,8 @@ export class App {
       const run = this.run;
       this.ask({
         title: 'ABANDON RUN?',
-        body: `${this.typeName()} full run, board ${this.boardIndex} of ${run.boardCount}, ` +
+        body:
+          `${this.typeName()} full run, board ${this.boardIndex} of ${run.boardCount}, ` +
           `HP ${run.hp}/${run.maxHp}. A run cannot be resumed.`,
         confirmLabel: 'Abandon run',
         cancelLabel: 'Keep playing',
@@ -1233,7 +1313,10 @@ export class App {
     if (!game || game.status !== 'playing') return;
     // The engine refuses a sweep the dial has closed, so the keyboard cannot
     // get past a gate the button is showing.
-    if (!game.sweepAvailable) { this.sfx.play('blocked'); return; }
+    if (!game.sweepAvailable) {
+      this.sfx.play('blocked');
+      return;
+    }
     const events = game.sweep({ useMarks });
     if (events.length > 0) this.sfx.play('sweep');
     this.apply(events);
@@ -1244,7 +1327,10 @@ export class App {
     // board. Without this, Escape would fall through to leaveGame and stack a
     // second copy of the very overlay that is asking.
     if (this.askOverlay) {
-      if (e.key === 'Escape') { e.preventDefault(); this.closeAsk(); }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        this.closeAsk();
+      }
       return;
     }
 
@@ -1252,9 +1338,13 @@ export class App {
     if (!game) return;
 
     if (e.key === 'Escape') {
-      if (this.pendingSpell) { this.pendingSpell = null; this.refresh(); }
-      else if (this.markMode >= 0) { this.markMode = -1; this.refresh(); }
-      else this.leaveGame();
+      if (this.pendingSpell) {
+        this.pendingSpell = null;
+        this.refresh();
+      } else if (this.markMode >= 0) {
+        this.markMode = -1;
+        this.refresh();
+      } else this.leaveGame();
       return;
     }
     if (game.status !== 'playing') return;
@@ -1315,9 +1405,9 @@ export class App {
         // only Shift pencilled, so in Pencil mode the palette and the keyboard
         // did opposite things — the mode silently did not apply to typing.
         const pencil = this.notesMode !== e.shiftKey;
-        this.apply(pencil
-          ? game.toggleNote(cell.x, cell.y, tier)
-          : game.setMark(cell.x, cell.y, tier));
+        this.apply(
+          pencil ? game.toggleNote(cell.x, cell.y, tier) : game.setMark(cell.x, cell.y, tier),
+        );
       } else {
         if (e.shiftKey) this.notesMode = true;
         this.pickTier(tier);
@@ -1350,20 +1440,26 @@ export class App {
       return `${SPELLS[this.pendingSpell].name} is armed — click a cell to cast it, Esc to cancel`;
     }
     if (this.notesMode) {
-      const what = tier === 0 ? '“might be empty”' : tier > 0 ? `“might be ${tier}”` : 'a candidate';
-      return `PENCIL — click a cell to add or remove ${what} · ` +
+      const what =
+        tier === 0 ? '“might be empty”' : tier > 0 ? `“might be ${tier}”` : 'a candidate';
+      return (
+        `PENCIL — click a cell to add or remove ${what} · ` +
         'pick a tier above, or Shift+digit over a cell · ' +
-        `N returns to marking · ${spell}`;
+        `N returns to marking · ${spell}`
+      );
     }
     if (tier > 0) {
-      return `MARK ${tier} — click a cell to claim it is a ${tier}, click again to clear · ` +
-        `a mark above your level locks the cell · N pencils instead · ${spell}`;
+      return (
+        `MARK ${tier} — click a cell to claim it is a ${tier}, click again to clear · ` +
+        `a mark above your level locks the cell · N pencils instead · ${spell}`
+      );
     }
-    const sweep = game && !game.hasSweep
-      ? 'no Sweep on this ladder — every cell is opened by hand'
-      : game && game.config.placement === 'sudoku'
-        ? 'S opens the clues at or below your level · D also opens your own marks'
-        : 'S sweeps what is proven safe · D also trusts your marks';
+    const sweep =
+      game && !game.hasSweep
+        ? 'no Sweep on this ladder — every cell is opened by hand'
+        : game && game.config.placement === 'sudoku'
+          ? 'S opens the clues at or below your level · D also opens your own marks'
+          : 'S sweeps what is proven safe · D also trusts your marks';
     // The crawl rule is the first thing a player meets on a DUNGEON board and
     // there is nothing on screen that would explain a click doing nothing, so
     // it is said here rather than left to be inferred from a red cursor. Once
@@ -1376,8 +1472,10 @@ export class App {
           `(red cursor means out of reach)`;
       return `${crawl} · right-click or a LV button to mark · ${sweep} · ${spell}`;
     }
-    return `Click to open · right-click or a LV button to mark · N pencils candidates · ` +
-      `${sweep} · ${spell}`;
+    return (
+      `Click to open · right-click or a LV button to mark · N pencils candidates · ` +
+      `${sweep} · ${spell}`
+    );
   }
 
   /**
@@ -1426,9 +1524,10 @@ export class App {
   private gatePalette(): void {
     const game = this.game;
     const cell = this.view?.hoveredCell ?? null;
-    const mask = game && this.notesMode && cell && !cell.open && !cell.given
-      ? game.noteCandidates(cell) | cell.notes
-      : ~0;
+    const mask =
+      game && this.notesMode && cell && !cell.open && !cell.given
+        ? game.noteCandidates(cell) | cell.notes
+        : ~0;
     for (const btn of this.counters) {
       btn.classList.toggle('ruled-out', !hasNote(mask, Number(btn.dataset.tier)));
     }
@@ -1599,25 +1698,28 @@ export class App {
     if (this.sweepSafeBtn) {
       // The meter goes on the button rather than in the HUD, because what the
       // player needs to know is why THIS control is dark.
-      this.sweepSafeBtn.textContent = mode === 'off'
-        ? 'Sweep off'
-        : gated
-          ? `Sweep (${game.charge}/${game.chargeNeeded})`
-          : safeCount > 0 ? `Sweep ${safeCount}` : 'Sweep';
+      this.sweepSafeBtn.textContent =
+        mode === 'off'
+          ? 'Sweep off'
+          : gated
+            ? `Sweep (${game.charge}/${game.chargeNeeded})`
+            : safeCount > 0
+              ? `Sweep ${safeCount}`
+              : 'Sweep';
       this.sweepSafeBtn.disabled = gated || safeCount === 0;
-      this.sweepSafeBtn.title = mode === 'off'
-        ? 'Sweep is switched off in Settings — every cell is opened by hand.'
-        : mode === 'charge'
-          ? `Opening cells by hand charges Sweep. ${game.chargeNeeded} per use; ` +
-            `${game.charge} banked. Cells a sweep opens do not charge it.`
-          : 'Open only what is proven safe at your level. Can never cost HP.';
+      this.sweepSafeBtn.title =
+        mode === 'off'
+          ? 'Sweep is switched off in Settings — every cell is opened by hand.'
+          : mode === 'charge'
+            ? `Opening cells by hand charges Sweep. ${game.chargeNeeded} per use; ` +
+              `${game.charge} banked. Cells a sweep opens do not charge it.`
+            : 'Open only what is proven safe at your level. Can never cost HP.';
     }
     if (this.sweepMarkBtn) {
       // Only offered when the marks actually buy something the proof cannot.
       const extra = markCount - safeCount;
-      this.sweepMarkBtn.textContent = mode === 'off'
-        ? 'Sweep off'
-        : extra > 0 ? `Sweep + marks +${extra}` : 'Sweep + marks';
+      this.sweepMarkBtn.textContent =
+        mode === 'off' ? 'Sweep off' : extra > 0 ? `Sweep + marks +${extra}` : 'Sweep + marks';
       this.sweepMarkBtn.disabled = gated || extra <= 0;
     }
 
@@ -1652,9 +1754,8 @@ export class App {
       // the only thing distinguishing a countdown from a count-up in a single
       // character, and a glyph is not available here — the font is a player
       // setting, so the word is the portable way to say it.
-      this.hud.t.textContent = left === null
-        ? `TIME ${this.elapsedSeconds()}`
-        : `TIME ${left} LEFT`;
+      this.hud.t.textContent =
+        left === null ? `TIME ${this.elapsedSeconds()}` : `TIME ${left} LEFT`;
       // Under ten seconds it reads like the HP counter does, for the same
       // reason: it is the number about to end the board.
       this.hud.t.classList.toggle('low', left !== null && left <= 10);
@@ -1692,7 +1793,10 @@ export class App {
   // --------------------------------------------------------------------- result
 
   private finish(): void {
-    if (this.run) { this.finishRunBoard(); return; }
+    if (this.run) {
+      this.finishRunBoard();
+      return;
+    }
     const game = this.game!;
     this.frozenSeconds = this.elapsedSeconds();
     this.stopClock();
@@ -1706,7 +1810,8 @@ export class App {
     // down at all — no clear, no unlock, no time. It was a different board.
     if (won && counts) {
       const result = this.progress.recordClear(ladders, this.typeId, this.boardIndex, {
-        perfect, seconds: this.frozenSeconds,
+        perfect,
+        seconds: this.frozenSeconds,
       });
       unlocked = result.unlockedBoard;
     }
@@ -1714,21 +1819,35 @@ export class App {
 
     const overlay = el('div', `overlay ${won ? 'win' : 'lose'}`);
     const card = el('div', 'overlay-card');
-    card.append(el('h2', undefined, won
-      ? (perfect ? 'PERFECT CLEAR' : 'CLEAR')
-      : this.timeExpired ? 'OUT OF TIME' : 'GAME OVER'));
+    card.append(
+      el(
+        'h2',
+        undefined,
+        won
+          ? perfect
+            ? 'PERFECT CLEAR'
+            : 'CLEAR'
+          : this.timeExpired
+            ? 'OUT OF TIME'
+            : 'GAME OVER',
+      ),
+    );
 
-    const stats = el('p', 'overlay-stats',
+    const stats = el(
+      'p',
+      'overlay-stats',
       won
         ? `${type.name} board ${this.boardIndex} · ${this.frozenSeconds}s · HP ${game.hp}/${game.maxHp}`
         : this.timeExpired
           ? `Time ran out · ${game.creaturesLeft()} creatures still standing`
-          : `${game.creaturesLeft()} creatures still standing · reached LV ${game.level}`);
+          : `${game.creaturesLeft()} creatures still standing · reached LV ${game.level}`,
+    );
     card.append(stats);
 
     if (won && perfect) {
-      card.append(el('p', 'overlay-note',
-        'No damage taken — every board can be cleared this way.'));
+      card.append(
+        el('p', 'overlay-note', 'No damage taken — every board can be cleared this way.'),
+      );
     }
     // The same fact, said to the players who need it rather than only to the
     // ones who have already proved they know it. A loss is the moment of most
@@ -1753,10 +1872,15 @@ export class App {
       // so this says the same number without quoting a price. Deriving the
       // full blow instead would mean a second copy of the damage formula
       // outside the engine, which is how the two drift.
-      card.append(el('p', 'overlay-note',
-        `A tier ${tier} creature at LV ${game.level} took your last ${damage} HP. ` +
-        `At LV ${tier} it would have cost nothing — ` +
-        'every board can be cleared without taking a single point of damage.'));
+      card.append(
+        el(
+          'p',
+          'overlay-note',
+          `A tier ${tier} creature at LV ${game.level} took your last ${damage} HP. ` +
+            `At LV ${tier} it would have cost nothing — ` +
+            'every board can be cleared without taking a single point of damage.',
+        ),
+      );
     }
     // Said on the overlay rather than only in Settings, because this is the
     // moment the absence of a new best time would otherwise look like a bug.
@@ -1816,16 +1940,22 @@ export class App {
     // The icon effects animate the board's own creatures, so they borrow the
     // glyphs from the view; the ambient ones ignore it.
     this.stopVictory = playVictory(
-      stage, effect, this.settings.themeFor(this.typeId), this.view?.victorySource(),
+      stage,
+      effect,
+      this.settings.themeFor(this.typeId),
+      this.view?.victorySource(),
     );
   }
 
   /** The one-line explanation of why a clear was not written down. */
   private modifiedNote(): HTMLElement {
     const easier = easierThanDefault(this.settings.gameplay);
-    return el('p', 'overlay-note modified',
+    return el(
+      'p',
+      'overlay-note modified',
       `Not recorded — ${easier.join(', ')} ${easier.length === 1 ? 'is' : 'are'} ` +
-      'set easier than the tuned game. Harder settings record normally.');
+        'set easier than the tuned game. Harder settings record normally.',
+    );
   }
 
   // ----------------------------------------------------------- result: full run
@@ -1869,34 +1999,71 @@ export class App {
     if (midRun) {
       const healed = Math.min(run.healPerBoard, run.maxHp - game.hp);
       card.append(el('h2', undefined, `BOARD ${this.boardIndex} CLEAR`));
-      card.append(el('p', 'overlay-stats',
-        `${type.name} full run · ${this.elapsedSeconds()}s · HP ${game.hp}/${run.maxHp}`));
+      card.append(
+        el(
+          'p',
+          'overlay-stats',
+          `${type.name} full run · ${this.elapsedSeconds()}s · HP ${game.hp}/${run.maxHp}`,
+        ),
+      );
       // Said explicitly, because the number is the mode: at full HP the heal
       // is zero and a player who is not told that will read it as a bug.
-      card.append(el('p', 'overlay-note', healed > 0
-        ? `Healed +${healed} — HP ${game.hp + healed}/${run.maxHp} going into board ${this.boardIndex + 1}.`
-        : run.healPerBoard === 0
-          ? `No heal on a pool of ${run.maxHp}. Every point you lose is gone for the run.`
-          : `Already at full HP, so the +${run.healPerBoard} heal is wasted.`));
-      card.append(el('p', 'overlay-note',
-        'Level, EXP and mana all reset on the next board. Only HP carries.'));
+      card.append(
+        el(
+          'p',
+          'overlay-note',
+          healed > 0
+            ? `Healed +${healed} — HP ${game.hp + healed}/${run.maxHp} going into board ${this.boardIndex + 1}.`
+            : run.healPerBoard === 0
+              ? `No heal on a pool of ${run.maxHp}. Every point you lose is gone for the run.`
+              : `Already at full HP, so the +${run.healPerBoard} heal is wasted.`,
+        ),
+      );
+      card.append(
+        el(
+          'p',
+          'overlay-note',
+          'Level, EXP and mana all reset on the next board. Only HP carries.',
+        ),
+      );
     } else if (won) {
       const perfect = game.hp === run.maxHp;
       card.append(el('h2', undefined, perfect ? 'PERFECT FULL RUN' : 'FULL RUN COMPLETE'));
-      card.append(el('p', 'overlay-stats',
-        `All ${run.boardCount} boards of ${type.name} · ${this.frozenSeconds}s · ` +
-        `HP ${game.hp}/${run.maxHp}`));
-      card.append(el('p', 'overlay-note', perfect
-        ? 'Ten boards, not a single point of damage.'
-        : `${run.damageTaken} HP lost across the ladder.`));
+      card.append(
+        el(
+          'p',
+          'overlay-stats',
+          `All ${run.boardCount} boards of ${type.name} · ${this.frozenSeconds}s · ` +
+            `HP ${game.hp}/${run.maxHp}`,
+        ),
+      );
+      card.append(
+        el(
+          'p',
+          'overlay-note',
+          perfect
+            ? 'Ten boards, not a single point of damage.'
+            : `${run.damageTaken} HP lost across the ladder.`,
+        ),
+      );
     } else {
       card.append(el('h2', undefined, 'RUN OVER'));
-      card.append(el('p', 'overlay-stats',
-        `${type.name} full run · board ${this.boardIndex} of ${run.boardCount} · ` +
-        `${this.frozenSeconds}s`));
-      card.append(el('p', 'overlay-note',
-        `${run.legs.length} board${run.legs.length === 1 ? '' : 's'} cleared. ` +
-        'The run starts again from board 1.'));
+      card.append(
+        el(
+          'p',
+          'overlay-stats',
+          `${type.name} full run · board ${this.boardIndex} of ${run.boardCount} · ` +
+            `${this.frozenSeconds}s`,
+        ),
+      );
+      card.append(
+        el(
+          'p',
+          'overlay-note',
+          `${run.legs.length} board${run.legs.length === 1 ? '' : 's'} cleared. ` +
+            'The run starts again from board 1.',
+        ),
+      );
     }
 
     const row = el('div', 'overlay-actions');
@@ -1915,7 +2082,10 @@ export class App {
     }
     const list = el('button', 'ghost', midRun ? 'Abandon run' : 'Board select');
     list.addEventListener('click', () => {
-      if (midRun) { this.leaveGame(); return; }
+      if (midRun) {
+        this.leaveGame();
+        return;
+      }
       this.run = null;
       this.showBoards(this.typeId);
     });
@@ -1945,13 +2115,15 @@ export class App {
     this.endVictory();
     this.closeAsk();
     this.root.replaceChildren();
-    this.root.append(buildSettingsScreen({
-      settings: this.settings,
-      typeId: this.typeId,
-      tiers: this.previewTiers(),
-      onBack: back,
-      onPreview: (event) => this.sfx.play(event),
-    }));
+    this.root.append(
+      buildSettingsScreen({
+        settings: this.settings,
+        typeId: this.typeId,
+        tiers: this.previewTiers(),
+        onBack: back,
+        onPreview: (event) => this.sfx.play(event),
+      }),
+    );
   }
 
   /**

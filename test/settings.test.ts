@@ -10,7 +10,6 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { boardConfig, findType } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
 import { FullRun } from '../src/engine/run.js';
@@ -27,12 +26,14 @@ import {
   snapRatio,
 } from '../src/engine/settings.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';
+import { ladders } from './helpers.js';
 
-const ladders = loadLadders();
 const SEED = 0x5eed;
 
-const dials = (patch: Partial<GameplaySettings>): GameplaySettings =>
-  ({ ...DEFAULT_GAMEPLAY, ...patch });
+const dials = (patch: Partial<GameplaySettings>): GameplaySettings => ({
+  ...DEFAULT_GAMEPLAY,
+  ...patch,
+});
 
 const board = (typeId: string, n = 1) => boardConfig(ladders, typeId, n);
 
@@ -48,8 +49,7 @@ describe('the dials default to the tuned game', () => {
     expect(dialled.hp).toBe(bare.hp);
     expect(dialled.mana).toBe(bare.mana);
     // Same seed, same board — the dials must not touch generation at all.
-    expect(dialled.grid.flat().map((c) => c.tier))
-      .toEqual(bare.grid.flat().map((c) => c.tier));
+    expect(dialled.grid.flat().map((c) => c.tier)).toEqual(bare.grid.flat().map((c) => c.tier));
   });
 
   it('agrees with itself about what "default" means', () => {
@@ -70,8 +70,9 @@ describe('the dials default to the tuned game', () => {
 describe('the HP dial', () => {
   it('scales the pool', () => {
     const cfg = board('normal', 5);
-    expect(Game.create(cfg, SEED, { settings: dials({ hpRatio: 2 }) }).maxHp)
-      .toBe(Math.round(cfg.hp * 2));
+    expect(Game.create(cfg, SEED, { settings: dials({ hpRatio: 2 }) }).maxHp).toBe(
+      Math.round(cfg.hp * 2),
+    );
   });
 
   it('never leaves a board you enter already dead', () => {
@@ -199,7 +200,12 @@ describe('forfeit', () => {
     const events = game.forfeit();
     expect(game.status).toBe('lost');
     expect(events).toEqual([{ type: 'lost' }]);
-    expect(game.grid.flat().filter((c) => c.tier > 0).every((c) => c.open)).toBe(true);
+    expect(
+      game.grid
+        .flat()
+        .filter((c) => c.tier > 0)
+        .every((c) => c.open),
+    ).toBe(true);
   });
 
   it('cannot end a board twice', () => {
@@ -212,8 +218,9 @@ describe('forfeit', () => {
 describe('a Full Run under the dials', () => {
   it('spends the HP-regen dial on the heal, and nothing else', () => {
     const type = findType(ladders, 'normal');
-    const quarter = FullRun.start(ladders, 'normal', SEED,
-      { settings: dials({ hpRegenRatio: 0.25 }) });
+    const quarter = FullRun.start(ladders, 'normal', SEED, {
+      settings: dials({ hpRegenRatio: 0.25 }),
+    });
     expect(quarter.maxHp).toBe(type.run_hp);
     expect(quarter.healPerBoard).toBe(Math.floor(type.run_hp * 0.25));
     // Nothing heals INSIDE a board at any setting — HP is a guess budget.
@@ -262,8 +269,10 @@ describe('which settings keep a record', () => {
     expect(isAtLeastAsHard(dials({ hpRatio: 1.05 }))).toBe(false);
     expect(easierThanDefault(dials({ hpRatio: 1.05 }))).toEqual(['player HP']);
     expect(easierThanDefault(dials({ enemyDamageRatio: 0 }))).toEqual(['creature damage']);
-    expect(easierThanDefault(dials({ hpRegenRatio: 1, manaRewardRatio: 2 })))
-      .toEqual(['HP regen', 'mana reward']);
+    expect(easierThanDefault(dials({ hpRegenRatio: 1, manaRewardRatio: 2 }))).toEqual([
+      'HP regen',
+      'mana reward',
+    ]);
   });
 
   it('never counts a gated Sweep as easier', () => {
@@ -284,7 +293,7 @@ describe('sliders move in 0.05 steps', () => {
 
 describe('THE DIALS CANNOT REACH THE LOAD-BEARING FACTS', () => {
   const harsh = dials({
-    hpRatio: 0,              // one point of HP, the minimum a board can have
+    hpRatio: 0, // one point of HP, the minimum a board can have
     enemyDamageRatio: 3,
     manaRegenRatio: 0,
     manaRewardRatio: 0,

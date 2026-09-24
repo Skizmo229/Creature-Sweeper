@@ -6,7 +6,6 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { boardConfig, cumulativeExp, findType } from '../src/engine/config.js';
 import { presentCellCount } from '../src/engine/board.js';
 import { dungeonMap } from '../src/engine/dungeon.js';
@@ -15,25 +14,7 @@ import { Game } from '../src/engine/game.js';
 import { autoplaySearch, autoplayTierOrder } from '../src/sim/autoplay.js';
 import { clearableWithoutGuessing } from '../src/engine/sudoku.js';
 import { hiddenCap, shadeForTier, shadeOf } from '../src/engine/checker.js';
-import { DEFAULT_GAMEPLAY } from '../src/engine/settings.js';
-
-/**
- * Settings with the Sweep gate taken off.
- *
- * The tuned default charges Sweep by ten hand-opened cells. A test about what
- * a sweep FINDS says so explicitly rather than opening ten unrelated cells
- * first — which on a Sudoku board would also change what there is to find.
- */
-const UNGATED_SWEEP = { settings: { ...DEFAULT_GAMEPLAY, sweep: 'on' as const } };
-
-const ladders = loadLadders();
-const battleTypes = ladders.filter((t) => !t.search);
-const SEEDS = [0xc0ffee, 0x5eed, 0xbeef];
-
-/** Every board config of one game type. */
-function boardsOf(typeId: string) {
-  return findType(ladders, typeId).boards.map((row) => boardConfig(ladders, typeId, row.n));
-}
+import { ladders, battleTypes, boardsOf, SEEDS, UNGATED_SWEEP } from './helpers.js';
 
 describe('ladder data', () => {
   it('has twenty-four types of ten boards', () => {
@@ -62,8 +43,9 @@ describe('ladder data', () => {
         const firstLocked = board.exp.length - board.lock;
         board.exp.forEach((threshold, k) => {
           if (k >= firstLocked) {
-            expect(threshold, `${type.id}#${board.n} gate ${k + 1} should equal C_${k + 1}`)
-              .toBe(C[k]);
+            expect(threshold, `${type.id}#${board.n} gate ${k + 1} should equal C_${k + 1}`).toBe(
+              C[k],
+            );
           }
         });
       }
@@ -76,8 +58,10 @@ describe('ladder data', () => {
         const prev = type.boards[i - 1]!.exp;
         const cur = type.boards[i]!.exp;
         for (let k = 0; k < Math.min(prev.length, cur.length); k++) {
-          expect(cur[k], `${type.id} board ${i + 1} threshold ${k + 1} dipped`)
-            .toBeGreaterThanOrEqual(prev[k]!);
+          expect(
+            cur[k],
+            `${type.id} board ${i + 1} threshold ${k + 1} dipped`,
+          ).toBeGreaterThanOrEqual(prev[k]!);
         }
       }
     }
@@ -92,8 +76,10 @@ describe('the zero-damage guarantee', () => {
         for (const seed of SEEDS) {
           const game = Game.create(cfg, seed);
           const result = autoplayTierOrder(game);
-          expect(result.cleared, `${type.id}#${board.n} seed ${seed} got stuck: ` +
-            JSON.stringify(result.stuck)).toBe(true);
+          expect(
+            result.cleared,
+            `${type.id}#${board.n} seed ${seed} got stuck: ` + JSON.stringify(result.stuck),
+          ).toBe(true);
           expect(result.hpLost, `${type.id}#${board.n} seed ${seed} took damage`).toBe(0);
           expect(game.hp).toBe(game.maxHp);
         }
@@ -107,8 +93,7 @@ describe('the zero-damage guarantee', () => {
       const cfg = boardConfig(ladders, type.id, board.n);
       const game = Game.create(cfg, 0xc0ffee);
       const result = autoplayTierOrder(game);
-      expect(result.finalLevel, `${type.id}#10 should top out at ${board.tiers}`)
-        .toBe(board.tiers);
+      expect(result.finalLevel, `${type.id}#10 should top out at ${board.tiers}`).toBe(board.tiers);
     }
   });
 });
@@ -133,8 +118,7 @@ describe('the auto-opening', () => {
         for (const seed of SEEDS) {
           const game = Game.create(cfg, seed);
           const opened = game.grid.flat().filter((c) => c.open);
-          expect(opened.length, `${type.id}#${board.n} opened nothing`)
-            .toBeGreaterThanOrEqual(9);
+          expect(opened.length, `${type.id}#${board.n} opened nothing`).toBeGreaterThanOrEqual(9);
           expect(
             opened.every((c) => c.tier === 0),
             `${type.id}#${board.n} opening uncovered a creature`,
@@ -166,8 +150,10 @@ describe('the crawl rule on the real ladders', () => {
   it('refuses a reach of one, and anything that is not a count of steps', () => {
     const dungeon = findType(ladders, 'dungeon');
     for (const bad of [1, -2, 1.5]) {
-      expect(() => boardConfig([{ ...dungeon, reach: bad }], 'dungeon', 1), `reach ${bad}`)
-        .toThrow();
+      expect(
+        () => boardConfig([{ ...dungeon, reach: bad }], 'dungeon', 1),
+        `reach ${bad}`,
+      ).toThrow();
     }
   });
 
@@ -200,8 +186,14 @@ describe('board shapes', () => {
     // puts them in. Menu order is a presentation decision — it moved when the
     // variants were regated on boards cleared — and it has no business
     // failing a test about board geometry.
-    expect(shaped.map((t) => t.id).sort())
-      .toEqual(['cave', 'cross', 'diamond', 'donut', 'dungeon', 'wrapped_cross']);
+    expect(shaped.map((t) => t.id).sort()).toEqual([
+      'cave',
+      'cross',
+      'diamond',
+      'donut',
+      'dungeon',
+      'wrapped_cross',
+    ]);
   });
 
   /**
@@ -232,7 +224,10 @@ describe('board shapes', () => {
         const stack = [present[0]!];
         while (stack.length) {
           for (const n of game.neighboursOf(stack.pop()!)) {
-            if (!seen.has(n)) { seen.add(n); stack.push(n); }
+            if (!seen.has(n)) {
+              seen.add(n);
+              stack.push(n);
+            }
           }
         }
         // A second region would be unreachable: the opening only reveals one.
@@ -312,7 +307,10 @@ describe('the ragged cave', () => {
         const stack = [present[0]!];
         while (stack.length) {
           for (const n of game.neighboursOf(stack.pop()!)) {
-            if (!seen.has(n)) { seen.add(n); stack.push(n); }
+            if (!seen.has(n)) {
+              seen.add(n);
+              stack.push(n);
+            }
           }
         }
         expect(seen.size, `cave#${board.n} seed ${seed} fragmented`).toBe(present.length);
@@ -326,9 +324,13 @@ describe('the ragged cave', () => {
       const cfg = boardConfig(ladders, 'cave', board.n);
       for (const seed of caveSeeds) {
         const game = Game.create(cfg, seed);
-        const onEdge = game.grid.flat().filter((c) => c.present && (
-          c.x === 0 || c.y === 0 || c.x === cfg.width - 1 || c.y === cfg.height - 1
-        ));
+        const onEdge = game.grid
+          .flat()
+          .filter(
+            (c) =>
+              c.present &&
+              (c.x === 0 || c.y === 0 || c.x === cfg.width - 1 || c.y === cfg.height - 1),
+          );
         expect(onEdge, `cave#${board.n} seed ${seed} reached the box edge`).toHaveLength(0);
       }
     }
@@ -350,11 +352,13 @@ describe('the ragged cave', () => {
     for (const board of cave.boards) {
       const cfg = boardConfig(ladders, 'cave', board.n);
       for (const seed of caveSeeds) {
-        const cells = Game.create(cfg, seed).grid.flat().filter((c) => c.present);
+        const cells = Game.create(cfg, seed)
+          .grid.flat()
+          .filter((c) => c.present);
         const xs = cells.map((c) => c.x);
         const ys = cells.map((c) => c.y);
-        const span = (Math.max(...xs) - Math.min(...xs) + 1)
-          * (Math.max(...ys) - Math.min(...ys) + 1);
+        const span =
+          (Math.max(...xs) - Math.min(...xs) + 1) * (Math.max(...ys) - Math.min(...ys) + 1);
         const ratio = cells.length / span;
         expect(ratio, `cave#${board.n} seed ${seed} is a solid blob`).toBeLessThan(0.88);
         total += ratio;
@@ -382,7 +386,8 @@ describe('the ragged cave', () => {
         const outside = new Set<number>();
         const stack: number[] = [];
         for (let x = 0; x < cfg.width; x++) stack.push(x, (cfg.height - 1) * cfg.width + x);
-        for (let y = 0; y < cfg.height; y++) stack.push(y * cfg.width, y * cfg.width + cfg.width - 1);
+        for (let y = 0; y < cfg.height; y++)
+          stack.push(y * cfg.width, y * cfg.width + cfg.width - 1);
         while (stack.length) {
           const idx = stack.pop()!;
           const x = idx % cfg.width;
@@ -392,14 +397,14 @@ describe('the ragged cave', () => {
           outside.add(idx);
           stack.push(idx + 1, idx - 1, idx + cfg.width, idx - cfg.width);
         }
-        const enclosed = game.grid.flat()
+        const enclosed = game.grid
+          .flat()
           .filter((c) => !c.present && !outside.has(c.y * cfg.width + c.x));
         if (enclosed.length) enclosing++;
         total++;
       }
     }
-    expect(enclosing / total, 'no cavern ever closes over any more')
-      .toBeGreaterThan(0.1);
+    expect(enclosing / total, 'no cavern ever closes over any more').toBeGreaterThan(0.1);
   });
 
   /**
@@ -413,12 +418,17 @@ describe('the ragged cave', () => {
       const cfg = boardConfig(ladders, 'cave', board.n);
       for (const seed of caveSeeds) {
         const grid = Game.create(cfg, seed).grid;
-        const on = (x: number, y: number) => x >= 0 && y >= 0 && x < cfg.width
-          && y < cfg.height && grid[y]![x]!.present;
+        const on = (x: number, y: number) =>
+          x >= 0 && y >= 0 && x < cfg.width && y < cfg.height && grid[y]![x]!.present;
 
         for (const cell of grid.flat()) {
           if (!cell.present) continue;
-          const square = [[-1, -1], [0, -1], [-1, 0], [0, 0]].some(([ox, oy]) => {
+          const square = [
+            [-1, -1],
+            [0, -1],
+            [-1, 0],
+            [0, 0],
+          ].some(([ox, oy]) => {
             const x = cell.x + ox!;
             const y = cell.y + oy!;
             return on(x, y) && on(x + 1, y) && on(x, y + 1) && on(x + 1, y + 1);
@@ -438,14 +448,17 @@ describe('the ragged cave', () => {
       const cfg = boardConfig(ladders, 'cave', board.n);
       for (const seed of caveSeeds) {
         const grid = Game.create(cfg, seed).grid;
-        const on = (x: number, y: number) => x >= 0 && y >= 0 && x < cfg.width
-          && y < cfg.height && grid[y]![x]!.present;
+        const on = (x: number, y: number) =>
+          x >= 0 && y >= 0 && x < cfg.width && y < cfg.height && grid[y]![x]!.present;
 
         for (const cell of grid.flat()) {
           if (!cell.present) continue;
-          for (const [dx, dy] of [[1, -1], [1, 1]] as const) {
-            const pinched = on(cell.x + dx, cell.y + dy)
-              && !on(cell.x + dx, cell.y) && !on(cell.x, cell.y + dy);
+          for (const [dx, dy] of [
+            [1, -1],
+            [1, 1],
+          ] as const) {
+            const pinched =
+              on(cell.x + dx, cell.y + dy) && !on(cell.x + dx, cell.y) && !on(cell.x, cell.y + dy);
             expect(
               pinched,
               `cave#${board.n} seed ${seed}: corner pinch at (${cell.x},${cell.y})`,
@@ -459,7 +472,10 @@ describe('the ragged cave', () => {
   it('is a pure function of the seed, and actually varies with it', () => {
     const cfg = boardConfig(ladders, 'cave', 5);
     const shape = (seed: number) =>
-      Game.create(cfg, seed).grid.flat().map((c) => (c.present ? '#' : '.')).join('');
+      Game.create(cfg, seed)
+        .grid.flat()
+        .map((c) => (c.present ? '#' : '.'))
+        .join('');
 
     expect(shape(0xc0ffee), 'same seed, different cave').toBe(shape(0xc0ffee));
     expect(shape(0xc0ffee), 'different seed, same cave').not.toBe(shape(0x5eed));
@@ -512,9 +528,12 @@ describe('the dungeon', () => {
     for (const board of dungeon.boards) {
       const cfg = boardConfig(ladders, 'dungeon', board.n);
       for (const seed of dungeonSeeds) {
-        const present = Game.create(cfg, seed).grid.flat().filter((c) => c.present);
-        expect(present.length, `dungeon#${board.n} seed ${seed}: wrong cell count`)
-          .toBe(board.cells);
+        const present = Game.create(cfg, seed)
+          .grid.flat()
+          .filter((c) => c.present);
+        expect(present.length, `dungeon#${board.n} seed ${seed}: wrong cell count`).toBe(
+          board.cells,
+        );
       }
     }
   });
@@ -528,8 +547,10 @@ describe('the dungeon', () => {
     eachBoard(({ grid, hall }, label) => {
       for (const cell of grid.flat()) {
         if (!cell.present || cell.tier === 0) continue;
-        expect(hall(cell.x, cell.y), `${label}: creature in the hallway at (${cell.x},${cell.y})`)
-          .toBe(false);
+        expect(
+          hall(cell.x, cell.y),
+          `${label}: creature in the hallway at (${cell.x},${cell.y})`,
+        ).toBe(false);
       }
     });
   });
@@ -570,13 +591,19 @@ describe('the dungeon', () => {
    * `spawnable`.
    */
   it('never puts a creature in a doorway pocket', () => {
-    const ORTHO = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const;
+    const ORTHO = [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ] as const;
     const RING = [...ORTHO, [1, 1], [1, -1], [-1, 1], [-1, -1]] as const;
     let pockets = 0;
-    eachBoard(({ cfg, grid, map }, label) => {
+    eachBoard(({ grid, map }, label) => {
       const isDoor = (x: number, y: number) =>
-        map.present[y]?.[x] === true && map.hall[y]?.[x] !== true
-        && ORTHO.some(([dx, dy]) => map.hall[y + dy]?.[x + dx] === true);
+        map.present[y]?.[x] === true &&
+        map.hall[y]?.[x] !== true &&
+        ORTHO.some(([dx, dy]) => map.hall[y + dy]?.[x + dx] === true);
       for (const cell of grid.flat()) {
         const { x, y } = cell;
         if (!cell.present || map.hall[y]![x] || isDoor(x, y)) continue;
@@ -624,9 +651,12 @@ describe('the dungeon', () => {
     eachBoard(({ grid, on }, label) => {
       for (const cell of grid.flat()) {
         if (!cell.present) continue;
-        for (const [dx, dy] of [[1, -1], [1, 1]] as const) {
-          const pinched = on(cell.x + dx, cell.y + dy)
-            && !on(cell.x + dx, cell.y) && !on(cell.x, cell.y + dy);
+        for (const [dx, dy] of [
+          [1, -1],
+          [1, 1],
+        ] as const) {
+          const pinched =
+            on(cell.x + dx, cell.y + dy) && !on(cell.x + dx, cell.y) && !on(cell.x, cell.y + dy);
           expect(pinched, `${label}: corner pinch at (${cell.x},${cell.y})`).toBe(false);
         }
       }
@@ -642,7 +672,10 @@ describe('the dungeon', () => {
         const stack = [present[0]!];
         while (stack.length) {
           for (const n of game.neighboursOf(stack.pop()!)) {
-            if (!seen.has(n)) { seen.add(n); stack.push(n); }
+            if (!seen.has(n)) {
+              seen.add(n);
+              stack.push(n);
+            }
           }
         }
         expect(seen.size, `dungeon#${board.n} seed ${seed} fragmented`).toBe(present.length);
@@ -655,8 +688,13 @@ describe('the dungeon', () => {
       const cfg = boardConfig(ladders, 'dungeon', board.n);
       for (const seed of dungeonSeeds) {
         const grid = Game.create(cfg, seed).grid;
-        const onEdge = grid.flat().filter((c) => c.present
-          && (c.x === 0 || c.y === 0 || c.x === cfg.width - 1 || c.y === cfg.height - 1));
+        const onEdge = grid
+          .flat()
+          .filter(
+            (c) =>
+              c.present &&
+              (c.x === 0 || c.y === 0 || c.x === cfg.width - 1 || c.y === cfg.height - 1),
+          );
         expect(onEdge, `dungeon#${board.n} seed ${seed} reached the box edge`).toHaveLength(0);
       }
     }
@@ -672,10 +710,10 @@ describe('the dungeon', () => {
       const present = grid.flat().filter((c) => c.present);
       const xs = present.map((c) => c.x);
       const ys = present.map((c) => c.y);
-      const box = (Math.max(...xs) - Math.min(...xs) + 1)
-        * (Math.max(...ys) - Math.min(...ys) + 1);
-      expect(1 - present.length / box, `${label}: hardly any wall inside the map`)
-        .toBeGreaterThan(0.25);
+      const box = (Math.max(...xs) - Math.min(...xs) + 1) * (Math.max(...ys) - Math.min(...ys) + 1);
+      expect(1 - present.length / box, `${label}: hardly any wall inside the map`).toBeGreaterThan(
+        0.25,
+      );
     });
   });
 
@@ -705,15 +743,17 @@ describe('the dungeon', () => {
       }
       const creatures = cfg.quantity.reduce((a, b) => a + b, 0);
       expect(creatures, `${label}: the quota does not fit`).toBeLessThanOrEqual(spawnable);
-      expect(creatures / spawnable, `${label}: rooms too packed to be a puzzle`)
-        .toBeLessThan(0.35);
+      expect(creatures / spawnable, `${label}: rooms too packed to be a puzzle`).toBeLessThan(0.35);
     });
   });
 
   it('is a pure function of the seed, and actually varies with it', () => {
     const cfg = boardConfig(ladders, 'dungeon', 5);
     const shape = (seed: number) =>
-      Game.create(cfg, seed).grid.flat().map((c) => (c.present ? '#' : '.')).join('');
+      Game.create(cfg, seed)
+        .grid.flat()
+        .map((c) => (c.present ? '#' : '.'))
+        .join('');
 
     expect(shape(0xc0ffee), 'same seed, different dungeon').toBe(shape(0xc0ffee));
     expect(shape(0xc0ffee), 'different seed, same dungeon').not.toBe(shape(0x5eed));
@@ -727,13 +767,17 @@ describe('topology', () => {
       const game = Game.create(cfg, 0xc0ffee);
       // an interior cell, well away from the edges
       const cell = game.cellAt(10, 8)!;
-      expect(game.neighboursOf(cell), `${id} neighbour count`)
-        .toHaveLength(cfg.topology === 'hex' ? 6 : 8);
+      expect(game.neighboursOf(cell), `${id} neighbour count`).toHaveLength(
+        cfg.topology === 'hex' ? 6 : 8,
+      );
     }
   });
 
   it('gives every cell a full neighbour count once the edges are joined', () => {
-    for (const [id, expected] of [['normal', 8], ['wraparound', 8]] as const) {
+    for (const [id, expected] of [
+      ['normal', 8],
+      ['wraparound', 8],
+    ] as const) {
       const cfg = boardConfig(ladders, id, 1);
       const game = Game.create(cfg, 0xc0ffee);
       // A corner: on an open board it has 3 neighbours, on a torus the full 8.
@@ -793,13 +837,11 @@ describe('topology', () => {
     it('joins the arm tips to each other', () => {
       const left = game.cellAt(0, midY)!;
       const right = game.cellAt(w - 1, midY)!;
-      expect(game.neighboursOf(left), 'left arm does not reach the right one')
-        .toContain(right);
+      expect(game.neighboursOf(left), 'left arm does not reach the right one').toContain(right);
 
       const top = game.cellAt(midX, 0)!;
       const bottom = game.cellAt(midX, h - 1)!;
-      expect(game.neighboursOf(top), 'top arm does not reach the bottom one')
-        .toContain(bottom);
+      expect(game.neighboursOf(top), 'top arm does not reach the bottom one').toContain(bottom);
     });
 
     it('gives a tip cell the neighbour count of one in mid-arm', () => {
@@ -819,8 +861,10 @@ describe('topology', () => {
       for (const row of game.grid) {
         for (const cell of row) {
           if (cell.present) continue;
-          expect(game.neighboursOf(cell), `hole at (${cell.x},${cell.y}) has neighbours`)
-            .toHaveLength(0);
+          expect(
+            game.neighboursOf(cell),
+            `hole at (${cell.x},${cell.y}) has neighbours`,
+          ).toHaveLength(0);
         }
       }
       for (const row of game.grid) {
@@ -836,7 +880,11 @@ describe('topology', () => {
       // Joining edges is an adjacency change and nothing else: the silhouette
       // is still CROSS's, which is what lets it carry CROSS's own schedule.
       const plain = Game.create(boardConfig(ladders, 'cross', 1), 0xc0ffee);
-      const mask = (g: Game) => g.grid.flat().map((c) => (c.present ? '#' : '.')).join('');
+      const mask = (g: Game) =>
+        g.grid
+          .flat()
+          .map((c) => (c.present ? '#' : '.'))
+          .join('');
       expect(mask(game)).toBe(mask(plain));
     });
   });
@@ -857,13 +905,13 @@ describe('topology', () => {
 
   it('numbers every board from its own adjacency, whatever the shape', () => {
     for (const id of ['normal', 'hive', 'wraparound', 'wrapped_cross']) {
-    const game = Game.create(boardConfig(ladders, id, 1), 0x5eed);
-    for (const row of game.grid) {
-      for (const cell of row) {
-        const sum = game.neighboursOf(cell).reduce((a, n) => a + n.tier, 0);
-        expect(cell.num, `${id} number wrong at (${cell.x},${cell.y})`).toBe(sum);
+      const game = Game.create(boardConfig(ladders, id, 1), 0x5eed);
+      for (const row of game.grid) {
+        for (const cell of row) {
+          const sum = game.neighboursOf(cell).reduce((a, n) => a + n.tier, 0);
+          expect(cell.num, `${id} number wrong at (${cell.x},${cell.y})`).toBe(sum);
+        }
       }
-    }
     }
   });
 });
@@ -882,8 +930,10 @@ describe('cascades', () => {
           game.open(cell.x, cell.y);
           opens++;
           const leaked = game.grid.flat().find((c) => c.open && c.tier > 0 && c.alive);
-          expect(leaked, `${type.id}: cascade uncovered a live tier-${leaked?.tier}`)
-            .toBeUndefined();
+          expect(
+            leaked,
+            `${type.id}: cascade uncovered a live tier-${leaked?.tier}`,
+          ).toBeUndefined();
         }
       }
     }
@@ -946,16 +996,26 @@ describe('the sudoku placement', () => {
         const game = Game.create(cfg, seed);
         const at = (x: number, y: number) => game.grid[y]![x]!.tier;
         const expectOnceEach = (tiers: number[], where: string) => {
-          expect([...tiers].sort((a, b) => a - b), where).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+          expect(
+            [...tiers].sort((a, b) => a - b),
+            where,
+          ).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
         };
         for (let i = 0; i < 9; i++) {
-          expectOnceEach(Array.from({ length: 9 }, (_, k) => at(k, i)), `row ${i}`);
-          expectOnceEach(Array.from({ length: 9 }, (_, k) => at(i, k)), `column ${i}`);
+          expectOnceEach(
+            Array.from({ length: 9 }, (_, k) => at(k, i)),
+            `row ${i}`,
+          );
+          expectOnceEach(
+            Array.from({ length: 9 }, (_, k) => at(i, k)),
+            `column ${i}`,
+          );
         }
         for (let by = 0; by < 9; by += 3) {
           for (let bx = 0; bx < 9; bx += 3) {
             const box: number[] = [];
-            for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) box.push(at(bx + dx, by + dy));
+            for (let dy = 0; dy < 3; dy++)
+              for (let dx = 0; dx < 3; dx++) box.push(at(bx + dx, by + dy));
             expectOnceEach(box, `box ${bx},${by}`);
           }
         }
@@ -984,7 +1044,9 @@ describe('the sudoku placement', () => {
     // what forces the givens count to carry the whole ladder.
     const curves = sudokuBoards.map((cfg) => cumulativeExp(cfg.quantity).join(','));
     expect(new Set(curves).size).toBe(1);
-    expect(cumulativeExp(sudokuBoards[0]!.quantity)).toEqual([9, 27, 63, 135, 279, 567, 1143, 2295]);
+    expect(cumulativeExp(sudokuBoards[0]!.quantity)).toEqual([
+      9, 27, 63, 135, 279, 567, 1143, 2295,
+    ]);
   });
 
   it('deals exactly the givens the ladder asked for, always truthfully', () => {
@@ -1073,7 +1135,7 @@ describe('sweep on a sudoku board', () => {
     game.toggleNote(target.x, target.y, 1);
     expect(game.safeCells().some((c) => c === target)).toBe(false);
 
-    game.setMark(target.x, target.y, 1);   // commit it
+    game.setMark(target.x, target.y, 1); // commit it
     expect(game.grid[target.y]![target.x]!.notes).toBe(0);
     expect(game.safeCells().some((c) => c === target)).toBe(true);
     // A mark is the player's claim, so the strict proof still will not take it.
@@ -1146,8 +1208,10 @@ describe('the checkerboard placement', () => {
           if (shadeOf(cell) === 'light') light++;
           else dark++;
         }
-        expect(Math.abs(light - dark), `${cfg.typeId}#${cfg.board} seed ${seed}`)
-          .toBeLessThanOrEqual(1);
+        expect(
+          Math.abs(light - dark),
+          `${cfg.typeId}#${cfg.board} seed ${seed}`,
+        ).toBeLessThanOrEqual(1);
         expect(light + dark).toBe(cfg.quantity.reduce((a, b) => a + b, 0));
       }
     }
@@ -1189,9 +1253,12 @@ describe('the checkerboard placement', () => {
           for (let t = 0; t <= MAX_TIER; t++) {
             // A cell holds empty ground or a creature of its own parity.
             if (t !== 0 && (t % 2 === 0) !== isLight) continue;
-            walk(i + 1, sum + t,
+            walk(
+              i + 1,
+              sum + t,
               isLight ? Math.max(topLight, t) : topLight,
-              isLight ? topDark : Math.max(topDark, t));
+              isLight ? topDark : Math.max(topDark, t),
+            );
           }
         };
         walk(0, 0, -1, -1);
@@ -1199,7 +1266,9 @@ describe('the checkerboard placement', () => {
         for (const [hidden, best] of reachable) {
           if (lights) {
             const cap = hiddenCap('light', hidden, darks);
-            expect(cap, `light, hidden ${hidden}, ${darks} dark`).toBeGreaterThanOrEqual(best.light);
+            expect(cap, `light, hidden ${hidden}, ${darks} dark`).toBeGreaterThanOrEqual(
+              best.light,
+            );
             if (cap <= MAX_TIER) expect(cap).toBe(best.light);
           }
           if (darks) {

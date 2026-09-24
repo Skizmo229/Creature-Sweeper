@@ -49,26 +49,41 @@ function workoutTable(seeds: number, typeId: string): void {
   const type = ladders.find((t) => t.id === typeId)!;
   console.log(`${type.name}, board by board, ${seeds} seeds each.
 `);
-  console.log('board  density  lock |  none: stuck  clear |  exercise: clear casts |' +
-    '  workout: stuck  hp lost  clear  casts  spent/pool');
+  console.log(
+    'board  density  lock |  none: stuck  clear |  exercise: clear casts |' +
+      '  workout: stuck  hp lost  clear  casts  spent/pool',
+  );
   const seedAt = (s: number) => s * 2654435761 + 11;
-  const pct = (rs: Run[]) => (100 * rs.filter((r) => r.cleared).length / rs.length)
-    .toFixed(0).padStart(4) + '%';
-  const avg = (rs: Run[], pick: (r: Run) => number) => rs.reduce((a, r) => a + pick(r), 0) / rs.length;
+  const pct = (rs: Run[]) =>
+    ((100 * rs.filter((r) => r.cleared).length) / rs.length).toFixed(0).padStart(4) + '%';
+  const avg = (rs: Run[], pick: (r: Run) => number) =>
+    rs.reduce((a, r) => a + pick(r), 0) / rs.length;
   for (const board of type.boards) {
     const cfg = boardConfig(ladders, type.id, board.n);
-    const runs = (policy: Policy) => Array.from({ length: seeds },
-      (_, s) => play(Game.create(cfg, seedAt(s)), policy, policy === 'none' ? null : 'exercise'));
+    const runs = (policy: Policy) =>
+      Array.from({ length: seeds }, (_, s) =>
+        play(Game.create(cfg, seedAt(s)), policy, policy === 'none' ? null : 'exercise'),
+      );
     const none = runs('none');
     const ex = runs('exercise');
     const wo = runs(process.env.POLICY === 'gym' ? 'gym' : 'workout');
     console.log(
       `${String(board.n).padStart(4)}  ${board.density.toFixed(1).padStart(6)}%  ${board.lock}    |` +
-      `${avg(none, (r) => r.stuckPoints).toFixed(1).padStart(12)} ${pct(none)} |` +
-      `${pct(ex).padStart(16)} ${avg(ex, (r) => r.casts).toFixed(1).padStart(5)} |` +
-      `${avg(wo, (r) => r.stuckPoints).toFixed(1).padStart(15)} ${avg(wo, (r) => r.hpLost).toFixed(2).padStart(8)}` +
-      ` ${pct(wo)} ${avg(wo, (r) => r.casts).toFixed(1).padStart(6)}` +
-      `${(100 * avg(wo, (r) => r.manaSpent) / avg(wo, (r) => r.manaPool)).toFixed(0).padStart(10)}%`,
+        `${avg(none, (r) => r.stuckPoints)
+          .toFixed(1)
+          .padStart(12)} ${pct(none)} |` +
+        `${pct(ex).padStart(16)} ${avg(ex, (r) => r.casts)
+          .toFixed(1)
+          .padStart(5)} |` +
+        `${avg(wo, (r) => r.stuckPoints)
+          .toFixed(1)
+          .padStart(15)} ${avg(wo, (r) => r.hpLost)
+          .toFixed(2)
+          .padStart(8)}` +
+        ` ${pct(wo)} ${avg(wo, (r) => r.casts)
+          .toFixed(1)
+          .padStart(6)}` +
+        `${((100 * avg(wo, (r) => r.manaSpent)) / avg(wo, (r) => r.manaPool)).toFixed(0).padStart(10)}%`,
     );
   }
 }
@@ -77,18 +92,24 @@ function byBoard(seeds: number, typeId: string): void {
   const ladders = loadLadders();
   const type = ladders.find((t) => t.id === typeId);
   if (!type) throw new Error(`no ladder "${typeId}"`);
-  if (type.workout) { workoutTable(seeds, typeId); return; }
+  if (type.workout) {
+    workoutTable(seeds, typeId);
+    return;
+  }
 
   console.log(`${type.name}, board by board, ${seeds} seeds each.
 `);
   // A column per spell the ladder actually offers, so the table answers "what
   // is this ladder's loadout worth on this ladder" rather than reporting on a
   // spell nobody there can cast.
-  const offered = (['reveal', 'census', 'exercise'] as const)
-    .filter((id) => (type.spells ?? []).includes(id));
+  const offered = (['reveal', 'census', 'exercise'] as const).filter((id) =>
+    (type.spells ?? []).includes(id),
+  );
 
-  console.log('board   density   cells   stuck/board   guesses   hp lost   cleared   ' +
-    offered.map((id) => `${id} saves`.padStart(16)).join(''));
+  console.log(
+    'board   density   cells   stuck/board   guesses   hp lost   cleared   ' +
+      offered.map((id) => `${id} saves`.padStart(16)).join(''),
+  );
 
   for (const board of type.boards) {
     const cfg = boardConfig(ladders, type.id, board.n);
@@ -109,30 +130,44 @@ function byBoard(seeds: number, typeId: string): void {
 
     console.log(
       `${String(board.n).padStart(4)}  ${board.density.toFixed(1).padStart(7)}%  ` +
-      `${String(board.cells).padStart(6)}  ${mean(base, (r) => r.stuckPoints).toFixed(1).padStart(11)}  ` +
-      `${mean(base, (r) => r.guesses).toFixed(1).padStart(8)}  ` +
-      `${mean(base, (r) => r.hpLost).toFixed(2).padStart(7)}  ` +
-      `${(100 * mean(base, (r) => (r.cleared ? 1 : 0))).toFixed(0).padStart(7)}%  ` +
-      offered.map((id) => (mean(base, (r) => r.hpLost)
-        - mean(withSpell.get(id)!, (r) => r.hpLost)).toFixed(2).padStart(16)).join(''),
+        `${String(board.cells).padStart(6)}  ${mean(base, (r) => r.stuckPoints)
+          .toFixed(1)
+          .padStart(11)}  ` +
+        `${mean(base, (r) => r.guesses)
+          .toFixed(1)
+          .padStart(8)}  ` +
+        `${mean(base, (r) => r.hpLost)
+          .toFixed(2)
+          .padStart(7)}  ` +
+        `${(100 * mean(base, (r) => (r.cleared ? 1 : 0))).toFixed(0).padStart(7)}%  ` +
+        offered
+          .map((id) =>
+            (mean(base, (r) => r.hpLost) - mean(withSpell.get(id)!, (r) => r.hpLost))
+              .toFixed(2)
+              .padStart(16),
+          )
+          .join(''),
     );
   }
 }
 
 function main(): void {
   const seeds = Number(process.argv[2] ?? 40);
-  if (process.argv[3]) { byBoard(seeds, process.argv[3]); return; }
+  if (process.argv[3]) {
+    byBoard(seeds, process.argv[3]);
+    return;
+  }
   const ladders = loadLadders();
   const magic = ladders.filter((t) => (t.spells ?? []).length > 0 && !t.search);
 
   console.log(
     `An honest player, ${seeds} seeds x every board of every magic ladder.\n` +
-    'Deduction is Sweep\'s own bound plus exact tiers from Reveal, plus the ' +
-    'Census count.\n',
+      "Deduction is Sweep's own bound plus exact tiers from Reveal, plus the " +
+      'Census count.\n',
   );
   console.log(
     'ladder        policy       cleared   hp lost   guesses  stuck  casts  useful  ' +
-    'mana spent  of pool',
+      'mana spent  of pool',
   );
 
   const totals = new Map<Policy, Run[]>();
@@ -151,8 +186,8 @@ function main(): void {
   for (const type of magic) {
     let typeBase: Run[] = [];
     for (const policy of ['none', 'reveal', 'census', 'census-best', 'exercise'] as const) {
-      const spellId: SpellId | null = policy === 'none' ? null
-        : policy === 'census-best' ? 'census' : policy;
+      const spellId: SpellId | null =
+        policy === 'none' ? null : policy === 'census-best' ? 'census' : policy;
       if (spellId && !(type.spells ?? []).includes(spellId)) continue;
       const runs: Run[] = [];
 
@@ -170,15 +205,32 @@ function main(): void {
         runs.reduce((s, r) => s + pick(r), 0) / runs.length;
       console.log(
         `${type.name.padEnd(13)} ${policy.padEnd(12)} ` +
-        `${(100 * mean((r) => (r.cleared ? 1 : 0))).toFixed(1).padStart(6)}%  ` +
-        `${mean((r) => r.hpLost).toFixed(2).padStart(7)}   ` +
-        `${mean((r) => r.guesses).toFixed(1).padStart(7)}  ` +
-        `${mean((r) => r.stuckPoints).toFixed(1).padStart(5)}  ` +
-        `${mean((r) => r.casts).toFixed(1).padStart(5)}  ` +
-        `${(100 * mean((r) => r.castsThatHelped) / Math.max(0.001, mean((r) => r.casts)))
-          .toFixed(0).padStart(5)}%  ` +
-        `${mean((r) => r.manaSpent).toFixed(0).padStart(10)}  ` +
-        `${(100 * mean((r) => r.manaSpent) / mean((r) => r.manaPool)).toFixed(0).padStart(6)}%`,
+          `${(100 * mean((r) => (r.cleared ? 1 : 0))).toFixed(1).padStart(6)}%  ` +
+          `${mean((r) => r.hpLost)
+            .toFixed(2)
+            .padStart(7)}   ` +
+          `${mean((r) => r.guesses)
+            .toFixed(1)
+            .padStart(7)}  ` +
+          `${mean((r) => r.stuckPoints)
+            .toFixed(1)
+            .padStart(5)}  ` +
+          `${mean((r) => r.casts)
+            .toFixed(1)
+            .padStart(5)}  ` +
+          `${(
+            (100 * mean((r) => r.castsThatHelped)) /
+            Math.max(
+              0.001,
+              mean((r) => r.casts),
+            )
+          )
+            .toFixed(0)
+            .padStart(5)}%  ` +
+          `${mean((r) => r.manaSpent)
+            .toFixed(0)
+            .padStart(10)}  ` +
+          `${((100 * mean((r) => r.manaSpent)) / mean((r) => r.manaPool)).toFixed(0).padStart(6)}%`,
       );
     }
     console.log('');
@@ -207,10 +259,10 @@ function main(): void {
     perMana.push([id, SPELLS[id].cost, savedTotal / Math.max(0.001, spent)]);
     console.log(
       `${policy.padEnd(12)} ${String(SPELLS[id].cost).padStart(4)}   ` +
-      `${(savedTotal / Math.max(0.001, casts)).toFixed(3).padStart(13)}   ` +
-      `${(savedTotal / Math.max(0.001, spent)).toFixed(4).padStart(13)}   ` +
-      `${(100 * clear).toFixed(1).padStart(9)}%  ` +
-      `${(100 * (clear - baseClearHere)).toFixed(1).padStart(4)}`,
+        `${(savedTotal / Math.max(0.001, casts)).toFixed(3).padStart(13)}   ` +
+        `${(savedTotal / Math.max(0.001, spent)).toFixed(4).padStart(13)}   ` +
+        `${(100 * clear).toFixed(1).padStart(9)}%  ` +
+        `${(100 * (clear - baseClearHere)).toFixed(1).padStart(4)}`,
     );
   }
 
@@ -220,11 +272,13 @@ function main(): void {
     const fair = a[1] * (b[2] / a[2]);
     console.log(
       `\nequal value per mana would price ${b[0]} at ${fair.toFixed(1)} ` +
-      `against ${a[0]} at ${a[1]} (it costs ${b[1]})`,
+        `against ${a[0]} at ${a[1]} (it costs ${b[1]})`,
     );
   }
-  console.log(`\nspell-less baseline: ${baseHp.toFixed(2)} hp lost, ` +
-    `${(100 * baseClear).toFixed(1)}% cleared`);
+  console.log(
+    `\nspell-less baseline: ${baseHp.toFixed(2)} hp lost, ` +
+      `${(100 * baseClear).toFixed(1)}% cleared`,
+  );
 }
 
 main();

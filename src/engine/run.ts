@@ -38,12 +38,7 @@
 
 import { Game } from './game.js';
 import { boardConfig, findType, type BoardOptions, type Ladders } from './config.js';
-import {
-  DEFAULT_GAMEPLAY,
-  type GameplaySettings,
-  effectiveHp,
-  healPerBoard,
-} from './settings.js';
+import { DEFAULT_GAMEPLAY, type GameplaySettings, effectiveHp, healPerBoard } from './settings.js';
 
 export type FullRunStatus = 'playing' | 'won' | 'lost';
 
@@ -92,9 +87,7 @@ export class FullRun {
   private readonly options: FullRunOptions;
   private readonly settings: GameplaySettings;
 
-  private constructor(
-    ladders: Ladders, typeId: string, seed: number, options: FullRunOptions,
-  ) {
+  private constructor(ladders: Ladders, typeId: string, seed: number, options: FullRunOptions) {
     const type = findType(ladders, typeId);
     this.ladders = ladders;
     this.typeId = typeId;
@@ -115,7 +108,10 @@ export class FullRun {
 
   /** Begin a run at board 1 with a full pool. */
   static start(
-    ladders: Ladders, typeId: string, seed: number, options: FullRunOptions = {},
+    ladders: Ladders,
+    typeId: string,
+    seed: number,
+    options: FullRunOptions = {},
   ): FullRun {
     return new FullRun(ladders, typeId, seed, options);
   }
@@ -179,9 +175,7 @@ export class FullRun {
    */
   advance(): FullRunLeg {
     if (this.game.status !== 'won') {
-      throw new Error(
-        `cannot advance a run from a board that is "${this.game.status}"`,
-      );
+      throw new Error(`cannot advance a run from a board that is "${this.game.status}"`);
     }
     if (this.isLastBoard) {
       throw new Error(`board ${this.boardIndex} is the last of ${this.typeId}; the run is won`);
@@ -212,9 +206,4 @@ export class FullRun {
     });
     return Game.create(cfg, this.boardSeed(board), { startHp, settings: this.settings });
   }
-}
-
-/** Whether a type can be run at all — a run needs a ladder to run down. */
-export function hasFullRun(ladders: Ladders, typeId: string): boolean {
-  return findType(ladders, typeId).boards.length > 1;
 }

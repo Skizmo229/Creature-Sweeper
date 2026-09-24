@@ -68,7 +68,11 @@ export function localDate(d: Date): string {
 export function encodeSave(bundle: SaveBundle, now: Date = new Date()): string {
   const parse = (raw: string | null): unknown => {
     if (raw === null) return null;
-    try { return JSON.parse(raw); } catch { return null; }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
   };
   const envelope: Envelope = {
     format: FORMAT,
@@ -81,8 +85,7 @@ export function encodeSave(bundle: SaveBundle, now: Date = new Date()): string {
 }
 
 export type DecodeResult =
-  | { ok: true; bundle: SaveBundle; exported: string | null }
-  | { ok: false; error: string };
+  { ok: true; bundle: SaveBundle; exported: string | null } | { ok: false; error: string };
 
 /**
  * Read a code back, refusing anything that is not a save.
@@ -106,7 +109,7 @@ export function decodeSave(text: string): DecodeResult {
     // unbroken string so that it can wrap — zero-width space, non-joiner and
     // joiner, word joiner, soft hyphen. `\s` covers none of them, none is
     // base64, and any one left in makes the code read as damaged.
-    const compact = trimmed.replace(/[\s­​-‍⁠]+/g, '');
+    const compact = trimmed.replace(/[\s\u00ad\u200b-\u200d\u2060]+/g, '');
     if (!compact.startsWith(PREFIX)) {
       return { ok: false, error: 'That is not a Creature Sweeper save code.' };
     }
@@ -131,8 +134,12 @@ export function decodeSave(text: string): DecodeResult {
   }
 
   const progress = envelope.progress;
-  if (!isRecord(progress) || progress.version !== 1
-    || !isRecord(progress.types) || !isRecord(progress.boards)) {
+  if (
+    !isRecord(progress) ||
+    progress.version !== 1 ||
+    !isRecord(progress.types) ||
+    !isRecord(progress.boards)
+  ) {
     return { ok: false, error: 'The save code has no readable progress in it.' };
   }
   const settings = envelope.settings;
@@ -143,9 +150,10 @@ export function decodeSave(text: string): DecodeResult {
       progress: JSON.stringify(progress),
       settings: isRecord(settings) ? JSON.stringify(settings) : null,
     },
-    exported: typeof envelope.exported === 'string' && !Number.isNaN(Date.parse(envelope.exported))
-      ? envelope.exported
-      : null,
+    exported:
+      typeof envelope.exported === 'string' && !Number.isNaN(Date.parse(envelope.exported))
+        ? envelope.exported
+        : null,
   };
 }
 
@@ -159,8 +167,10 @@ export function describeSave(bundle: SaveBundle): string {
     };
     const boards = Object.values(p.boards ?? {}).filter((b) => b?.cleared).length;
     const types = Object.values(p.types ?? {}).filter((t) => t?.cleared).length;
-    return `${boards} board${boards === 1 ? '' : 's'} cleared, `
-      + `${types} game type${types === 1 ? '' : 's'} finished.`;
+    return (
+      `${boards} board${boards === 1 ? '' : 's'} cleared, ` +
+      `${types} game type${types === 1 ? '' : 's'} finished.`
+    );
   } catch {
     return 'Unreadable progress.';
   }

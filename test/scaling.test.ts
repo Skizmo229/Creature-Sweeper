@@ -13,21 +13,23 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import {
-  boardConfig, cumulativeExp, findType, isExtendedBoard, maxBoard,
+  boardConfig,
+  cumulativeExp,
+  findType,
+  isExtendedBoard,
+  maxBoard,
 } from '../src/engine/config.js';
 import { presentCellCount } from '../src/engine/board.js';
 import { Game } from '../src/engine/game.js';
 import { autoplaySearch, autoplayTierOrder } from '../src/sim/autoplay.js';
+import { ladders } from './helpers.js';
 
-const ladders = loadLadders();
 const SEEDS = [0xc0ffee, 0x5eed];
 
 /** Every board past the tuned ladder, as configs. */
 function scalingOf(typeId: string) {
-  return findType(ladders, typeId).extended
-    .map((row) => boardConfig(ladders, typeId, row.n));
+  return findType(ladders, typeId).extended.map((row) => boardConfig(ladders, typeId, row.n));
 }
 
 describe('the shape of the continuation', () => {
@@ -51,8 +53,7 @@ describe('the shape of the continuation', () => {
     // A type with no continuation would leave the scaling tile permanently
     // empty, which is worse than not offering it.
     for (const type of ladders) {
-      expect(type.extended.length, `${type.id} has no scaling boards`)
-        .toBeGreaterThan(0);
+      expect(type.extended.length, `${type.id} has no scaling boards`).toBeGreaterThan(0);
     }
   });
 
@@ -66,8 +67,9 @@ describe('the shape of the continuation', () => {
       for (let i = 1; i < rows.length; i++) {
         const a = { ...rows[i - 1]!, n: 0 };
         const b = { ...rows[i]!, n: 0 };
-        expect(JSON.stringify(b), `${type.id} board ${rows[i]!.n} repeats`)
-          .not.toBe(JSON.stringify(a));
+        expect(JSON.stringify(b), `${type.id} board ${rows[i]!.n} repeats`).not.toBe(
+          JSON.stringify(a),
+        );
       }
     }
   });
@@ -81,8 +83,7 @@ describe('the shape of the continuation', () => {
 
   it('refuses a board past the end, and says where the end is', () => {
     const top = maxBoard(ladders, 'normal');
-    expect(() => boardConfig(ladders, 'normal', top + 1))
-      .toThrow(new RegExp(`scaling to ${top}`));
+    expect(() => boardConfig(ladders, 'normal', top + 1)).toThrow(new RegExp(`scaling to ${top}`));
   });
 });
 
@@ -96,7 +97,7 @@ describe('the ceilings hold', () => {
 
   it('caps density, lower for the search ladders that have no level economy', () => {
     for (const type of ladders) {
-      if (type.placement === 'sudoku') continue;   // fixed by its own rule
+      if (type.placement === 'sudoku') continue; // fixed by its own rule
       // A cap is never allowed below where the tuned ladder already finished.
       // HIVE ends at 35% and ARCANE at 34.5%, both past the nominal ceiling,
       // and clamping them to it made board 11 sparser than board 10.
@@ -123,8 +124,9 @@ describe('the ceilings hold', () => {
         const a = cumulativeExp(rows[i - 1]!.quantity);
         const b = cumulativeExp(rows[i]!.quantity);
         for (let k = 0; k < Math.min(a.length, b.length); k++) {
-          expect(b[k], `${type.id}#${rows[i]!.n} C_${k + 1} went backwards`)
-            .toBeGreaterThanOrEqual(a[k]!);
+          expect(b[k], `${type.id}#${rows[i]!.n} C_${k + 1} went backwards`).toBeGreaterThanOrEqual(
+            a[k]!,
+          );
         }
       }
     }
@@ -177,8 +179,7 @@ describe('the tuning identity survives the continuation', () => {
         if (!row.exp.length) continue;
         const C = cumulativeExp(row.quantity);
         row.exp.forEach((threshold, k) => {
-          expect(threshold, `${type.id}#${row.n} threshold ${k + 1}`)
-            .toBeLessThanOrEqual(C[k]!);
+          expect(threshold, `${type.id}#${row.n} threshold ${k + 1}`).toBeLessThanOrEqual(C[k]!);
         });
       }
     }
@@ -210,10 +211,12 @@ describe('the tuning identity survives the continuation', () => {
     for (const type of ladders) {
       const rows = [...type.boards, ...type.extended];
       for (let i = 1; i < rows.length; i++) {
-        const prev = rows[i - 1]!, cur = rows[i]!;
+        const prev = rows[i - 1]!,
+          cur = rows[i]!;
         for (let k = 0; k < Math.min(prev.exp.length, cur.exp.length); k++) {
-          expect(cur.exp[k], `${type.id}#${cur.n} threshold ${k + 1}`)
-            .toBeGreaterThanOrEqual(prev.exp[k]!);
+          expect(cur.exp[k], `${type.id}#${cur.n} threshold ${k + 1}`).toBeGreaterThanOrEqual(
+            prev.exp[k]!,
+          );
         }
       }
     }
@@ -230,12 +233,16 @@ describe('scaling boards are real boards', () => {
     for (const type of ladders) {
       for (const row of type.extended) {
         const cfg = boardConfig(ladders, type.id, row.n);
-        expect(presentCellCount(cfg.shape, cfg.shapeParam, cfg.width, cfg.height),
-          `${type.id}#${row.n}: engine mask and ladders.py disagree`).toBe(row.cells);
+        expect(
+          presentCellCount(cfg.shape, cfg.shapeParam, cfg.width, cfg.height),
+          `${type.id}#${row.n}: engine mask and ladders.py disagree`,
+        ).toBe(row.cells);
         for (const seed of SEEDS) {
           const game = Game.create(cfg, seed);
-          expect(game.grid.flat().filter((c) => c.present).length,
-            `${type.id}#${row.n} seed ${seed}: wrong cell count`).toBe(row.cells);
+          expect(
+            game.grid.flat().filter((c) => c.present).length,
+            `${type.id}#${row.n} seed ${seed}: wrong cell count`,
+          ).toBe(row.cells);
         }
       }
     }

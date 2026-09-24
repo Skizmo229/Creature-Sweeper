@@ -85,14 +85,16 @@ export const SPELLS: Record<SpellId, Spell> = {
     name: 'Reveal',
     cost: 75,
     targeted: true,
-    blurb: 'Learn one cell exactly, and clear the empty ground touching it. A creature is marked with its true tier; empty ground opens.',
+    blurb:
+      'Learn one cell exactly, and clear the empty ground touching it. A creature is marked with its true tier; empty ground opens.',
   },
   census: {
     id: 'census',
     name: 'Census',
     cost: 30,
     targeted: true,
-    blurb: 'How many creatures surround this cell. Pairs with the number — sum plus count often pins the exact layout.',
+    blurb:
+      'How many creatures surround this cell. Pairs with the number — sum plus count often pins the exact layout.',
   },
   exercise: {
     id: 'exercise',
@@ -145,8 +147,9 @@ export function spellLabel(id: SpellId): string {
  * Ties break on id, so the order is total and stable rather than dependent on
  * however the record happened to be declared.
  */
-export const SPELL_ORDER: readonly SpellId[] = (Object.keys(SPELLS) as SpellId[])
-  .sort((a, b) => SPELLS[a].cost - SPELLS[b].cost || a.localeCompare(b));
+export const SPELL_ORDER: readonly SpellId[] = (Object.keys(SPELLS) as SpellId[]).sort(
+  (a, b) => SPELLS[a].cost - SPELLS[b].cost || a.localeCompare(b),
+);
 
 /** A loadout in the order it should be offered. Never trusts its input's. */
 export function orderSpells(ids: readonly SpellId[]): SpellId[] {

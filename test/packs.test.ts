@@ -8,23 +8,23 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { boardConfig, findType, type LadderType } from '../src/engine/config.js';
 import { neighbours } from '../src/engine/board.js';
 import {
-  PACK_MAX_DENSITY, choosePacks, dealPacks, missingFrom, packFault, packsIn,
+  PACK_MAX_DENSITY,
+  choosePacks,
+  dealPacks,
+  missingFrom,
+  packFault,
+  packsIn,
 } from '../src/engine/packs.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import { Game } from '../src/engine/game.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';
-import { DEFAULT_GAMEPLAY } from '../src/engine/settings.js';
 import type { Cell } from '../src/engine/types.js';
+import { ladders, PLACEMENT_SEEDS as SEEDS, UNGATED_SWEEP } from './helpers.js';
 
-const UNGATED_SWEEP = { settings: { ...DEFAULT_GAMEPLAY, sweep: 'on' as const } };
-
-const ladders = loadLadders();
 const packs = findType(ladders, 'packs');
-const SEEDS = [0xc0ffee, 0x5eed, 0xbeef, 0x1d10, 0xfeed];
 
 function allRows(type: LadderType) {
   return [...type.boards, ...type.extended];
@@ -45,12 +45,13 @@ function square(w: number, h: number) {
     const x = flat % w;
     const y = Math.floor(flat / w);
     const out: number[] = [];
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-      if (!dx && !dy) continue;
-      const nx = x + dx;
-      const ny = y + dy;
-      if (nx >= 0 && nx < w && ny >= 0 && ny < h) out.push(ny * w + nx);
-    }
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx >= 0 && nx < w && ny >= 0 && ny < h) out.push(ny * w + nx);
+      }
     return out;
   };
   return { cells, near };
@@ -81,10 +82,18 @@ describe('the rule itself', () => {
       for (const seed of SEEDS) {
         const game = Game.create(cfg, seed);
         const tierAt = new Map(creatureCells(game).map((c) => [c.y * cfg.width + c.x, c.tier]));
-        const fault = packFault(tierAt, (flat) =>
-          neighbours(
-            game.grid, flat % cfg.width, Math.floor(flat / cfg.width), cfg.topology, cfg.wrap,
-          ).map((n) => n.y * cfg.width + n.x), cfg.tiers);
+        const fault = packFault(
+          tierAt,
+          (flat) =>
+            neighbours(
+              game.grid,
+              flat % cfg.width,
+              Math.floor(flat / cfg.width),
+              cfg.topology,
+              cfg.wrap,
+            ).map((n) => n.y * cfg.width + n.x),
+          cfg.tiers,
+        );
         expect(fault, `PACKS#${row.n} seed ${seed}`).toBeNull();
       }
     }
@@ -97,8 +106,9 @@ describe('the rule itself', () => {
         const game = Game.create(cfg, seed);
         expect(creatureCells(game)).toHaveLength(row.monsters);
         for (let t = 1; t <= cfg.tiers; t++) {
-          expect(creatureCells(game).filter((c) => c.tier === t))
-            .toHaveLength(cfg.quantity[t - 1]!);
+          expect(creatureCells(game).filter((c) => c.tier === t)).toHaveLength(
+            cfg.quantity[t - 1]!,
+          );
         }
       }
     }
@@ -117,7 +127,10 @@ describe('the rule itself', () => {
       seen.add(start);
       for (let i = 0; i < pack.length; i++) {
         for (const n of game.neighboursOf(pack[i]!)) {
-          if (n.tier > 0 && !seen.has(n)) { seen.add(n); pack.push(n); }
+          if (n.tier > 0 && !seen.has(n)) {
+            seen.add(n);
+            pack.push(n);
+          }
         }
       }
       const xs = pack.map((c) => c.x);
@@ -196,14 +209,16 @@ describe('the boundary refuses what it cannot build', () => {
   it('refuses a quantity that is not whole packs', () => {
     const q = [...packs.boards[0]!.quantity];
     q[5] = q[5]! - 1;
-    expect(() => boardConfig([bend({ quantity: q, monsters: q.reduce((a, b) => a + b) })], 'bent', 1))
-      .toThrow(/whole number of packs/);
+    expect(() =>
+      boardConfig([bend({ quantity: q, monsters: q.reduce((a, b) => a + b) })], 'bent', 1),
+    ).toThrow(/whole number of packs/);
   });
 
   it('refuses a density the packing cannot reach', () => {
     const q = Array(6).fill(40);
-    expect(() => boardConfig([bend({ quantity: q, monsters: 240 })], 'bent', 1))
-      .toThrow(/non-touching packs/);
+    expect(() => boardConfig([bend({ quantity: q, monsters: 240 })], 'bent', 1)).toThrow(
+      /non-touching packs/,
+    );
   });
 });
 

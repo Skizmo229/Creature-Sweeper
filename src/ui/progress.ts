@@ -74,12 +74,17 @@ export interface SaveData {
 
 function emptySave(): SaveData {
   return {
-    version: 1, types: {}, boards: {}, runs: {}, scaling: {},
-    unlockAll: false, seenHowTo: false,
+    version: 1,
+    types: {},
+    boards: {},
+    runs: {},
+    scaling: {},
+    unlockAll: false,
+    seenHowTo: false,
   };
 }
 
-export function boardKey(typeId: string, board: number): string {
+function boardKey(typeId: string, board: number): string {
   return `${typeId}#${board}`;
 }
 
@@ -134,9 +139,15 @@ export class Progress {
   }
 
   runRecord(typeId: string): FullRunRecord {
-    return this.data.runs[typeId] ?? {
-      cleared: false, bestBoard: 0, bestHp: null, bestTime: null, attempts: 0,
-    };
+    return (
+      this.data.runs[typeId] ?? {
+        cleared: false,
+        bestBoard: 0,
+        bestHp: null,
+        bestTime: null,
+        attempts: 0,
+      }
+    );
   }
 
   /**
@@ -162,11 +173,11 @@ export class Progress {
     this.data.runs[typeId] = {
       cleared: prev.cleared || opts.completed,
       bestBoard: Math.max(prev.bestBoard, opts.reachedBoard),
-      bestHp: opts.completed
-        ? Math.max(prev.bestHp ?? 0, opts.hp)
-        : prev.bestHp,
+      bestHp: opts.completed ? Math.max(prev.bestHp ?? 0, opts.hp) : prev.bestHp,
       bestTime: opts.completed
-        ? (prev.bestTime === null ? opts.seconds : Math.min(prev.bestTime, opts.seconds))
+        ? prev.bestTime === null
+          ? opts.seconds
+          : Math.min(prev.bestTime, opts.seconds)
         : prev.bestTime,
       attempts: prev.attempts + 1,
     };
@@ -198,9 +209,13 @@ export class Progress {
   }
 
   boardRecord(typeId: string, board: number): BoardRecord {
-    return this.data.boards[boardKey(typeId, board)] ?? {
-      cleared: false, perfect: false, bestTime: null,
-    };
+    return (
+      this.data.boards[boardKey(typeId, board)] ?? {
+        cleared: false,
+        perfect: false,
+        bestTime: null,
+      }
+    );
   }
 
   /**

@@ -227,14 +227,21 @@ export class Sfx {
     osc.stop(at + v.dur + 0.02);
     // Let the node go as soon as it has finished; without this a long session
     // keeps every oscillator it ever made alive on the graph.
-    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+    osc.onended = () => {
+      osc.disconnect();
+      gain.disconnect();
+    };
   }
 
   private context(): AudioContext | null {
     if (this.ctx) return this.ctx;
-    const Ctor = window.AudioContext
-      ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctor) { this.dead = true; return null; }
+    const Ctor =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctor) {
+      this.dead = true;
+      return null;
+    }
     this.ctx = new Ctor();
     this.master = this.ctx.createGain();
     // Headroom: several voices can overlap during a sweep, and clipping the

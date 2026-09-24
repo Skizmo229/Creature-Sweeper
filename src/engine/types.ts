@@ -170,8 +170,7 @@ export type OpeningRule =
  * requires the TOTAL to be even, which is a constraint on what `ladders.py`
  * may ask for rather than something the placement changes.
  */
-export type Placement = 'uniform' | 'sudoku' | 'checker' | 'pairs' | 'dominoes' | 'packs'
-  | 'congo';
+export type Placement = 'uniform' | 'sudoku' | 'checker' | 'pairs' | 'dominoes' | 'packs' | 'congo';
 
 export interface BoardConfig {
   /** Game type id, e.g. "normal". */

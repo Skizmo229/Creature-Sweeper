@@ -12,8 +12,8 @@ const view = { cell: 20, originX: 10, originY: 30 };
 describe('pinch-zoom', () => {
   it('scales the cell size with the spread of the fingers', () => {
     const s = pinchStart(100, 100, 200, 100, view);
-    expect(pinchTo(s, 50, 100, 250, 100, 8, 64).cell).toBe(40);   // twice as far apart
-    expect(pinchTo(s, 125, 100, 175, 100, 8, 64).cell).toBe(10);  // half
+    expect(pinchTo(s, 50, 100, 250, 100, 8, 64).cell).toBe(40); // twice as far apart
+    expect(pinchTo(s, 125, 100, 175, 100, 8, 64).cell).toBe(10); // half
   });
 
   it('keeps the board point under the midpoint where it was', () => {

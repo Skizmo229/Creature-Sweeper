@@ -26,16 +26,6 @@ export function randomSeed(): number {
   return (Math.random() * 0x100000000) >>> 0;
 }
 
-/** Turn any string (a shared seed code, a daily key) into a numeric seed. */
-export function seedFromString(text: string): number {
-  let h = 2166136261 >>> 0;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
 /** Integer in [0, n). */
 export function randInt(rng: Rng, n: number): number {
   return Math.floor(rng() * n);

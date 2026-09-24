@@ -180,9 +180,7 @@ function subtractPairs(constraints: Constraint[]): Constraint[] {
         cell: b.cell,
         residual: b.residual - a.residual,
         unknown: rest,
-        creatures: a.creatures !== null && b.creatures !== null
-          ? b.creatures - a.creatures
-          : null,
+        creatures: a.creatures !== null && b.creatures !== null ? b.creatures - a.creatures : null,
       });
     }
   }
@@ -220,7 +218,10 @@ function nameWhatIsCertain(game: Game): boolean {
     // a residual of zero and this says nothing new.
     for (const cell of c.unknown) {
       if (cell.mark > 0 || cell.open || capOf(game, c, cell) !== 0) continue;
-      if (game.status === 'playing') { game.open(cell.x, cell.y); learned = true; }
+      if (game.status === 'playing') {
+        game.open(cell.x, cell.y);
+        learned = true;
+      }
     }
 
     if (c.unknown.length !== 1) continue;
@@ -308,7 +309,10 @@ function namePacks(game: Game): boolean {
     done.add(cell);
     for (let i = 0; i < piece.length; i++) {
       for (const n of game.neighboursOf(piece[i]!)) {
-        if (n.open && n.tier > 0 && !done.has(n)) { done.add(n); piece.push(n); }
+        if (n.open && n.tier > 0 && !done.has(n)) {
+          done.add(n);
+          piece.push(n);
+        }
       }
     }
     if (piece.length !== tiers - 1) continue;
@@ -436,7 +440,8 @@ function safeToOpen(game: Game, constraints: Constraint[]): Cell[] {
 function bestGuess(game: Game, constraints: Constraint[], among?: ReadonlySet<Cell>): Cell | null {
   const board = game.config;
   const total = board.quantity.reduce((s, n, i) => s + n * (i + 1), 0);
-  const covered = game.grid.flat()
+  const covered = game.grid
+    .flat()
     .filter((c) => c.present && !c.open && c.mark === 0 && game.inReach(c));
   if (!covered.length) return null;
   const loose = total / Math.max(1, covered.length);
@@ -450,9 +455,8 @@ function bestGuess(game: Game, constraints: Constraint[], among?: ReadonlySet<Ce
   const mean = new Map<Cell, number>();
   for (const c of constraints) {
     if (c.residual < 0) continue;
-    const counted = c.creatures !== null && c.creatures > 0
-      ? c.residual - (c.creatures - 1)
-      : c.residual;
+    const counted =
+      c.creatures !== null && c.creatures > 0 ? c.residual - (c.creatures - 1) : c.residual;
     const each = c.residual / c.unknown.length;
     for (const n of c.unknown) {
       // A player choosing where to gamble knows the colours too, so the cheap
@@ -493,7 +497,10 @@ function censusTarget(game: Game, constraints: Constraint[], guess: Cell): Cell 
     if (!c.unknown.includes(guess)) continue;
     // Most tier spread over fewest cells: the bound the count would tighten.
     const score = c.residual / c.unknown.length;
-    if (score > bestScore) { best = c.cell; bestScore = score; }
+    if (score > bestScore) {
+      best = c.cell;
+      bestScore = score;
+    }
   }
   return best;
 }
@@ -529,9 +536,17 @@ export function play(
   options: PlayOptions = {},
 ): Run {
   const run: Run = {
-    cleared: false, hpLost: 0, guesses: 0, stuckPoints: 0,
-    casts: 0, castsThatHelped: 0, manaSpent: 0, manaPool: 0,
-    rescued: 0, couldRescue: 0, rescueDamage: 0,
+    cleared: false,
+    hpLost: 0,
+    guesses: 0,
+    stuckPoints: 0,
+    casts: 0,
+    castsThatHelped: 0,
+    manaSpent: 0,
+    manaPool: 0,
+    rescued: 0,
+    couldRescue: 0,
+    rescueDamage: 0,
   };
   const freeMoves = (): Cell[] =>
     options.rescue ? options.rescue(game).filter((c) => !c.open && game.inReach(c)) : [];
@@ -542,13 +557,17 @@ export function play(
   while (game.status === 'playing' && guard-- > 0) {
     // Everything free first: name what is certain, then take what is proven,
     // and only call it stuck when neither has anything left to give.
-    if (nameWhatIsCertain(game)) { castsHere = 0; continue; }
+    if (nameWhatIsCertain(game)) {
+      castsHere = 0;
+      continue;
+    }
 
     const constraints = allConstraints(game);
     // Same again: a proof about a cell you cannot click yet is a proof you
     // have to hold on to, not a move.
-    const safe = safeToOpen(game, constraints)
-      .filter((c) => c.mark <= game.level && game.inReach(c));
+    const safe = safeToOpen(game, constraints).filter(
+      (c) => c.mark <= game.level && game.inReach(c),
+    );
 
     // WORKOUT's own move, and the reason the mode exists: a creature named at
     // one tier past your level is a free kill for the price of an Exercise,
@@ -558,12 +577,26 @@ export function play(
     // named at or one past your level, taken on a charge for the double EXP,
     // whenever the price is back at its base. That is the player who treats
     // the spell as a way to level rather than as insurance.
-    const training = policy === 'gym' && game.config.workout
-      && game.spellCost('exercise') === game.config.workout.base;
-    if ((training || (!safe.length && (policy === 'workout' || policy === 'gym')))
-        && game.exerciseCharge === 0 && game.canCast('exercise')) {
-      const reachable = game.grid.flat().filter((c) => c.present && !c.open && c.mark > 0
-        && c.mark <= game.level + 1 && (training || c.mark === game.level + 1) && game.inReach(c))
+    const training =
+      policy === 'gym' &&
+      game.config.workout &&
+      game.spellCost('exercise') === game.config.workout.base;
+    if (
+      (training || (!safe.length && (policy === 'workout' || policy === 'gym'))) &&
+      game.exerciseCharge === 0 &&
+      game.canCast('exercise')
+    ) {
+      const reachable = game.grid
+        .flat()
+        .filter(
+          (c) =>
+            c.present &&
+            !c.open &&
+            c.mark > 0 &&
+            c.mark <= game.level + 1 &&
+            (training || c.mark === game.level + 1) &&
+            game.inReach(c),
+        )
         .sort((a, b) => b.mark - a.mark)[0];
       if (reachable) {
         const before = game.mana;
@@ -612,9 +645,11 @@ export function play(
     // rather than on the deduction that has already failed. Cast and fall
     // straight through: it changes nothing a player could reason about, so
     // going round the loop again would only find the same dead end.
-    if ((policy === 'exercise' || policy === 'workout' || policy === 'gym')
-        && game.exerciseCharge === 0
-        && game.canCast('exercise')) {
+    if (
+      (policy === 'exercise' || policy === 'workout' || policy === 'gym') &&
+      game.exerciseCharge === 0 &&
+      game.canCast('exercise')
+    ) {
       const before = game.mana;
       if (!game.cast('exercise').some((e) => e.type === 'blocked')) {
         run.casts++;
@@ -625,13 +660,20 @@ export function play(
     // Spend, if this policy spends and the spell can still be afforded. Two
     // casts at one stuck point at most: past that it is throwing mana at a
     // wall, which is a decision a player makes once and not again.
-    if (policy !== 'none' && policy !== 'workout' && policy !== 'gym' && spellId && castsHere < 2
-        && game.canCast(spellId)) {
-      const target = spellId === 'reveal'
-        ? guess
-        : policy === 'census-best'
-          ? censusOracle(game, guess)
-          : censusTarget(game, constraints, guess);
+    if (
+      policy !== 'none' &&
+      policy !== 'workout' &&
+      policy !== 'gym' &&
+      spellId &&
+      castsHere < 2 &&
+      game.canCast(spellId)
+    ) {
+      const target =
+        spellId === 'reveal'
+          ? guess
+          : policy === 'census-best'
+            ? censusOracle(game, guess)
+            : censusTarget(game, constraints, guess);
       if (target) {
         const before = game.mana;
         const events = game.cast(spellId, target.x, target.y);

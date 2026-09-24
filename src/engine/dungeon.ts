@@ -100,7 +100,7 @@ const LOOP_SHARE = 0.35;
  * spent widening rooms afterwards. One-cell hallways are cheap, so this sits
  * much higher than it did when they were two.
  */
-const ROOM_SHARES = [0.86, 0.80, 0.90, 0.74, 0.94, 0.68];
+const ROOM_SHARES = [0.86, 0.8, 0.9, 0.74, 0.94, 0.68];
 
 /** Attempts per share before the whole mask is given up on. */
 const ATTEMPTS_PER_SHARE = 2;
@@ -175,8 +175,18 @@ function count(mask: Mask): number {
   return n;
 }
 
-const ORTHO: ReadonlyArray<readonly [number, number]> = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-const DIAG: ReadonlyArray<readonly [number, number]> = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+const ORTHO: ReadonlyArray<readonly [number, number]> = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+];
+const DIAG: ReadonlyArray<readonly [number, number]> = [
+  [1, 1],
+  [1, -1],
+  [-1, 1],
+  [-1, -1],
+];
 
 /** The cells a room covers, plus the wall around it. */
 function halo(room: Room): { x0: number; y0: number; x1: number; y1: number } {
@@ -218,16 +228,25 @@ function placeRooms(bw: number, bh: number, want: number, rng: Rng): Room[] {
   while (area < want && misses < ROOM_MISSES) {
     const w = roomSide(mean, rng);
     const h = roomSide(mean, rng);
-    if (w > bw || h > bh || area + w * h > want) { misses++; continue; }
+    if (w > bw || h > bh || area + w * h > want) {
+      misses++;
+      continue;
+    }
 
     const room: Room = { x: randInt(rng, bw - w + 1), y: randInt(rng, bh - h + 1), w, h };
     let clear = true;
     for (let y = room.y; y < room.y + room.h && clear; y++) {
       for (let x = room.x; x < room.x + room.w; x++) {
-        if (inAnyHalo(rooms, -1, x, y)) { clear = false; break; }
+        if (inAnyHalo(rooms, -1, x, y)) {
+          clear = false;
+          break;
+        }
       }
     }
-    if (!clear) { misses++; continue; }
+    if (!clear) {
+      misses++;
+      continue;
+    }
 
     rooms.push(room);
     area += w * h;
@@ -288,21 +307,27 @@ function carveHalls(hall: Mask, rooms: Room[], rng: Rng): void {
         for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) cells.push([x, y]);
       }
     };
-    if (first === 'x') { run(ax, bx, ay, ay); run(bx, bx, ay, by); }
-    else { run(ax, ax, ay, by); run(ax, bx, by, by); }
+    if (first === 'x') {
+      run(ax, bx, ay, ay);
+      run(bx, bx, ay, by);
+    } else {
+      run(ax, ax, ay, by);
+      run(ax, bx, by, by);
+    }
     return cells;
   };
 
   const connect = (a: Room, b: Room): void => {
     const [ax, ay] = centre(a);
     const [bx, by] = centre(b);
-    const options = rng() < 0.5
-      ? [elbow(ax, ay, bx, by, 'x'), elbow(ax, ay, bx, by, 'y')]
-      : [elbow(ax, ay, bx, by, 'y'), elbow(ax, ay, bx, by, 'x')];
+    const options =
+      rng() < 0.5
+        ? [elbow(ax, ay, bx, by, 'x'), elbow(ax, ay, bx, by, 'y')]
+        : [elbow(ax, ay, bx, by, 'y'), elbow(ax, ay, bx, by, 'x')];
     // The coin decides ties; the count decides everything else, so a tidier
     // route always wins and the shape still varies with the seed.
-    const chosen = parallelCells(options[1]!) < parallelCells(options[0]!)
-      ? options[1]! : options[0]!;
+    const chosen =
+      parallelCells(options[1]!) < parallelCells(options[0]!) ? options[1]! : options[0]!;
     for (const [x, y] of chosen) line(x, x, y, y);
   };
 
@@ -317,7 +342,11 @@ function carveHalls(hall: Mask, rooms: Room[], rng: Rng): void {
     for (let i = 0; i < rest.length; i++) {
       for (const from of inTree) {
         const d = distance(rooms[from]!, rooms[rest[i]!]!);
-        if (d < best) { best = d; bestAt = i; bestFrom = from; }
+        if (d < best) {
+          best = d;
+          bestAt = i;
+          bestFrom = from;
+        }
       }
     }
     const to = rest.splice(bestAt, 1)[0]!;
@@ -360,18 +389,25 @@ function carveHalls(hall: Mask, rooms: Room[], rng: Rng): void {
  * exact cell count.
  */
 function thinHalls(hall: Mask, rooms: Room[], bw: number, bh: number): void {
-  const solid = (x: number, y: number): boolean =>
-    (hall[y]?.[x] === true) || inAnyRoom(rooms, x, y);
+  const solid = (x: number, y: number): boolean => hall[y]?.[x] === true || inAnyRoom(rooms, x, y);
 
   for (;;) {
     let cut = false;
     for (let y = 0; y + 1 < bh; y++) {
       for (let x = 0; x + 1 < bw; x++) {
-        const square: Array<[number, number]> = [[x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]];
+        const square: Array<[number, number]> = [
+          [x, y],
+          [x + 1, y],
+          [x, y + 1],
+          [x + 1, y + 1],
+        ];
         if (!square.every(([sx, sy]) => hall[sy]![sx])) continue;
         for (const [sx, sy] of square) {
           hall[sy]![sx] = false;
-          if (connectedWith(solid, bw, bh)) { cut = true; break; }
+          if (connectedWith(solid, bw, bh)) {
+            cut = true;
+            break;
+          }
           hall[sy]![sx] = true;
         }
       }
@@ -381,9 +417,7 @@ function thinHalls(hall: Mask, rooms: Room[], bw: number, bh: number): void {
 }
 
 /** Is everything the predicate calls solid reachable from the first of it? */
-function connectedWith(
-  solid: (x: number, y: number) => boolean, bw: number, bh: number,
-): boolean {
+function connectedWith(solid: (x: number, y: number) => boolean, bw: number, bh: number): boolean {
   let start: [number, number] | null = null;
   let total = 0;
   for (let y = 0; y < bh; y++) {
@@ -439,9 +473,17 @@ function pinches(present: Mask, bw: number, bh: number, x: number, y: number): b
  * place a hallway has to be.
  */
 function widen(
-  present: Mask, bw: number, bh: number, rooms: Room[], budget: number, rng: Rng,
+  present: Mask,
+  bw: number,
+  bh: number,
+  rooms: Room[],
+  budget: number,
+  rng: Rng,
 ): number {
-  for (const at of shuffle(rooms.map((_, i) => i), rng)) {
+  for (const at of shuffle(
+    rooms.map((_, i) => i),
+    rng,
+  )) {
     const room = rooms[at]!;
     for (const [dx, dy] of shuffle([...ORTHO], rng)) {
       const along = dx ? room.h : room.w;
@@ -456,7 +498,10 @@ function widen(
       let ok = true;
       for (let y = y0; y < y0 + h && ok; y++) {
         for (let x = x0; x < x0 + w; x++) {
-          if (present[y]![x] || inAnyHalo(rooms, at, x, y)) { ok = false; break; }
+          if (present[y]![x] || inAnyHalo(rooms, at, x, y)) {
+            ok = false;
+            break;
+          }
         }
       }
       if (!ok) continue;
@@ -521,8 +566,16 @@ function connected(present: Mask, bw: number, bh: number): boolean {
 }
 
 /** One floor plan, at one guess for how much of the budget rooms should take. */
-function attempt(bw: number, bh: number, target: number, share: number, rng: Rng): {
-  present: Mask; rooms: Room[]; hall: Mask;
+function attempt(
+  bw: number,
+  bh: number,
+  target: number,
+  share: number,
+  rng: Rng,
+): {
+  present: Mask;
+  rooms: Room[];
+  hall: Mask;
 } {
   const rooms = placeRooms(bw, bh, Math.round(target * share), rng);
   if (rooms.length < 2) throw new Error(`only ${rooms.length} room(s) fit`);
@@ -550,7 +603,10 @@ function attempt(bw: number, bh: number, target: number, share: number, rng: Rng
 
   for (let tries = 0; laid < target && tries < SPEND_TRIES; tries++) {
     const gained = widen(present, bw, bh, rooms, target - laid, rng);
-    if (gained) { laid += gained; continue; }
+    if (gained) {
+      laid += gained;
+      continue;
+    }
     if (!alcove(present, bw, bh, rng)) break;
     laid++;
   }
@@ -621,7 +677,7 @@ function spawnableCells(present: Mask, hall: Mask, bw: number, bh: number): Mask
   const pocket: Array<[number, number]> = [];
   for (let y = 0; y < bh; y++) {
     for (let x = 0; x < bw; x++) {
-      if (!out[y]![x]) continue;                                   // hall, door, or void
+      if (!out[y]![x]) continue; // hall, door, or void
       if (!ORTHO.some(([dx, dy]) => door[y + dy]?.[x + dx] === true)) continue;
       if (!ring.some(([dx, dy]) => wallAt(x + dx, y + dy))) continue;
       pocket.push([x, y]);
@@ -642,7 +698,9 @@ export function dungeonMap(w: number, h: number, target: number, rng: Rng): Dung
   const bh = h - 2 * DUNGEON_MARGIN;
   if (bw < ROOM_MIN || bh < ROOM_MIN) throw new Error(`dungeon ${w}x${h}: too small for a room`);
   if (target > bw * bh) {
-    throw new Error(`dungeon ${w}x${h}: ${target} cells asked for, only ${bw * bh} inside the margin`);
+    throw new Error(
+      `dungeon ${w}x${h}: ${target} cells asked for, only ${bw * bh} inside the margin`,
+    );
   }
 
   let last = '';
@@ -657,7 +715,9 @@ export function dungeonMap(w: number, h: number, target: number, rng: Rng): Dung
         }
 
         const out: DungeonMap = {
-          present: blank(w, h), spawnable: blank(w, h), hall: blank(w, h),
+          present: blank(w, h),
+          spawnable: blank(w, h),
+          hall: blank(w, h),
         };
         for (let y = 0; y < bh; y++) {
           for (let x = 0; x < bw; x++) {

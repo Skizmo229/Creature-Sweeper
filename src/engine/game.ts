@@ -6,7 +6,7 @@
  * test can assert on them. Elapsed time is entirely the caller's business.
  */
 
-import type { BoardConfig, Cell, GameEvent, SweepOptions } from './types.js';
+import type { BoardConfig, Cell, GameEvent, GameStatus, SweepOptions } from './types.js';
 import { Progression, resolveBattle, expForTier } from './combat.js';
 import { EXERCISE_LEVELS, SPELLS, type SpellId } from './spells.js';
 import {
@@ -17,13 +17,7 @@ import {
   effectiveHp,
   manaRewardFor,
 } from './settings.js';
-import {
-  hasNote,
-  hasNotes,
-  lowestNote,
-  noteBit,
-  toggleNote as toggleNoteBit,
-} from './notes.js';
+import { hasNote, hasNotes, lowestNote, noteBit, toggleNote as toggleNoteBit } from './notes.js';
 import {
   type Grid,
   findBestOpening,
@@ -70,7 +64,7 @@ export class Game {
   /** After the HP dial. The board's own `config.hp` is left alone. */
   readonly maxHp: number;
   hp: number;
-  status: 'playing' | 'won' | 'lost' = 'playing';
+  status: GameStatus = 'playing';
 
   /** Undefeated creatures per tier; index 0 is tier 1. */
   readonly remaining: number[];
@@ -91,21 +85,6 @@ export class Game {
   private exploreProgress = 0;
 
   /**
-   * False until the player's first real action on this board.
-   *
-   * It is NOT what starts the clock, and deliberately so. A board deals its
-   * opening before the player touches anything, and reading that opening is
-   * the first thing you do — so the clock starts when the board is dealt and
-   * this flag answers a different question: whether the player has done
-   * anything here yet.
-   *
-   * No caller today. Kept because "untouched board" is a real distinction the
-   * engine is the only thing that can make, and because the alternative is for
-   * the next feature that wants it to re-derive it from the grid.
-   */
-  started = false;
-
-  /**
    * Cells opened BY HAND since the last sweep, for the charge gate.
    *
    * Only hand-opened cells count, which is what stops the meter feeding
@@ -121,7 +100,10 @@ export class Game {
   private readonly totalEmpty: number;
 
   private constructor(
-    config: BoardConfig, seed: number, grid: Grid, startHp: number,
+    config: BoardConfig,
+    seed: number,
+    grid: Grid,
+    startHp: number,
     settings: GameplaySettings,
   ) {
     this.config = config;
@@ -139,12 +121,13 @@ export class Game {
     // assumed empty.
     for (const row of grid) {
       for (const cell of row) {
-        if (cell.mark > 0) this.marksPlaced[cell.mark - 1] = (this.marksPlaced[cell.mark - 1] ?? 0) + 1;
+        if (cell.mark > 0)
+          this.marksPlaced[cell.mark - 1] = (this.marksPlaced[cell.mark - 1] ?? 0) + 1;
       }
     }
     // Only ground that exists counts toward a search-mode clear.
-    this.totalEmpty = grid.flat().filter((c) => c.present).length -
-      config.quantity.reduce((a, b) => a + b, 0);
+    this.totalEmpty =
+      grid.flat().filter((c) => c.present).length - config.quantity.reduce((a, b) => a + b, 0);
   }
 
   /**
@@ -163,7 +146,7 @@ export class Game {
     if (!Number.isInteger(startHp) || startHp < 1 || startHp > maxHp) {
       throw new Error(
         `startHp is ${startHp}; it must be a whole number in 1..${maxHp} ` +
-        `(a board entered at 0 HP is a run that already ended)`,
+          `(a board entered at 0 HP is a run that already ended)`,
       );
     }
     const rng = mulberry32(seed);
@@ -256,9 +239,8 @@ export class Game {
       : null;
     // Cells the line's own shape has proven empty; see `congoClear`. Decided
     // per cell rather than per ring, like the checkerboard's parity.
-    const lineClear = this.config.placement === 'congo'
-      ? congoClear(this.grid, this.config.tiers)
-      : null;
+    const lineClear =
+      this.config.placement === 'congo' ? congoClear(this.grid, this.config.tiers) : null;
     const seen = new Set<Cell>();
 
     for (const row of this.grid) {
@@ -355,8 +337,12 @@ export class Game {
 
         const provenByLine = (n: Cell): boolean => !!lineClear && lineClear.has(n);
 
-        if (!proven && !claimedSafe && !ns.some(
-          (n) => !n.open && (provenByColour(n) || provenByLine(n)))) continue;
+        if (
+          !proven &&
+          !claimedSafe &&
+          !ns.some((n) => !n.open && (provenByColour(n) || provenByLine(n)))
+        )
+          continue;
 
         for (const n of ns) {
           if (n.open || seen.has(n)) continue;
@@ -465,7 +451,6 @@ export class Game {
       return [{ type: 'blocked', reason: 'note-guard' }];
     }
 
-    this.started = true;
     if (!this.sweeping) this.sweepCharge++;
     const events: GameEvent[] = [];
     const revealed = this.reveal(cell);
@@ -537,7 +522,11 @@ export class Game {
     // Nothing within reach is open. Before refusing, check the board has an
     // open cell anywhere at all — see the note above.
     for (const row of this.grid) {
-      for (const c of row) if (c.open) { anyOpen = true; break; }
+      for (const c of row)
+        if (c.open) {
+          anyOpen = true;
+          break;
+        }
       if (anyOpen) break;
     }
     return !anyOpen;
@@ -604,7 +593,10 @@ export class Game {
     const seen = new Set<Cell>();
     for (const row of this.grid) {
       for (const cell of row) {
-        if (cell.present && cell.open) { frontier.push(cell); seen.add(cell); }
+        if (cell.present && cell.open) {
+          frontier.push(cell);
+          seen.add(cell);
+        }
       }
     }
     // A board with nothing open is not sealed — everything is in reach there.
@@ -644,7 +636,6 @@ export class Game {
     if (from === to) return [];
 
     this.applyMark(cell, to);
-    this.started = true;
     return [{ type: 'marked', x, y, from, to }];
   }
 
@@ -680,7 +671,6 @@ export class Game {
     const to = toggleNoteBit(from, tier);
     if (from === to) return events;
     cell.notes = to;
-    this.started = true;
     events.push({ type: 'noted', x, y, from, to });
     return events;
   }
@@ -974,7 +964,6 @@ export class Game {
     if (id === 'exercise' && this.config.workout) {
       this.exerciseSurcharge += this.config.workout.step;
     }
-    this.started = true;
     events.push(
       target
         ? { type: 'spell', id, x: target.x, y: target.y, detail }
@@ -1073,9 +1062,10 @@ export class Game {
     // kill paying over only reaches a gate sooner. The bonus is counted here so
     // the event can say what it was worth.
     const workout = this.config.workout;
-    const bonusExp = lent > 0 && workout && result.defeated
-      ? expForTier(cell.tier) * (workout.expMultiplier - 1)
-      : 0;
+    const bonusExp =
+      lent > 0 && workout && result.defeated
+        ? expForTier(cell.tier) * (workout.expMultiplier - 1)
+        : 0;
     if (lent > 0) {
       const unaided = resolveBattle(this.level, this.hp + taken, cell.tier, bite).damage;
       events.push({ type: 'exercised', levels: lent, spared: unaided - taken, bonusExp });
@@ -1103,7 +1093,9 @@ export class Game {
         // kill can buy two levels at once, and both count.
         if (workout) {
           this.exerciseSurcharge = Math.max(
-            0, this.exerciseSurcharge - workout.relief * (this.level - levelBefore));
+            0,
+            this.exerciseSurcharge - workout.relief * (this.level - levelBefore),
+          );
         }
       }
       if (this.creaturesLeft() === 0 && !this.config.search) {

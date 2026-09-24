@@ -117,7 +117,10 @@ export function dominoCreatures(tiers: number, sets = 1): number {
  * set's own order.
  */
 export function dealTiles(
-  pairs: readonly number[], tiers: number, sets: number, rng: Rng,
+  pairs: readonly number[],
+  tiers: number,
+  sets: number,
+  rng: Rng,
 ): Map<number, number> {
   const tiles = dominoSet(tiers, sets);
   if (pairs.length !== tiles.length * 2) {
@@ -149,7 +152,9 @@ export function dealTiles(
  * manage while dealing the same tile twice.
  */
 export function dominoFault(
-  dealt: ReadonlyArray<Tile>, tiers: number, sets: number,
+  dealt: ReadonlyArray<Tile>,
+  tiers: number,
+  sets: number,
 ): string | null {
   const key = (t: Tile): string => {
     const [a, b] = t;

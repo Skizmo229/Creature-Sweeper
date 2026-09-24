@@ -13,7 +13,13 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { loadLadders } from '../src/data.js';
 import {
-  FONTS, FONT_IDS, LEGIBLE_FONT, TITLE_FONT, TYPE_FONTS, fontFor, migrateFontChoice,
+  FONTS,
+  FONT_IDS,
+  LEGIBLE_FONT,
+  TITLE_FONT,
+  TYPE_FONTS,
+  fontFor,
+  migrateFontChoice,
 } from '../src/ui/typefaces.js';
 
 const CSS = readFileSync('src/ui/fonts.css', 'utf8');
@@ -59,12 +65,16 @@ describe('every face', () => {
     for (const id of FONT_IDS) {
       const { stack, weight } = FONTS[id];
       const faces = FACES.filter((f) => f.family === familyOf(stack));
-      expect(faces.some((f) => weight >= f.lo && weight <= f.hi), id).toBe(true);
+      expect(
+        faces.some((f) => weight >= f.lo && weight <= f.hi),
+        id,
+      ).toBe(true);
     }
   });
 
   it('ships with its copyright notice', () => {
-    for (const id of FONT_IDS) expect(LICENCES, id).toContain(`\n${familyOf(FONTS[id].stack)}\n  Copyright`);
+    for (const id of FONT_IDS)
+      expect(LICENCES, id).toContain(`\n${familyOf(FONTS[id].stack)}\n  Copyright`);
     expect(LICENCES).toContain('SIL OPEN FONT LICENSE Version 1.1');
   });
 

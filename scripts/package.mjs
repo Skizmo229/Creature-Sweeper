@@ -25,7 +25,9 @@ if (!existsSync(join(DIST, 'index.html'))) {
 // Guard against the one silent failure: absolute asset paths load nothing on itch.
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
 if (/(src|href)="\/(?!\/)/.test(html)) {
-  console.error('dist/index.html uses absolute asset paths; itch.io needs `base: \'./\'` in vite.config.ts.');
+  console.error(
+    "dist/index.html uses absolute asset paths; itch.io needs `base: './'` in vite.config.ts.",
+  );
   process.exit(1);
 }
 
@@ -64,9 +66,9 @@ for (const path of walk(DIST).sort()) {
 
   const local = Buffer.alloc(30);
   local.writeUInt32LE(0x04034b50, 0);
-  local.writeUInt16LE(20, 4);          // version needed
-  local.writeUInt16LE(0x0800, 6);      // UTF-8 names
-  local.writeUInt16LE(8, 8);           // deflate
+  local.writeUInt16LE(20, 4); // version needed
+  local.writeUInt16LE(0x0800, 6); // UTF-8 names
+  local.writeUInt16LE(8, 8); // deflate
   local.writeUInt16LE(dosTime, 10);
   local.writeUInt16LE(dosDate, 12);
   local.writeUInt32LE(crc, 14);
@@ -78,7 +80,7 @@ for (const path of walk(DIST).sort()) {
 
   const central = Buffer.alloc(46);
   central.writeUInt32LE(0x02014b50, 0);
-  central.writeUInt16LE(20, 4);        // version made by
+  central.writeUInt16LE(20, 4); // version made by
   central.writeUInt16LE(20, 6);
   central.writeUInt16LE(0x0800, 8);
   central.writeUInt16LE(8, 10);
@@ -105,11 +107,15 @@ end.writeUInt32LE(offset, 16);
 let commit = 'nogit';
 try {
   commit = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
-    .toString().trim();
+    .toString()
+    .trim();
   const dirty = execSync('git status --porcelain', { stdio: ['ignore', 'pipe', 'ignore'] })
-    .toString().trim();
+    .toString()
+    .trim();
   if (dirty) commit += '-dirty';
-} catch { /* not a git checkout; the date still identifies it */ }
+} catch {
+  /* not a git checkout; the date still identifies it */
+}
 
 // The local date, to agree with the timestamps inside the zip; `toISOString`
 // is the UTC date and names an evening's build after the following day.

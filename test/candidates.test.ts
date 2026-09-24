@@ -11,7 +11,6 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { boardConfig } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
 import { hasNote, noteTiers } from '../src/engine/notes.js';
@@ -19,9 +18,7 @@ import { packCandidates } from '../src/engine/packs.js';
 import { pairCandidates } from '../src/engine/pairs.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import type { Cell } from '../src/engine/types.js';
-
-const ladders = loadLadders();
-const SEEDS = [0xc0ffee, 0x5eed, 0xbeef];
+import { ladders, SEEDS } from './helpers.js';
 
 /** Every placement the gate knows about, on boards from both ends of each
  *  ladder. Sudoku stops at board 5 because the late boards are slow to deal. */
@@ -34,8 +31,7 @@ const GATED: Record<string, number[]> = {
   sudoku: [1, 5],
 };
 
-const covered = (game: Game): Cell[] =>
-  game.grid.flat().filter((c) => c.present && !c.open);
+const covered = (game: Game): Cell[] => game.grid.flat().filter((c) => c.present && !c.open);
 
 /**
  * Open free cells in a seeded random order, yielding after each, until none is
@@ -68,16 +64,19 @@ describe('pencil candidates', () => {
             for (const c of covered(game)) {
               const mask = game.noteCandidates(c);
               if (!hasNote(mask, c.tier)) {
-                failures.push(`${id} #${board} seed ${seed}: (${c.x},${c.y}) holds ` +
-                  `${c.tier} but is offered ${noteTiers(mask).join(',')}`);
+                failures.push(
+                  `${id} #${board} seed ${seed}: (${c.x},${c.y}) holds ` +
+                    `${c.tier} but is offered ${noteTiers(mask).join(',')}`,
+                );
               }
               // On a pairing or pack board count only what that rule narrowed,
               // so this cannot pass on a gate that never engages.
-              const engaged = id === 'pairs' || id === 'dominoes'
-                ? pairCandidates(c, (n) => game.neighboursOf(n)) !== null
-                : id === 'packs' || id === 'congo'
-                  ? packCandidates(c, (n) => game.neighboursOf(n), game.config.tiers) !== null
-                  : mask !== every;
+              const engaged =
+                id === 'pairs' || id === 'dominoes'
+                  ? pairCandidates(c, (n) => game.neighboursOf(n)) !== null
+                  : id === 'packs' || id === 'congo'
+                    ? packCandidates(c, (n) => game.neighboursOf(n), game.config.tiers) !== null
+                    : mask !== every;
               if (engaged) narrowed[id]!++;
             }
           };
@@ -169,7 +168,8 @@ describe('pencil candidates', () => {
     const packOf = (start: Cell): Cell[] => {
       const out = [start];
       for (let i = 0; i < out.length; i++) {
-        for (const n of game.neighboursOf(out[i]!)) if (creature(n) && !out.includes(n)) out.push(n);
+        for (const n of game.neighboursOf(out[i]!))
+          if (creature(n) && !out.includes(n)) out.push(n);
       }
       return out;
     };
@@ -188,7 +188,8 @@ describe('pencil candidates', () => {
     const packsOf = (start: Cell): Set<Cell> => {
       const out = [start];
       for (let i = 0; i < out.length; i++) {
-        for (const n of fresh.neighboursOf(out[i]!)) if (creature(n) && !out.includes(n)) out.push(n);
+        for (const n of fresh.neighboursOf(out[i]!))
+          if (creature(n) && !out.includes(n)) out.push(n);
       }
       return new Set(out);
     };
@@ -196,8 +197,11 @@ describe('pencil candidates', () => {
     for (const x of fresh.grid.flat()) {
       if (!x.present || x.open || x.tier !== 0) continue;
       const ns = fresh.neighboursOf(x).filter(creature);
-      const pair = ns.flatMap((a) => ns.filter((b) => b !== a && b.tier === a.tier && !packsOf(a).has(b))
-        .map((b) => [a, b] as const))[0];
+      const pair = ns.flatMap((a) =>
+        ns
+          .filter((b) => b !== a && b.tier === a.tier && !packsOf(a).has(b))
+          .map((b) => [a, b] as const),
+      )[0];
       if (!pair) continue;
       pair[0].open = true;
       pair[1].open = true;
@@ -212,7 +216,9 @@ describe('pencil candidates', () => {
     const game = Game.create(boardConfig(ladders, 'checker', 1), SEEDS[0]!);
     const light = covered(game).find((c) => (c.x + c.y) % 2 === 0 && !c.given)!;
     game.setMark(light.x, light.y, 2);
-    expect(game.toggleNote(light.x, light.y, 3)).toEqual([{ type: 'blocked', reason: 'ruled-out' }]);
+    expect(game.toggleNote(light.x, light.y, 3)).toEqual([
+      { type: 'blocked', reason: 'ruled-out' },
+    ]);
     // Refused before the mark is rubbed out, so nothing about the cell moved.
     expect(light.mark).toBe(2);
     expect(light.notes).toBe(0);
@@ -228,8 +234,12 @@ describe('pencil candidates', () => {
         if (c.tier !== 1) continue;
         const partner = game.neighboursOf(c).find((n) => n.tier > 0)!;
         if (partner.open) continue;
-        const x = game.neighboursOf(c).find((n) => !n.open && n !== partner
-          && !game.neighboursOf(n).some((m) => m.open && m.tier > 0));
+        const x = game
+          .neighboursOf(c)
+          .find(
+            (n) =>
+              !n.open && n !== partner && !game.neighboursOf(n).some((m) => m.open && m.tier > 0),
+          );
         if (!x) continue;
 
         // Pencilled while nothing ruled it out...
@@ -240,7 +250,9 @@ describe('pencil candidates', () => {
         expect(hasNote(game.noteCandidates(x), stale)).toBe(false);
         // Taking it off is still allowed; putting it back is not.
         expect(game.toggleNote(x.x, x.y, stale).some((e) => e.type === 'noted')).toBe(true);
-        expect(game.toggleNote(x.x, x.y, stale)).toEqual([{ type: 'blocked', reason: 'ruled-out' }]);
+        expect(game.toggleNote(x.x, x.y, stale)).toEqual([
+          { type: 'blocked', reason: 'ruled-out' },
+        ]);
         return;
       }
     }

@@ -13,7 +13,10 @@ const progress = JSON.stringify({
   version: 1,
   types: { easy: { highestBoard: 10, cleared: true } },
   boards: { 'easy#1': { cleared: true, perfect: false, bestTime: 42 } },
-  runs: {}, scaling: {}, unlockAll: false, seenHowTo: true,
+  runs: {},
+  scaling: {},
+  unlockAll: false,
+  seenHowTo: true,
 });
 const settings = JSON.stringify({ version: 1, presentation: {}, gameplay: {} });
 
@@ -36,8 +39,10 @@ describe('save codes', () => {
   it('ignores the invisible characters an app slips into a long string', () => {
     const code = encodeSave({ progress, settings });
     const invisible = ['​', '‌', '‍', '⁠', '­'];
-    const mangled = code.match(/.{1,16}/g)!
-      .map((part, i) => part + invisible[i % invisible.length]).join('');
+    const mangled = code
+      .match(/.{1,16}/g)!
+      .map((part, i) => part + invisible[i % invisible.length])
+      .join('');
     expect(decodeSave(mangled).ok).toBe(true);
   });
 
@@ -51,8 +56,11 @@ describe('save codes', () => {
 
   it('drops an export stamp that is not a date', () => {
     const envelope = JSON.stringify({
-      format: 'creature-sweeper-save', version: 1, exported: 'yesterday',
-      progress: JSON.parse(progress), settings: null,
+      format: 'creature-sweeper-save',
+      version: 1,
+      exported: 'yesterday',
+      progress: JSON.parse(progress),
+      settings: null,
     });
     const result = decodeSave(envelope);
     expect(result.ok && result.exported).toBe(null);
@@ -72,7 +80,10 @@ describe('save codes', () => {
     expect(decodeSave('hello').ok).toBe(false);
     expect(decodeSave(encodeSave({ progress: null, settings })).ok).toBe(false);
     expect(decodeSave(encodeSave({ progress: 'not json', settings })).ok).toBe(false);
-    const future = encodeSave({ progress: JSON.stringify({ version: 2, types: {}, boards: {} }), settings });
+    const future = encodeSave({
+      progress: JSON.stringify({ version: 2, types: {}, boards: {} }),
+      settings,
+    });
     expect(decodeSave(future).ok).toBe(false);
   });
 

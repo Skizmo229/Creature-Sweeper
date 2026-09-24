@@ -81,29 +81,37 @@ function byBoard(seeds: number, typeId: string, only?: [number, number]): void {
   const type = battleLadders().find((t) => t.id === typeId);
   if (!type) throw new Error(`no battle ladder "${typeId}"`);
   console.log(`${type.name}, board by board, ${seeds} seeds each.\n`);
-  console.log('board  density |  honest: stuck  clear   free | complete: forced  clear*  no guess |' +
-    '  undecided  bad  hurt');
+  console.log(
+    'board  density |  honest: stuck  clear   free | complete: forced  clear*  no guess |' +
+      '  undecided  bad  hurt',
+  );
   for (const b of type.boards) {
     if (only && (b.n < only[0] || b.n > only[1])) continue;
     const r = measure(type.id, b.n, seeds);
     console.log(
       `${String(b.n).padStart(4)}  ${b.density.toFixed(1).padStart(6)}% |` +
-      `${mean(r.honest, (x) => x.stuckPoints).toFixed(1).padStart(14)}` +
-      `${pct(mean(r.honest, (x) => (x.cleared ? 1 : 0))).padStart(7)}` +
-      `${pct(freeShare(r.honest)).padStart(7)} |` +
-      `${mean(r.solver, (x) => x.stuckPoints).toFixed(1).padStart(16)}` +
-      `${pct(mean(r.solver, (x) => (x.cleared ? 1 : 0))).padStart(8)}` +
-      `${pct(mean(r.solver, (x) => (x.stuckPoints === 0 ? 1 : 0))).padStart(10)} |` +
-      `${String(r.undecided).padStart(11)}${String(r.bad).padStart(5)}` +
-      `${String(r.solver.reduce((a, x) => a + x.rescueDamage, 0)).padStart(6)}`,
+        `${mean(r.honest, (x) => x.stuckPoints)
+          .toFixed(1)
+          .padStart(14)}` +
+        `${pct(mean(r.honest, (x) => (x.cleared ? 1 : 0))).padStart(7)}` +
+        `${pct(freeShare(r.honest)).padStart(7)} |` +
+        `${mean(r.solver, (x) => x.stuckPoints)
+          .toFixed(1)
+          .padStart(16)}` +
+        `${pct(mean(r.solver, (x) => (x.cleared ? 1 : 0))).padStart(8)}` +
+        `${pct(mean(r.solver, (x) => (x.stuckPoints === 0 ? 1 : 0))).padStart(10)} |` +
+        `${String(r.undecided).padStart(11)}${String(r.bad).padStart(5)}` +
+        `${String(r.solver.reduce((a, x) => a + x.rescueDamage, 0)).padStart(6)}`,
     );
   }
 }
 
 function everyLadder(seeds: number): void {
   console.log(`Every battle ladder, its ten tuned boards, ${seeds} seeds each.\n`);
-  console.log('ladder         |  honest: stuck  clear   free | complete: forced  clear*  no guess' +
-    '  #10 no guess |  undecided  bad  hurt');
+  console.log(
+    'ladder         |  honest: stuck  clear   free | complete: forced  clear*  no guess' +
+      '  #10 no guess |  undecided  bad  hurt',
+  );
   for (const type of battleLadders()) {
     const rows = type.boards.map((b) => measure(type.id, b.n, seeds));
     const honest = rows.flatMap((r) => r.honest);
@@ -111,16 +119,20 @@ function everyLadder(seeds: number): void {
     const last = rows[rows.length - 1]!.solver;
     console.log(
       `${type.name.padEnd(14)} |` +
-      `${mean(honest, (x) => x.stuckPoints).toFixed(2).padStart(14)}` +
-      `${pct(mean(honest, (x) => (x.cleared ? 1 : 0))).padStart(7)}` +
-      `${pct(freeShare(honest)).padStart(7)} |` +
-      `${mean(solver, (x) => x.stuckPoints).toFixed(2).padStart(16)}` +
-      `${pct(mean(solver, (x) => (x.cleared ? 1 : 0))).padStart(8)}` +
-      `${pct(mean(solver, (x) => (x.stuckPoints === 0 ? 1 : 0))).padStart(10)}` +
-      `${pct(mean(last, (x) => (x.stuckPoints === 0 ? 1 : 0))).padStart(14)} |` +
-      `${String(rows.reduce((a, r) => a + r.undecided, 0)).padStart(11)}` +
-      `${String(rows.reduce((a, r) => a + r.bad, 0)).padStart(5)}` +
-      `${String(solver.reduce((a, x) => a + x.rescueDamage, 0)).padStart(6)}`,
+        `${mean(honest, (x) => x.stuckPoints)
+          .toFixed(2)
+          .padStart(14)}` +
+        `${pct(mean(honest, (x) => (x.cleared ? 1 : 0))).padStart(7)}` +
+        `${pct(freeShare(honest)).padStart(7)} |` +
+        `${mean(solver, (x) => x.stuckPoints)
+          .toFixed(2)
+          .padStart(16)}` +
+        `${pct(mean(solver, (x) => (x.cleared ? 1 : 0))).padStart(8)}` +
+        `${pct(mean(solver, (x) => (x.stuckPoints === 0 ? 1 : 0))).padStart(10)}` +
+        `${pct(mean(last, (x) => (x.stuckPoints === 0 ? 1 : 0))).padStart(14)} |` +
+        `${String(rows.reduce((a, r) => a + r.undecided, 0)).padStart(11)}` +
+        `${String(rows.reduce((a, r) => a + r.bad, 0)).padStart(5)}` +
+        `${String(solver.reduce((a, x) => a + x.rescueDamage, 0)).padStart(6)}`,
     );
   }
 }

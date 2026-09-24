@@ -10,13 +10,12 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { boardConfig, findType } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
 import { FullRun } from '../src/engine/run.js';
 import { autoplaySearch, autoplayTierOrder } from '../src/sim/autoplay.js';
+import { ladders } from './helpers.js';
 
-const ladders = loadLadders();
 const SEED = 0x5eed;
 
 /** Play a run to its end with the omniscient tier-order player. */
@@ -44,7 +43,10 @@ function strike(game: Game, pick: 'cheapest' | 'fatal'): number {
   for (const row of game.grid) {
     for (const cell of row) {
       if (!cell.alive || cell.tier <= game.level) continue;
-      if (!target) { target = cell; continue; }
+      if (!target) {
+        target = cell;
+        continue;
+      }
       const better = pick === 'cheapest' ? cell.tier < target.tier : cell.tier > target.tier;
       if (better) target = cell;
     }
@@ -195,7 +197,11 @@ describe('a run as a whole', () => {
     const a = autoRun('cave', 0xbeef);
     const b = autoRun('cave', 0xbeef);
     const c = autoRun('cave', 0xc0ffee);
-    const shape = (r: FullRun) => r.game.grid.flat().map((x) => x.tier).join('');
+    const shape = (r: FullRun) =>
+      r.game.grid
+        .flat()
+        .map((x) => x.tier)
+        .join('');
     expect(shape(a)).toBe(shape(b));
     expect(shape(a)).not.toBe(shape(c));
     // Consecutive boards must not be related boards.

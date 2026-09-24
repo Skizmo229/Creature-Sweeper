@@ -2,8 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { Game } from '../src/engine/game.js';
 import { computeNumbers } from '../src/engine/board.js';
 import {
-  EXERCISE_LEVELS, MANA_PER_EMPTY_CELLS, SPELLS, SPELL_ORDER,
-  orderSpells, spellKey, spellLabel, totalMana,
+  EXERCISE_LEVELS,
+  MANA_PER_EMPTY_CELLS,
+  SPELLS,
+  SPELL_ORDER,
+  orderSpells,
+  spellKey,
+  spellLabel,
+  totalMana,
 } from '../src/engine/spells.js';
 import { loadLadders } from '../src/data.js';
 import { boardConfig, cumulativeExp } from '../src/engine/config.js';
@@ -53,8 +59,14 @@ function paint(game: Game, rows: string[]): void {
 }
 
 const EMPTY8 = [
-  '........', '........', '........', '........',
-  '........', '........', '........', '........',
+  '........',
+  '........',
+  '........',
+  '........',
+  '........',
+  '........',
+  '........',
+  '........',
 ];
 
 describe('mana', () => {
@@ -73,10 +85,18 @@ describe('mana', () => {
 
   it('trickles while you explore, so spells exist before the first kill', () => {
     const game = Game.create(magicConfig({ startMana: 0 }), 7);
-    paint(game, ['........', '........', '........', '........',
-                 '........', '........', '........', '.......1']);
+    paint(game, [
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '.......1',
+    ]);
     expect(game.mana).toBe(0);
-    game.open(0, 0);   // one cascade uncovers most of the board
+    game.open(0, 0); // one cascade uncovers most of the board
     const opened = game.grid.flat().filter((c) => c.open && c.tier === 0).length;
     expect(game.mana).toBe(Math.floor(opened / MANA_PER_EMPTY_CELLS));
     expect(game.mana).toBeGreaterThan(0);
@@ -90,8 +110,16 @@ describe('mana', () => {
 
     // Neither is a Beacon, which would otherwise refund part of its own cost.
     const bought = Game.create(magicConfig({ startMana: SPELLS.beacon.cost + 18 }), 7);
-    paint(bought, ['........', '........', '........', '11111111',
-                   '........', '........', '........', '........']);
+    paint(bought, [
+      '........',
+      '........',
+      '........',
+      '11111111',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
     bought.open(0, 0);
     const before = bought.mana;
     bought.cast('beacon');
@@ -208,11 +236,18 @@ describe('Reveal', () => {
    */
   it('never cascades off a creature, however much blank ground is next to it', () => {
     const game = Game.create(magicConfig(), 7);
-    paint(game, ['........', '........', '........', '........',
-                 '....1...', '........', '........', '........']);
+    paint(game, [
+      '........',
+      '........',
+      '........',
+      '........',
+      '....1...',
+      '........',
+      '........',
+      '........',
+    ]);
     const creature = game.grid[4]![4]!;
-    expect(game.grid.flat().filter((c) => c.tier === 0 && c.num === 0).length)
-      .toBeGreaterThan(40);
+    expect(game.grid.flat().filter((c) => c.tier === 0 && c.num === 0).length).toBeGreaterThan(40);
 
     game.cast('reveal', 4, 4);
     const opened = game.grid.flat().filter((c) => c.open);
@@ -223,8 +258,16 @@ describe('Reveal', () => {
   /** Revealing empty ground still cascades exactly as it always did. */
   it('still cascades when the cell it opens is a blank one', () => {
     const game = Game.create(magicConfig(), 7);
-    paint(game, ['........', '........', '........', '........',
-                 '........', '........', '........', '.......1']);
+    paint(game, [
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '.......1',
+    ]);
     game.cast('reveal', 0, 0);
     expect(game.grid.flat().filter((c) => c.open).length).toBeGreaterThan(40);
   });
@@ -267,9 +310,9 @@ describe('Census', () => {
     // Three creatures adjacent to (2,2): tier 1, 1 and 4.
     paint(game, ['........', '.1.1....', '........', '.4......', ...EMPTY8.slice(4)]);
     const mid = game.grid[2]![2]!;
-    expect(mid.num).toBe(1 + 1 + 4);   // the number is their SUM
+    expect(mid.num).toBe(1 + 1 + 4); // the number is their SUM
     game.cast('census', 2, 2);
-    expect(mid.census).toBe(3);        // census is their COUNT
+    expect(mid.census).toBe(3); // census is their COUNT
     // Together those pin the layout: sum 6 across 3 creatures is 1+1+4.
   });
 
@@ -300,8 +343,8 @@ describe('Exercise', () => {
     const events = game.open(1, 1);
     expect(events.some((e) => e.type === 'exercised' && e.spared === 8)).toBe(true);
     expect(game.hp).toBe(20 - 4);
-    expect(game.exerciseCharge).toBe(0);   // spent
-    expect(game.level).toBe(1);            // and only lent, never kept
+    expect(game.exerciseCharge).toBe(0); // spent
+    expect(game.level).toBe(1); // and only lent, never kept
   });
 
   /** The fight it is bought for: one tier past what you could safely take. */
@@ -313,7 +356,7 @@ describe('Exercise', () => {
 
     game.cast('exercise');
     expect(game.open(1, 1).some((e) => e.type === 'battle' && e.defeated)).toBe(true);
-    expect(game.hp).toBe(20);              // LV2 kills a tier 2 outright
+    expect(game.hp).toBe(20); // LV2 kills a tier 2 outright
   });
 
   it('still pays full EXP, so it cannot strand a C_k gate', () => {
@@ -321,7 +364,7 @@ describe('Exercise', () => {
     paint(game, ['........', '.4......', ...EMPTY8.slice(2)]);
     game.cast('exercise');
     game.open(1, 1);
-    expect(game.ex).toBe(8);               // 2^(4-1), undiminished
+    expect(game.ex).toBe(8); // 2^(4-1), undiminished
   });
 
   it('does not stack', () => {
@@ -338,11 +381,16 @@ describe('Beacon', () => {
   it('opens an untouched blank region', () => {
     const game = Game.create(magicConfig(), 7);
     paint(game, [
-      '........', '........', '........',
-      '11111111',                              // wall splitting the board
-      '........', '........', '........', '........',
+      '........',
+      '........',
+      '........',
+      '11111111', // wall splitting the board
+      '........',
+      '........',
+      '........',
+      '........',
     ]);
-    game.open(0, 0);                           // take the upper half
+    game.open(0, 0); // take the upper half
     const openBefore = game.grid.flat().filter((c) => c.open).length;
     const events = game.cast('beacon');
     expect(events.some((e) => e.type === 'spell' && e.id === 'beacon')).toBe(true);
@@ -355,7 +403,7 @@ describe('Beacon', () => {
   it('refuses when there is nothing left to open', () => {
     const game = Game.create(magicConfig(), 7);
     paint(game, EMPTY8);
-    game.open(0, 0);                           // one cascade takes the whole board
+    game.open(0, 0); // one cascade takes the whole board
     const mana = game.mana;
     expect(game.cast('beacon')[0]).toMatchObject({ type: 'blocked', reason: 'no-effect' });
     expect(game.mana).toBe(mana);
@@ -390,8 +438,12 @@ describe('spell shortcuts', () => {
 
   it('gives every spell the letter its name starts with', () => {
     expect(SPELL_ORDER.map((id) => spellKey(id))).toEqual(['c', 'r', 'e', 'b']);
-    expect(SPELL_ORDER.map((id) => spellLabel(id)))
-      .toEqual(['[C]ensus', '[R]eveal', '[E]xercise', '[B]eacon']);
+    expect(SPELL_ORDER.map((id) => spellLabel(id))).toEqual([
+      '[C]ensus',
+      '[R]eveal',
+      '[E]xercise',
+      '[B]eacon',
+    ]);
   });
 
   /**
@@ -410,8 +462,9 @@ describe('spell shortcuts', () => {
     const data = loadLadders();
     for (const type of data.filter((t) => (t.spells ?? []).length > 0)) {
       const offered = boardConfig(data, type.id, 1).spells.map((id) => SPELLS[id].cost);
-      expect(offered, `${type.id} offers its spells out of price order`)
-        .toEqual([...offered].sort((a, b) => a - b));
+      expect(offered, `${type.id} offers its spells out of price order`).toEqual(
+        [...offered].sort((a, b) => a - b),
+      );
     }
   });
 
@@ -425,8 +478,7 @@ describe('spell shortcuts', () => {
     const keys = SPELL_ORDER.map((id) => spellKey(id));
     expect(new Set(keys).size, 'two spells want the same letter').toBe(keys.length);
     for (const key of keys) {
-      expect(RESERVED, `a spell claims "${key}", which the board already uses`)
-        .not.toContain(key);
+      expect(RESERVED, `a spell claims "${key}", which the board already uses`).not.toContain(key);
     }
   });
 });
@@ -441,11 +493,17 @@ describe('the magic ladders', () => {
   it('has magic ladders to check', () => {
     // Sorted, for the same reason: which ladders carry spells is the claim,
     // not where the menu happens to list them.
-    expect(magicTypes.map((t) => t.id).sort())
-      .toEqual([
-        'arcane', 'cave', 'cross', 'diamond', 'donut', 'dungeon', 'oracle', 'workout',
-        'wrapped_cross',
-      ]);
+    expect(magicTypes.map((t) => t.id).sort()).toEqual([
+      'arcane',
+      'cave',
+      'cross',
+      'diamond',
+      'donut',
+      'dungeon',
+      'oracle',
+      'workout',
+      'wrapped_cross',
+    ]);
   });
 
   it('give every magic type a loadout and a starting pool', () => {
@@ -489,18 +547,25 @@ describe('the magic ladders', () => {
       // workout rule sets one — WORKOUT's Exercise starts at 30, not 150.
       const cfg = boardConfig(ladders, type.id, 1);
       const costs = cfg.spells.map((s) =>
-        s === 'exercise' && cfg.workout ? cfg.workout.base : SPELLS[s].cost);
+        s === 'exercise' && cfg.workout ? cfg.workout.base : SPELLS[s].cost,
+      );
       const cheapest = Math.min(...costs);
       const dearest = Math.max(...costs);
 
       for (const board of type.boards) {
-        const pool = totalMana(board.quantity) + (type.start_mana ?? 0)
-          + Math.floor(board.empty / MANA_PER_EMPTY_CELLS);
+        const pool =
+          totalMana(board.quantity) +
+          (type.start_mana ?? 0) +
+          Math.floor(board.empty / MANA_PER_EMPTY_CELLS);
 
-        expect(pool / cheapest, `${type.id}#${board.n} cannot lean on its cheapest spell`)
-          .toBeGreaterThan(5);
-        expect(pool / dearest, `${type.id}#${board.n} can never cast its dearest spell`)
-          .toBeGreaterThan(1);
+        expect(
+          pool / cheapest,
+          `${type.id}#${board.n} cannot lean on its cheapest spell`,
+        ).toBeGreaterThan(5);
+        expect(
+          pool / dearest,
+          `${type.id}#${board.n} can never cast its dearest spell`,
+        ).toBeGreaterThan(1);
       }
     }
   });
@@ -517,22 +582,32 @@ describe('the magic ladders', () => {
   it('makes answering every forced guess cost a real share of a board', () => {
     // Measured forced guesses a board, at board 10, per ladder.
     const stuckAtTen: Record<string, number> = {
-      arcane: 5.0, oracle: 6.0, diamond: 1.5, donut: 6.0, cross: 2.5, cave: 5.5, dungeon: 3.9,
+      arcane: 5.0,
+      oracle: 6.0,
+      diamond: 1.5,
+      donut: 6.0,
+      cross: 2.5,
+      cave: 5.5,
+      dungeon: 3.9,
     };
     for (const type of magicTypes) {
       const stuck = stuckAtTen[type.id];
       if (stuck === undefined) continue;
       const board = type.boards[9]!;
-      const pool = totalMana(board.quantity) + (type.start_mana ?? 0)
-        + Math.floor(board.empty / MANA_PER_EMPTY_CELLS);
+      const pool =
+        totalMana(board.quantity) +
+        (type.start_mana ?? 0) +
+        Math.floor(board.empty / MANA_PER_EMPTY_CELLS);
       const answerEverything = stuck * SPELLS.reveal.cost;
 
       // DIAMOND is exempt and that is a difficulty fact, not a pricing one: it
       // corners a deductive player 1.5 times a board, so there is barely
       // anything to buy however it is priced.
       if (type.id === 'diamond') continue;
-      expect(answerEverything / pool, `${type.id}#10 can buy its way out of everything`)
-        .toBeGreaterThan(0.3);
+      expect(
+        answerEverything / pool,
+        `${type.id}#10 can buy its way out of everything`,
+      ).toBeGreaterThan(0.3);
     }
   });
 
