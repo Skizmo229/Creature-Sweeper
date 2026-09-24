@@ -25,9 +25,7 @@ interface Driver {
   onCellPrimary(x: number, y: number): void;
   showSettings(back: () => void): void;
   buildGameScreen(): void;
-  pendingSpell: string | null;
-  notesMode: boolean;
-  markMode: number;
+  readonly mode: { pendingSpell: string | null; notesMode: boolean; markMode: number };
 }
 
 const key = (k: string, extra: KeyboardEventInit = {}): void => {
@@ -74,28 +72,28 @@ describe('the app', () => {
   it('N switches the entry mode and arms a pencil tier', () => {
     app.play('normal', 1, 7);
     key('n');
-    expect(app.notesMode).toBe(true);
-    expect(app.markMode).toBe(1);
+    expect(app.mode.notesMode).toBe(true);
+    expect(app.mode.markMode).toBe(1);
     expect(text('.hint')).toMatch(/^PENCIL/);
     key('n');
-    expect(app.notesMode).toBe(false);
-    expect(app.markMode).toBe(-1);
+    expect(app.mode.notesMode).toBe(false);
+    expect(app.mode.markMode).toBe(-1);
     expect(text('.hint')).toMatch(/^Click to open/);
   });
 
   it('Escape cancels an armed spell, and pencil mode clears one too', () => {
     app.play('arcane', 1, 7);
     app.pickSpell('reveal');
-    expect(app.pendingSpell).toBe('reveal');
+    expect(app.mode.pendingSpell).toBe('reveal');
     expect(text('.hint')).toContain('Reveal is armed');
     key('Escape');
-    expect(app.pendingSpell).toBeNull();
+    expect(app.mode.pendingSpell).toBeNull();
     expect(text('.hint')).toMatch(/^Click to open/);
 
     app.pickSpell('reveal');
     key('n');
-    expect(app.pendingSpell).toBeNull();
-    expect(app.notesMode).toBe(true);
+    expect(app.mode.pendingSpell).toBeNull();
+    expect(app.mode.notesMode).toBe(true);
   });
 
   it('a cleared board shows the clear overlay, records it, and offers the next board', () => {
