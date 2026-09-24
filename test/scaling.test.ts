@@ -20,10 +20,10 @@ import {
   isExtendedBoard,
   maxBoard,
 } from '../src/engine/config.js';
-import { presentCellCount } from '../src/engine/board.js';
 import { Game } from '../src/engine/game.js';
 import { autoplaySearch, autoplayTierOrder } from '../src/sim/autoplay.js';
 import { ladders } from './helpers.js';
+import { presentCellCount } from '../src/engine/shape.js';
 
 const SEEDS = [0xc0ffee, 0x5eed];
 

@@ -7,7 +7,7 @@ import {
   hexRadius,
   hexRowStep,
 } from '../src/ui/hexgeom.js';
-import { neighbours, makeCell, type Grid } from '../src/engine/board.js';
+import { neighbours, makeCell, type Grid } from '../src/engine/grid.js';
 
 const SIZES = [8, 13, 21, 32, 48];
 const COLS = 30;

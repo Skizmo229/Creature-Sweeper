@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { Game } from '../src/engine/game.js';
-import { computeNumbers } from '../src/engine/board.js';
 import {
   EXERCISE_LEVELS,
   MANA_PER_EMPTY_CELLS,
@@ -14,6 +13,7 @@ import {
 import { loadLadders } from '../src/data.js';
 import { boardConfig, cumulativeExp } from '../src/engine/config.js';
 import type { BoardConfig } from '../src/engine/types.js';
+import { computeNumbers } from '../src/engine/grid.js';
 
 function magicConfig(over: Partial<BoardConfig> = {}): BoardConfig {
   return {

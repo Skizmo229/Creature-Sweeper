@@ -9,13 +9,13 @@
 
 import { describe, expect, it } from 'vitest';
 import { boardConfig, findType, type LadderType } from '../src/engine/config.js';
-import { neighbours } from '../src/engine/board.js';
 import { choosePairs, pairingFault, ringIsFree } from '../src/engine/pairs.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import { Game } from '../src/engine/game.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';
 import type { Cell } from '../src/engine/types.js';
 import { ladders, PLACEMENT_SEEDS as SEEDS, UNGATED_SWEEP } from './helpers.js';
+import { neighbours } from '../src/engine/grid.js';
 
 const pairs = findType(ladders, 'pairs');
 

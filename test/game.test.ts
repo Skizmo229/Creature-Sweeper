@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { Game } from '../src/engine/game.js';
-import { computeNumbers, findBestOpening, neighbours } from '../src/engine/board.js';
 import { noteTiers } from '../src/engine/notes.js';
 import type { BoardConfig } from '../src/engine/types.js';
 import { DEFAULT_GAMEPLAY } from '../src/engine/settings.js';
 import { UNGATED_SWEEP } from './helpers.js';
+import { computeNumbers, neighbours } from '../src/engine/grid.js';
+import { findBestOpening } from '../src/engine/opening.js';
 
 /** A small hand-built board so the assertions can be exact. */
 function tinyConfig(over: Partial<BoardConfig> = {}): BoardConfig {

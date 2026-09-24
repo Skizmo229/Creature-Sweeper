@@ -10,13 +10,13 @@
 
 import { describe, expect, it } from 'vitest';
 import { Game } from '../src/engine/game.js';
-import { computeNumbers } from '../src/engine/board.js';
 import { SPELLS } from '../src/engine/spells.js';
 import { loadLadders } from '../src/data.js';
 import { boardConfig, findType } from '../src/engine/config.js';
 import { FullRun } from '../src/engine/run.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';
 import type { BoardConfig, WorkoutRule } from '../src/engine/types.js';
+import { computeNumbers } from '../src/engine/grid.js';
 
 const RULE: WorkoutRule = { base: 30, step: 10, relief: 10, expMultiplier: 2 };
 

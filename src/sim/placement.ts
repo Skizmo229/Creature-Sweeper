@@ -34,16 +34,12 @@ import { writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadLadders } from '../data.js';
-import {
-  type Grid,
-  computeNumbers,
-  findBestOpening,
-  generateGrid,
-  makeCell,
-} from '../engine/board.js';
 import { boardConfig } from '../engine/config.js';
 import { mulberry32, type Rng } from '../engine/rng.js';
 import type { BoardConfig } from '../engine/types.js';
+import { type Grid, computeNumbers, makeCell } from '../engine/grid.js';
+import { findBestOpening } from '../engine/opening.js';
+import { generateGrid } from '../engine/generate.js';
 
 const TRIALS = Number(process.argv[2] ?? 240);
 const HERE = dirname(fileURLToPath(import.meta.url));

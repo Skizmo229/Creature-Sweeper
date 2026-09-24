@@ -1,11 +1,13 @@
+// Proves the rules engine is free of browser APIs: no DOM lib at all, so a stray
+// `document` or `window` in src/engine is a compile error rather than something
+// discovered when it fails to run headlessly. test/ui is the one folder that
+// needs a DOM, and the main tsconfig still checks it.
 {
-  // Proves the rules engine is free of browser APIs: no DOM lib at all, so a
-  // stray `document` or `window` in src/engine is a compile error rather than
-  // something discovered when it fails to run headlessly.
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "lib": ["ES2022"],
     "types": ["node"]
   },
-  "include": ["src/engine", "src/sim", "src/data.ts", "test"]
+  "include": ["src/engine", "src/sim", "src/data.ts", "test"],
+  "exclude": ["test/ui"]
 }

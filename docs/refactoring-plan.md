@@ -18,6 +18,18 @@ the codebase was changed while producing this.
 - Features are paused until the milestone lands. Tuning changes (playtesting, `ladders.py`) may
   continue in parallel, in their own commits, never mixed with a refactor.
 
+**Progress.** Phase 0 (guardrails) and phase 1 (`docs/`) merged on 24 September 2026. Phase 2
+(the file splits) done the same day on branch `m3-2-splits`: `settingsscreen.ts` into
+`settingsscreen/`, `game.ts` into `sweep.ts`, `cast.ts` and `reach.ts`, `board.ts` into `grid.ts`,
+`shape.ts`, `cave.ts`, `generate.ts` and `opening.ts`, `boardview.ts` into `board/`, and `app.ts`
+into `screens/`, `overlays/` and `game/` behind a browser-environment smoke test (`test/ui/`).
+Every split was verified behaviour-neutral: golden outputs byte-identical, and for the renderer,
+canvas hashes of ten boards in four states unchanged. ESLint's size warnings went from 25 to 15;
+the largest remaining in the engine and UI are `generateGrid` (phase 3 dissolves it into the
+registry), the settings screen's gameplay section, `playVictory` and the pointer handler, and no
+UI or engine file is over 800 lines (`app.ts` 780, from 2,138). Next: phase 3, the placement
+registry.
+
 ---
 
 ## 1. The short version
