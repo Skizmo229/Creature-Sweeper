@@ -24,7 +24,7 @@
 
 import type { Rng } from '../rng.js';
 import { expForTier } from '../combat.js';
-import { type PlacementRow, type PlacementRule, boardName } from './rule.js';
+import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
 
 export const SUDOKU_SIZE = 9;
 export const SUDOKU_BOX = 3;
@@ -387,7 +387,7 @@ const SUDOKU_ATTEMPTS = 4000;
  * nothing: the opening reveals every empty cell before the player's first
  * move.
  */
-export function generateSudokuBoard(
+function generateSudokuBoard(
   rng: Rng,
   givens: number,
   thresholds: ReadonlyArray<number>,
@@ -457,6 +457,38 @@ function validateSudoku(row: PlacementRow): void {
   }
 }
 
+/**
+ * Lay the tiers out as a Sudoku solution and pin the givens as marks. Givens are placed here rather
+ * than by the Game because they are part of the board, not of play: the same seed must produce the
+ * same clues. They are truthful marks, which is what Reveal produces too, so every rule that trusts
+ * a mark (the guard, mark-assisted Sweep) reads them without knowing where they came from.
+ */
+function fillSudoku(d: Deal): void {
+  const { cfg, grid } = d;
+  if (cfg.width !== SUDOKU_SIZE || cfg.height !== SUDOKU_SIZE) {
+    throw new Error(
+      `${cfg.typeId}#${cfg.board}: sudoku placement needs a ` +
+        `${SUDOKU_SIZE}x${SUDOKU_SIZE} board, got ${cfg.width}x${cfg.height}`,
+    );
+  }
+  // Generated against the board's own thresholds, because they decide when a tier becomes
+  // openable: a board proven against the wrong ones is provably clear for a player who does not
+  // exist.
+  const board = generateSudokuBoard(d.rng, cfg.givens, cfg.exp, cfg.startLevel);
+  for (let y = 0; y < SUDOKU_SIZE; y++) {
+    for (let x = 0; x < SUDOKU_SIZE; x++) {
+      const cell = grid[y]![x]!;
+      cell.tier = board.grid[y]![x]!;
+      cell.alive = cell.tier > 0;
+    }
+  }
+  for (const flat of board.givens) {
+    const cell = grid[Math.floor(flat / SUDOKU_SIZE)]![flat % SUDOKU_SIZE]!;
+    cell.mark = cell.tier;
+    cell.given = true;
+  }
+}
+
 export const SUDOKU_RULE: PlacementRule = {
   id: 'sudoku',
   validate: validateSudoku,
@@ -464,4 +496,5 @@ export const SUDOKU_RULE: PlacementRule = {
   // no creature neighbours, and at 100% density there is none, so 'auto' would silently fall
   // through to the single-cell fallback.
   opening: 'empties',
+  deal: fillSudoku,
 };

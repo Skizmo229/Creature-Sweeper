@@ -55,7 +55,8 @@
 import type { Cell, Placement } from '../types.js';
 import { noteBit } from '../notes.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
-import { type PlacementRow, type PlacementRule, boardName } from './rule.js';
+import { placeDealt, shuffledPool } from './deal.js';
+import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
 
 /**
  * Does the pack rule hold on a board with this placement?
@@ -353,8 +354,33 @@ function validatePacks(row: PlacementRow): void {
   }
 }
 
+/**
+ * The spawnable cells shuffled, and how many packs (or congo lines) the board's quantity is. A
+ * pack board deals its own tiers, for DOMINOES's reason: one of every tier has to land in each
+ * pack, so the grouping must reach the deal intact, and the shuffle-and-take would scatter it.
+ */
+export function packPoolAndCount(d: Deal): { pool: number[]; count: number } {
+  const { cfg } = d;
+  const pool = shuffledPool(d);
+  const count = packsIn(cfg.tiers, cfg.quantity);
+  if (count === null) {
+    throw new Error(
+      `board ${cfg.typeId}#${cfg.board}: quantity [${cfg.quantity.join(',')}] is not ` +
+        `a whole number of packs — a pack is one of each of the ${cfg.tiers} tiers`,
+    );
+  }
+  return { pool, count };
+}
+
+function dealPackBoard(d: Deal): void {
+  const { pool, count } = packPoolAndCount(d);
+  const packs = choosePacks(pool, (flat) => d.neighboursOf(flat), count, d.cfg.tiers, d.rng);
+  placeDealt(d, dealPacks(packs, d.cfg.tiers, d.rng));
+}
+
 export const PACKS_RULE: PlacementRule = {
   id: 'packs',
   validate: validatePacks,
   opening: 'auto',
+  deal: dealPackBoard,
 };

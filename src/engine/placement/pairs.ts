@@ -59,7 +59,8 @@
 import type { Cell, Placement } from '../types.js';
 import { noteBit } from '../notes.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
-import { type PlacementRow, type PlacementRule, boardName } from './rule.js';
+import { ONE_POOL, shapeLeftTooFew, shuffledPool, takeInOrder } from './deal.js';
+import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
 
 /**
  * Does the pairing rule hold on a board with this placement?
@@ -289,8 +290,29 @@ function validatePairs(row: PlacementRow): void {
   }
 }
 
+/**
+ * Lay the dominoes for the whole quota, as `choosePairs` returns them: partner-adjacent, so cells
+ * `2i` and `2i + 1` are one domino.
+ */
+export function layPairs(d: Deal): number[] {
+  const total = d.cfg.quantity.reduce((a, b) => a + b, 0);
+  return choosePairs(shuffledPool(d), (flat) => d.neighboursOf(flat), total, d.rng);
+}
+
+/**
+ * Where before what: the dominoes are laid first and the ordinary shuffle-and-take deals into
+ * exactly their cells, so the rule never learns what a tier is, which is what keeps it clear of
+ * C_k. The second shuffle matters: pairs come back partner-adjacent, and dealing straight off them
+ * would put tier 1 on the pairs that happened to be placed first.
+ */
+function dealPairs(d: Deal): void {
+  const cells = shuffle(layPairs(d), d.rng);
+  takeInOrder(d, new Map([['any', cells]]), ONE_POOL.forTier, shapeLeftTooFew(d.cfg));
+}
+
 export const PAIRS_RULE: PlacementRule = {
   id: 'pairs',
   validate: validatePairs,
   opening: 'auto',
+  deal: dealPairs,
 };

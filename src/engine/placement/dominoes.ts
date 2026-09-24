@@ -43,8 +43,9 @@
  */
 
 import { type Rng, randInt, shuffle } from '../rng.js';
-import { type PlacementRow, type PlacementRule, boardName } from './rule.js';
-import { PAIRS_RULE } from './pairs.js';
+import { placeDealt } from './deal.js';
+import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
+import { PAIRS_RULE, layPairs } from './pairs.js';
 
 /** One tile: two tiers, in no particular order. */
 export type Tile = readonly [number, number];
@@ -197,8 +198,27 @@ function validateDominoes(row: PlacementRow): void {
   PAIRS_RULE.validate(row);
 }
 
+/**
+ * Tiles, not tiers: the pair order `layPairs` returns must survive, because the two ends of a tile
+ * have to land on the two halves of one domino. So this writes the tiers itself rather than
+ * handing the cells to the shuffle-and-take, which would scatter the pairs.
+ */
+function dealDominoes(d: Deal): void {
+  const { cfg } = d;
+  const pairs = layPairs(d);
+  const sets = setsIn(cfg.tiers, cfg.quantity);
+  if (sets === null) {
+    throw new Error(
+      `board ${cfg.typeId}#${cfg.board}: quantity [${cfg.quantity.join(',')}] is not ` +
+        `a whole number of double-${cfg.tiers} domino sets`,
+    );
+  }
+  placeDealt(d, dealTiles(pairs, cfg.tiers, sets, d.rng));
+}
+
 export const DOMINOES_RULE: PlacementRule = {
   id: 'dominoes',
   validate: validateDominoes,
   opening: 'auto',
+  deal: dealDominoes,
 };

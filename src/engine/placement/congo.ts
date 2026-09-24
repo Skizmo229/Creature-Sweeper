@@ -55,8 +55,9 @@
 
 import type { Cell } from '../types.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
-import { type PlacementRow, type PlacementRule, boardName } from './rule.js';
-import { packsIn } from './packs.js';
+import { placeDealt } from './deal.js';
+import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
+import { packPoolAndCount, packsIn } from './packs.js';
 
 /** Restarts allowed before a board is refused. PACKS's argument. */
 const CONGO_ATTEMPTS = 60;
@@ -468,8 +469,18 @@ function validateCongo(row: PlacementRow): void {
   }
 }
 
+/** Lines come back leader first, so the deal can put the strongest tier at the front. */
+function dealCongo(d: Deal): void {
+  const { cfg } = d;
+  const { pool, count } = packPoolAndCount(d);
+  const near = (flat: number) => d.neighboursOf(flat);
+  const lines = chooseLines(pool, near, cfg.width, cfg.height, count, cfg.tiers, d.rng);
+  placeDealt(d, dealLines(lines, cfg.tiers, d.rng));
+}
+
 export const CONGO_RULE: PlacementRule = {
   id: 'congo',
   validate: validateCongo,
   opening: 'auto',
+  deal: dealCongo,
 };

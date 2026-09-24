@@ -36,7 +36,8 @@
  */
 
 import type { Cell } from '../types.js';
-import { type PlacementRow, type PlacementRule, boardName } from './rule.js';
+import { dealByPool } from './deal.js';
+import { type PlacementRow, type PlacementRule, type Pools, boardName } from './rule.js';
 
 /**
  * A cell's colour. Light squares take even tiers, dark squares take odd.
@@ -47,7 +48,7 @@ import { type PlacementRow, type PlacementRule, boardName } from './rule.js';
  */
 export type Shade = 'light' | 'dark';
 
-export function shadeAt(x: number, y: number): Shade {
+function shadeAt(x: number, y: number): Shade {
   return (x + y) % 2 === 0 ? 'light' : 'dark';
 }
 
@@ -174,8 +175,17 @@ function validateChecker(row: PlacementRow): void {
   }
 }
 
+/** One pool per colour: a tier is dealt only onto squares of its own parity. */
+const COLOURS: Pools = { of: shadeAt, forTier: shadeForTier };
+
 export const CHECKER_RULE: PlacementRule = {
   id: 'checker',
   validate: validateChecker,
   opening: 'auto',
+  deal: (d) =>
+    dealByPool(
+      d,
+      COLOURS,
+      (shade) => ` on the ${shade} squares, which is every tier of that parity`,
+    ),
 };
