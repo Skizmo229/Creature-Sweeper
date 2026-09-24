@@ -29,18 +29,8 @@ import { easierThanDefault, isAtLeastAsHard } from '../engine/settings.js';
 import { Settings } from './settings.js';
 import { Sfx, type SfxEvent } from './sfx.js';
 import { playVictory } from './victory.js';
-import { buildSettingsScreen } from './settingsscreen.js';
-
-const el = <K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  cls?: string,
-  text?: string,
-): HTMLElementTagNameMap[K] => {
-  const node = document.createElement(tag);
-  if (cls) node.className = cls;
-  if (text !== undefined) node.textContent = text;
-  return node;
-};
+import { buildSettingsScreen } from './settingsscreen/screen.js';
+import { el } from './dom.js';
 
 /** The save exactly as stored. Blocked storage reads as no save at all. */
 function readStoredSave(): SaveBundle {
