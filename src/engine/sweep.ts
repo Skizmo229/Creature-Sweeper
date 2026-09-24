@@ -13,12 +13,12 @@
  */
 
 import type { BoardConfig, Cell, GameStatus, SweepOptions } from './types.js';
-import type { Grid } from './board.js';
 import { hiddenCap, shadeOf } from './checker.js';
 import { congoClear } from './congo.js';
 import { hasNotes, lowestNote } from './notes.js';
 import { isPacked, missingFrom } from './packs.js';
 import { isPaired, ringIsFree } from './pairs.js';
+import type { Grid } from './grid.js';
 
 /** What the proof reads off a game. `Game` satisfies it. */
 export interface SweepView {

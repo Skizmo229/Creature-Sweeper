@@ -7,7 +7,7 @@
  */
 
 import type { BoardConfig, Cell } from './types.js';
-import type { Grid } from './board.js';
+import type { Grid } from './grid.js';
 
 /** What the rule reads off a game. `Game` satisfies it. */
 export interface ReachView {

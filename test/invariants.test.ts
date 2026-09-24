@@ -7,7 +7,6 @@
 
 import { describe, expect, it } from 'vitest';
 import { boardConfig, cumulativeExp, findType } from '../src/engine/config.js';
-import { presentCellCount } from '../src/engine/board.js';
 import { dungeonMap } from '../src/engine/dungeon.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import { Game } from '../src/engine/game.js';
@@ -15,6 +14,7 @@ import { autoplaySearch, autoplayTierOrder } from '../src/sim/autoplay.js';
 import { clearableWithoutGuessing } from '../src/engine/sudoku.js';
 import { hiddenCap, shadeForTier, shadeOf } from '../src/engine/checker.js';
 import { ladders, battleTypes, boardsOf, SEEDS, UNGATED_SWEEP } from './helpers.js';
+import { presentCellCount } from '../src/engine/shape.js';
 
 describe('ladder data', () => {
   it('has twenty-four types of ten boards', () => {

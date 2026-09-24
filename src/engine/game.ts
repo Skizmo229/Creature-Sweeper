@@ -18,14 +18,6 @@ import {
   manaRewardFor,
 } from './settings.js';
 import { hasNote, hasNotes, lowestNote, noteBit, toggleNote as toggleNoteBit } from './notes.js';
-import {
-  type Grid,
-  findBestOpening,
-  findFallbackOpening,
-  generateGrid,
-  inBounds,
-  neighbours,
-} from './board.js';
 import { allowsTier } from './checker.js';
 import { isPaired, pairCandidates } from './pairs.js';
 import { isPacked, packCandidates } from './packs.js';
@@ -33,6 +25,9 @@ import { mulberry32 } from './rng.js';
 import { SPELL_EFFECTS } from './cast.js';
 import { computeSealed, withinReach } from './reach.js';
 import { safeCells as provenSafe } from './sweep.js';
+import { type Grid, inBounds, neighbours } from './grid.js';
+import { findBestOpening, findFallbackOpening } from './opening.js';
+import { generateGrid } from './generate.js';
 
 export interface GameOptions {
   /**

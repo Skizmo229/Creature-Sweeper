@@ -5,9 +5,10 @@
  * spell. No spell removes a creature or skips its EXP (docs/invariants.md, fact 3).
  */
 
-import { findBestOpening, type Grid } from './board.js';
 import { EXERCISE_LEVELS, type SpellId } from './spells.js';
 import type { BlockReason, BoardConfig, Cell, GameEvent } from './types.js';
+import { findBestOpening } from './opening.js';
+import type { Grid } from './grid.js';
 
 /** The engine operations a spell may perform. `Game` satisfies it. */
 export interface SpellHost {
