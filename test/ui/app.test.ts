@@ -8,12 +8,19 @@
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Game } from '../../src/engine/game.js';
+import type { GameEvent } from '../../src/engine/types.js';
+import { autoplayTierOrder } from '../../src/sim/autoplay.js';
 import { App } from '../../src/ui/app.js';
+import type { Progress } from '../../src/ui/progress.js';
 
 /** The app's surface as the test drives it, private members included, the way the dev console does. */
 interface Driver {
   play(typeId: string, board: number, seed?: number): void;
+  runFull(typeId: string, seed?: number): void;
   readonly current: Game | null;
+  readonly progress: Progress;
+  finish(): void;
+  apply(events: GameEvent[]): void;
   pickSpell(id: string): void;
   onCellPrimary(x: number, y: number): void;
   showSettings(back: () => void): void;
@@ -89,6 +96,46 @@ describe('the app', () => {
     key('n');
     expect(app.pendingSpell).toBeNull();
     expect(app.notesMode).toBe(true);
+  });
+
+  it('a cleared board shows the clear overlay, records it, and offers the next board', () => {
+    app.play('normal', 1, 7);
+    const game = app.current!;
+    const result = autoplayTierOrder(game);
+    expect(result.cleared).toBe(true);
+    expect(game.status).toBe('won');
+    app.finish();
+    expect(text('.overlay h2')).toMatch(/CLEAR/);
+    expect(text('.overlay-stats')).toContain('NORMAL board 1');
+    const buttons = [...document.querySelectorAll('.overlay button')].map((b) => b.textContent);
+    expect(buttons).toContain('Next board');
+    expect(app.progress.boardRecord('normal', 1).cleared).toBe(true);
+    expect(app.progress.boardRecord('normal', 1).perfect).toBe(true);
+  });
+
+  it('a lost board shows GAME OVER and offers to try again', () => {
+    app.play('easy', 1, 7);
+    const game = app.current!;
+    app.apply(game.forfeit());
+    expect(game.status).toBe('lost');
+    expect(text('.overlay h2')).toBe('GAME OVER');
+    const buttons = [...document.querySelectorAll('.overlay button')].map((b) => b.textContent);
+    expect(buttons).toContain('Try again');
+    expect(app.progress.boardRecord('easy', 1).cleared).toBe(false);
+  });
+
+  it('a Full Run carries on to the next board after a clear', () => {
+    app.runFull('easy', 7);
+    expect(text('.board-label')).toContain('board 1 of 10');
+    autoplayTierOrder(app.current!);
+    app.finish();
+    expect(text('.overlay h2')).toBe('BOARD 1 CLEAR');
+    const next = [...document.querySelectorAll<HTMLButtonElement>('.overlay button')].find((b) =>
+      b.textContent?.startsWith('Continue'),
+    )!;
+    next.click();
+    expect(text('.board-label')).toContain('board 2 of 10');
+    expect(app.current?.status).toBe('playing');
   });
 
   it('opens the settings screen from a board and comes back to the same board', () => {
