@@ -344,6 +344,7 @@ Create `docs/` with one file per kind of knowledge:
 | `docs/glossary.md` | every domain term, one paragraph each, linking to the code that owns it | new; terms listed in 3.1 |
 | `docs/invariants.md` | the four facts: statement, why, what protects it (test names), what would break it silently | CLAUDE.md "four load-bearing facts", README |
 | `docs/decisions/NNNN-*.md` | one short record per decision: context, decision, consequences, measurement if any. Seeded from every CLAUDE.md "gotcha" and every "by request" | CLAUDE.md "Gotchas", the 28 history comments |
+| `docs/modes.md` | one section per ladder with a rule of its own: what the rule is, what the engine proves from it, what the pencil refuses, what breaks it, how it was tuned | CLAUDE.md's per-mode gotchas (added during phase 1; it is what phase 3's registry will be built against) |
 | `docs/tuning.md` | the retune workflow (`CS_LADDERS`, candidate files, byte-for-byte diffs), the ceilings, the open questions (never playtested, the lock cliffs, ORACLE 7 to 10, the solver-vs-honest-player gap) | CLAUDE.md "Open decisions" |
 | `docs/ui.md` | fonts, effects, settings galleries, the presentation rules | CLAUDE.md UI notes |
 | `docs/extending.md` | checklists: adding a spell, a placement rule, a shape, a ladder, a setting. Each is the list the three walkthroughs had to build by hand | the walkthrough reports |
