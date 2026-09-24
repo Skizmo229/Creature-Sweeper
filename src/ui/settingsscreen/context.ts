@@ -4,7 +4,7 @@
  * to each section.
  */
 
-import type { BoardDisplay } from '../boardview.js';
+import type { BoardDisplay } from '../board/view.js';
 import { ladders } from '../ladders.js';
 import { sampleBoard } from '../preview.js';
 import { DEFAULT, type PresentationSettings, type Settings } from '../settings.js';

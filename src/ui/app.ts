@@ -11,7 +11,7 @@ import { FullRun } from '../engine/run.js';
 import { randomSeed } from '../engine/rng.js';
 import type { Cell, GameEvent } from '../engine/types.js';
 import { hasNote } from '../engine/notes.js';
-import { BoardView, type BoardDisplay } from './boardview.js';
+import { BoardView, type BoardDisplay } from './board/view.js';
 import { ladders } from './ladders.js';
 import { Progress } from './progress.js';
 import {
