@@ -6,6 +6,11 @@ progression mode. Intended for freeware release if it ever ships.
 Read `README.md` first for layout and commands. This file is the stuff that is not obvious from
 the code and expensive to rediscover.
 
+**Milestone 3 (current) is the readability refactor. Read `docs/refactoring-plan.md` before
+changing anything: features are paused until it lands, every refactor step goes on its own branch
+for the owner to merge, and the plan's PR rules and comment style apply. Most of this file moves
+into `docs/` during its phase 1.**
+
 ---
 
 ## The four load-bearing facts
@@ -1250,8 +1255,11 @@ board is painted, so the game stays navigable however far the board is repainted
 Ordered by how much they matter.
 
 **The ladders have never been played.** Every density, lock depth and HP value is derived and
-simulation-checked but not playtested. This is the biggest open risk and the reason Milestone 2, the current one,
-(headless measurement across many seeds, then retuning `ladders.py`) exists.
+simulation-checked but not playtested. This is the biggest open risk and the reason Milestone 2
+(headless measurement across many seeds, then retuning `ladders.py`) existed. Milestone 3, the
+current one, is the readability refactor in `docs/refactoring-plan.md`; the tuning questions in
+this section are parked while it runs, not dropped, and playtesting may continue alongside it in
+its own commits.
 
 **Boards still contain unresolvable 50/50s, and there is now a solver that can say which.** Some
 deaths are unfair rather than earned. Solvable generation is the highest-value QOL fix and is harder
