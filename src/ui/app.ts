@@ -1542,6 +1542,9 @@ export class App {
     if (this.notesMode && this.markMode < 0) {
       this.markMode = 1;
       this.tierArmedByPencil = true;
+      // An armed tier and an armed spell are the two targeting modes, and
+      // `pickTier` and `pickSpell` each clear the other; this arms a tier too.
+      this.pendingSpell = null;
     }
     if (!this.notesMode) {
       // Hand back a tier the pencil armed for itself. Keeping it would leave
