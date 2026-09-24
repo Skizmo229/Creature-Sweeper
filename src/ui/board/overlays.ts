@@ -5,8 +5,8 @@
  * paint over its neighbour's half of a shared line.
  */
 
-import { isPaired } from '../../engine/pairs.js';
-import { SUDOKU_BOX, SUDOKU_SIZE } from '../../engine/sudoku.js';
+import { isPaired } from '../../engine/placement/pairs.js';
+import { SUDOKU_BOX, SUDOKU_SIZE } from '../../engine/placement/sudoku.js';
 import type { Cell } from '../../engine/types.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
 import type { HighlightStyle } from '../settings.js';

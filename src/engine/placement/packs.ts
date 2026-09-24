@@ -52,9 +52,9 @@
  * against PAIRS's 26%.
  */
 
-import type { Cell, Placement } from './types.js';
-import { noteBit } from './notes.js';
-import { type Rng, randInt, shuffle } from './rng.js';
+import type { Cell, Placement } from '../types.js';
+import { noteBit } from '../notes.js';
+import { type Rng, randInt, shuffle } from '../rng.js';
 
 /**
  * Does the pack rule hold on a board with this placement?

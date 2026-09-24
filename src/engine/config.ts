@@ -7,11 +7,11 @@
  */
 
 import type { BoardConfig, OpeningRule, Placement, WorkoutRule } from './types.js';
-import { sideTotals } from './checker.js';
-import { PAIR_MAX_DENSITY } from './pairs.js';
-import { setsIn } from './dominoes.js';
-import { PACK_MAX_DENSITY, packsIn } from './packs.js';
-import { CONGO_MAX_DENSITY } from './congo.js';
+import { sideTotals } from './placement/checker.js';
+import { PAIR_MAX_DENSITY } from './placement/pairs.js';
+import { setsIn } from './placement/dominoes.js';
+import { PACK_MAX_DENSITY, packsIn } from './placement/packs.js';
+import { CONGO_MAX_DENSITY } from './placement/congo.js';
 import { SPELLS, type SpellId, isSpellId, orderSpells } from './spells.js';
 
 /** One board's row as `ladders.py` emits it. */

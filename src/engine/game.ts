@@ -18,9 +18,9 @@ import {
   manaRewardFor,
 } from './settings.js';
 import { hasNote, hasNotes, lowestNote, noteBit, toggleNote as toggleNoteBit } from './notes.js';
-import { allowsTier } from './checker.js';
-import { isPaired, pairCandidates } from './pairs.js';
-import { isPacked, packCandidates } from './packs.js';
+import { allowsTier } from './placement/checker.js';
+import { isPaired, pairCandidates } from './placement/pairs.js';
+import { isPacked, packCandidates } from './placement/packs.js';
 import { mulberry32 } from './rng.js';
 import { SPELL_EFFECTS } from './cast.js';
 import { computeSealed, withinReach } from './reach.js';

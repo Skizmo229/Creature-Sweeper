@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { boardConfig, findType, type LadderType } from '../src/engine/config.js';
-import { choosePairs, pairingFault, ringIsFree } from '../src/engine/pairs.js';
+import { choosePairs, pairingFault, ringIsFree } from '../src/engine/placement/pairs.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import { Game } from '../src/engine/game.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';

@@ -42,7 +42,7 @@
  * is the one thing it cannot have. Tiers 1..T only.
  */
 
-import { type Rng, randInt, shuffle } from './rng.js';
+import { type Rng, randInt, shuffle } from '../rng.js';
 
 /** One tile: two tiers, in no particular order. */
 export type Tile = readonly [number, number];

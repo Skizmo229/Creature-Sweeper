@@ -4,11 +4,11 @@
  * handed, so no painter reaches into the view.
  */
 
-import { shadeOf } from '../../engine/checker.js';
+import { shadeOf } from '../../engine/placement/checker.js';
 import type { Game } from '../../engine/game.js';
 import { hasNote } from '../../engine/notes.js';
-import { isPaired } from '../../engine/pairs.js';
-import { SUDOKU_BOX } from '../../engine/sudoku.js';
+import { isPaired } from '../../engine/placement/pairs.js';
+import { SUDOKU_BOX } from '../../engine/placement/sudoku.js';
 import type { Cell } from '../../engine/types.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
 import {

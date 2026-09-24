@@ -56,9 +56,9 @@
  * number or refuse the board.
  */
 
-import type { Cell, Placement } from './types.js';
-import { noteBit } from './notes.js';
-import { type Rng, randInt, shuffle } from './rng.js';
+import type { Cell, Placement } from '../types.js';
+import { noteBit } from '../notes.js';
+import { type Rng, randInt, shuffle } from '../rng.js';
 
 /**
  * Does the pairing rule hold on a board with this placement?

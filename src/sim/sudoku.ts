@@ -32,7 +32,7 @@ import {
   sudokuCeiling,
   sudokuDeduction,
   sudokuSolution,
-} from '../engine/sudoku.js';
+} from '../engine/placement/sudoku.js';
 
 const perRung = Number(process.argv[2] ?? 20);
 const ladders = loadLadders();

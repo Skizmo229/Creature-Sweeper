@@ -39,7 +39,7 @@
 
 import type { Game } from '../engine/game.js';
 import type { Cell } from '../engine/types.js';
-import { congoClear } from '../engine/congo.js';
+import { congoClear } from '../engine/placement/congo.js';
 
 export interface SolveOptions {
   /** Search nodes one question may use before it is left undecided. */

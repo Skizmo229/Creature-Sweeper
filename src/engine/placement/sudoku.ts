@@ -22,8 +22,8 @@
  * number of GIVENS: cells whose tier the player is told up front.
  */
 
-import type { Rng } from './rng.js';
-import { expForTier } from './combat.js';
+import type { Rng } from '../rng.js';
+import { expForTier } from '../combat.js';
 
 export const SUDOKU_SIZE = 9;
 export const SUDOKU_BOX = 3;

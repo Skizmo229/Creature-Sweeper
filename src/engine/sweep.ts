@@ -13,11 +13,11 @@
  */
 
 import type { BoardConfig, Cell, GameStatus, SweepOptions } from './types.js';
-import { hiddenCap, shadeOf } from './checker.js';
-import { congoClear } from './congo.js';
+import { hiddenCap, shadeOf } from './placement/checker.js';
+import { congoClear } from './placement/congo.js';
 import { hasNotes, lowestNote } from './notes.js';
-import { isPacked, missingFrom } from './packs.js';
-import { isPaired, ringIsFree } from './pairs.js';
+import { isPacked, missingFrom } from './placement/packs.js';
+import { isPaired, ringIsFree } from './placement/pairs.js';
 import type { Grid } from './grid.js';
 
 /** What the proof reads off a game. `Game` satisfies it. */

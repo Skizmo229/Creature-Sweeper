@@ -4,12 +4,12 @@
 
 import type { BoardConfig, Cell } from './types.js';
 import { type Rng, shuffle } from './rng.js';
-import { SUDOKU_SIZE, generateSudokuBoard } from './sudoku.js';
-import { type Shade, shadeAt, shadeForTier } from './checker.js';
-import { choosePairs, isPaired } from './pairs.js';
-import { dealTiles, setsIn } from './dominoes.js';
-import { choosePacks, dealPacks, isPacked, packsIn } from './packs.js';
-import { chooseLines, dealLines } from './congo.js';
+import { SUDOKU_SIZE, generateSudokuBoard } from './placement/sudoku.js';
+import { type Shade, shadeAt, shadeForTier } from './placement/checker.js';
+import { choosePairs, isPaired } from './placement/pairs.js';
+import { dealTiles, setsIn } from './placement/dominoes.js';
+import { choosePacks, dealPacks, isPacked, packsIn } from './placement/packs.js';
+import { chooseLines, dealLines } from './placement/congo.js';
 import { type Grid, type Mask, computeNumbers, makeCell, neighbours } from './grid.js';
 import { buildShape } from './shape.js';
 

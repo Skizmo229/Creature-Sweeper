@@ -18,8 +18,8 @@ import {
   dominoSet,
   setsIn,
   type Tile,
-} from '../src/engine/dominoes.js';
-import { isPaired } from '../src/engine/pairs.js';
+} from '../src/engine/placement/dominoes.js';
+import { isPaired } from '../src/engine/placement/pairs.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import { Game } from '../src/engine/game.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';

@@ -35,7 +35,7 @@
  * about where they go, never how many there are.
  */
 
-import type { Cell } from './types.js';
+import type { Cell } from '../types.js';
 
 /**
  * A cell's colour. Light squares take even tiers, dark squares take odd.

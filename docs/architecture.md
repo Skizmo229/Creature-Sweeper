@@ -22,12 +22,13 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   cast.ts         what each spell does, behind the SpellHost interface
   sweep.ts        Sweep's proof: safeCells and its named proofs; the Sudoku harvest
   reach.ts        the crawl rule: withinReach and computeSealed
-  sudoku.ts       the Sudoku placement and its guess-free generator
-  checker.ts      the checkerboard placement: colour fixes a tier's parity; hiddenCap
-  pairs.ts        the pairing placement: non-touching dominoes; ringIsFree; isPaired
-  dominoes.ts     pairs dealt as a full domino set
-  packs.ts        non-touching packs of one-of-every-tier; missingFrom; isPacked
-  congo.ts        packs strung into orthogonal lines led by the top tier
+  placement/      the placement rules, one module each
+    sudoku.ts       the Sudoku placement and its guess-free generator
+    checker.ts      the checkerboard placement: colour fixes a tier's parity; hiddenCap
+    pairs.ts        the pairing placement: non-touching dominoes; ringIsFree; isPaired
+    dominoes.ts     pairs dealt as a full domino set
+    packs.ts        non-touching packs of one-of-every-tier; missingFrom; isPacked
+    congo.ts        packs strung into orthogonal lines led by the top tier
   game.ts         the state machine: open, mark, note, sweep, cast, forfeit, fight
   run.ts          Full Run: ten boards, one HP pool
   settings.ts     the gameplay dials, their defaults and directions

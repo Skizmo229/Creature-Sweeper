@@ -13,10 +13,10 @@
 import type { Game } from '../engine/game.js';
 import type { SpellId } from '../engine/spells.js';
 import type { Cell } from '../engine/types.js';
-import { hiddenCap, shadeOf } from '../engine/checker.js';
-import { isPaired, ringIsFree } from '../engine/pairs.js';
-import { isPacked, missingFrom } from '../engine/packs.js';
-import { congoClear } from '../engine/congo.js';
+import { hiddenCap, shadeOf } from '../engine/placement/checker.js';
+import { isPaired, ringIsFree } from '../engine/placement/pairs.js';
+import { isPacked, missingFrom } from '../engine/placement/packs.js';
+import { congoClear } from '../engine/placement/congo.js';
 
 /**
  * How the player spends, if they spend at all.

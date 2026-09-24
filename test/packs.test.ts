@@ -16,7 +16,7 @@ import {
   missingFrom,
   packFault,
   packsIn,
-} from '../src/engine/packs.js';
+} from '../src/engine/placement/packs.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import { Game } from '../src/engine/game.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';

@@ -53,8 +53,8 @@
  * collected" are where they were.
  */
 
-import type { Cell } from './types.js';
-import { type Rng, randInt, shuffle } from './rng.js';
+import type { Cell } from '../types.js';
+import { type Rng, randInt, shuffle } from '../rng.js';
 
 /** Restarts allowed before a board is refused. PACKS's argument. */
 const CONGO_ATTEMPTS = 60;

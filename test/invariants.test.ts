@@ -11,8 +11,8 @@ import { dungeonMap } from '../src/engine/dungeon.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import { Game } from '../src/engine/game.js';
 import { autoplaySearch, autoplayTierOrder } from '../src/sim/autoplay.js';
-import { clearableWithoutGuessing } from '../src/engine/sudoku.js';
-import { hiddenCap, shadeForTier, shadeOf } from '../src/engine/checker.js';
+import { clearableWithoutGuessing } from '../src/engine/placement/sudoku.js';
+import { hiddenCap, shadeForTier, shadeOf } from '../src/engine/placement/checker.js';
 import { ladders, battleTypes, boardsOf, SEEDS, UNGATED_SWEEP } from './helpers.js';
 import { presentCellCount } from '../src/engine/shape.js';
 
