@@ -14,7 +14,7 @@ import { autoplaySearch, autoplayTierOrder } from '../src/sim/autoplay.js';
 import { clearableWithoutGuessing } from '../src/engine/placement/sudoku.js';
 import { hiddenCap, shadeOf } from '../src/engine/placement/checker.js';
 import { ladders, battleTypes, boardsOf, SEEDS, UNGATED_SWEEP } from './helpers.js';
-import { presentCellCount } from '../src/engine/shape.js';
+import { shapeRule } from '../src/engine/shape/registry.js';
 
 describe('ladder data', () => {
   it('has twenty-four types of ten boards', () => {
@@ -208,7 +208,7 @@ describe('board shapes', () => {
       for (const board of type.boards) {
         const cfg = boardConfig(ladders, type.id, board.n);
         expect(
-          presentCellCount(cfg.shape, cfg.shapeParam, cfg.width, cfg.height),
+          shapeRule(cfg.shape).cellCount(cfg.shapeParam, cfg.width, cfg.height),
           `${type.id}#${board.n}: engine mask and ladders.py disagree`,
         ).toBe(board.cells);
       }

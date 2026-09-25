@@ -5,8 +5,8 @@
 import type { BoardConfig, Cell } from './types.js';
 import type { Rng } from './rng.js';
 import { placementRule } from './placement/registry.js';
-import { type Grid, type Mask, computeNumbers, makeCell, neighbours } from './grid.js';
-import { buildShape } from './shape.js';
+import { type Grid, computeNumbers, makeCell, neighbours } from './grid.js';
+import { shapeRule } from './shape/registry.js';
 
 /**
  * Build a board: cut the shape, hand the cells a creature may stand on to the placement rule to
@@ -24,23 +24,18 @@ export function generateGrid(cfg: BoardConfig, rng: Rng): Grid {
   }
 
   // Everywhere but the dungeon these are the same mask.
-  let spawnable: Mask | null = null;
-  if (cfg.shape !== 'rect') {
-    const shape = buildShape(cfg.shape, cfg.shapeParam, cfg.width, cfg.height, rng);
-    for (let y = 0; y < cfg.height; y++)
-      for (let x = 0; x < cfg.width; x++) {
-        grid[y]![x]!.present = shape.present[y]![x]!;
-      }
-    spawnable = shape.spawnable;
-  }
-
+  const { present, spawnable } = shapeRule(cfg.shape).build(
+    cfg.shapeParam,
+    cfg.width,
+    cfg.height,
+    rng,
+  );
   const cells: number[] = [];
   for (let i = 0; i < cfg.width * cfg.height; i++) {
     const y = Math.floor(i / cfg.width);
     const x = i % cfg.width;
-    if (!grid[y]![x]!.present) continue;
-    if (spawnable && !spawnable[y]![x]) continue;
-    cells.push(i);
+    grid[y]![x]!.present = present[y]![x]!;
+    if (present[y]![x] && spawnable[y]![x]) cells.push(i);
   }
 
   placementRule(cfg.placement).deal({
