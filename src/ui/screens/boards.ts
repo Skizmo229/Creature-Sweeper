@@ -8,7 +8,7 @@ import { boardRow, maxBoard } from '../../engine/config.js';
 import { el } from '../dom.js';
 import { ladders } from '../ladders.js';
 import type { Progress } from '../progress.js';
-import { themeFor } from '../theme.js';
+import { themeFor } from '../looks.js';
 
 export interface BoardListActions {
   progress: Progress;

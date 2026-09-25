@@ -17,15 +17,9 @@ import {
   HIGHLIGHT_NAMES,
   type HighlightStyle,
 } from '../settings.js';
-import {
-  PALETTE_IDS,
-  PIP_NAMES,
-  PIP_SHAPES,
-  type PipShape,
-  themeFor,
-  tierColor,
-} from '../theme.js';
-import { FONTS, FONT_IDS, type FontId, LEGIBLE_FONT, TYPE_FONTS } from '../typefaces.js';
+import { PIP_NAMES, PIP_SHAPES, tierColor } from '../theme.js';
+import { LOOK_IDS, type PipShape, lookFor, themeFor } from '../looks.js';
+import { FONTS, FONT_IDS, type FontId, LEGIBLE_FONT } from '../typefaces.js';
 import { type ScreenContext, typeName } from './context.js';
 import { CHIP_CELL, renderPreview } from './render.js';
 import { type Choice, choiceRow, gallery, slider, wideRow } from './widgets.js';
@@ -68,7 +62,7 @@ export function paletteRow(ctx: ScreenContext, host: HTMLElement): void {
       label: `Default — ${typeName(typeId)}`,
       example: ctx.chipBoard({ ...themeFor(typeId), pip: currentPip }),
     },
-    options: PALETTE_IDS.map((id): Choice => ({
+    options: LOOK_IDS.map((id): Choice => ({
       value: id,
       label: typeName(id),
       example: ctx.chipBoard({ ...themeFor(id), pip: currentPip }),
@@ -77,10 +71,13 @@ export function paletteRow(ctx: ScreenContext, host: HTMLElement): void {
   });
 }
 
-/** Each tile names the ladder the face belongs to; "Pirata One" alone says nothing about why. */
+/**
+ * Each tile names the ladder the face belongs to, the first in ladder order if several wear it;
+ * "Pirata One" alone says nothing about why.
+ */
 function fontOwner(id: FontId): string {
   if (id === LEGIBLE_FONT) return 'easiest to read';
-  const owner = Object.keys(TYPE_FONTS).find((t) => TYPE_FONTS[t] === id);
+  const owner = LOOK_IDS.find((t) => lookFor(t).font === id);
   return owner ? typeName(owner) : '';
 }
 

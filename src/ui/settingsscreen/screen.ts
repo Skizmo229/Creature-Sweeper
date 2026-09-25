@@ -9,7 +9,7 @@
  */
 
 import { el } from '../dom.js';
-import { themeFor } from '../theme.js';
+import { themeFor } from '../looks.js';
 import { type SettingsScreenOptions, makeContext, typeName } from './context.js';
 import { clearEffectRow, soundRow, stopSettingsDemo } from './effects.js';
 import { gameplaySection } from './gameplay.js';

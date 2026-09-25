@@ -20,7 +20,7 @@
  * that takes a click handler down with it.
  */
 
-import type { SfxPackId } from './theme.js';
+import type { SfxPackId } from './looks.js';
 
 /** Everything the game can make a noise about. */
 export type SfxEvent =

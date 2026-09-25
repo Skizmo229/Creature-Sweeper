@@ -9,7 +9,8 @@ import type { FullRun } from '../../engine/run.js';
 import { SPELLS, type SpellId, spellKey } from '../../engine/spells.js';
 import { el } from '../dom.js';
 import { ladders } from '../ladders.js';
-import { TIER_GOLD, themeFor, tierColor, tierGilded } from '../theme.js';
+import { TIER_GOLD, tierColor, tierGilded } from '../theme.js';
+import { themeFor } from '../looks.js';
 
 export interface GameScreenActions {
   openSettings(): void;

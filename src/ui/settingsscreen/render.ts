@@ -7,7 +7,7 @@
 
 import type { Game } from '../../engine/game.js';
 import { BoardView, type BoardDisplay } from '../board/view.js';
-import type { TypeTheme } from '../theme.js';
+import type { TypeTheme } from '../looks.js';
 
 /** Cell size for a gallery thumbnail. Below about 24 the pip shapes stop being tellable apart. */
 export const CHIP_CELL = 26;

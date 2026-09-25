@@ -33,9 +33,9 @@ import {
   type SfxPackId,
   type TypeTheme,
   type VictoryId,
-  identityFor,
+  lookFor,
   themeFor,
-} from './theme.js';
+} from './looks.js';
 import { type FontId, type GameFont, TITLE_FONT, fontFor, migrateFontChoice } from './typefaces.js';
 import { SETTINGS_KEY as KEY } from './savefile.js';
 
@@ -310,7 +310,7 @@ export class Settings {
   /** The face for this ladder's screens and board numbers. */
   font(typeId: string): GameFont {
     const choice = this.data.presentation.font;
-    return fontFor(choice === DEFAULT ? identityFor(typeId).font : choice);
+    return fontFor(choice === DEFAULT ? lookFor(typeId).font : choice);
   }
 
   /**
@@ -324,25 +324,25 @@ export class Settings {
     if (this.data.presentation.muted) return null;
     const choice = this.data.presentation.sfx;
     if (choice === OFF) return null;
-    return (choice === DEFAULT ? identityFor(typeId).sfx : choice) as SfxPackId;
+    return (choice === DEFAULT ? lookFor(typeId).sfx : choice) as SfxPackId;
   }
 
   /** The board-clear effect, or null for none. */
   victoryEffect(typeId: string): VictoryId | null {
     const choice = this.data.presentation.victory;
     if (choice === OFF) return null;
-    return (choice === DEFAULT ? identityFor(typeId).victory : choice) as VictoryId;
+    return (choice === DEFAULT ? lookFor(typeId).victory : choice) as VictoryId;
   }
 
   /** How the cursor lights the board, or null for no highlight at all. */
   highlightStyle(_typeId: string): HighlightStyle | null {
     const choice = this.data.presentation.highlight;
     if (choice === OFF) return null;
-    // No type currently overrides this, but resolving through `identityFor`'s
+    // No type currently overrides this, but resolving through `lookFor`'s
     // sibling would be the place to start if one ever wants to.
     if (choice !== DEFAULT) return choice;
     // No ladder overrides this today, so every type's default is the true
-    // adjacency ring. `identityFor(typeId)` is where a per-type answer would
+    // adjacency ring. `lookFor(typeId)` is where a per-type answer would
     // go if one ever earns its place.
     return 'neighbours';
   }

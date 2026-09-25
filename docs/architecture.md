@@ -55,8 +55,9 @@ src/ui/         the prototype
   settings.ts     the presentation settings and the store
   settingsscreen/ the settings form: context, widgets, look, effects, gameplay, screen
   preview.ts      the settings screen's example boards (no rendering, so tests can build them)
-  theme.ts        palettes, creature glyphs, per-type identity
-  typefaces.ts    the bundled faces and which ladder wears which
+  looks.ts        one record per ladder: palette, face, sound pack, clear effect (DOM-free)
+  theme.ts        the global colours, the picker's names, creature glyphs
+  typefaces.ts    the bundled faces
   progress.ts     the save: clears, best times, unlocks
   savefile.ts     the CS1: backup code
   sfx.ts          synthesised sound packs
@@ -81,7 +82,7 @@ imports nothing outside itself; `src/sim` never imports `src/ui`; `src/ui` never
 all**, so a stray `window` is a build error rather than something discovered when it fails to run
 in Node. Anything a test needs to import therefore has to be DOM-free too, which is why
 `preview.ts` builds boards and renders nothing, why `pinch.ts` and `hexgeom.ts` are separate from
-`boardview.ts`, and why the font table is in `typefaces.ts` rather than `theme.ts`.
+`boardview.ts`, and why the per-ladder looks are in `looks.ts` rather than `theme.ts`.
 
 **Adjacency lives in exactly one function**: `neighbours()` in `src/engine/grid.ts`. Numbers,
 cascades, the opening, Sweep's proofs, Census, the crawl rule and the honest player all read

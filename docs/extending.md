@@ -35,11 +35,10 @@ the golden outputs and say so in the commit.
 7. **Tests and docs.** A block in `test/spells.test.ts`; the affordability test reads the data.
    `docs/glossary.md`, the README's controls line, the design reference's spell table.
 
-## Adding a placement rule (6 files for the rule, plus the ladder that carries it)
+## Adding a placement rule (9 hand-edited files with its ladder, from about 19)
 
-Before the registry this was about 19 files. The rule itself is now three files and a test; the
-rest is the ladder, whose per-ladder tables (theme, typeface, the ladder count) phase 3 has not
-folded yet.
+The rule itself is three files and a test. The ladder that carries it adds its data, its look,
+and the two test lists that pin the ladder set.
 
 1. **The name.** Add it to `Placement` in `src/engine/types.ts`.
 2. **The rule.** A module in `src/engine/placement/` ending with a `PlacementRule` record.
@@ -68,8 +67,7 @@ folded yet.
 6. **Ladder data.** A type in `design/ladders.py` (its distribution path if the rule fixes the
    distribution), then regenerate `ladders.json`, `placement-rules.json`, `opening.json` and the
    reference page. That is a new ladder too: follow "Adding a ladder" below for its unlock, its
-   palette and face, and the ladder count and lists in `test/invariants.test.ts` and
-   `test/unlocks.test.ts`.
+   look, and the ladder count and list in `test/invariants.test.ts` and `test/unlocks.test.ts`.
 7. `docs/modes.md`: a section saying the rule, the proof, the pencil, and what breaks it.
 
 ## Adding a shape
@@ -98,8 +96,10 @@ folded yet.
    ten-element schedules. Regenerate `ladders.json`.
 2. An unlock: `requires`, or a slot on the counted schedule (`UNLOCK_BOARDS`, steps of five), or
    `requires_runs`. `test/unlocks.test.ts` fails if a save can be stranded.
-3. `theme.ts` (palette, `TYPE_IDENTITY`), `typefaces.ts` (`TYPE_FONTS`), and the ladder count in
-   `test/invariants.test.ts`.
+3. An entry in `LOOKS` in `src/ui/looks.ts`: palette (with a pip shape of its own), face, sound
+   pack and clear effect, with the reason for each. The face is any bundled one; a ladder may
+   share a face with another (decision 0031), so no new font is needed. `test/fonts.test.ts`
+   fails until the entry exists. Then the ladder count in `test/invariants.test.ts`.
 4. The reference page's unlock graph places type-gated variants by rule; a counted one needs its
    lane entry.
 5. Measure it against the ladder it is nearest to.
