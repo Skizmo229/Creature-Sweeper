@@ -108,6 +108,33 @@ export function fontRow(ctx: ScreenContext, host: HTMLElement): void {
   });
 }
 
+/** The HUD's readouts at the start of a board, keyed by the class each wears in play. */
+const HUD_READOUTS = [
+  ['hp', 'HP 10'],
+  ['lv', 'Level '],
+  ['ex', 'EXP 0'],
+  ['ne', 'Next Level 6'],
+] as const;
+
+/**
+ * A copy of the HUD's readouts, as an example. The real HUD's own classes, so each readout
+ * reserves the width it does in play.
+ */
+function hudCopy(cls: string): HTMLElement {
+  const copy = el('div', `hud ${cls}`);
+  for (const [key, text] of HUD_READOUTS) {
+    const readout = el('span', `hud-item hud-${key}`, text);
+    if (key === 'lv') {
+      // Level 1, in tier 1's colour, as the real readout draws it.
+      const level = el('span', 'hud-level-num', '1');
+      level.style.color = tierColor(1);
+      readout.append(level);
+    }
+    copy.append(readout);
+  }
+  return copy;
+}
+
 /**
  * The whole page is the example, but not DURING a drag: resizing every line on the screen moves
  * the slider out from under the pointer. So a copy of the HUD follows the thumb, and the page
@@ -115,20 +142,7 @@ export function fontRow(ctx: ScreenContext, host: HTMLElement): void {
  */
 export function textSizeRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p } = ctx;
-  const textDemo = el('div', 'hud text-size-demo');
-  // The real HUD's own classes, so each readout reserves the width it does in play.
-  for (const [key, item] of [
-    ['hp', 'HP 10'],
-    ['lv', 'Level '],
-    ['ex', 'EXP 0'],
-    ['ne', 'Next Level 6'],
-  ]) {
-    textDemo.append(el('span', `hud-item hud-${key}`, item));
-  }
-  // Level 1, in tier 1's colour, as the real readout draws it.
-  const demoLevel = el('span', 'hud-level-num', '1');
-  demoLevel.style.color = tierColor(1);
-  textDemo.querySelector('.hud-lv')!.append(demoLevel);
+  const textDemo = hudCopy('text-size-demo');
   const showTextSize = (size: number): void => {
     // Relative to what the page is already set at, which is what rem means.
     textDemo.style.setProperty('--demo-scale', String(size / p.textSize));
