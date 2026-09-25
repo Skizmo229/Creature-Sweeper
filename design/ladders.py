@@ -43,11 +43,11 @@ def shape_cells(shape, param, w, h):
     if shape in ("cave", "dungeon"):
         # These two invert the relationship every other shape has with this file.
         # A ragged cave has no closed form to count, and its silhouette moves
-        # with the seed, which is exactly why it sat deferred: C_k needs the
-        # cell count fixed before the board exists. So the count is not
-        # measured here, it is *chosen* here -- per board, in the `cells`
-        # schedule -- and the engine's generator is required to hit it on
-        # every seed. Same guard as the other shapes, pointing the other way.
+        # with the seed, while C_k needs the cell count fixed before the board
+        # exists. So the count is not measured here, it is *chosen* here --
+        # per board, in the `cells` schedule -- and the engine's generator is
+        # required to hit it on every seed. Same guard as the other shapes,
+        # pointing the other way.
         raise ValueError(f"{shape} cells come from the type's `cells` schedule")
     return sum(1 for y in range(h) for x in range(w)
                if shape_present(shape, param, w, h, x, y))
@@ -260,8 +260,9 @@ def _density_cap(t):
     #
     # And a cap is never allowed below where the tuned ladder already finished.
     # HIVE ends at 35% and ARCANE at 34.5%, both past the 34% ceiling; clamping
-    # to it made board 11 SPARSER than board 10, which is not a gentler board,
-    # it is a board with too few creatures left to meet its own thresholds.
+    # to it would make board 11 SPARSER than board 10, which is not a gentler
+    # board, it is a board with too few creatures left to meet its own
+    # thresholds.
     #
     # A type may also cap itself below the global ceiling, and DUNGEON does.
     # Its walls are what make it hard rather than its creatures, so the density
@@ -284,14 +285,14 @@ def _domino_box(t, T, i, density, max_w, max_h):
     # here: the schedule's own growth would lay seven sets on a board
     # sized for about six and run past the packing ceiling, which
     # config.ts refuses outright. Once a set no longer fits the largest
-    # board there is simply no further step, and the loop ends there.
+    # board there is simply no further step, and the continuation ends there.
     s_next = t["sets"][-1] + i
     creatures = T * (T + 1) * s_next
     # Keep the ladder's own landscape shape. Pinning the height at the
-    # ceiling and deriving the width was the first version, and it made
-    # the first scaling board 21x32 - a portrait board after ten
-    # landscape ones. Only once the natural shape stops fitting does
-    # the height go to the ceiling to buy width.
+    # ceiling and deriving the width would make the first scaling board
+    # 21x32 - a portrait board after ten landscape ones. Only once the
+    # natural shape stops fitting does the height go to the ceiling to buy
+    # width.
     cells = creatures / density
     h = min(max_h, max(1, round(math.sqrt(cells / 1.75))))
     w = math.ceil(creatures / (density * h))
@@ -311,8 +312,8 @@ def extend(t):
     max_h = over.get("max_h", CEILINGS["max_h"])
     # "HP at its floor" means the floor the tuned ladder already chose. EXTREME
     # bottoms out at 8 and ORACLE at 6 deliberately; continuing the erosion
-    # past that invents a difficulty those ladders never claimed - it took
-    # EXTREME to HP 2 before this was pinned.
+    # past that would invent a difficulty those ladders never claimed, and
+    # take EXTREME to HP 2.
     hp_floor = over.get("hp_floor", min(t["hp"]))
     d_cap = _density_cap(t)
 
@@ -381,16 +382,16 @@ def extend(t):
 #
 # A BOARD-COUNT gate ("clear 25 boards, anywhere") is a statement about time
 # served. The variant ladders do not teach each other - a hex grid teaches you
-# nothing about a torus, and neither teaches you Sudoku - so chaining them was
-# always a fiction, and it forced a player who wanted the ragged cave to grind
-# three shapes they had no interest in first. Counting boards instead lets them
-# arrive from whatever direction they like, and spaces the variants out across
-# the whole game rather than bunching them behind one branch.
+# nothing about a torus, and neither teaches you Sudoku - so chaining them
+# would be a fiction, and would make a player who wants the ragged cave grind
+# three shapes they have no interest in first (decision 0018). Counting boards
+# lets them arrive from whatever direction they like, and spaces the variants
+# out across the whole game rather than bunching them behind one branch.
 UNLOCKS = {
     "easy": [],
     "normal": ["easy"],
-    # HUGE and EXTREME are now siblings off NORMAL rather than a chain, so the
-    # player picks which wall to walk into first.
+    # HUGE and EXTREME are siblings off NORMAL, not a chain, so the player
+    # picks which wall to walk into first.
     "huge": ["normal"],
     "extreme": ["normal"],
     # Both parents: this ladder is the two of them at once.
@@ -401,8 +402,9 @@ UNLOCKS = {
     "oracle": ["arcane"],
     "checker": [],
     "pairs": [],
-    # Both used to need PAIRS cleared. They are on the board-count schedule now,
-    # by request, and still open after PAIRS because their counts are higher.
+    # Not gated on PAIRS: they are on the board-count schedule, by request
+    # (decision 0018), and still open after PAIRS because their counts are
+    # higher.
     "dominoes": [],
     "packs": [],
     "workout": [],
@@ -435,14 +437,14 @@ UNLOCKS = {
 #
 # The types that gate on type-clears alone offer 70 ladder boards between them
 # (EASY, NORMAL, HUGE, EXTREME, HUGE x EXTREME, ARCANE, ORACLE), so the top of
-# the schedule - CAVE at 70 is the last reachable that way - now asks a player
+# the schedule - CAVE at 70 is the last reachable that way - asks a player
 # who never touches a variant to play one. Every earlier variant is ten more
 # tuned boards, so the gates are still met without a single scaling board;
 # `test/unlocks.test.ts` walks the schedule in order to check exactly that.
 # Scaling boards past 10 count too, for a player who would rather go deep.
 #
-# THE ORDER IS A DESIGN CHOICE, not the measured difficulty ranking it used to
-# follow. It is set by hand to pace what the player meets. For reference, the
+# THE ORDER IS A DESIGN CHOICE, not the measured difficulty ranking (decision
+# 0018). It is set by hand to pace what the player meets. For reference, the
 # honest player from `sim:spells`, spell-less, 30 seeds a board, mean clear rate
 # over the tuned ten, ranks them:
 #
@@ -455,9 +457,9 @@ UNLOCKS = {
 # HIVE and PAIRS are within the noise of each other. SUDOKU cannot be measured
 # on the same scale -- it is guess-free by construction -- so it keeps the top
 # slot. BLIND is not on this schedule at all; see UNLOCK_RUNS.
-# The biggest departure from that ranking is DUNGEON, the second easiest, now
-# last before SUDOKU. DUNGEON is also where most players met spells and the crawl rule, so
-# arriving late means ARCANE has usually been played first.
+# The biggest departure from that ranking is DUNGEON, the second easiest,
+# placed last before SUDOKU. It carries spells and the crawl rule, and arriving
+# late means the player has usually met spells on ARCANE first.
 UNLOCK_BOARDS = {
     "wraparound": 15,
     "cross": 20,
@@ -490,14 +492,15 @@ UNLOCK_RUNS = {
     "blind": 3,
 }
 
-# Menu order. HUGE now sits before EXTREME, and the variant ladders are ordered
-# by the board count that opens them, so the menu reads in the order a player
+# Menu order. HUGE sits before EXTREME, and the variant ladders are ordered by
+# the board count that opens them, so the menu reads in the order a player
 # will actually meet it.
 MAINLINE = ["easy", "normal", "huge", "extreme", "huge_extreme"]
 MAGIC = ["arcane", "oracle"]
 # The variant lane, in the order its gates open (see UNLOCK_BOARDS). A
-# combined type sits right after the last of its parents to open. The list is menu order, not a taxonomy -- a placement rule sits here
-# beside the topologies and the shapes because that is where a player meets it.
+# combined type sits right after the last of its parents to open. The list is
+# menu order, not a taxonomy -- a placement rule sits here beside the
+# topologies and the shapes because that is where a player meets it.
 TOPOLOGY = ["wraparound", "cross", "wrapped_cross", "hive", "diamond", "pairs", "dominoes",
             "workout", "packs", "donut", "checker", "congo", "cave", "dungeon"]
 PUZZLE = ["sudoku"]
