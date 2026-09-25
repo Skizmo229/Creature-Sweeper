@@ -888,6 +888,14 @@ button.board-card:hover:not(:disabled) {
 .settings-screen .title-bar {
   margin-bottom: 18px;
 }
+/* The screen is long, so its way out stays pinned to the top of the window.
+   It sits outside the header, whose height would otherwise bound the pin. */
+.settings-screen > .sticky-back {
+  position: sticky;
+  top: calc(8px + env(safe-area-inset-top, 0px));
+  z-index: 5;
+  background: var(--bg);
+}
 
 .settings-group {
   background: var(--panel);
