@@ -1070,12 +1070,13 @@ button.small {
   letter-spacing: 0.04em;
 }
 /* What the "User choice" tile shows before anything is chosen: a box the size
-   of a thumbnail, so the two tiles stand level. */
+   of a thumbnail, so the two tiles stand level. `--chip-w` and `--chip-h` are
+   the example board's size, set by the settings screen. */
 .picker-placeholder {
   display: grid;
   place-items: center;
-  width: 104px;
-  height: 78px;
+  width: var(--chip-w);
+  height: var(--chip-h);
   padding: 6px;
   border: 1px dashed var(--line);
   border-radius: 3px;
@@ -1094,8 +1095,8 @@ button.small {
   align-items: flex-start;
   justify-content: center;
   gap: 2px;
-  min-width: 104px;
-  min-height: 78px;
+  min-width: var(--chip-w);
+  min-height: var(--chip-h);
   padding: 6px 10px;
   font-size: 0.95rem;
   font-size-adjust: ex-height calc(var(--ex-height) * var(--ex-fix, 1));

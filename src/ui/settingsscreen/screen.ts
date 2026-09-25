@@ -10,6 +10,7 @@
 
 import { el } from '../dom.js';
 import { themeFor } from '../looks.js';
+import { sampleBoard } from '../preview.js';
 import { type SettingsScreenOptions, makeContext, typeName } from './context.js';
 import { clearEffectRow, fightRimRow, soundRow, stopSettingsDemo } from './effects.js';
 import { gameplaySection } from './gameplay.js';
@@ -23,6 +24,7 @@ import {
   textSizeRow,
   zoomRow,
 } from './look.js';
+import { CHIP_CELL } from './render.js';
 import { section } from './widgets.js';
 
 export type { SettingsScreenOptions } from './context.js';
@@ -34,6 +36,10 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
 
   const wrap = el('div', 'screen settings-screen');
   wrap.style.setProperty('--tint', themeFor(typeId).accent);
+  // A tile with no board in it is sized like one with, so a row of tiles stands level.
+  const { width, height } = sampleBoard().config;
+  wrap.style.setProperty('--chip-w', `${width * CHIP_CELL}px`);
+  wrap.style.setProperty('--chip-h', `${height * CHIP_CELL}px`);
 
   const head = el('header', 'title-bar');
   const back = el('button', 'ghost', '← Back');
