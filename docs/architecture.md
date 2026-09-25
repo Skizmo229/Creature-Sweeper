@@ -70,6 +70,7 @@ src/ui/         the prototype
   pinch.ts, hexgeom.ts   arithmetic kept DOM-free so tests can reach it
 src/sim/        headless measurement, all driving the real engine (see docs/tuning.md)
   honest.ts       the honest player: sees what a player sees, deduces locally, guesses or casts
+  deduce.ts       what the honest player concludes: constraints, what is safe, where to guess
   solver.ts       the complete deducer, the floor under the honest player's forced guesses
   autoplay.ts     the omniscient tier-order player that proves the zero-damage guarantee
   cli/            one command-line entry per measurement, run on import
