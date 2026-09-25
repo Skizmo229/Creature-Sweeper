@@ -25,7 +25,8 @@ and the open questions), `docs/ui.md` (presentation rules), `docs/extending.md` 
   board. Never let a gameplay dial reach EXP or a threshold. (`docs/invariants.md`.)
 - **Notes can protect the player; they must never expose them.** Read a pencil mask by its
   lowest candidate only.
-- **Tuning data flows one way**: edit `design/ladders.py`, regenerate `ladders.json`, never edit
+- **Tuning data flows one way**: edit `design/ladder_types.toml` (the schedules) or
+  `design/ladders.py` (how boards are derived from them), regenerate `ladders.json`, never edit
   the JSON. Retune on a candidate file (`CS_LADDERS=path`) and measure before replacing it.
 - **Measure, don't argue.** When a simulator can settle a design question, run it. Several past
   findings contradicted the intuition.

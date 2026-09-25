@@ -1,7 +1,7 @@
 # Tuning: the instruments, the method, and the open questions
 
-Every density, lock depth and HP value in the game is derived by `design/ladders.py` and checked
-by simulation. This page is how that is done and what is still unsettled. The full derivations
+Every density, lock depth and HP value in the game is a schedule in `design/ladder_types.toml`,
+derived into boards by `design/ladders.py`, and checked by simulation. This page is how that is done and what is still unsettled. The full derivations
 and the per-ladder findings are in the design reference (`design/reference.html`).
 
 ## The instruments
@@ -94,7 +94,8 @@ ladder, each spell against playing spell-less on the ladders that offer it:
 ## Open questions, in order of weight
 
 1. **The ladders have never been played.** Everything is derived and simulation-checked, not
-   playtested. Playtesting may run alongside the refactor; tuning changes live in `ladders.py`.
+   playtested. Playtesting may run alongside the refactor; tuning changes live in
+   `ladder_types.toml` and `ladders.py`.
 2. **Boards contain unresolvable 50/50s, and the solver can say which.** Guess-free
    generate-and-test is affordable early and impossible late: a perfect deducer finishes NORMAL
    94% guess-free, ARCANE 73%, DUNGEON 59%, DONUT 36%, and 0% of board 10 on EXTREME, HUGE x

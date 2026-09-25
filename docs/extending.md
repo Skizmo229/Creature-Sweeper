@@ -23,7 +23,8 @@ the golden outputs and say so in the commit.
    translate the answer into marks by hand (Census's original failure). A spell must never remove
    a creature or skip its EXP (`docs/invariants.md`, fact 3).
 4. **Ladder data.** Add it to the `spells` list of each type that offers it in
-   `design/ladders.py`, regenerate `ladders.json`, and update the type blurbs that name spells.
+   `design/ladder_types.toml`, regenerate `ladders.json`, and update the type blurbs that name
+   spells.
    Starting mana is "one Reveal exactly"; a spell cheaper than Reveal changes what the opening
    pool means.
 5. **UI.** The button, the shortcut, the hint and the sound come for free from `SPELLS`. Anything
@@ -65,10 +66,11 @@ and the two test lists that pin the ladder set.
    rule to its quota and its fault finder, and `test/candidates.test.ts` already walks its pencil.
    Add `test/<rule>.test.ts` for what is particular to it, above all "the proof never calls a
    creature empty, whatever is open".
-6. **Ladder data.** A type in `design/ladders.py` (its distribution path if the rule fixes the
-   distribution), then regenerate `ladders.json`, `placement-rules.json`, `opening.json` and the
-   reference page. That is a new ladder too: follow "Adding a ladder" below for its unlock, its
-   look, and the ladder count and list in `test/invariants.test.ts` and `test/unlocks.test.ts`.
+6. **Ladder data.** A type in `design/ladder_types.toml`, and its distribution path in
+   `design/ladders.py` if the rule fixes the distribution; then regenerate `ladders.json`,
+   `placement-rules.json`, `opening.json` and the reference page. That is a new ladder too:
+   follow "Adding a ladder" below for its unlock, its look, and the ladder count and list in
+   `test/invariants.test.ts` and `test/unlocks.test.ts`.
 7. `docs/modes.md`: a section saying the rule, the proof, the pencil, and what breaks it.
 
 ## Adding a shape
@@ -93,8 +95,9 @@ and the two test lists that pin the ladder set.
 
 ## Adding a ladder (type)
 
-1. A `dict` in `TYPES` in `design/ladders.py`: id, name, tint, archetype, axis, blurb, and the
-   ten-element schedules. Regenerate `ladders.json`.
+1. A `[[type]]` in `design/ladder_types.toml`: id, name, tint, archetype, axis, blurb, and the
+   ten-element schedules (the schema is written at the top of the file and enforced on load).
+   Regenerate `ladders.json`.
 2. An unlock: `requires`, or a slot on the counted schedule (`UNLOCK_BOARDS`, steps of five), or
    `requires_runs`. `test/unlocks.test.ts` fails if a save can be stranded.
 3. An entry in `LOOKS` in `src/ui/looks.ts`: palette (with a pip shape of its own), face, sound

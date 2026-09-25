@@ -72,7 +72,8 @@ test/           vitest; test/helpers.ts holds the shared fixtures (the ladder da
                 hand-built boards); test/golden/ the sim fingerprints; test/ui/ the
                 browser-environment smoke test (happy-dom)
 scripts/        golden.mjs (the golden harness), package.mjs (the itch.io zip)
-design/         ladders.py (the generator) and test_ladders.py (its own tests, `npm run test:py`),
+design/         ladder_types.toml (each ladder's schedules), ladders.py (the generator) and
+                test_ladders.py (its own tests, `npm run test:py`),
                 data/ (its output), the design reference page
 docs/           this folder
 ```
@@ -104,7 +105,8 @@ by existing. `RULES` is keyed by the whole `Placement` union, which makes a name
 or a rule missing a hook, a compile error (decision 0029). Shapes work the same way through
 `shapeRule(config.shape)` and `SHAPES` in `src/engine/shape/` (decision 0030).
 
-**Tuning data flows one way**: `design/ladders.py` writes `design/data/ladders.json`, `config.ts`
+**Tuning data flows one way**: `design/ladders.py` reads the schedules in
+`design/ladder_types.toml` and writes `design/data/ladders.json`, `config.ts`
 reads it, and the engine never duplicates a number from it. `ladders.py` does carry its own copy of
 the shape predicates, because it must count a shape's cells before it can apportion creatures;
 that duplication is guarded by a test that the engine's mask leaves exactly the cell count the
