@@ -50,8 +50,9 @@ src/ui/         the prototype
   screens/        one builder per screen: ladders, boards, howto, backup
   overlays/       ask.ts: the in-page yes/no question (never window.confirm)
   game/           the game screen: screen.ts (furniture), hud.ts (filling it in), mode.ts
-                  (what a click does: tier, pencil, spell), hint.ts, sound.ts, clock.ts,
-                  outcome.ts (the clear, loss and run overlays)
+                  (what a click will do: tier, pencil, spell), actions.ts (what the player's
+                  clicks and keys do), hint.ts, sound.ts, clock.ts, outcome.ts (the clear, loss
+                  and run overlays)
   board/          the canvas: view.ts (state, fit, zoom, render order), geometry.ts,
                   digits.ts, paint.ts (cell painters), overlays.ts (silhouette, seams, bonds,
                   highlight), input.ts (pointer, wheel, pinch)
@@ -140,8 +141,9 @@ would leave the rest unreachable.
 ## How a click flows
 
 `BoardInput` (in `src/ui/board/input.ts`) turns pointer events into the view's four callbacks
-(open, mark, hover, and whether a click would land). `App` decides what the click means from its
-`EntryMode` (an armed tier, pencil mode, an armed spell) and calls one engine method: `game.open`,
+(open, mark, hover, and whether a click would land). `BoardActions` (`game/actions.ts`) decides what
+the click, or a key, means from the `EntryMode` (an armed tier, pencil mode, an armed spell) and
+calls one engine method: `game.open`,
 `game.setMark`, `game.toggleNote`, `game.cast` or `game.sweep`. Every engine action returns the
 events it caused (`GameEvent[]`: revealed, battle, levelUp, marked, noted, blocked, won, lost,
 spell, exercised). `App.apply` hands them to the sound (`game/sound.ts`), the celebration and the

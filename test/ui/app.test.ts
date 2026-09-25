@@ -21,9 +21,11 @@ interface Driver {
   readonly progress: Progress;
   finish(): void;
   apply(events: GameEvent[]): void;
-  pickSpell(id: string): void;
-  pickTier(tier: number): void;
-  onCellPrimary(x: number, y: number): void;
+  readonly actions: {
+    pickSpell(id: string): void;
+    pickTier(tier: number): void;
+    onCellPrimary(x: number, y: number): void;
+  };
   showSettings(back: () => void): void;
   buildGameScreen(): void;
   readonly mode: { pendingSpell: string | null; notesMode: boolean; markMode: number };
@@ -65,7 +67,7 @@ describe('the app', () => {
     const game = app.current!;
     const before = game.grid.flat().filter((c) => c.open).length;
     const safe = game.safeCells({ useMarks: false })[0]!;
-    app.onCellPrimary(safe.x, safe.y);
+    app.actions.onCellPrimary(safe.x, safe.y);
     expect(game.grid.flat().filter((c) => c.open).length).toBeGreaterThan(before);
     expect(game.hp).toBe(game.maxHp);
   });
@@ -84,14 +86,14 @@ describe('the app', () => {
 
   it('Escape cancels an armed spell, and pencil mode clears one too', () => {
     app.play('arcane', 1, 7);
-    app.pickSpell('reveal');
+    app.actions.pickSpell('reveal');
     expect(app.mode.pendingSpell).toBe('reveal');
     expect(text('.hint')).toContain('Reveal is armed');
     key('Escape');
     expect(app.mode.pendingSpell).toBeNull();
     expect(text('.hint')).toMatch(/^Click to open/);
 
-    app.pickSpell('reveal');
+    app.actions.pickSpell('reveal');
     key('n');
     expect(app.mode.pendingSpell).toBeNull();
     expect(app.mode.notesMode).toBe(true);
@@ -154,11 +156,11 @@ describe('Escape and the entry modes', () => {
 
   it('backs out one thing at a time on a board: the spell, the tier, then the board', () => {
     app.play('arcane', 1, 7);
-    app.pickTier(2);
-    app.pickSpell('reveal');
+    app.actions.pickTier(2);
+    app.actions.pickSpell('reveal');
     key('Escape');
     expect(app.mode.pendingSpell).toBeNull();
-    app.pickTier(2);
+    app.actions.pickTier(2);
     key('Escape');
     expect(app.mode.markMode).toBe(-1);
     expect(onGame()).toBe(true);
@@ -183,7 +185,7 @@ describe('Escape and the entry modes', () => {
    */
   it.fails('leaves the board under the settings screen alone', () => {
     app.play('arcane', 1, 7);
-    app.pickSpell('reveal');
+    app.actions.pickSpell('reveal');
     app.showSettings(() => app.buildGameScreen());
     key('n');
     key('Escape');

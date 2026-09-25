@@ -10,12 +10,12 @@ import { Game } from '../engine/game.js';
 import { randomSeed } from '../engine/rng.js';
 import { FullRun } from '../engine/run.js';
 import { isAtLeastAsHard } from '../engine/settings.js';
-import { SPELLS, type SpellId, spellKey } from '../engine/spells.js';
-import type { Cell, GameEvent } from '../engine/types.js';
+import type { GameEvent } from '../engine/types.js';
 import { BoardView, type BoardDisplay } from './board/view.js';
 import { BoardClock } from './game/clock.js';
 import { gatePalette, syncClock, syncGameScreen } from './game/hud.js';
 import { EntryMode } from './game/mode.js';
+import { BoardActions } from './game/actions.js';
 import { buildBoardOutcome, buildRunOutcome } from './game/outcome.js';
 import { type GameScreenElements, buildGameScreen } from './game/screen.js';
 import { soundFor } from './game/sound.js';
@@ -52,6 +52,18 @@ export class App {
 
   /** What a click on the board does right now. */
   private readonly mode = new EntryMode();
+  /** What the player's input does on a board (game/actions.ts). */
+  private readonly actions = new BoardActions({
+    game: () => this.game,
+    view: () => this.view,
+    asking: () => this.askOverlay !== null,
+    mode: this.mode,
+    sfx: this.sfx,
+    apply: (events) => this.apply(events),
+    refresh: () => this.refresh(),
+    closeAsk: () => this.closeAsk(),
+    leaveGame: () => this.leaveGame(),
+  });
   private readonly clock = new BoardClock();
   /** The open modal overlay (a question, the how-to, the save backup), if any. */
   private askOverlay: HTMLElement | null = null;
@@ -86,7 +98,7 @@ export class App {
 
   constructor(root: HTMLElement) {
     this.root = root;
-    window.addEventListener('keydown', (e) => this.onKey(e));
+    window.addEventListener('keydown', (e) => this.actions.onKey(e));
     window.addEventListener('resize', () => this.view?.fit());
     // A settings change has to reach the board the player came from, not just the next one.
     this.settings.onChange(() => this.applyPresentation());
@@ -363,14 +375,14 @@ export class App {
           this.startClock();
         }),
       leave: () => this.leaveGame(),
-      pickTier: (tier) => this.pickTier(tier),
+      pickTier: (tier) => this.actions.pickTier(tier),
       pencilEmpty: () => {
         this.mode.notesMode = true;
-        this.pickTier(0);
+        this.actions.pickTier(0);
       },
-      toggleNotes: () => this.toggleNotesMode(),
-      sweep: (useMarks) => this.doSweep(useMarks),
-      pickSpell: (id) => this.pickSpell(id),
+      toggleNotes: () => this.actions.toggleNotesMode(),
+      sweep: (useMarks) => this.actions.doSweep(useMarks),
+      pickSpell: (id) => this.actions.pickSpell(id),
       cancelSpell: () => {
         this.mode.cancelSpell();
         this.refresh();
@@ -380,11 +392,11 @@ export class App {
     this.root.append(els.root);
 
     this.view = new BoardView(els.canvas, {
-      onOpen: (x, y) => this.onCellPrimary(x, y),
-      onCycleMark: (x, y) => this.cycleMark(x, y),
+      onOpen: (x, y) => this.actions.onCellPrimary(x, y),
+      onCycleMark: (x, y) => this.actions.cycleMark(x, y),
       // The hover ring is drawn by the view; the palette answers for the cell.
       onHover: () => this.gatePalette(),
-      lands: (cell) => this.clickLands(cell),
+      lands: (cell) => this.actions.clickLands(cell),
     });
     this.view.setGame(game, this.settings.themeFor(this.typeId), this.boardDisplay());
     this.refresh();
@@ -392,72 +404,7 @@ export class App {
 
   // ---------------------------------------------------------------- actions
 
-  private onCellPrimary(x: number, y: number): void {
-    const game = this.game;
-    if (!game || game.status !== 'playing') return;
-    // A pending spell claims the click before anything else does.
-    if (this.mode.pendingSpell) {
-      const id = this.mode.pendingSpell;
-      this.mode.cancelSpell();
-      this.apply(game.cast(id, x, y));
-      return;
-    }
-    if (this.mode.markMode >= 0) {
-      const tier = this.mode.markMode;
-      this.apply(this.mode.notesMode ? game.toggleNote(x, y, tier) : game.setMark(x, y, tier));
-      return;
-    }
-    // In pencil mode a click annotates or does nothing; it never opens (decision 0008).
-    if (this.mode.notesMode) return;
-    this.apply(game.open(x, y));
-  }
-
   /** Untargeted spells fire at once; targeted ones arm and wait for a cell. */
-  private pickSpell(id: SpellId): void {
-    const game = this.game;
-    if (!game || game.status !== 'playing' || !game.canCast(id)) return;
-    if (!SPELLS[id].targeted) {
-      this.mode.cancelSpell();
-      this.apply(game.cast(id));
-      return;
-    }
-    this.mode.armSpell(id);
-    this.refresh();
-  }
-
-  private cycleMark(x: number, y: number): void {
-    const game = this.game;
-    if (!game || game.status !== 'playing') return;
-    const cell = game.cellAt(x, y);
-    if (!cell || cell.open) return;
-    const next = cell.mark >= game.config.tiers ? 0 : cell.mark + 1;
-    this.apply(game.setMark(x, y, next === 0 ? cell.mark : next));
-  }
-
-  private pickTier(tier: number): void {
-    this.mode.pickTier(tier);
-    this.refresh();
-  }
-
-  private toggleNotesMode(): void {
-    this.mode.toggleNotes();
-    this.refresh();
-  }
-
-  private doSweep(useMarks: boolean): void {
-    const game = this.game;
-    if (!game || game.status !== 'playing') return;
-    // The engine refuses a sweep the dial has closed, so the keyboard cannot get past a gate the
-    // button is showing.
-    if (!game.sweepAvailable) {
-      this.sfx.play('blocked');
-      return;
-    }
-    const events = game.sweep({ useMarks });
-    if (events.length > 0) this.sfx.play('sweep');
-    this.apply(events);
-  }
-
   /**
    * Back out to board select. A run cannot be resumed, so leaving one asks first; a single board
    * is replayable at will and needs no guard.
@@ -488,106 +435,6 @@ export class App {
     }
     this.run = null;
     this.showBoards(this.typeId);
-  }
-
-  private onKey(e: KeyboardEvent): void {
-    // A question is modal: Escape answers "no" and nothing else reaches the board.
-    if (this.askOverlay) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        this.closeAsk();
-      }
-      return;
-    }
-
-    const game = this.game;
-    if (!game) return;
-
-    if (e.key === 'Escape') {
-      if (this.mode.escape()) this.refresh();
-      else this.leaveGame();
-      return;
-    }
-    if (game.status !== 'playing') return;
-
-    const key = e.key.toLowerCase();
-    if (key === 's') {
-      e.preventDefault();
-      this.doSweep(e.shiftKey);
-      return;
-    }
-    if (key === 'd') {
-      e.preventDefault();
-      this.doSweep(true);
-      return;
-    }
-    if (e.key === '+' || e.key === '=') {
-      e.preventDefault();
-      this.view?.nudgeZoom(2);
-      return;
-    }
-    if (e.key === '-' || e.key === '_') {
-      e.preventDefault();
-      this.view?.nudgeZoom(-2);
-      return;
-    }
-    if (key === 'f') {
-      e.preventDefault();
-      this.view?.fit();
-      return;
-    }
-    // A spell's own letter casts it, checked after the board's own keys so a spell can never
-    // shadow Sweep or zoom.
-    const spell = game.spells.find((id) => spellKey(id) === key);
-    if (spell) {
-      e.preventDefault();
-      this.pickSpell(spell);
-      return;
-    }
-
-    if (key === 'n') {
-      e.preventDefault();
-      this.toggleNotesMode();
-      return;
-    }
-
-    // Digits come off e.code, not e.key: Shift+1 is "!" on a US layout and something else again
-    // elsewhere, so the key would be unreadable exactly when the pencil needs it.
-    const digit = /^(?:Digit|Numpad)([0-9])$/.exec(e.code);
-    if (digit) {
-      const cell: Cell | null = this.view?.hoveredCell ?? null;
-      const tier = Number(digit[1]);
-      if (tier > game.config.tiers) return;
-      e.preventDefault();
-      if (cell) {
-        // The Entry mode decides, exactly as it does for a click, and Shift inverts it for this
-        // one keystroke.
-        const pencil = this.mode.notesMode !== e.shiftKey;
-        this.apply(
-          pencil ? game.toggleNote(cell.x, cell.y, tier) : game.setMark(cell.x, cell.y, tier),
-        );
-      } else {
-        if (e.shiftKey) this.mode.notesMode = true;
-        this.pickTier(tier);
-      }
-      return;
-    }
-  }
-
-  /**
-   * Whether a click on this cell would land in the mode the palette is in, which is what the
-   * board's cursor colours itself by. Annotation is exempt from the crawl rule, so while a tier
-   * is armed only annotation's own refusals apply: a given, or a ruled-out candidate.
-   */
-  private clickLands(cell: Cell): boolean {
-    const game = this.game;
-    if (!game) return true;
-    if (this.mode.markMode >= 0) {
-      if (cell.open) return true;
-      if (cell.given) return false;
-      return !this.mode.notesMode || game.canNote(cell, this.mode.markMode);
-    }
-    return game.inReach(cell);
   }
 
   private gatePalette(): void {
