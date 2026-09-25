@@ -35,7 +35,17 @@
  * about where they go, never how many there are.
  */
 
-import type { Cell } from './types.js';
+import type { Cell } from '../types.js';
+import { dealByPool } from './deal.js';
+import {
+  NOTHING_EMPTIED,
+  NO_RING_PROOF,
+  PLAIN_DISPLAY,
+  type PlacementRow,
+  type PlacementRule,
+  type Pools,
+  boardName,
+} from './rule.js';
 
 /**
  * A cell's colour. Light squares take even tiers, dark squares take odd.
@@ -46,7 +56,7 @@ import type { Cell } from './types.js';
  */
 export type Shade = 'light' | 'dark';
 
-export function shadeAt(x: number, y: number): Shade {
+function shadeAt(x: number, y: number): Shade {
   return (x + y) % 2 === 0 ? 'light' : 'dark';
 }
 
@@ -55,12 +65,12 @@ export function shadeOf(cell: Cell): Shade {
 }
 
 /** Which colour a tier belongs on. Tier 0 is empty ground and belongs on both. */
-export function shadeForTier(tier: number): Shade {
+function shadeForTier(tier: number): Shade {
   return tier % 2 === 0 ? 'light' : 'dark';
 }
 
 /** Could this cell be holding this tier, by the colour rule alone? */
-export function allowsTier(x: number, y: number, tier: number): boolean {
+function allowsTier(x: number, y: number, tier: number): boolean {
   return tier === 0 || shadeForTier(tier) === shadeAt(x, y);
 }
 
@@ -110,7 +120,7 @@ export function hiddenCap(shade: Shade, hidden: number, darkCovered: number): nu
  * out of balance would still generate, it would just quietly be a different
  * mode from the one that was tuned.
  */
-export function sideTotals(quantity: readonly number[]): { light: number; dark: number } {
+function sideTotals(quantity: readonly number[]): { light: number; dark: number } {
   let light = 0;
   let dark = 0;
   for (let i = 0; i < quantity.length; i++) {
@@ -120,3 +130,95 @@ export function sideTotals(quantity: readonly number[]): { light: number; dark: 
   }
   return { light, dark };
 }
+
+/**
+ * The checkerboard's structural requirements. Two colours, so a hex grid is out on arithmetic
+ * rather than taste: a hexagonal tiling cannot be two-coloured. A cut-out shape is out because a
+ * mask splits between the colours by its silhouette, which for a cave depends on the seed, and the
+ * mode promises an even split. An even cell count makes the two colours exactly equal, so the
+ * balance is a statement about the creatures alone. A wrapped axis must be even, or the seam
+ * joins two squares of one colour. And the balance promise itself, checked rather than assumed:
+ * `ladders.py` apportions each parity its own half of the budget (`sideTotals`).
+ */
+function validateChecker(row: PlacementRow): void {
+  const where = boardName(row);
+  if (row.topology === 'hex') {
+    throw new Error(
+      `${row.typeId}: a hex tiling has no two-colouring, so there is no checkerboard`,
+    );
+  }
+  if (row.shape && row.shape !== 'rect') {
+    throw new Error(
+      `${row.typeId}: the checkerboard needs a rectangle — a "${row.shape}" mask splits ` +
+        `between the colours by its silhouette, and the mode promises an even split`,
+    );
+  }
+  if ((row.width * row.height) % 2 !== 0) {
+    throw new Error(
+      `${where}: ${row.width}x${row.height} is an odd number of cells, so one colour has ` +
+        `a square more than the other`,
+    );
+  }
+  const wrap = row.wrap ?? 'none';
+  if (wrap !== 'none' && row.width % 2 !== 0) {
+    throw new Error(`${where}: joining left to right across an odd width meets two light squares`);
+  }
+  if (wrap === 'both' && row.height % 2 !== 0) {
+    throw new Error(`${where}: joining top to bottom across an odd height meets two light squares`);
+  }
+
+  const { light, dark } = sideTotals(row.quantity);
+  if (Math.abs(light - dark) > 1) {
+    throw new Error(
+      `${where}: ${dark} odd-tier creatures against ${light} even-tier ones. ` +
+        `The colours must carry within one of each other`,
+    );
+  }
+  const half = (row.width * row.height) / 2;
+  if (dark > half || light > half) {
+    throw new Error(
+      `${where}: ${Math.max(light, dark)} creatures of one parity want ` +
+        `${half} squares of that colour`,
+    );
+  }
+}
+
+/** One pool per colour: a tier is dealt only onto squares of its own parity. */
+const COLOURS: Pools = { of: shadeAt, forTier: shadeForTier };
+
+export const CHECKER_RULE: PlacementRule = {
+  id: 'checker',
+  validate: validateChecker,
+  opening: 'auto',
+  deal: (d) =>
+    dealByPool(
+      d,
+      COLOURS,
+      (shade) => ` on the ${shade} squares, which is every tier of that parity`,
+    ),
+  coveredCanBeEmpty: true,
+  // The square's colour: the pencil refuses the other parity. Marks are not refused, by decision.
+  candidates: (cell, view) => {
+    let mask = 0;
+    for (let t = 0; t <= view.config.tiers; t++) if (allowsTier(cell.x, cell.y, t)) mask |= 1 << t;
+    return mask;
+  },
+  guessFree: false,
+  // Counted over every cell sharing the sum, marked or not: the parity argument is about what the
+  // cells are, and leaving the marked ones out would make a proof depend on annotation.
+  cap: (cell, hidden, among) =>
+    hiddenCap(shadeOf(cell), hidden, among.filter((c) => shadeOf(c) === 'dark').length),
+  ringProof: NO_RING_PROOF,
+  emptied: NOTHING_EMPTIED,
+  // The light squares are washed, which is also the half that holds the even tiers.
+  display: { ...PLAIN_DISPLAY, washes: (cell) => shadeOf(cell) === 'light' },
+  pools: COLOURS,
+  groups: null,
+  fault: (grid) => {
+    for (const cell of grid.flat()) {
+      if (!cell.present || allowsTier(cell.x, cell.y, cell.tier)) continue;
+      return `tier ${cell.tier} at ${cell.x},${cell.y} stands on a ${shadeOf(cell)} square`;
+    }
+    return null;
+  },
+};

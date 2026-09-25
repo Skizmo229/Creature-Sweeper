@@ -1,6 +1,6 @@
 # 0011. Every reader of a rule family asks isPaired or isPacked
 
-2026-09-21. Status: adopted; to be superseded by the placement registry (refactoring plan, phase 3).
+2026-09-21. Status: superseded by 0029.
 
 ## Context
 DOMINOES is a pairing board and CONGO LINE is a pack board. Five separate `=== 'pairs'` checks would

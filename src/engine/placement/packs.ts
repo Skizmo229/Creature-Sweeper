@@ -52,21 +52,21 @@
  * against PAIRS's 26%.
  */
 
-import type { Cell, Placement } from './types.js';
-import { noteBit } from './notes.js';
-import { type Rng, randInt, shuffle } from './rng.js';
-
-/**
- * Does the pack rule hold on a board with this placement?
- *
- * `isPaired`'s reason, one rule over: a congo line IS a pack, so every reader
- * of the pack rule — the generator, Sweep's proof, the pencil, the honest
- * player, the solver — has to hand CONGO LINE the pack reading as well, and
- * each site that spelled out the pair of names was a place to forget one.
- */
-export function isPacked(placement: Placement): boolean {
-  return placement === 'packs' || placement === 'congo';
-}
+import type { Cell } from '../types.js';
+import { noteBit } from '../notes.js';
+import { type Rng, randInt, shuffle } from '../rng.js';
+import { ONE_POOL, placeDealt, readDealt, shuffledPool } from './deal.js';
+import {
+  type Deal,
+  NOTHING_EMPTIED,
+  PLAIN_DISPLAY,
+  type PlacementRow,
+  type PlacementRule,
+  type RingProof,
+  type RuleView,
+  WHOLE_SUM,
+  boardName,
+} from './rule.js';
 
 /**
  * What a covered cell could hold by the pack rule alone, as a note mask — or
@@ -84,7 +84,7 @@ export function isPacked(placement: Placement): boolean {
  * really holds is never taken out, and `test/candidates.test.ts` walks real
  * boards to hold it to that.
  */
-export function packCandidates(
+function packCandidates(
   cell: Cell,
   neighboursOf: (c: Cell) => readonly Cell[],
   tiers: number,
@@ -327,3 +327,86 @@ export function packFault(
   }
   return null;
 }
+
+/**
+ * The pack rule's structural requirements. `quantity` must be flat, n of every tier for n packs;
+ * a quantity merely close to whole packs would still generate and be tuned correctly, and would
+ * not be the mode. And the density must be one the packing can reach, because the quota has to
+ * land exactly.
+ */
+function validatePacks(row: PlacementRow): void {
+  const where = boardName(row);
+  if (packsIn(row.tiers, row.quantity) === null) {
+    throw new Error(
+      `${where}: quantity [${row.quantity.join(',')}] is not a whole number of packs — ` +
+        `a pack is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
+    );
+  }
+  const share = row.monsters / row.cells;
+  if (share > PACK_MAX_DENSITY) {
+    throw new Error(
+      `${where}: ${row.monsters} creatures on ${row.cells} cells is ` +
+        `${(100 * share).toFixed(1)}%, past the ${(100 * PACK_MAX_DENSITY).toFixed(0)}% ` +
+        `non-touching packs can be laid down reliably`,
+    );
+  }
+}
+
+/**
+ * The spawnable cells shuffled, and how many packs (or congo lines) the board's quantity is. A
+ * pack board deals its own tiers, for DOMINOES's reason: one of every tier has to land in each
+ * pack, so the grouping must reach the deal intact, and the shuffle-and-take would scatter it.
+ */
+export function packPoolAndCount(d: Deal): { pool: number[]; count: number } {
+  const { cfg } = d;
+  const pool = shuffledPool(d);
+  const count = packsIn(cfg.tiers, cfg.quantity);
+  if (count === null) {
+    throw new Error(
+      `board ${cfg.typeId}#${cfg.board}: quantity [${cfg.quantity.join(',')}] is not ` +
+        `a whole number of packs — a pack is one of each of the ${cfg.tiers} tiers`,
+    );
+  }
+  return { pool, count };
+}
+
+/**
+ * The pack ring: every covered neighbour of an open creature is a packmate or empty ground, and a
+ * packmate is a tier its pack has not shown, so the ring is free once the strongest of those is
+ * within `level`, and at any level once nothing is missing. Worked out once per sweep, because a
+ * pack's piece is shared by every creature in it.
+ */
+function packRingProof(view: RuleView, level: number): RingProof {
+  const gaps = missingFrom(view.grid.flat(), (c) => view.neighboursOf(c), view.config.tiers);
+  return (cell) => {
+    const gap = gaps.get(cell);
+    return gap !== undefined && gap <= level;
+  };
+}
+
+function dealPackBoard(d: Deal): void {
+  const { pool, count } = packPoolAndCount(d);
+  const packs = choosePacks(pool, (flat) => d.neighboursOf(flat), count, d.cfg.tiers, d.rng);
+  placeDealt(d, dealPacks(packs, d.cfg.tiers, d.rng));
+}
+
+export const PACKS_RULE: PlacementRule = {
+  id: 'packs',
+  validate: validatePacks,
+  opening: 'auto',
+  deal: dealPackBoard,
+  coveredCanBeEmpty: true,
+  candidates: (cell, view) => packCandidates(cell, (c) => view.neighboursOf(c), view.config.tiers),
+  guessFree: false,
+  cap: WHOLE_SUM,
+  ringProof: packRingProof,
+  emptied: NOTHING_EMPTIED,
+  // Packs never touch, so which pack a creature belongs to is never hidden and needs no bond.
+  display: PLAIN_DISPLAY,
+  pools: ONE_POOL,
+  groups: 'packs',
+  fault: (grid, cfg) => {
+    const { tierAt, neighboursOf } = readDealt(grid, cfg);
+    return packFault(tierAt, neighboursOf, cfg.tiers);
+  },
+};

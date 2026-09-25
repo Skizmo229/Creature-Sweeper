@@ -22,11 +22,23 @@
  * number of GIVENS: cells whose tier the player is told up front.
  */
 
-import type { Rng } from './rng.js';
-import { expForTier } from './combat.js';
+import type { Rng } from '../rng.js';
+import type { Grid } from '../grid.js';
+import { expForTier } from '../combat.js';
+import { ONE_POOL } from './deal.js';
+import {
+  type Deal,
+  NOTHING_EMPTIED,
+  NO_RING_PROOF,
+  PLAIN_DISPLAY,
+  type PlacementRow,
+  type PlacementRule,
+  WHOLE_SUM,
+  boardName,
+} from './rule.js';
 
 export const SUDOKU_SIZE = 9;
-export const SUDOKU_BOX = 3;
+const SUDOKU_BOX = 3;
 const DIGITS = SUDOKU_SIZE;
 const ALL = (1 << DIGITS) - 1;
 
@@ -386,7 +398,7 @@ const SUDOKU_ATTEMPTS = 4000;
  * nothing: the opening reveals every empty cell before the player's first
  * move.
  */
-export function generateSudokuBoard(
+function generateSudokuBoard(
   rng: Rng,
   givens: number,
   thresholds: ReadonlyArray<number>,
@@ -413,3 +425,118 @@ export function generateSudokuBoard(
       `the givens schedule in ladders.py is below what the propagator can carry`,
   );
 }
+
+/** Creature cells on a Sudoku board: every cell but the one empty cell in each row. */
+const SUDOKU_CREATURES = SUDOKU_SIZE * (SUDOKU_SIZE - 1);
+
+/**
+ * Sudoku's structural requirements, which are hard because the rule is what fixes the quantities
+ * and therefore C_k. A board failing any of these would not throw during generation; it would be
+ * tuned against numbers its own layout cannot produce, and the top gate would sit one kill out of
+ * reach. A given on empty ground would say nothing, since the opening reveals it.
+ */
+function validateSudoku(row: PlacementRow): void {
+  const where = boardName(row);
+  if (row.width !== SUDOKU_SIZE || row.height !== SUDOKU_SIZE) {
+    throw new Error(`${where}: sudoku needs a 9x9 board, got ${row.width}x${row.height}`);
+  }
+  if (row.tiers !== SUDOKU_SIZE - 1) {
+    throw new Error(
+      `${where}: sudoku uses the nine digits 0-8, so 8 creature ` +
+        `tiers plus empty ground — got ${row.tiers}`,
+    );
+  }
+  if (row.quantity.length !== SUDOKU_SIZE - 1 || row.quantity.some((n) => n !== SUDOKU_SIZE)) {
+    throw new Error(
+      `${where}: sudoku places each tier exactly nine times; ` +
+        `quantity is [${row.quantity.join(',')}]`,
+    );
+  }
+  if (
+    row.topology === 'hex' ||
+    (row.wrap && row.wrap !== 'none') ||
+    (row.shape && row.shape !== 'rect')
+  ) {
+    throw new Error(`${row.typeId}: sudoku's rows, columns and boxes need a plain square 9x9`);
+  }
+  const givens = row.givens ?? 0;
+  if (givens < 1 || givens > SUDOKU_CREATURES) {
+    throw new Error(
+      `${where}: givens is ${givens}; it must be between 1 and ${SUDOKU_CREATURES} ` +
+        `(the creatures — a given on empty ground says nothing, since the opening reveals it)`,
+    );
+  }
+}
+
+/**
+ * Lay the tiers out as a Sudoku solution and pin the givens as marks. Givens are placed here rather
+ * than by the Game because they are part of the board, not of play: the same seed must produce the
+ * same clues. They are truthful marks, which is what Reveal produces too, so every rule that trusts
+ * a mark (the guard, mark-assisted Sweep) reads them without knowing where they came from.
+ */
+function fillSudoku(d: Deal): void {
+  const { cfg, grid } = d;
+  if (cfg.width !== SUDOKU_SIZE || cfg.height !== SUDOKU_SIZE) {
+    throw new Error(
+      `${cfg.typeId}#${cfg.board}: sudoku placement needs a ` +
+        `${SUDOKU_SIZE}x${SUDOKU_SIZE} board, got ${cfg.width}x${cfg.height}`,
+    );
+  }
+  // Generated against the board's own thresholds, because they decide when a tier becomes
+  // openable: a board proven against the wrong ones is provably clear for a player who does not
+  // exist.
+  const board = generateSudokuBoard(d.rng, cfg.givens, cfg.exp, cfg.startLevel);
+  for (let y = 0; y < SUDOKU_SIZE; y++) {
+    for (let x = 0; x < SUDOKU_SIZE; x++) {
+      const cell = grid[y]![x]!;
+      cell.tier = board.grid[y]![x]!;
+      cell.alive = cell.tier > 0;
+    }
+  }
+  for (const flat of board.givens) {
+    const cell = grid[Math.floor(flat / SUDOKU_SIZE)]![flat % SUDOKU_SIZE]!;
+    cell.mark = cell.tier;
+    cell.given = true;
+  }
+}
+
+/** Every row, column and box holds each of the nine digits exactly once. */
+function sudokuFault(grid: Grid): string | null {
+  for (const unit of SUDOKU_UNITS) {
+    const digits = unit.map(
+      (flat) => grid[Math.floor(flat / SUDOKU_SIZE)]![flat % SUDOKU_SIZE]!.tier,
+    );
+    if (new Set(digits).size !== SUDOKU_SIZE || digits.some((t) => t < 0 || t >= SUDOKU_SIZE)) {
+      return `cells ${unit.join(',')} hold ${digits.join(',')}, not each digit once`;
+    }
+  }
+  return null;
+}
+
+export const SUDOKU_RULE: PlacementRule = {
+  id: 'sudoku',
+  validate: validateSudoku,
+  // Its nine empty cells. The cascade rule cannot produce them: a cascade needs a zero cell with
+  // no creature neighbours, and at 100% density there is none, so 'auto' would silently fall
+  // through to the single-cell fallback.
+  opening: 'empties',
+  deal: fillSudoku,
+  // The opening uncovered every empty cell, so nothing covered can be tier 0. The pencil refuses
+  // nothing else: a row already holding a 3 does not strike the 3, that is the player's work.
+  coveredCanBeEmpty: false,
+  candidates: () => null,
+  guessFree: true,
+  cap: WHOLE_SUM,
+  ringProof: NO_RING_PROOF,
+  emptied: NOTHING_EMPTIED,
+  // The box is a constraint as real as the row and the column but has no edge to give it away,
+  // so alternate boxes are washed and box edges get a heavy rule.
+  display: {
+    ...PLAIN_DISPLAY,
+    washes: (cell) => (Math.floor(cell.x / SUDOKU_BOX) + Math.floor(cell.y / SUDOKU_BOX)) % 2 === 1,
+    boxRules: SUDOKU_BOX,
+  },
+  pools: ONE_POOL,
+  groups: null,
+  fault: sudokuFault,
+};

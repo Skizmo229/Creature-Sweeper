@@ -3,7 +3,8 @@
 Each list is every place a change has to reach, in the order to make it. They were built by
 walking the code for three concrete tasks and writing down everything that had to be touched; the
 counts at the top are what those walks measured before Milestone 3, and shrinking them is what the
-milestone's phases 2 and 3 are for. Until then, the lists are the map.
+milestone's phases 2 and 3 are for. The placement list has been rewritten for the registry; the
+others are still the map.
 
 Whatever you add: run `npm run check`, and if the change is meant to alter behaviour, re-record
 the golden outputs and say so in the commit.
@@ -17,7 +18,7 @@ the golden outputs and say so in the commit.
    spells and Sweep, and the UI checks the board's keys first.
 2. Add a `case` to `Game.cast` in `src/engine/game.ts`. The case must set `detail`. If the spell
    stores anything per cell, add the field to `Cell` in `types.ts` and to `makeCell` in
-   `board.ts`.
+   `grid.ts`.
 3. If the spell gives information, teach `Game.safeCells` to act on it, or the player has to
    translate the answer into marks by hand (Census's original failure). A spell must never remove
    a creature or skip its EXP (`docs/invariants.md`, fact 3).
@@ -34,38 +35,46 @@ the golden outputs and say so in the commit.
 7. **Tests and docs.** A block in `test/spells.test.ts`; the affordability test reads the data.
    `docs/glossary.md`, the README's controls line, the design reference's spell table.
 
-## Adding a placement rule (about 19 files today; phase 3 makes it one)
+## Adding a placement rule (6 files for the rule, plus the ladder that carries it)
 
-1. Add the name to `Placement` in `src/engine/types.ts` and a module beside `pairs.ts` and
-   `packs.ts` with: the chooser/dealer, a fault finder for tests, the pencil's candidates, and the
-   Sweep proof.
-2. `generateGrid` in `board.ts`: deal through the rule. The rule decides where, never how many.
-3. `Game.safeCells` and `Game.noteCandidates` in `game.ts`: fold the proof and the candidates in.
-   A proof that claims EMPTY is a free sweep into a creature if it is ever wrong; the test that
-   matters is "never calls a creature empty, whatever is open".
-4. `readPlacement` and the per-rule validators in `config.ts`: refuse a board that would generate
-   perfectly and quietly not be the mode (a quota that does not divide, an odd cell count, a
-   wrapped or hex board the rule cannot live on).
-5. `isPaired` / `isPacked` in `pairs.ts` / `packs.ts` if the rule belongs to one of those
-   families; otherwise every site that asks them (the generator, both proofs, the honest player,
-   the renderer's bonds and hover suppression) is a site to check.
-6. `src/sim/honest.ts`: teach the honest player the rule, or the ladder is tuned against a player
-   who cannot see it. `src/sim/solver.ts` reads candidates through `noteCandidates` and needs a
-   change only for a proof that is not local to one creature's neighbours.
-7. `src/ui/boardview.ts`: shading, bonds, whether to hide a beaten creature's number.
-8. **Ladder data.** A type in `design/ladders.py` (its distribution path if the rule fixes the
-   distribution), an unlock slot on the counted schedule, and the per-ladder tables: `theme.ts`
-   (palette and identity), `typefaces.ts` (a face of its own, which today means a new bundled
-   font, `@font-face` and licence line; see issue #5), the exact ladder count in
-   `test/invariants.test.ts`, the lists in `test/unlocks.test.ts` and `test/candidates.test.ts`.
-9. Tests: a `<rule>.test.ts` beside `pairs.test.ts` (the rule holds on every board, the quota
-   lands, the proof never lies), and regenerate `ladders.json`, `placement-rules.json`,
-   `opening.json` and the reference page.
-10. `docs/modes.md`: a section saying the rule, the proof, the pencil, and what breaks it.
+Before the registry this was about 19 files. The rule itself is now three files and a test; the
+rest is the ladder, whose per-ladder tables (theme, typeface, the ladder count) phase 3 has not
+folded yet.
+
+1. **The name.** Add it to `Placement` in `src/engine/types.ts`.
+2. **The rule.** A module in `src/engine/placement/` ending with a `PlacementRule` record.
+   `rule.ts` is the contract, and each member's docblock says what it owes; the compiler lists
+   every hook still missing. Start from the nearest rule: `uniform.ts` is the minimum, `pairs.ts`
+   a rule with a proof. The members that bite:
+   - `validate`: refuse a row that would generate perfectly and quietly not be the mode (a quota
+     that does not divide, an odd cell count, a wrapped or hex board the rule cannot live on).
+   - `deal`: decides where, never how many; land the quota exactly or throw. The helpers in
+     `deal.ts` cover the shuffle-and-take and writing a layout down.
+   - `ringProof`, `emptied`, `cap`: a proof that claims EMPTY is a free sweep into a creature if
+     it is ever wrong, and none may run away.
+   - `candidates`: never refuse the tier a cell holds, and never do the player's deduction
+     (decision 0010).
+   - `groups`: a rule in the pairs or packs family takes that family's hooks by reference, as
+     `dominoes.ts` and `congo.ts` do, so the two cannot disagree.
+3. **The registry.** One line in `RULES` in `src/engine/placement/registry.ts`.
+4. **The honest player** (`src/sim/honest.ts`) reads the rule through its hooks and `groups`.
+   Teach it anything a player can see that the hooks do not carry, or the ladder is tuned against
+   a player who cannot see the rule. The solver needs nothing unless a proof is not a reading of
+   one cell's neighbours; if it is, it belongs in `emptied`.
+5. **Tests.** `test/placement.test.ts` already deals every board of the new ladder and holds the
+   rule to its quota and its fault finder, and `test/candidates.test.ts` already walks its pencil.
+   Add `test/<rule>.test.ts` for what is particular to it, above all "the proof never calls a
+   creature empty, whatever is open".
+6. **Ladder data.** A type in `design/ladders.py` (its distribution path if the rule fixes the
+   distribution), then regenerate `ladders.json`, `placement-rules.json`, `opening.json` and the
+   reference page. That is a new ladder too: follow "Adding a ladder" below for its unlock, its
+   palette and face, and the ladder count and lists in `test/invariants.test.ts` and
+   `test/unlocks.test.ts`.
+7. `docs/modes.md`: a section saying the rule, the proof, the pencil, and what breaks it.
 
 ## Adding a shape
 
-1. Add the name to `BoardShape` in `types.ts` and the predicate (or generator) in `board.ts`,
+1. Add the name to `BoardShape` in `types.ts` and the predicate (or generator) in `shape.ts`,
    reached through `buildShape`. Parameterise in cells, never in fractions of the board.
 2. If the shape is seeded (like the cave and the dungeon), its parameter is the exact cell count
    and the generator must spend exactly that many; `ladders.py` chooses the count per board.

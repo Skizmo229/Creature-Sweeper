@@ -6,6 +6,7 @@
 
 import type { Game } from '../../engine/game.js';
 import { hasNote } from '../../engine/notes.js';
+import { placementRule } from '../../engine/placement/registry.js';
 import type { FullRun } from '../../engine/run.js';
 import { type SpellId, spellLabel } from '../../engine/spells.js';
 import type { Cell } from '../../engine/types.js';
@@ -19,7 +20,7 @@ const pad = (n: number, width: number) => String(Math.max(0, Math.floor(n))).pad
 
 /** Whether "might be empty ground" is a hypothesis this board can hold at all. */
 function canPencilEmpty(game: Game | null): boolean {
-  return game?.config.placement !== 'sudoku';
+  return !game || placementRule(game.config.placement).coveredCanBeEmpty;
 }
 
 /**

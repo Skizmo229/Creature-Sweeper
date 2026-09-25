@@ -53,8 +53,11 @@
  * collected" are where they were.
  */
 
-import type { Cell } from './types.js';
-import { type Rng, randInt, shuffle } from './rng.js';
+import type { Cell } from '../types.js';
+import { type Rng, randInt, shuffle } from '../rng.js';
+import { placeDealt, readDealt } from './deal.js';
+import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
+import { PACKS_RULE, packPoolAndCount, packsIn } from './packs.js';
 
 /** Restarts allowed before a board is refused. PACKS's argument. */
 const CONGO_ATTEMPTS = 60;
@@ -436,3 +439,64 @@ export function congoFault(
   }
   return null;
 }
+
+/**
+ * The congo rule's requirements: PACKS's, plus a plain square board. A line is defined by
+ * orthogonal steps, which hex does not have, and a wrapped seam would let a line step off one edge
+ * and on at the other: legal to `neighbours()`, invisible as a line on screen, and a case the
+ * "no 2x2" proof would have to be re-argued for. Refused rather than half-supported.
+ */
+function validateCongo(row: PlacementRow): void {
+  const where = boardName(row);
+  if (row.topology === 'hex' || (row.wrap && row.wrap !== 'none')) {
+    throw new Error(
+      `${where}: congo lines step orthogonally, so they need an unwrapped square board`,
+    );
+  }
+  if (packsIn(row.tiers, row.quantity) === null) {
+    throw new Error(
+      `${where}: quantity [${row.quantity.join(',')}] is not a whole number of lines — ` +
+        `a line is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
+    );
+  }
+  const share = row.monsters / row.cells;
+  if (share > CONGO_MAX_DENSITY) {
+    throw new Error(
+      `${where}: ${row.monsters} creatures on ${row.cells} cells is ` +
+        `${(100 * share).toFixed(1)}%, past the ${(100 * CONGO_MAX_DENSITY).toFixed(0)}% ` +
+        `non-touching lines can be laid down reliably`,
+    );
+  }
+}
+
+/** Lines come back leader first, so the deal can put the strongest tier at the front. */
+function dealCongo(d: Deal): void {
+  const { cfg } = d;
+  const { pool, count } = packPoolAndCount(d);
+  const near = (flat: number) => d.neighboursOf(flat);
+  const lines = chooseLines(pool, near, cfg.width, cfg.height, count, cfg.tiers, d.rng);
+  placeDealt(d, dealLines(lines, cfg.tiers, d.rng));
+}
+
+export const CONGO_RULE: PlacementRule = {
+  id: 'congo',
+  validate: validateCongo,
+  opening: 'auto',
+  deal: dealCongo,
+  // A congo line is a pack, so every pack reading holds; the line's shape adds `emptied`.
+  coveredCanBeEmpty: PACKS_RULE.coveredCanBeEmpty,
+  candidates: PACKS_RULE.candidates,
+  guessFree: PACKS_RULE.guessFree,
+  cap: PACKS_RULE.cap,
+  ringProof: PACKS_RULE.ringProof,
+  emptied: (view) => congoClear(view.grid, view.config.tiers),
+  // Two open creatures side by side are consecutive in their line, so they are tied; a diagonal
+  // is where a line turns a corner, and is not.
+  display: { ...PACKS_RULE.display, bonds: 'orthogonal' },
+  pools: PACKS_RULE.pools,
+  groups: PACKS_RULE.groups,
+  fault: (grid, cfg) => {
+    const { tierAt, neighboursOf } = readDealt(grid, cfg);
+    return congoFault(tierAt, neighboursOf, cfg.width, cfg.height, cfg.tiers);
+  },
+};

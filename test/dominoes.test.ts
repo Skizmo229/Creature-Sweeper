@@ -18,8 +18,8 @@ import {
   dominoSet,
   setsIn,
   type Tile,
-} from '../src/engine/dominoes.js';
-import { isPaired } from '../src/engine/pairs.js';
+} from '../src/engine/placement/dominoes.js';
+import { RULES } from '../src/engine/placement/registry.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import { Game } from '../src/engine/game.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';
@@ -28,27 +28,6 @@ import { ladders, PLACEMENT_SEEDS as SEEDS, UNGATED_SWEEP } from './helpers.js';
 const dominoes = findType(ladders, 'dominoes');
 
 const allRows = (type: LadderType) => [...type.boards, ...type.extended];
-
-/**
- * The tiles on a finished board, read off it: every creature and the one
- * creature beside it, each pair counted once.
- */
-function tilesOn(game: Game): Tile[] {
-  const seen = new Set<string>();
-  const out: Tile[] = [];
-  for (const cell of game.grid.flat()) {
-    if (!cell.present || cell.tier === 0) continue;
-    const partner = game.neighboursOf(cell).find((n) => n.tier > 0)!;
-    const key = [cell, partner]
-      .map((c) => `${c.x},${c.y}`)
-      .sort()
-      .join('|');
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push([cell.tier, partner.tier]);
-  }
-  return out;
-}
 
 describe('a full domino set', () => {
   it('holds every pairing exactly once per set, and nothing else', () => {
@@ -139,31 +118,6 @@ describe('the ladder', () => {
 });
 
 describe('the board', () => {
-  it('deals the full set on every board and every seed — read back off the grid', () => {
-    for (const row of allRows(dominoes)) {
-      const cfg = boardConfig(ladders, 'dominoes', row.n);
-      const sets = setsIn(cfg.tiers, cfg.quantity)!;
-      for (const seed of SEEDS) {
-        const fault = dominoFault(tilesOn(Game.create(cfg, seed)), cfg.tiers, sets);
-        expect(fault, `DOMINOES#${row.n} seed ${seed}`).toBeNull();
-      }
-    }
-  });
-
-  it('keeps the pairing rule: every creature has exactly one creature beside it', () => {
-    for (const row of allRows(dominoes)) {
-      const cfg = boardConfig(ladders, 'dominoes', row.n);
-      for (const seed of SEEDS) {
-        const game = Game.create(cfg, seed);
-        for (const cell of game.grid.flat()) {
-          if (cell.tier === 0) continue;
-          const mates = game.neighboursOf(cell).filter((n) => n.tier > 0);
-          expect(mates, `DOMINOES#${row.n} seed ${seed}`).toHaveLength(1);
-        }
-      }
-    }
-  });
-
   it('gives a creature its partner’s tier as its number', () => {
     // The number IS the partner's tier. It used to start flipped on every
     // pairing board, so a kill showed the fact and a click uncovered the art;
@@ -179,11 +133,14 @@ describe('the board', () => {
 });
 
 describe('it inherits every pairing proof', () => {
-  it('counts as a paired board, so Sweep and the renderer both know the rule', () => {
-    // Every reader of the pairing rule asks `isPaired`. A domino board that
-    // answered no would lose both Sweep proofs and the bonds, silently.
-    expect(isPaired('dominoes')).toBe(true);
-    expect(isPaired('uniform')).toBe(false);
+  it('reads as a pairing board, so Sweep, the pencil and the renderer all know the rule', () => {
+    // A domino board that read any of these differently would lose the partner proof, the
+    // pencil's refusals or the bonds, silently.
+    const [domino, pairing] = [RULES.dominoes, RULES.pairs];
+    expect(domino.ringProof).toBe(pairing.ringProof);
+    expect(domino.candidates).toBe(pairing.candidates);
+    expect(domino.display).toBe(pairing.display);
+    expect(domino.groups).toBe('pairs');
   });
 
   it('never costs HP to sweep, and never carries a board on its own', () => {

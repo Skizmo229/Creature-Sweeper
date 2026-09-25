@@ -4,11 +4,9 @@
  * handed, so no painter reaches into the view.
  */
 
-import { shadeOf } from '../../engine/checker.js';
 import type { Game } from '../../engine/game.js';
 import { hasNote } from '../../engine/notes.js';
-import { isPaired } from '../../engine/pairs.js';
-import { SUDOKU_BOX } from '../../engine/sudoku.js';
+import { placementRule } from '../../engine/placement/registry.js';
 import type { Cell } from '../../engine/types.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
 import {
@@ -57,19 +55,12 @@ export function tracePath(p: Paint, cx: number, cy: number, inset = 1): void {
 }
 
 /**
- * Alternate 3x3 boxes get a wash, so the boxes read at a glance: on a Sudoku board the box is a
- * constraint as real as the row and the column, but unlike them it has no edge to give it away.
- * A checkerboard has to LOOK like one for the same reason; the light squares are the washed ones,
- * which is also the half that holds the even tiers. A translucent wash rather than a second set of
- * colours, so it derives from whichever theme is in play and lands identically on tile and floor.
+ * The placement rule's wash (Sudoku's alternate boxes, the checkerboard's light squares). A
+ * translucent wash rather than a second set of colours, so it derives from whichever theme is in
+ * play and lands identically on tile and floor.
  */
 function washesCell(game: Game, cell: Cell): boolean {
-  const placement = game.config.placement;
-  if (placement === 'checker') return shadeOf(cell) === 'light';
-  if (placement !== 'sudoku') return false;
-  const bx = Math.floor(cell.x / SUDOKU_BOX);
-  const by = Math.floor(cell.y / SUDOKU_BOX);
-  return (bx + by) % 2 === 1;
+  return placementRule(game.config.placement).display.washes(cell);
 }
 
 /** The wash itself, over a path the caller has already traced. */
@@ -179,7 +170,7 @@ export function drawOpen(p: Paint, cell: Cell, cx: number, cy: number): void {
     !cell.alive &&
     cell === p.hovered &&
     !p.creaturesHidden &&
-    !isPaired(game.config.placement);
+    placementRule(game.config.placement).display.hoverShowsNumber;
 
   if (cell.tier > 0 && !hoverNumber) {
     if (p.creaturesHidden) return;

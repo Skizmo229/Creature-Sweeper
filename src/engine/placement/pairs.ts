@@ -56,25 +56,19 @@
  * number or refuse the board.
  */
 
-import type { Cell, Placement } from './types.js';
-import { noteBit } from './notes.js';
-import { type Rng, randInt, shuffle } from './rng.js';
-
-/**
- * Does the pairing rule hold on a board with this placement?
- *
- * The one question every reader of the rule has to ask — the generator, both
- * of Sweep's proofs, the honest player in `sim:spells`, and the renderer's
- * bonds — and the reason it is asked HERE rather than spelled out at each of
- * them. DOMINOES is PAIRS with a different deal, so it inherits every one of
- * those, and each site that tested `=== 'pairs'` directly was a place that
- * would have quietly handed a domino board none of the mode's deduction. That
- * is the "anything classifying ladders by X" failure this codebase has already
- * met twice, so it gets one answer instead of five.
- */
-export function isPaired(placement: Placement): boolean {
-  return placement === 'pairs' || placement === 'dominoes';
-}
+import type { Cell } from '../types.js';
+import { noteBit } from '../notes.js';
+import { type Rng, randInt, shuffle } from '../rng.js';
+import { ONE_POOL, readDealt, shapeLeftTooFew, shuffledPool, takeInOrder } from './deal.js';
+import {
+  type Deal,
+  NOTHING_EMPTIED,
+  PLAIN_DISPLAY,
+  type PlacementRow,
+  type PlacementRule,
+  WHOLE_SUM,
+  boardName,
+} from './rule.js';
 
 /**
  * Restarts allowed before a board is refused.
@@ -101,7 +95,7 @@ const PAIR_ATTEMPTS = 60;
  * HERE, at the config boundary with the arithmetic in the message, rather than
  * as an occasional seed that cannot be placed.
  */
-export const PAIR_MAX_DENSITY = 0.26;
+const PAIR_MAX_DENSITY = 0.26;
 
 /**
  * Lay down `total / 2` dominoes among `candidates`, no two touching.
@@ -225,10 +219,7 @@ export function ringIsFree(cell: Cell, ns: readonly Cell[], level: number): bool
  * `test/pairs.test.ts` checks that on every covered cell of real boards played
  * part-way.
  */
-export function pairCandidates(
-  cell: Cell,
-  neighboursOf: (c: Cell) => readonly Cell[],
-): number | null {
+function pairCandidates(cell: Cell, neighboursOf: (c: Cell) => readonly Cell[]): number | null {
   const mates = neighboursOf(cell).filter((n) => n.open && n.tier > 0);
   if (mates.length === 0) return null;
   if (mates.length > 1) return noteBit(0);
@@ -260,3 +251,72 @@ export function pairingFault(
   }
   return null;
 }
+
+/**
+ * The pairing rule's structural requirements. An even total, because every creature has exactly
+ * one partner; it is the only constraint pairing puts on `quantity`, and `ladders.py` rounds its
+ * quota down to meet it. And a density the packing can reach, against the cells a creature may
+ * stand on: the quota has to land exactly because C_k assumed it, so a schedule asking for too
+ * many would not make a hard board, it would make one that fails on some seeds and is mistuned on
+ * the rest.
+ */
+function validatePairs(row: PlacementRow): void {
+  const where = boardName(row);
+  const total = row.quantity.reduce((a, b) => a + b, 0);
+  if (total % 2 !== 0) {
+    throw new Error(
+      `${where}: ${total} creatures cannot pair up — every creature has ` +
+        `exactly one partner, so the total must be even`,
+    );
+  }
+  const share = total / row.cells;
+  if (share > PAIR_MAX_DENSITY) {
+    throw new Error(
+      `${where}: ${total} creatures on ${row.cells} cells is ` +
+        `${(100 * share).toFixed(1)}%, past the ${(100 * PAIR_MAX_DENSITY).toFixed(0)}% ` +
+        `a non-touching domino packing can be laid down reliably`,
+    );
+  }
+}
+
+/**
+ * Lay the dominoes for the whole quota, as `choosePairs` returns them: partner-adjacent, so cells
+ * `2i` and `2i + 1` are one domino.
+ */
+export function layPairs(d: Deal): number[] {
+  const total = d.cfg.quantity.reduce((a, b) => a + b, 0);
+  return choosePairs(shuffledPool(d), (flat) => d.neighboursOf(flat), total, d.rng);
+}
+
+/**
+ * Where before what: the dominoes are laid first and the ordinary shuffle-and-take deals into
+ * exactly their cells, so the rule never learns what a tier is, which is what keeps it clear of
+ * C_k. The second shuffle matters: pairs come back partner-adjacent, and dealing straight off them
+ * would put tier 1 on the pairs that happened to be placed first.
+ */
+function dealPairs(d: Deal): void {
+  const cells = shuffle(layPairs(d), d.rng);
+  takeInOrder(d, new Map([['any', cells]]), ONE_POOL.forTier, shapeLeftTooFew(d.cfg));
+}
+
+export const PAIRS_RULE: PlacementRule = {
+  id: 'pairs',
+  validate: validatePairs,
+  opening: 'auto',
+  deal: dealPairs,
+  coveredCanBeEmpty: true,
+  candidates: (cell, view) => pairCandidates(cell, (c) => view.neighboursOf(c)),
+  guessFree: false,
+  cap: WHOLE_SUM,
+  ringProof: (_view, level) => (cell, ring) => ringIsFree(cell, ring, level),
+  emptied: NOTHING_EMPTIED,
+  // A beaten creature's number is its partner's tier, and hovering does not show it, by request:
+  // a lone digit read as the creature's own level. Sweep and the pencil still read it.
+  display: { ...PLAIN_DISPLAY, bonds: 'every', hoverShowsNumber: false },
+  pools: ONE_POOL,
+  groups: 'pairs',
+  fault: (grid, cfg) => {
+    const { tierAt, neighboursOf } = readDealt(grid, cfg);
+    return pairingFault([...tierAt.keys()], neighboursOf);
+  },
+};

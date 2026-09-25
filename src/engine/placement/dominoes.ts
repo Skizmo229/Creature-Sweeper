@@ -42,7 +42,12 @@
  * is the one thing it cannot have. Tiers 1..T only.
  */
 
-import { type Rng, randInt, shuffle } from './rng.js';
+import { type Rng, randInt, shuffle } from '../rng.js';
+import type { BoardConfig } from '../types.js';
+import type { Grid } from '../grid.js';
+import { placeDealt, readDealt } from './deal.js';
+import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
+import { PAIRS_RULE, layPairs } from './pairs.js';
 
 /** One tile: two tiers, in no particular order. */
 export type Tile = readonly [number, number];
@@ -176,3 +181,72 @@ export function dominoFault(
   }
   return null;
 }
+
+/**
+ * The domino rule's structural requirements: everything PAIRS requires, checked by the pairing
+ * rule itself so the two cannot drift, plus the set. `quantity` must be exactly a whole number of
+ * double-T sets, flat at T+1 of each tier per set; a quantity merely close to one would generate
+ * and be tuned correctly, and would not be the mode, because the dealer could not lay a full set.
+ */
+function validateDominoes(row: PlacementRow): void {
+  if (setsIn(row.tiers, row.quantity) === null) {
+    const per = row.tiers + 1;
+    throw new Error(
+      `${boardName(row)}: quantity [${row.quantity.join(',')}] is not a whole number of ` +
+        `double-${row.tiers} domino sets — a set is ${per} of every tier, so the ` +
+        `quantity has to be flat and a multiple of ${per}`,
+    );
+  }
+  PAIRS_RULE.validate(row);
+}
+
+/**
+ * Tiles, not tiers: the pair order `layPairs` returns must survive, because the two ends of a tile
+ * have to land on the two halves of one domino. So this writes the tiers itself rather than
+ * handing the cells to the shuffle-and-take, which would scatter the pairs.
+ */
+function dealDominoes(d: Deal): void {
+  const { cfg } = d;
+  const pairs = layPairs(d);
+  const sets = setsIn(cfg.tiers, cfg.quantity);
+  if (sets === null) {
+    throw new Error(
+      `board ${cfg.typeId}#${cfg.board}: quantity [${cfg.quantity.join(',')}] is not ` +
+        `a whole number of double-${cfg.tiers} domino sets`,
+    );
+  }
+  placeDealt(d, dealTiles(pairs, cfg.tiers, sets, d.rng));
+}
+
+/** The pairing rule, then the set: the tiles read back off the grid are exactly the board's sets. */
+function dominoBoardFault(grid: Grid, cfg: BoardConfig): string | null {
+  const paired = PAIRS_RULE.fault(grid, cfg);
+  if (paired !== null) return paired;
+  const sets = setsIn(cfg.tiers, cfg.quantity);
+  if (sets === null) return `quantity [${cfg.quantity.join(',')}] is not a whole number of sets`;
+  const { tierAt, neighboursOf } = readDealt(grid, cfg);
+  const tiles: Tile[] = [];
+  for (const [flat, tier] of tierAt) {
+    const partner = neighboursOf(flat).find((n) => tierAt.has(n))!;
+    if (flat < partner) tiles.push([tier, tierAt.get(partner)!]);
+  }
+  return dominoFault(tiles, cfg.tiers, sets);
+}
+
+export const DOMINOES_RULE: PlacementRule = {
+  id: 'dominoes',
+  validate: validateDominoes,
+  opening: 'auto',
+  deal: dealDominoes,
+  // A domino board is a pairing board: everything the pairing rule reads, it reads here.
+  coveredCanBeEmpty: PAIRS_RULE.coveredCanBeEmpty,
+  candidates: PAIRS_RULE.candidates,
+  guessFree: PAIRS_RULE.guessFree,
+  cap: PAIRS_RULE.cap,
+  ringProof: PAIRS_RULE.ringProof,
+  emptied: PAIRS_RULE.emptied,
+  display: PAIRS_RULE.display,
+  pools: PAIRS_RULE.pools,
+  groups: PAIRS_RULE.groups,
+  fault: dominoBoardFault,
+};
