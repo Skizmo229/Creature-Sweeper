@@ -9,14 +9,14 @@ import type { GameEvent } from '../../engine/types.js';
 import { el } from '../dom.js';
 import { flashRim } from '../game/flash.js';
 import { PREVIEW_SEED, clearedBoard } from '../preview.js';
-import { DEFAULT, type FightRim, OFF } from '../settings.js';
+import { DEFAULT, type FightRim, MAX_SFX_VOLUME, OFF } from '../settings.js';
 import { SFX_NAMES, VICTORY_NAMES } from '../theme.js';
 import { type SfxPackId, type VictoryId } from '../looks.js';
 import { playVictory } from '../victory/play.js';
 import { type ScreenContext, typeName } from './context.js';
 import { DEMO_CELL, renderPreview } from './render.js';
 import { openSoundCheck } from './soundcheck.js';
-import { type Choice, gallery, row, toggle, wideRow } from './widgets.js';
+import { type Choice, gallery, row, slider, toggle, wideRow } from './widgets.js';
 
 /**
  * The board-clear demo currently running, if any. Module-level because a screen rebuild throws
@@ -71,6 +71,22 @@ export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
       'Picking one plays it. Sound check plays any sound from any pack, and keys can be ' +
       'assigned to sounds there.',
     stack,
+  );
+  row(
+    host,
+    'Sound effects volume',
+    slider(
+      0,
+      MAX_SFX_VOLUME,
+      0.05,
+      p.sfxVolume,
+      (v) => `${Math.round(v * 100)}%`,
+      (v) => settings.setPresentation({ sfxVolume: v }),
+      // Heard on release rather than a sound per step of the drag.
+      () => ctx.onPreview('levelup'),
+    ),
+    'How loud every sound in play is. Letting go of the slider plays a sound at the new level. ' +
+      'The sound check keeps a volume of its own.',
   );
   // Updates only the store, like the sound gallery: nothing on the screen is drawn in terms of it.
   row(

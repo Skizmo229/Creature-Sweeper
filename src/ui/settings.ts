@@ -124,6 +124,12 @@ export interface SoundCheckSettings {
 /** Loud enough to hear a quiet sound clearly, short of drowning the room. */
 export const MAX_SOUND_CHECK_VOLUME = 3;
 
+/**
+ * The game's sounds top out at the level every pack was voiced at: the mixer already leaves
+ * headroom for a sweep's overlapping voices, and a louder setting would spend it.
+ */
+export const MAX_SFX_VOLUME = 1;
+
 export interface PresentationSettings {
   readonly icons: IconChoice;
   readonly palette: PaletteChoice;
@@ -135,6 +141,11 @@ export interface PresentationSettings {
    */
   readonly interfaceFont: FontChoice;
   readonly sfx: SfxChoice;
+  /**
+   * How loud the game's sounds are, as a multiple of each pack's own level. The sound check
+   * has a volume of its own and does not follow this one.
+   */
+  readonly sfxVolume: number;
   readonly victory: VictoryChoice;
   readonly highlight: HighlightChoice;
   /**
@@ -178,6 +189,7 @@ const DEFAULT_PRESENTATION: PresentationSettings = {
   font: DEFAULT,
   interfaceFont: DEFAULT,
   sfx: DEFAULT,
+  sfxVolume: MAX_SFX_VOLUME,
   victory: DEFAULT,
   highlight: DEFAULT,
   strikeDefeated: true,
@@ -266,6 +278,8 @@ function readPresentation(raw: unknown): PresentationSettings {
     // interface both, so it reads as that font here too (decision 0033).
     interfaceFont: migrateFontChoice(str('interfaceFont', font)) as FontChoice,
     sfx: str('sfx', DEFAULT) as SfxChoice,
+    // A save from before this setting reads as full volume, the only level the game had.
+    sfxVolume: num(p.sfxVolume, 0, MAX_SFX_VOLUME, MAX_SFX_VOLUME),
     victory: str('victory', DEFAULT) as VictoryChoice,
     highlight: str('highlight', DEFAULT) as HighlightChoice,
     strikeDefeated: typeof p.strikeDefeated === 'boolean' ? p.strikeDefeated : true,

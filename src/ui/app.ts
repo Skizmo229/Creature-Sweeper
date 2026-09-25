@@ -130,8 +130,9 @@ export class App {
     // A percentage, so it multiplies the browser's own text size rather than replacing it.
     document.documentElement.style.fontSize = `${this.settings.presentation.textSize * 100}%`;
     this.sfx.setPack(this.settings.sfxPack(this.typeId));
-    const { customPitches, soundCheck } = this.settings.presentation;
+    const { customPitches, soundCheck, sfxVolume } = this.settings.presentation;
     this.sfx.setPitches(customPitches ? soundCheck.pitches : {});
+    this.sfx.setVolume(sfxVolume);
     this.view?.setDisplay(this.settings.themeFor(this.typeId), this.boardDisplay());
     this.syncMuteButton();
   }

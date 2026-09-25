@@ -193,6 +193,8 @@ export class Sfx {
   private pack: SfxPackId | null = null;
   /** Sounds retuned in the sound check, by `sfxSoundId`, when they are to be heard in play. */
   private pitches: Readonly<Record<string, number>> = {};
+  /** The game's volume, scaling every sound `play` makes; `audition` is given its own. */
+  private volume = 1;
   private readonly lastAt = new Map<SfxEvent, number>();
   /** Set once anything throws, so a broken audio stack is not retried on
    *  every click for the rest of the session. */
@@ -206,6 +208,11 @@ export class Sfx {
   /** Play these sounds at these notes (MIDI numbers), or pass `{}` for every sound's own. */
   setPitches(pitches: Readonly<Record<string, number>>): void {
     this.pitches = pitches;
+  }
+
+  /** Scale every sound the game plays, 0 for silent. */
+  setVolume(volume: number): void {
+    this.volume = volume;
   }
 
   get enabled(): boolean {
@@ -225,7 +232,8 @@ export class Sfx {
     if (now - last < THROTTLE_MS) return;
     this.lastAt.set(event, now);
     const pack = this.pack!;
-    this.sound(pack, event, sfxRatio(pack, event, this.pitches[sfxSoundId(pack, event)]));
+    const ratio = sfxRatio(pack, event, this.pitches[sfxSoundId(pack, event)]);
+    this.sound(pack, event, ratio, this.volume);
   }
 
   /**
