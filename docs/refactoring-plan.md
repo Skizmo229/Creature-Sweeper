@@ -52,6 +52,13 @@ past behaviour are down from 28 to none: each now says what is true and names th
 holds the history, with decision 0032 new for the palette changes. The rest of phase 4 continues
 as files are touched.
 
+Phase 5 done on branch `m3-5-test-hygiene`: unit tests for Sweep's proofs (`sweep.test.ts`), the
+crawl rule's geometry (`reach.test.ts`) and the entry modes (`entry-mode.test.ts`), each checked
+against deliberate faults; the spells already had one block each in `spells.test.ts`. The smoke
+test covers Escape and the Full Run guard, and pins the walkthrough's still-live Escape finding
+with three `it.fails` tests. `design/test_ladders.py` gives the generator tests of its own, run by
+CI. The hand-built board fixtures three files each kept a copy of are in `test/helpers.ts`.
+
 ---
 
 ## 1. The short version

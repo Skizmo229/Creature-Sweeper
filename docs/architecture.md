@@ -66,10 +66,12 @@ src/ui/         the prototype
 src/sim/        headless measurement, all driving the real engine (see docs/tuning.md)
 src/data.ts     Node-only loader for ladders.json; CS_LADDERS points it at a candidate file
 src/main.ts     browser entry; window.cs in dev
-test/           vitest; test/helpers.ts holds the shared fixtures; test/golden/ the sim
-                fingerprints; test/ui/ the browser-environment smoke test (happy-dom)
+test/           vitest; test/helpers.ts holds the shared fixtures (the ladder data, the seeds,
+                hand-built boards); test/golden/ the sim fingerprints; test/ui/ the
+                browser-environment smoke test (happy-dom)
 scripts/        golden.mjs (the golden harness), package.mjs (the itch.io zip)
-design/         ladders.py (the generator), data/ (its output), the design reference page
+design/         ladders.py (the generator) and test_ladders.py (its own tests, `npm run test:py`),
+                data/ (its output), the design reference page
 docs/           this folder
 ```
 
