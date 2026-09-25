@@ -267,8 +267,8 @@ export class App {
         tiers: this.previewTiers(),
         onBack: back,
         onPreview: (event) => this.sfx.play(event),
-        onAudition: (pack, event, ratio) => {
-          if (!this.settings.presentation.muted) this.sfx.audition(pack, event, ratio);
+        onAudition: (pack, event, ratio, volume) => {
+          if (!this.settings.presentation.muted) this.sfx.audition(pack, event, ratio, volume);
         },
       }),
     );

@@ -143,6 +143,8 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   and never heard in play. Clicking the keyboard hands the computer's keys to it (A to K the white
   keys, the row above the black, Z and X the octave); Shift pressed and released alone swaps
   between that and the assigned keys, and Escape steps back one mode before it closes the window.
+  Its volume slider (0 to 300% of each sound's level) is passed to `Sfx.audition` alone, so the
+  game's own sounds never hear it. Note names are green, apart from the ladder's accent.
 - Two families of clear effect: ambient (confetti, burst, ripple, sparkle) and icon (tumble,
   cascade, pop, burn, three wipes). Icon effects take the board's glyphs (`VictorySource`),
   pre-rendered per tier into an atlas at twice the cell size, and the board stops drawing them

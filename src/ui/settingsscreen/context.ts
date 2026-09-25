@@ -32,10 +32,10 @@ export interface SettingsScreenOptions {
   /** Play a sound so a pack can be heard while it is being chosen. */
   onPreview: (event: SfxEvent) => void;
   /**
-   * Play one event from a given pack, for the sound check, transposed by `ratio`; silent while
-   * muted.
+   * Play one event from a given pack, for the sound check, transposed by `ratio` and scaled by
+   * `volume`; silent while muted.
    */
-  onAudition: (pack: SfxPackId, event: SfxEvent, ratio?: number) => void;
+  onAudition: (pack: SfxPackId, event: SfxEvent, ratio?: number, volume?: number) => void;
 }
 
 /** A visual patch to the presentation settings. */
@@ -46,7 +46,7 @@ export interface ScreenContext {
   readonly typeId: string;
   readonly tiers: number;
   readonly onPreview: (event: SfxEvent) => void;
-  readonly onAudition: (pack: SfxPackId, event: SfxEvent, ratio?: number) => void;
+  readonly onAudition: (pack: SfxPackId, event: SfxEvent, ratio?: number, volume?: number) => void;
   /** The screen element: sections append to it, and the picker overlay lives inside it. */
   readonly host: HTMLElement;
   /** The presentation settings as saved. */

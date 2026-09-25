@@ -164,6 +164,9 @@ export function sfxPitch(pack: SfxPackId, event: SfxEvent): number {
  */
 const THROTTLE_MS = 45;
 
+/** The gain an envelope starts and ends at: an exponential ramp cannot reach zero. */
+const SILENT = 0.0001;
+
 export class Sfx {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
@@ -202,13 +205,13 @@ export class Sfx {
    * sound check, where every press is one deliberate sound. Silence is still
    * the caller's to decide, since the pack being off is no reason not to
    * audition one. `ratio` transposes every voice by the same factor, so a
-   * sound keeps its shape at any pitch.
+   * sound keeps its shape at any pitch; `volume` scales every voice's peak.
    */
-  audition(pack: SfxPackId, event: SfxEvent, ratio = 1): void {
-    if (!this.dead) this.sound(pack, event, ratio);
+  audition(pack: SfxPackId, event: SfxEvent, ratio = 1, volume = 1): void {
+    if (!this.dead) this.sound(pack, event, ratio, volume);
   }
 
-  private sound(pack: SfxPackId, event: SfxEvent, ratio = 1): void {
+  private sound(pack: SfxPackId, event: SfxEvent, ratio = 1, volume = 1): void {
     try {
       const ctx = this.context();
       if (!ctx || !this.master) return;
@@ -216,14 +219,17 @@ export class Sfx {
       // was backgrounded can suspend it again later.
       if (ctx.state === 'suspended') void ctx.resume();
 
-      for (const v of PACKS[pack][event]) this.voice(ctx, this.master, v, ratio);
+      for (const v of PACKS[pack][event]) this.voice(ctx, this.master, v, ratio, volume);
     } catch {
       this.dead = true;
     }
   }
 
   /** A single oscillator with an attack/decay envelope. */
-  private voice(ctx: AudioContext, out: GainNode, v: Voice, ratio: number): void {
+  private voice(ctx: AudioContext, out: GainNode, v: Voice, ratio: number, volume: number): void {
+    const peak = v.gain * volume;
+    // The envelope ramps from and to SILENT, and a peak at or below it has nothing to ramp to.
+    if (peak <= SILENT) return;
     const at = ctx.currentTime + (v.delay ?? 0);
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -237,9 +243,9 @@ export class Sfx {
     // clicks audibly, and with a click per opened cell that is the loudest
     // thing in the mix.
     const attack = Math.min(0.012, v.dur / 3);
-    gain.gain.setValueAtTime(0.0001, at);
-    gain.gain.exponentialRampToValueAtTime(v.gain, at + attack);
-    gain.gain.exponentialRampToValueAtTime(0.0001, at + v.dur);
+    gain.gain.setValueAtTime(SILENT, at);
+    gain.gain.exponentialRampToValueAtTime(peak, at + attack);
+    gain.gain.exponentialRampToValueAtTime(SILENT, at + v.dur);
 
     osc.connect(gain);
     gain.connect(out);

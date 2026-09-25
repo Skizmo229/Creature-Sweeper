@@ -1206,6 +1206,19 @@ button.soundcheck-open {
   font-size: 0.78rem;
   color: var(--tint);
 }
+.soundcheck-volume {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  flex: 0 1 260px;
+}
+.soundcheck-volume .settings-slider {
+  flex: 1;
+}
+.soundcheck-volume .settings-value {
+  min-width: 5ch;
+}
 .soundcheck-pack {
   margin: 14px 0 6px;
   font-size: 0.85rem;
@@ -1301,10 +1314,16 @@ button.piano-key.black {
   background: #1b1b18;
   border-color: #1b1b18;
 }
+/* Note names are green wherever they appear, apart from the ladder's accent
+   that the keys and states wear: dark on the ivory keys, light on the panel. */
 .piano-label {
   font-size: 0.55rem;
-  color: #3a3a33;
+  font-weight: 700;
+  color: #1d7a3a;
   pointer-events: none;
+}
+.soundcheck-note {
+  color: #5fd37b;
 }
 /* The sound's own pitch wears a dot; the chosen one lights up. */
 button.piano-key.own::after {

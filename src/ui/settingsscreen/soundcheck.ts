@@ -17,6 +17,7 @@ import { type SfxEvent, sfxPitch } from '../sfx.js';
 import { SFX_EVENT_NAMES, SFX_NAMES } from '../theme.js';
 import type { ScreenContext } from './context.js';
 import { type PianoRoll, nearestNote, noteHz, noteName, pianoRoll } from './pianoroll.js';
+import { slider } from './widgets.js';
 
 interface Sound {
   pack: SfxPackId;
@@ -30,6 +31,14 @@ interface Sound {
  */
 const keys = new Map<string, Sound>();
 const pitches = new Map<string, number>();
+
+/**
+ * The sound check's own volume, as a multiple of each sound's level in play, kept like the keys.
+ * It scales only what the sound check plays; the game's sounds never see it.
+ */
+let volume = 1;
+/** Loud enough to hear a quiet sound clearly, short of drowning the room. */
+const MAX_VOLUME = 3;
 
 /**
  * Keys that keep their own job in the window: Escape closes it, Tab moves the focus, Shift swaps
@@ -208,18 +217,25 @@ interface PitchPanel {
 }
 
 /** The keyboard under a line naming the sound it tunes, with a way back to its own pitch. */
-function pitchPanel(onPick: (note: number) => void, onReset: () => void): PitchPanel {
+function pitchPanel(
+  onPick: (note: number) => void,
+  onReset: () => void,
+  onClearAll: () => void,
+): PitchPanel {
   const element = el('div', 'soundcheck-pitch');
   const head = el('div', 'soundcheck-tools');
   const label = el('span', 'soundcheck-status');
   const reset = el('button', 'ghost small', 'Own pitch');
   reset.addEventListener('click', onReset);
-  head.append(el('h3', 'soundcheck-pack', 'Pitch'), label, reset);
+  const clearAll = el('button', 'ghost small', 'Clear custom pitches');
+  clearAll.addEventListener('click', onClearAll);
+  head.append(el('h3', 'soundcheck-pack', 'Pitch'), label, reset, clearAll);
   const roll = pianoRoll(onPick);
   element.append(head, roll.element);
 
   const show = (s: Sound | null, letters?: Map<number, string>): void => {
     element.classList.toggle('playing', letters !== undefined);
+    clearAll.disabled = pitches.size === 0;
     if (!s) {
       label.textContent = 'Click a sound to tune it.';
       reset.disabled = true;
@@ -281,12 +297,34 @@ class SoundCheck {
     this.overlay = overlay;
     const tools = el('div', 'soundcheck-tools');
     this.status.setAttribute('aria-live', 'polite');
-    tools.append(this.assignBtn, this.clearBtn, this.status);
+    const loudness = el('div', 'soundcheck-volume');
+    loudness.append(
+      el('span', undefined, 'Volume'),
+      slider(
+        0,
+        MAX_VOLUME,
+        0.05,
+        volume,
+        (v) => `${Math.round(v * 100)}%`,
+        (v) => {
+          volume = v;
+        },
+        // On release, so the new level can be heard without a sound per step of the drag.
+        () => {
+          if (this.tuning) this.play(this.tuning);
+        },
+      ),
+    );
+    tools.append(this.assignBtn, this.clearBtn, loudness, this.status);
 
     ({ grid: this.grid, buttons: this.buttons } = soundGrid((s) => this.clickSound(s)));
     this.pitch = pitchPanel(
       (note) => this.clickKey(note),
       () => this.retune(null),
+      () => {
+        pitches.clear();
+        this.sync();
+      },
     );
     this.piano = pianoInput(this.pitch.roll, (note) => {
       if (this.tuning) this.play(this.tuning, note);
@@ -317,7 +355,7 @@ class SoundCheck {
   }
 
   private play(s: Sound, note = pitches.get(soundId(s))): void {
-    this.ctx.onAudition(s.pack, s.event, ratioFor(s, note));
+    this.ctx.onAudition(s.pack, s.event, ratioFor(s, note), volume);
   }
 
   private clickSound(sound: Sound): void {
@@ -359,7 +397,11 @@ class SoundCheck {
     for (const { sound, btn, badge } of this.buttons) {
       const bound = [...keys].filter(([, s]) => same(s, sound)).map(([k]) => keyName(k));
       const note = pitches.get(soundId(sound));
-      badge.textContent = [...bound, ...(note === undefined ? [] : [noteName(note)])].join(' · ');
+      // The note in a colour of its own, so it reads apart from the keys at a glance.
+      badge.replaceChildren(bound.join(' '));
+      if (note !== undefined) {
+        badge.append(bound.length > 0 ? ' · ' : '', el('span', 'soundcheck-note', noteName(note)));
+      }
       btn.classList.toggle('picking', assign.step === 'key' && same(assign.sound, sound));
       btn.classList.toggle('tuning', tuning !== null && same(tuning, sound));
     }
