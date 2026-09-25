@@ -14,10 +14,10 @@
 import { el } from '../dom.js';
 import type { SfxPackId } from '../looks.js';
 import type { Settings } from '../settings.js';
-import { type SfxEvent, sfxPitch, sfxSoundId } from '../sfx.js';
+import { type SfxEvent, sfxPitch, sfxRatio, sfxSoundId } from '../sfx.js';
 import { SFX_EVENT_NAMES, SFX_NAMES } from '../theme.js';
 import type { ScreenContext } from './context.js';
-import { type PianoRoll, nearestNote, noteHz, noteName, pianoRoll } from './pianoroll.js';
+import { type PianoRoll, nearestNote, noteName, pianoRoll } from './pianoroll.js';
 import { slider } from './widgets.js';
 
 interface Sound {
@@ -119,14 +119,9 @@ const soundName = (s: Sound): string =>
 /** The key nearest where a sound starts as the game plays it. */
 const ownNote = (s: Sound): number => nearestNote(sfxPitch(s.pack, s.event));
 
-/**
- * The factor that moves a sound's first voice onto a note, by default the one it is tuned to.
- * Every voice is moved by the same factor, so a two-note sting stays the same interval and a
- * slide keeps its shape.
- */
-function ratioFor(s: Sound, note = pitches.get(soundId(s))): number {
-  return note === undefined ? 1 : noteHz(note) / sfxPitch(s.pack, s.event);
-}
+/** The factor that moves a sound onto a note, by default the one it is tuned to. */
+const ratioFor = (s: Sound, note = pitches.get(soundId(s))): number =>
+  sfxRatio(s.pack, s.event, note);
 
 /**
  * Assigning is two steps, a sound and then a key, and the state says which one the window is

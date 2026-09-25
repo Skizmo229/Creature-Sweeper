@@ -1,14 +1,16 @@
 // @vitest-environment happy-dom
 /**
  * The sound check keeps its keys and pitches in the settings: they survive a reload and a closed
- * window, and a save carrying anything malformed loses only the malformed entries.
+ * window, and a save carrying anything malformed loses only the malformed entries. Retuned sounds
+ * reach the game's own mixer only while the custom pitches setting is on.
  */
 
 import './setup.js';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../../src/ui/app.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
+import type { Sfx } from '../../src/ui/sfx.js';
 
 interface Driver {
   showSettings(back: () => void): void;
@@ -66,6 +68,51 @@ describe('the sound check', () => {
     button(window_, 'Clear keys').click();
     button(window_, 'Clear custom pitches').click();
     expect(Settings.load().presentation.soundCheck).toEqual({ keys: {}, pitches: {} });
+  });
+
+  it('plays retuned sounds in the game only while custom pitches are on', () => {
+    const window_ = openSoundCheck();
+    window_.querySelectorAll<HTMLButtonElement>('.soundcheck-sound')[0]!.click();
+    [...window_.querySelectorAll<HTMLButtonElement>('.piano-key')]
+      .find((k) => k.title === 'E5')!
+      .click();
+
+    // What the game's mixer is handed, and what one of its sounds is played at.
+    const sfx = (app as unknown as { sfx: Sfx }).sfx;
+    const heard: number[] = [];
+    // happy-dom has no audio, so the sound check's own plays left the mixer marked dead.
+    Object.assign(sfx, {
+      dead: false,
+      sound: (_pack: string, _event: string, ratio: number) => heard.push(ratio),
+    });
+    sfx.setPack('chime');
+    const openCell = (): number => {
+      // Past the mixer's throttle, so every call is heard.
+      vi.advanceTimersByTime(1000);
+      sfx.play('open');
+      return heard.at(-1)!;
+    };
+    vi.useFakeTimers();
+    try {
+      expect(Settings.load().presentation.customPitches).toBe(false);
+      expect(openCell()).toBe(1);
+
+      const setting = [...document.querySelectorAll('.settings-row')].find((r) =>
+        r.textContent?.startsWith('Custom pitches in play'),
+      )!;
+      const box = setting.querySelector<HTMLInputElement>('input[type=checkbox]')!;
+      box.click();
+      sfx.setPack('chime');
+      expect(Settings.load().presentation.customPitches).toBe(true);
+      // Chimes' open starts on A5 (880 Hz); E5 is a fourth below.
+      expect(openCell()).toBeCloseTo(659.255 / 880, 4);
+
+      box.click();
+      sfx.setPack('chime');
+      expect(openCell()).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('drops malformed entries from a save and keeps the rest', () => {

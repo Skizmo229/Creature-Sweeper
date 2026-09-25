@@ -156,6 +156,12 @@ export interface PresentationSettings {
    */
   readonly muted: boolean;
   readonly soundCheck: SoundCheckSettings;
+  /**
+   * Whether sounds retuned in the sound check play at their new pitch in the game as well. Off
+   * by default: the sound check is a place to experiment, and what is tried there should not
+   * follow the player onto a board until they ask it to.
+   */
+  readonly customPitches: boolean;
 }
 
 const DEFAULT_PRESENTATION: PresentationSettings = {
@@ -173,6 +179,7 @@ const DEFAULT_PRESENTATION: PresentationSettings = {
   textSize: DEFAULT_TEXT_SIZE,
   muted: false,
   soundCheck: { keys: {}, pitches: {} },
+  customPitches: false,
 };
 
 interface SettingsData {
@@ -260,6 +267,7 @@ function readPresentation(raw: unknown): PresentationSettings {
     // with sound on — which is the state that save was actually played in.
     muted: typeof p.muted === 'boolean' ? p.muted : false,
     soundCheck: readSoundCheck(p.soundCheck),
+    customPitches: typeof p.customPitches === 'boolean' ? p.customPitches : false,
   };
 }
 

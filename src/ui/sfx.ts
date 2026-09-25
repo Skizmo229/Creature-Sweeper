@@ -157,6 +157,23 @@ export function sfxPitch(pack: SfxPackId, event: SfxEvent): number {
   return PACKS[pack][event][0].from;
 }
 
+/** Equal temperament from A4 at 440 Hz, in MIDI numbers, which the sound check tunes in. */
+const A4 = 69;
+const A4_HZ = 440;
+
+const noteHz = (note: number): number => A4_HZ * 2 ** ((note - A4) / 12);
+
+/** The MIDI number of a frequency, unrounded. */
+export const hzNote = (hz: number): number => A4 + 12 * Math.log2(hz / A4_HZ);
+
+/**
+ * The factor that moves a sound's first voice onto a note. Every voice is moved by the same
+ * factor, so a two-note sting stays the same interval and a slide keeps its shape.
+ */
+export function sfxRatio(pack: SfxPackId, event: SfxEvent, note: number | undefined): number {
+  return note === undefined ? 1 : noteHz(note) / sfxPitch(pack, event);
+}
+
 /**
  * Shortest gap between two sounds of the same event, in milliseconds.
  *
@@ -174,6 +191,8 @@ export class Sfx {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private pack: SfxPackId | null = null;
+  /** Sounds retuned in the sound check, by `sfxSoundId`, when they are to be heard in play. */
+  private pitches: Readonly<Record<string, number>> = {};
   private readonly lastAt = new Map<SfxEvent, number>();
   /** Set once anything throws, so a broken audio stack is not retried on
    *  every click for the rest of the session. */
@@ -182,6 +201,11 @@ export class Sfx {
   /** Choose the pack, or pass null for silence. */
   setPack(pack: SfxPackId | null): void {
     this.pack = pack;
+  }
+
+  /** Play these sounds at these notes (MIDI numbers), or pass `{}` for every sound's own. */
+  setPitches(pitches: Readonly<Record<string, number>>): void {
+    this.pitches = pitches;
   }
 
   get enabled(): boolean {
@@ -200,7 +224,8 @@ export class Sfx {
     const last = this.lastAt.get(event) ?? 0;
     if (now - last < THROTTLE_MS) return;
     this.lastAt.set(event, now);
-    this.sound(this.pack!, event);
+    const pack = this.pack!;
+    this.sound(pack, event, sfxRatio(pack, event, this.pitches[sfxSoundId(pack, event)]));
   }
 
   /**

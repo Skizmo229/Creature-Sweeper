@@ -5,24 +5,21 @@
  */
 
 import { el } from '../dom.js';
+import { hzNote } from '../sfx.js';
 
 /** MIDI numbers: C2 to C7, which holds the starting pitch of every sound in every pack. */
 const LOWEST_NOTE = 36;
 const HIGHEST_NOTE = 96;
 
-const A4 = 69;
-const A4_HZ = 440;
 // A plain #: the sharp sign is outside Latin-1, and the interface font is a player setting.
 const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const BLACK = new Set([1, 3, 6, 8, 10]);
-
-export const noteHz = (note: number): number => A4_HZ * 2 ** ((note - A4) / 12);
 
 export const noteName = (note: number): string => `${NAMES[note % 12]}${Math.floor(note / 12) - 1}`;
 
 /** The nearest key to a frequency, kept on the keyboard. */
 export function nearestNote(hz: number): number {
-  const note = Math.round(A4 + 12 * Math.log2(hz / A4_HZ));
+  const note = Math.round(hzNote(hz));
   return Math.min(HIGHEST_NOTE, Math.max(LOWEST_NOTE, note));
 }
 

@@ -141,7 +141,8 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   sound clicked or played by its key: every voice is scaled by one factor, so the first lands on
   the chosen note and the rest keep their intervals. Keys and pitches are saved in the
   presentation settings (`soundCheck`, sounds named `pack:event`), so a backup code carries them
-  and Reset presentation clears them. Clicking the keyboard hands the computer's keys to it (A to
+  and Reset presentation clears them. The pitches reach the game's own mixer (`Sfx.setPitches`,
+  from `applyPresentation`) only while "Custom pitches in play" is on, which it is not by default. Clicking the keyboard hands the computer's keys to it (A to
   K the white keys, the row above the black, Z and X the octave); Shift pressed and released alone
   swaps between that and the assigned keys, and Escape steps back one mode before it closes the
   window. Its volume slider (0 to 300% of each sound's level) lasts for the session and is passed
