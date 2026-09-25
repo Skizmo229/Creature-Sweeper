@@ -159,9 +159,10 @@ export const FONT_IDS = Object.keys(FONTS) as FontId[];
  *
  * It belongs to no ladder and the picker does not offer it — it is the title's
  * and nothing else's. So "game type default" leaves the title in it wherever
- * the player has been, and only a face the player FORCES reaches the title,
- * because forcing a face is a statement about the whole interface and the
- * title is part of it. `Settings.titleFont` is that rule.
+ * the player has been, and only a face the player chooses for the INTERFACE
+ * reaches the title, because choosing one is a statement about the whole
+ * interface and the title is part of it. The board's font never does.
+ * `Settings.titleFont` is that rule.
  */
 export const TITLE_FONT: GameFont = { name: 'Griffy', stack: `Griffy, ${SANS}`, weight: 400 };
 

@@ -12,7 +12,8 @@
   --muted: #948f7b;
   --tint: #d99a34;
   --danger: #e8735e;
-  /* The ladder's face, set from app.ts. This is only what shows before it is. */
+  /* The interface's face on this ladder, set from app.ts. This is only what
+     shows before it is. */
   --font: 'JetBrains Mono', ui-monospace, monospace;
   /* Where every face's lowercase stands, as a share of the em — see body. */
   --ex-height: 0.52;
@@ -44,7 +45,8 @@ body {
      and Aladin's file is wrong, so `--ex-fix` (`GameFont.exHeightFix`, set
      from app.ts) corrects it. This inherits as a finished NUMBER, fix
      included, so any element that wears a different face from its parent
-     must declare its own — the title and the font captions do. */
+     must declare its own — the title, the font captions and the interface
+     font's examples do. */
   font-size-adjust: ex-height calc(var(--ex-height) * var(--ex-fix, 1));
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
@@ -78,8 +80,9 @@ body {
   font-size: 0.85rem;
   max-width: 60ch;
 }
-/* The game's own name, in its own face unless the player forces one. Set from
-   app.ts (`Settings.titleFont`); the fallback only covers the first frame. */
+/* The game's own name, in its own face unless the player chooses one for the
+   interface. Set from app.ts (`Settings.titleFont`); the fallback only covers
+   the first frame. */
 .title-bar h1.game-title {
   font-family: var(--title-font, var(--font));
   font-size-adjust: ex-height calc(var(--ex-height) * var(--title-ex-fix, 1));
@@ -1070,6 +1073,23 @@ button.small {
   color: var(--muted);
   font-size: 0.72rem;
   text-align: center;
+}
+
+/* An interface font's example: two of the HUD's readouts in the face, one
+   above the other, at the size the HUD first shipped at, in a box no smaller
+   than a thumbnail, so its tiles stand level with the placeholder's. It wears
+   a face other than the page's, so it declares its own size correction, and
+   `--ex-fix` is set beside the face. See body. */
+.hud.font-demo {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  min-width: 104px;
+  min-height: 78px;
+  padding: 6px 10px;
+  font-size: 0.95rem;
+  font-size-adjust: ex-height calc(var(--ex-height) * var(--ex-fix, 1));
 }
 
 /* The zoom example is drawn at the exact cell size being chosen, so its box

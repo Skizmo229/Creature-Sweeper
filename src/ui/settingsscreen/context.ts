@@ -67,7 +67,7 @@ export function makeContext(
   const currentTheme = settings.themeFor(typeId);
   const display = (over: Partial<BoardDisplay> = {}): BoardDisplay => ({
     maxCell: p.maxZoom,
-    font: settings.font(typeId),
+    font: settings.boardFont(typeId),
     highlight: settings.highlightStyle(typeId),
     strikeDefeated: p.strikeDefeated,
     ...over,
