@@ -16,6 +16,7 @@ import { BoardClock } from './game/clock.js';
 import { gatePalette, syncClock, syncGameScreen } from './game/hud.js';
 import { EntryMode } from './game/mode.js';
 import { BoardActions } from './game/actions.js';
+import { flashStage } from './game/flash.js';
 import { buildBoardOutcome, buildRunOutcome } from './game/outcome.js';
 import { type GameScreenElements, buildGameScreen } from './game/screen.js';
 import { soundFor } from './game/sound.js';
@@ -469,13 +470,7 @@ export class App {
   private apply(events: GameEvent[]): void {
     const game = this.game!;
 
-    // One rim per action, however many fights it resolved (a sweep can fight several): red if
-    // any of them cost HP, green otherwise.
-    const battles = events.filter((ev) => ev.type === 'battle');
-    const hurt = battles.some((ev) => ev.damage > 0);
-    if (hurt) this.flash('shake');
-    if (battles.length > 0) this.flashRim(hurt ? 'hurt' : 'clean');
-    if (events.some((ev) => ev.type === 'levelUp')) this.flash('levelup');
+    if (this.els) flashStage(this.els.stage, events);
     if (this.sfx.enabled) {
       const sound = soundFor(events);
       if (sound) this.sfx.play(sound);
@@ -494,26 +489,6 @@ export class App {
 
     this.refresh();
     if (game.status !== 'playing') this.finish();
-  }
-
-  private flash(kind: 'shake' | 'levelup'): void {
-    const stage = this.els?.stage;
-    if (!stage) return;
-    stage.classList.remove(kind);
-    void stage.offsetWidth; // restart the animation
-    stage.classList.add(kind);
-  }
-
-  /**
-   * Light the stage's rim for the fights an action resolved. Only one of the two classes is ever
-   * on the stage: with both, the later CSS rule would win and the other colour could never play.
-   */
-  private flashRim(outcome: 'clean' | 'hurt'): void {
-    const stage = this.els?.stage;
-    if (!stage) return;
-    stage.classList.remove('fight-clean', 'fight-hurt');
-    void stage.offsetWidth; // restart the animation
-    stage.classList.add(`fight-${outcome}`);
   }
 
   private refresh(): void {

@@ -51,8 +51,8 @@ src/ui/         the prototype
   overlays/       ask.ts: the in-page yes/no question (never window.confirm)
   game/           the game screen: screen.ts (furniture), hud.ts (filling it in), mode.ts
                   (what a click will do: tier, pencil, spell), actions.ts (what the player's
-                  clicks and keys do), hint.ts, sound.ts, clock.ts, outcome.ts (the clear, loss
-                  and run overlays)
+                  clicks and keys do), hint.ts, sound.ts, flash.ts (the shake, the rim and the
+                  level-up glow), clock.ts, outcome.ts (the clear, loss and run overlays)
   board/          the canvas: view.ts (state, fit, zoom, render order), geometry.ts,
                   digits.ts, paint.ts (cell painters), overlays.ts (silhouette, seams, bonds,
                   highlight), input.ts (pointer, wheel, pinch)
@@ -149,9 +149,10 @@ the click, or a key, means from the `EntryMode` (an armed tier, pencil mode, an 
 calls one engine method: `game.open`,
 `game.setMark`, `game.toggleNote`, `game.cast` or `game.sweep`. Every engine action returns the
 events it caused (`GameEvent[]`: revealed, battle, levelUp, marked, noted, blocked, won, lost,
-spell, exercised). `App.apply` hands them to the sound (`game/sound.ts`), the celebration and the
-HUD (`game/hud.ts`); the renderer repaints from the grid. The engine holds no clock: the UI
-owns elapsed time, and Time Attack reports expiry back through `game.forfeit`.
+spell, exercised). `App.apply` hands them to the stage's flashes (`game/flash.ts`), the sound
+(`game/sound.ts`), the celebration and the HUD (`game/hud.ts`); the renderer repaints from the
+grid. The engine holds no clock: the UI owns elapsed time, and Time Attack reports expiry back
+through `game.forfeit`.
 
 A Full Run is engine state, not UI state: `FullRun` in `run.ts` owns the ten-board sequence, the
 HP pool and the heal, and `App` only ever renders `run.game`, an ordinary `Game`. That is why a

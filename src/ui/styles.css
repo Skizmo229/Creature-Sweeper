@@ -373,11 +373,12 @@ button.small {
 
 /*
  * A fight lights the stage's rim, fading inward: green when it cost nothing,
- * red when it cost HP (app.ts decides which). A layer of its own, over the
- * canvas, so it shows however much of the stage the board covers and never
- * takes a click. Green is the softer of the two because it is the common
- * case. It stays on under reduced motion: it is a fade, not a movement, and
- * with the shake gone it is the one sign on the board that a fight hurt.
+ * red when it cost HP (game/flash.ts decides which). A layer of its own, over
+ * the canvas, so it shows however much of the stage the board covers and
+ * never takes a click. Green is the softer of the two because it is the
+ * common case. It stays on under reduced motion: it is a fade, not a
+ * movement, and with the shake gone it is the one sign on the board that a
+ * fight hurt.
  */
 .stage::after {
   content: '';
