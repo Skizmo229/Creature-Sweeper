@@ -24,6 +24,8 @@ Node 22 (`.nvmrc`); Python 3 only for the ladder generator.
 | `docs/decisions/` | why things are the way they are, one record per decision |
 | `docs/glossary.md` | the vocabulary |
 | `docs/refactoring-plan.md` | Milestone 3, the readability refactor (complete): what was measured and what changed |
+| `docs/strategies.md` | how a person clears a board: the tricks, graded, for players and for the graded player |
+| `docs/human-tuning-plan.md` | Milestone 4, tuning for the human player: the instrument, the measurements, the retune |
 | `CONTRIBUTING.md` | setup, the check, and the rules for a change |
 | design reference | <https://claude.ai/artifact/8w8aAaG6MJ3LCnSbokJUXi> (built from `design/page.template.html`) |
 
@@ -64,13 +66,14 @@ npm run typecheck      # twice: the second pass compiles the engine, sims and te
 npm run lint           # ESLint, failing on any warning; the size warnings are the readability bar Milestone 3 set
 npm run knip           # unused files and exports
 npm run format         # Prettier (format:check to verify)
-npm test               # 467 tests, including the invariants
-npm run sim:golden:check   # re-run fourteen fixed-seed simulator runs and diff against test/golden/
+npm test               # 474 tests, including the invariants
+npm run sim:golden:check   # re-run sixteen fixed-seed simulator runs and diff against test/golden/
 npm run sim            # clear every one of the 689 boards headlessly (-- 200 for more seeds)
 npm run sim:run        # complete every type's Full Run
 npm run sim:spells -- 40 dungeon   # what each spell is worth on one ladder, board by board
 npm run sim:forced -- 30 oracle    # how many forced guesses a perfect deducer still faces
 npm run sim:lethal -- 30 extreme   # whether any of those guesses could kill
+npm run sim:human -- 40 normal     # what each board demands of a person, grade by grade (docs/strategies.md)
 npm run sim:sudoku -- 8 --sweep    # SUDOKU build cost and how tight each board plays
 npm run build          # production build (relative paths, for itch.io)
 npm run package        # build and zip dist/ into release/

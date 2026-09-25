@@ -13,7 +13,9 @@ that used to live here is in `docs/`, where a human can find it too.
 Then as needed: `docs/modes.md` (each ladder's rule and proof), `docs/tuning.md` (the instruments
 and the open questions), `docs/ui.md` (presentation rules), `docs/extending.md` (checklists),
 `docs/decisions/` (why things are the way they are), `docs/glossary.md`, `CONTRIBUTING.md`, and
-`docs/refactoring-plan.md` (Milestone 3, the readability refactor, complete on 24 September 2026).
+`docs/refactoring-plan.md` (Milestone 3, the readability refactor, complete on 24 September 2026),
+`docs/strategies.md` (how a person plays: the tricks, graded) and `docs/human-tuning-plan.md`
+(Milestone 4, tuning for the human player, in progress).
 
 ## Rules for a session
 

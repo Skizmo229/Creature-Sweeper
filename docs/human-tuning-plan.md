@@ -1,0 +1,344 @@
+# Milestone 4: tuning for the human player
+
+Every difficulty figure in this repository comes from two machine players. They settle whether a
+board *can* be cleared and how often a perfect or a careful deducer is cornered, and they have
+never been wrong about that. What they cannot say is how hard a board is for a person, because a
+person does not solve the way they do. This milestone builds an instrument that plays the way
+people play, in graded steps of skill, measures every ladder with it, retunes the ladders against
+what it finds, and turns the techniques it uses into a catalogue the game can teach.
+
+Started 25 September 2026. The catalogue is `docs/strategies.md`; the instrument is the graded
+player in `src/sim/graded.ts` (`npm run sim:human`). Status of each step is in section 9.
+
+## 1. The problem
+
+The honest player (`src/sim/honest.ts`) and the complete deducer (`src/sim/solver.ts`) were built
+to answer "is this board fair", and for that they are right to be exhaustive. Measured against a
+person they are wrong in both directions, and the errors do not cancel:
+
+- **They never scan.** The honest player rebuilds every constraint on the board on every pass and
+  subtracts every nested pair of numbers at once. A person looks where they last acted, finds the
+  one move that is there, and misses the 1-2-1 on the far side of the board. On a 1,682-cell
+  HUGE board the difference between "a move exists" and "I found it" is most of the game.
+- **They never pay for arithmetic.** A 9 over three cells has ten decompositions on a five-tier
+  board; the instruments read it as a residual and move on. A person reading "is anything behind
+  this above my level" pays for the small residuals and not for the large ones, and the sum rule
+  is exactly what a Minesweeper player gets wrong first (`src/ui/screens/howto.ts`).
+- **They never forget, and never remember.** The honest player writes only exact marks, so a
+  bound like "4 or 5, come back at level 4" is thrown away between passes; a person pencils it
+  and returns. The same player never misreads a dead creature's tier and never trusts a wrong
+  mark, which the mamono community names as its fatal error.
+- **They do not count.** The honest player never reads the per-tier counters the HUD shows, which
+  is the endgame technique people fall back on ("one tier 5 left and it has to be there"). The
+  solver counts perfectly, which no person does.
+- **They read what a person cannot see.** Both instruments, Sweep's partner proof and the pencil
+  read a beaten creature's number on PAIRS and DOMINOES, where it is not drawn (decision 0012), so
+  those two ladders play harder than their tuning says; the placement-rule ladders as a whole
+  were tuned against a reader of their rules weaker than a strong person, so they play easier
+  (`docs/tuning.md`, open question 4).
+- **They guess without fear.** `bestGuess` minimises the worst case one step ahead and never
+  looks at HP, at whether the worst case kills, at what the guess would reveal, or at whether
+  two more free kills would make the cell free.
+
+The consequence is stated in `docs/tuning.md` as open question 1: the ladders have never been
+played. Playtesting will come; this milestone builds the instrument that stands in for it and
+stays useful after it, because a model that reproduces what players do can be run 40 times a
+board on a candidate schedule and a playtest cannot.
+
+## 2. What "hard for a person" will mean
+
+Other puzzle communities have already found that a single number does not do it. Sudoku's
+Explainer rating (the hardest technique on the cheapest solving path) correlates with human solve
+times at r = 0.70 to 0.86 over a whole portal but only 0.28 to 0.55 on the puzzles solvable by
+simple techniques, where people still differ by a factor of two; there, the count of moves
+*available* at each step is the best single predictor, because scanning is the work. HoDoKu's
+summed technique cost tracks time better than the hardest step alone but lets twenty easy steps
+outweigh one hard one, so it floors the sum at the hardest step's band. A 2026 nonogram study
+found that a SAT solver's search effort does not correlate with reported difficulty at all, while
+guessing, ambiguity and load do. (Sources in `docs/strategies.md`, section 8.)
+
+So the graded player records four things per board and seed, and the retune decides which to
+match per ladder rather than collapsing them:
+
+1. **The hardest grade the board demanded**: the highest technique grade that was the lowest one
+   yielding a move at some point in the game. A board that a grade-1 player clears without a
+   guess is a grade-1 board.
+2. **How often each grade was needed**: the number of passes on which grade g was the lowest
+   grade with a move, so "one hard step" and "forty easy ones" stay distinguishable.
+3. **Moves available when you had to look**: at every pass above the glance grade, how many
+   moves that grade offered. Few means scanning; one means a needle.
+4. **The guess measures**, at each grade: stuck points (nothing at this grade or below), guesses
+   taken, guesses whose worst case could kill, HP lost, deaths, clear rate.
+
+The grades are the catalogue's grades (`docs/strategies.md`): 0 glance, 1 one number, 2 two
+numbers, 3 what-if, 4 counting, with the complete deducer as grade 5, the ceiling nobody reaches.
+A player of grade g uses every technique at or below g. Grade 1 is a novice who has learned the
+sum rule; grade 2 is a competent Minesweeper player who has learned it; grade 4 is an expert.
+
+## 3. The instrument: the graded player
+
+`src/sim/graded.ts`, with what it sees in `src/sim/reader.ts` and its techniques in
+`src/sim/tricks.ts`. A sibling of the honest player, not a parameterisation of it, for two
+reasons: the honest player's readers treat marks as facts and read hidden numbers by design, and
+ten of the fourteen golden runs play it, so leaving it untouched keeps them byte-identical.
+
+### What it reads
+
+Only what is on screen, stated per field rather than assumed. An open empty cell's number; an
+open creature's tier; a beaten creature's number **only where the rule draws it on hover**
+(`placementRule(config.placement).display.hoverShowsNumber`, false on PAIRS and DOMINOES), with
+a `seesHiddenNumbers` switch to measure what hiding it costs; the per-tier counters
+(`game.counterFor`); level, HP, mana and the spell list; the crawl rule through `game.inReach`;
+the placement rule's own readings through its hooks (`cap`, `emptied`, `missingFrom`, `groups`),
+each assigned a grade because they are full-strength techniques, not free knowledge; the
+silhouette (`present`), from which it infers a dungeon's corridors the way a person does. It
+never reads a covered cell's `tier`, `num` or `alive`, never calls `noteCandidates` on a rule
+whose number it may not see, never calls `sealedIn`'s internals, and never touches the map's
+`hall` or `spawnable` masks. Everything it opens as safe is checked against the real tier by the
+tests, on every ladder that has a rule (section 5).
+
+### The grades and their techniques
+
+Each technique is a function of the visible state that returns moves: cells proven safe to open,
+cells named with an exact tier (marked), or candidate sets narrowed (the pencil, held in the
+instrument rather than in `Cell.notes`, which the engine reads as a guard and must never be read
+as a bound; `docs/invariants.md`). The ids are the catalogue's.
+
+| Grade | Technique | What it concludes | Where |
+| --- | --- | --- | --- |
+| 0 | `raw-ring` | an open number at or under your level frees every covered neighbour | all |
+| 0 | `named-kill` | a cell marked at or under your level is a free kill | all |
+| 0 | `met-partner` | a creature beside a creature has met its partner; the rest of its ring is empty | pairs, dominoes |
+| 0 | `corridor` | a one-wide passage and the room cell it arrives at are empty | dungeon |
+| 1 | `residual-ring` | subtract the tiers you can see; a remainder at or under your level frees the ring, a remainder of 0 empties it | all |
+| 1 | `last-cell` | a number with one covered neighbour left has named it | all |
+| 1 | `counters` | a tier whose counter reads 0 is gone; when every tier left is at or under your level, everything is free | all |
+| 1 | `lone-dark` | the one covered dark square under an even remainder is empty | checkerboard |
+| 1 | `partner-number` | a beaten creature's number is its partner's tier: what the pencil offers beside a lone creature | pairs, dominoes, only when the number is visible |
+| 2 | `subtract` | one number's covered cells inside another's: the difference is a number of its own (the 1-2-1 family) | all |
+| 2 | `overlap` | two numbers that share cells: the cells one sees alone are bounded by the other | all |
+| 2 | `bounds` | what one number allows each of its cells (a 9 over two cells is 4 and 5) | all |
+| 2 | `colour-cap` | what a square's colour caps it at under a remainder | checkerboard |
+| 2 | `pack-gap` | a covered cell beside a pack holds one of the tiers it has not shown, or nothing; a pack missing one tier with one covered cell beside it names it | packs, conga line |
+| 3 | `what-if` | suppose a cell is a 5: follow the numbers two steps; a contradiction rules it out | all |
+| 3 | `line-reach` | a line only continues from its ends; everything its missing members cannot walk to is empty | conga line |
+| 4 | `accounted` | the counters say how much tier is left; a set of numbers that accounts for all of it empties every other cell | all |
+| 4 | `last-of-tier` | the last creature of the top tier must sit where a number forces it, so nowhere else | all |
+| 5 | the complete deducer | everything that follows from the screen | all |
+
+Two reads that are cheap for the instrument are graded above zero on purpose. Subtracting a
+beaten creature's tier is grade 1 because a person has to look at the glyph and do the sum; the
+raw number at or under your level is the grade-0 version and the first trick in the catalogue.
+The counters are grade 1 because they are on the HUD rather than the board. Within a grade the
+tricks run in the catalogue's order and the first to conclude a cell takes the credit. One trick
+of the catalogue has no technique of its own: a finished pack's ring is what `residual-ring`
+opens, because every member's number then leaves a remainder of 0, and a technique for it
+concluded nothing in 150 games (measured 25 September 2026), so the catalogue says so instead.
+
+### The loop
+
+One pass at a time, lowest grade first. On each pass the player gathers every move that grade 0
+offers; if there are none, grade 1; and so on up to its own grade. It records which grade
+yielded and how many moves it offered, then applies all of them, because once a person has found
+a read they take everything of that kind in sight, and re-reads the board. A level-up ends a pass
+early, because the cheapest techniques change meaning with the level. When no grade yields, the
+player is stuck: it records a stuck point and guesses.
+
+Every move that opens a cell is filtered by the crawl rule, as the honest player's are
+(`honest.ts`), and by the player's own marks (a mark above level is a lock it wrote itself). The
+candidate sets narrow and never widen, and a set that narrows to one tier names the cell; a set
+whose largest tier is at or under the level frees it. When the player's own grade includes a
+technique that would read a hidden number on a pairing board, the technique is skipped rather
+than the number peeked, which is what makes the `seesHiddenNumbers` switch a measurement.
+
+### Guessing
+
+A person guessing weighs what the guess could cost against what it would tell them, and the
+staircase makes that sharp: one tier over the level costs exactly that tier, two over is a cliff
+(`docs/strategies.md`, section 1). The graded player, when stuck:
+
+1. Considers every covered, unmarked cell it may click. For each it knows a **ceiling**: the
+   smallest remainder among the visible numbers touching it, capped by the colour or the pack
+   beside it and by the highest tier whose counter is not zero. A cell no number touches has the
+   highest live tier as its ceiling and the counters' average tier per covered cell as its
+   expectation, which is what a person estimates from the HUD.
+2. Prefers a cell whose worst case cannot kill at its current HP, then the lowest ceiling, then
+   the lowest expectation, then the cell with more numbers touching it (a guess that resolves
+   more). Ties are broken by a draw from the run's seed, not by grid order, so that the
+   instrument's attention is not secretly the row-major scan of the grid.
+3. Records whether the worst case could have killed, and what it cost.
+
+Deferral (leaving a 4-or-5 cell alone because two more free kills will make it free) and the
+spending policies are not in the first version; both are listed in section 10. The first version
+is spell-less on every ladder, like the forced-guess curves every retune so far has matched.
+
+### Search ladders
+
+BLIND and HUGE x BLIND are played at level 0, where "at or under your level" is never true and
+every creature is death. The same techniques apply where they prove a cell *empty* (a remainder
+of 0, a subtraction to 0, the counters accounting for everything) and never where they prove it
+*low*. No instrument has played those ladders with a deducer before; their figures are a
+single-mistake game and are reported as clear rate alone.
+
+### Determinism and cost
+
+Boards are pure functions of (config, seed) and the player's only draw is the guess tie-break,
+seeded from the board seed, so a run is reproducible and can be a golden output. Measured on
+25 September 2026, the honest player costs 4 to 85 ms a board and the solver 1 to 20 ms a call
+(`src/sim/cli/forced.ts`); the graded player runs several passes a move and lands within an
+order of magnitude of that, so 40 seeds over ten boards is under a minute a ladder at grade 4.
+
+## 4. Where it plugs in
+
+`play(game, options)` returns a `Run` like the honest player's, extended with the four measures;
+the CLI `src/sim/cli/human.ts` iterates `type.boards` and prints a table per ladder, board by
+board, at grades 1 to 4 side by side, and every-ladder rows at one grade; `--profile` prints how
+often each technique fired. The solver can be attached as the ceiling through the same `rescue`
+hook `forced.ts` uses, which is how "forced at any grade" is reported beside "forced at this
+grade". One golden run (`human-normal`) fixes the printout. `docs/tuning.md`'s instrument table
+and the README's commands list gain the row.
+
+## 5. Validation
+
+Nothing about a person is in the tests, only the instrument's honesty. What is asserted:
+
+- **Soundness.** On every ladder with a rule, a hex grid and a torus, a cell the player opens as
+  safe holds a tier at or under the level at that moment, and a cell it names holds that tier.
+  `rescueDamage`'s equivalent (HP lost on a cell a technique called safe) must be zero.
+- **Non-vacuity.** Each technique fires somewhere on a real board, and each grade clears
+  something the grade below could not, or the test is exercising nothing.
+- **Visibility.** The `seesHiddenNumbers` switch changes the figures on PAIRS and on no other
+  ladder, which proves the predicate is asked rather than the name.
+- **The corridor inference** equals the dungeon map's hallways, doors and pockets on every seed
+  it is checked on; a cell it calls empty is never spawnable.
+- **Monotonicity.** Adding a grade never adds a stuck point on the same seed.
+- **The ceiling.** With the solver attached, the player's stuck points match `forced.ts`'s
+  complete-deducer column on the same seeds.
+
+Beyond the tests, four anchors for the shape of the curves, none sufficient alone:
+
+1. **Minesweeper itself.** A `search` board of one tier at 30x16 with 99 creatures *is* Expert
+   Minesweeper: numbers are counts, every creature is death, marks are flags. Published
+   technique ladders span a 30-fold win rate on it (single-point 0.5%, coupled subsets 33%), 84%
+   of boards force at least one guess, and 88% of a board is cleared before the first one. The
+   graded player's grades 1, 2 and 4 should land in that order and near those figures.
+2. **The original's own stars.** hojamaka rates Easy 1, Normal 2, Huge 3, Extreme 3, Blind 5,
+   and marks Huge x Extreme and Huge x Blind not recommended: five ordinal points for the ladders
+   that mirror them.
+3. **Self-consistency.** Grade 2 subsumes the honest player's arithmetic, so on every ladder but
+   the two pairing ones its stuck points should be at or below the honest player's; grade 5 is
+   the solver.
+4. **Telemetry**, once the game is played (section 8).
+
+## 6. The measurements
+
+Every ladder but SUDOKU (guess-free by construction, and its techniques are Sudoku's) and the
+search ladders (reported on their own), 40 seeds a board, grades 1 to 4, spell-less, numbers
+hidden where the game hides them. The baseline table goes in section 9 as it is recorded, dated,
+and the design reference gets a section once the retune has something to compare against.
+
+What the table is expected to show, and what each outcome would mean:
+
+- A ladder whose grade-2 clear rate is far below its grade-4 one is a ladder that rewards the
+  hard techniques; that is the point of the placement ladders and a fault on NORMAL.
+- A board whose hardest grade is 3 or 4 on most seeds is a board most players will guess on
+  without knowing a deduction existed; on the early boards of any ladder that is a retune.
+- A ladder where moves available per pass is low throughout is a scanning ladder (HUGE, the
+  shapes with long rims); size, not density, is its lever.
+- Where the grade-4 player is cornered about as often as the honest player and clears less, the
+  guess model is the difference, and the guess measures say whether it is the lethality.
+
+## 7. The retune, for a human curve
+
+The method is `docs/tuning.md`'s, with the reference curve replaced:
+
+1. **Name the player and the measure each ladder is tuned for.** Proposed, to be decided with
+   the owner once the baseline is in: EASY, a grade-1 player clears every board with no forced
+   guess; NORMAL, WRAPAROUND, HIVE and the shapes, a grade-2 player clears 90% falling to 70%
+   over the ten with the hardest grade needed at most 2 on boards 1 to 5; the placement ladders,
+   the same at grade 2 *with their rule's grade-1 reads*, and a grade-4 player clearing 95%
+   throughout, since understanding the rule is their reward; EXTREME, ORACLE and the HUGE
+   ladders, a grade-4 player at 60 to 70% on the top boards, which is where the lock decision
+   (`docs/tuning.md`, open question 3) is finally made on a human figure.
+2. **Build a candidate file** (`design/ladders.py` in memory, `build()`, written outside
+   `design/data`), point the player at it with `CS_LADDERS`, measure at 40 seeds, compare. The
+   vitest suite reads the same loader, so the structural tests run against the candidate too.
+3. **Mind the walls.** Per-tier creature counts must not fall from one board to the next or
+   `monotone` and two tests fail; the mana affordability floors are set by DUNGEON board 1;
+   `test/spells.test.ts` pins the honest player's stuck counts at board 10 on six magic ladders
+   and has to be re-measured with any of them; the auto-opening must stay at nine cells, which
+   binds PAIRS and DOMINOES first.
+4. **Land it**: edit the TOML, regenerate, diff byte for byte against the candidate measured,
+   `npm run test:py`, re-record the goldens the ladder appears in and say so in the commit, and
+   write a decision record in 0019's shape with the schedule quoted and the before and after.
+
+The dials and what each moves are unchanged (`docs/tuning.md`); what is new is that a ladder can
+now be moved on a scanning measure (size) or a technique measure (density, lock) and the
+instrument says which one the ladder is failing on.
+
+## 8. Teaching, and telemetry
+
+The catalogue is written for two readers at once, and section 7 of it says which trick each
+technique id is. Three routes into the game, in the order they are worth doing:
+
+1. **A per-ladder tip on the board screen.** The `blurb` field of `design/ladder_types.toml` is
+   already the only technique text that ships (CHECKERBOARD's, PAIRS's, PACKS's, CONGA LINE's and
+   DUNGEON's each state their trick); a `tip` field beside it flows through `ladders.py`, the
+   JSON and `LadderType` to the board list and the loss card, which today explains a death on
+   EASY alone. Data, so it never classifies a ladder by name.
+2. **A tricks page on the how-to card**, reachable from the board screen as well as the ladder
+   list, with the first three tricks of the catalogue illustrated by real boards built the way
+   the settings galleries are (`src/ui/preview.ts`, decision 0025). `test/helpers.ts`'s `paint`
+   moves into `src/` for it.
+3. **Lesson boards**, later: tiny boards built to need one trick, each doubling as the fixture
+   that proves the graded player needs exactly that technique to clear it.
+
+Telemetry: nothing is recorded today beyond clears, best times and Full Run attempts
+(`src/ui/progress.ts`). A separate store (its own key and version, never inside the `CS1:` code,
+which is in the wild) recording per board: attempts, HP lost, cells opened by hand, cells opened
+outside `safeCells({ useMarks: false })` at that moment (the honest definition of a guess a
+player made), sweeps, casts, deaths and the tier that dealt them, elapsed time, and the dials
+the board was played under. Local only, exported on request as a code the owner can paste. This
+is what calibrates the technique costs and the retune targets once the game has been played.
+
+## 9. The steps, and where they stand
+
+| Step | What | Status |
+| --- | --- | --- |
+| 4.1 | The catalogue, `docs/strategies.md` | done 25 September 2026 |
+| 4.2 | The graded player, its CLI, tests and golden run | done 25 September 2026 |
+| 4.3 | The baseline measurement, every ladder, grades 1 to 4 | recorded below |
+| 4.4 | The anchors: the Minesweeper board, the stars, the honest comparison | Minesweeper pending |
+| 4.5 | Decide the target per ladder with the owner | open |
+| 4.6 | Retune, one ladder per branch, decision record each | open |
+| 4.7 | Per-ladder tips and the tricks page | open |
+| 4.8 | Telemetry store and export | open |
+| 4.9 | Spending policies and deferral in the graded player | open |
+| 4.10 | Re-measure against telemetry; revise the costs | after release |
+
+### 9.1 Baseline, 25 September 2026
+
+Recorded with `npm run sim:human -- 40 <ladder>` on the ladder data of 25 September 2026,
+spell-less, numbers hidden where the game hides them. The table is appended by step 4.3.
+
+## 10. Open questions and known limits
+
+1. **The grades are an opinion until telemetry.** They follow the Sudoku raters' practice and the
+   mamono community's own account of how it plays, and they are consistent with each other, but
+   the cost of a grade-3 what-if against ten grade-1 subtractions is a guess.
+2. **Attention is modelled by counting, not by missing.** The player finds every move of the
+   yielding grade; the "moves available" figure says how hard that would have been. A bounded
+   working set (only the numbers near the last action) is the next step if the figure does not
+   separate the ladders.
+3. **Marks are always right.** The trusted wrong mark is the community's fatal error and is not
+   modelled; a seeded error rate is the third knob, after attention and deferral.
+4. **Spell-less.** The magic ladders were tuned dense because the spells compensate; their
+   human figures are a floor until the honest player's policies are ported.
+5. **CONGA LINE's adjacency reads are graded with its reach read** at grade 3, because the engine
+   proves them together in `emptied`; splitting them is a later refinement.
+6. **SUDOKU** needs its own catalogue (singles, hidden singles) and is not measured.
+7. **Two things the map found that are not this milestone's.** The honest player's pair
+   subtraction pairs numbers by coordinates and so never subtracts across a wrapped seam, which
+   makes it weaker on WRAPAROUND and WRAPPED CROSS than elsewhere; and the pencil palette's
+   strike-through beside a beaten creature on PAIRS and DOMINOES shows the partner's tier that
+   decision 0012 hid from hover. Both are drafted as issues for the owner.
