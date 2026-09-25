@@ -1,7 +1,8 @@
 # Creature Sweeper: codebase improvement plan
 
-Status: adopted 24 September 2026 as **Milestone 3**. Written for the owner and for the reviewer
-who read the code and found it hard to follow; kept for whoever joins later.
+Status: adopted 24 September 2026 as **Milestone 3**, and complete: the owner closed it on 24
+September 2026, and features resumed. Written for the owner and for the reviewer who read the code
+and found it hard to follow; kept for whoever joins later.
 
 Everything numeric below was measured on commit `cd28494` (see Appendix B for how). Nothing in
 the codebase was changed while producing this.

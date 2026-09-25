@@ -2,9 +2,9 @@
 
 Creature Sweeper is a headless rules engine (`src/engine`), a canvas prototype around it
 (`src/ui`), a set of measurement instruments that drive the engine (`src/sim`), and the Python
-ladder generator whose output tunes all of it (`design/`). `README.md` is the front door. The
-current milestone is the readability refactor in `docs/refactoring-plan.md`; read it before a
-structural change, because it says which files are about to move.
+ladder generator whose output tunes all of it (`design/`). `README.md` is the front door.
+`docs/refactoring-plan.md` is Milestone 3, the readability refactor, complete on 24 September
+2026: what was measured, what changed and why.
 
 ## Setup
 
@@ -82,7 +82,7 @@ byte-identical. A change that is meant to (a retune, a rule change) re-records w
 - One commit per move, with a message that says what moved and what verified it.
 - `git config blame.ignoreRevsFile .git-blame-ignore-revs` makes blame look through the
   formatting-only commits listed there.
-- Each step of the milestone is a branch; the owner reviews and merges.
+- Each change is a branch; the owner reviews and merges.
 - Decisions that a later reader might reverse without knowing why go in `docs/decisions/`.
 - Nothing that pictures the original game goes in the repository. `design/original-reference/`,
   `game_types.pdn` and `design/screenshots/` are untracked on purpose; see the README's licence

@@ -23,7 +23,7 @@ Node 22 (`.nvmrc`); Python 3 only for the ladder generator.
 | `docs/extending.md` | checklists for adding a spell, a placement rule, a shape, a ladder, a setting |
 | `docs/decisions/` | why things are the way they are, one record per decision |
 | `docs/glossary.md` | the vocabulary |
-| `docs/refactoring-plan.md` | Milestone 3, the current one: the readability refactor |
+| `docs/refactoring-plan.md` | Milestone 3, the readability refactor (complete): what was measured and what changed |
 | `CONTRIBUTING.md` | setup, the check, and the rules for a change |
 | design reference | <https://claude.ai/artifact/8w8aAaG6MJ3LCnSbokJUXi> (built from `design/page.template.html`) |
 
@@ -61,7 +61,7 @@ and `design/screenshots/` are untracked on purpose (see Third-party reference).
 npm run dev            # play it
 npm run check          # everything below that CI runs, in about a minute
 npm run typecheck      # twice: the second pass compiles the engine, sims and tests with no DOM library
-npm run lint           # ESLint; the size warnings are the readability measure Milestone 3 tracks
+npm run lint           # ESLint; the size warnings are the readability measure Milestone 3 set
 npm run knip           # unused files and exports
 npm run format         # Prettier (format:check to verify)
 npm test               # 458 tests, including the invariants

@@ -3,7 +3,7 @@
 Each list is every place a change has to reach, in the order to make it. They were built by
 walking the code for three concrete tasks and writing down everything that had to be touched; the
 counts at the top are what those walks measured before Milestone 3, and shrinking them is what the
-milestone's phases 2 and 3 are for. The placement list has been rewritten for the registry; the
+milestone's phases 2 and 3 were for. The placement list has been rewritten for the registry; the
 others are still the map.
 
 Whatever you add: run `npm run check`, and if the change is meant to alter behaviour, re-record
