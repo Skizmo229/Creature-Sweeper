@@ -2,5 +2,6 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "entry": ["src/sim/*.ts", "scripts/*.mjs"],
   "project": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.mjs"],
-  "ignoreExportsUsedInFile": { "interface": true, "type": true }
+  "ignoreExportsUsedInFile": { "interface": true, "type": true },
+  "ignoreBinaries": ["python"]
 }

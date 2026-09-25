@@ -22,6 +22,7 @@ interface Driver {
   finish(): void;
   apply(events: GameEvent[]): void;
   pickSpell(id: string): void;
+  pickTier(tier: number): void;
   onCellPrimary(x: number, y: number): void;
   showSettings(back: () => void): void;
   buildGameScreen(): void;
@@ -145,5 +146,67 @@ describe('the app', () => {
     document.querySelector<HTMLButtonElement>('.settings-screen .title-bar button')!.click();
     expect(document.querySelector('.screen.game')).not.toBeNull();
     expect(app.current).toBe(game);
+  });
+});
+
+describe('Escape and the entry modes', () => {
+  const onGame = (): boolean => document.querySelector('.screen.game') !== null;
+
+  it('backs out one thing at a time on a board: the spell, the tier, then the board', () => {
+    app.play('arcane', 1, 7);
+    app.pickTier(2);
+    app.pickSpell('reveal');
+    key('Escape');
+    expect(app.mode.pendingSpell).toBeNull();
+    app.pickTier(2);
+    key('Escape');
+    expect(app.mode.markMode).toBe(-1);
+    expect(onGame()).toBe(true);
+    key('Escape');
+    expect(onGame()).toBe(false);
+  });
+
+  it('asks before Escape leaves a Full Run, and a second Escape answers no', () => {
+    app.runFull('easy', 7);
+    key('Escape');
+    expect(text('.overlay h2')).toBe('ABANDON RUN?');
+    key('Escape');
+    expect(document.querySelector('.overlay')).toBeNull();
+    expect(onGame()).toBe(true);
+    expect(app.current?.status).toBe('playing');
+  });
+
+  /*
+   * Known bug (issue #6): the key handler does not know which screen is showing, and the board a player
+   * left is still held, so keys reach a board that is not on screen. `it.fails` pins the bug:
+   * these pass while it stands and fail, as a reminder to flip them, once it is fixed.
+   */
+  it.fails('leaves the board under the settings screen alone', () => {
+    app.play('arcane', 1, 7);
+    app.pickSpell('reveal');
+    app.showSettings(() => app.buildGameScreen());
+    key('n');
+    key('Escape');
+    expect(app.mode.pendingSpell).toBe('reveal');
+    expect(app.mode.notesMode).toBe(false);
+  });
+
+  it.fails('never lets Escape on the settings screen discard the board under it', () => {
+    app.play('normal', 1, 7);
+    const game = app.current;
+    app.showSettings(() => app.buildGameScreen());
+    key('Escape');
+    key('Escape');
+    document.querySelector<HTMLButtonElement>('.settings-screen .title-bar button')?.click();
+    expect(onGame()).toBe(true);
+    expect(app.current).toBe(game);
+  });
+
+  it.fails('sends no key to a board the player has left', () => {
+    app.play('normal', 1, 7);
+    key('Escape');
+    expect(onGame()).toBe(false);
+    key('n');
+    expect(app.mode.notesMode).toBe(false);
   });
 });

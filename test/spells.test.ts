@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { paint, testConfig, EMPTY8 } from './helpers.js';
 import { Game } from '../src/engine/game.js';
 import {
   EXERCISE_LEVELS,
@@ -13,61 +14,19 @@ import {
 import { loadLadders } from '../src/data.js';
 import { boardConfig, cumulativeExp } from '../src/engine/config.js';
 import type { BoardConfig } from '../src/engine/types.js';
-import { computeNumbers } from '../src/engine/grid.js';
 
 function magicConfig(over: Partial<BoardConfig> = {}): BoardConfig {
-  return {
-    typeId: 'test',
-    board: 1,
-    width: 8,
-    height: 8,
+  return testConfig({
     tiers: 5,
     quantity: [2, 1, 1, 1, 1],
-    hp: 10,
-    startLevel: 1,
     exp: [4, 20, 60, 200],
-    search: false,
-    placement: 'uniform',
-    givens: 0,
-    opening: 'none',
-    topology: 'square',
-    wrap: 'none',
-    shape: 'rect',
-    shapeParam: 0,
     spells: ['reveal', 'census', 'exercise', 'beacon'],
     // Comfortably above the dearest spell, so a test that means to check a
     // rule is never really checking the mana counter.
     startMana: 300,
-    reach: 0,
     ...over,
-  };
-}
-
-function paint(game: Game, rows: string[]): void {
-  rows.forEach((row, y) => {
-    [...row].forEach((ch, x) => {
-      const cell = game.grid[y]![x]!;
-      cell.tier = ch === '.' ? 0 : Number(ch);
-      cell.alive = cell.tier > 0;
-    });
   });
-  computeNumbers(game.grid, game.config.topology, game.config.wrap);
-  game.remaining.fill(0);
-  for (const r of game.grid) {
-    for (const c of r) if (c.tier > 0) game.remaining[c.tier - 1]!++;
-  }
 }
-
-const EMPTY8 = [
-  '........',
-  '........',
-  '........',
-  '........',
-  '........',
-  '........',
-  '........',
-  '........',
-];
 
 describe('mana', () => {
   it('starts at the board’s allowance and earns tier per kill', () => {

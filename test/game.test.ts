@@ -3,53 +3,11 @@ import { Game } from '../src/engine/game.js';
 import { noteTiers } from '../src/engine/notes.js';
 import type { BoardConfig } from '../src/engine/types.js';
 import { DEFAULT_GAMEPLAY } from '../src/engine/settings.js';
-import { UNGATED_SWEEP } from './helpers.js';
+import { UNGATED_SWEEP, paint, testConfig } from './helpers.js';
 import { computeNumbers, neighbours } from '../src/engine/grid.js';
 import { findBestOpening } from '../src/engine/opening.js';
 
 /** A small hand-built board so the assertions can be exact. */
-function tinyConfig(over: Partial<BoardConfig> = {}): BoardConfig {
-  return {
-    typeId: 'test',
-    board: 1,
-    width: 8,
-    height: 8,
-    tiers: 3,
-    quantity: [4, 3, 2],
-    hp: 10,
-    startLevel: 1,
-    exp: [4, 20],
-    search: false,
-    placement: 'uniform',
-    givens: 0,
-    opening: 'none',
-    topology: 'square',
-    wrap: 'none',
-    shape: 'rect',
-    shapeParam: 0,
-    spells: [],
-    startMana: 0,
-    reach: 0,
-    ...over,
-  };
-}
-
-/** Replace a generated layout with an exact one, then recompute numbers. */
-function paint(game: Game, rows: string[]): void {
-  rows.forEach((row, y) => {
-    [...row].forEach((ch, x) => {
-      const cell = game.grid[y]![x]!;
-      cell.tier = ch === '.' ? 0 : Number(ch);
-      cell.alive = cell.tier > 0;
-    });
-  });
-  computeNumbers(game.grid, game.config.topology, game.config.wrap);
-  game.remaining.fill(0);
-  for (const r of game.grid) {
-    for (const c of r) if (c.tier > 0) game.remaining[c.tier - 1]!++;
-  }
-}
-
 /** Reveal size of every candidate opening on the board, largest-first. */
 function everyOpeningSize(grid: Game['grid']): number[] {
   const h = grid.length;
@@ -82,7 +40,7 @@ function everyOpeningSize(grid: Game['grid']): number[] {
 
 describe('numbers', () => {
   it('sums neighbouring tiers rather than counting creatures', () => {
-    const game = Game.create(tinyConfig(), 1);
+    const game = Game.create(testConfig(), 1);
     paint(
       game,
       [
@@ -103,14 +61,14 @@ describe('numbers', () => {
 
 describe('opening', () => {
   it('reveals a region and never uncovers a creature', () => {
-    const game = Game.create(tinyConfig({ opening: 'auto' }), 42);
+    const game = Game.create(testConfig({ opening: 'auto' }), 42);
     const open = game.grid.flat().filter((c) => c.open);
     expect(open.length).toBeGreaterThan(0);
     expect(open.every((c) => c.tier === 0)).toBe(true);
   });
 
   it('picks the region that reveals the most cells', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     paint(game, [
       '........',
       '........',
@@ -131,14 +89,14 @@ describe('opening', () => {
   });
 
   it('leaves the board cold when the rule is "none"', () => {
-    const game = Game.create(tinyConfig({ opening: 'none' }), 42);
+    const game = Game.create(testConfig({ opening: 'none' }), 42);
     expect(game.grid.flat().some((c) => c.open)).toBe(false);
   });
 });
 
 describe('open()', () => {
   it('cascades through blanks but stops at numbers', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     paint(game, [
       '........',
       '........',
@@ -156,7 +114,7 @@ describe('open()', () => {
   });
 
   it('fights an alive creature and awards EXP', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     paint(game, [
       '........',
       '.1......',
@@ -178,7 +136,7 @@ describe('open()', () => {
     // Hovering shows the number, which is the renderer's alone (decision 0012),
     // so a click here is a click on open ground: refused, and nothing about the
     // cell changes.
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     // two creatures, so defeating one does not end the board
     paint(game, [
       '........',
@@ -198,7 +156,7 @@ describe('open()', () => {
   });
 
   it('ends the game when HP runs out', () => {
-    const game = Game.create(tinyConfig({ hp: 2 }), 7);
+    const game = Game.create(testConfig({ hp: 2 }), 7);
     paint(game, [
       '........',
       '.3......',
@@ -215,7 +173,7 @@ describe('open()', () => {
   });
 
   it('wins a battle board once the last creature falls', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     paint(game, [
       '1.......',
       '........',
@@ -232,7 +190,7 @@ describe('open()', () => {
   });
 
   it('wins a search board once every empty cell is open', () => {
-    const cfg = tinyConfig({ search: true, startLevel: 0, exp: [9999, 9999] });
+    const cfg = testConfig({ search: true, startLevel: 0, exp: [9999, 9999] });
     const game = Game.create(cfg, 7);
     paint(game, [
       '1.......',
@@ -253,7 +211,7 @@ describe('open()', () => {
 
 describe('marks', () => {
   it('sets, re-marks and clears', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     expect(game.setMark(0, 0, 3)[0]).toMatchObject({ type: 'marked', from: 0, to: 3 });
     expect(game.setMark(0, 0, 3)[0]).toMatchObject({ type: 'marked', from: 3, to: 0 });
     game.setMark(0, 0, 2);
@@ -261,7 +219,7 @@ describe('marks', () => {
   });
 
   it('blocks clicks on a cell marked above your level', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     paint(game, [
       '........',
       '.3......',
@@ -278,7 +236,7 @@ describe('marks', () => {
   });
 
   it('lets a mark at or below your level through', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     paint(game, [
       '........',
       '.1......',
@@ -295,11 +253,11 @@ describe('marks', () => {
   });
 
   it('counts marks against the tier counters in search modes only', () => {
-    const battle = Game.create(tinyConfig(), 7);
+    const battle = Game.create(testConfig(), 7);
     battle.setMark(0, 0, 1);
     expect(battle.counterFor(1)).toBe(battle.remaining[0]);
 
-    const search = Game.create(tinyConfig({ search: true, startLevel: 0 }), 7);
+    const search = Game.create(testConfig({ search: true, startLevel: 0 }), 7);
     const before = search.counterFor(1);
     search.setMark(0, 0, 1);
     expect(search.counterFor(1)).toBe(before - 1);
@@ -309,7 +267,7 @@ describe('marks', () => {
 describe('determinism', () => {
   it('produces an identical board from the same seed', () => {
     const layout = (seed: number) =>
-      Game.create(tinyConfig({ opening: 'auto' }), seed)
+      Game.create(testConfig({ opening: 'auto' }), seed)
         .grid.flat()
         .map((c) => c.tier)
         .join('');
@@ -320,7 +278,7 @@ describe('determinism', () => {
 
 describe('sweep and marks', () => {
   it('subtracts creatures you can already see, not just the raw number', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     paint(game, [
       '3.......',
       '........',
@@ -340,7 +298,7 @@ describe('sweep and marks', () => {
   });
 
   it('uses the marked value to reach further', () => {
-    const game = Game.create(tinyConfig({ tiers: 5, quantity: [1, 0, 0, 1, 0] }), 7);
+    const game = Game.create(testConfig({ tiers: 5, quantity: [1, 0, 0, 1, 0] }), 7);
     paint(game, [
       '4.......',
       '........',
@@ -366,7 +324,7 @@ describe('sweep and marks', () => {
   });
 
   it('ignores marks that contradict the number', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     paint(game, [
       '1.......',
       '........',
@@ -385,7 +343,7 @@ describe('sweep and marks', () => {
   });
 
   it('never opens a cell marked above your level, even mark-assisted', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     paint(game, [
       '........',
       '........',
@@ -403,7 +361,7 @@ describe('sweep and marks', () => {
 
   it('can cost HP when a mark is wrong — the price of the assumption', () => {
     const build = () => {
-      const g = Game.create(tinyConfig(), 7, UNGATED_SWEEP);
+      const g = Game.create(testConfig(), 7, UNGATED_SWEEP);
       paint(g, [
         '........',
         '.3......',
@@ -437,7 +395,7 @@ describe('sweep and marks', () => {
 
 describe('notes — candidate-set pencil marks', () => {
   it('toggles candidates on and off, including empty ground', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     expect(game.toggleNote(0, 0, 2)[0]).toMatchObject({ type: 'noted', from: 0, to: 0b100 });
     expect(game.toggleNote(0, 0, 0)[0]).toMatchObject({ type: 'noted', to: 0b101 });
     expect(noteTiers(game.grid[0]![0]!.notes)).toEqual([0, 2]);
@@ -446,7 +404,7 @@ describe('notes — candidate-set pencil marks', () => {
   });
 
   it('is mutually exclusive with a mark, in both directions', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     game.setMark(0, 0, 3);
     const events = game.toggleNote(0, 0, 1);
     expect(events[0]).toMatchObject({ type: 'marked', from: 3, to: 0 });
@@ -457,7 +415,7 @@ describe('notes — candidate-set pencil marks', () => {
   });
 
   it('blocks a click only when EVERY candidate is out of reach', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     paint(game, [
       '........',
       '.3......',
@@ -483,7 +441,7 @@ describe('notes — candidate-set pencil marks', () => {
   });
 
   it('an empty note mask is "no notes", never "nothing is possible"', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     paint(game, [
       '........',
       '.3......',
@@ -503,7 +461,7 @@ describe('notes — candidate-set pencil marks', () => {
   });
 
   it('never makes a cell sweepable, however low the candidates are', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     paint(game, [
       '........',
       '.1......',
@@ -528,7 +486,7 @@ describe('notes — candidate-set pencil marks', () => {
   it('can never cost HP, however wrong the pencil was', () => {
     // The asymmetry that makes notes safe to use as scratch work: the guard
     // reads them, Sweep does not.
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     paint(game, [
       '........',
       '.3......',
@@ -546,7 +504,7 @@ describe('notes — candidate-set pencil marks', () => {
   });
 
   it('never sweeps a cell its own notes rule out, even when the number proves it', () => {
-    const game = Game.create(tinyConfig(), 7);
+    const game = Game.create(testConfig(), 7);
     paint(game, [
       '........',
       '.1......',
@@ -578,7 +536,7 @@ describe('notes — candidate-set pencil marks', () => {
 describe('the crawl rule', () => {
   /** A board with one open cell at (0,0) and a reach of 2. */
   function crawlBoard(over: Partial<BoardConfig> = {}): Game {
-    const game = Game.create(tinyConfig({ reach: 2, startLevel: 3, ...over }), 7);
+    const game = Game.create(testConfig({ reach: 2, startLevel: 3, ...over }), 7);
     paint(game, [
       '........',
       '........',
@@ -639,7 +597,7 @@ describe('the crawl rule', () => {
   });
 
   it('does not apply to a board that has none', () => {
-    const game = Game.create(tinyConfig({ reach: 0 }), 7);
+    const game = Game.create(testConfig({ reach: 0 }), 7);
     paint(game, [
       '........',
       '........',
@@ -667,7 +625,7 @@ describe('the crawl rule', () => {
      * tier 1. That is the whole failure mode in eight cells.
      */
     function sealed(): Game {
-      const game = Game.create(tinyConfig({ reach: 2, startLevel: 1, tiers: 3 }), 7);
+      const game = Game.create(testConfig({ reach: 2, startLevel: 1, tiers: 3 }), 7);
       paint(game, [
         '.33.....',
         '333.....',
@@ -724,7 +682,7 @@ describe('the crawl rule', () => {
     });
 
     it('is not sealed before anything is open at all', () => {
-      const game = Game.create(tinyConfig({ reach: 2, opening: 'none' }), 7);
+      const game = Game.create(testConfig({ reach: 2, opening: 'none' }), 7);
       expect(game.grid.flat().some((c) => c.open)).toBe(false);
       expect(game.sealedIn()).toBe(false);
       expect(game.inReach(game.grid[7]![7]!), 'a board nobody may touch').toBe(true);

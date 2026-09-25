@@ -14,6 +14,7 @@
     "package": "vite build && node scripts/package.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:py": "python -m unittest discover -s design -p \"test_*.py\"",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.engine.json",
     "sim": "tsx src/sim/cli.ts",
     "sim:run": "tsx src/sim/run.ts",
