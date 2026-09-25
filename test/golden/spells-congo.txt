@@ -1,5 +1,5 @@
 $ src/sim/cli/spellvalue.ts 4 congo
-CONGO LINE, board by board, 4 seeds each.
+CONGA LINE, board by board, 4 seeds each.
 
 board   density   cells   stuck/board   guesses   hp lost   cleared   
    1     22.5%     480          0.0       0.0     0.00      100%  

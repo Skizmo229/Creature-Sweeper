@@ -114,16 +114,16 @@ whole dial (18.5 to 23.5%), and it gets harder by getting *smaller* between set 
 creature's number is not drawn on these two ladders, by request, though the engine and the proofs
 still read it.
 
-## PACKS and CONGO LINE
+## PACKS and CONGA LINE
 
 Creatures stand in connected packs of one of every tier, and no two packs touch (touching is
 `neighbours()`, so a diagonal counts). `missingFrom` is the Sweep proof: the strongest tier a
 pack has not shown yet; when that is within your level, or nothing is missing, the ring is free.
 Computed over the component of *open* creatures, which errs safe. `packCandidates` gives the
-pencil the tiers the neighbouring pack has not shown. CONGO LINE takes all of it by reference. Density is
+pencil the tiers the neighbouring pack has not shown. CONGA LINE takes all of it by reference. Density is
 the dial (22.5 to 31.6%), and the board grows a row or column every step for granularity.
 
-**CONGO LINE** strings each pack into an orthogonal line led by the tier 6, with no member
+**CONGA LINE** strings each pack into an orthogonal line led by the tier 6, with no member
 orthogonally beside any but its neighbours in the line; at six, "no 2x2" and "a true line" are the
 same rule. So two open creatures side by side are consecutive, which is why the board ties them
 (`drawBonds`). `beyondReach` is the proof that does something: a line only continues from its

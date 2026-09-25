@@ -10,7 +10,7 @@ count.
 
 ## Decision
 WRAPAROUND 15, CROSS 20, HIVE 25, DIAMOND 30, PAIRS 35, DOMINOES 40, WORKOUT 45, PACKS 50, DONUT
-55, CHECKERBOARD 60, CONGO LINE 65, RAGGED CAVE 70, DUNGEON 75, SUDOKU 80, by request, and it does
+55, CHECKERBOARD 60, CONGA LINE 65, RAGGED CAVE 70, DUNGEON 75, SUDOKU 80, by request, and it does
 not follow difficulty (DUNGEON, second easiest, is last before SUDOKU). Every cleared board counts
 once, scaling boards included. WRAPPED CROSS is gated on its two parents; BLIND on three Full Runs
 on different types.

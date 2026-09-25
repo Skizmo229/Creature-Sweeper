@@ -141,19 +141,30 @@ button.small {
   text-align: left;
   padding: 14px 16px;
   background: var(--panel);
-  border-left: 4px solid var(--tint);
+  /* Twice a button's edge, by request. */
+  border-width: 2px;
+  /* The ladder's colour (its palette's accent), 8px wide by request. */
+  border-left: 8px solid var(--tint);
   display: flex;
   flex-direction: column;
   gap: 4px;
+  /* The name's size is capped by the card's width (100cqi, below). */
+  container-type: inline-size;
 }
 /* Each name wears its own ladder's face (app.ts), and every name is capitals,
    so the body's ex-height rule sizes them by a letter they do not contain:
    caps ran from 8.3px in Bungee to 12.8px in Aladin. Capital height instead,
    pinned where NORMAL's JetBrains Mono already stood under the old rule.
    `--cap-fix` corrects a face whose file misstates its capital height
-   (`GameFont.capHeightFix`). */
+   (`GameFont.capHeightFix`).
+   Half as large again as that, by request, but never wider than the card.
+   At that size CHECKERBOARD, one long word, runs past a card at laptop width,
+   and any long word can at a large text size or in a wide face chosen for the
+   interface. `--word-em` is the name's longest word in ems (`fitNames`, in
+   screens/ladders.ts), so such a name comes down just far enough to fit. A
+   name with a space in it breaks there first. */
 .type-name {
-  font-size: 1rem;
+  font-size: min(1.5rem, 100cqi / var(--word-em, 0.01));
   font-weight: 700;
   letter-spacing: 0.05em;
   font-size-adjust: cap-height calc(0.69 * var(--cap-fix, 1));
@@ -174,7 +185,7 @@ button.small {
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 10px;
 }
-/* Every board tile carries a white outline.
+/* Every board tile carries a white outline, 2px by request.
    
    It is an `outline` rather than a `border` for two reasons. The border is
    already carrying STATE on these tiles — the tint says cleared, or Full Run,
@@ -195,7 +206,13 @@ button.small {
   flex-direction: column;
   gap: 3px;
   position: relative;
-  outline: 1px solid var(--card-outline);
+  outline: 2px solid var(--card-outline);
+}
+/* A hover colours the whole edge. The button rule turns only the border,
+   which is the thin line inside the outline. The scaling tile is not a
+   button and is not clickable as a whole, so it has no hover of its own. */
+button.board-card:hover:not(:disabled) {
+  outline-color: var(--tint);
 }
 .board-card.done {
   border-color: var(--tint);

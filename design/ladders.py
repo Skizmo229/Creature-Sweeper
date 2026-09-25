@@ -449,7 +449,7 @@ UNLOCKS = {
 # over the tuned ten, ranks them:
 #
 #   WRAPAROUND 99.0   DUNGEON 97.7   CHECKERBOARD 97.4   DIAMOND 95.5
-#   CROSS 94.0        CONGO LINE 92.8 HIVE 92.7          PAIRS 92.1
+#   CROSS 94.0        CONGA LINE 92.8 HIVE 92.7          PAIRS 92.1
 #   RAGGED CAVE 89.0  DONUT 84.9
 #
 # Spell-less on purpose, so every ladder is measured by the same player; the

@@ -18,7 +18,7 @@ WORKOUT            10     5      10        3/3        0      10            -
 PACKS              10     5      10        3/3        0      10            -
 DONUT              10     5      10        3/3        0      10            -
 CHECKERBOARD       10     5      10        3/3        0      10            -
-CONGO LINE         10     5      10        3/3        0      10            -
+CONGA LINE         10     5      10        3/3        0      10            -
 RAGGED CAVE        10     5      10        3/3        0      10            -
 DUNGEON            10     5      10        3/3        0      10            -
 SUDOKU             20    10      10        3/3        0      20            -
