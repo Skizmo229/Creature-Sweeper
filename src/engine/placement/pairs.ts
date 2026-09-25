@@ -332,4 +332,6 @@ export const PAIRS_RULE: PlacementRule = {
   // A beaten creature's number is its partner's tier, and hovering does not show it, by request:
   // a lone digit read as the creature's own level. Sweep and the pencil still read it.
   display: { ...PLAIN_DISPLAY, bonds: 'every', hoverShowsNumber: false },
+  pools: ONE_POOL,
+  groups: 'pairs',
 };

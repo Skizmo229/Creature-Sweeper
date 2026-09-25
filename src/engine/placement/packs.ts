@@ -52,10 +52,10 @@
  * against PAIRS's 26%.
  */
 
-import type { Cell, Placement } from '../types.js';
+import type { Cell } from '../types.js';
 import { noteBit } from '../notes.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
-import { placeDealt, shuffledPool } from './deal.js';
+import { ONE_POOL, placeDealt, shuffledPool } from './deal.js';
 import {
   type Deal,
   NOTHING_EMPTIED,
@@ -67,18 +67,6 @@ import {
   WHOLE_SUM,
   boardName,
 } from './rule.js';
-
-/**
- * Does the pack rule hold on a board with this placement?
- *
- * `isPaired`'s reason, one rule over: a congo line IS a pack, so every reader
- * of the pack rule — the generator, Sweep's proof, the pencil, the honest
- * player, the solver — has to hand CONGO LINE the pack reading as well, and
- * each site that spelled out the pair of names was a place to forget one.
- */
-export function isPacked(placement: Placement): boolean {
-  return placement === 'packs' || placement === 'congo';
-}
 
 /**
  * What a covered cell could hold by the pack rule alone, as a note mask — or
@@ -415,4 +403,6 @@ export const PACKS_RULE: PlacementRule = {
   emptied: NOTHING_EMPTIED,
   // Packs never touch, so which pack a creature belongs to is never hidden and needs no bond.
   display: PLAIN_DISPLAY,
+  pools: ONE_POOL,
+  groups: 'packs',
 };

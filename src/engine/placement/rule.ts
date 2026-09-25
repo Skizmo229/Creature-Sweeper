@@ -111,6 +111,16 @@ export interface PlacementRule {
 
   /** What the renderer draws for the rule. */
   readonly display: PlacementDisplay;
+
+  /** Where each tier may stand by position alone, for a reader that counts capacity (the solver). */
+  readonly pools: Pools;
+  /**
+   * The groups the rule's creatures stand in, for a reader that reasons about a group beyond the
+   * hooks above (the honest player names a pair's partner and a pack's last member): 'pairs', every
+   * creature beside exactly one other; 'packs', connected groups of one of every tier; null, none.
+   * Two groups never touch.
+   */
+  readonly groups: 'pairs' | 'packs' | null;
 }
 
 /**

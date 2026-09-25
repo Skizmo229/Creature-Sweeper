@@ -493,4 +493,6 @@ export const CONGO_RULE: PlacementRule = {
   // Two open creatures side by side are consecutive in their line, so they are tied; a diagonal
   // is where a line turns a corner, and is not.
   display: { ...PACKS_RULE.display, bonds: 'orthogonal' },
+  pools: PACKS_RULE.pools,
+  groups: PACKS_RULE.groups,
 };

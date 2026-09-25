@@ -13,10 +13,9 @@
 import type { Game } from '../engine/game.js';
 import type { SpellId } from '../engine/spells.js';
 import type { Cell } from '../engine/types.js';
-import { hiddenCap, shadeOf } from '../engine/placement/checker.js';
-import { isPaired, ringIsFree } from '../engine/placement/pairs.js';
-import { isPacked, missingFrom } from '../engine/placement/packs.js';
-import { congoClear } from '../engine/placement/congo.js';
+import { ringIsFree } from '../engine/placement/pairs.js';
+import { missingFrom } from '../engine/placement/packs.js';
+import { placementRule } from '../engine/placement/registry.js';
 
 /**
  * How the player spends, if they spend at all.
@@ -93,22 +92,18 @@ interface Constraint {
 }
 
 /**
- * The most tier one of a constraint's unknown cells could be hiding.
- *
- * On an ordinary board that is the whole residual and this is the bound Sweep
- * already proves. On a checkerboard the colours carry the parity of the sum,
- * which caps a single cell below the residual and sometimes pins it at zero —
- * see `hiddenCap`. Taught to the harness because a real player on that board
- * can see the colours: measuring the ladder with a player who could not would
- * be measuring a different mode.
+ * The most tier one of a constraint's unknown cells could be hiding: the rule's
+ * `cap`. On an ordinary board that is the whole residual, the bound Sweep
+ * already proves; on a checkerboard the colours cap a single cell below it.
+ * Taught to the harness because a real player on that board can see the
+ * colours: measuring the ladder with a player who could not would be measuring
+ * a different mode.
  *
  * Marks never reach this. Everything marked has already been subtracted out of
- * the residual, so `unknown` IS the set the parity argument is about.
+ * the residual, so `unknown` IS the set the cap is about.
  */
 function capOf(game: Game, c: Constraint, cell: Cell): number {
-  if (game.config.placement !== 'checker') return c.residual;
-  const dark = c.unknown.reduce((n, u) => n + (shadeOf(u) === 'dark' ? 1 : 0), 0);
-  return hiddenCap(shadeOf(cell), c.residual, dark);
+  return placementRule(game.config.placement).cap(cell, c.residual, c.unknown);
 }
 
 function constraintsOf(game: Game): Constraint[] {
@@ -256,7 +251,7 @@ function nameWhatIsCertain(game: Game): boolean {
  *   a creature's ring empties out fast once the cells around it open.
  */
 function namePairs(game: Game): boolean {
-  if (!isPaired(game.config.placement)) return false;
+  if (!isPaired(game)) return false;
   let learned = false;
 
   for (const cell of game.grid.flat()) {
@@ -331,9 +326,14 @@ function namePacks(game: Game): boolean {
   return learned;
 }
 
-/** A congo line is a pack with a shape, so every pack read applies to it. */
+/** Creatures stand in non-touching pairs (PAIRS, DOMINOES). */
+function isPaired(game: Game): boolean {
+  return placementRule(game.config.placement).groups === 'pairs';
+}
+
+/** Creatures stand in non-touching packs (PACKS; a congo line is a pack with a shape). */
 function isGrouped(game: Game): boolean {
-  return isPacked(game.config.placement);
+  return placementRule(game.config.placement).groups === 'packs';
 }
 
 /**
@@ -345,12 +345,10 @@ function isGrouped(game: Game): boolean {
 function packCaps(game: Game): Map<Cell, number> {
   const caps = new Map<Cell, number>();
   if (!isGrouped(game)) return caps;
-  // A congo line's shape proves some of its rim empty outright — above all,
-  // every cell the rest of the line cannot reach from its ends. Read through
-  // the engine's own proof, for the pairing ring's reason.
-  if (game.config.placement === 'congo') {
-    for (const cell of congoClear(game.grid, game.config.tiers)) caps.set(cell, 0);
-  }
+  // The rule may prove some of the rim empty outright: above all, every cell
+  // the rest of a congo line cannot reach from its ends. Read through the
+  // engine's own proof, for the pairing ring's reason.
+  for (const cell of placementRule(game.config.placement).emptied(game)) caps.set(cell, 0);
   const gaps = missingFrom(game.grid.flat(), (c) => game.neighboursOf(c), game.config.tiers);
   for (const [cell, gap] of gaps) {
     for (const n of game.neighboursOf(cell)) {
@@ -411,7 +409,7 @@ function safeToOpen(game: Game, constraints: Constraint[]): Cell[] {
   // of it — a second implementation of a rule this load-bearing is a second
   // place for it to drift. A creature's number is its partner's tier, so at or
   // below your level the whole ring around it is free.
-  if (isPaired(game.config.placement)) {
+  if (isPaired(game)) {
     for (const cell of game.grid.flat()) {
       if (!cell.present || !cell.open || cell.tier === 0) continue;
       const ns = game.neighboursOf(cell);

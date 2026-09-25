@@ -40,6 +40,7 @@ import type { BoardConfig } from '../engine/types.js';
 import { type Grid, computeNumbers, makeCell } from '../engine/grid.js';
 import { findBestOpening } from '../engine/opening.js';
 import { generateGrid } from '../engine/generate.js';
+import { placementRule } from '../engine/placement/registry.js';
 
 const TRIALS = Number(process.argv[2] ?? 240);
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -339,7 +340,8 @@ console.log(
 const ruled: object[] = [];
 for (const type of ladders) {
   const cfg = boardConfig(ladders, type.id, 5);
-  if (cfg.placement === 'uniform' || cfg.placement === 'sudoku') continue;
+  // Uniform is the scatter itself; a guess-free rule's board is a generated puzzle, not a deal.
+  if (cfg.placement === 'uniform' || placementRule(cfg.placement).guessFree) continue;
   const scatterCfg: BoardConfig = { ...cfg, placement: 'uniform' };
   const scatter = trial(scatterCfg, engine(scatterCfg));
   const rule = trial(cfg, engine(cfg));

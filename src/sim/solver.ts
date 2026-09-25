@@ -39,7 +39,7 @@
 
 import type { Game } from '../engine/game.js';
 import type { Cell } from '../engine/types.js';
-import { congoClear } from '../engine/placement/congo.js';
+import { placementRule } from '../engine/placement/registry.js';
 
 export interface SolveOptions {
   /** Search nodes one question may use before it is left undecided. */
@@ -89,19 +89,6 @@ interface Model {
 const lowest = (m: number): number => 31 - Math.clz32(m & -m);
 const highest = (m: number): number => 31 - Math.clz32(m);
 
-/**
- * Cells a congo line's own shape proves empty — the one pack reading the pencil
- * does not make, because it counts reach from the line's ends rather than
- * reading a neighbour (see `congoClear`). Everything else the pack rule says
- * about a cell arrives through `noteCandidates`, the same reading the pencil
- * uses, so the two cannot drift apart.
- */
-function lineClear(game: Game): Set<Cell> {
-  return game.config.placement === 'congo'
-    ? new Set(congoClear(game.grid, game.config.tiers))
-    : new Set();
-}
-
 function buildModel(game: Game): Model | null {
   const tiers = game.config.tiers;
   const all = game.grid.flat().filter((c) => c.present);
@@ -119,7 +106,11 @@ function buildModel(game: Game): Model | null {
   // ones are dead" turns the whole board free without a single number read.
   let alive = 1;
   for (let t = 1; t <= tiers; t++) if (remaining[t]! > 0) alive |= 1 << t;
-  const clear = lineClear(game);
+  // Cells the rule proves empty outright (a congo line's reach): the one reading
+  // the pencil does not make, because it is not a reading of one neighbour.
+  // Everything else the rule says about a cell arrives through
+  // `noteCandidates`, the same reading the pencil uses, so the two cannot drift.
+  const clear = placementRule(game.config.placement).emptied(game);
   const domOf = (c: Cell): number => game.noteCandidates(c) & (clear.has(c) ? 1 : ~0) & alive;
 
   const index = new Map<Cell, number>();
@@ -205,29 +196,30 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
   let interiorSeen = 0;
   let nodes = 0;
 
-  // The interior's capacity, split by colour on a checkerboard because a light
-  // square cannot take an odd tier. Everywhere else one pool.
-  const checker = game.config.placement === 'checker';
-  let capLight = 0;
-  let capDark = 0;
+  // The interior's capacity per pool, because a tier fits only on cells of its
+  // own pool: the checkerboard's colours, one pool everywhere else.
+  const pools = placementRule(game.config.placement).pools;
+  const poolIds = new Map<string, number>();
+  const poolId = (key: string): number => {
+    const known = poolIds.get(key);
+    if (known !== undefined) return known;
+    poolIds.set(key, poolIds.size);
+    return poolIds.size - 1;
+  };
+  const tierPool = [0];
+  for (let t = 1; t <= tiers; t++) tierPool.push(poolId(pools.forTier(t)));
+  const capacity: number[] = [];
   for (const c of interior) {
-    if ((c.x + c.y) % 2 === 0) capLight++;
-    else capDark++;
+    const id = poolId(pools.of(c.x, c.y));
+    capacity[id] = (capacity[id] ?? 0) + 1;
   }
+  const need = new Array<number>(poolIds.size);
   const leftover = (t: number): number => remaining[t]! - counts[t]!;
   const interiorFits = (): boolean => {
-    if (!checker) {
-      let sum = 0;
-      for (let t = 1; t <= tiers; t++) sum += leftover(t);
-      return sum <= interior.length;
-    }
-    let even = 0;
-    let odd = 0;
-    for (let t = 1; t <= tiers; t++) {
-      if (t % 2 === 0) even += leftover(t);
-      else odd += leftover(t);
-    }
-    return even <= capLight && odd <= capDark;
+    need.fill(0);
+    for (let t = 1; t <= tiers; t++) need[tierPool[t]!] += leftover(t);
+    for (let id = 0; id < need.length; id++) if (need[id]! > (capacity[id] ?? 0)) return false;
+    return true;
   };
 
   const span = (lo: number, hi: number): number => {

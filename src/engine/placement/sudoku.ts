@@ -24,6 +24,7 @@
 
 import type { Rng } from '../rng.js';
 import { expForTier } from '../combat.js';
+import { ONE_POOL } from './deal.js';
 import {
   type Deal,
   NOTHING_EMPTIED,
@@ -521,4 +522,6 @@ export const SUDOKU_RULE: PlacementRule = {
     washes: (cell) => (Math.floor(cell.x / SUDOKU_BOX) + Math.floor(cell.y / SUDOKU_BOX)) % 2 === 1,
     boxRules: SUDOKU_BOX,
   },
+  pools: ONE_POOL,
+  groups: null,
 };

@@ -33,6 +33,7 @@
 import { loadLadders } from '../data.js';
 import { boardConfig, type LadderType } from '../engine/config.js';
 import { Game } from '../engine/game.js';
+import { placementRule } from '../engine/placement/registry.js';
 import { play, type Run } from './honest.js';
 import { solve } from './solver.js';
 
@@ -72,9 +73,15 @@ const freeShare = (rs: Run[]): number => {
   return stuck ? rs.reduce((a, r) => a + r.couldRescue, 0) / stuck : 0;
 };
 
+/**
+ * The ladders with forced guesses to count: not the search ladders, and not a guess-free rule's
+ * (SUDOKU), whose boards are generated so that no deducer is ever forced.
+ */
 function battleLadders(): LadderType[] {
   const ladders = loadLadders();
-  return ladders.filter((t) => !t.search && boardConfig(ladders, t.id, 1).placement !== 'sudoku');
+  return ladders.filter(
+    (t) => !t.search && !placementRule(boardConfig(ladders, t.id, 1).placement).guessFree,
+  );
 }
 
 function byBoard(seeds: number, typeId: string, only?: [number, number]): void {

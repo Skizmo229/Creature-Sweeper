@@ -212,4 +212,6 @@ export const CHECKER_RULE: PlacementRule = {
   emptied: NOTHING_EMPTIED,
   // The light squares are washed, which is also the half that holds the even tiers.
   display: { ...PLAIN_DISPLAY, washes: (cell) => shadeOf(cell) === 'light' },
+  pools: COLOURS,
+  groups: null,
 };

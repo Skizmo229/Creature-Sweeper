@@ -24,4 +24,6 @@ export const UNIFORM_RULE: PlacementRule = {
   ringProof: NO_RING_PROOF,
   emptied: NOTHING_EMPTIED,
   display: PLAIN_DISPLAY,
+  pools: ONE_POOL,
+  groups: null,
 };

@@ -229,4 +229,6 @@ export const DOMINOES_RULE: PlacementRule = {
   ringProof: PAIRS_RULE.ringProof,
   emptied: PAIRS_RULE.emptied,
   display: PAIRS_RULE.display,
+  pools: PAIRS_RULE.pools,
+  groups: PAIRS_RULE.groups,
 };
