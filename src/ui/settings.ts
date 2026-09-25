@@ -104,6 +104,18 @@ export const MIN_MAX_ZOOM = 24;
 export const MAX_MAX_ZOOM = 128;
 export const DEFAULT_MAX_ZOOM = 48;
 
+/**
+ * What the sound check keeps between sessions: the computer keys assigned to sounds and the notes
+ * sounds are tuned to. A sound is named `pack:event` (`sfxSoundId`). Plain records, so the save
+ * and its backup code stay plain JSON.
+ */
+export interface SoundCheckSettings {
+  /** A computer key, as the sound check names it, to the sound it plays. */
+  readonly keys: Readonly<Record<string, string>>;
+  /** A sound to the MIDI note it is tuned to. */
+  readonly pitches: Readonly<Record<string, number>>;
+}
+
 export interface PresentationSettings {
   readonly icons: IconChoice;
   readonly palette: PaletteChoice;
@@ -143,6 +155,7 @@ export interface PresentationSettings {
    * and there would be nothing to restore when they turned it back on.
    */
   readonly muted: boolean;
+  readonly soundCheck: SoundCheckSettings;
 }
 
 const DEFAULT_PRESENTATION: PresentationSettings = {
@@ -159,6 +172,7 @@ const DEFAULT_PRESENTATION: PresentationSettings = {
   maxZoom: DEFAULT_MAX_ZOOM,
   textSize: DEFAULT_TEXT_SIZE,
   muted: false,
+  soundCheck: { keys: {}, pitches: {} },
 };
 
 interface SettingsData {
@@ -190,6 +204,27 @@ function num(value: unknown, min: number, max: number, fallback: number): number
   return typeof value === 'number' && Number.isFinite(value)
     ? snapRatio(value, min, max)
     : fallback;
+}
+
+/** The highest note MIDI numbers, which the sound check's pitches are written in. */
+const MAX_MIDI_NOTE = 127;
+
+/**
+ * Entries of the wrong type are dropped one at a time. An id this build does not know is kept, as
+ * `icons` keeps an unknown pip, and the sound check passes over it.
+ */
+function readSoundCheck(raw: unknown): SoundCheckSettings {
+  const s = (raw ?? {}) as Record<string, unknown>;
+  const record = (v: unknown): Record<string, unknown> =>
+    typeof v === 'object' && v !== null ? (v as Record<string, unknown>) : {};
+  const keys = Object.entries(record(s.keys)).filter(
+    (e): e is [string, string] => typeof e[1] === 'string',
+  );
+  const pitches = Object.entries(record(s.pitches)).filter(
+    (e): e is [string, number] =>
+      typeof e[1] === 'number' && Number.isInteger(e[1]) && e[1] >= 0 && e[1] <= MAX_MIDI_NOTE,
+  );
+  return { keys: Object.fromEntries(keys), pitches: Object.fromEntries(pitches) };
 }
 
 function readPresentation(raw: unknown): PresentationSettings {
@@ -224,6 +259,7 @@ function readPresentation(raw: unknown): PresentationSettings {
     // Defaults to unmuted, so a save written before the speaker existed opens
     // with sound on — which is the state that save was actually played in.
     muted: typeof p.muted === 'boolean' ? p.muted : false,
+    soundCheck: readSoundCheck(p.soundCheck),
   };
 }
 

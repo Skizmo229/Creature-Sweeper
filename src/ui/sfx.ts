@@ -149,6 +149,9 @@ const PACKS: Record<SfxPackId, Pack> = {
   },
 };
 
+/** How a sound is named where one is stored: the sound check's keys and pitches. */
+export const sfxSoundId = (pack: SfxPackId, event: SfxEvent): string => `${pack}:${event}`;
+
 /** Where a sound starts, in Hz: its first voice's opening frequency. */
 export function sfxPitch(pack: SfxPackId, event: SfxEvent): number {
   return PACKS[pack][event][0].from;

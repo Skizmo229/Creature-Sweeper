@@ -13,7 +13,8 @@
 
 import { el } from '../dom.js';
 import type { SfxPackId } from '../looks.js';
-import { type SfxEvent, sfxPitch } from '../sfx.js';
+import type { Settings } from '../settings.js';
+import { type SfxEvent, sfxPitch, sfxSoundId } from '../sfx.js';
 import { SFX_EVENT_NAMES, SFX_NAMES } from '../theme.js';
 import type { ScreenContext } from './context.js';
 import { type PianoRoll, nearestNote, noteHz, noteName, pianoRoll } from './pianoroll.js';
@@ -25,16 +26,43 @@ interface Sound {
 }
 
 /**
- * Key to sound, and sound to the note it is tuned to. Module-level so both outlive a rebuild of
- * the screen and a closed window for the rest of the session; they are a testing aid, not a
- * setting, so they are never saved and never reach the game's own sounds.
+ * Key to sound, and sound to the note it is tuned to: the window's working copies of what the
+ * settings keep (`SoundCheckSettings`), read when it opens and written back on every change.
  */
 const keys = new Map<string, Sound>();
 const pitches = new Map<string, number>();
 
+/** A stored sound id back to a sound, or null for one this build has no button for. */
+function parseSound(id: string): Sound | null {
+  const [pack, event] = id.split(':');
+  return pack && event && pack in SFX_NAMES && event in SFX_EVENT_NAMES
+    ? { pack: pack as SfxPackId, event: event as SfxEvent }
+    : null;
+}
+
+function load(settings: Settings): void {
+  const saved = settings.presentation.soundCheck;
+  keys.clear();
+  for (const [key, id] of Object.entries(saved.keys)) {
+    const sound = parseSound(id);
+    if (sound) keys.set(key, sound);
+  }
+  pitches.clear();
+  for (const [id, note] of Object.entries(saved.pitches)) pitches.set(id, note);
+}
+
+function save(settings: Settings): void {
+  settings.setPresentation({
+    soundCheck: {
+      keys: Object.fromEntries([...keys].map(([key, s]) => [key, soundId(s)])),
+      pitches: Object.fromEntries(pitches),
+    },
+  });
+}
+
 /**
- * The sound check's own volume, as a multiple of each sound's level in play, kept like the keys.
- * It scales only what the sound check plays; the game's sounds never see it.
+ * The sound check's own volume, as a multiple of each sound's level in play. It lasts for the
+ * session and scales only what the sound check plays; the game's sounds never see it.
  */
 let volume = 1;
 /** Loud enough to hear a quiet sound clearly, short of drowning the room. */
@@ -83,7 +111,7 @@ const keyName = (id: string): string =>
 
 const same = (a: Sound, b: Sound): boolean => a.pack === b.pack && a.event === b.event;
 
-const soundId = (s: Sound): string => `${s.pack}:${s.event}`;
+const soundId = (s: Sound): string => sfxSoundId(s.pack, s.event);
 
 const soundName = (s: Sound): string =>
   `${SFX_NAMES[s.pack].split(' — ')[0]} · ${SFX_EVENT_NAMES[s.event]}`;
@@ -293,6 +321,7 @@ class SoundCheck {
   private readonly onKeyUp = (e: KeyboardEvent): void => this.keyUp(e);
 
   constructor(private readonly ctx: ScreenContext) {
+    load(ctx.settings);
     const { overlay, card, close } = shell();
     this.overlay = overlay;
     const tools = el('div', 'soundcheck-tools');
@@ -323,6 +352,7 @@ class SoundCheck {
       () => this.retune(null),
       () => {
         pitches.clear();
+        save(this.ctx.settings);
         this.sync();
       },
     );
@@ -337,6 +367,7 @@ class SoundCheck {
     });
     this.clearBtn.addEventListener('click', () => {
       keys.clear();
+      save(this.ctx.settings);
       this.sync();
     });
     close.addEventListener('click', () => this.dismiss());
@@ -376,6 +407,7 @@ class SoundCheck {
     if (!this.tuning) return;
     if (note === null) pitches.delete(soundId(this.tuning));
     else pitches.set(soundId(this.tuning), note);
+    save(this.ctx.settings);
     this.play(this.tuning);
     this.sync();
   }
@@ -439,6 +471,7 @@ class SoundCheck {
     if (this.assign.step === 'key') {
       take(e);
       keys.set(id, this.assign.sound);
+      save(this.ctx.settings);
       this.assign = { step: 'idle' };
       this.sync();
       return;
