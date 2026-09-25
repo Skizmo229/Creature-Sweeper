@@ -19,8 +19,9 @@ creatures. See `docs/invariants.md`, fact 4.
 one round, no damage. Above it, damage follows a staircase, `E * (ceil(E / L) - 1)` for tier `E`
 at level `L`. `src/engine/combat.ts`.
 
-**EXP and thresholds.** Killing a creature pays its tier in EXP. The thresholds to each level are
-per board and come from the ladder data (`exp` in `BoardConfig`). See **tuning identity**.
+**EXP and thresholds.** Killing a creature of tier `E` pays `2^(E - 1)` EXP: 1, 2, 4, 8, 16
+(`expForTier` in `src/engine/combat.ts`; mana is the linear one). The thresholds to each level
+are per board and come from the ladder data (`exp` in `BoardConfig`). See **tuning identity**.
 
 **HP.** The player's hit points for one board, or one Full Run. A guess budget, not a combat
 resource: see `docs/invariants.md`, fact 2.
