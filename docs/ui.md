@@ -137,7 +137,9 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   until the effect hands them back, even when cut short. Physics effects step by measured time
   clamped to 1/20 s; ambient ones keep a fixed step. Cascade never clears its canvas and fades the
   element instead. Sprites include covered creatures, for the search boards. Burn clips the real
-  glyph. Effects draw on their own layer.
+  glyph. Effects draw on their own layer, stacked inside the stage (`isolation: isolate`), so the
+  clear card covers the effect, by request, rather than the effect's glyphs flying across the
+  card's buttons.
 - The first clear of a board holds its card back for three seconds, by request, so the clear effect
   plays over the board itself, undimmed and with no card in the middle of it (`.overlay.held`).
   Until then the overlay is clear but still takes the pointer, so the board cannot be zoomed or

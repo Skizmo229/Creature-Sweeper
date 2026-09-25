@@ -334,8 +334,11 @@ button.board-card:hover:not(:disabled) {
      `overflow: hidden` below then cut the bottom rows off. */
   flex: 1 1 0;
   min-height: 180px;
-  /* The board-clear effect is an absolutely-positioned layer inside here. */
+  /* The board-clear effect is an absolutely-positioned layer inside here, and
+     stacked inside here too, so the result card laid over the screen covers
+     the effect rather than the effect the card. */
   position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -869,7 +872,9 @@ button.board-card:hover:not(:disabled) {
  * The celebration draws on its own layer over the stage, never into the
  * board's canvas. The board renderer is turn-based and should stay that way —
  * animating into it would mean repainting every cell sixty times a second, or
- * leaving particle trails smeared across the board.
+ * leaving particle trails smeared across the board. The z-index lifts it over
+ * the board and the fight rim and no further: the stage isolates its layers,
+ * so the result card still covers it.
  */
 .victory-layer {
   position: absolute;
