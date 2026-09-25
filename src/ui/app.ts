@@ -469,7 +469,12 @@ export class App {
   private apply(events: GameEvent[]): void {
     const game = this.game!;
 
-    if (events.some((ev) => ev.type === 'battle' && ev.damage > 0)) this.flash('shake');
+    // One rim per action, however many fights it resolved (a sweep can fight several): red if
+    // any of them cost HP, green otherwise.
+    const battles = events.filter((ev) => ev.type === 'battle');
+    const hurt = battles.some((ev) => ev.damage > 0);
+    if (hurt) this.flash('shake');
+    if (battles.length > 0) this.flashRim(hurt ? 'hurt' : 'clean');
     if (events.some((ev) => ev.type === 'levelUp')) this.flash('levelup');
     if (this.sfx.enabled) {
       const sound = soundFor(events);
@@ -497,6 +502,18 @@ export class App {
     stage.classList.remove(kind);
     void stage.offsetWidth; // restart the animation
     stage.classList.add(kind);
+  }
+
+  /**
+   * Light the stage's rim for the fights an action resolved. Only one of the two classes is ever
+   * on the stage: with both, the later CSS rule would win and the other colour could never play.
+   */
+  private flashRim(outcome: 'clean' | 'hurt'): void {
+    const stage = this.els?.stage;
+    if (!stage) return;
+    stage.classList.remove('fight-clean', 'fight-hurt');
+    void stage.offsetWidth; // restart the animation
+    stage.classList.add(`fight-${outcome}`);
   }
 
   private refresh(): void {

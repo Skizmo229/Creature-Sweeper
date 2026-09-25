@@ -80,6 +80,34 @@ describe('the app', () => {
     expect(game.hp).toBe(game.maxHp);
   });
 
+  it('lights the stage rim after a fight: green when it cost nothing, red when it hurt', () => {
+    app.play('normal', 1, 7);
+    const game = app.current!;
+    const stage = document.querySelector('.stage')!;
+    const rim = (): string[] => [...stage.classList].filter((c) => c.startsWith('fight-'));
+    const covered = (fits: (tier: number) => boolean) =>
+      game.grid.flat().find((c) => !c.open && c.alive && c.tier > 0 && fits(c.tier))!;
+
+    const free = covered((tier) => tier <= game.level);
+    app.actions.onCellPrimary(free.x, free.y);
+    expect(game.hp).toBe(game.maxHp);
+    expect(rim()).toEqual(['fight-clean']);
+
+    const costly = covered((tier) => tier === game.level + 1);
+    app.actions.onCellPrimary(costly.x, costly.y);
+    expect(game.hp).toBeLessThan(game.maxHp);
+    expect(rim()).toEqual(['fight-hurt']);
+
+    // A sweep can fight several creatures in one action; any one that hurt makes the rim red.
+    const fought = (damage: number): GameEvent => {
+      return { type: 'battle', x: 0, y: 0, tier: 1, damage, defeated: true };
+    };
+    app.apply([fought(0)]);
+    expect(rim()).toEqual(['fight-clean']);
+    app.apply([fought(0), fought(2), fought(0)]);
+    expect(rim()).toEqual(['fight-hurt']);
+  });
+
   it('N switches the entry mode and arms a pencil tier', () => {
     app.play('normal', 1, 7);
     key('n');

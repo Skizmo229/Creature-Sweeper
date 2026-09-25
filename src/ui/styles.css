@@ -360,6 +360,46 @@ button.small {
   animation: levelup 650ms ease-out;
 }
 
+/*
+ * A fight lights the stage's rim, fading inward: green when it cost nothing,
+ * red when it cost HP (app.ts decides which). A layer of its own, over the
+ * canvas, so it shows however much of the stage the board covers and never
+ * takes a click; `shake` and `levelup` share the stage's own `animation`.
+ * Green is the softer of the two because it is the common case. It stays on
+ * under reduced motion: it is a fade, not a movement, and with the shake gone
+ * it is the one sign on the board that a fight hurt.
+ */
+.stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow:
+    inset 0 0 0 2px var(--fight-rim),
+    inset 0 0 28px 6px var(--fight-rim);
+}
+.stage.fight-clean::after {
+  --fight-rim: rgba(53, 224, 106, 0.55);
+  animation: fight-rim 550ms ease-out;
+}
+.stage.fight-hurt::after {
+  --fight-rim: rgba(255, 52, 40, 0.85);
+  animation: fight-rim 800ms ease-out;
+}
+@keyframes fight-rim {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .stage.shake,
   .stage.levelup {
