@@ -38,8 +38,9 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   longest word in ems once its face has arrived (`fitNames`), and the stylesheet caps its size by
   the card's width, so CHECKERBOARD comes down a little at laptop width, and any long word at a
   large text size. A name with a space in it breaks there first.
-- The menus' cards have heavy edges, by request: a 2px border on a game-type card, a 2px white
-  outline on a board tile (an outline, because a tile's border carries its state).
+- The menus' cards have heavy edges, by request: a 2px border on a game-type card, with an 8px strip
+  of the ladder's colour down its left, and a 2px white outline on a board tile (an outline,
+  because a tile's border carries its state).
 
 ## The board
 
