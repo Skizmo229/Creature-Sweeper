@@ -66,7 +66,7 @@ with a schema `ladders.py` enforces (the JSON regenerates to the same bytes); `b
 every spell (which surfaced that nothing measures Beacon); the command-line sims are in
 `src/sim/cli/`; and `test/docs.test.ts` holds the README and architecture maps to the tree.
 
-**The targets (section 9) as of 24 September 2026:**
+**The targets (section 9) as of 25 September 2026:**
 
 | Measure | Target | Now |
 | --- | ---: | ---: |
@@ -74,11 +74,12 @@ every spell (which surfaced that nothing measures Beacon); the command-line sims
 | Placement branch sites | about 10 | 12 in 5 files, 8 of them in `ladders.py` |
 | Longest function, engine and UI | 100 (warn), 150 (hard) | under 100: no warning |
 | Largest file, engine and UI | 600 | under 600: no warning |
-| CLAUDE.md | under 150 | 56 |
+| CLAUDE.md | under 150 | 55 |
 | Comment lines describing past behaviour | 0 | 0 |
 | Unreferenced exports | 0, enforced | 0, knip in `npm run check` |
 | CI | the full set | typecheck, lint, knip, format, tests, golden, Python tests, ladders |
-| Files to change to add a spell | 6 or fewer | not re-walked |
+| Files to change to add a spell | 6 or fewer | 20 like Census, 14 without docs: not met |
+| Files read to be confident of that list | 8 or fewer | 41: not met |
 
 Phase 2's own bar, cleared the same day on branch `m3-2b-size-warnings`: the eight size warnings
 in the engine and UI are gone. `game.ts` lost the fight to `fight.ts`; `shape/dungeon.ts` its floor
@@ -91,7 +92,21 @@ complete deducer's search a class in `sim/search.ts`, and `play` and the spell s
 split, so ESLint reports no size warning anywhere in `src`. `Placement` and `BoardShape` are now
 their registries' keys, which takes a placement rule with its ladder to 8 files. The honest player
 casts Beacon, and the measurement says it is priced out of reach (`docs/tuning.md`, open question
-7). Every target in the table is met; spell-addition is the one not re-walked.
+7). Every target in the table is met but the spell's, walked again the next day (below).
+
+**The double-check, 25 September 2026.** A read-only walkthrough of adding a spell, started from
+the README on `main` at `2bfce56` like the first three, took Echo from the design reference (the
+highest tier in a 3x3, left on the cell): 20 files to change, 14 of them code, data and tests, and
+41 read to be confident of the list. The target of 6 is not met, and no tidying meets it: a
+spell's parts live in the engine (its record, its effect, the cell field, the Sweep proof), the
+honest player, the renderer, the ladder data and the docs, and the layering keeps the renderer's
+part out of the engine. Meeting it would take a structural change, which is a design question
+rather than a loose end. The walk read more than the first (41 against about 24) partly because
+`docs/extending.md` still described the code before phase 2. On branch `m3-loose-ends` that
+checklist is rewritten from the walk; `extend()` in `ladders.py` is split, the other half of
+phase 6's split; `ladders.py`'s comments lose their history; the names of the files phase 2 moved
+are corrected wherever the docs and comments still used the old ones; and the design generators
+write LF on Windows.
 
 ---
 
