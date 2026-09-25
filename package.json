@@ -27,7 +27,7 @@
     "sim:golden:check": "node scripts/golden.mjs --check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "knip": "knip",
     "check": "npm run typecheck && npm run lint && npm run knip && npm run format:check && npm test && npm run sim:golden:check"
   },

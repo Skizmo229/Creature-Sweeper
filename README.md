@@ -61,7 +61,7 @@ and `design/screenshots/` are untracked on purpose (see Third-party reference).
 npm run dev            # play it
 npm run check          # everything below that CI runs, in about a minute
 npm run typecheck      # twice: the second pass compiles the engine, sims and tests with no DOM library
-npm run lint           # ESLint; the size warnings are the readability measure Milestone 3 set
+npm run lint           # ESLint, failing on any warning; the size warnings are the readability bar Milestone 3 set
 npm run knip           # unused files and exports
 npm run format         # Prettier (format:check to verify)
 npm test               # 458 tests, including the invariants

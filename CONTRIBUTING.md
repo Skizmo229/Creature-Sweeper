@@ -22,8 +22,9 @@ npm run check
 ```
 
 That is typecheck (twice: the second pass compiles the engine, the sims and the tests with no
-DOM library at all, which is how the engine is proven headless), ESLint, knip, the Prettier
-check, the test suite and the golden simulator outputs. Each is also its own script:
+DOM library at all, which is how the engine is proven headless), ESLint (a warning fails it, the
+size warnings included), knip, the Prettier check, the test suite and the golden simulator
+outputs. Each is also its own script:
 `typecheck`, `lint`, `knip`, `format` / `format:check`, `test`, `sim:golden:check`.
 
 If you touched `design/ladders.py` or `design/ladder_types.toml`, also run `npm run test:py`: the generator's own tests

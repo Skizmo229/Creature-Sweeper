@@ -1,5 +1,6 @@
 // ESLint, flat config. Correctness rules only, plus two size warnings that are the
-// readability measure Milestone 3 set (docs/refactoring-plan.md, section 9).
+// readability measure Milestone 3 set (docs/refactoring-plan.md, section 9). `npm run lint`
+// allows no warnings, so they fail the check as an error does.
 // Formatting is Prettier's job and no style rule is enabled here.
 
 import js from '@eslint/js';
