@@ -541,6 +541,8 @@ export class App {
     const perfect = won && game.hp === game.maxHp;
     const type = ladders.find((t) => t.id === this.typeId)!;
     const recorded = this.recordsCount;
+    // Read before the clear is written down, after which every clear would look like a repeat.
+    const firstClear = won && !this.progress.boardRecord(this.typeId, this.boardIndex).cleared;
     let unlocked: number | null = null;
     // A board cleared on settings easier than the tuned ones is not written down at all.
     if (won && recorded) {
@@ -560,6 +562,8 @@ export class App {
       seed: this.seed,
       won,
       perfect,
+      // The wait is for watching the clear effect, so with the effect off there is none.
+      held: firstClear && this.settings.victoryEffect(this.typeId) !== null,
       timeExpired: this.clock.timeExpired,
       seconds,
       fatal: this.fatalBattle,

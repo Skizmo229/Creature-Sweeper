@@ -137,7 +137,16 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   until the effect hands them back, even when cut short. Physics effects step by measured time
   clamped to 1/20 s; ambient ones keep a fixed step. Cascade never clears its canvas and fades the
   element instead. Sprites include covered creatures, for the search boards. Burn clips the real
-  glyph. Effects draw on their own layer.
+  glyph. Effects draw on their own layer, stacked inside the stage (`isolation: isolate`), so the
+  clear card covers the effect, by request, rather than the effect's glyphs flying across the
+  card's buttons.
+- The first clear of a board holds its card back for two and a half seconds, by request, so the
+  clear effect plays over the board itself, undimmed and with no card in the middle of it
+  (`.overlay.held`). Until then the overlay is clear but still takes the pointer, so the board
+  cannot be zoomed or panned out from under the effect and no hidden button can be pressed;
+  Escape still leaves. A first clear is one the save had never recorded. A replay, a loss and a
+  clear with the effect off (nothing to watch) show the card at once. A Full Run never holds one:
+  its boards were all cleared before it opened, and between boards its clock is still running.
 - A fight that costs HP shakes the stage, and a level-up glows inside it. They are the stage's own
   animations, one slot each in its `animation` list, filled by the `shake` and `levelup` classes.
   Two rules setting `animation` would let one displace the other, and a class left on after its

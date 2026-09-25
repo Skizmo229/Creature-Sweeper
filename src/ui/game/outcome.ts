@@ -35,6 +35,8 @@ export interface BoardOutcome {
   seed: number;
   won: boolean;
   perfect: boolean;
+  /** Keep the card back while the clear effect plays (`.overlay.held`): a first clear, effect on. */
+  held: boolean;
   timeExpired: boolean;
   seconds: number;
   /** The blow that ended a lost board, if a fight did. */
@@ -55,7 +57,8 @@ export interface BoardOutcome {
 
 export function buildBoardOutcome(o: BoardOutcome): HTMLElement {
   const { game, won } = o;
-  const overlay = el('div', `overlay ${won ? 'win' : 'lose'}`);
+  // A held card waits while the clear effect plays over the board (styles.css).
+  const overlay = el('div', `overlay ${won ? 'win' : 'lose'}${o.held ? ' held' : ''}`);
   const card = el('div', 'overlay-card');
   card.append(
     el(

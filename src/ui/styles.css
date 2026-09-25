@@ -334,8 +334,11 @@ button.board-card:hover:not(:disabled) {
      `overflow: hidden` below then cut the bottom rows off. */
   flex: 1 1 0;
   min-height: 180px;
-  /* The board-clear effect is an absolutely-positioned layer inside here. */
+  /* The board-clear effect is an absolutely-positioned layer inside here, and
+     stacked inside here too, so the result card laid over the screen covers
+     the effect rather than the effect the card. */
   position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -608,6 +611,34 @@ button.board-card:hover:not(:disabled) {
 }
 
 /*
+ * A board's first clear, with a clear effect on, holds its card back, by
+ * request, so the effect plays over the board itself, undimmed and with no
+ * card in the middle of it. Until the hold is up the overlay is clear but still takes the pointer, so
+ * the board cannot be zoomed or panned out from under the effect, and the card
+ * is hidden, so none of its buttons can be pressed unseen; Escape still leaves
+ * the board. Then the dimming and the card fade in together. No timer: leaving
+ * the screen takes the card with it, so there is nothing to cancel.
+ */
+.overlay.held {
+  --hold: 2.5s;
+  animation: overlay-dim 200ms ease-out var(--hold) both;
+}
+.overlay.held > .overlay-card {
+  animation: overlay-arrive 200ms ease-out var(--hold) both;
+}
+@keyframes overlay-dim {
+  from {
+    background-color: transparent;
+  }
+}
+@keyframes overlay-arrive {
+  from {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/*
  * The rules card is the one overlay carrying prose rather than a score, so it
  * is wider and ranged left — three blocks of centred text is a poster, not
  * something anyone reads. Its body takes the ordinary ink colour and leaves
@@ -841,7 +872,9 @@ button.board-card:hover:not(:disabled) {
  * The celebration draws on its own layer over the stage, never into the
  * board's canvas. The board renderer is turn-based and should stay that way —
  * animating into it would mean repainting every cell sixty times a second, or
- * leaving particle trails smeared across the board.
+ * leaving particle trails smeared across the board. The z-index lifts it over
+ * the board and the fight rim and no further: the stage isolates its layers,
+ * so the result card still covers it.
  */
 .victory-layer {
   position: absolute;
