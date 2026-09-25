@@ -73,7 +73,13 @@ ladder, each spell against playing spell-less on the ladders that offer it:
 | Census, as played | 30 | 0.001 | 0.0000 | 0.0 |
 | Census, where it demonstrably helps | 30 | 0.48 | 0.0158 | 0.8 |
 | Exercise | 150 | 0.90 | 0.0098 | 2.5 |
+| Beacon (ORACLE only) | 300 | (about 3 casts in 400 games) | 0.0083 | 0.0 |
 
+- Beacon is cast at a stuck point, like Reveal and Census, and is almost never affordable there:
+  at the first stuck point on each ORACLE board the player holds a median of 84 mana against its
+  300, and can pay for it 2% of the time, while an untouched blank region (17 cells on average)
+  is there to open 95% of the time. Its per-cast figure rests on too few casts to mean anything;
+  what the measurement says is that at this price the spell is out of reach (open question 7).
 - Reveal is the most valuable spell by a wide margin. Census is not weak, it is unaimable: cast
   where it demonstrably unlocks something it is worth more per mana than Reveal, but such a spot
   exists 0.1 to 0.3 times a board and a player hits it 2 to 9% of the time (an earlier
@@ -117,6 +123,9 @@ ladder, each spell against playing spell-less on the ladders that offer it:
    level them. Left alone deliberately.
 6. **Marks are not gated the way the pencil is** (a mark may claim the wrong parity on
    CHECKERBOARD). A decision, left open.
-7. **Smaller:** BLIND's unlock timing (three Full Runs) is a guess; pinch-zoom has only met
+7. **Beacon is priced out of play.** At 300 it is affordable at 2% of ORACLE's stuck points
+   (measured 24 September 2026, above), so ORACLE effectively offers three spells. Whether to
+   reprice it, or to let it be the late, rare purchase it is, is a design call.
+8. **Smaller:** BLIND's unlock timing (three Full Runs) is a guess; pinch-zoom has only met
    synthetic touch events; touch has no hover, so a beaten creature's number is unreachable on a
    phone.

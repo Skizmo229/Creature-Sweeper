@@ -27,7 +27,8 @@ import { placementRule } from '../engine/placement/registry.js';
  * deduction has run out and a guess is coming — and judged on the `exercised`
  * event the fight itself emits, which says exactly what it spared.
  */
-export type Policy = 'none' | 'reveal' | 'census' | 'census-best' | 'exercise' | 'workout' | 'gym';
+export type Policy =
+  'none' | 'reveal' | 'census' | 'census-best' | 'exercise' | 'beacon' | 'workout' | 'gym';
 
 /**
  * The policies that measure each spell, keyed by every spell, so a new one cannot be added without
@@ -40,8 +41,8 @@ export const SPELL_POLICIES: Readonly<Record<SpellId, readonly Policy[]>> = {
   // when aimed perfectly, against `census`, aimed by judgement.
   census: ['census', 'census-best'],
   exercise: ['exercise'],
-  // Not measured yet: the honest player has no policy for it, though ORACLE offers it.
-  beacon: [],
+  // Cast at a stuck point, like Reveal and Census, while there is an untouched blank region left.
+  beacon: ['beacon'],
 };
 
 export interface Run {
@@ -681,15 +682,19 @@ export function play(
       castsHere < 2 &&
       game.canCast(spellId)
     ) {
-      const target =
-        spellId === 'reveal'
+      // Beacon takes no target: it opens the largest blank region nobody has touched, and is
+      // refused when there is none.
+      const untargeted = spellId === 'beacon';
+      const target = untargeted
+        ? null
+        : spellId === 'reveal'
           ? guess
           : policy === 'census-best'
             ? censusOracle(game, guess)
             : censusTarget(game, constraints, guess);
-      if (target) {
+      if (target || untargeted) {
         const before = game.mana;
-        const events = game.cast(spellId, target.x, target.y);
+        const events = target ? game.cast(spellId, target.x, target.y) : game.cast(spellId);
         if (!events.some((e) => e.type === 'blocked')) {
           run.casts++;
           castsHere++;
