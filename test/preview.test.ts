@@ -15,6 +15,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { loadLadders } from '../src/data.js';
+import { placementRule } from '../src/engine/placement/registry.js';
 import {
   PREVIEW_SEED,
   clearedBoard,
@@ -22,7 +23,7 @@ import {
   hexSampleBoard,
   highlightSampleBoard,
   sampleBoard,
-  topDefeatedCell,
+  samplePin,
   zoomSampleBoard,
 } from '../src/ui/preview.js';
 import type { Game } from '../src/engine/game.js';
@@ -120,10 +121,37 @@ describe('the gallery examples', () => {
   });
 
   it('leaves covered ground as well, so the palette has both to show', () => {
-    // Tile colour and floor colour are different settings on the same tile.
-    const board = sampleBoard();
-    expect(board.grid.flat().some((c) => c.present && c.open)).toBe(true);
-    expect(board.grid.flat().some((c) => c.present && !c.open)).toBe(true);
+    // Tile colour and floor colour are different settings on the same tile,
+    // and the tile is half of what a palette paints, so a quarter of the board
+    // stays covered rather than one lone cell.
+    const cells = sampleBoard()
+      .grid.flat()
+      .filter((c) => c.present);
+    expect(cells.some((c) => c.open)).toBe(true);
+    expect(cells.filter((c) => !c.open).length * 4).toBeGreaterThanOrEqual(cells.length);
+  });
+
+  it('writes every digit from 0 to 9 in the ink', () => {
+    // A face is judged on its digits and a palette on its ink, so all ten are
+    // on show. An empty cell numbered 0 is left blank, so the 0 has to come
+    // from a two-digit number.
+    const shown = new Set(
+      sampleBoard()
+        .grid.flat()
+        .filter((c) => c.present && c.open && c.tier === 0 && c.num > 0)
+        .flatMap((c) => [...String(c.num)]),
+    );
+    expect([...shown].sort().join('')).toBe('0123456789');
+  });
+
+  it('carries a mark on a covered tile, in the green of a player mark', () => {
+    // The mark is the one annotation every board can wear, drawn in the face
+    // being chosen; a given would be gold instead.
+    const marked = sampleBoard()
+      .grid.flat()
+      .filter((c) => c.present && !c.open && c.mark > 0);
+    expect(marked).toHaveLength(1);
+    expect(marked[0]!.given).toBe(false);
   });
 
   it('is the same board every time it is asked for', () => {
@@ -153,29 +181,27 @@ describe('the gallery examples', () => {
     expect(hexSampleBoard()).toBe(highlightSampleBoard('hex'));
   });
 
-  it('pins the hover example on a defeated creature, not on floor', () => {
-    // The hover gallery is about what the cursor does to a BEATEN creature, so
-    // a pin that landed on floor would leave every tile identical and the
-    // setting would look like it did nothing. This is the alarm if the sample
-    // board's layout ever moves.
+  it('holds the cursor over a beaten creature, so its number shows in `hot`', () => {
+    // Hovering a beaten creature is the only way a board draws the palette's
+    // `hot`. A pin over floor or a live creature would draw nothing in it, and
+    // a pairing placement would not show the number at all (decision 0012).
     const board = sampleBoard();
-    const { x, y } = topDefeatedCell(board);
-    const cell = board.cellAt(x, y)!;
-    expect(cell.open).toBe(true);
-    expect(cell.tier).toBeGreaterThan(0);
+    const pin = samplePin();
+    expect(board.cellAt(pin.x, pin.y)).toBe(pin);
+    expect(pin.open).toBe(true);
+    expect(pin.tier).toBeGreaterThan(0);
+    expect(pin.alive).toBe(false);
+    expect(placementRule(board.config.placement).display.hoverShowsNumber).toBe(true);
   });
 
-  it('pins it on the highest tier, where the level is worth reading', () => {
-    // Counting pips is what the digit replaces, so the example should be on
-    // the glyph with the most of them — and a shape swap reads there too.
-    const board = sampleBoard();
-    const { x, y } = topDefeatedCell(board);
-    const best = Math.max(
-      ...creatures(board)
-        .filter((c) => c.open)
-        .map((c) => c.tier),
-    );
-    expect(board.cellAt(x, y)!.tier).toBe(best);
+  it('pins the weakest beaten creature, so two glyphs still show their pips', () => {
+    // The pinned creature shows a number instead of its glyph. The icon
+    // gallery's question is the pip shape, which the most pips answer best.
+    const beaten = creatures(sampleBoard()).filter((c) => c.open);
+    const pin = samplePin();
+    const glyphs = beaten.filter((c) => c !== pin);
+    expect(glyphs.length).toBeGreaterThanOrEqual(2);
+    for (const glyph of glyphs) expect(glyph.tier).toBeGreaterThan(pin.tier);
   });
 
   it('shows a creature and a number on the zoom example', () => {

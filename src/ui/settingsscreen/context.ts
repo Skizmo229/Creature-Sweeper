@@ -6,7 +6,7 @@
 
 import type { BoardDisplay } from '../board/view.js';
 import { ladders } from '../ladders.js';
-import { sampleBoard } from '../preview.js';
+import { sampleBoard, samplePin } from '../preview.js';
 import { DEFAULT, type PresentationSettings, type Settings } from '../settings.js';
 import type { SfxEvent } from '../sfx.js';
 import { type PipShape, type LadderLook, type TypeTheme, lookFor, themeFor } from '../looks.js';
@@ -83,10 +83,15 @@ export function makeContext(
     currentPip: p.icons === DEFAULT ? themeFor(typeId).pip : p.icons,
     currentTheme,
     display,
+    // Held over a beaten creature, so its number shows in the palette's `hot`, with the cursor
+    // highlight off: that has a gallery of its own, and on a thumbnail it buries the cells.
     chipBoard:
       (theme, over = {}) =>
       () =>
-        renderPreview(sampleBoard(), theme, display(over), { cell: CHIP_CELL }).canvas,
+        renderPreview(sampleBoard(), theme, display({ highlight: null, ...over }), {
+          cell: CHIP_CELL,
+          pin: samplePin(),
+        }).canvas,
     pick(patch) {
       settings.setPresentation(patch);
       rebuild();

@@ -66,6 +66,11 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   Every tile in a gallery draws the same board from the same seed, so only the setting differs.
   The example boards open the highest tiers, show defeated creatures (the only way to show a
   glyph), and open numbered empty cells so a cascade does not clear the board.
+- The standard example, which the icon, palette, board font and strike galleries draw, shows
+  every digit from 0 to 9 in the ink and every colour a palette paints on a board (decision 0034).
+  Its thumbnails hold the cursor over a beaten creature, highlight off, because hover is the only
+  way a board draws `hot`. It is dealt by rejection from the fixed seed until a layout shows all
+  ten digits, so a change to the generator moves it rather than breaking it.
 - Icons, palette and the two fonts show two tiles, Default and User choice; the full gallery opens
   in a picker inside the settings element, which catches Escape in the capture phase.
 - The interface font's tiles are the one gallery that is not boards: each is a copy of the HUD's
