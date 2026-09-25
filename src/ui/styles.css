@@ -323,6 +323,17 @@ button.small {
   cursor: pointer;
 }
 
+/*
+ * The stage's own effects, the shake and the level-up glow, each fill a slot
+ * in its animation list from their class. Written as two rules setting
+ * `animation`, one would displace the other, and a class left on after its
+ * animation had played would hold the stage against the other for the rest
+ * of the board.
+ */
+.stage {
+  animation: var(--shake, none), var(--levelup, none);
+}
+
 @keyframes shake {
   0%,
   100% {
@@ -342,7 +353,7 @@ button.small {
   }
 }
 .stage.shake {
-  animation: shake 260ms ease-in-out;
+  --shake: shake 260ms ease-in-out;
 }
 
 @keyframes levelup {
@@ -357,7 +368,57 @@ button.small {
   }
 }
 .stage.levelup {
-  animation: levelup 650ms ease-out;
+  --levelup: levelup 650ms ease-out;
+}
+
+/*
+ * A fight lights the stage's rim, fading inward: green when it cost nothing,
+ * blue when it levelled the player up, red when it cost HP (game/flash.ts
+ * decides which, and the player's setting whether). A layer of its own, over
+ * the canvas, so it shows however much of the stage the board covers and never
+ * takes a click. Green is the softest because it is the common case; the blue
+ * is deeper than the cyan a spell's targeting outline draws in the same place.
+ * It stays on under reduced motion: it is a fade, not a movement, and with the
+ * shake gone it is the one sign on the board that a fight hurt. The settings
+ * screen's example wears the same rim.
+ */
+.stage::after,
+.rim-demo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow:
+    inset 0 0 0 2px var(--fight-rim),
+    inset 0 0 28px 6px var(--fight-rim);
+}
+.stage.fight-clean::after,
+.rim-demo.fight-clean::after {
+  --fight-rim: rgba(53, 224, 106, 0.55);
+  animation: fight-rim 550ms ease-out;
+}
+.stage.fight-levelup::after,
+.rim-demo.fight-levelup::after {
+  --fight-rim: rgba(64, 140, 255, 0.8);
+  animation: fight-rim 750ms ease-out;
+}
+.stage.fight-hurt::after,
+.rim-demo.fight-hurt::after {
+  --fight-rim: rgba(255, 52, 40, 0.85);
+  animation: fight-rim 800ms ease-out;
+}
+@keyframes fight-rim {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1038,6 +1099,27 @@ button.small {
 .clear-demo canvas {
   display: block;
   cursor: inherit;
+}
+
+/* The glow-after-a-fight example: the board in a stage of its own, with the
+   stage's colours and room around the board for the rim, as in play. */
+.rim-demo {
+  position: relative;
+  align-self: flex-start;
+  padding: 24px;
+  background: #12120c;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.rim-demo canvas {
+  display: block;
+  cursor: inherit;
+}
+.rim-demo-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .settings-stack .settings-gallery {

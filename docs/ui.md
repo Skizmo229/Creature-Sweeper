@@ -69,8 +69,11 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - Icons, palette and font show two tiles, Default and User choice; the full gallery opens in a
   picker inside the settings element, which catches Escape in the capture phase.
 - Picking a visual option rebuilds the whole screen and carries the scroll position, because the
-  galleries are drawn in terms of each other. Exceptions: the zoom slider redraws in place; sound
-  and the clear effect play themselves and update their own tiles.
+  galleries are drawn in terms of each other. Exceptions: the zoom slider redraws in place; sound,
+  the glow after a fight and the clear effect play themselves and update their own tiles.
+- The glow after a fight is shown on the standard example board in a stage of its own, and three
+  buttons act out a clean fight, a level-up and a hit through `flashRim`, the game's own code,
+  under the option chosen, so the difference between the options can be tried.
 - The clear-effect demo runs over a genuinely won board carrying one of every tier the real board
   uses (`previewTiers()` reads the live game). Test deals a new board; picking an effect replays
   on the same one. The demo seed is module-level so it outlives a rebuild.
@@ -111,6 +114,19 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   clamped to 1/20 s; ambient ones keep a fixed step. Cascade never clears its canvas and fades the
   element instead. Sprites include covered creatures, for the search boards. Burn clips the real
   glyph. Effects draw on their own layer.
+- A fight that costs HP shakes the stage, and a level-up glows inside it. They are the stage's own
+  animations, one slot each in its `animation` list, filled by the `shake` and `levelup` classes.
+  Two rules setting `animation` would let one displace the other, and a class left on after its
+  animation played would block the other for the rest of the board.
+- A fight lights the stage's rim, fading inward: green when it cost nothing, blue when it levelled
+  the player up, red when it cost HP. One rim per action, since a sweep can fight several: red if
+  any fight in it hurt, else blue if it levelled up, else green. The player can keep it for every
+  fight, for level-ups and damage only (blue and red, no green), or turn it off (`fightRim`); the
+  shake and the level-up glow ignore it. The blue is deeper than the cyan of a spell's targeting
+  outline, which sits in the same place. It is `.stage::after`, over the canvas so it shows
+  however much of the stage the board covers, and deaf to the pointer. Only one of the three rim
+  classes is on the stage at a time, or the later rule would keep its colour for good. It stays
+  on under reduced motion, which drops the shake and the glow.
 
 ## Saves
 

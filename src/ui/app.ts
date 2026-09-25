@@ -16,6 +16,7 @@ import { BoardClock } from './game/clock.js';
 import { gatePalette, syncClock, syncGameScreen } from './game/hud.js';
 import { EntryMode } from './game/mode.js';
 import { BoardActions } from './game/actions.js';
+import { flashStage } from './game/flash.js';
 import { buildBoardOutcome, buildRunOutcome } from './game/outcome.js';
 import { type GameScreenElements, buildGameScreen } from './game/screen.js';
 import { soundFor } from './game/sound.js';
@@ -469,8 +470,7 @@ export class App {
   private apply(events: GameEvent[]): void {
     const game = this.game!;
 
-    if (events.some((ev) => ev.type === 'battle' && ev.damage > 0)) this.flash('shake');
-    if (events.some((ev) => ev.type === 'levelUp')) this.flash('levelup');
+    if (this.els) flashStage(this.els.stage, events, this.settings.presentation.fightRim);
     if (this.sfx.enabled) {
       const sound = soundFor(events);
       if (sound) this.sfx.play(sound);
@@ -489,14 +489,6 @@ export class App {
 
     this.refresh();
     if (game.status !== 'playing') this.finish();
-  }
-
-  private flash(kind: 'shake' | 'levelup'): void {
-    const stage = this.els?.stage;
-    if (!stage) return;
-    stage.classList.remove(kind);
-    void stage.offsetWidth; // restart the animation
-    stage.classList.add(kind);
   }
 
   private refresh(): void {

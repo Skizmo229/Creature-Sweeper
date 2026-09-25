@@ -3,9 +3,10 @@
  *
  * Two halves that behave very differently:
  *
- * **Presentation** — icons, palette, font, sound, the clear effect, the cursor
- * highlight, the struck-out creatures, the zoom ceiling. None of it touches a
- * rule, so none of it can affect whether a clear is recorded.
+ * **Presentation** — icons, palette, font, sound, the clear effect, the glow
+ * after a fight, the cursor highlight, the struck-out creatures, the zoom
+ * ceiling. None of it touches a rule, so none of it can affect whether a clear
+ * is recorded.
  *
  * **Gameplay** — the dials in `engine/settings.ts`. Those change the rules, so
  * they decide whether a board counts. See `isAtLeastAsHard`: a player who
@@ -73,6 +74,15 @@ export const HIGHLIGHT_NAMES: Record<HighlightStyle, string> = {
 };
 
 /**
+ * Which fights light the edge of the board. 'every' is green for a fight that cost nothing, blue
+ * for one that levelled the player up and red for one that hurt; 'levelups' keeps the blue and
+ * the red and leaves the green out, since clean fights are most of a board; 'off' is none. See
+ * `game/flash.ts`.
+ */
+export type FightRim = 'every' | 'levelups' | typeof OFF;
+const FIGHT_RIMS: readonly FightRim[] = ['every', 'levelups', OFF];
+
+/**
  * How large the interface's text can be set, as a multiple of the browser's
  * own size. Applied as the root font size, which every size in the stylesheet
  * is written against, so the HUD, the menus and this screen all follow it and
@@ -102,6 +112,8 @@ export interface PresentationSettings {
    * the stroke crosses the pips and some players read it as clutter.
    */
   readonly strikeDefeated: boolean;
+  /** Which fights light the edge of the board. The shake and the level-up glow are not this. */
+  readonly fightRim: FightRim;
   /** Ceiling for manual zoom, in CSS pixels per cell. */
   readonly maxZoom: number;
   /** Size of the interface's text — HUD, menus, settings — as a multiple. */
@@ -127,6 +139,7 @@ const DEFAULT_PRESENTATION: PresentationSettings = {
   victory: DEFAULT,
   highlight: DEFAULT,
   strikeDefeated: true,
+  fightRim: 'every',
   maxZoom: DEFAULT_MAX_ZOOM,
   textSize: DEFAULT_TEXT_SIZE,
   muted: false,
@@ -181,6 +194,8 @@ function readPresentation(raw: unknown): PresentationSettings {
     victory: str('victory', DEFAULT) as VictoryChoice,
     highlight: str('highlight', DEFAULT) as HighlightChoice,
     strikeDefeated: typeof p.strikeDefeated === 'boolean' ? p.strikeDefeated : true,
+    // A save from before this setting reads as every fight, which is how the glow first shipped.
+    fightRim: oneOf(p.fightRim, FIGHT_RIMS, 'every'),
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
     // A save from before this setting has no field, and reads as the size the
     // game always had.

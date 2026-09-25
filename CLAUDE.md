@@ -9,12 +9,11 @@ that used to live here is in `docs/`, where a human can find it too.
 1. `README.md`: what it is, how to run it, the layout.
 2. `docs/invariants.md`: the four load-bearing facts. All four fail silently.
 3. `docs/architecture.md`: the map, the one-way data flow, how a board is born, how a click flows.
-4. `docs/refactoring-plan.md`: **Milestone 3, the current one.** Features are paused until it
-   lands; check which phase is current before proposing work.
 
 Then as needed: `docs/modes.md` (each ladder's rule and proof), `docs/tuning.md` (the instruments
 and the open questions), `docs/ui.md` (presentation rules), `docs/extending.md` (checklists),
-`docs/decisions/` (why things are the way they are), `docs/glossary.md`, `CONTRIBUTING.md`.
+`docs/decisions/` (why things are the way they are), `docs/glossary.md`, `CONTRIBUTING.md`, and
+`docs/refactoring-plan.md` (Milestone 3, the readability refactor, complete on 24 September 2026).
 
 ## Rules for a session
 

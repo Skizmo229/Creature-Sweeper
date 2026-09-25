@@ -3,7 +3,7 @@
 Each list is every place a change has to reach, in the order to make it. They were built by
 walking the code for three concrete tasks and writing down everything that had to be touched; the
 counts at the top are what those walks measured before Milestone 3, and shrinking them is what the
-milestone's phases 2 and 3 are for. The placement list has been rewritten for the registry; the
+milestone's phases 2 and 3 were for. The placement list has been rewritten for the registry; the
 others are still the map.
 
 Whatever you add: run `npm run check`, and if the change is meant to alter behaviour, re-record
@@ -123,7 +123,8 @@ and the two test lists that pin the ladder set.
 
 1. `PresentationSettings`, its default and its reader in `src/ui/settings.ts` (the reader ignores
    unknown keys, so old saves need no migration; a retired setting can simply go).
-2. A row in `settingsscreen.ts`, as a gallery of real boards where the setting is visual, with the
-   "game type default" option naming what it resolves to.
-3. `BoardDisplay` in `boardview.ts` if the renderer reads it, and `App.boardDisplay`.
+2. A row in `src/ui/settingsscreen/` (`look.ts` for a setting that is drawn, `effects.ts` for one
+   that plays itself), called from `screen.ts`, as a gallery of real boards where the setting is
+   visual, with any "game type default" option naming what it resolves to.
+3. `BoardDisplay` in `src/ui/board/view.ts` if the renderer reads it, and `App.boardDisplay`.
 4. `test/preview.test.ts` if it has an example board.
