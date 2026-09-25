@@ -66,8 +66,11 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   Every tile in a gallery draws the same board from the same seed, so only the setting differs.
   The example boards open the highest tiers, show defeated creatures (the only way to show a
   glyph), and open numbered empty cells so a cascade does not clear the board.
-- Icons, palette and font show two tiles, Default and User choice; the full gallery opens in a
-  picker inside the settings element, which catches Escape in the capture phase.
+- Icons, palette and the two fonts show two tiles, Default and User choice; the full gallery opens
+  in a picker inside the settings element, which catches Escape in the capture phase.
+- The interface font's tiles are the one gallery that is not boards: each is a copy of the HUD's
+  first two readouts, in the real HUD's classes, set in its face. Picking one dresses the whole
+  screen at once, so the page is its own example.
 - Picking a visual option rebuilds the whole screen and carries the scroll position, because the
   galleries are drawn in terms of each other. Exceptions: the zoom slider redraws in place; sound,
   the glow after a fight and the clear effect play themselves and update their own tiles.
@@ -88,6 +91,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 
 ## Fonts
 
+- Two settings: the board's font (its numbers and marks, on the canvas) and the interface's
+  (everything in the DOM: the HUD, the menus, the settings screen, the ladder list's names). Each
+  defaults to the ladder's own face, independently. Only a face chosen for the interface reaches
+  the title, and a save from before the split reads its one font as both (decision 0033).
 - Every ladder has a bundled typeface (twenty-four, plus Atkinson Hyperlegible Next for anyone who
   wants the easiest one, plus Griffy for the title alone). Latin woff2 files in `src/ui/fonts/`,
   licences in `public/FONT-LICENSES.txt`, `@font-face` in `fonts.css`. `test/fonts.test.ts` checks

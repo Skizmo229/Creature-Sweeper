@@ -1,7 +1,8 @@
 /**
  * The ladder list: every game type, locked or not, with what it takes to unlock it and how far
- * the player has got. Each name wears its own ladder's face, so the list previews the ladders
- * (decision 0021). The tools under it reach the how-to, settings, the save backup and the reset.
+ * the player has got. Each name wears the face its ladder's screens do, its own unless the player
+ * chose one for the interface, so the list previews the ladders (decision 0021). The tools under
+ * it reach the how-to, settings, the save backup and the reset.
  */
 
 import { easierThanDefault } from '../../engine/settings.js';
@@ -62,7 +63,7 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
     card.disabled = !unlocked;
     card.style.setProperty('--tint', theme.accent);
 
-    const face = settings.font(type.id);
+    const face = settings.interfaceFont(type.id);
     const name = el('span', 'type-name', type.name);
     name.style.fontFamily = face.stack;
     if (face.capHeightFix) name.style.setProperty('--cap-fix', String(face.capHeightFix));

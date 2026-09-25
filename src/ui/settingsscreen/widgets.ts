@@ -14,8 +14,8 @@ export interface Choice {
   /** The example for this option, if it has a drawn one. */
   example?: () => HTMLElement;
   /**
-   * A face to set the label in. The font setting dresses the interface as well as the board, so
-   * each font tile's own caption is the interface example, size correction included.
+   * A face to set the label in, size correction included, so a font's tile names it in its own
+   * letters as well as showing it.
    */
   labelFont?: GameFont;
   /** Clicking this tile opens something instead of picking its value (the "User choice" tile). */

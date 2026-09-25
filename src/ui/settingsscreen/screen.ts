@@ -14,9 +14,10 @@ import { type SettingsScreenOptions, makeContext, typeName } from './context.js'
 import { clearEffectRow, fightRimRow, soundRow, stopSettingsDemo } from './effects.js';
 import { gameplaySection } from './gameplay.js';
 import {
-  fontRow,
+  boardFontRow,
   highlightRow,
   iconsRow,
+  interfaceFontRow,
   paletteRow,
   strikeRow,
   textSizeRow,
@@ -69,7 +70,8 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   );
   iconsRow(ctx, look);
   paletteRow(ctx, look);
-  fontRow(ctx, look);
+  boardFontRow(ctx, look);
+  interfaceFontRow(ctx, look);
   textSizeRow(ctx, look);
   highlightRow(ctx, look);
   strikeRow(ctx, look);

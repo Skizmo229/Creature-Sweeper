@@ -1,7 +1,7 @@
 /**
- * The Presentation section's drawn settings: creature icons, board palette, font, text size, the
- * cursor highlight, the strike-through and the zoom ceiling. Every example is a real board
- * (decision 0025).
+ * The Presentation section's drawn settings: creature icons, board palette, the board's font and
+ * the interface's, text size, the cursor highlight, the strike-through and the zoom ceiling. Every
+ * example is a real board, or for the interface a copy of the HUD (decision 0025).
  */
 
 import { el } from '../dom.js';
@@ -19,7 +19,7 @@ import {
 } from '../settings.js';
 import { PIP_NAMES, PIP_SHAPES, tierColor } from '../theme.js';
 import { LOOK_IDS, type PipShape, lookFor, themeFor } from '../looks.js';
-import { FONTS, FONT_IDS, type FontId, LEGIBLE_FONT } from '../typefaces.js';
+import { FONTS, FONT_IDS, type FontId, type GameFont, LEGIBLE_FONT } from '../typefaces.js';
 import { type ScreenContext, typeName } from './context.js';
 import { CHIP_CELL, renderPreview } from './render.js';
 import { type Choice, choiceRow, gallery, slider, wideRow } from './widgets.js';
@@ -81,16 +81,16 @@ function fontOwner(id: FontId): string {
   return owner ? typeName(owner) : '';
 }
 
-export function fontRow(ctx: ScreenContext, host: HTMLElement): void {
+export function boardFontRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, ident, currentTheme } = ctx;
   choiceRow(ctx.host, host, {
-    label: 'Font',
+    label: 'Board font',
     hint:
-      'Board numbers, marks and the whole interface. Every ladder has a face of its own; ' +
+      'The numbers and marks on the board; the interface font, below, sets the HUD and the ' +
+      'menus. Every ladder has a face of its own; ' +
       `${FONTS[LEGIBLE_FONT].name} belongs to none of them — it was designed for readers with ` +
-      'low vision, and keeps every digit easy to tell apart. The game’s title keeps its own ' +
-      'face unless you choose one.',
-    title: 'Choose a font',
+      'low vision, and keeps every digit easy to tell apart.',
+    title: 'Choose a board font',
     current: p.font,
     fallback: {
       value: DEFAULT,
@@ -117,12 +117,12 @@ const HUD_READOUTS = [
 ] as const;
 
 /**
- * A copy of the HUD's readouts, as an example. The real HUD's own classes, so each readout
- * reserves the width it does in play.
+ * A copy of the HUD's first `count` readouts, as an example. The real HUD's own classes, so each
+ * readout reserves the width it does in play.
  */
-function hudCopy(cls: string): HTMLElement {
+function hudCopy(cls: string, count: number = HUD_READOUTS.length): HTMLElement {
   const copy = el('div', `hud ${cls}`);
-  for (const [key, text] of HUD_READOUTS) {
+  for (const [key, text] of HUD_READOUTS.slice(0, count)) {
     const readout = el('span', `hud-item hud-${key}`, text);
     if (key === 'lv') {
       // Level 1, in tier 1's colour, as the real readout draws it.
@@ -133,6 +133,45 @@ function hudCopy(cls: string): HTMLElement {
     copy.append(readout);
   }
   return copy;
+}
+
+/**
+ * An interface font's example: the HUD's first two readouts, set in the face. It declares its own
+ * size correction, as anything wearing a face other than the page's must (see body in styles.css).
+ */
+function hudInFace(face: GameFont): () => HTMLElement {
+  return () => {
+    const copy = hudCopy('font-demo', 2);
+    copy.style.fontFamily = face.stack;
+    copy.style.setProperty('--ex-fix', String(face.exHeightFix ?? 1));
+    return copy;
+  };
+}
+
+/** A face picked here dresses this screen at once, so the page is an example as well as the tiles. */
+export function interfaceFontRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p, ident } = ctx;
+  choiceRow(ctx.host, host, {
+    label: 'Interface font',
+    hint:
+      'The HUD, the menus and this screen: everything but the board, which the board font ' +
+      'above sets. The game’s title keeps a face of its own unless you choose one here.',
+    title: 'Choose an interface font',
+    current: p.interfaceFont,
+    fallback: {
+      value: DEFAULT,
+      label: `Default — ${FONTS[ident.font].name}`,
+      example: hudInFace(FONTS[ident.font]),
+      labelFont: FONTS[ident.font],
+    },
+    options: FONT_IDS.map((id): Choice => ({
+      value: id,
+      label: [FONTS[id].name, fontOwner(id)].filter(Boolean).join(' — '),
+      example: hudInFace(FONTS[id]),
+      labelFont: FONTS[id],
+    })),
+    onPick: (v) => ctx.pick({ interfaceFont: v as FontId | typeof DEFAULT }),
+  });
 }
 
 /**

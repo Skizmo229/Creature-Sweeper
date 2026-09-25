@@ -11,8 +11,11 @@ import type { Game } from '../../src/engine/game.js';
 import type { GameEvent } from '../../src/engine/types.js';
 import { autoplayTierOrder } from '../../src/sim/autoplay.js';
 import { App } from '../../src/ui/app.js';
+import type { BoardDisplay } from '../../src/ui/board/view.js';
 import type { Progress } from '../../src/ui/progress.js';
+import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import type { Settings } from '../../src/ui/settings.js';
+import { FONTS, TITLE_FONT } from '../../src/ui/typefaces.js';
 
 /** The app's surface as the test drives it, private members included, the way the dev console does. */
 interface Driver {
@@ -21,6 +24,7 @@ interface Driver {
   readonly current: Game | null;
   readonly progress: Progress;
   readonly settings: Settings;
+  readonly view: { readonly display: BoardDisplay } | null;
   finish(): void;
   apply(events: GameEvent[]): void;
   readonly actions: {
@@ -338,5 +342,75 @@ describe('Escape and the entry modes', () => {
     expect(text('.overlay h2')).toBe('SURE?');
     key('Escape');
     expect(document.querySelector('.overlay')).toBeNull();
+  });
+});
+
+describe('the board font and the interface font', () => {
+  const rootVar = (name: string): string => document.documentElement.style.getPropertyValue(name);
+  const ladderNames = (): HTMLElement[] => [
+    ...document.querySelectorAll<HTMLElement>('.type-name'),
+  ];
+
+  it('dress the board and everything around it separately', () => {
+    app.settings.setPresentation({ interfaceFont: 'atkinson' });
+    app.play('normal', 1, 7);
+    expect(rootVar('--font')).toBe(FONTS.atkinson.stack);
+    expect(app.view?.display.font).toBe(FONTS['jetbrains-mono']);
+
+    // A change reaches the board the player is on, not only the next one.
+    app.settings.setPresentation({ interfaceFont: 'default', font: 'bungee' });
+    expect(rootVar('--font')).toBe(FONTS['jetbrains-mono'].stack);
+    expect(app.view?.display.font).toBe(FONTS.bungee);
+  });
+
+  it('let only a face chosen for the interface reach the title and the ladder names', () => {
+    app.settings.setPresentation({ font: 'bungee' });
+    app.showTypes();
+    expect(rootVar('--title-font')).toBe(TITLE_FONT.stack);
+    const easy = ladderNames()[0]!;
+    expect(easy.textContent).toBe('EASY');
+    expect(easy.style.fontFamily).toBe(FONTS.fredoka.stack);
+
+    app.settings.setPresentation({ interfaceFont: 'atkinson' });
+    app.showTypes();
+    expect(rootVar('--title-font')).toBe(FONTS.atkinson.stack);
+    for (const name of ladderNames()) expect(name.style.fontFamily).toBe(FONTS.atkinson.stack);
+  });
+
+  it('are picked in rows of their own, and the settings screen wears the interface font at once', () => {
+    // Pinned to this test's app: the screen stays up, and its Escape handler outlives the test.
+    const here = app;
+    here.showSettings(() => here.showTypes());
+    const row = [...document.querySelectorAll('.settings-row')].find(
+      (r) => r.querySelector('.settings-name')?.textContent === 'Interface font',
+    )!;
+    row.querySelectorAll<HTMLButtonElement>('.preview-chip')[1]!.click();
+    // Found by its caption: the tile's own text begins with its example, the HUD's readouts.
+    const tile = [...document.querySelectorAll<HTMLButtonElement>('.picker .preview-chip')].find(
+      (b) => b.querySelector('.chip-label')?.textContent?.startsWith(FONTS.atkinson.name),
+    )!;
+    tile.click();
+    expect(here.settings.presentation.interfaceFont).toBe('atkinson');
+    expect(here.settings.presentation.font).toBe('default');
+    expect(rootVar('--font')).toBe(FONTS.atkinson.stack);
+  });
+
+  it('read a save from before the interface had its own as one face for both', () => {
+    const load = (presentation: object): Driver => {
+      localStorage.setItem(
+        SETTINGS_KEY,
+        JSON.stringify({ version: 1, presentation, gameplay: {} }),
+      );
+      return new App(document.getElementById('app')!) as unknown as Driver;
+    };
+    const old = load({ font: 'bungee' });
+    expect(old.settings.presentation.interfaceFont).toBe('bungee');
+    expect(rootVar('--font')).toBe(FONTS.bungee.stack);
+    expect(rootVar('--title-font')).toBe(FONTS.bungee.stack);
+
+    // A save that has the setting is taken at its word.
+    expect(
+      load({ font: 'bungee', interfaceFont: 'default' }).settings.presentation.interfaceFont,
+    ).toBe('default');
   });
 });

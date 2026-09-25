@@ -118,9 +118,9 @@ export class App {
   }
 
   /**
-   * Push the presentation settings at everything already on screen. The font is a CSS variable
-   * so the menus follow it; the board is re-themed directly because nothing cascades into a
-   * canvas. The speaker is repainted from here too, because "Reset presentation" clears `muted`.
+   * Push the presentation settings at everything already on screen. The interface's font is a CSS
+   * variable so the menus follow it; the board is re-themed directly because nothing cascades into
+   * a canvas. The speaker is repainted from here too, because "Reset presentation" clears `muted`.
    */
   private applyPresentation(): void {
     this.wearFont();
@@ -134,9 +134,9 @@ export class App {
     this.syncMuteButton();
   }
 
-  /** Dress the interface in the current ladder's face, with its x-height correction. */
+  /** Dress the interface in its face on the current ladder, with its x-height correction. */
   private wearFont(): void {
-    const face = this.settings.font(this.typeId);
+    const face = this.settings.interfaceFont(this.typeId);
     document.documentElement.style.setProperty('--font', face.stack);
     document.documentElement.style.setProperty('--ex-fix', String(face.exHeightFix ?? 1));
   }
@@ -146,7 +146,7 @@ export class App {
     const p = this.settings.presentation;
     return {
       maxCell: p.maxZoom,
-      font: this.settings.font(this.typeId),
+      font: this.settings.boardFont(this.typeId),
       highlight: this.settings.highlightStyle(this.typeId),
       strikeDefeated: p.strikeDefeated,
     };
@@ -239,8 +239,8 @@ export class App {
 
   private showBoards(typeId: string): void {
     this.clearScreen();
-    // "Game type default" and the board font follow the ladder you are looking at, so the type
-    // has to be current before anything is drawn.
+    // "Game type default" and the fonts follow the ladder you are looking at, so the type has to
+    // be current before anything is drawn.
     this.typeId = typeId;
     this.applyPresentation();
     this.root.append(

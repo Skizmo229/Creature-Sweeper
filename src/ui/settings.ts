@@ -3,10 +3,10 @@
  *
  * Two halves that behave very differently:
  *
- * **Presentation** — icons, palette, font, sound, the clear effect, the glow
- * after a fight, the cursor highlight, the struck-out creatures, the zoom
- * ceiling. None of it touches a rule, so none of it can affect whether a clear
- * is recorded.
+ * **Presentation** — icons, palette, the board's font and the interface's,
+ * sound, the clear effect, the glow after a fight, the cursor highlight, the
+ * struck-out creatures, the zoom ceiling. None of it touches a rule, so none
+ * of it can affect whether a clear is recorded.
  *
  * **Gameplay** — the dials in `engine/settings.ts`. Those change the rules, so
  * they decide whether a board counts. See `isAtLeastAsHard`: a player who
@@ -100,7 +100,13 @@ export const DEFAULT_MAX_ZOOM = 48;
 export interface PresentationSettings {
   readonly icons: IconChoice;
   readonly palette: PaletteChoice;
+  /** The face of the board's numbers and marks. */
   readonly font: FontChoice;
+  /**
+   * The face of the HUD, the menus and the settings screen: everything but the board. A face
+   * chosen here dresses the game's title too, which the board's font never does.
+   */
+  readonly interfaceFont: FontChoice;
   readonly sfx: SfxChoice;
   readonly victory: VictoryChoice;
   readonly highlight: HighlightChoice;
@@ -135,6 +141,7 @@ const DEFAULT_PRESENTATION: PresentationSettings = {
   icons: DEFAULT,
   palette: DEFAULT,
   font: DEFAULT,
+  interfaceFont: DEFAULT,
   sfx: DEFAULT,
   victory: DEFAULT,
   highlight: DEFAULT,
@@ -180,16 +187,20 @@ function readPresentation(raw: unknown): PresentationSettings {
   const p = (raw ?? {}) as Record<string, unknown>;
   const str = (k: string, fallback: string): string =>
     typeof p[k] === 'string' ? (p[k] as string) : fallback;
+  // Retired ids map to their successors — see `migrateFontChoice`. An id this
+  // build does not know is kept, like `icons`, and resolves to the baseline
+  // face until a build that knows it reads the save.
+  const font = migrateFontChoice(str('font', DEFAULT)) as FontChoice;
   return {
     // Not validated against the shape list on purpose: an unknown pip falls
     // through `drawCreature`'s own default, and rejecting it here would lose a
     // setting written by a newer build.
     icons: str('icons', DEFAULT) as IconChoice,
     palette: str('palette', DEFAULT),
-    // Retired ids map to their successors — see `migrateFontChoice`. An id
-    // this build does not know is kept, like `icons`, and resolves to the
-    // baseline face until a build that knows it reads the save.
-    font: migrateFontChoice(str('font', DEFAULT)) as FontChoice,
+    font,
+    // A save from before this setting had one font for the board and the
+    // interface both, so it reads as that font here too (decision 0033).
+    interfaceFont: migrateFontChoice(str('interfaceFont', font)) as FontChoice,
     sfx: str('sfx', DEFAULT) as SfxChoice,
     victory: str('victory', DEFAULT) as VictoryChoice,
     highlight: str('highlight', DEFAULT) as HighlightChoice,
@@ -313,18 +324,24 @@ export class Settings {
   }
 
   /**
-   * The face for the game's title: its own, unless the player has forced a
-   * face on the whole interface. Takes no ladder, because the title has no
-   * ladder — "game type default" means the title's own default here.
+   * The face for the game's title: its own, unless the player has chosen a
+   * face for the interface. Takes no ladder, because the title has no ladder —
+   * "game type default" means the title's own default here.
    */
   titleFont(): GameFont {
-    const choice = this.data.presentation.font;
+    const choice = this.data.presentation.interfaceFont;
     return choice === DEFAULT ? TITLE_FONT : fontFor(choice);
   }
 
-  /** The face for this ladder's screens and board numbers. */
-  font(typeId: string): GameFont {
+  /** The face for this ladder's board: its numbers and marks. */
+  boardFont(typeId: string): GameFont {
     const choice = this.data.presentation.font;
+    return fontFor(choice === DEFAULT ? lookFor(typeId).font : choice);
+  }
+
+  /** The face for this ladder's HUD and menus, and everything else outside the board. */
+  interfaceFont(typeId: string): GameFont {
+    const choice = this.data.presentation.interfaceFont;
     return fontFor(choice === DEFAULT ? lookFor(typeId).font : choice);
   }
 

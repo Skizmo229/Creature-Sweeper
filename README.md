@@ -64,7 +64,7 @@ npm run typecheck      # twice: the second pass compiles the engine, sims and te
 npm run lint           # ESLint, failing on any warning; the size warnings are the readability bar Milestone 3 set
 npm run knip           # unused files and exports
 npm run format         # Prettier (format:check to verify)
-npm test               # 460 tests, including the invariants
+npm test               # 464 tests, including the invariants
 npm run sim:golden:check   # re-run fourteen fixed-seed simulator runs and diff against test/golden/
 npm run sim            # clear every one of the 689 boards headlessly (-- 200 for more seeds)
 npm run sim:run        # complete every type's Full Run
@@ -94,13 +94,13 @@ the other one for that keystroke · `S` sweeps what is proven safe · `D` also t
 spell's bracketed letter casts it (`C`ensus, `R`eveal, `E`xercise, `B`eacon, offered cheapest
 first) · scroll or `+`/`-` to zoom, `F` to reset · `Esc` backs out.
 
-**Settings** are two separate things. The presentation half (creature icons, board palette, font,
-sound pack, board-clear effect, text size, cursor highlight, strike-through, zoom ceiling) touches
-no rule and can never affect a record; every visual option is shown as a real board. The gameplay
-half is seven dials that do change the rules (HP, Full Run regen, creature damage, mana regen, mana
-per creature, how Sweep is gated, Time Attack). Settings that make the game harder record normally;
-anything easier than the tuned game records no clear, no unlock and no best time, and the game says
-so live.
+**Settings** are two separate things. The presentation half (creature icons, board palette, board
+font, interface font, sound pack, board-clear effect, text size, cursor highlight, strike-through,
+zoom ceiling) touches no rule and can never affect a record; every visual option is shown as a real
+board, or for the interface a copy of the HUD. The gameplay half is seven dials that do change the
+rules (HP, Full Run regen, creature damage, mana regen, mana per creature, how Sweep is gated, Time
+Attack). Settings that make the game harder record normally; anything easier than the tuned game
+records no clear, no unlock and no best time, and the game says so live.
 
 **Game types.** 24 ladders of ten tuned boards, each with a scaling continuation past board 10
 (689 boards in all) and a Full Run (all ten on one HP pool).
