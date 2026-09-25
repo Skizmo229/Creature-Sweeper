@@ -100,8 +100,8 @@ export function fightRimRow(ctx: ScreenContext, host: HTMLElement): void {
   stack.append(
     gallery(
       [
-        { value: 'every', label: 'Every fight — green when it cost nothing, red when it hurt' },
-        { value: 'levelups', label: 'Level-ups and damage — green only for a level-up' },
+        { value: 'every', label: 'Every fight — green, or blue for a level-up, or red for a hit' },
+        { value: 'levelups', label: 'Level-ups and damage — blue and red only' },
         { value: OFF, label: 'Off — no glow' },
       ],
       p.fightRim,
@@ -114,8 +114,9 @@ export function fightRimRow(ctx: ScreenContext, host: HTMLElement): void {
   wideRow(
     host,
     'Glow after a fight',
-    'The edge of the board lights up when a fight ends: green when it cost you nothing, red when ' +
-      'it cost HP. The buttons under the example play each kind of fight with the option chosen.',
+    'The edge of the board lights up when a fight ends: green when it cost you nothing, blue when ' +
+      'it levelled you up, red when it cost HP, and red over blue when it did both. The buttons ' +
+      'under the example play each kind of fight with the option chosen.',
     stack,
   );
 }

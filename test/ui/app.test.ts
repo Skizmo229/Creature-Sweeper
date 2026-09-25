@@ -52,6 +52,7 @@ const text = (selector: string): string =>
 const fought = (damage: number): GameEvent => {
   return { type: 'battle', x: 0, y: 0, tier: 1, damage, defeated: true };
 };
+const levelUp: GameEvent = { type: 'levelUp', level: 2 };
 
 /** The rim classes on an element: which colour it last flashed, if any. */
 const rimOf = (host: Element): string[] =>
@@ -91,7 +92,7 @@ describe('the app', () => {
     expect(game.hp).toBe(game.maxHp);
   });
 
-  it('lights the stage rim after a fight: green when it cost nothing, red when it hurt', () => {
+  it('lights the stage rim after a fight: green when clean, blue on a level-up, red on a hit', () => {
     app.play('normal', 1, 7);
     const game = app.current!;
     const stage = document.querySelector('.stage')!;
@@ -113,17 +114,22 @@ describe('the app', () => {
     expect(rimOf(stage)).toEqual(['fight-clean']);
     app.apply([fought(0), fought(2), fought(0)]);
     expect(rimOf(stage)).toEqual(['fight-hurt']);
+
+    // A level-up turns a clean fight's green blue; a hit that levels up stays red.
+    app.apply([fought(0), levelUp]);
+    expect(rimOf(stage)).toEqual(['fight-levelup']);
+    app.apply([fought(2), levelUp]);
+    expect(rimOf(stage)).toEqual(['fight-hurt']);
   });
 
   it('lights the rim for level-ups and damage only, or not at all, as the setting says', () => {
-    const levelUp: GameEvent = { type: 'levelUp', level: 2 };
     app.settings.setPresentation({ fightRim: 'levelups' });
     app.play('normal', 1, 7);
     const stage = document.querySelector('.stage')!;
     app.apply([fought(0)]);
     expect(rimOf(stage)).toEqual([]);
     app.apply([fought(0), levelUp]);
-    expect(rimOf(stage)).toEqual(['fight-clean']);
+    expect(rimOf(stage)).toEqual(['fight-levelup']);
     app.apply([fought(2)]);
     expect(rimOf(stage)).toEqual(['fight-hurt']);
 
@@ -230,6 +236,8 @@ describe('the app', () => {
 
     play('Clean fight');
     expect(rimOf(demo)).toEqual(['fight-clean']);
+    play('Level-up');
+    expect(rimOf(demo)).toEqual(['fight-levelup']);
     play('Hit');
     expect(rimOf(demo)).toEqual(['fight-hurt']);
 
@@ -238,11 +246,11 @@ describe('the app', () => {
     play('Clean fight');
     expect(rimOf(demo)).toEqual(['fight-hurt']);
     play('Level-up');
-    expect(rimOf(demo)).toEqual(['fight-clean']);
+    expect(rimOf(demo)).toEqual(['fight-levelup']);
 
     pick('Off');
     play('Hit');
-    expect(rimOf(demo)).toEqual(['fight-clean']);
+    expect(rimOf(demo)).toEqual(['fight-levelup']);
     expect(app.settings.presentation.fightRim).toBe('off');
   });
 });

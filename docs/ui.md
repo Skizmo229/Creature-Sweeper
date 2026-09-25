@@ -118,14 +118,15 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   animations, one slot each in its `animation` list, filled by the `shake` and `levelup` classes.
   Two rules setting `animation` would let one displace the other, and a class left on after its
   animation played would block the other for the rest of the board.
-- A fight lights the stage's rim, fading inward: green when it cost nothing, red when it cost HP.
-  One rim per action, and red if any fight in it hurt, since a sweep can fight several. The
-  player can keep it for every fight, for level-ups and damage only (green only when the fight
-  levelled them up), or turn it off (`fightRim`); the shake and the level-up glow ignore it. It is
-  `.stage::after`, over the canvas so it shows however much of the stage the board covers, and
-  deaf to the pointer. Only one of `fight-clean` and `fight-hurt` is on the stage at a time, or
-  the later rule would keep its colour for good. It stays on under reduced motion, which drops
-  the shake and the glow.
+- A fight lights the stage's rim, fading inward: green when it cost nothing, blue when it levelled
+  the player up, red when it cost HP. One rim per action, since a sweep can fight several: red if
+  any fight in it hurt, else blue if it levelled up, else green. The player can keep it for every
+  fight, for level-ups and damage only (blue and red, no green), or turn it off (`fightRim`); the
+  shake and the level-up glow ignore it. The blue is deeper than the cyan of a spell's targeting
+  outline, which sits in the same place. It is `.stage::after`, over the canvas so it shows
+  however much of the stage the board covers, and deaf to the pointer. Only one of the three rim
+  classes is on the stage at a time, or the later rule would keep its colour for good. It stays
+  on under reduced motion, which drops the shake and the glow.
 
 ## Saves
 

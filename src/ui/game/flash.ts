@@ -1,8 +1,9 @@
 /**
- * What the stage shows of an action, beside its sound: a shake when a fight cost HP, the rim lit
- * red for that or green for fights that cost nothing, and a glow on a level-up. The look is in
- * styles.css; this decides which from the action's events, and restarts the animations. The rim
- * follows the player's setting; the shake and the glow do not.
+ * What the stage shows of an action, beside its sound: a shake when a fight cost HP; the rim lit
+ * red for that, blue for a fight that levelled the player up, or green for one that cost nothing;
+ * and a glow on a level-up. The look is in styles.css; this decides which from the action's
+ * events, and restarts the animations. The rim follows the player's setting; the shake and the
+ * glow do not.
  */
 
 import type { GameEvent } from '../../engine/types.js';
@@ -16,26 +17,27 @@ export function flashStage(stage: HTMLElement, events: GameEvent[], rim: FightRi
 
 /**
  * Light the rim for an action's fights, on the stage or on the settings screen's example of it.
- * Only one rim class is ever on the element: with both, the later CSS rule would win and the
+ * Only one rim class is ever on the element: with two, the later CSS rule would win and the
  * other colour could never play.
  */
 export function flashRim(host: HTMLElement, events: GameEvent[], rim: FightRim): void {
-  const colour = rimFor(events, rim);
-  if (!colour) return;
-  host.classList.remove('fight-clean', 'fight-hurt');
-  restart(host, `fight-${colour}`);
+  const outcome = rimFor(events, rim);
+  if (!outcome) return;
+  host.classList.remove('fight-clean', 'fight-levelup', 'fight-hurt');
+  restart(host, `fight-${outcome}`);
 }
 
 /**
  * One rim per action, however many fights it resolved (a sweep can fight several): red if any of
- * them cost HP, otherwise green, which 'levelups' keeps for a fight that levelled the player up.
+ * them cost HP, else blue if the action levelled the player up, else green, which 'levelups'
+ * leaves out.
  */
-function rimFor(events: GameEvent[], rim: FightRim): 'clean' | 'hurt' | null {
+function rimFor(events: GameEvent[], rim: FightRim): 'clean' | 'levelup' | 'hurt' | null {
   const battles = events.filter((ev) => ev.type === 'battle');
   if (rim === 'off' || battles.length === 0) return null;
   if (battles.some((ev) => ev.damage > 0)) return 'hurt';
-  if (rim === 'levelups' && !events.some((ev) => ev.type === 'levelUp')) return null;
-  return 'clean';
+  if (events.some((ev) => ev.type === 'levelUp')) return 'levelup';
+  return rim === 'levelups' ? null : 'clean';
 }
 
 /** Take a class off and put it back with a reflow between, so its animation plays again. */

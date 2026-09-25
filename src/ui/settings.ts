@@ -74,9 +74,10 @@ export const HIGHLIGHT_NAMES: Record<HighlightStyle, string> = {
 };
 
 /**
- * Which fights light the edge of the board. 'every' is green for a fight that cost nothing and red
- * for one that hurt; 'levelups' keeps the red and shows green only when a fight levelled the
- * player up, since clean fights are most of a board; 'off' is none. See `game/flash.ts`.
+ * Which fights light the edge of the board. 'every' is green for a fight that cost nothing, blue
+ * for one that levelled the player up and red for one that hurt; 'levelups' keeps the blue and
+ * the red and leaves the green out, since clean fights are most of a board; 'off' is none. See
+ * `game/flash.ts`.
  */
 export type FightRim = 'every' | 'levelups' | typeof OFF;
 const FIGHT_RIMS: readonly FightRim[] = ['every', 'levelups', OFF];

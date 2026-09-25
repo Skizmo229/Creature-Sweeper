@@ -373,12 +373,14 @@ button.small {
 
 /*
  * A fight lights the stage's rim, fading inward: green when it cost nothing,
- * red when it cost HP (game/flash.ts decides which, and the player's setting
- * whether). A layer of its own, over the canvas, so it shows however much of
- * the stage the board covers and never takes a click. Green is the softer of
- * the two because it is the common case. It stays on under reduced motion: it
- * is a fade, not a movement, and with the shake gone it is the one sign on the
- * board that a fight hurt. The settings screen's example wears the same rim.
+ * blue when it levelled the player up, red when it cost HP (game/flash.ts
+ * decides which, and the player's setting whether). A layer of its own, over
+ * the canvas, so it shows however much of the stage the board covers and never
+ * takes a click. Green is the softest because it is the common case; the blue
+ * is deeper than the cyan a spell's targeting outline draws in the same place.
+ * It stays on under reduced motion: it is a fade, not a movement, and with the
+ * shake gone it is the one sign on the board that a fight hurt. The settings
+ * screen's example wears the same rim.
  */
 .stage::after,
 .rim-demo::after {
@@ -396,6 +398,11 @@ button.small {
 .rim-demo.fight-clean::after {
   --fight-rim: rgba(53, 224, 106, 0.55);
   animation: fight-rim 550ms ease-out;
+}
+.stage.fight-levelup::after,
+.rim-demo.fight-levelup::after {
+  --fight-rim: rgba(64, 140, 255, 0.8);
+  animation: fight-rim 750ms ease-out;
 }
 .stage.fight-hurt::after,
 .rim-demo.fight-hurt::after {
