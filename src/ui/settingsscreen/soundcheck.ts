@@ -13,7 +13,7 @@
 
 import { el } from '../dom.js';
 import type { SfxPackId } from '../looks.js';
-import type { Settings } from '../settings.js';
+import { MAX_SOUND_CHECK_VOLUME, type Settings } from '../settings.js';
 import { type SfxEvent, sfxPitch, sfxRatio, sfxSoundId } from '../sfx.js';
 import { SFX_EVENT_NAMES, SFX_NAMES } from '../theme.js';
 import type { ScreenContext } from './context.js';
@@ -49,6 +49,7 @@ function load(settings: Settings): void {
   }
   pitches.clear();
   for (const [id, note] of Object.entries(saved.pitches)) pitches.set(id, note);
+  volume = saved.volume;
 }
 
 function save(settings: Settings): void {
@@ -56,17 +57,13 @@ function save(settings: Settings): void {
     soundCheck: {
       keys: Object.fromEntries([...keys].map(([key, s]) => [key, soundId(s)])),
       pitches: Object.fromEntries(pitches),
+      volume,
     },
   });
 }
 
-/**
- * The sound check's own volume, as a multiple of each sound's level in play. It lasts for the
- * session and scales only what the sound check plays; the game's sounds never see it.
- */
+/** The sound check's own volume (`SoundCheckSettings.volume`), kept like the keys. */
 let volume = 1;
-/** Loud enough to hear a quiet sound clearly, short of drowning the room. */
-const MAX_VOLUME = 3;
 
 /**
  * Keys that keep their own job in the window: Escape closes it, Tab moves the focus, Shift swaps
@@ -326,15 +323,16 @@ class SoundCheck {
       el('span', undefined, 'Volume'),
       slider(
         0,
-        MAX_VOLUME,
+        MAX_SOUND_CHECK_VOLUME,
         0.05,
         volume,
         (v) => `${Math.round(v * 100)}%`,
         (v) => {
           volume = v;
         },
-        // On release, so the new level can be heard without a sound per step of the drag.
+        // On release, so the new level is saved once and heard without a sound per step.
         () => {
+          save(this.ctx.settings);
           if (this.tuning) this.play(this.tuning);
         },
       ),

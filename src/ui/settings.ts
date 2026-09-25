@@ -114,7 +114,15 @@ export interface SoundCheckSettings {
   readonly keys: Readonly<Record<string, string>>;
   /** A sound to the MIDI note it is tuned to. */
   readonly pitches: Readonly<Record<string, number>>;
+  /**
+   * The sound check's own volume, as a multiple of each sound's level in play. It scales only
+   * what the sound check plays; the game's sounds never see it.
+   */
+  readonly volume: number;
 }
+
+/** Loud enough to hear a quiet sound clearly, short of drowning the room. */
+export const MAX_SOUND_CHECK_VOLUME = 3;
 
 export interface PresentationSettings {
   readonly icons: IconChoice;
@@ -178,7 +186,7 @@ const DEFAULT_PRESENTATION: PresentationSettings = {
   maxZoom: DEFAULT_MAX_ZOOM,
   textSize: DEFAULT_TEXT_SIZE,
   muted: false,
-  soundCheck: { keys: {}, pitches: {} },
+  soundCheck: { keys: {}, pitches: {}, volume: 1 },
   customPitches: false,
 };
 
@@ -231,7 +239,12 @@ function readSoundCheck(raw: unknown): SoundCheckSettings {
     (e): e is [string, number] =>
       typeof e[1] === 'number' && Number.isInteger(e[1]) && e[1] >= 0 && e[1] <= MAX_MIDI_NOTE,
   );
-  return { keys: Object.fromEntries(keys), pitches: Object.fromEntries(pitches) };
+  return {
+    keys: Object.fromEntries(keys),
+    pitches: Object.fromEntries(pitches),
+    // A save from before the volume was kept reads as the level every sound plays at.
+    volume: num(s.volume, 0, MAX_SOUND_CHECK_VOLUME, 1),
+  };
 }
 
 function readPresentation(raw: unknown): PresentationSettings {
