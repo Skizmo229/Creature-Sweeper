@@ -21,6 +21,7 @@ import {
   interfaceFontRow,
   paletteRow,
   strikeRow,
+  menuStripRow,
   textSizeRow,
   zoomRow,
 } from './look.js';
@@ -41,10 +42,10 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   wrap.style.setProperty('--chip-w', `${width * CHIP_CELL}px`);
   wrap.style.setProperty('--chip-h', `${height * CHIP_CELL}px`);
 
-  const head = el('header', 'title-bar');
-  const back = el('button', 'ghost', '← Back');
+  const back = el('button', 'ghost sticky-back', '← Back');
   back.addEventListener('click', onBack);
-  head.append(back);
+  wrap.append(back);
+  const head = el('header', 'title-bar');
   head.append(el('h1', undefined, 'Settings'));
   head.append(
     el(
@@ -79,6 +80,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   boardFontRow(ctx, look);
   interfaceFontRow(ctx, look);
   textSizeRow(ctx, look);
+  menuStripRow(ctx, look);
   highlightRow(ctx, look);
   strikeRow(ctx, look);
   zoomRow(ctx, look);

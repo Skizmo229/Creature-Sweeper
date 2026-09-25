@@ -83,6 +83,13 @@ export type FightRim = 'every' | 'levelups' | typeof OFF;
 const FIGHT_RIMS: readonly FightRim[] = ['every', 'levelups', OFF];
 
 /**
+ * Where a game-type card on the ladder list wears its ladder's colour: down its left edge (the
+ * default), down both vertical edges, all the way round, or nowhere.
+ */
+export type MenuStrip = 'left' | 'sides' | 'all' | typeof OFF;
+const MENU_STRIPS: readonly MenuStrip[] = ['left', 'sides', 'all', OFF];
+
+/**
  * How large the interface's text can be set, as a multiple of the browser's
  * own size. Applied as the root font size, which every size in the stylesheet
  * is written against, so the HUD, the menus and this screen all follow it and
@@ -120,6 +127,7 @@ export interface PresentationSettings {
   readonly strikeDefeated: boolean;
   /** Which fights light the edge of the board. The shake and the level-up glow are not this. */
   readonly fightRim: FightRim;
+  readonly menuStrip: MenuStrip;
   /** Ceiling for manual zoom, in CSS pixels per cell. */
   readonly maxZoom: number;
   /** Size of the interface's text — HUD, menus, settings — as a multiple. */
@@ -147,6 +155,7 @@ const DEFAULT_PRESENTATION: PresentationSettings = {
   highlight: DEFAULT,
   strikeDefeated: true,
   fightRim: 'every',
+  menuStrip: 'left',
   maxZoom: DEFAULT_MAX_ZOOM,
   textSize: DEFAULT_TEXT_SIZE,
   muted: false,
@@ -207,6 +216,7 @@ function readPresentation(raw: unknown): PresentationSettings {
     strikeDefeated: typeof p.strikeDefeated === 'boolean' ? p.strikeDefeated : true,
     // A save from before this setting reads as every fight, which is how the glow first shipped.
     fightRim: oneOf(p.fightRim, FIGHT_RIMS, 'every'),
+    menuStrip: oneOf(p.menuStrip, MENU_STRIPS, 'left'),
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
     // A save from before this setting has no field, and reads as the size the
     // game always had.

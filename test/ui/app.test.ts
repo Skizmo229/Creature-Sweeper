@@ -249,7 +249,7 @@ describe('the app', () => {
     app.showSettings(() => app.buildGameScreen());
     expect(document.querySelector('.settings-screen')).not.toBeNull();
     expect(document.querySelectorAll('.settings-row').length).toBeGreaterThan(10);
-    document.querySelector<HTMLButtonElement>('.settings-screen .title-bar button')!.click();
+    document.querySelector<HTMLButtonElement>('.settings-screen .sticky-back')!.click();
     expect(document.querySelector('.screen.game')).not.toBeNull();
     expect(app.current).toBe(game);
   });

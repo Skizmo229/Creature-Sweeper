@@ -59,7 +59,7 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
     const rec = progress.typeRecord(type.id);
     const theme = themeFor(type.id);
 
-    const card = el('button', 'type-card');
+    const card = el('button', `type-card strip-${settings.presentation.menuStrip}`);
     card.disabled = !unlocked;
     card.style.setProperty('--tint', theme.accent);
 

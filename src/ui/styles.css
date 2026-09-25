@@ -2,12 +2,22 @@
 @import './fonts.css';
 
 :root {
-  --bg: #17170f;
+  --bg: #181a1b;
   --panel: #23231b;
   --panel-2: #2e2e24;
   --line: #3b3b2e;
-  /* The outline every board tile carries. White on purpose — see .board-card. */
-  --card-outline: #ffffff;
+  /* The edge of anything clickable: lighter than --line, which frames panels,
+     so a control reads against the near-black background. */
+  --button-line: #6b665b;
+  /* Text on a button filled with colour (primary, armed, hovered): white, by request. */
+  --button-ink: #ffffff;
+  /* A 1px dark outline round that white, drawn as eight shadows, so it reads on
+     the bright fills (white on yellow alone is about 1.4 : 1). */
+  --button-ink-outline:
+    -1px -1px 0 #17170f, 0 -1px 0 #17170f, 1px -1px 0 #17170f, -1px 0 0 #17170f, 1px 0 0 #17170f,
+    -1px 1px 0 #17170f, 0 1px 0 #17170f, 1px 1px 0 #17170f;
+  /* The edge every board tile carries, border and outline in one colour — see .board-card. */
+  --card-outline: #7b7265;
   --ink: #ece7d6;
   --muted: #948f7b;
   --tint: #d99a34;
@@ -100,7 +110,7 @@ button {
   font-size: 0.85rem;
   color: var(--ink);
   background: var(--panel-2);
-  border: 1px solid var(--line);
+  border: 1px solid var(--button-line);
   border-radius: 4px;
   padding: 8px 14px;
   cursor: pointer;
@@ -118,7 +128,8 @@ button:disabled {
 }
 button.primary {
   background: var(--tint);
-  color: #17170f;
+  color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
   border-color: var(--tint);
   font-weight: 700;
 }
@@ -141,10 +152,9 @@ button.small {
   text-align: left;
   padding: 14px 16px;
   background: var(--panel);
-  /* Twice a button's edge, by request. */
-  border-width: 2px;
-  /* The ladder's colour (its palette's accent), 8px wide by request. */
-  border-left: 8px solid var(--tint);
+  /* Twice a button's edge, by request. Stated in full, because the settings
+     screen's example of this card is not a button. */
+  border: 2px solid var(--button-line);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -163,6 +173,37 @@ button.small {
    interface. `--word-em` is the name's longest word in ems (`fitNames`, in
    screens/ladders.ts), so such a name comes down just far enough to fit. A
    name with a space in it breaks there first. */
+/* The ladder's colour (its palette's accent), 8px wide by request, on the
+   edges the player chose (`menuStrip`). */
+.type-card.strip-left {
+  border-left: 8px solid var(--tint);
+}
+.type-card.strip-sides {
+  border-left: 8px solid var(--tint);
+  border-right: 8px solid var(--tint);
+}
+.type-card.strip-all {
+  border: 8px solid var(--tint);
+}
+/* A hover turns the edge the ladder's colour, so the strip darkens to stay
+   distinct from it. With no strip there is nothing to keep apart. */
+button.type-card.strip-left:hover:not(:disabled) {
+  border-left-color: var(--strip-hover);
+}
+button.type-card.strip-sides:hover:not(:disabled) {
+  border-left-color: var(--strip-hover);
+  border-right-color: var(--strip-hover);
+}
+button.type-card.strip-all:hover:not(:disabled) {
+  border-color: var(--strip-hover);
+}
+.type-card {
+  --strip-hover: color-mix(in srgb, var(--tint) 55%, black);
+}
+/* The settings screen's example of each strip: a card's width, not a gallery tile's. */
+.strip-demo {
+  width: 170px;
+}
 .type-name {
   font-size: min(1.5rem, 100cqi / var(--word-em, 0.01));
   font-weight: 700;
@@ -185,17 +226,16 @@ button.small {
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 10px;
 }
-/* Every board tile carries a white outline, 2px by request.
-   
-   It is an `outline` rather than a `border` for two reasons. The border is
-   already carrying STATE on these tiles — the tint says cleared, or Full Run,
-   or scaling — so painting it white would have cost the one thing the colour
-   was saying. And the scaling tile is a div rather than a button, so it never
-   picked up the button border at all and had been sitting there with no edge
-   on it; an outline lands on all three kinds without caring what they are.
-   
+/* Every board tile carries a 3px warm-grey edge, by request: a 1px border
+   with a 2px outline around it in the same colour, so the two read as one.
+
+   The outer part is an `outline` because the border carries STATE on these
+   tiles — the tint says cleared, or Full Run, or scaling — and widening it
+   would have made the state shout. The scaling tile is a div rather than a
+   button, so it states its border here rather than inheriting a button's.
+
    Dimming comes for free: a locked tile is already at 0.4 opacity, so its
-   outline dims with it and locked still reads as locked. The focus ring wins
+   edge dims with it and locked still reads as locked. The focus ring wins
    over this without needing to say so, because `button:focus-visible` is the
    more specific selector. */
 .board-card {
@@ -206,6 +246,7 @@ button.small {
   flex-direction: column;
   gap: 3px;
   position: relative;
+  border: 1px solid var(--card-outline);
   outline: 2px solid var(--card-outline);
 }
 /* A hover colours the whole edge. The button rule turns only the border,
@@ -477,7 +518,8 @@ button.board-card:hover:not(:disabled) {
 }
 .counter.active {
   background: var(--tint);
-  color: #17170f;
+  color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
   border-color: var(--tint);
   font-weight: 700;
 }
@@ -491,7 +533,8 @@ button.board-card:hover:not(:disabled) {
 .counter[data-tier].active {
   background: var(--tier);
   border-color: var(--tier);
-  color: #17170f;
+  color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
 }
 .counter.gilded,
 .counter.gilded.active {
@@ -536,7 +579,8 @@ button.board-card:hover:not(:disabled) {
 }
 .sweep.assist:hover:not(:disabled) {
   background: var(--tint);
-  color: #17170f;
+  color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
 }
 
 .hint {
@@ -769,12 +813,14 @@ button.board-card:hover:not(:disabled) {
 }
 .spell:hover:not(:disabled) {
   background: #7ad9ff;
-  color: #0b1418;
+  color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
   border-color: #7ad9ff;
 }
 .spell.armed {
   background: #7ad9ff;
-  color: #0b1418;
+  color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
   border-color: #7ad9ff;
   border-style: solid;
   font-weight: 700;
@@ -797,7 +843,7 @@ button.board-card:hover:not(:disabled) {
   border-color: var(--tint);
 }
 .run-card:disabled {
-  border-color: var(--line);
+  border-color: var(--card-outline);
 }
 /* "FULL RUN" where a board card puts one or two digits, so it takes a size
    that fits two words on one line instead of the digit's 1.5rem. */
@@ -839,7 +885,7 @@ button.board-card:hover:not(:disabled) {
   font-size: 0.8rem;
   line-height: 1.5;
   background: transparent;
-  border-color: var(--line);
+  border-color: var(--button-line);
 }
 .scale-arrow:hover:not(:disabled) {
   border-color: var(--tint);
@@ -887,6 +933,14 @@ button.board-card:hover:not(:disabled) {
 
 .settings-screen .title-bar {
   margin-bottom: 18px;
+}
+/* The screen is long, so its way out stays pinned to the top of the window.
+   It sits outside the header, whose height would otherwise bound the pin. */
+.settings-screen > .sticky-back {
+  position: sticky;
+  top: calc(8px + env(safe-area-inset-top, 0px));
+  z-index: 5;
+  background: var(--bg);
 }
 
 .settings-group {
@@ -945,7 +999,7 @@ button.board-card:hover:not(:disabled) {
   font-size: 0.78rem;
   color: var(--ink);
   background: var(--panel-2);
-  border: 1px solid var(--line);
+  border: 1px solid var(--button-line);
   border-radius: 4px;
   padding: 7px 8px;
   width: 100%;
@@ -1057,7 +1111,7 @@ button.board-card:hover:not(:disabled) {
   gap: 6px;
   padding: 8px;
   background: var(--panel-2);
-  border: 1px solid var(--line);
+  border: 1px solid var(--button-line);
   border-radius: 5px;
   cursor: pointer;
   /* The caption is the option's name, so it must not be clipped to the
@@ -1228,8 +1282,8 @@ button.board-card:hover:not(:disabled) {
   display: grid;
   place-items: center;
   padding: 0;
-  background: rgba(28, 28, 21, 0.9);
-  border: 1px solid var(--line);
+  background: rgba(24, 26, 27, 0.9);
+  border: 1px solid var(--button-line);
   border-radius: 4px;
   color: var(--ink);
   cursor: pointer;
