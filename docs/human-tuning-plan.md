@@ -307,7 +307,7 @@ is what calibrates the technique costs and the retune targets once the game has 
 | --- | --- | --- |
 | 4.1 | The catalogue, `docs/strategies.md` | done 25 September 2026 |
 | 4.2 | The graded player, its CLI, tests and golden run | done 25 September 2026 |
-| 4.3 | The baseline measurement, every ladder, grades 1 to 4 | recorded below |
+| 4.3 | The baseline measurement, every ladder, grades 2 and 4 | done 25 September 2026, below |
 | 4.4 | The anchors: the Minesweeper board, the stars, the honest comparison | Minesweeper pending |
 | 4.5 | Decide the target per ladder with the owner | open |
 | 4.6 | Retune, one ladder per branch, decision record each | open |
@@ -318,8 +318,63 @@ is what calibrates the technique costs and the retune targets once the game has 
 
 ### 9.1 Baseline, 25 September 2026
 
-Recorded with `npm run sim:human -- 40 <ladder>` on the ladder data of 25 September 2026,
-spell-less, numbers hidden where the game hides them. The table is appended by step 4.3.
+Recorded with `npm run sim:human -- 40` on the ladder data of 25 September 2026: every ladder
+but SUDOKU, its ten tuned boards, 40 seeds each, spell-less, numbers hidden where the game hides
+them, `unsound` 0 throughout. Stuck points, guesses, lethal guesses and HP lost are per board;
+"need" is the share of boards on which the grade-4 player needed a trick of that grade or above;
+"avail" is the moves on offer per pass above grade 0; "#10" is board 10's clear rate.
+
+| ladder | g2 stuck | g2 clear | g4 stuck | guess | lethal | g4 clear | hp | need>=2 | >=3 | >=4 | avail | effort | #10 g2 | #10 g4 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| EASY | 0.0 | 100% | 0.0 | 0.0 | 0.0 | 100% | 0.0 | 0% | 0% | 0% | 12.3 | 29 | 100% | 100% |
+| NORMAL | 0.1 | 100% | 0.1 | 0.1 | 0.0 | 100% | 0.0 | 24% | 1% | 1% | 11.7 | 74 | 100% | 100% |
+| HUGE | 0.1 | 100% | 0.1 | 0.1 | 0.0 | 100% | 0.1 | 42% | 2% | 2% | 15.5 | 151 | 100% | 100% |
+| EXTREME | 3.1 | 80% | 3.1 | 3.1 | 0.6 | 80% | 2.9 | 92% | 6% | 3% | 4.8 | 200 | 8% | 8% |
+| HUGE x EXTREME | 3.2 | 76% | 3.0 | 3.0 | 0.6 | 79% | 3.5 | 99% | 16% | 8% | 5.9 | 401 | 57% | 63% |
+| ARCANE | 0.6 | 100% | 0.6 | 0.6 | 0.0 | 100% | 0.4 | 69% | 3% | 2% | 8.0 | 130 | 100% | 100% |
+| ORACLE | 4.0 | 59% | 3.9 | 3.9 | 1.3 | 60% | 3.2 | 98% | 9% | 4% | 4.6 | 219 | 0% | 0% |
+| WRAPAROUND | 0.0 | 100% | 0.0 | 0.0 | 0.0 | 100% | 0.0 | 4% | 0% | 0% | 19.3 | 49 | 100% | 100% |
+| CROSS | 0.8 | 99% | 0.7 | 0.7 | 0.0 | 100% | 0.8 | 72% | 4% | 3% | 6.0 | 105 | 98% | 98% |
+| WRAPPED CROSS | 0.5 | 100% | 0.5 | 0.5 | 0.0 | 100% | 0.5 | 63% | 1% | 0% | 6.9 | 93 | 98% | 98% |
+| HIVE | 0.4 | 100% | 0.4 | 0.4 | 0.0 | 100% | 0.4 | 24% | 1% | 1% | 9.5 | 100 | 100% | 100% |
+| DIAMOND | 0.5 | 99% | 0.5 | 0.5 | 0.0 | 99% | 0.5 | 61% | 4% | 3% | 7.7 | 95 | 100% | 100% |
+| PAIRS | 0.4 | 100% | 0.4 | 0.4 | 0.0 | 100% | 0.4 | 54% | 1% | 0% | 11.2 | 126 | 98% | 98% |
+| DOMINOES | 0.3 | 99% | 0.3 | 0.3 | 0.0 | 99% | 0.4 | 56% | 1% | 1% | 7.7 | 98 | 95% | 95% |
+| WORKOUT | 0.7 | 99% | 0.6 | 0.6 | 0.0 | 100% | 0.6 | 78% | 7% | 7% | 6.2 | 147 | 98% | 98% |
+| PACKS | 0.5 | 99% | 0.4 | 0.4 | 0.0 | 99% | 0.5 | 69% | 3% | 2% | 6.9 | 111 | 98% | 98% |
+| DONUT | 1.9 | 95% | 1.9 | 1.9 | 0.1 | 95% | 2.3 | 96% | 1% | 1% | 3.5 | 174 | 80% | 80% |
+| CHECKERBOARD | 0.2 | 100% | 0.2 | 0.2 | 0.0 | 100% | 0.1 | 67% | 2% | 0% | 7.8 | 140 | 100% | 100% |
+| CONGA LINE | 0.3 | 100% | 0.3 | 0.3 | 0.0 | 100% | 0.3 | 61% | 1% | 1% | 6.7 | 110 | 100% | 100% |
+| RAGGED CAVE | 1.1 | 97% | 1.1 | 1.1 | 0.1 | 97% | 1.3 | 80% | 6% | 5% | 5.2 | 118 | 90% | 90% |
+| DUNGEON | 0.9 | 96% | 0.8 | 0.8 | 0.1 | 97% | 1.2 | 62% | 4% | 3% | 5.7 | 71 | 93% | 93% |
+| BLIND | 2.4 | 4% | 2.3 | 2.3 | 2.3 | 7% | 0.9 | 98% | 7% | 5% | 3.8 | 119 | 0% | 0% |
+| HUGE x BLIND | 2.5 | 2% | 2.5 | 2.5 | 2.5 | 4% | 1.0 | 99% | 8% | 2% | 4.7 | 218 | 0% | 0% |
+
+What it says, read on the day it was recorded:
+
+- **Grades 3 and 4 hardly move anything.** On every ladder the grade-2 and grade-4 players are
+  within a point of each other; a what-if or a count was the only way forward on 1 to 16% of
+  boards. What separates the ladders is not the technique they demand but the guesses they
+  force, so the retune's lever is the guess measures and the scanning measure, not the grade.
+- **The plain ladders never corner a grade-2 player.** EASY, NORMAL, HUGE, WRAPAROUND, HIVE,
+  ARCANE and the placement ladders clear at 99 to 100% with a guess every few boards; a player
+  who subtracts numbers and never misses a move is not what those ladders are hard for. What
+  they cost is scanning: 12 to 19 moves on offer per pass, over 74 to 151 units of effort on
+  NORMAL and HUGE, which is where attention (section 10) would show.
+- **The hard ladders are guess-decided, as the lock finding said.** EXTREME, ORACLE and
+  HUGE x EXTREME force three to four guesses a board, one of them lethal on ORACLE, and their
+  board 10 clears at 0 to 8% for EXTREME and ORACLE even at grade 4 (HUGE x EXTREME at 63%
+  since its retune). DONUT is the needle ladder: 3.5 moves on offer per pass, two guesses a
+  board, 80% of board 10.
+- **The graded player clears more than the honest player where guesses are dear.** EXTREME 80%
+  against the honest player's 55%, ORACLE 60% against 48%: it holds a pencil, bounds two
+  numbers that overlap, never guesses a cell it has named, and refuses a guess that could kill
+  while another exists. The honest player's forced-guess curves remain the record of what the
+  ladders were tuned to; these are the record of what they demand.
+- **The search ladders are single-mistake games a deducer loses.** BLIND and HUGE x BLIND force
+  two to three guesses a board and every one is death: 4 to 7% cleared, 0% of board 10. The
+  original rates its Blind five stars; whether these should be this unwinnable is a decision for
+  step 4.5.
 
 ## 10. Open questions and known limits
 
