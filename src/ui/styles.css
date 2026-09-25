@@ -323,6 +323,17 @@ button.small {
   cursor: pointer;
 }
 
+/*
+ * The stage's own effects, the shake and the level-up glow, each fill a slot
+ * in its animation list from their class. Written as two rules setting
+ * `animation`, one would displace the other, and a class left on after its
+ * animation had played would hold the stage against the other for the rest
+ * of the board.
+ */
+.stage {
+  animation: var(--shake, none), var(--levelup, none);
+}
+
 @keyframes shake {
   0%,
   100% {
@@ -342,7 +353,7 @@ button.small {
   }
 }
 .stage.shake {
-  animation: shake 260ms ease-in-out;
+  --shake: shake 260ms ease-in-out;
 }
 
 @keyframes levelup {
@@ -357,17 +368,16 @@ button.small {
   }
 }
 .stage.levelup {
-  animation: levelup 650ms ease-out;
+  --levelup: levelup 650ms ease-out;
 }
 
 /*
  * A fight lights the stage's rim, fading inward: green when it cost nothing,
  * red when it cost HP (app.ts decides which). A layer of its own, over the
  * canvas, so it shows however much of the stage the board covers and never
- * takes a click; `shake` and `levelup` share the stage's own `animation`.
- * Green is the softer of the two because it is the common case. It stays on
- * under reduced motion: it is a fade, not a movement, and with the shake gone
- * it is the one sign on the board that a fight hurt.
+ * takes a click. Green is the softer of the two because it is the common
+ * case. It stays on under reduced motion: it is a fade, not a movement, and
+ * with the shake gone it is the one sign on the board that a fight hurt.
  */
 .stage::after {
   content: '';

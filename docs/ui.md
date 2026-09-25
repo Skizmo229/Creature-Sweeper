@@ -111,12 +111,16 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   clamped to 1/20 s; ambient ones keep a fixed step. Cascade never clears its canvas and fades the
   element instead. Sprites include covered creatures, for the search boards. Burn clips the real
   glyph. Effects draw on their own layer.
+- A fight that costs HP shakes the stage, and a level-up glows inside it. They are the stage's own
+  animations, one slot each in its `animation` list, filled by the `shake` and `levelup` classes.
+  Two rules setting `animation` would let one displace the other, and a class left on after its
+  animation played would block the other for the rest of the board.
 - A fight lights the stage's rim, fading inward: green when it cost nothing, red when it cost HP.
   One rim per action, and red if any fight in it hurt, since a sweep can fight several. It is
-  `.stage::after`, over the canvas and deaf to the pointer, because the shake and the level-up
-  glow share the stage's own `animation`. Only one of `fight-clean` and `fight-hurt` is on the
-  stage at a time, or the later rule would keep its colour for good. It stays on under reduced
-  motion, which drops the shake.
+  `.stage::after`, over the canvas so it shows however much of the stage the board covers, and
+  deaf to the pointer. Only one of `fight-clean` and `fight-hurt` is on the stage at a time, or
+  the later rule would keep its colour for good. It stays on under reduced motion, which drops
+  the shake and the glow.
 
 ## Saves
 
