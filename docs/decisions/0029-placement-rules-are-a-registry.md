@@ -16,7 +16,7 @@ reader needs: `validate` and `opening` (config), `deal` (the generator), `candid
 `coveredCanBeEmpty` (the pencil), `guessFree`, `cap`, `ringProof` and `emptied` (Sweep, the honest
 player and the solver), `display` (the renderer), `pools` and `groups` (the instruments), and
 `fault` (the tests). No reader outside the folder compares a placement's name, except the
-placement experiment's scatter baseline. DOMINOES and CONGO LINE take their family's hooks by
+placement experiment's scatter baseline. DOMINOES and CONGA LINE take their family's hooks by
 reference, so the two cannot disagree.
 
 ## Consequences

@@ -606,7 +606,7 @@ $ src/sim/cli/boards.ts 3
  30    62x32     764       15     12      3/3        0       6
  31    64x32     788       28     15      3/3        0       6
 
-=== CONGO LINE === ladder 1-10, scaling 11-40
+=== CONGA LINE === ladder 1-10, scaling 11-40
  bd     grid  creat.  opening  worst  cleared  hp lost  max lv
   1    30x16     108       95     93      3/3        0       6
   2    30x16     114       95     66      3/3        0       6

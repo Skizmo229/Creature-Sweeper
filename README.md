@@ -111,7 +111,7 @@ main line   EASY -> NORMAL -> { HUGE, EXTREME } -> HUGE x EXTREME (needs both)
 magic       NORMAL -> ARCANE -> ORACLE
 variants    unlocked by BOARDS CLEARED ANYWHERE, not by each other:
             WRAPAROUND 15 · CROSS 20 · HIVE 25 · DIAMOND 30 · PAIRS 35 · DOMINOES 40
-            WORKOUT 45 · PACKS 50 · DONUT 55 · CHECKERBOARD 60 · CONGO LINE 65
+            WORKOUT 45 · PACKS 50 · DONUT 55 · CHECKERBOARD 60 · CONGA LINE 65
             RAGGED CAVE 70 · DUNGEON 75 · SUDOKU 80
 full runs   BLIND needs Full Runs completed on 3 different types
 combined    WRAPPED CROSS needs CROSS and WRAPAROUND

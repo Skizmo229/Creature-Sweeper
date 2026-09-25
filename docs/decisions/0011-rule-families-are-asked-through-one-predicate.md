@@ -3,7 +3,7 @@
 2026-09-21. Status: superseded by 0029.
 
 ## Context
-DOMINOES is a pairing board and CONGO LINE is a pack board. Five separate `=== 'pairs'` checks would
+DOMINOES is a pairing board and CONGA LINE is a pack board. Five separate `=== 'pairs'` checks would
 have been five places to hand a domino board none of the mode's deduction, silently. The same
 failure took WRAPPED CROSS out of the unlock graph, which drew only ladders it had a position for.
 

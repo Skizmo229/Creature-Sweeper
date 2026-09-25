@@ -49,7 +49,7 @@ other; it does not rank the placement-rule ladders against them.
 
 - 34% density is the battle ceiling: past it a board stops being a puzzle. HIVE (35%), ARCANE
   (34.5%) and CHECKERBOARD (38.5%) sit past it for stated reasons (`docs/modes.md`).
-- Placement ceilings: PAIRS 26% (`PAIR` jams at 24.8 to 25.6%), PACKS 36%, CONGO 34%.
+- Placement ceilings: PAIRS 26% (`PAIR` jams at 24.8 to 25.6%), PACKS 36%, CONGA LINE 34%.
 - Spell prices 30 / 75 / 150 / 300 (Census, Reveal, Exercise, Beacon), one global table on purpose:
   income (pools span 150 to 1,233) and demand (forced guesses 0.1 to 6.0 a board) already carry the
   variation between ladders. Starting mana is 75 because it is "one Reveal exactly"; anything that
@@ -117,7 +117,7 @@ ladder, each spell against playing spell-less on the ladders that offer it:
    two more HP on ORACLE 7 to 10.
 4. **The placement-rule ladders play easier than their tuning says**, because they were tuned
    against the honest player, which understands their rules worse than a strong human. Re-deriving
-   CHECKERBOARD, PAIRS, DOMINOES, PACKS and CONGO LINE against the solver is open. PAIRS and
+   CHECKERBOARD, PAIRS, DOMINOES, PACKS and CONGA LINE against the solver is open. PAIRS and
    DOMINOES also no longer show a beaten creature's number, which the instrument still reads.
 5. **Reveal buys twice what Exercise does per mana** since the ring; pricing Reveal at 100 would
    level them. Left alone deliberately.

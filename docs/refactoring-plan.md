@@ -314,7 +314,7 @@ there is no shape a new rule can copy.
 
 The CLAUDE.md notes record this exact failure recurring: `isPaired` "replaced five separate checks
 that would have been five places to hand a domino board none of the mode's deduction, silently";
-`isPacked` did the same for CONGO LINE; the unlock graph "only drew ladders it had a hard-coded
+`isPacked` did the same for CONGA LINE; the unlock graph "only drew ladders it had a hard-coded
 position for" and lost WRAPPED CROSS. A registry with a typed interface turns each of those into a
 compile error.
 
