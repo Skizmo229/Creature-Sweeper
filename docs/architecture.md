@@ -72,6 +72,7 @@ src/sim/        headless measurement, all driving the real engine (see docs/tuni
   honest.ts       the honest player: sees what a player sees, deduces locally, guesses or casts
   deduce.ts       what the honest player concludes: constraints, what is safe, where to guess
   solver.ts       the complete deducer, the floor under the honest player's forced guesses
+  search.ts       the complete deducer's search: bounds propagation, tier counts, one layout
   autoplay.ts     the omniscient tier-order player that proves the zero-damage guarantee
   cli/            one command-line entry per measurement, run on import
 src/data.ts     Node-only loader for ladders.json; CS_LADDERS points it at a candidate file
