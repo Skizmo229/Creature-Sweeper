@@ -163,6 +163,11 @@ button.small {
    interface. `--word-em` is the name's longest word in ems (`fitNames`, in
    screens/ladders.ts), so such a name comes down just far enough to fit. A
    name with a space in it breaks there first. */
+/* A hover turns the edge the ladder's colour, so the strip darkens to stay
+   distinct from it. */
+button.type-card:hover:not(:disabled) {
+  border-left-color: color-mix(in srgb, var(--tint) 55%, black);
+}
 .type-name {
   font-size: min(1.5rem, 100cqi / var(--word-em, 0.01));
   font-weight: 700;
