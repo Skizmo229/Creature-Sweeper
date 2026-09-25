@@ -2,7 +2,9 @@
  * The sound check: every sound in the game, one button per pack and event, in a window over the
  * settings screen. Keys can be assigned to sounds, and play them only while the window is open;
  * nowhere else in the game listens for them. A keyboard at the bottom retunes the last sound
- * clicked, and its keys and button then play it at that pitch.
+ * clicked, and its keys and button then play it at that pitch. Clicking the keyboard also hands
+ * the computer's keys to it, to play that sound as a piano; Shift on its own swaps back and forth
+ * between playing the keyboard and the sound buttons' keys.
  *
  * It lives inside the screen's element, like the picker, so a rebuild or leaving the screen takes
  * it away. Its keys are caught at the window before they reach the app, where a key on the
@@ -14,7 +16,7 @@ import type { SfxPackId } from '../looks.js';
 import { type SfxEvent, sfxPitch } from '../sfx.js';
 import { SFX_EVENT_NAMES, SFX_NAMES } from '../theme.js';
 import type { ScreenContext } from './context.js';
-import { nearestNote, noteHz, noteName, pianoRoll } from './pianoroll.js';
+import { type PianoRoll, nearestNote, noteHz, noteName, pianoRoll } from './pianoroll.js';
 
 interface Sound {
   pack: SfxPackId;
@@ -29,8 +31,40 @@ interface Sound {
 const keys = new Map<string, Sound>();
 const pitches = new Map<string, number>();
 
-/** Keys that keep their own job in the window: Escape closes it, Tab moves the focus. */
+/**
+ * Keys that keep their own job in the window: Escape closes it, Tab moves the focus, Shift swaps
+ * between the sounds and the keyboard.
+ */
 const RESERVED = new Set(['Escape', 'Tab', 'Shift', 'Control', 'Alt', 'Meta', 'CapsLock']);
+
+/**
+ * The computer's keys as a piano, in semitones above the octave's C: the home row is the white
+ * keys and the row above it the black, the layout music software uses. Z and X move the octave.
+ */
+const PIANO_KEYS = new Map<string, number>([
+  ['a', 0],
+  ['w', 1],
+  ['s', 2],
+  ['e', 3],
+  ['d', 4],
+  ['f', 5],
+  ['t', 6],
+  ['g', 7],
+  ['y', 8],
+  ['h', 9],
+  ['u', 10],
+  ['j', 11],
+  ['k', 12],
+  ['o', 13],
+  ['l', 14],
+  ['p', 15],
+  [';', 16],
+]);
+const OCTAVE_DOWN = 'z';
+const OCTAVE_UP = 'x';
+/** Where the home row can start: C2 to C6, so a whole octave above it is still on the keyboard. */
+const LOWEST_C = 36;
+const HIGHEST_C = 84;
 
 /** A letter is the same key with or without Shift. */
 const keyId = (e: KeyboardEvent): string => (e.key.length === 1 ? e.key.toLowerCase() : e.key);
@@ -49,11 +83,11 @@ const soundName = (s: Sound): string =>
 const ownNote = (s: Sound): number => nearestNote(sfxPitch(s.pack, s.event));
 
 /**
- * The factor that moves a sound's first voice onto its chosen note. Every voice is moved by the
- * same factor, so a two-note sting stays the same interval and a slide keeps its shape.
+ * The factor that moves a sound's first voice onto a note, by default the one it is tuned to.
+ * Every voice is moved by the same factor, so a two-note sting stays the same interval and a
+ * slide keeps its shape.
  */
-function ratioFor(s: Sound): number {
-  const note = pitches.get(soundId(s));
+function ratioFor(s: Sound, note = pitches.get(soundId(s))): number {
   return note === undefined ? 1 : noteHz(note) / sfxPitch(s.pack, s.event);
 }
 
@@ -64,10 +98,11 @@ function ratioFor(s: Sound): number {
 type Assign = { step: 'idle' } | { step: 'sound' } | { step: 'key'; sound: Sound };
 
 /** The line beside the buttons: what the window is waiting for, or why it is silent. */
-function statusText(assign: Assign, muted: boolean): string {
+function statusText(assign: Assign, muted: boolean, playing: boolean): string {
+  if (muted) return 'Sound is muted: the speaker in the corner turns it back on.';
+  if (playing) return 'Playing the keyboard. Shift goes back to the sounds.';
   if (assign.step === 'sound') return 'Click the sound to assign.';
   if (assign.step === 'key') return `Press a key for ${soundName(assign.sound)}.`;
-  if (muted) return 'Sound is muted: the speaker in the corner turns it back on.';
   return keys.size > 0 ? 'Press an assigned key to play its sound.' : '';
 }
 
@@ -112,11 +147,68 @@ function soundGrid(onClick: (s: Sound) => void): { grid: HTMLElement; buttons: S
   return { grid, buttons };
 }
 
+interface PianoInput {
+  /** Start the home row on the C at or below `note`. */
+  moveTo(note: number): void;
+  /** Which computer key plays each note from where the home row now starts. */
+  letters(): Map<number, string>;
+  /** Play a key, or move the octave; null for a key the piano does not use. */
+  down(id: string, repeat: boolean): 'note' | 'octave' | null;
+  up(id: string): void;
+  /** Let every held note go, when the keys stop belonging to the piano. */
+  release(): void;
+}
+
+/** The computer's keys as a piano. A note stays lit on the keyboard until its key comes up. */
+function pianoInput(roll: PianoRoll, play: (note: number) => void): PianoInput {
+  const held = new Map<string, number>();
+  let octave = 60;
+  const moveTo = (note: number): void => {
+    octave = Math.min(HIGHEST_C, Math.max(LOWEST_C, note - (note % 12)));
+  };
+  const release = (): void => {
+    for (const note of held.values()) roll.press(note, false);
+    held.clear();
+  };
+  return {
+    moveTo,
+    letters: () => new Map([...PIANO_KEYS].map(([k, semis]) => [octave + semis, keyName(k)])),
+    down(id, repeat) {
+      if (id === OCTAVE_DOWN || id === OCTAVE_UP) {
+        release();
+        moveTo(octave + (id === OCTAVE_UP ? 12 : -12));
+        return 'octave';
+      }
+      const semis = PIANO_KEYS.get(id);
+      if (semis === undefined) return null;
+      // A held key repeats, and a note is one sound per press.
+      if (!repeat) {
+        const note = octave + semis;
+        play(note);
+        roll.press(note, true);
+        held.set(id, note);
+      }
+      return 'note';
+    },
+    up(id) {
+      const note = held.get(id);
+      if (note === undefined) return;
+      roll.press(note, false);
+      held.delete(id);
+    },
+    release,
+  };
+}
+
+interface PitchPanel {
+  element: HTMLElement;
+  roll: PianoRoll;
+  /** `letters`, while the keyboard is being played, says which key plays which note. */
+  show(s: Sound | null, letters?: Map<number, string>): void;
+}
+
 /** The keyboard under a line naming the sound it tunes, with a way back to its own pitch. */
-function pitchPanel(
-  onPick: (note: number) => void,
-  onReset: () => void,
-): { element: HTMLElement; show: (s: Sound | null) => void } {
+function pitchPanel(onPick: (note: number) => void, onReset: () => void): PitchPanel {
   const element = el('div', 'soundcheck-pitch');
   const head = el('div', 'soundcheck-tools');
   const label = el('span', 'soundcheck-status');
@@ -126,7 +218,8 @@ function pitchPanel(
   const roll = pianoRoll(onPick);
   element.append(head, roll.element);
 
-  const show = (s: Sound | null): void => {
+  const show = (s: Sound | null, letters?: Map<number, string>): void => {
+    element.classList.toggle('playing', letters !== undefined);
     if (!s) {
       label.textContent = 'Click a sound to tune it.';
       reset.disabled = true;
@@ -135,119 +228,202 @@ function pitchPanel(
     }
     const own = ownNote(s);
     const chosen = pitches.get(soundId(s));
-    label.textContent =
-      `${soundName(s)}: ${noteName(chosen ?? own)}` +
-      (chosen === undefined ? ', its own pitch' : `, from ${noteName(own)}`);
+    label.textContent = letters
+      ? `${soundName(s)} on your keys: A to K from ${noteName(Math.min(...letters.keys()))}, ` +
+        'Z and X change octave, Shift goes back to the sounds.'
+      : `${soundName(s)}: ${noteName(chosen ?? own)}` +
+        (chosen === undefined ? ', its own pitch.' : `, from ${noteName(own)}.`) +
+        ' Click a key, or press Shift, to play it on your keys.';
     reset.disabled = chosen === undefined;
-    roll.show({ own, chosen: chosen ?? own });
+    roll.show({ own, chosen: chosen ?? own, ...(letters ? { letters } : {}) });
   };
-  return { element, show };
+  return { element, roll, show };
+}
+
+/** Take a key from everything else: the app, and a focused button that Space would click. */
+function take(e: KeyboardEvent): void {
+  e.preventDefault();
+  // Immediate as well, or the app's own listener on the window still sees it.
+  e.stopImmediatePropagation();
 }
 
 export function openSoundCheck(ctx: ScreenContext): void {
-  const { overlay, card, close } = shell();
+  new SoundCheck(ctx);
+}
 
-  const tools = el('div', 'soundcheck-tools');
-  const assignBtn = el('button', 'primary small', 'Assign key');
-  const clearBtn = el('button', 'ghost small', 'Clear keys');
-  const status = el('span', 'soundcheck-status');
-  status.setAttribute('aria-live', 'polite');
-  tools.append(assignBtn, clearBtn, status);
+/**
+ * The window's state and wiring. It removes itself, and its listeners on the window, when closed;
+ * a rebuild of the screen that takes it away unhooks it on the next key.
+ */
+class SoundCheck {
+  private readonly overlay: HTMLElement;
+  private readonly assignBtn = el('button', 'primary small', 'Assign key');
+  private readonly clearBtn = el('button', 'ghost small', 'Clear keys');
+  private readonly status = el('span', 'soundcheck-status');
+  private readonly grid: HTMLElement;
+  private readonly buttons: SoundButton[];
+  private readonly pitch: PitchPanel;
+  private readonly piano: PianoInput;
 
-  let assign: Assign = { step: 'idle' };
-  /** The sound the keyboard is tuning: the last one clicked. */
-  let tuning: Sound | null = null;
-  const play = (s: Sound): void => ctx.onAudition(s.pack, s.event, ratioFor(s));
+  private assign: Assign = { step: 'idle' };
+  /** The sound the keyboard is tuning and playing: the last one clicked. */
+  private tuning: Sound | null = null;
+  /** Whether the computer's keys play the keyboard rather than the sounds they are assigned to. */
+  private playing = false;
+  /** Shift is down and nothing else has been pressed with it, so letting it go swaps modes. */
+  private shiftAlone = false;
 
-  const { grid, buttons } = soundGrid((sound) => {
-    play(sound);
-    tuning = sound;
-    if (assign.step === 'sound') assign = { step: 'key', sound };
-    sync();
-  });
-  const retune = (note: number | null): void => {
-    if (!tuning) return;
-    if (note === null) pitches.delete(soundId(tuning));
-    else pitches.set(soundId(tuning), note);
-    play(tuning);
-    sync();
-  };
-  const pitch = pitchPanel(retune, () => retune(null));
+  private readonly onKey = (e: KeyboardEvent): void => this.keyDown(e);
+  private readonly onKeyUp = (e: KeyboardEvent): void => this.keyUp(e);
 
-  const sync = (): void => {
-    for (const { sound, btn, badge } of buttons) {
+  constructor(private readonly ctx: ScreenContext) {
+    const { overlay, card, close } = shell();
+    this.overlay = overlay;
+    const tools = el('div', 'soundcheck-tools');
+    this.status.setAttribute('aria-live', 'polite');
+    tools.append(this.assignBtn, this.clearBtn, this.status);
+
+    ({ grid: this.grid, buttons: this.buttons } = soundGrid((s) => this.clickSound(s)));
+    this.pitch = pitchPanel(
+      (note) => this.clickKey(note),
+      () => this.retune(null),
+    );
+    this.piano = pianoInput(this.pitch.roll, (note) => {
+      if (this.tuning) this.play(this.tuning, note);
+    });
+
+    this.assignBtn.addEventListener('click', () => {
+      if (this.playing) this.setPlaying(false);
+      this.assign = this.assign.step === 'idle' ? { step: 'sound' } : { step: 'idle' };
+      this.sync();
+    });
+    this.clearBtn.addEventListener('click', () => {
+      keys.clear();
+      this.sync();
+    });
+    close.addEventListener('click', () => this.dismiss());
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) this.dismiss();
+    });
+    window.addEventListener('keydown', this.onKey, true);
+    window.addEventListener('keyup', this.onKeyUp, true);
+
+    card.append(tools, this.grid, this.pitch.element);
+    overlay.append(card);
+    ctx.host.append(overlay);
+    // After it is in the page, so the keyboard has a width to scroll within.
+    this.sync();
+    close.focus();
+  }
+
+  private play(s: Sound, note = pitches.get(soundId(s))): void {
+    this.ctx.onAudition(s.pack, s.event, ratioFor(s, note));
+  }
+
+  private clickSound(sound: Sound): void {
+    this.play(sound);
+    this.tuning = sound;
+    if (this.assign.step === 'sound') this.assign = { step: 'key', sound };
+    this.sync();
+  }
+
+  /** A click on the keyboard tunes the sound to that key and hands the computer's keys to it. */
+  private clickKey(note: number): void {
+    this.retune(note);
+    this.piano.moveTo(note);
+    this.setPlaying(true);
+  }
+
+  private retune(note: number | null): void {
+    if (!this.tuning) return;
+    if (note === null) pitches.delete(soundId(this.tuning));
+    else pitches.set(soundId(this.tuning), note);
+    this.play(this.tuning);
+    this.sync();
+  }
+
+  /** Hand the computer's keys to the keyboard, or back. Only a chosen sound can be played. */
+  private setPlaying(on: boolean): void {
+    if (on && !this.tuning) return;
+    if (on && !this.playing && this.tuning) {
+      this.piano.moveTo(pitches.get(soundId(this.tuning)) ?? ownNote(this.tuning));
+    }
+    this.playing = on;
+    this.piano.release();
+    if (on) this.assign = { step: 'idle' };
+    this.sync();
+  }
+
+  private sync(): void {
+    const { assign, tuning, playing } = this;
+    for (const { sound, btn, badge } of this.buttons) {
       const bound = [...keys].filter(([, s]) => same(s, sound)).map(([k]) => keyName(k));
       const note = pitches.get(soundId(sound));
       badge.textContent = [...bound, ...(note === undefined ? [] : [noteName(note)])].join(' · ');
       btn.classList.toggle('picking', assign.step === 'key' && same(assign.sound, sound));
       btn.classList.toggle('tuning', tuning !== null && same(tuning, sound));
     }
-    grid.classList.toggle('choosing', assign.step === 'sound');
-    assignBtn.textContent = assign.step === 'idle' ? 'Assign key' : 'Cancel';
-    clearBtn.disabled = keys.size === 0;
-    status.textContent = statusText(assign, ctx.p.muted);
-    pitch.show(tuning);
-  };
+    this.grid.classList.toggle('choosing', assign.step === 'sound');
+    this.grid.classList.toggle('resting', playing);
+    this.assignBtn.textContent = assign.step === 'idle' ? 'Assign key' : 'Cancel';
+    this.clearBtn.disabled = keys.size === 0;
+    this.status.textContent = statusText(assign, this.ctx.p.muted, playing);
+    this.pitch.show(tuning, playing ? this.piano.letters() : undefined);
+  }
 
-  const dismiss = (): void => {
-    overlay.remove();
-    window.removeEventListener('keydown', onKey, true);
-  };
+  private dismiss(): void {
+    this.overlay.remove();
+    window.removeEventListener('keydown', this.onKey, true);
+    window.removeEventListener('keyup', this.onKeyUp, true);
+  }
 
-  const onKey = (e: KeyboardEvent): void => {
-    if (!overlay.isConnected) {
-      window.removeEventListener('keydown', onKey, true);
-      return;
-    }
+  private keyDown(e: KeyboardEvent): void {
+    if (!this.overlay.isConnected) return this.dismiss();
+    this.shiftAlone = e.key === 'Shift' ? this.shiftAlone || !e.repeat : false;
     if (e.key === 'Escape') {
-      e.preventDefault();
-      // Immediate as well, or the app's own listener on the window still sees it.
-      e.stopImmediatePropagation();
-      if (assign.step === 'idle') dismiss();
-      else {
-        assign = { step: 'idle' };
-        sync();
-      }
+      take(e);
+      this.back();
       return;
     }
     // Browser and system shortcuts are left alone, and so is anything reserved.
     if (e.ctrlKey || e.metaKey || e.altKey || RESERVED.has(e.key)) return;
     const id = keyId(e);
-    if (assign.step === 'key') {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      keys.set(id, assign.sound);
-      assign = { step: 'idle' };
-      sync();
+    if (this.playing) {
+      const took = this.piano.down(id, e.repeat);
+      if (took) take(e);
+      if (took === 'octave') this.sync();
+      return;
+    }
+    if (this.assign.step === 'key') {
+      take(e);
+      keys.set(id, this.assign.sound);
+      this.assign = { step: 'idle' };
+      this.sync();
       return;
     }
     const sound = keys.get(id);
     if (!sound) return;
-    // Taken from the focused button too: Space or Enter on a button would otherwise click it.
-    e.preventDefault();
-    e.stopImmediatePropagation();
+    take(e);
     // A held key repeats, and a sound check is one sound per press.
-    if (!e.repeat) play(sound);
-  };
+    if (!e.repeat) this.play(sound);
+  }
 
-  assignBtn.addEventListener('click', () => {
-    assign = assign.step === 'idle' ? { step: 'sound' } : { step: 'idle' };
-    sync();
-  });
-  clearBtn.addEventListener('click', () => {
-    keys.clear();
-    sync();
-  });
-  close.addEventListener('click', dismiss);
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) dismiss();
-  });
-  window.addEventListener('keydown', onKey, true);
+  private keyUp(e: KeyboardEvent): void {
+    if (!this.overlay.isConnected) return this.dismiss();
+    if (e.key === 'Shift') {
+      if (this.shiftAlone) this.setPlaying(!this.playing);
+      this.shiftAlone = false;
+      return;
+    }
+    this.piano.up(keyId(e));
+  }
 
-  card.append(tools, grid, pitch.element);
-  overlay.append(card);
-  ctx.host.append(overlay);
-  // After it is in the page, so the keyboard has a width to scroll within.
-  sync();
-  close.focus();
+  /** Escape: one step back at a time, off the keyboard, out of an assignment, then away. */
+  private back(): void {
+    if (this.playing) this.setPlaying(false);
+    else if (this.assign.step !== 'idle') {
+      this.assign = { step: 'idle' };
+      this.sync();
+    } else this.dismiss();
+  }
 }

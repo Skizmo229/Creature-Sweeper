@@ -26,10 +26,21 @@ export function nearestNote(hz: number): number {
   return Math.min(HIGHEST_NOTE, Math.max(LOWEST_NOTE, note));
 }
 
+export interface PianoState {
+  /** The key nearest the sound's own pitch, which wears a dot. */
+  own: number;
+  /** The key the sound is tuned to, which is lit. */
+  chosen: number;
+  /** While the keyboard is being played, the computer key that plays each note. */
+  letters?: ReadonlyMap<number, string>;
+}
+
 export interface PianoRoll {
   readonly element: HTMLElement;
   /** Light the chosen key and mark the sound's own; null greys the keyboard out. */
-  show(state: { own: number; chosen: number } | null): void;
+  show(state: PianoState | null): void;
+  /** Hold a key down, or let it go, as a note is played from the computer's keys. */
+  press(note: number, down: boolean): void;
 }
 
 /**
@@ -41,37 +52,53 @@ export function pianoRoll(onPick: (note: number) => void): PianoRoll {
   const element = el('div', 'piano-scroll');
   const board = el('div', 'piano');
   element.append(board);
-  const keys = new Map<number, HTMLButtonElement>();
+  const keys = new Map<number, { key: HTMLButtonElement; letter: HTMLElement }>();
   let whites = 0;
   for (let note = LOWEST_NOTE; note <= HIGHEST_NOTE; note++) {
     const black = BLACK.has(note % 12);
     const key = el('button', black ? 'piano-key black' : 'piano-key white');
     key.title = noteName(note);
     key.setAttribute('aria-label', noteName(note));
+    const letter = el('span', 'piano-letter');
+    key.append(letter);
     if (black) key.style.setProperty('--at', String(whites));
     else {
       whites++;
       if (note % 12 === 0) key.append(el('span', 'piano-label', noteName(note)));
     }
     key.addEventListener('click', () => onPick(note));
-    keys.set(note, key);
+    keys.set(note, { key, letter });
     board.append(key);
   }
   board.style.setProperty('--whites', String(whites));
+
+  /** Only sideways: scrolling a key into view would also drag the window down to it. */
+  const centre = (note: number): void => {
+    const key = keys.get(note)?.key;
+    if (key) element.scrollLeft = key.offsetLeft - (element.clientWidth - key.offsetWidth) / 2;
+  };
 
   return {
     element,
     show(state) {
       element.classList.toggle('idle', state === null);
-      for (const [note, key] of keys) {
+      element.classList.toggle('playing', state?.letters !== undefined);
+      for (const [note, { key, letter }] of keys) {
         key.disabled = state === null;
         key.classList.toggle('chosen', state?.chosen === note);
         key.classList.toggle('own', state?.own === note);
         key.setAttribute('aria-pressed', String(state?.chosen === note));
+        letter.textContent = state?.letters?.get(note) ?? '';
       }
-      // Only sideways: scrolling the key into view would also drag the window down to it.
-      const key = state && keys.get(state.chosen);
-      if (key) element.scrollLeft = key.offsetLeft - (element.clientWidth - key.offsetWidth) / 2;
+      if (!state) return;
+      // While playing, the keys the computer reaches; otherwise the chosen one.
+      const reach = state.letters ? [...state.letters.keys()] : [];
+      centre(
+        reach.length > 0 ? Math.round((Math.min(...reach) + Math.max(...reach)) / 2) : state.chosen,
+      );
+    },
+    press(note, down) {
+      keys.get(note)?.key.classList.toggle('pressed', down);
     },
   };
 }
