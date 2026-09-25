@@ -11,7 +11,7 @@
  */
 
 import type { Game } from '../engine/game.js';
-import type { SpellId } from '../engine/spells.js';
+import { SPELLS, type SpellId } from '../engine/spells.js';
 import type { Cell } from '../engine/types.js';
 import {
   type Constraint,
@@ -268,9 +268,9 @@ function spendAtStuckPoint(
     spellId &&
     game.canCast(spellId)
   ) {
-    // Beacon takes no target: it opens the largest blank region nobody has touched, and is
-    // refused when there is none.
-    const untargeted = spellId === 'beacon';
+    // A spell that takes no target is cast as it is. Beacon, which opens the largest blank region
+    // nobody has touched, is refused when there is none.
+    const untargeted = !SPELLS[spellId].targeted;
     const target = untargeted
       ? null
       : spellId === 'reveal'

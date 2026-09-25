@@ -35,11 +35,11 @@ cell, feeds it to Sweep and draws it, as Census does, is every step.
    `src/ui/theme.ts` clear of the annotation colours and of every look's `hot` (decision 0032).
    The button, the shortcut, the hint and the sound come from `SPELLS` with no more work.
 6. **The honest player** (`src/sim/honest.ts`): a policy and its entry in `SPELL_POLICIES`, which
-   the compiler asks for, and its aim in `spendAtStuckPoint`, which takes a spell for untargeted
-   only if it is Beacon and aims any other like Census. If the spell informs, `src/sim/deduce.ts`
-   must read its answer too (`safeToOpen`, `bestGuess`), or the ladder is tuned against a player
-   who cannot see it, and the docblock and header of `src/sim/cli/spellvalue.ts` name what the
-   deduction reads.
+   the compiler asks for. `spendAtStuckPoint` casts a spell that takes no target as it is, aims
+   Reveal at the guess and any other targeted spell like Census; teach it the aim if that is wrong.
+   If the spell informs, `src/sim/deduce.ts` must read its answer too (`safeToOpen`, `bestGuess`),
+   or the ladder is tuned against a player who cannot see it, and the docblock and header of
+   `src/sim/cli/spellvalue.ts` name what the deduction reads.
 7. **Ladder data.** The `spells` list of each type that offers it, and the blurbs that name
    spells, in `design/ladder_types.toml`; then `python design/ladders.py`. Starting mana is "one
    Reveal exactly", so a spell cheaper than Reveal changes what the opening pool means. Price it by
