@@ -1,41 +1,56 @@
 # Extending the game: checklists
 
 Each list is every place a change has to reach, in the order to make it. They were built by
-walking the code for three concrete tasks and writing down everything that had to be touched; the
-counts at the top are what those walks measured before Milestone 3, and shrinking them is what the
-milestone's phases 2 and 3 were for. The placement list has been rewritten for the registry; the
-others are still the map.
+walking the code for concrete tasks and writing down everything that had to be touched. The
+placement list was rewritten for the registry and the spell list walked again on 25 September
+2026, after Milestone 3; the files and names in every list were checked against the tree that day.
 
 Whatever you add: run `npm run check`, and if the change is meant to alter behaviour, re-record
 the golden outputs and say so in the commit.
 
-## Adding a spell (15 files today)
+## Adding a spell (11 files at the simplest, 20 for one like Census)
 
-1. **Engine.** Add the id to `SpellId` and an entry (name, cost, `targeted`, blurb) to `SPELLS`
-   in `src/engine/spells.ts`. The keyboard shortcut is the name's first letter (`spellKey`), so a
-   name that starts with the letter of an existing spell, of `S` (Sweep), `D` (assisted Sweep),
-   `N` (entry mode) or `F` (fit) cannot ship; `test/spells.test.ts` fails on a clash with the
-   spells and Sweep, and the UI checks the board's keys first.
-2. Add a `case` to `Game.cast` in `src/engine/game.ts`. The case must set `detail`. If the spell
-   stores anything per cell, add the field to `Cell` in `types.ts` and to `makeCell` in
-   `grid.ts`.
-3. If the spell gives information, teach `Game.safeCells` to act on it, or the player has to
-   translate the answer into marks by hand (Census's original failure). A spell must never remove
-   a creature or skip its EXP (`docs/invariants.md`, fact 3).
-4. **Ladder data.** Add it to the `spells` list of each type that offers it in
-   `design/ladder_types.toml`, regenerate `ladders.json`, and update the type blurbs that name
-   spells.
-   Starting mana is "one Reveal exactly"; a spell cheaper than Reveal changes what the opening
-   pool means.
-5. **UI.** The button, the shortcut, the hint and the sound come for free from `SPELLS`. Anything
-   the spell draws needs a draw pass in `BoardView` beside `drawCensus`, and a colour in `theme.ts`
-   that stands apart from the palette's annotation colours.
-6. **Measurement.** `src/sim/honest.ts` needs a policy for when to cast it and how to read its
-   answer (an unknown targeted spell is currently aimed like Census), and an entry in
-   `SPELL_POLICIES` there, which the compiler asks for and `src/sim/cli/spellvalue.ts` reads its
-   columns from. Without these its price is a guess.
-7. **Tests and docs.** A block in `test/spells.test.ts`; the affordability test reads the data.
-   `docs/glossary.md`, the README's controls line, the design reference's spell table.
+A spell that only acts, like Beacon, is steps 1, 2, 6, 7 and 8. One that leaves an answer on a
+cell, feeds it to Sweep and draws it, as Census does, is every step.
+
+1. **The spell.** Its id in `SpellId` and its record (name, cost, `targeted`, blurb) in `SPELLS`,
+   `src/engine/spells.ts`. The keyboard shortcut is the name's first letter (`spellKey`), so the
+   name cannot start with another spell's letter or one the board uses: `S` (Sweep), `D` (assisted
+   Sweep), `F` (fit) or `N` (entry mode). `test/spells.test.ts` fails on a clash with a spell, `S`,
+   `D` or `F`, but not with `N`, which the board reads after the spell letters: a spell named with
+   an N would silently take the entry-mode key.
+2. **What it does.** Its entry in `SPELL_EFFECTS`, `src/engine/cast.ts`, which the compiler asks
+   for, and the function it names: it returns the events and a `detail`, or a `blocked` reason.
+   `Game.cast` already makes the checks every spell shares (offered, affordable, on the board, in
+   reach) and does the paying. A spell never removes a creature or skips its EXP
+   (`docs/invariants.md`, fact 3).
+3. **What it leaves on a cell**, if anything: a field on `Cell` in `src/engine/types.ts` and its
+   empty value in `makeCell`, `src/engine/grid.ts`, as `census` has.
+4. **What Sweep proves from it**, if it gives information, or the player has to turn the answer
+   into marks by hand (Census's original failure): a proof in `src/engine/sweep.ts` beside
+   `provenByCensus`, and a block in `test/sweep.test.ts`. `safeCells` visits open cells only, so a
+   proof about a covered cell needs a pass of its own.
+5. **What it draws**, if anything: a painter beside `drawCensus` in `src/ui/board/paint.ts`,
+   called from `render()` in `src/ui/board/view.ts` where `drawCensus` is, and a colour in
+   `src/ui/theme.ts` clear of the annotation colours and of every look's `hot` (decision 0032).
+   The button, the shortcut, the hint and the sound come from `SPELLS` with no more work.
+6. **The honest player** (`src/sim/honest.ts`): a policy and its entry in `SPELL_POLICIES`, which
+   the compiler asks for, and its aim in `spendAtStuckPoint`, which takes a spell for untargeted
+   only if it is Beacon and aims any other like Census. If the spell informs, `src/sim/deduce.ts`
+   must read its answer too (`safeToOpen`, `bestGuess`), or the ladder is tuned against a player
+   who cannot see it, and the docblock and header of `src/sim/cli/spellvalue.ts` name what the
+   deduction reads.
+7. **Ladder data.** The `spells` list of each type that offers it, and the blurbs that name
+   spells, in `design/ladder_types.toml`; then `python design/ladders.py`. Starting mana is "one
+   Reveal exactly", so a spell cheaper than Reveal changes what the opening pool means. Price it by
+   measuring (`npm run sim:spells -- 40 <ladder>`) until its HP saved per mana matches Reveal's in
+   `docs/tuning.md`. If a ladder in `test/golden/` gains it, re-record with `npm run sim:golden`.
+8. **Tests and docs.** A block in `test/spells.test.ts`, whose shortcut test and `magicConfig`
+   list every spell (the affordability test reads the data). The README's controls line and test
+   count; `docs/glossary.md`: its entry, the Spells entry, and strict Sweep's list if it informs;
+   `docs/tuning.md`: the price list and the value table; "the four spells" in
+   `docs/architecture.md`; the spell table and status note in `design/page.template.html`, then
+   `python design/build.py`; and a decision record for its design and measured price.
 
 ## Adding a placement rule (8 hand-edited files with its ladder, from about 19)
 
