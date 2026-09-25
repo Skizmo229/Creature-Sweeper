@@ -12,12 +12,12 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { loadLadders } from '../src/data.js';
+import { LOOK_IDS, lookFor } from '../src/ui/looks.js';
 import {
   FONTS,
   FONT_IDS,
   LEGIBLE_FONT,
   TITLE_FONT,
-  TYPE_FONTS,
   fontFor,
   migrateFontChoice,
 } from '../src/ui/typefaces.js';
@@ -39,19 +39,18 @@ const familyOf = (stack: string): string => stack.split(',')[0]!.trim().replace(
 describe('every ladder', () => {
   const ids = loadLadders().map((t) => t.id);
 
-  it('wears a face of its own', () => {
-    const fonts = ids.map((id) => TYPE_FONTS[id]);
-    expect(fonts.every((f) => f !== undefined && f in FONTS)).toBe(true);
-    expect(new Set(fonts).size).toBe(ids.length);
+  it('has a look, and every look is a ladder', () => {
+    // A ladder without one wears NORMAL's, silently.
+    expect([...LOOK_IDS].sort()).toEqual([...ids].sort());
+  });
+
+  it('names a bundled face', () => {
+    // Two ladders may share one (decision 0031); a new ladder needs no new font.
+    for (const id of ids) expect(FONTS, id).toHaveProperty(lookFor(id).font);
   });
 
   it('leaves the legible face to the player', () => {
-    expect(ids.some((id) => TYPE_FONTS[id] === LEGIBLE_FONT)).toBe(false);
-  });
-
-  it('accounts for every face but the legible one', () => {
-    const worn = new Set(ids.map((id) => TYPE_FONTS[id]));
-    expect(FONT_IDS.filter((f) => !worn.has(f))).toEqual([LEGIBLE_FONT]);
+    expect(ids.some((id) => lookFor(id).font === LEGIBLE_FONT)).toBe(false);
   });
 });
 

@@ -15,9 +15,9 @@ import {
   MARK_COLOR,
   MARK_OUTLINE,
   NOTE_COLOR,
-  type TypeTheme,
   drawCreature,
 } from '../theme.js';
+import { type TypeTheme } from '../looks.js';
 import type { GameFont } from '../typefaces.js';
 import { setNumberFont } from './digits.js';
 import { type Layout, contentBox } from './geometry.js';

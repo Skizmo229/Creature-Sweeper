@@ -9,13 +9,7 @@ import { ladders } from '../ladders.js';
 import { sampleBoard } from '../preview.js';
 import { DEFAULT, type PresentationSettings, type Settings } from '../settings.js';
 import type { SfxEvent } from '../sfx.js';
-import {
-  type PipShape,
-  type TypeIdentity,
-  type TypeTheme,
-  identityFor,
-  themeFor,
-} from '../theme.js';
+import { type PipShape, type LadderLook, type TypeTheme, lookFor, themeFor } from '../looks.js';
 import { CHIP_CELL, renderPreview } from './render.js';
 
 export interface SettingsScreenOptions {
@@ -44,7 +38,7 @@ export interface ScreenContext {
   readonly host: HTMLElement;
   /** The presentation settings as saved. */
   readonly p: PresentationSettings;
-  readonly ident: TypeIdentity;
+  readonly ident: LadderLook;
   /** This ladder's icon as things currently stand, which a palette tile wears. */
   readonly currentPip: PipShape;
   /** This ladder's palette as things currently stand, which an icon tile wears. */
@@ -85,7 +79,7 @@ export function makeContext(
     onPreview,
     host,
     p,
-    ident: identityFor(typeId),
+    ident: lookFor(typeId),
     currentPip: p.icons === DEFAULT ? themeFor(typeId).pip : p.icons,
     currentTheme,
     display,

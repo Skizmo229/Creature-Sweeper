@@ -26,7 +26,8 @@
  * Every effect is finite and removes itself. There is no idle loop.
  */
 
-import { TIER_COLORS, drawCreature, tierColor, type TypeTheme, type VictoryId } from './theme.js';
+import { TIER_COLORS, drawCreature, tierColor } from './theme.js';
+import { type TypeTheme, type VictoryId } from './looks.js';
 
 /** One creature glyph, as the board is currently drawing it. */
 export interface VictorySprite {
