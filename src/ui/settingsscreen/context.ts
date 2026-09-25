@@ -9,7 +9,14 @@ import { ladders } from '../ladders.js';
 import { sampleBoard, samplePin } from '../preview.js';
 import { DEFAULT, type PresentationSettings, type Settings } from '../settings.js';
 import type { SfxEvent } from '../sfx.js';
-import { type PipShape, type LadderLook, type TypeTheme, lookFor, themeFor } from '../looks.js';
+import {
+  type PipShape,
+  type LadderLook,
+  type SfxPackId,
+  type TypeTheme,
+  lookFor,
+  themeFor,
+} from '../looks.js';
 import { CHIP_CELL, renderPreview } from './render.js';
 
 export interface SettingsScreenOptions {
@@ -24,6 +31,8 @@ export interface SettingsScreenOptions {
   onBack: () => void;
   /** Play a sound so a pack can be heard while it is being chosen. */
   onPreview: (event: SfxEvent) => void;
+  /** Play one event from a given pack, for the sound check; silent while muted. */
+  onAudition: (pack: SfxPackId, event: SfxEvent) => void;
 }
 
 /** A visual patch to the presentation settings. */
@@ -34,6 +43,7 @@ export interface ScreenContext {
   readonly typeId: string;
   readonly tiers: number;
   readonly onPreview: (event: SfxEvent) => void;
+  readonly onAudition: (pack: SfxPackId, event: SfxEvent) => void;
   /** The screen element: sections append to it, and the picker overlay lives inside it. */
   readonly host: HTMLElement;
   /** The presentation settings as saved. */
@@ -62,7 +72,7 @@ export function makeContext(
   host: HTMLElement,
   rebuild: () => void,
 ): ScreenContext {
-  const { settings, typeId, tiers, onPreview } = opts;
+  const { settings, typeId, tiers, onPreview, onAudition } = opts;
   const p = settings.presentation;
   const currentTheme = settings.themeFor(typeId);
   const display = (over: Partial<BoardDisplay> = {}): BoardDisplay => ({
@@ -77,6 +87,7 @@ export function makeContext(
     typeId,
     tiers,
     onPreview,
+    onAudition,
     host,
     p,
     ident: lookFor(typeId),

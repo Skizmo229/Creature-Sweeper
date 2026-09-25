@@ -135,6 +135,9 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - Sound is synthesised. The `AudioContext` is built lazily on the first sound and resumed on every
   call; every entry point swallows its own failure; one sound per action, the loudest event wins.
   Muting is not the same as the OFF pack, and the speaker is repainted from `applyPresentation`.
+- The sound check (a button under the Sound effects gallery) plays any pack's sound through
+  `Sfx.audition`, which ignores the chosen pack and the throttle but not mute. Keys assigned there
+  play only while its window is open, and last for the session; they are never saved.
 - Two families of clear effect: ambient (confetti, burst, ripple, sparkle) and icon (tumble,
   cascade, pop, burn, three wipes). Icon effects take the board's glyphs (`VictorySource`),
   pre-rendered per tier into an atlas at twice the cell size, and the board stops drawing them

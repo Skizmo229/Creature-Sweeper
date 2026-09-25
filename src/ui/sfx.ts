@@ -189,7 +189,20 @@ export class Sfx {
     const last = this.lastAt.get(event) ?? 0;
     if (now - last < THROTTLE_MS) return;
     this.lastAt.set(event, now);
+    this.sound(this.pack!, event);
+  }
 
+  /**
+   * Play one event from any pack, whichever is chosen, and unthrottled: the
+   * sound check, where every press is one deliberate sound. Silence is still
+   * the caller's to decide, since the pack being off is no reason not to
+   * audition one.
+   */
+  audition(pack: SfxPackId, event: SfxEvent): void {
+    if (!this.dead) this.sound(pack, event);
+  }
+
+  private sound(pack: SfxPackId, event: SfxEvent): void {
     try {
       const ctx = this.context();
       if (!ctx || !this.master) return;
@@ -197,8 +210,7 @@ export class Sfx {
       // was backgrounded can suspend it again later.
       if (ctx.state === 'suspended') void ctx.resume();
 
-      const voices = PACKS[this.pack!][event];
-      for (const v of voices) this.voice(ctx, this.master, v);
+      for (const v of PACKS[pack][event]) this.voice(ctx, this.master, v);
     } catch {
       this.dead = true;
     }

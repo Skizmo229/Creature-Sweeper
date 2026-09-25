@@ -1189,6 +1189,60 @@ button.board-card:hover:not(:disabled) {
   text-align: center;
 }
 
+/* The sound check: every pack's sounds as a grid of buttons, in the picker's
+   window. A button wears the keys assigned to it; while a sound is being
+   picked for a key the grid is outlined, and the chosen one lit. */
+button.soundcheck-open {
+  align-self: flex-start;
+}
+.soundcheck-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.soundcheck-status {
+  font-size: 0.78rem;
+  color: var(--tint);
+}
+.soundcheck-pack {
+  margin: 14px 0 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.soundcheck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 6px;
+}
+.soundcheck.choosing .soundcheck-grid {
+  outline: 1px dashed var(--tint);
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+button.soundcheck-sound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 52px;
+  justify-content: center;
+}
+button.soundcheck-sound:active {
+  background: var(--panel);
+}
+button.soundcheck-sound.picking {
+  border-color: var(--tint);
+  box-shadow: inset 0 0 0 1px var(--tint);
+}
+.soundcheck-key {
+  font-size: 0.68rem;
+  color: var(--tint);
+  min-height: 1em;
+}
+
 /* An interface font's example: two of the HUD's readouts in the face, one
    above the other, at the size the HUD first shipped at, in a box no smaller
    than a thumbnail, so its tiles stand level with the placeholder's. It wears
