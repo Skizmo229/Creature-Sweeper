@@ -107,7 +107,7 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
   box.type = 'checkbox';
   box.checked = progress.unlockAll;
   box.addEventListener('change', () => a.setUnlockAll(box.checked));
-  unlockAll.append(box, el('span', undefined, 'Unlock everything (prototype)'));
+  unlockAll.append(box, el('span', undefined, 'Unlock everything'));
   tools.append(unlockAll);
 
   const howto = el('button', 'ghost', 'How to play');
