@@ -27,24 +27,7 @@ export function gameplaySection(ctx: ScreenContext): void {
 
   const g = () => settings.gameplay;
 
-  const status = el('p', 'settings-status');
-  const refreshStatus = (): void => {
-    const s = g();
-    const easier = easierThanDefault(s);
-    if (isDefaultGameplay(s)) {
-      status.textContent = 'Tuned game — everything records.';
-      status.className = 'settings-status ok';
-    } else if (isAtLeastAsHard(s)) {
-      status.textContent = 'Harder than tuned — clears, unlocks and best times all record.';
-      status.className = 'settings-status ok';
-    } else {
-      status.textContent =
-        `Nothing will record: ${easier.join(', ')} ` +
-        `${easier.length === 1 ? 'is' : 'are'} easier than the tuned game. ` +
-        'No clear, no unlock, no best time.';
-      status.className = 'settings-status warn';
-    }
-  };
+  const { status, refreshStatus } = recordStatus(ctx);
 
   const gameplayRow = (label: string, key: RatioKey, max: number, hint: string): void => {
     row(
@@ -90,6 +73,61 @@ export function gameplaySection(ctx: ScreenContext): void {
     'Scales the mana a defeated creature pays. Its EXP is never scaled — the level gates are exact totals.',
   );
 
+  const sweepBox = sweepControl(ctx, refreshStatus);
+  row(
+    play,
+    'Sweep',
+    sweepBox,
+    'Charged mode banks one charge per cell you open by hand. Cells a sweep opens never charge it, ' +
+      'or a sweep would pay for the next one.',
+  );
+
+  row(
+    play,
+    'Time attack',
+    toggle(g().timeAttack, (v) => {
+      settings.setGameplay({ timeAttack: v });
+      refreshStatus();
+    }),
+    'Replaying a board you have a best time on counts DOWN from it, and reaching zero loses the board. ' +
+      'A board with no best time has nothing to race, and plays normally.',
+  );
+
+  refreshStatus();
+  play.append(status);
+}
+
+/** The line that says whether a clear will record at these settings, and its refresh. */
+function recordStatus(ctx: ScreenContext): {
+  status: HTMLElement;
+  refreshStatus: () => void;
+} {
+  const g = () => ctx.settings.gameplay;
+  const status = el('p', 'settings-status');
+  const refreshStatus = (): void => {
+    const s = g();
+    const easier = easierThanDefault(s);
+    if (isDefaultGameplay(s)) {
+      status.textContent = 'Tuned game — everything records.';
+      status.className = 'settings-status ok';
+    } else if (isAtLeastAsHard(s)) {
+      status.textContent = 'Harder than tuned — clears, unlocks and best times all record.';
+      status.className = 'settings-status ok';
+    } else {
+      status.textContent =
+        `Nothing will record: ${easier.join(', ')} ` +
+        `${easier.length === 1 ? 'is' : 'are'} easier than the tuned game. ` +
+        'No clear, no unlock, no best time.';
+      status.className = 'settings-status warn';
+    }
+  };
+  return { status, refreshStatus };
+}
+
+/** Sweep's mode, and the cells-per-charge slider shown only while it is charged. */
+function sweepControl(ctx: ScreenContext, refreshStatus: () => void): HTMLElement {
+  const { settings } = ctx;
+  const g = () => settings.gameplay;
   const sweepBox = el('div', 'settings-stack');
   const chargeRow = el('div', 'settings-subrow');
   const drawCharge = (): void => {
@@ -128,25 +166,5 @@ export function gameplaySection(ctx: ScreenContext): void {
   );
   sweepBox.append(chargeRow);
   drawCharge();
-  row(
-    play,
-    'Sweep',
-    sweepBox,
-    'Charged mode banks one charge per cell you open by hand. Cells a sweep opens never charge it, ' +
-      'or a sweep would pay for the next one.',
-  );
-
-  row(
-    play,
-    'Time attack',
-    toggle(g().timeAttack, (v) => {
-      settings.setGameplay({ timeAttack: v });
-      refreshStatus();
-    }),
-    'Replaying a board you have a best time on counts DOWN from it, and reaching zero loses the board. ' +
-      'A board with no best time has nothing to race, and plays normally.',
-  );
-
-  refreshStatus();
-  play.append(status);
+  return sweepBox;
 }
