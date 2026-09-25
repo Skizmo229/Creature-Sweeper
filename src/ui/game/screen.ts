@@ -52,7 +52,31 @@ export function buildGameScreen(
   // the menus stay recognisable however the board is painted.
   wrap.style.setProperty('--tint', themeFor(typeId).accent);
 
-  // --- HUD
+  const { hudEl, hud } = buildHud(game, run, a);
+  wrap.append(hudEl, boardLabel(type.name, game, boardIndex, run));
+
+  const stage = el('div', 'stage');
+  const canvas = el('canvas');
+  stage.append(canvas);
+  wrap.append(stage);
+
+  const { palette, ...controls } = buildPalette(game, a);
+  wrap.append(palette);
+  const { row, spellBtns } = buildSpellRow(game, a);
+  if (row) wrap.append(row);
+
+  const hint = el('p', 'hint');
+  wrap.append(hint);
+
+  return { root: wrap, stage, canvas, hud, ...controls, spellBtns, hint };
+}
+
+/** The HUD: the readouts `hud.ts` fills in, and the Settings and Back buttons. */
+function buildHud(
+  game: Game,
+  run: FullRun | null,
+  a: GameScreenActions,
+): { hudEl: HTMLElement; hud: Record<string, HTMLElement> } {
   const hudEl = el('div', 'hud');
   const hud: Record<string, HTMLElement> = {};
   const mk = (key: string, cls = '') => {
@@ -78,29 +102,39 @@ export function buildGameScreen(
   const back = el('button', 'ghost small', run ? 'Abandon' : 'Back');
   back.addEventListener('click', a.leave);
   hudEl.append(back);
-  wrap.append(hudEl);
+  return { hudEl, hud };
+}
 
+/** What board this is, and in a run, how far down the ladder and what the pool is. */
+function boardLabel(
+  typeName: string,
+  game: Game,
+  boardIndex: number,
+  run: FullRun | null,
+): HTMLElement {
   const size = `${game.config.width}×${game.config.height}`;
   const creatures = game.config.quantity.reduce((x, y) => x + y, 0);
   const label = el(
     'div',
     'board-label',
     run
-      ? `${type.name} FULL RUN — board ${boardIndex} of ${run.boardCount} · ` +
+      ? `${typeName} FULL RUN — board ${boardIndex} of ${run.boardCount} · ` +
           `${size} · ${creatures} creatures · ` +
           `pool ${run.maxHp}, +${run.healPerBoard} between boards`
-      : `${type.name} — board ${boardIndex} · ${size} · ${creatures} creatures`,
+      : `${typeName} — board ${boardIndex} · ${size} · ${creatures} creatures`,
   );
   if (run) label.classList.add('run');
-  wrap.append(label);
+  return label;
+}
 
-  // --- board
-  const stage = el('div', 'stage');
-  const canvas = el('canvas');
-  stage.append(canvas);
-  wrap.append(stage);
-
-  // --- mark palette doubles as the per-tier counter
+/** The LV palette, which doubles as the per-tier counter, with the pencil and Sweep. */
+function buildPalette(
+  game: Game,
+  a: GameScreenActions,
+): Pick<
+  GameScreenElements,
+  'counters' | 'emptyNoteBtn' | 'notesBtn' | 'sweepSafeBtn' | 'sweepMarkBtn'
+> & { palette: HTMLElement } {
   const palette = el('div', 'palette');
   const counters: HTMLButtonElement[] = [];
   for (let tier = 1; tier <= game.config.tiers; tier++) {
@@ -145,49 +179,37 @@ export function buildGameScreen(
     sweepMarkBtn.addEventListener('click', () => a.sweep(true));
     palette.append(sweepMarkBtn);
   }
-  wrap.append(palette);
+  return { palette, counters, emptyNoteBtn, notesBtn, sweepSafeBtn, sweepMarkBtn };
+}
 
+/** The spell row, on a ladder that offers any: one button per spell, and Cancel. */
+function buildSpellRow(
+  game: Game,
+  a: GameScreenActions,
+): { row: HTMLElement | null; spellBtns: HTMLButtonElement[] } {
   const spellBtns: HTMLButtonElement[] = [];
-  if (game.spells.length) {
-    const row = el('div', 'palette spells');
-    for (const id of game.spells) {
-      const spell = SPELLS[id];
-      const btn = el('button', 'spell');
-      btn.dataset.spell = id;
-      btn.title = `${spell.blurb} (${game.spellCost(id)} mana, or press ${spellKey(id).toUpperCase()})`;
-      // WORKOUT's Exercise plays by different rules, and the tooltip is where every other
-      // spell explains itself.
-      if (id === 'exercise' && game.config.workout) {
-        const w = game.config.workout;
-        btn.title =
-          `Fight your next battle 1 level higher, for ${w.expMultiplier}x EXP if you win. ` +
-          `Costs ${w.base} and ${w.step} more each cast; each level-up takes ${w.relief} off ` +
-          `(never below ${w.base}). Resets every board. Press ${spellKey(id).toUpperCase()}.`;
-      }
-      btn.addEventListener('click', () => a.pickSpell(id));
-      spellBtns.push(btn);
-      row.append(btn);
+  if (!game.spells.length) return { row: null, spellBtns };
+  const row = el('div', 'palette spells');
+  for (const id of game.spells) {
+    const spell = SPELLS[id];
+    const btn = el('button', 'spell');
+    btn.dataset.spell = id;
+    btn.title = `${spell.blurb} (${game.spellCost(id)} mana, or press ${spellKey(id).toUpperCase()})`;
+    // WORKOUT's Exercise plays by different rules, and the tooltip is where every other
+    // spell explains itself.
+    if (id === 'exercise' && game.config.workout) {
+      const w = game.config.workout;
+      btn.title =
+        `Fight your next battle 1 level higher, for ${w.expMultiplier}x EXP if you win. ` +
+        `Costs ${w.base} and ${w.step} more each cast; each level-up takes ${w.relief} off ` +
+        `(never below ${w.base}). Resets every board. Press ${spellKey(id).toUpperCase()}.`;
     }
-    const cancel = el('button', 'ghost small', 'Cancel (Esc)');
-    cancel.addEventListener('click', a.cancelSpell);
-    row.append(cancel);
-    wrap.append(row);
+    btn.addEventListener('click', () => a.pickSpell(id));
+    spellBtns.push(btn);
+    row.append(btn);
   }
-
-  const hint = el('p', 'hint');
-  wrap.append(hint);
-
-  return {
-    root: wrap,
-    stage,
-    canvas,
-    hud,
-    counters,
-    emptyNoteBtn,
-    notesBtn,
-    sweepSafeBtn,
-    sweepMarkBtn,
-    spellBtns,
-    hint,
-  };
+  const cancel = el('button', 'ghost small', 'Cancel (Esc)');
+  cancel.addEventListener('click', a.cancelSpell);
+  row.append(cancel);
+  return { row, spellBtns };
 }
