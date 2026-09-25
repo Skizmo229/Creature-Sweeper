@@ -43,7 +43,9 @@
  */
 
 import { type Rng, randInt, shuffle } from '../rng.js';
-import { placeDealt } from './deal.js';
+import type { BoardConfig } from '../types.js';
+import type { Grid } from '../grid.js';
+import { placeDealt, readDealt } from './deal.js';
 import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
 import { PAIRS_RULE, layPairs } from './pairs.js';
 
@@ -216,6 +218,21 @@ function dealDominoes(d: Deal): void {
   placeDealt(d, dealTiles(pairs, cfg.tiers, sets, d.rng));
 }
 
+/** The pairing rule, then the set: the tiles read back off the grid are exactly the board's sets. */
+function dominoBoardFault(grid: Grid, cfg: BoardConfig): string | null {
+  const paired = PAIRS_RULE.fault(grid, cfg);
+  if (paired !== null) return paired;
+  const sets = setsIn(cfg.tiers, cfg.quantity);
+  if (sets === null) return `quantity [${cfg.quantity.join(',')}] is not a whole number of sets`;
+  const { tierAt, neighboursOf } = readDealt(grid, cfg);
+  const tiles: Tile[] = [];
+  for (const [flat, tier] of tierAt) {
+    const partner = neighboursOf(flat).find((n) => tierAt.has(n))!;
+    if (flat < partner) tiles.push([tier, tierAt.get(partner)!]);
+  }
+  return dominoFault(tiles, cfg.tiers, sets);
+}
+
 export const DOMINOES_RULE: PlacementRule = {
   id: 'dominoes',
   validate: validateDominoes,
@@ -231,4 +248,5 @@ export const DOMINOES_RULE: PlacementRule = {
   display: PAIRS_RULE.display,
   pools: PAIRS_RULE.pools,
   groups: PAIRS_RULE.groups,
+  fault: dominoBoardFault,
 };

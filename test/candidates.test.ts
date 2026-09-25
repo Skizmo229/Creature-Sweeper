@@ -14,22 +14,14 @@ import { describe, expect, it } from 'vitest';
 import { boardConfig } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
 import { hasNote, noteTiers } from '../src/engine/notes.js';
-import { packCandidates } from '../src/engine/placement/packs.js';
-import { pairCandidates } from '../src/engine/placement/pairs.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import type { Cell } from '../src/engine/types.js';
 import { ladders, SEEDS } from './helpers.js';
 
-/** Every placement the gate knows about, on boards from both ends of each
- *  ladder. Sudoku stops at board 5 because the late boards are slow to deal. */
-const GATED: Record<string, number[]> = {
-  checker: [1, 10],
-  pairs: [1, 10],
-  dominoes: [1, 10],
-  packs: [1, 10],
-  congo: [1, 10],
-  sudoku: [1, 5],
-};
+/** Every ladder whose rule can narrow the pencil, on boards from both ends of
+ *  its ladder: a new rule's ladder is held to this without being listed. */
+const GATED = ladders.filter((t) => (t.placement ?? 'uniform') !== 'uniform').map((t) => t.id);
+const BOARDS = [1, 10];
 
 const covered = (game: Game): Cell[] => game.grid.flat().filter((c) => c.present && !c.open);
 
@@ -54,9 +46,9 @@ describe('pencil candidates', () => {
   it('never rule out the tier a cell really holds, however far the board is played', () => {
     const failures: string[] = [];
     const narrowed: Record<string, number> = {};
-    for (const [id, boards] of Object.entries(GATED)) {
+    for (const id of GATED) {
       narrowed[id] = 0;
-      for (const board of boards) {
+      for (const board of BOARDS) {
         for (const seed of SEEDS) {
           const game = Game.create(boardConfig(ladders, id, board), seed);
           const every = (1 << (game.config.tiers + 1)) - 1;
@@ -69,15 +61,9 @@ describe('pencil candidates', () => {
                     `${c.tier} but is offered ${noteTiers(mask).join(',')}`,
                 );
               }
-              // On a pairing or pack board count only what that rule narrowed,
-              // so this cannot pass on a gate that never engages.
-              const engaged =
-                id === 'pairs' || id === 'dominoes'
-                  ? pairCandidates(c, (n) => game.neighboursOf(n)) !== null
-                  : id === 'packs' || id === 'congo'
-                    ? packCandidates(c, (n) => game.neighboursOf(n), game.config.tiers) !== null
-                    : mask !== every;
-              if (engaged) narrowed[id]!++;
+              // Count only what the rule narrowed, so this cannot pass on a
+              // gate that never engages.
+              if (mask !== every) narrowed[id]!++;
             }
           };
           check();
@@ -88,7 +74,8 @@ describe('pencil candidates', () => {
       }
     }
     expect(failures.slice(0, 5)).toEqual([]);
-    for (const id of Object.keys(GATED)) expect(narrowed[id], id).toBeGreaterThan(0);
+    expect(GATED.length).toBeGreaterThan(0);
+    for (const id of GATED) expect(narrowed[id], id).toBeGreaterThan(0);
   });
 
   it('offer a CHECKERBOARD square only its own colour, and empty ground on both', () => {

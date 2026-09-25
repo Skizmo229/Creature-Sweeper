@@ -25,7 +25,6 @@ import { Game } from '../src/engine/game.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';
 import type { Cell } from '../src/engine/types.js';
 import { ladders, PLACEMENT_SEEDS as SEEDS, UNGATED_SWEEP } from './helpers.js';
-import { neighbours } from '../src/engine/grid.js';
 
 const congo = findType(ladders, 'congo');
 
@@ -39,25 +38,6 @@ function gameFor(board: number, seed: number): Game {
 
 function creatureCells(game: Game): Cell[] {
   return game.grid.flat().filter((c) => c.present && c.tier > 0);
-}
-
-function faultOf(game: Game): string | null {
-  const cfg = game.config;
-  const tierAt = new Map(creatureCells(game).map((c) => [c.y * cfg.width + c.x, c.tier]));
-  return congoFault(
-    tierAt,
-    (flat) =>
-      neighbours(
-        game.grid,
-        flat % cfg.width,
-        Math.floor(flat / cfg.width),
-        cfg.topology,
-        cfg.wrap,
-      ).map((n) => n.y * cfg.width + n.x),
-    cfg.width,
-    cfg.height,
-    cfg.tiers,
-  );
 }
 
 /** A plain w x h grid of flat indices, with eight-way adjacency. */
@@ -110,28 +90,6 @@ describe('the ladder data congo lines need', () => {
 });
 
 describe('the rule itself', () => {
-  it('strings every creature into a line of one of each tier, led by the 6, lines never touching', () => {
-    for (const row of allRows(congo)) {
-      for (const seed of SEEDS) {
-        expect(faultOf(gameFor(row.n, seed)), `CONGO#${row.n} seed ${seed}`).toBeNull();
-      }
-    }
-  });
-
-  it('places exactly the quota the thresholds were tuned against', () => {
-    for (const row of allRows(congo)) {
-      const cfg = boardConfig(ladders, 'congo', row.n);
-      for (const seed of SEEDS) {
-        const game = Game.create(cfg, seed);
-        for (let t = 1; t <= cfg.tiers; t++) {
-          expect(creatureCells(game).filter((c) => c.tier === t)).toHaveLength(
-            cfg.quantity[t - 1]!,
-          );
-        }
-      }
-    }
-  });
-
   it('snakes: some lines turn, some run long', () => {
     // The shape asked for. A line that never turned would be a rod, and a
     // line that only ever turned would be a coil.

@@ -65,7 +65,7 @@ export function shadeOf(cell: Cell): Shade {
 }
 
 /** Which colour a tier belongs on. Tier 0 is empty ground and belongs on both. */
-export function shadeForTier(tier: number): Shade {
+function shadeForTier(tier: number): Shade {
   return tier % 2 === 0 ? 'light' : 'dark';
 }
 
@@ -214,4 +214,11 @@ export const CHECKER_RULE: PlacementRule = {
   display: { ...PLAIN_DISPLAY, washes: (cell) => shadeOf(cell) === 'light' },
   pools: COLOURS,
   groups: null,
+  fault: (grid) => {
+    for (const cell of grid.flat()) {
+      if (!cell.present || allowsTier(cell.x, cell.y, cell.tier)) continue;
+      return `tier ${cell.tier} at ${cell.x},${cell.y} stands on a ${shadeOf(cell)} square`;
+    }
+    return null;
+  },
 };

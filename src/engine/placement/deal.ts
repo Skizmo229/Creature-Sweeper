@@ -1,9 +1,10 @@
 /**
- * The pieces of a deal the rules share: the shuffle-and-take and writing a dealt layout onto the
- * grid.
+ * The pieces of a deal the rules share: the shuffle-and-take, writing a dealt layout onto the grid,
+ * and reading one back for a fault finder.
  */
 
 import type { BoardConfig } from '../types.js';
+import { type Grid, neighbours } from '../grid.js';
 import { shuffle } from '../rng.js';
 import type { Deal, Pools } from './rule.js';
 
@@ -75,4 +76,20 @@ function place(d: Deal, flat: number, tier: number): void {
   const cell = d.grid[Math.floor(flat / d.cfg.width)]![flat % d.cfg.width]!;
   cell.tier = tier;
   cell.alive = true;
+}
+
+/** A dealt board read back off its grid, by flat index: each creature's tier, and adjacency. */
+export function readDealt(
+  grid: Grid,
+  cfg: BoardConfig,
+): { tierAt: Map<number, number>; neighboursOf: (flat: number) => number[] } {
+  const tierAt = new Map<number, number>();
+  for (const cell of grid.flat()) {
+    if (cell.present && cell.tier > 0) tierAt.set(cell.y * cfg.width + cell.x, cell.tier);
+  }
+  const neighboursOf = (flat: number): number[] =>
+    neighbours(grid, flat % cfg.width, Math.floor(flat / cfg.width), cfg.topology, cfg.wrap).map(
+      (n) => n.y * cfg.width + n.x,
+    );
+  return { tierAt, neighboursOf };
 }

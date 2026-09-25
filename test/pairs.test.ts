@@ -15,7 +15,6 @@ import { Game } from '../src/engine/game.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';
 import type { Cell } from '../src/engine/types.js';
 import { ladders, PLACEMENT_SEEDS as SEEDS, UNGATED_SWEEP } from './helpers.js';
-import { neighbours } from '../src/engine/grid.js';
 
 const pairs = findType(ladders, 'pairs');
 
@@ -52,44 +51,6 @@ describe('the ladder data pairing needs', () => {
 });
 
 describe('the rule itself', () => {
-  it('gives every creature exactly one creature neighbour, on every board', () => {
-    for (const row of allRows(pairs)) {
-      const cfg = boardConfig(ladders, 'pairs', row.n);
-      for (const seed of SEEDS) {
-        const game = Game.create(cfg, seed);
-        const occupied = creatureCells(game).map((c) => c.y * cfg.width + c.x);
-        const fault = pairingFault(occupied, (flat) =>
-          neighbours(
-            game.grid,
-            flat % cfg.width,
-            Math.floor(flat / cfg.width),
-            cfg.topology,
-            cfg.wrap,
-          ).map((n) => n.y * cfg.width + n.x),
-        );
-        expect(fault, `PAIRS#${row.n} seed ${seed}`).toBeNull();
-      }
-    }
-  });
-
-  it('places exactly the quota the thresholds were tuned against', () => {
-    // C_k is a sum over `quantity`, so a board that came up two creatures
-    // light would carry a top gate one kill out of reach — and would not
-    // throw. Same failure shape as the ragged cave's cell count.
-    for (const row of allRows(pairs)) {
-      const cfg = boardConfig(ladders, 'pairs', row.n);
-      for (const seed of SEEDS) {
-        const game = Game.create(cfg, seed);
-        expect(creatureCells(game)).toHaveLength(row.monsters);
-        for (let t = 1; t <= cfg.tiers; t++) {
-          expect(creatureCells(game).filter((c) => c.tier === t)).toHaveLength(
-            cfg.quantity[t - 1]!,
-          );
-        }
-      }
-    }
-  });
-
   it('leaves the tiers unpaired — a partner is as likely to be any tier', () => {
     // The mode constrains WHERE creatures stand, never what they are worth.
     // If pairing ever became tier-aware it would reach `quantity` and

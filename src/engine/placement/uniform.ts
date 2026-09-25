@@ -26,4 +26,5 @@ export const UNIFORM_RULE: PlacementRule = {
   display: PLAIN_DISPLAY,
   pools: ONE_POOL,
   groups: null,
+  fault: () => null,
 };

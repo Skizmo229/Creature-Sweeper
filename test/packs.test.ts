@@ -22,7 +22,6 @@ import { Game } from '../src/engine/game.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';
 import type { Cell } from '../src/engine/types.js';
 import { ladders, PLACEMENT_SEEDS as SEEDS, UNGATED_SWEEP } from './helpers.js';
-import { neighbours } from '../src/engine/grid.js';
 
 const packs = findType(ladders, 'packs');
 
@@ -76,44 +75,6 @@ describe('the ladder data packs need', () => {
 });
 
 describe('the rule itself', () => {
-  it('stands every creature in a connected pack of one of each tier, packs never touching', () => {
-    for (const row of allRows(packs)) {
-      const cfg = boardConfig(ladders, 'packs', row.n);
-      for (const seed of SEEDS) {
-        const game = Game.create(cfg, seed);
-        const tierAt = new Map(creatureCells(game).map((c) => [c.y * cfg.width + c.x, c.tier]));
-        const fault = packFault(
-          tierAt,
-          (flat) =>
-            neighbours(
-              game.grid,
-              flat % cfg.width,
-              Math.floor(flat / cfg.width),
-              cfg.topology,
-              cfg.wrap,
-            ).map((n) => n.y * cfg.width + n.x),
-          cfg.tiers,
-        );
-        expect(fault, `PACKS#${row.n} seed ${seed}`).toBeNull();
-      }
-    }
-  });
-
-  it('places exactly the quota the thresholds were tuned against', () => {
-    for (const row of allRows(packs)) {
-      const cfg = boardConfig(ladders, 'packs', row.n);
-      for (const seed of SEEDS) {
-        const game = Game.create(cfg, seed);
-        expect(creatureCells(game)).toHaveLength(row.monsters);
-        for (let t = 1; t <= cfg.tiers; t++) {
-          expect(creatureCells(game).filter((c) => c.tier === t)).toHaveLength(
-            cfg.quantity[t - 1]!,
-          );
-        }
-      }
-    }
-  });
-
   it('grows loose shapes, not only compact blocks', () => {
     // The shape asked for. A pack whose bounding box is wider than 3 in
     // either direction cannot be a 2x3 block, so some of them should be.

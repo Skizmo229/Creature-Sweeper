@@ -121,6 +121,13 @@ export interface PlacementRule {
    * Two groups never touch.
    */
   readonly groups: 'pairs' | 'packs' | null;
+
+  /**
+   * What is wrong with a dealt board under this rule, or null if nothing is. For the tests rather
+   * than for play: the dealer cannot produce a fault, and this is here to prove that on real
+   * boards, kept beside the rule so the check and the thing it checks cannot drift apart.
+   */
+  fault(grid: Grid, cfg: BoardConfig): string | null;
 }
 
 /**

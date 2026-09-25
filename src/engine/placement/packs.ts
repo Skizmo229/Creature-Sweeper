@@ -55,7 +55,7 @@
 import type { Cell } from '../types.js';
 import { noteBit } from '../notes.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
-import { ONE_POOL, placeDealt, shuffledPool } from './deal.js';
+import { ONE_POOL, placeDealt, readDealt, shuffledPool } from './deal.js';
 import {
   type Deal,
   NOTHING_EMPTIED,
@@ -84,7 +84,7 @@ import {
  * really holds is never taken out, and `test/candidates.test.ts` walks real
  * boards to hold it to that.
  */
-export function packCandidates(
+function packCandidates(
   cell: Cell,
   neighboursOf: (c: Cell) => readonly Cell[],
   tiers: number,
@@ -405,4 +405,8 @@ export const PACKS_RULE: PlacementRule = {
   display: PLAIN_DISPLAY,
   pools: ONE_POOL,
   groups: 'packs',
+  fault: (grid, cfg) => {
+    const { tierAt, neighboursOf } = readDealt(grid, cfg);
+    return packFault(tierAt, neighboursOf, cfg.tiers);
+  },
 };

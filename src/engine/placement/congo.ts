@@ -55,7 +55,7 @@
 
 import type { Cell } from '../types.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
-import { placeDealt } from './deal.js';
+import { placeDealt, readDealt } from './deal.js';
 import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
 import { PACKS_RULE, packPoolAndCount, packsIn } from './packs.js';
 
@@ -495,4 +495,8 @@ export const CONGO_RULE: PlacementRule = {
   display: { ...PACKS_RULE.display, bonds: 'orthogonal' },
   pools: PACKS_RULE.pools,
   groups: PACKS_RULE.groups,
+  fault: (grid, cfg) => {
+    const { tierAt, neighboursOf } = readDealt(grid, cfg);
+    return congoFault(tierAt, neighboursOf, cfg.width, cfg.height, cfg.tiers);
+  },
 };

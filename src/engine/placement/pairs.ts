@@ -56,10 +56,10 @@
  * number or refuse the board.
  */
 
-import type { Cell, Placement } from '../types.js';
+import type { Cell } from '../types.js';
 import { noteBit } from '../notes.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
-import { ONE_POOL, shapeLeftTooFew, shuffledPool, takeInOrder } from './deal.js';
+import { ONE_POOL, readDealt, shapeLeftTooFew, shuffledPool, takeInOrder } from './deal.js';
 import {
   type Deal,
   NOTHING_EMPTIED,
@@ -69,22 +69,6 @@ import {
   WHOLE_SUM,
   boardName,
 } from './rule.js';
-
-/**
- * Does the pairing rule hold on a board with this placement?
- *
- * The one question every reader of the rule has to ask — the generator, both
- * of Sweep's proofs, the honest player in `sim:spells`, and the renderer's
- * bonds — and the reason it is asked HERE rather than spelled out at each of
- * them. DOMINOES is PAIRS with a different deal, so it inherits every one of
- * those, and each site that tested `=== 'pairs'` directly was a place that
- * would have quietly handed a domino board none of the mode's deduction. That
- * is the "anything classifying ladders by X" failure this codebase has already
- * met twice, so it gets one answer instead of five.
- */
-export function isPaired(placement: Placement): boolean {
-  return placement === 'pairs' || placement === 'dominoes';
-}
 
 /**
  * Restarts allowed before a board is refused.
@@ -235,10 +219,7 @@ export function ringIsFree(cell: Cell, ns: readonly Cell[], level: number): bool
  * `test/pairs.test.ts` checks that on every covered cell of real boards played
  * part-way.
  */
-export function pairCandidates(
-  cell: Cell,
-  neighboursOf: (c: Cell) => readonly Cell[],
-): number | null {
+function pairCandidates(cell: Cell, neighboursOf: (c: Cell) => readonly Cell[]): number | null {
   const mates = neighboursOf(cell).filter((n) => n.open && n.tier > 0);
   if (mates.length === 0) return null;
   if (mates.length > 1) return noteBit(0);
@@ -334,4 +315,8 @@ export const PAIRS_RULE: PlacementRule = {
   display: { ...PLAIN_DISPLAY, bonds: 'every', hoverShowsNumber: false },
   pools: ONE_POOL,
   groups: 'pairs',
+  fault: (grid, cfg) => {
+    const { tierAt, neighboursOf } = readDealt(grid, cfg);
+    return pairingFault([...tierAt.keys()], neighboursOf);
+  },
 };

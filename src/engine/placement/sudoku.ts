@@ -23,6 +23,7 @@
  */
 
 import type { Rng } from '../rng.js';
+import type { Grid } from '../grid.js';
 import { expForTier } from '../combat.js';
 import { ONE_POOL } from './deal.js';
 import {
@@ -499,6 +500,19 @@ function fillSudoku(d: Deal): void {
   }
 }
 
+/** Every row, column and box holds each of the nine digits exactly once. */
+function sudokuFault(grid: Grid): string | null {
+  for (const unit of SUDOKU_UNITS) {
+    const digits = unit.map(
+      (flat) => grid[Math.floor(flat / SUDOKU_SIZE)]![flat % SUDOKU_SIZE]!.tier,
+    );
+    if (new Set(digits).size !== SUDOKU_SIZE || digits.some((t) => t < 0 || t >= SUDOKU_SIZE)) {
+      return `cells ${unit.join(',')} hold ${digits.join(',')}, not each digit once`;
+    }
+  }
+  return null;
+}
+
 export const SUDOKU_RULE: PlacementRule = {
   id: 'sudoku',
   validate: validateSudoku,
@@ -524,4 +538,5 @@ export const SUDOKU_RULE: PlacementRule = {
   },
   pools: ONE_POOL,
   groups: null,
+  fault: sudokuFault,
 };

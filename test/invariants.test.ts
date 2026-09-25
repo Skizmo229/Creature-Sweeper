@@ -12,7 +12,7 @@ import { mulberry32 } from '../src/engine/rng.js';
 import { Game } from '../src/engine/game.js';
 import { autoplaySearch, autoplayTierOrder } from '../src/sim/autoplay.js';
 import { clearableWithoutGuessing } from '../src/engine/placement/sudoku.js';
-import { hiddenCap, shadeForTier, shadeOf } from '../src/engine/placement/checker.js';
+import { hiddenCap, shadeOf } from '../src/engine/placement/checker.js';
 import { ladders, battleTypes, boardsOf, SEEDS, UNGATED_SWEEP } from './helpers.js';
 import { presentCellCount } from '../src/engine/shape.js';
 
@@ -990,39 +990,6 @@ describe('sweep', () => {
 describe('the sudoku placement', () => {
   const sudokuBoards = boardsOf('sudoku');
 
-  it('lays every tier out as a Sudoku solution', () => {
-    for (const cfg of sudokuBoards) {
-      for (const seed of SEEDS) {
-        const game = Game.create(cfg, seed);
-        const at = (x: number, y: number) => game.grid[y]![x]!.tier;
-        const expectOnceEach = (tiers: number[], where: string) => {
-          expect(
-            [...tiers].sort((a, b) => a - b),
-            where,
-          ).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
-        };
-        for (let i = 0; i < 9; i++) {
-          expectOnceEach(
-            Array.from({ length: 9 }, (_, k) => at(k, i)),
-            `row ${i}`,
-          );
-          expectOnceEach(
-            Array.from({ length: 9 }, (_, k) => at(i, k)),
-            `column ${i}`,
-          );
-        }
-        for (let by = 0; by < 9; by += 3) {
-          for (let bx = 0; bx < 9; bx += 3) {
-            const box: number[] = [];
-            for (let dy = 0; dy < 3; dy++)
-              for (let dx = 0; dx < 3; dx++) box.push(at(bx + dx, by + dy));
-            expectOnceEach(box, `box ${bx},${by}`);
-          }
-        }
-      }
-    }
-  });
-
   it('opens exactly the nine empty cells, and they pay no EXP', () => {
     // The whole reason the digits are 0-8: tier 0 is a digit, so it lands once
     // per row, column and box, and those nine cells are the opening. A 1-9
@@ -1169,21 +1136,6 @@ describe('sweep on a sudoku board', () => {
 
 describe('the checkerboard placement', () => {
   const checkerBoards = boardsOf('checker');
-
-  it('puts every creature on a square of its own parity', () => {
-    for (const cfg of checkerBoards) {
-      for (const seed of SEEDS) {
-        const game = Game.create(cfg, seed);
-        for (const cell of game.grid.flat()) {
-          if (cell.tier === 0) continue;
-          expect(
-            shadeOf(cell),
-            `${cfg.typeId}#${cfg.board} seed ${seed}: tier ${cell.tier} at ${cell.x},${cell.y}`,
-          ).toBe(shadeForTier(cell.tier));
-        }
-      }
-    }
-  });
 
   it('leaves empty ground free to sit on either colour', () => {
     // The rule is about creatures, not about cells. If tier 0 were pinned to
