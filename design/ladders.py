@@ -737,7 +737,7 @@ def build():
 
 if __name__ == "__main__":
     data = build()
-    with open(DATA / "ladders.json", "w", encoding="utf-8") as f:
+    with open(DATA / "ladders.json", "w", encoding="utf-8", newline="\n") as f:
         json.dump(data, f, indent=1)
     for t in data:
         last = t["extended"][-1]["n"] if t["extended"] else 10
