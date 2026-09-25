@@ -228,4 +228,5 @@ export const DOMINOES_RULE: PlacementRule = {
   cap: PAIRS_RULE.cap,
   ringProof: PAIRS_RULE.ringProof,
   emptied: PAIRS_RULE.emptied,
+  display: PAIRS_RULE.display,
 };

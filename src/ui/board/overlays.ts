@@ -1,12 +1,11 @@
 /**
  * What is drawn over or around the cells: the ghost band beyond a wrapped edge, the board's
- * silhouette, Sudoku's box rules, the bonds between paired creatures, the wrap seams, and the
+ * silhouette, the placement rule's box rules and bonds, the wrap seams, and the
  * cursor highlight. Each is its own pass over the finished board, because a cell drawn later would
  * paint over its neighbour's half of a shared line.
  */
 
-import { isPaired } from '../../engine/placement/pairs.js';
-import { SUDOKU_BOX, SUDOKU_SIZE } from '../../engine/placement/sudoku.js';
+import { placementRule } from '../../engine/placement/registry.js';
 import type { Cell } from '../../engine/types.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
 import type { HighlightStyle } from '../settings.js';
@@ -108,46 +107,54 @@ export function drawSilhouette(p: Paint): void {
 }
 
 /**
- * Heavier rules along Sudoku's 3x3 box boundaries. Every cell already carries a ~size/10 edge, so
- * a rule of similar weight is invisible among them; it has to be decisively heavier to read as a
- * boundary. One stroke of constant width over the whole board is what makes it read as structure.
+ * Heavier rules along the placement rule's box boundaries (Sudoku's 3x3 boxes). Every cell already
+ * carries a ~size/10 edge, so a rule of similar weight is invisible among them; it has to be
+ * decisively heavier to read as a boundary. One stroke of constant width over the whole board is
+ * what makes it read as structure.
  */
 export function drawBoxRules(p: Paint): void {
   const { ctx, game, layout } = p;
-  if (game.config.placement !== 'sudoku') return;
+  const box = placementRule(game.config.placement).display.boxRules;
+  if (box === 0) return;
+  const { width, height } = game.config;
   const size = layout.cellPx;
   const origin = centreOf(layout, 0, 0);
   const left = origin.cx - size / 2;
   const top = origin.cy - size / 2;
-  const span = SUDOKU_SIZE * size;
 
   ctx.save();
   ctx.strokeStyle = BOX_RULE;
   ctx.lineWidth = Math.max(3, size / 4.5);
   ctx.lineCap = 'square';
   ctx.beginPath();
-  for (let i = 0; i <= SUDOKU_SIZE; i += SUDOKU_BOX) {
+  for (let i = 0; i <= Math.max(width, height); i += box) {
     const at = i * size;
-    ctx.moveTo(left + at, top);
-    ctx.lineTo(left + at, top + span);
-    ctx.moveTo(left, top + at);
-    ctx.lineTo(left + span, top + at);
+    if (i <= width) {
+      ctx.moveTo(left + at, top);
+      ctx.lineTo(left + at, top + height * size);
+    }
+    if (i <= height) {
+      ctx.moveTo(left, top + at);
+      ctx.lineTo(left + width * size, top + at);
+    }
   }
   ctx.stroke();
   ctx.restore();
 }
 
 /**
- * Tie the two halves of every uncovered pair together, and the consecutive members of a congo
- * line (orthogonal contacts only: a diagonal is where a line turns a corner). Only where BOTH are
- * open, because that is exactly when the player knows which cell the partner is. Read through
- * `neighboursOf`, so a bond across a seam or between hexes needs no special case; a wrapped pair
- * is a board apart on screen and is not drawn, the seam already says the edges are joined.
+ * Tie open creatures that touch, where the placement rule says touching means belonging together:
+ * the two halves of a pair, the consecutive members of a congo line (orthogonal contacts only).
+ * Only where BOTH are open, because that is exactly when the player knows which cell the partner
+ * is. Read through `neighboursOf`, so a bond across a seam or between hexes needs no special case;
+ * a wrapped pair is a board apart on screen and is not drawn, the seam already says the edges are
+ * joined.
  */
 export function drawBonds(p: Paint): void {
   const { ctx, game, layout } = p;
-  const congo = game.config.placement === 'congo';
-  if (!congo && !isPaired(game.config.placement)) return;
+  const bonds = placementRule(game.config.placement).display.bonds;
+  if (bonds === 'none') return;
+  const orthogonal = bonds === 'orthogonal';
   ctx.save();
   ctx.strokeStyle = BOND_COLOR;
   ctx.lineWidth = Math.max(1, layout.cellPx / 12);
@@ -162,7 +169,7 @@ export function drawBonds(p: Paint): void {
         if (!n.open || n.tier === 0) continue;
         // The `<` keeps each bond from being drawn twice, once from either end.
         if (n.y * w + n.x < cell.y * w + cell.x) continue;
-        if (congo && n.x !== cell.x && n.y !== cell.y) continue;
+        if (orthogonal && n.x !== cell.x && n.y !== cell.y) continue;
         const a = centreOf(layout, cell.x, cell.y);
         const b = centreOf(layout, n.x, n.y);
         if (Math.abs(a.cx - b.cx) > layout.cellPx * 2 || Math.abs(a.cy - b.cy) > layout.cellPx * 2)

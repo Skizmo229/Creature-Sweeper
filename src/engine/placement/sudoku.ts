@@ -28,6 +28,7 @@ import {
   type Deal,
   NOTHING_EMPTIED,
   NO_RING_PROOF,
+  PLAIN_DISPLAY,
   type PlacementRow,
   type PlacementRule,
   WHOLE_SUM,
@@ -35,7 +36,7 @@ import {
 } from './rule.js';
 
 export const SUDOKU_SIZE = 9;
-export const SUDOKU_BOX = 3;
+const SUDOKU_BOX = 3;
 const DIGITS = SUDOKU_SIZE;
 const ALL = (1 << DIGITS) - 1;
 
@@ -513,4 +514,11 @@ export const SUDOKU_RULE: PlacementRule = {
   cap: WHOLE_SUM,
   ringProof: NO_RING_PROOF,
   emptied: NOTHING_EMPTIED,
+  // The box is a constraint as real as the row and the column but has no edge to give it away,
+  // so alternate boxes are washed and box edges get a heavy rule.
+  display: {
+    ...PLAIN_DISPLAY,
+    washes: (cell) => (Math.floor(cell.x / SUDOKU_BOX) + Math.floor(cell.y / SUDOKU_BOX)) % 2 === 1,
+    boxRules: SUDOKU_BOX,
+  },
 };

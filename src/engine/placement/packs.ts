@@ -59,6 +59,7 @@ import { placeDealt, shuffledPool } from './deal.js';
 import {
   type Deal,
   NOTHING_EMPTIED,
+  PLAIN_DISPLAY,
   type PlacementRow,
   type PlacementRule,
   type RingProof,
@@ -412,4 +413,6 @@ export const PACKS_RULE: PlacementRule = {
   cap: WHOLE_SUM,
   ringProof: packRingProof,
   emptied: NOTHING_EMPTIED,
+  // Packs never touch, so which pack a creature belongs to is never hidden and needs no bond.
+  display: PLAIN_DISPLAY,
 };

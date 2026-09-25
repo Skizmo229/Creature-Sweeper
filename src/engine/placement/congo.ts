@@ -490,4 +490,7 @@ export const CONGO_RULE: PlacementRule = {
   cap: PACKS_RULE.cap,
   ringProof: PACKS_RULE.ringProof,
   emptied: (view) => congoClear(view.grid, view.config.tiers),
+  // Two open creatures side by side are consecutive in their line, so they are tied; a diagonal
+  // is where a line turns a corner, and is not.
+  display: { ...PACKS_RULE.display, bonds: 'orthogonal' },
 };

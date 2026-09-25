@@ -108,7 +108,33 @@ export interface PlacementRule {
    * never names a creature, whatever is open.
    */
   emptied(view: RuleView): ReadonlySet<Cell>;
+
+  /** What the renderer draws for the rule. */
+  readonly display: PlacementDisplay;
 }
+
+/**
+ * How a rule is drawn. A rule the player cannot see is a rule they cannot use, so a board has to
+ * look like its mode: a checkerboard like a checkerboard, Sudoku's boxes like boxes.
+ */
+export interface PlacementDisplay {
+  /** Cells drawn with the translucent wash: the checkerboard's light squares, alternate boxes. */
+  washes(cell: Cell): boolean;
+  /** A heavy rule every this many cells, across and down (Sudoku's boxes); 0 for none. */
+  readonly boxRules: number;
+  /** Which open creatures that touch are tied together: every such pair, orthogonal only, none. */
+  readonly bonds: 'every' | 'orthogonal' | 'none';
+  /** Whether hovering a beaten creature shows its number (decision 0012). */
+  readonly hoverShowsNumber: boolean;
+}
+
+/** Nothing drawn for the rule beyond the creatures themselves. */
+export const PLAIN_DISPLAY: PlacementDisplay = {
+  washes: () => false,
+  boxRules: 0,
+  bonds: 'none',
+  hoverShowsNumber: true,
+};
 
 /** What a rule reads off a board in play. `Game` satisfies it. */
 export interface RuleView {

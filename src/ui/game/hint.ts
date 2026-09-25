@@ -4,6 +4,7 @@
  */
 
 import type { Game } from '../../engine/game.js';
+import { placementRule } from '../../engine/placement/registry.js';
 import { SPELLS } from '../../engine/spells.js';
 import type { EntryMode } from './mode.js';
 
@@ -31,7 +32,7 @@ export function hintText(game: Game | null, mode: EntryMode): string {
   const sweep =
     game && !game.hasSweep
       ? 'no Sweep on this ladder — every cell is opened by hand'
-      : game && game.config.placement === 'sudoku'
+      : game && placementRule(game.config.placement).guessFree
         ? 'S opens the clues at or below your level · D also opens your own marks'
         : 'S sweeps what is proven safe · D also trusts your marks';
   // The crawl rule is the first thing a player meets on a DUNGEON board and nothing on screen

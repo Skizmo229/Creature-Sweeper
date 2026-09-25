@@ -63,6 +63,7 @@ import { ONE_POOL, shapeLeftTooFew, shuffledPool, takeInOrder } from './deal.js'
 import {
   type Deal,
   NOTHING_EMPTIED,
+  PLAIN_DISPLAY,
   type PlacementRow,
   type PlacementRule,
   WHOLE_SUM,
@@ -328,4 +329,7 @@ export const PAIRS_RULE: PlacementRule = {
   cap: WHOLE_SUM,
   ringProof: (_view, level) => (cell, ring) => ringIsFree(cell, ring, level),
   emptied: NOTHING_EMPTIED,
+  // A beaten creature's number is its partner's tier, and hovering does not show it, by request:
+  // a lone digit read as the creature's own level. Sweep and the pencil still read it.
+  display: { ...PLAIN_DISPLAY, bonds: 'every', hoverShowsNumber: false },
 };

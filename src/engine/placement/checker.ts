@@ -40,6 +40,7 @@ import { dealByPool } from './deal.js';
 import {
   NOTHING_EMPTIED,
   NO_RING_PROOF,
+  PLAIN_DISPLAY,
   type PlacementRow,
   type PlacementRule,
   type Pools,
@@ -209,4 +210,6 @@ export const CHECKER_RULE: PlacementRule = {
     hiddenCap(shadeOf(cell), hidden, among.filter((c) => shadeOf(c) === 'dark').length),
   ringProof: NO_RING_PROOF,
   emptied: NOTHING_EMPTIED,
+  // The light squares are washed, which is also the half that holds the even tiers.
+  display: { ...PLAIN_DISPLAY, washes: (cell) => shadeOf(cell) === 'light' },
 };
