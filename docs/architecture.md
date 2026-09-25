@@ -44,8 +44,9 @@ src/ui/         the prototype
   app.ts          the router: screens, the cross-screen state, the keyboard, the actions
   dom.ts          el(), the one DOM helper
   mute.ts         the always-present speaker
+  ladders.ts      the ladder data, bundled into the build (src/data.ts is Node's loader)
   screens/        one builder per screen: ladders, boards, howto, backup
-  overlays/ask.ts the in-page yes/no question (never window.confirm)
+  overlays/       ask.ts: the in-page yes/no question (never window.confirm)
   game/           the game screen: screen.ts (furniture), hud.ts (filling it in), mode.ts
                   (what a click does: tier, pencil, spell), hint.ts, sound.ts, clock.ts,
                   outcome.ts (the clear, loss and run overlays)
@@ -53,7 +54,7 @@ src/ui/         the prototype
                   digits.ts, paint.ts (cell painters), overlays.ts (silhouette, seams, bonds,
                   highlight), input.ts (pointer, wheel, pinch)
   settings.ts     the presentation settings and the store
-  settingsscreen/ the settings form: context, widgets, look, effects, gameplay, screen
+  settingsscreen/  the settings form: context, widgets, look, effects, gameplay, screen
   preview.ts      the settings screen's example boards (no rendering, so tests can build them)
   looks.ts        one record per ladder: palette, face, sound pack, clear effect (DOM-free)
   theme.ts        the global colours, the picker's names, creature glyphs
@@ -63,9 +64,11 @@ src/ui/         the prototype
   sfx.ts          synthesised sound packs
   victory.ts      the board-clear effects
   pinch.ts, hexgeom.ts   arithmetic kept DOM-free so tests can reach it
-src/sim/        headless measurement, all driving the real engine (see docs/tuning.md):
-                honest.ts, solver.ts and autoplay.ts are the players; cli/ holds one
-                command-line entry per measurement
+src/sim/        headless measurement, all driving the real engine (see docs/tuning.md)
+  honest.ts       the honest player: sees what a player sees, deduces locally, guesses or casts
+  solver.ts       the complete deducer, the floor under the honest player's forced guesses
+  autoplay.ts     the omniscient tier-order player that proves the zero-damage guarantee
+  cli/            one command-line entry per measurement, run on import
 src/data.ts     Node-only loader for ladders.json; CS_LADDERS points it at a candidate file
 src/main.ts     browser entry; window.cs in dev
 test/           vitest; test/helpers.ts holds the shared fixtures (the ladder data, the seeds,
