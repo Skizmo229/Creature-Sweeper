@@ -37,13 +37,12 @@ the golden outputs and say so in the commit.
 7. **Tests and docs.** A block in `test/spells.test.ts`; the affordability test reads the data.
    `docs/glossary.md`, the README's controls line, the design reference's spell table.
 
-## Adding a placement rule (9 hand-edited files with its ladder, from about 19)
+## Adding a placement rule (8 hand-edited files with its ladder, from about 19)
 
-The rule itself is three files and a test. The ladder that carries it adds its data, its look,
+The rule itself is two files and a test. The ladder that carries it adds its data, its look,
 and the two test lists that pin the ladder set.
 
-1. **The name.** Add it to `Placement` in `src/engine/types.ts`.
-2. **The rule.** A module in `src/engine/placement/` ending with a `PlacementRule` record.
+1. **The rule.** A module in `src/engine/placement/` ending with a `PlacementRule` record.
    `rule.ts` is the contract, and each member's docblock says what it owes; the compiler lists
    every hook still missing. Start from the nearest rule: `uniform.ts` is the minimum, `pairs.ts`
    a rule with a proof. The members that bite:
@@ -57,26 +56,27 @@ and the two test lists that pin the ladder set.
      (decision 0010).
    - `groups`: a rule in the pairs or packs family takes that family's hooks by reference, as
      `dominoes.ts` and `congo.ts` do, so the two cannot disagree.
-3. **The registry.** One line in `RULES` in `src/engine/placement/registry.ts`.
-4. **The honest player** (`src/sim/honest.ts`) reads the rule through its hooks and `groups`.
+2. **The registry.** One line in `RULES` in `src/engine/placement/registry.ts`. That line is
+   the name: `Placement` is `RULES`'s keys.
+3. **The honest player** (`src/sim/honest.ts`) reads the rule through its hooks and `groups`.
    Teach it anything a player can see that the hooks do not carry, or the ladder is tuned against
    a player who cannot see the rule. The solver needs nothing unless a proof is not a reading of
    one cell's neighbours; if it is, it belongs in `emptied`.
-5. **Tests.** `test/placement.test.ts` already deals every board of the new ladder and holds the
+4. **Tests.** `test/placement.test.ts` already deals every board of the new ladder and holds the
    rule to its quota and its fault finder, and `test/candidates.test.ts` already walks its pencil.
    Add `test/<rule>.test.ts` for what is particular to it, above all "the proof never calls a
    creature empty, whatever is open".
-6. **Ladder data.** A type in `design/ladder_types.toml`, and its distribution path in
+5. **Ladder data.** A type in `design/ladder_types.toml`, and its distribution path in
    `design/ladders.py` if the rule fixes the distribution; then regenerate `ladders.json`,
    `placement-rules.json`, `opening.json` and the reference page. That is a new ladder too:
    follow "Adding a ladder" below for its unlock, its look, and the ladder count and list in
    `test/invariants.test.ts` and `test/unlocks.test.ts`.
-7. `docs/modes.md`: a section saying the rule, the proof, the pencil, and what breaks it.
+6. `docs/modes.md`: a section saying the rule, the proof, the pencil, and what breaks it.
 
 ## Adding a shape
 
-1. Add the name to `BoardShape` in `types.ts`, and a line to `SHAPES` in
-   `src/engine/shape/registry.ts`; the compiler refuses one without the other.
+1. A line in `SHAPES` in `src/engine/shape/registry.ts`. That line is the name: `BoardShape` is
+   `SHAPES`'s keys.
 2. The record. A per-cell predicate goes in `shape/fixed.ts` through `predicateShape`, and is
    parameterised in cells, never in fractions of the board. A seeded shape (like the cave and the
    dungeon) gets a module of its own ending with a `ShapeRule`: `seeded: true`, its parameter is

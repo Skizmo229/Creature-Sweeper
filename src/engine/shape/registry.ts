@@ -1,23 +1,25 @@
 /**
- * Every board shape, by the name the ladder data uses. Keyed by the whole `BoardShape` union, so
- * a name without a shape is a compile error; `test/shape.test.ts` checks every name in
- * `ladders.json` is here.
+ * Every board shape, by the name the ladder data uses. `BoardShape` is this record's keys, so a
+ * shape is added by adding its line here and a name without a shape cannot exist;
+ * `test/shape.test.ts` checks every name in `ladders.json` is here.
  */
 
-import type { BoardShape } from '../types.js';
 import type { ShapeRule } from './rule.js';
 import { CROSS_SHAPE, DIAMOND_SHAPE, DONUT_SHAPE, RECT_SHAPE } from './fixed.js';
 import { CAVE_SHAPE } from './cave.js';
 import { DUNGEON_SHAPE } from './dungeon.js';
 
-export const SHAPES: Readonly<Record<BoardShape, ShapeRule>> = {
+export const SHAPES = {
   rect: RECT_SHAPE,
   donut: DONUT_SHAPE,
   cross: CROSS_SHAPE,
   diamond: DIAMOND_SHAPE,
   cave: CAVE_SHAPE,
   dungeon: DUNGEON_SHAPE,
-};
+} as const satisfies Readonly<Record<string, ShapeRule>>;
+
+/** Which cells of the bounding box exist: a key of `SHAPES` (see `docs/modes.md`). */
+export type BoardShape = keyof typeof SHAPES;
 
 /** The shape a board is cut by. */
 export function shapeRule(shape: BoardShape): ShapeRule {
