@@ -11,6 +11,11 @@
   --button-line: #6b665b;
   /* Text on a button filled with colour (primary, armed, hovered): white, by request. */
   --button-ink: #ffffff;
+  /* A 1px dark outline round that white, drawn as eight shadows, so it reads on
+     the bright fills (white on yellow alone is about 1.4 : 1). */
+  --button-ink-outline:
+    -1px -1px 0 #17170f, 0 -1px 0 #17170f, 1px -1px 0 #17170f, -1px 0 0 #17170f, 1px 0 0 #17170f,
+    -1px 1px 0 #17170f, 0 1px 0 #17170f, 1px 1px 0 #17170f;
   /* The edge every board tile carries, border and outline in one colour — see .board-card. */
   --card-outline: #7b7265;
   --ink: #ece7d6;
@@ -124,6 +129,7 @@ button:disabled {
 button.primary {
   background: var(--tint);
   color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
   border-color: var(--tint);
   font-weight: 700;
 }
@@ -513,6 +519,7 @@ button.board-card:hover:not(:disabled) {
 .counter.active {
   background: var(--tint);
   color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
   border-color: var(--tint);
   font-weight: 700;
 }
@@ -527,6 +534,7 @@ button.board-card:hover:not(:disabled) {
   background: var(--tier);
   border-color: var(--tier);
   color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
 }
 .counter.gilded,
 .counter.gilded.active {
@@ -572,6 +580,7 @@ button.board-card:hover:not(:disabled) {
 .sweep.assist:hover:not(:disabled) {
   background: var(--tint);
   color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
 }
 
 .hint {
@@ -805,11 +814,13 @@ button.board-card:hover:not(:disabled) {
 .spell:hover:not(:disabled) {
   background: #7ad9ff;
   color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
   border-color: #7ad9ff;
 }
 .spell.armed {
   background: #7ad9ff;
   color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
   border-color: #7ad9ff;
   border-style: solid;
   font-weight: 700;
