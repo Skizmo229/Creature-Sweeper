@@ -39,7 +39,7 @@ and the open questions), `docs/ui.md` (presentation rules), `docs/extending.md` 
   code. Numbers in comments are named constants or dated measurements. (`CONTRIBUTING.md`.)
 - **Anything that classifies ladders by a property** (placement, shape, spells) has bitten three
   times. Ask the placement rule (`placementRule()`) or the shape (`shapeRule()`), never compare
-  its name; for spells, go through the existing predicate.
+  its name; for spells, ask the data (a ladder's `spells`, a spell's `SPELLS` record), never an id.
 - **Anything that drives the game headlessly must know every rule** the player can see (the
   crawl rule, the checkerboard's colours), or it measures a different game.
 - **Nothing that pictures the original game goes in the repo.** `design/original-reference/`,
