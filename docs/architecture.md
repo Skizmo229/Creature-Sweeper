@@ -12,9 +12,12 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   rng.ts          mulberry32; boards are pure functions of (config, seed)
   combat.ts       damage, EXP, mana rewards, the Progression (level/thresholds)
   grid.ts         cells, neighbours() (the one adjacency function), computeNumbers, masks
-  shape.ts        which cells exist for a shape; presentCellCount; buildShape
-  cave.ts         the ragged cave generator
-  dungeon.ts      the dungeon map: rooms, one-cell hallways, doorways and their pockets
+  shape/          the board shapes: one record per shape, which cells exist and may hold a creature
+    rule.ts         ShapeRule, the contract; predicateShape; refuseHexAndWrap
+    registry.ts     SHAPES, keyed by every BoardShape; shapeRule()
+    fixed.ts        the per-cell predicates: rect, donut, cross, diamond
+    cave.ts         the ragged cave generator
+    dungeon.ts      the dungeon map: rooms, one-cell hallways, doorways and their pockets
   generate.ts     dealing the creatures: shape, then placement rule, then numbers
   opening.ts      choosing the opening
   notes.ts        pencil marks as a bitmask
@@ -87,13 +90,14 @@ engine. Anything that *iterates* the grid instead (creature placement, the searc
 `safeCells`, the renderer) is where a new board feature actually costs work. A hole (`present:
 false`) neighbours nothing in both directions, guarded at the top of `neighbours()`.
 
-**A placement rule is asked, never named.** Everything that differs between placements is a
+**A placement rule or a shape is asked, never named.** Everything that differs between placements is a
 member of the rule's `PlacementRule` record: its config check, its deal, what the pencil may
 offer, Sweep's proofs, what the renderer draws, and what the instruments need. The generator,
 `safeCells`, `noteCandidates`, the renderer, the hint, the honest player and the solver call
 `placementRule(config.placement)` and never compare the name, so a new rule reaches all of them
 by existing. `RULES` is keyed by the whole `Placement` union, which makes a name without a rule,
-or a rule missing a hook, a compile error (decision 0029).
+or a rule missing a hook, a compile error (decision 0029). Shapes work the same way through
+`shapeRule(config.shape)` and `SHAPES` in `src/engine/shape/` (decision 0030).
 
 **Tuning data flows one way**: `design/ladders.py` writes `design/data/ladders.json`, `config.ts`
 reads it, and the engine never duplicates a number from it. `ladders.py` does carry its own copy of
@@ -105,8 +109,8 @@ ladder recorded. CI regenerates the JSON and fails on any difference.
 
 `Game.create(config, seed)`:
 
-1. `generateGrid` makes the cells, then applies the shape. Every shape but the cave and the
-   dungeon is a per-cell predicate; those two are grown from the seed to an exact cell count that
+1. `generateGrid` makes the cells, then cuts them with the shape (`ShapeRule.build`). Every shape
+   but the cave and the dungeon is a per-cell predicate; those two are grown from the seed to an exact cell count that
    the ladder chose (`shapeParam`), because `C_k` needs the quota fixed before the board exists.
    The dungeon also returns which cells are room floor (the only cells a creature may stand on).
 2. The placement rule deals the tiers into the spawnable cells (`PlacementRule.deal`). Uniform is

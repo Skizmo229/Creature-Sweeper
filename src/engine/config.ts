@@ -6,8 +6,9 @@
  * those numbers.
  */
 
-import type { BoardConfig, OpeningRule, Placement, WorkoutRule } from './types.js';
+import type { BoardConfig, BoardShape, OpeningRule, Placement, WorkoutRule } from './types.js';
 import { RULES, isPlacement, placementRule } from './placement/registry.js';
+import { SHAPES, isShape, shapeRule } from './shape/registry.js';
 import { SPELLS, type SpellId, isSpellId, orderSpells } from './spells.js';
 
 /** One board's row as `ladders.py` emits it. */
@@ -50,7 +51,7 @@ export interface LadderType {
   topology?: string;
   /** 'horizontal' joins left/right; 'both' makes a torus. */
   wrap?: string;
-  /** 'donut' | 'cross' | 'diamond' | 'cave' | 'dungeon'; absent is a rectangle. */
+  /** A key of the shape registry (`src/engine/shape/registry.ts`). Absent is a rectangle. */
   shape?: string;
   shape_param?: number;
   /**
@@ -208,32 +209,14 @@ function readReach(type: LadderType): number {
   return raw;
 }
 
-const SHAPES = ['rect', 'donut', 'cross', 'diamond', 'cave', 'dungeon'] as const;
-
-/** The shapes whose mask is seeded rather than a per-cell predicate. */
-const CARVED = ['cave', 'dungeon'] as const;
-
-/**
- * A carved mask carries two constraints the fixed shapes do not. It is laid
- * out and checked with square adjacency, so on a hex board its "connected"
- * region could be in pieces under the six-way rule; and it always leaves a
- * margin of absent cells around the bounding box, so joining those edges would
- * join two holes. Both would be silent, so both are refused here rather than
- * discovered on a board the player cannot finish.
- */
-function readShape(type: LadderType): (typeof SHAPES)[number] {
+/** The board's shape, refusing a type it cannot live on (each shape's `validate`). */
+function readShape(type: LadderType): BoardShape {
   const raw = type.shape ?? 'rect';
-  const found = SHAPES.find((s) => s === raw);
-  if (!found) throw new Error(`${type.id}: unknown shape "${raw}" (${SHAPES.join(' | ')})`);
-  if ((CARVED as readonly string[]).includes(found)) {
-    if (type.topology === 'hex') {
-      throw new Error(`${type.id}: ${found} is carved with eight-way adjacency, not hex`);
-    }
-    if (type.wrap && type.wrap !== 'none') {
-      throw new Error(`${type.id}: ${found} leaves an absent margin, so wrapping joins nothing`);
-    }
+  if (!isShape(raw)) {
+    throw new Error(`${type.id}: unknown shape "${raw}" (${Object.keys(SHAPES).join(' | ')})`);
   }
-  return found;
+  shapeRule(raw).validate({ typeId: type.id, topology: type.topology, wrap: type.wrap });
+  return raw;
 }
 
 /**
@@ -336,11 +319,11 @@ export function boardConfig(
     topology: type.topology === 'hex' ? 'hex' : 'square',
     wrap: readWrap(type, row),
     shape: shape,
-    // A carved shape's parameter is the cell count the mask must land on, and
+    // A seeded shape's parameter is the cell count the mask must land on, and
     // it differs per board, so it is read from the board's own row. That row is
     // the same `cells` figure `ladders.py` apportioned the creatures against,
     // which is what keeps C_k and the thresholds true on every seed.
-    shapeParam: (CARVED as readonly string[]).includes(shape) ? row.cells : (type.shape_param ?? 0),
+    shapeParam: shapeRule(shape).seeded ? row.cells : (type.shape_param ?? 0),
   };
 }
 

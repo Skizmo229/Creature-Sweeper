@@ -74,17 +74,22 @@ folded yet.
 
 ## Adding a shape
 
-1. Add the name to `BoardShape` in `types.ts` and the predicate (or generator) in `shape.ts`,
-   reached through `buildShape`. Parameterise in cells, never in fractions of the board.
-2. If the shape is seeded (like the cave and the dungeon), its parameter is the exact cell count
-   and the generator must spend exactly that many; `ladders.py` chooses the count per board.
+1. Add the name to `BoardShape` in `types.ts`, and a line to `SHAPES` in
+   `src/engine/shape/registry.ts`; the compiler refuses one without the other.
+2. The record. A per-cell predicate goes in `shape/fixed.ts` through `predicateShape`, and is
+   parameterised in cells, never in fractions of the board. A seeded shape (like the cave and the
+   dungeon) gets a module of its own ending with a `ShapeRule`: `seeded: true`, its parameter is
+   the exact cell count, the generator must spend exactly that many, and `refuseHexAndWrap` is
+   its `validate` unless it can be argued otherwise. `ladders.py` chooses the count per board.
+   `test/shape.test.ts` already holds the new shape's build to its own count.
 3. `ladders.py`: `shape_present` / `shape_cells` carry a copy of the predicate so the generator
-   can apportion creatures; the test `leaves exactly the cell count the ladder was tuned against`
-   guards the two copies.
+   can apportion creatures; the test `agrees with the ladder generator on how many cells a shape
+   leaves` guards the two copies.
 4. Connectivity must be asserted: the opening reveals one region.
 5. The continuation refuses a candidate whose `C_k` went backwards; check the shape's cell count
    is monotone in the box, or the ladder stops early.
-6. `drawSilhouette` and `drawSeams` in `boardview.ts` work from the mask; check a wrapped edge.
+6. `drawSilhouette` and `drawSeams` in `src/ui/board/overlays.ts` work from the mask; check a
+   wrapped edge.
 7. Measure it (`sim:spells` against a reference ladder's curve) rather than reasoning about it.
 
 ## Adding a ladder (type)

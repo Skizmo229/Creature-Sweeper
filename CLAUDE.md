@@ -38,8 +38,8 @@ and the open questions), `docs/ui.md` (presentation rules), `docs/extending.md` 
 - **Comments say what; a paragraph says why; history goes to `docs/decisions/`.** No commented-out
   code. Numbers in comments are named constants or dated measurements. (`CONTRIBUTING.md`.)
 - **Anything that classifies ladders by a property** (placement, shape, spells) has bitten three
-  times. Ask the placement rule (`placementRule()`, `src/engine/placement/registry.ts`), never
-  compare its name; for shape and spells, go through the existing predicate.
+  times. Ask the placement rule (`placementRule()`) or the shape (`shapeRule()`), never compare
+  its name; for spells, go through the existing predicate.
 - **Anything that drives the game headlessly must know every rule** the player can see (the
   crawl rule, the checkerboard's colours), or it measures a different game.
 - **Nothing that pictures the original game goes in the repo.** `design/original-reference/`,

@@ -16,7 +16,7 @@ DATA = HERE / "data"
 DATA.mkdir(exist_ok=True)
 
 # ---------- board shapes ---------------------------------------------------
-# These predicates MUST match `isPresent` in src/engine/board.ts. They are
+# These predicates MUST match src/engine/shape/fixed.ts. They are
 # duplicated rather than shared because the ladder generator has to know how
 # many cells a shape leaves *before* it can apportion creatures, and that
 # number feeds C_k and therefore every level threshold.

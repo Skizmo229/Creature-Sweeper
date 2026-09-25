@@ -35,7 +35,8 @@
  * rather than as a passage, whatever its width.
  */
 
-import { type Rng, randInt, shuffle } from './rng.js';
+import { type Rng, randInt, shuffle } from '../rng.js';
+import { type ShapeRule, refuseHexAndWrap } from './rule.js';
 
 /**
  * Cells of bounding box kept clear all round.
@@ -734,3 +735,12 @@ export function dungeonMap(w: number, h: number, target: number, rng: Rng): Dung
   }
   throw new Error(`dungeon ${w}x${h}: no floor plan after every attempt, last: ${last}`);
 }
+
+/** The dungeon: exactly `param` cells of map, of which only room floor ever holds a creature. */
+export const DUNGEON_SHAPE: ShapeRule = {
+  id: 'dungeon',
+  seeded: true,
+  validate: refuseHexAndWrap('dungeon'),
+  cellCount: (param) => param,
+  build: (param, w, h, rng) => dungeonMap(w, h, param, rng),
+};

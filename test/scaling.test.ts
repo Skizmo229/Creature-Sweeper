@@ -23,7 +23,7 @@ import {
 import { Game } from '../src/engine/game.js';
 import { autoplaySearch, autoplayTierOrder } from '../src/sim/autoplay.js';
 import { ladders } from './helpers.js';
-import { presentCellCount } from '../src/engine/shape.js';
+import { shapeRule } from '../src/engine/shape/registry.js';
 
 const SEEDS = [0xc0ffee, 0x5eed];
 
@@ -234,7 +234,7 @@ describe('scaling boards are real boards', () => {
       for (const row of type.extended) {
         const cfg = boardConfig(ladders, type.id, row.n);
         expect(
-          presentCellCount(cfg.shape, cfg.shapeParam, cfg.width, cfg.height),
+          shapeRule(cfg.shape).cellCount(cfg.shapeParam, cfg.width, cfg.height),
           `${type.id}#${row.n}: engine mask and ladders.py disagree`,
         ).toBe(row.cells);
         for (const seed of SEEDS) {

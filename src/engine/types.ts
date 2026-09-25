@@ -116,10 +116,11 @@ export type Wrap = 'none' | 'horizontal' | 'both';
  * 'cave' and 'dungeon' are the two shapes that are not per-cell predicates:
  * they are seeded, so the same board index gives a different silhouette on
  * every seed. Their parameter is therefore the exact number of cells the mask
- * must leave — see `caveMask` in board.ts for why that exactness is not
+ * must leave — see `caveMask` in `shape/cave.ts` for why that exactness is not
  * optional. A dungeon splits what it builds into rooms, one-cell hallways and
  * the doorways between them, and only room floor ever holds a creature; see
- * `dungeon.ts`.
+ * `shape/dungeon.ts`. Each is a `ShapeRule` in `src/engine/shape/`, listed in
+ * `registry.ts`.
  */
 export type BoardShape = 'rect' | 'donut' | 'cross' | 'diamond' | 'cave' | 'dungeon';
 

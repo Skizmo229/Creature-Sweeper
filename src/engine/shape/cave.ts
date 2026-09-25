@@ -2,8 +2,9 @@
  * The ragged cave shape. See decision 0002 for why it is grown rather than trimmed.
  */
 
-import { type Rng, randInt } from './rng.js';
-import { type Mask, blankMask, countPresent } from './grid.js';
+import { type Rng, randInt } from '../rng.js';
+import { type Mask, blankMask, countPresent } from '../grid.js';
+import { type ShapeRule, refuseHexAndWrap } from './rule.js';
 
 /**
  * The ragged cave: a blob of caverns and passages, seeded, and built from
@@ -384,7 +385,7 @@ function growCave(space: Mask, w: number, h: number, target: number, rng: Rng): 
   return placed;
 }
 
-export function caveMask(w: number, h: number, target: number, rng: Rng): Mask {
+function caveMask(w: number, h: number, target: number, rng: Rng): Mask {
   const usable = (w - 2 * CAVE_MARGIN) * (h - 2 * CAVE_MARGIN);
   if (target > usable) {
     throw new Error(`cave ${w}x${h}: ${target} cells asked for, only ${usable} inside the margin`);
@@ -400,3 +401,15 @@ export function caveMask(w: number, h: number, target: number, rng: Rng): Mask {
   }
   throw new Error(`cave ${w}x${h}: ${CAVE_ATTEMPTS} attempts failed, last: ${last}`);
 }
+
+/** The ragged cave: grown from the seed to exactly `param` cells, all of them open to creatures. */
+export const CAVE_SHAPE: ShapeRule = {
+  id: 'cave',
+  seeded: true,
+  validate: refuseHexAndWrap('cave'),
+  cellCount: (param) => param,
+  build: (param, w, h, rng) => {
+    const present = caveMask(w, h, param, rng);
+    return { present, spawnable: present };
+  },
+};

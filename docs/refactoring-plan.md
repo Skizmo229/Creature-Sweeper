@@ -38,7 +38,9 @@ and three tests. Adding a rule is 6 hand-edited files plus the ladder that carri
 walkthrough measured about 19). Verified behaviour-neutral: golden outputs byte-identical after
 every commit, the sims outside the golden set byte-identical against `main`, and canvas hashes of
 seven ladders in three states unchanged. `generateGrid` left the size warnings (15 to 14).
-Remaining in phase 3: the shape registry and the per-ladder presentation record.
+The shape registry followed on branch `m3-3b-shape-registry` (decision 0030):
+`src/engine/shape/` holds one `ShapeRule` per shape, `shape.ts` and its `switch` are gone, and
+config and the generator ask the shape. Remaining in phase 3: the per-ladder presentation record.
 
 ---
 

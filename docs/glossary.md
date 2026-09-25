@@ -102,7 +102,8 @@ decides how fast the early levels come.
 
 **Shape.** Which cells of the bounding box exist: rect, donut, cross, diamond, cave, dungeon.
 Cut-away cells are **absent** (`present: false`), not empty. Parameters are always in cells.
-`BoardShape`, `shapeParam`.
+`BoardShape`, `shapeParam`; one `ShapeRule` per shape in `src/engine/shape/`, listed in
+`registry.ts`.
 
 **Placement.** The rule that decides where creatures stand: uniform, sudoku, checker, pairs,
 dominoes, packs, congo. A placement never changes how many creatures there are. `Placement`;
