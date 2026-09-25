@@ -8,6 +8,7 @@ using the tuning identity found in mamono sweeper's own data:
     the rest are alpha_k * C_k, alpha ramping from alpha0 up to 0.70
 """
 import json, math, tomllib
+from dataclasses import dataclass
 
 from pathlib import Path
 
@@ -504,15 +505,47 @@ def carved_room(shape, w, h):
     return (w - 2) * (h - 2)
 
 
-def board_row(t, n, W, H, T, lock, alpha0, hp, density, boss, givens, cells_override,
-              sets=None):
+@dataclass(frozen=True)
+class BoardDials:
+    """One board's dials: entry n of each schedule for the tuned ten, or a row of the
+    continuation. `boss`, `givens`, `cells` and `sets` exist only on the ladders that have them."""
+    n: int
+    size: tuple
+    tiers: int
+    lock: int
+    alpha0: float
+    hp: int
+    density: float
+    boss: int | None = None
+    givens: int | None = None
+    cells: int | None = None
+    sets: int | None = None
+
+    @classmethod
+    def tuned(cls, t, i):
+        """Board i + 1 of a type's tuned ladder."""
+        at = lambda key: t[key][i] if t.get(key) else None
+        return cls(n=i + 1, size=tuple(t["size"][i]), tiers=t["tiers"][i], lock=t["lock"][i],
+                   alpha0=t["alpha0"][i], hp=t["hp"][i], density=t["density"][i],
+                   boss=at("boss"), givens=at("givens"), cells=at("cells"), sets=at("sets"))
+
+    @classmethod
+    def continued(cls, row):
+        """A continuation row from `extend`, numbered later, once it is known to be a new board."""
+        return cls(n=0, **row)
+
+
+def board_row(t, d):
     """One board's row. Shared by the tuned ten and the continuation, because a
     board past 10 is the same kind of object built from the same rules - only
     the schedule feeding it differs."""
+    n, (W, H), T = d.n, d.size, d.tiers
+    lock, alpha0, hp, density, boss, givens, sets = (
+        d.lock, d.alpha0, d.hp, d.density, d.boss, d.givens, d.sets)
     shape = t.get("shape", "rect")
     shape_param = t.get("shape_param", 0)
     if shape in ("cave", "dungeon"):
-        cells = cells_override
+        cells = d.cells
         # The generator keeps a one-cell margin all round and cannot carve
         # more than what is inside it. Caught here, where the schedule is
         # written, rather than on the board.
@@ -605,107 +638,98 @@ def monotone(boards):
     return boards
 
 
+def tuned_boards(t):
+    """The ten boards of a type's ladder, made monotone."""
+    return monotone([board_row(t, BoardDials.tuned(t, i)) for i in range(10)])
+
+
+def continued_boards(t, boards):
+    """Boards 11..N: the schedules continued past the tuned ten, built by the same `board_row`
+    and made monotone against board 10, so the step off the end of the ladder is a step up like
+    every other."""
+    # Walk the whole schedule horizon, make it monotone, and only THEN
+    # drop the repeats. The order matters: two candidates can differ only
+    # in an alpha-scaled threshold, and monotone() is what lifts the later
+    # one up to the earlier and makes them the same board. Deduplicating
+    # first would let that pair through.
+    candidates = []
+    floor_C = cumulative_exp(boards[-1]["quantity"])
+    for row in extend(t):
+        cand = board_row(t, BoardDials.continued(row))
+        # A board that offers LESS exp than the one before it cannot be a
+        # step up, and its thresholds could not be lifted to match even if
+        # we wanted them to - there would not be the EXP on the board to
+        # meet them. See the module note: a wider CROSS can be a smaller
+        # one, because its arm width depends on the parity of the box.
+        # Only the battle ladders. A search type has no level economy at
+        # all - no thresholds, no gates - so C_k says nothing about its
+        # difficulty, and BLIND's own tuned ten already step C_1 backwards
+        # when the tier count rises and the distribution spreads wider.
+        C = cumulative_exp(cand["quantity"])
+        if not t.get("search", False):
+            if any(C[k] < floor_C[k] for k in range(min(len(C), len(floor_C)))):
+                continue
+            floor_C = C
+        candidates.append(cand)
+    monotone([boards[-1]] + candidates)
+
+    # A step that yields the board we already have is skipped, not treated
+    # as the end: the schedules move at very different rates and a slow one
+    # takes two or three steps to earn a board.
+    extended = []
+    for nxt in candidates:
+        prev = extended[-1] if extended else boards[-1]
+        if {k: v for k, v in nxt.items() if k != "n"} == \
+           {k: v for k, v in prev.items() if k != "n"}:
+            continue
+        nxt["n"] = 11 + len(extended)
+        extended.append(nxt)
+        if len(extended) >= CEILINGS["max_extended"]:
+            break
+    return extended
+
+
+def ladder_record(t, boards, extended):
+    """A type as ladders.json carries it: its identity, rules, unlock gates and boards."""
+    return dict(
+        id=t["id"], name=t["name"], tint=t["tint"], axis=t["axis"],
+        blurb=t["blurb"], archetype=t["archetype"],
+        search=t.get("search", False),
+        postgame=t["id"] in POSTGAME,
+        placement=t.get("placement", "uniform"),
+        spells=t.get("spells", []),
+        start_mana=t.get("start_mana", 0),
+        **({"workout": t["workout"]} if t.get("workout") else {}),
+        **({"sweep": False} if t.get("sweep") is False else {}),
+        topology=t.get("topology", "square"),
+        shape=t.get("shape", "rect"),
+        shape_param=t.get("shape_param", 0),
+        # 0 means the whole board is in reach, which is every type but one.
+        reach=t.get("reach", 0),
+        wrap=t.get("wrap", "none"),
+        # Full Run: one HP pool for the whole 10-board run, taken from
+        # board 1. The per-board HP schedule is ignored in that mode, and
+        # board 1 is the most generous entry in every schedule, so the
+        # ceiling never drops below what a later board was tuned against.
+        run_hp=t["hp"][0],
+        requires=UNLOCKS[t["id"]],
+        # Boards cleared anywhere, counting each once. 0 means no such gate.
+        requires_boards=UNLOCK_BOARDS.get(t["id"], 0),
+        # Full Runs completed on distinct types. 0 means no such gate.
+        requires_runs=UNLOCK_RUNS.get(t["id"], 0),
+        boards=boards,
+        # Boards 11..N. Unlocked by clearing board 10, and deliberately
+        # NOT part of `boards`: the ladder is ten, a Full Run is ten, and
+        # clearing the type is still board 10.
+        extended=extended,
+    )
+
+
 def build():
     out = []
     for t in TYPES:
-        boards = []
-        for n in range(10):
-            W, H = t["size"][n]
-            T = t["tiers"][n]
-            shape = t.get("shape", "rect")
-            shape_param = t.get("shape_param", 0)
-            boards.append(board_row(
-                t, n + 1, W, H, T,
-                lock=t["lock"][n], alpha0=t["alpha0"][n], hp=t["hp"][n],
-                density=t["density"][n],
-                boss=t["boss"][n] if t["boss"] else None,
-                givens=t["givens"][n] if t.get("givens") else None,
-                cells_override=t["cells"][n] if t.get("cells") else None,
-                sets=t["sets"][n] if t.get("sets") else None,
-            ))
-        monotone(boards)
-
-        # The continuation. Built from the same function against continued
-        # schedules, then made monotone against board 10 so the step off the
-        # end of the ladder is a step up like every other.
-        # Walk the whole schedule horizon, make it monotone, and only THEN
-        # drop the repeats. The order matters: two candidates can differ only
-        # in an alpha-scaled threshold, and monotone() is what lifts the later
-        # one up to the earlier and makes them the same board. Deduplicating
-        # first would let that pair through.
-        candidates = []
-        floor_C = cumulative_exp(boards[-1]["quantity"])
-        for row in extend(t):
-            cand = board_row(
-                t, 0, row["size"][0], row["size"][1], row["tiers"],
-                lock=row["lock"], alpha0=row["alpha0"], hp=row["hp"],
-                density=row["density"], boss=row.get("boss"),
-                givens=row.get("givens"), cells_override=row.get("cells"),
-                sets=row.get("sets"),
-            )
-            # A board that offers LESS exp than the one before it cannot be a
-            # step up, and its thresholds could not be lifted to match even if
-            # we wanted them to - there would not be the EXP on the board to
-            # meet them. See the module note: a wider CROSS can be a smaller
-            # one, because its arm width depends on the parity of the box.
-            # Only the battle ladders. A search type has no level economy at
-            # all - no thresholds, no gates - so C_k says nothing about its
-            # difficulty, and BLIND's own tuned ten already step C_1 backwards
-            # when the tier count rises and the distribution spreads wider.
-            C = cumulative_exp(cand["quantity"])
-            if not t.get("search", False):
-                if any(C[k] < floor_C[k] for k in range(min(len(C), len(floor_C)))):
-                    continue
-                floor_C = C
-            candidates.append(cand)
-        monotone([boards[-1]] + candidates)
-
-        # A step that yields the board we already have is skipped, not treated
-        # as the end: the schedules move at very different rates and a slow one
-        # takes two or three steps to earn a board.
-        extended = []
-        for nxt in candidates:
-            prev = extended[-1] if extended else boards[-1]
-            if {k: v for k, v in nxt.items() if k != "n"} == \
-               {k: v for k, v in prev.items() if k != "n"}:
-                continue
-            nxt["n"] = 11 + len(extended)
-            extended.append(nxt)
-            if len(extended) >= CEILINGS["max_extended"]:
-                break
-
-        out.append(dict(
-            id=t["id"], name=t["name"], tint=t["tint"], axis=t["axis"],
-            blurb=t["blurb"], archetype=t["archetype"],
-            search=t.get("search", False),
-            postgame=t["id"] in POSTGAME,
-            placement=t.get("placement", "uniform"),
-            spells=t.get("spells", []),
-            start_mana=t.get("start_mana", 0),
-            **({"workout": t["workout"]} if t.get("workout") else {}),
-            **({"sweep": False} if t.get("sweep") is False else {}),
-            topology=t.get("topology", "square"),
-            shape=t.get("shape", "rect"),
-            shape_param=t.get("shape_param", 0),
-            # 0 means the whole board is in reach, which is every type but one.
-            reach=t.get("reach", 0),
-            wrap=t.get("wrap", "none"),
-            # Full Run: one HP pool for the whole 10-board run, taken from
-            # board 1. The per-board HP schedule is ignored in that mode, and
-            # board 1 is the most generous entry in every schedule, so the
-            # ceiling never drops below what a later board was tuned against.
-            run_hp=t["hp"][0],
-            requires=UNLOCKS[t["id"]],
-            # Boards cleared anywhere, counting each once. 0 means no such gate.
-            requires_boards=UNLOCK_BOARDS.get(t["id"], 0),
-            # Full Runs completed on distinct types. 0 means no such gate.
-            requires_runs=UNLOCK_RUNS.get(t["id"], 0),
-            boards=boards,
-            # Boards 11..N. Unlocked by clearing board 10, and deliberately
-            # NOT part of `boards`: the ladder is ten, a Full Run is ten, and
-            # clearing the type is still board 10.
-            extended=extended,
-        ))
+        boards = tuned_boards(t)
+        out.append(ladder_record(t, boards, continued_boards(t, boards)))
     order = {k: i for i, k in enumerate(MAINLINE + MAGIC + TOPOLOGY + PUZZLE + POSTGAME)}
     out.sort(key=lambda t: order[t["id"]])
     return out
