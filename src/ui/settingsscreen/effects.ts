@@ -1,18 +1,20 @@
 /**
- * The two settings whose only possible example is themselves: the sound pack and the board-clear
- * effect. Picking one PLAYS it, which is only possible because these tiles update in place rather
- * than rebuilding the screen (decision 0025).
+ * The three settings whose only possible example is themselves: the sound pack, the glow after a
+ * fight and the board-clear effect. Each is played, not pictured, which is only possible because
+ * these tiles update in place rather than rebuilding the screen (decision 0025).
  */
 
 import { randomSeed } from '../../engine/rng.js';
+import type { GameEvent } from '../../engine/types.js';
 import { el } from '../dom.js';
-import { PREVIEW_SEED, clearedBoard } from '../preview.js';
-import { DEFAULT, OFF } from '../settings.js';
+import { flashRim } from '../game/flash.js';
+import { PREVIEW_SEED, clearedBoard, sampleBoard } from '../preview.js';
+import { DEFAULT, type FightRim, OFF } from '../settings.js';
 import { SFX_NAMES, VICTORY_NAMES } from '../theme.js';
 import { type SfxPackId, type VictoryId } from '../looks.js';
 import { playVictory } from '../victory/play.js';
 import { type ScreenContext, typeName } from './context.js';
-import { DEMO_CELL, renderPreview } from './render.js';
+import { CHIP_CELL, DEMO_CELL, renderPreview } from './render.js';
 import { type Choice, gallery, wideRow } from './widgets.js';
 
 /**
@@ -59,6 +61,62 @@ export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
       },
       true,
     ),
+  );
+}
+
+/** A fight for the glow's example, costing `damage` HP. */
+const fought = (damage: number): GameEvent => ({
+  type: 'battle',
+  x: 0,
+  y: 0,
+  tier: 3,
+  damage,
+  defeated: true,
+});
+
+/**
+ * The example board sits in a stage of its own, and the buttons act out a clean fight, a level-up
+ * and a hit through `flashRim`, the game's own code, under whichever option is chosen, so the
+ * difference between the options is something to try rather than to read about.
+ */
+export function fightRimRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p, settings, currentTheme } = ctx;
+  const demo = el('div', 'rim-demo');
+  demo.append(
+    renderPreview(sampleBoard(), currentTheme, ctx.display(), { cell: CHIP_CELL }).canvas,
+  );
+
+  const acts = el('div', 'rim-demo-acts');
+  const act = (label: string, events: GameEvent[]): void => {
+    const btn = el('button', 'ghost small', label);
+    btn.addEventListener('click', () => flashRim(demo, events, settings.presentation.fightRim));
+    acts.append(btn);
+  };
+  act('Clean fight', [fought(0)]);
+  act('Level-up', [fought(0), { type: 'levelUp', level: 2 }]);
+  act('Hit', [fought(3)]);
+
+  const stack = el('div', 'settings-stack');
+  stack.append(
+    gallery(
+      [
+        { value: 'every', label: 'Every fight — green when it cost nothing, red when it hurt' },
+        { value: 'levelups', label: 'Level-ups and damage — green only for a level-up' },
+        { value: OFF, label: 'Off — no glow' },
+      ],
+      p.fightRim,
+      (v) => settings.setPresentation({ fightRim: v as FightRim }),
+      true,
+    ),
+    demo,
+    acts,
+  );
+  wideRow(
+    host,
+    'Glow after a fight',
+    'The edge of the board lights up when a fight ends: green when it cost you nothing, red when ' +
+      'it cost HP. The buttons under the example play each kind of fight with the option chosen.',
+    stack,
   );
 }
 

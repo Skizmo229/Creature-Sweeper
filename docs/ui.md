@@ -69,8 +69,11 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - Icons, palette and font show two tiles, Default and User choice; the full gallery opens in a
   picker inside the settings element, which catches Escape in the capture phase.
 - Picking a visual option rebuilds the whole screen and carries the scroll position, because the
-  galleries are drawn in terms of each other. Exceptions: the zoom slider redraws in place; sound
-  and the clear effect play themselves and update their own tiles.
+  galleries are drawn in terms of each other. Exceptions: the zoom slider redraws in place; sound,
+  the glow after a fight and the clear effect play themselves and update their own tiles.
+- The glow after a fight is shown on the standard example board in a stage of its own, and three
+  buttons act out a clean fight, a level-up and a hit through `flashRim`, the game's own code,
+  under the option chosen, so the difference between the options can be tried.
 - The clear-effect demo runs over a genuinely won board carrying one of every tier the real board
   uses (`previewTiers()` reads the live game). Test deals a new board; picking an effect replays
   on the same one. The demo seed is module-level so it outlives a rebuild.
@@ -116,7 +119,9 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   Two rules setting `animation` would let one displace the other, and a class left on after its
   animation played would block the other for the rest of the board.
 - A fight lights the stage's rim, fading inward: green when it cost nothing, red when it cost HP.
-  One rim per action, and red if any fight in it hurt, since a sweep can fight several. It is
+  One rim per action, and red if any fight in it hurt, since a sweep can fight several. The
+  player can keep it for every fight, for level-ups and damage only (green only when the fight
+  levelled them up), or turn it off (`fightRim`); the shake and the level-up glow ignore it. It is
   `.stage::after`, over the canvas so it shows however much of the stage the board covers, and
   deaf to the pointer. Only one of `fight-clean` and `fight-hurt` is on the stage at a time, or
   the later rule would keep its colour for good. It stays on under reduced motion, which drops

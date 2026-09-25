@@ -470,7 +470,7 @@ export class App {
   private apply(events: GameEvent[]): void {
     const game = this.game!;
 
-    if (this.els) flashStage(this.els.stage, events);
+    if (this.els) flashStage(this.els.stage, events, this.settings.presentation.fightRim);
     if (this.sfx.enabled) {
       const sound = soundFor(events);
       if (sound) this.sfx.play(sound);

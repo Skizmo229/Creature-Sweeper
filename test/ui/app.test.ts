@@ -12,6 +12,7 @@ import type { GameEvent } from '../../src/engine/types.js';
 import { autoplayTierOrder } from '../../src/sim/autoplay.js';
 import { App } from '../../src/ui/app.js';
 import type { Progress } from '../../src/ui/progress.js';
+import type { Settings } from '../../src/ui/settings.js';
 
 /** The app's surface as the test drives it, private members included, the way the dev console does. */
 interface Driver {
@@ -19,6 +20,7 @@ interface Driver {
   runFull(typeId: string, seed?: number): void;
   readonly current: Game | null;
   readonly progress: Progress;
+  readonly settings: Settings;
   finish(): void;
   apply(events: GameEvent[]): void;
   readonly actions: {
@@ -45,6 +47,15 @@ const key = (k: string, extra: KeyboardEventInit = {}): void => {
 
 const text = (selector: string): string =>
   document.querySelector<HTMLElement>(selector)?.textContent ?? '';
+
+/** A fight as the engine reports it, costing `damage` HP. */
+const fought = (damage: number): GameEvent => {
+  return { type: 'battle', x: 0, y: 0, tier: 1, damage, defeated: true };
+};
+
+/** The rim classes on an element: which colour it last flashed, if any. */
+const rimOf = (host: Element): string[] =>
+  [...host.classList].filter((c) => c.startsWith('fight-'));
 
 let app: Driver;
 
@@ -84,28 +95,46 @@ describe('the app', () => {
     app.play('normal', 1, 7);
     const game = app.current!;
     const stage = document.querySelector('.stage')!;
-    const rim = (): string[] => [...stage.classList].filter((c) => c.startsWith('fight-'));
     const covered = (fits: (tier: number) => boolean) =>
       game.grid.flat().find((c) => !c.open && c.alive && c.tier > 0 && fits(c.tier))!;
 
     const free = covered((tier) => tier <= game.level);
     app.actions.onCellPrimary(free.x, free.y);
     expect(game.hp).toBe(game.maxHp);
-    expect(rim()).toEqual(['fight-clean']);
+    expect(rimOf(stage)).toEqual(['fight-clean']);
 
     const costly = covered((tier) => tier === game.level + 1);
     app.actions.onCellPrimary(costly.x, costly.y);
     expect(game.hp).toBeLessThan(game.maxHp);
-    expect(rim()).toEqual(['fight-hurt']);
+    expect(rimOf(stage)).toEqual(['fight-hurt']);
 
     // A sweep can fight several creatures in one action; any one that hurt makes the rim red.
-    const fought = (damage: number): GameEvent => {
-      return { type: 'battle', x: 0, y: 0, tier: 1, damage, defeated: true };
-    };
     app.apply([fought(0)]);
-    expect(rim()).toEqual(['fight-clean']);
+    expect(rimOf(stage)).toEqual(['fight-clean']);
     app.apply([fought(0), fought(2), fought(0)]);
-    expect(rim()).toEqual(['fight-hurt']);
+    expect(rimOf(stage)).toEqual(['fight-hurt']);
+  });
+
+  it('lights the rim for level-ups and damage only, or not at all, as the setting says', () => {
+    const levelUp: GameEvent = { type: 'levelUp', level: 2 };
+    app.settings.setPresentation({ fightRim: 'levelups' });
+    app.play('normal', 1, 7);
+    const stage = document.querySelector('.stage')!;
+    app.apply([fought(0)]);
+    expect(rimOf(stage)).toEqual([]);
+    app.apply([fought(0), levelUp]);
+    expect(rimOf(stage)).toEqual(['fight-clean']);
+    app.apply([fought(2)]);
+    expect(rimOf(stage)).toEqual(['fight-hurt']);
+
+    app.settings.setPresentation({ fightRim: 'off' });
+    app.play('normal', 1, 7);
+    const quiet = document.querySelector('.stage')!;
+    app.apply([fought(2), levelUp]);
+    expect(rimOf(quiet)).toEqual([]);
+    // The setting is the rim's alone: the shake and the level-up glow still play.
+    expect(quiet.classList.contains('shake')).toBe(true);
+    expect(quiet.classList.contains('levelup')).toBe(true);
   });
 
   it('N switches the entry mode and arms a pencil tier', () => {
@@ -184,6 +213,37 @@ describe('the app', () => {
     document.querySelector<HTMLButtonElement>('.settings-screen .title-bar button')!.click();
     expect(document.querySelector('.screen.game')).not.toBeNull();
     expect(app.current).toBe(game);
+  });
+
+  it('plays the glow after a fight on the settings screen, under the option picked', () => {
+    // Pinned to this test's app: the screen stays up, and its Escape handler outlives the test.
+    const here = app;
+    here.showSettings(() => here.showTypes());
+    const demo = document.querySelector('.rim-demo')!;
+    const row = demo.closest('.settings-row')!;
+    const button = (selector: string, label: string): HTMLButtonElement =>
+      [...row.querySelectorAll<HTMLButtonElement>(selector)].find((b) =>
+        b.textContent?.startsWith(label),
+      )!;
+    const play = (label: string): void => button('.rim-demo-acts button', label).click();
+    const pick = (label: string): void => button('.preview-chip', label).click();
+
+    play('Clean fight');
+    expect(rimOf(demo)).toEqual(['fight-clean']);
+    play('Hit');
+    expect(rimOf(demo)).toEqual(['fight-hurt']);
+
+    // A flash that does not play leaves the last colour's class where it was.
+    pick('Level-ups and damage');
+    play('Clean fight');
+    expect(rimOf(demo)).toEqual(['fight-hurt']);
+    play('Level-up');
+    expect(rimOf(demo)).toEqual(['fight-clean']);
+
+    pick('Off');
+    play('Hit');
+    expect(rimOf(demo)).toEqual(['fight-clean']);
+    expect(app.settings.presentation.fightRim).toBe('off');
   });
 });
 

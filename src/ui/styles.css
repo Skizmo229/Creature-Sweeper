@@ -373,14 +373,15 @@ button.small {
 
 /*
  * A fight lights the stage's rim, fading inward: green when it cost nothing,
- * red when it cost HP (game/flash.ts decides which). A layer of its own, over
- * the canvas, so it shows however much of the stage the board covers and
- * never takes a click. Green is the softer of the two because it is the
- * common case. It stays on under reduced motion: it is a fade, not a
- * movement, and with the shake gone it is the one sign on the board that a
- * fight hurt.
+ * red when it cost HP (game/flash.ts decides which, and the player's setting
+ * whether). A layer of its own, over the canvas, so it shows however much of
+ * the stage the board covers and never takes a click. Green is the softer of
+ * the two because it is the common case. It stays on under reduced motion: it
+ * is a fade, not a movement, and with the shake gone it is the one sign on the
+ * board that a fight hurt. The settings screen's example wears the same rim.
  */
-.stage::after {
+.stage::after,
+.rim-demo::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -391,11 +392,13 @@ button.small {
     inset 0 0 0 2px var(--fight-rim),
     inset 0 0 28px 6px var(--fight-rim);
 }
-.stage.fight-clean::after {
+.stage.fight-clean::after,
+.rim-demo.fight-clean::after {
   --fight-rim: rgba(53, 224, 106, 0.55);
   animation: fight-rim 550ms ease-out;
 }
-.stage.fight-hurt::after {
+.stage.fight-hurt::after,
+.rim-demo.fight-hurt::after {
   --fight-rim: rgba(255, 52, 40, 0.85);
   animation: fight-rim 800ms ease-out;
 }
@@ -1089,6 +1092,27 @@ button.small {
 .clear-demo canvas {
   display: block;
   cursor: inherit;
+}
+
+/* The glow-after-a-fight example: the board in a stage of its own, with the
+   stage's colours and room around the board for the rim, as in play. */
+.rim-demo {
+  position: relative;
+  align-self: flex-start;
+  padding: 24px;
+  background: #12120c;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.rim-demo canvas {
+  display: block;
+  cursor: inherit;
+}
+.rim-demo-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .settings-stack .settings-gallery {

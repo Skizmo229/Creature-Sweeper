@@ -11,7 +11,7 @@
 import { el } from '../dom.js';
 import { themeFor } from '../looks.js';
 import { type SettingsScreenOptions, makeContext, typeName } from './context.js';
-import { clearEffectRow, soundRow, stopSettingsDemo } from './effects.js';
+import { clearEffectRow, fightRimRow, soundRow, stopSettingsDemo } from './effects.js';
 import { gameplaySection } from './gameplay.js';
 import {
   fontRow,
@@ -75,6 +75,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   strikeRow(ctx, look);
   zoomRow(ctx, look);
   soundRow(ctx, look);
+  fightRimRow(ctx, look);
   clearEffectRow(ctx, look);
 
   gameplaySection(ctx);
