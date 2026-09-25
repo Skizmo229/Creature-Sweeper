@@ -33,7 +33,7 @@ export interface TypeTheme {
 export type SfxPackId = 'chime' | 'blip' | 'thud' | 'glass';
 
 /**
- * Board-clear celebrations. See `victory.ts`.
+ * Board-clear celebrations. See `victory/`.
  *
  * Two families. The first four are ambient — decoration drawn over the board,
  * knowing nothing about what is underneath. The rest animate the board's own

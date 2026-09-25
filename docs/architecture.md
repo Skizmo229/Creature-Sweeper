@@ -57,7 +57,7 @@ src/ui/         the prototype
                   digits.ts, paint.ts (cell painters), overlays.ts (silhouette, seams, bonds,
                   highlight), input.ts (pointer, wheel, pinch)
   settings.ts     the presentation settings and the store
-  settingsscreen/  the settings form: context, widgets, look, effects, gameplay, screen
+  settingsscreen/  the settings form: context, widgets, render, look, effects, gameplay, screen
   preview.ts      the settings screen's example boards (no rendering, so tests can build them)
   looks.ts        one record per ladder: palette, face, sound pack, clear effect (DOM-free)
   theme.ts        the global colours, the picker's names, creature glyphs
@@ -97,7 +97,7 @@ imports nothing outside itself; `src/sim` never imports `src/ui`; `src/ui` never
 all**, so a stray `window` is a build error rather than something discovered when it fails to run
 in Node. Anything a test needs to import therefore has to be DOM-free too, which is why
 `preview.ts` builds boards and renders nothing, why `pinch.ts` and `hexgeom.ts` are separate from
-`boardview.ts`, and why the per-ladder looks are in `looks.ts` rather than `theme.ts`.
+`board/view.ts`, and why the per-ladder looks are in `looks.ts` rather than `theme.ts`.
 
 **Adjacency lives in exactly one function**: `neighbours()` in `src/engine/grid.ts`. Numbers,
 cascades, the opening, Sweep's proofs, Census, the crawl rule and the honest player all read
@@ -165,7 +165,7 @@ Two halves that behave completely differently. `src/engine/settings.ts` holds th
 dials**: they change rules, so they are engine state, and they decide whether a board counts for
 a record (`isAtLeastAsHard`: harder records, easier records nothing, unlocks included).
 `src/ui/settings.ts` holds the **presentation settings** and the store; none of those touches a
-rule. `settingsscreen.ts` is the form, built detached and handed back to `App`.
+rule. `settingsscreen/` is the form, built detached and handed back to `App`.
 
 ## Where knowledge lives
 

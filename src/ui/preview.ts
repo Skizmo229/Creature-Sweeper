@@ -3,7 +3,7 @@
  *
  * HEADLESS, AND THAT IS LOAD-BEARING. This file builds boards and nothing
  * else — no canvas, no DOM, no rendering. `renderPreview` lives in
- * `settingsscreen.ts` with the only thing that calls it, which is what keeps
+ * `settingsscreen/render.ts` beside the code that calls it, which is what keeps
  * this module importable from a Node test: `tsconfig.engine.json` compiles
  * `test/` with no DOM library at all, deliberately, so every test is proven
  * headless. Pulling the renderer in here would drag `CanvasRenderingContext2D`
