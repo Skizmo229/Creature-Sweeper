@@ -1,7 +1,7 @@
 /**
  * Measure the auto-opening across every board of every ladder.
  *
- *   npx tsx src/sim/opening.ts [trials]   # writes design/data/opening.json
+ *   npx tsx src/sim/cli/opening.ts [trials]   # writes design/data/opening.json
  *
  * This replaces the original `design/opening.py`, which reimplemented the
  * board rules in Python. The two agreed closely while boards were all plain
@@ -14,13 +14,13 @@
 import { writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadLadders } from '../data.js';
-import { boardConfig } from '../engine/config.js';
-import { Game } from '../engine/game.js';
+import { loadLadders } from '../../data.js';
+import { boardConfig } from '../../engine/config.js';
+import { Game } from '../../engine/game.js';
 
 const TRIALS = Number(process.argv[2] ?? 300);
 const HERE = dirname(fileURLToPath(import.meta.url));
-const OUT = resolve(HERE, '..', '..', 'design', 'data', 'opening.json');
+const OUT = resolve(HERE, '..', '..', '..', 'design', 'data', 'opening.json');
 
 interface Row {
   type: string;

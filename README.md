@@ -34,7 +34,7 @@ creature_sweeper/
 ├─ src/
 │  ├─ engine/     the rules engine: no DOM, no I/O, no timers; boards are pure (config, seed)
 │  ├─ ui/         the playable prototype: canvas board, HUD, settings, save, sound, effects
-│  ├─ sim/        headless measurement, all driving the real engine
+│  ├─ sim/        headless measurement, all driving the real engine; cli/ holds the commands
 │  ├─ main.ts     browser entry
 │  └─ data.ts     Node-only loader for the ladder data
 ├─ test/          vitest; helpers.ts holds the shared fixtures; golden/ the simulator fingerprints
@@ -72,7 +72,7 @@ npm run package        # build and zip dist/ into release/
 ```
 
 Regenerating the ladder data, in order: `python design/ladders.py`, then (slow) `npx tsx
-src/sim/opening.ts` and `npx tsx src/sim/placement.ts`, then `python design/build.py`. Only the
+src/sim/cli/opening.ts` and `npx tsx src/sim/cli/placement.ts`, then `python design/build.py`. Only the
 first is needed when a schedule changes; CI checks that the committed JSON is what the generator
 produces.
 

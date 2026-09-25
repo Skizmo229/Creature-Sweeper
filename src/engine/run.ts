@@ -33,7 +33,7 @@
  * a guess budget; the run simply makes it one budget instead of ten.
  *
  * Headless like the rest of the engine: no DOM, no storage, no timers. The UI
- * drives it, and so does `src/sim/run.ts`.
+ * drives it, and so does `src/sim/cli/run.ts`.
  */
 
 import { Game } from './game.js';

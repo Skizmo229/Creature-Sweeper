@@ -1,4 +1,4 @@
-$ src/sim/spellvalue.ts 4 arcane
+$ src/sim/cli/spellvalue.ts 4 arcane
 ARCANE, board by board, 4 seeds each.
 
 board   density   cells   stuck/board   guesses   hp lost   cleared       reveal saves    census saves

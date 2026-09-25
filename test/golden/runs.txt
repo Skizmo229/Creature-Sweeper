@@ -1,4 +1,4 @@
-$ src/sim/run.ts 3
+$ src/sim/cli/run.ts 3
 type             pool  heal  boards  completed  hp lost  min hp  first stall
 EASY               10     5      10        3/3        0      10            -
 NORMAL             10     5      10        3/3        0      10            -

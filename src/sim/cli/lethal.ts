@@ -1,7 +1,7 @@
 /**
  * Can every forced guess be survived? The weaker target for solvable boards.
  *
- *   npx tsx src/sim/lethal.ts [seeds] [ladder,ladder,...]   board by board
+ *   npx tsx src/sim/cli/lethal.ts [seeds] [ladder,ladder,...]   board by board
  *
  * `sim:forced` showed that a guess-free board 10 does not exist on EXTREME,
  * HUGE x EXTREME or ORACLE — a perfect deducer is cornered on every one — so
@@ -23,14 +23,14 @@
  * set beside what it keeps under the strict one (`no guess`).
  */
 
-import { loadLadders } from '../data.js';
-import { boardConfig, type LadderType } from '../engine/config.js';
-import { resolveBattle } from '../engine/combat.js';
-import { Game } from '../engine/game.js';
-import { biteFor } from '../engine/settings.js';
-import type { Cell } from '../engine/types.js';
-import { honestGuess, play, type Run } from './honest.js';
-import { solve } from './solver.js';
+import { loadLadders } from '../../data.js';
+import { boardConfig, type LadderType } from '../../engine/config.js';
+import { resolveBattle } from '../../engine/combat.js';
+import { Game } from '../../engine/game.js';
+import { biteFor } from '../../engine/settings.js';
+import type { Cell } from '../../engine/types.js';
+import { honestGuess, play, type Run } from '../honest.js';
+import { solve } from '../solver.js';
 
 interface Board {
   run: Run;

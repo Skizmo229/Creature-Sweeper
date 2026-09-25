@@ -6,7 +6,7 @@ and the per-ladder findings are in the design reference (`design/reference.html`
 
 ## The instruments
 
-All in `src/sim/`, all driving the real engine with fixed seeds, all deterministic.
+All in `src/sim/cli/`, all driving the real engine with fixed seeds, all deterministic.
 
 | Command | What it measures |
 | --- | --- |
@@ -16,7 +16,7 @@ All in `src/sim/`, all driving the real engine with fixed seeds, all determinist
 | `npm run sim:forced -- N [ladder] [a-b]` | The honest player beside a player that also takes the complete deducer's free moves, on the same seeds: what share of stuck points had a free move, how often a perfect deducer is still cornered, what share of boards is guess-free. Its `bad` and `hurt` columns must be zero. |
 | `npm run sim:lethal -- N ladders` | The perfect deducer guessing the cell with the lowest proven worst case: could any forced guess kill? |
 | `npm run sim:sudoku -- N [--sweep]` | SUDOKU build cost per givens count and the tightest round of each board. |
-| `npx tsx src/sim/opening.ts`, `placement.ts`, `topology.ts` | The opening, placement and topology experiments; the first two write `design/data/*.json` for the reference page. |
+| `npx tsx src/sim/cli/opening.ts`, `placement.ts`, `topology.ts` | The opening, placement and topology experiments; the first two write `design/data/*.json` for the reference page. |
 | `npm run sim:golden` / `sim:golden:check` | Records or diffs the text of fourteen small runs of the above: the behaviour-preservation harness. |
 
 The **honest player** (`src/sim/honest.ts`) reads only what a player can see and deduces locally,

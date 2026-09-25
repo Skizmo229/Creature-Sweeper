@@ -1,4 +1,4 @@
-$ src/sim/topology.ts 8
+$ src/sim/cli/topology.ts 8
 30x16, 8 boards per point
 blank% = cells with no creature neighbours; open = median auto-opening
 

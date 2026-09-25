@@ -1,4 +1,4 @@
-$ src/sim/sudoku.ts 3
+$ src/sim/cli/sudoku.ts 3
 SUDOKU — 3 boards a rung
 
 board  givens  lock   attempts/board   rounds  tightest    cleared   HP lost

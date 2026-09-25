@@ -20,8 +20,8 @@
  * answer the game cannot act on is worth less than the same answer in a form
  * it can.
  *
- *   npx tsx src/sim/spellvalue.ts [seeds]          every magic ladder
- *   npx tsx src/sim/spellvalue.ts [seeds] arcane   one ladder, board by board
+ *   npx tsx src/sim/cli/spellvalue.ts [seeds]          every magic ladder
+ *   npx tsx src/sim/cli/spellvalue.ts [seeds] arcane   one ladder, board by board
  *
  * The per-board view answers a different question from the per-ladder one: not
  * what a spell is worth, but whether there is anything for it to be worth. A
@@ -29,11 +29,11 @@
  * rarely corners the player has nothing for one to do, however good it is.
  */
 
-import { loadLadders } from '../data.js';
-import { boardConfig } from '../engine/config.js';
-import { Game } from '../engine/game.js';
-import { SPELLS, type SpellId } from '../engine/spells.js';
-import { type Policy, type Run, SPELL_POLICIES, play } from './honest.js';
+import { loadLadders } from '../../data.js';
+import { boardConfig } from '../../engine/config.js';
+import { Game } from '../../engine/game.js';
+import { SPELLS, type SpellId } from '../../engine/spells.js';
+import { type Policy, type Run, SPELL_POLICIES, play } from '../honest.js';
 
 /** Every measured policy with the spell it casts, in the order the tables print them. */
 const MEASURED: ReadonlyArray<{ policy: Policy; spell: SpellId }> = (

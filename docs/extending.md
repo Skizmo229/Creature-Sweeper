@@ -30,8 +30,9 @@ the golden outputs and say so in the commit.
    the spell draws needs a draw pass in `BoardView` beside `drawCensus`, and a colour in `theme.ts`
    that stands apart from the palette's annotation colours.
 6. **Measurement.** `src/sim/honest.ts` needs a policy for when to cast it and how to read its
-   answer (an unknown targeted spell is currently aimed like Census); `src/sim/spellvalue.ts`
-   needs a column. Without these its price is a guess.
+   answer (an unknown targeted spell is currently aimed like Census), and an entry in
+   `SPELL_POLICIES` there, which the compiler asks for and `src/sim/cli/spellvalue.ts` reads its
+   columns from. Without these its price is a guess.
 7. **Tests and docs.** A block in `test/spells.test.ts`; the affordability test reads the data.
    `docs/glossary.md`, the README's controls line, the design reference's spell table.
 

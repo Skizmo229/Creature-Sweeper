@@ -2,7 +2,7 @@
  * What placement rules and board topology do to a board, measured on the real
  * engine.
  *
- *   npx tsx src/sim/placement.ts [trials]
+ *   npx tsx src/sim/cli/placement.ts [trials]
  *     writes design/data/placement.json and design/data/placement-rules.json
  *
  * Every number is the engine's own `computeNumbers`, every opening its own
@@ -29,18 +29,18 @@
 import { writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadLadders } from '../data.js';
-import { boardConfig } from '../engine/config.js';
-import { mulberry32, type Rng } from '../engine/rng.js';
-import type { BoardConfig } from '../engine/types.js';
-import { type Grid, computeNumbers, makeCell } from '../engine/grid.js';
-import { findBestOpening } from '../engine/opening.js';
-import { generateGrid } from '../engine/generate.js';
-import { placementRule } from '../engine/placement/registry.js';
+import { loadLadders } from '../../data.js';
+import { boardConfig } from '../../engine/config.js';
+import { mulberry32, type Rng } from '../../engine/rng.js';
+import type { BoardConfig } from '../../engine/types.js';
+import { type Grid, computeNumbers, makeCell } from '../../engine/grid.js';
+import { findBestOpening } from '../../engine/opening.js';
+import { generateGrid } from '../../engine/generate.js';
+import { placementRule } from '../../engine/placement/registry.js';
 
 const TRIALS = Number(process.argv[2] ?? 240);
 const HERE = dirname(fileURLToPath(import.meta.url));
-const DATA = resolve(HERE, '..', '..', 'design', 'data');
+const DATA = resolve(HERE, '..', '..', '..', 'design', 'data');
 const rng: Rng = mulberry32(31415);
 
 // ---------- a tier layout, for the strategies the engine never had ----------

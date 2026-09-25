@@ -1,4 +1,4 @@
-$ src/sim/spellvalue.ts 4 workout
+$ src/sim/cli/spellvalue.ts 4 workout
 WORKOUT, board by board, 4 seeds each.
 
 board  density  lock |  none: stuck  clear |  exercise: clear casts |  workout: stuck  hp lost  clear  casts  spent/pool

@@ -1,4 +1,4 @@
-$ src/sim/forced.ts 3 arcane 8-10
+$ src/sim/cli/forced.ts 3 arcane 8-10
 ARCANE, board by board, 3 seeds each.
 
 board  density |  honest: stuck  clear   free | complete: forced  clear*  no guess |  undecided  bad  hurt

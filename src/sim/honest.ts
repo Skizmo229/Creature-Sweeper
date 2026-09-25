@@ -3,11 +3,11 @@
  * and when deduction runs out either spends mana or takes a guess and eats the
  * damage.
  *
- * It lives apart from `spellvalue.ts` because that file is a CLI that runs at
- * import, and more than one measurement needs the same player — a second copy
- * of it would be the `design/opening.py` failure over again. `spellvalue.ts`
- * measures spells with it; `forced.ts` measures how many of its forced guesses
- * a complete deducer would not have needed.
+ * A library, like `solver.ts` and `autoplay.ts`: the command-line measurements
+ * in `cli/` run on import and share this one player, because a second copy of
+ * it would drift. `cli/spellvalue.ts` measures spells with it; `cli/forced.ts`
+ * measures how many of its forced guesses a complete deducer would not have
+ * needed.
  */
 
 import type { Game } from '../engine/game.js';

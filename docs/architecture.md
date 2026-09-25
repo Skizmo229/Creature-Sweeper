@@ -63,7 +63,9 @@ src/ui/         the prototype
   sfx.ts          synthesised sound packs
   victory.ts      the board-clear effects
   pinch.ts, hexgeom.ts   arithmetic kept DOM-free so tests can reach it
-src/sim/        headless measurement, all driving the real engine (see docs/tuning.md)
+src/sim/        headless measurement, all driving the real engine (see docs/tuning.md):
+                honest.ts, solver.ts and autoplay.ts are the players; cli/ holds one
+                command-line entry per measurement
 src/data.ts     Node-only loader for ladders.json; CS_LADDERS points it at a candidate file
 src/main.ts     browser entry; window.cs in dev
 test/           vitest; test/helpers.ts holds the shared fixtures (the ladder data, the seeds,
