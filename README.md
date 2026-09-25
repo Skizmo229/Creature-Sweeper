@@ -95,12 +95,13 @@ spell's bracketed letter casts it (`C`ensus, `R`eveal, `E`xercise, `B`eacon, off
 first) · scroll or `+`/`-` to zoom, `F` to reset · `Esc` backs out.
 
 **Settings** are two separate things. The presentation half (creature icons, board palette, board
-font, interface font, sound pack, board-clear effect, text size, cursor highlight, strike-through,
-zoom ceiling) touches no rule and can never affect a record; every visual option is shown as a real
-board, or for the interface a copy of the HUD. The gameplay half is seven dials that do change the
-rules (HP, Full Run regen, creature damage, mana regen, mana per creature, how Sweep is gated, Time
-Attack). Settings that make the game harder record normally; anything easier than the tuned game
-records no clear, no unlock and no best time, and the game says so live.
+font, interface font, sound pack, glow after a fight, board-clear effect, text size, cursor
+highlight, strike-through, zoom ceiling) touches no rule and can never affect a record; every
+visual option is shown as a real board, or for the interface a copy of the HUD. The gameplay half
+is seven dials that do change the rules (HP, Full Run regen, creature damage, mana regen, mana per
+creature, how Sweep is gated, Time Attack). Settings that make the game harder record normally;
+anything easier than the tuned game records no clear, no unlock and no best time, and the game says
+so live.
 
 **Game types.** 24 ladders of ten tuned boards, each with a scaling continuation past board 10
 (689 boards in all) and a Full Run (all ten on one HP pool).

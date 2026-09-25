@@ -98,7 +98,8 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - Every ladder has a bundled typeface (twenty-four, plus Atkinson Hyperlegible Next for anyone who
   wants the easiest one, plus Griffy for the title alone). Latin woff2 files in `src/ui/fonts/`,
   licences in `public/FONT-LICENSES.txt`, `@font-face` in `fonts.css`. `test/fonts.test.ts` checks
-  all of it, and that every ladder's face is its own (see issue #5).
+  all of it, and that every ladder names a bundled face, which two ladders may share (decision
+  0031).
 - A face must have lining figures; Georgia's old-style figures made numbers jump. Check a
   candidate's OS/2 metrics with fontTools: Aladin and Gluten misstate cap height
   (`capHeightFix`) and Aladin its x-height (`exHeightFix`).
