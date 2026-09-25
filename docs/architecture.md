@@ -74,6 +74,11 @@ src/sim/        headless measurement, all driving the real engine (see docs/tuni
   solver.ts       the complete deducer, the floor under the honest player's forced guesses
   search.ts       the complete deducer's search: bounds propagation, tier counts, one layout
   autoplay.ts     the omniscient tier-order player that proves the zero-damage guarantee
+  graded.ts       the graded player: a person's tricks up to a grade, one pass at a time, and
+                  what each board demanded (Milestone 4, docs/human-tuning-plan.md)
+  reader.ts       what the graded player can see, and the sum arithmetic its tricks share
+  tricks.ts       the tricks: one technique per entry of docs/strategies.md, at its grade
+  scaffold.ts     a dungeon's corridors, doorways and pockets, read off the silhouette
   cli/            one command-line entry per measurement, run on import
 src/data.ts     Node-only loader for ladders.json; CS_LADDERS points it at a candidate file
 src/main.ts     browser entry; window.cs in dev
