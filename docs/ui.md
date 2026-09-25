@@ -138,7 +138,7 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - The sound check (a button under the Sound effects gallery) plays any pack's sound through
   `Sfx.audition`, which ignores the chosen pack and the throttle but not mute. Keys assigned there
   play only while its window is open, and last for the session; they are never saved. Its keyboard
-  (C2 to C7, equal temperament) retunes the last sound clicked: every voice is scaled by one
+  (C2 to C7, equal temperament) retunes the last sound clicked or played by its key: every voice is scaled by one
   factor, so the first lands on the chosen note and the rest keep their intervals. Session-only,
   and never heard in play. Clicking the keyboard hands the computer's keys to it (A to K the white
   keys, the row above the black, Z and X the octave); Shift pressed and released alone swaps

@@ -447,7 +447,11 @@ class SoundCheck {
     if (!sound) return;
     take(e);
     // A held key repeats, and a sound check is one sound per press.
-    if (!e.repeat) this.play(sound);
+    if (e.repeat) return;
+    this.play(sound);
+    // It selects the sound as a click on its button would, so the keyboard below tunes it.
+    this.tuning = sound;
+    this.sync();
   }
 
   private keyUp(e: KeyboardEvent): void {
