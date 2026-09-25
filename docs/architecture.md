@@ -17,7 +17,8 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
     registry.ts     SHAPES, keyed by every BoardShape; shapeRule()
     fixed.ts        the per-cell predicates: rect, donut, cross, diamond
     cave.ts         the ragged cave generator
-    dungeon.ts      the dungeon map: rooms, one-cell hallways, doorways and their pockets
+    floorplan.ts    the dungeon's floor plan: rooms, and one-cell hallways between them
+    dungeon.ts      the dungeon map: the budget spent exactly, doorways and their pockets
   generate.ts     dealing the creatures: shape, then placement rule, then numbers
   opening.ts      choosing the opening
   notes.ts        pencil marks as a bitmask
