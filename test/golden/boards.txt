@@ -1,4 +1,4 @@
-$ src/sim/cli.ts 3
+$ src/sim/cli/boards.ts 3
 
 === EASY === ladder 1-10, scaling 11-34
  bd     grid  creat.  opening  worst  cleared  hp lost  max lv

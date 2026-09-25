@@ -1,7 +1,7 @@
 /**
  * What density does a hex board need to play like a square one?
  *
- *   npx tsx src/sim/topology.ts [trials]
+ *   npx tsx src/sim/cli/topology.ts [trials]
  *
  * A blank cell is one whose neighbours are all empty. On a square board that
  * is eight coin flips; on a hex board only six. So at equal density a hex
@@ -9,8 +9,8 @@
  * measures the gap and reports the density that closes it.
  */
 
-import { Game } from '../engine/game.js';
-import type { BoardConfig, Topology, Wrap } from '../engine/types.js';
+import { Game } from '../../engine/game.js';
+import type { BoardConfig, Topology, Wrap } from '../../engine/types.js';
 
 const TRIALS = Number(process.argv[2] ?? 120);
 

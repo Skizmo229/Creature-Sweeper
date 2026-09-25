@@ -19,9 +19,9 @@
  * regression gate on the run rules the same way `sim` is on the ladders.
  */
 
-import { loadLadders } from '../data.js';
-import { FullRun } from '../engine/run.js';
-import { autoplaySearch, autoplayTierOrder } from './autoplay.js';
+import { loadLadders } from '../../data.js';
+import { FullRun } from '../../engine/run.js';
+import { autoplaySearch, autoplayTierOrder } from '../autoplay.js';
 
 const runs = Number(process.argv[2] ?? 20);
 const ladders = loadLadders();

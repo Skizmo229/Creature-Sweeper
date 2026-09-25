@@ -23,6 +23,43 @@ def rows(t):
     return t["boards"] + t["extended"]
 
 
+class TheSchema(unittest.TestCase):
+    """`load_types` refuses a schedule file that would build a board nobody tuned."""
+
+    def refuses(self, edit, message):
+        import os
+        import tempfile
+
+        src = (L.HERE / "ladder_types.toml").read_text(encoding="utf-8")
+        bad = edit(src)
+        self.assertNotEqual(bad, src, "the edit must change the file")
+        with tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False, encoding="utf-8") as f:
+            f.write(bad)
+        try:
+            with self.assertRaisesRegex(ValueError, message):
+                L.load_types(f.name)
+        finally:
+            os.unlink(f.name)
+
+    def test_a_missing_field(self):
+        self.refuses(
+            lambda s: s.replace('axis = "The classic game"\n', "", 1),
+            r"normal: missing \['axis'\]",
+        )
+
+    def test_an_unknown_field(self):
+        self.refuses(
+            lambda s: s.replace('id = "normal"', 'id = "normal"\nlocks = [2]', 1),
+            r"normal: missing \[\], unknown \['locks'\]",
+        )
+
+    def test_a_schedule_that_is_not_ten_long(self):
+        self.refuses(
+            lambda s: s.replace("lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]", "lock = [2, 2, 3]", 1),
+            r"normal: lock has 3 entries",
+        )
+
+
 class Apportioning(unittest.TestCase):
     def test_distribute_lands_the_total_and_leaves_no_tier_empty(self):
         for total in (6, 17, 100, 333):

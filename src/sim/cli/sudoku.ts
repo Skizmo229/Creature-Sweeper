@@ -22,17 +22,17 @@
  * Run: npm run sim:sudoku [boards-per-rung]
  */
 
-import { loadLadders } from '../data.js';
-import { boardConfig, findType } from '../engine/config.js';
-import { Game } from '../engine/game.js';
-import { mulberry32 } from '../engine/rng.js';
+import { loadLadders } from '../../data.js';
+import { boardConfig, findType } from '../../engine/config.js';
+import { Game } from '../../engine/game.js';
+import { mulberry32 } from '../../engine/rng.js';
 import {
   SUDOKU_SIZE,
   clearableWithoutGuessing,
   sudokuCeiling,
   sudokuDeduction,
   sudokuSolution,
-} from '../engine/placement/sudoku.js';
+} from '../../engine/placement/sudoku.js';
 
 const perRung = Number(process.argv[2] ?? 20);
 const ladders = loadLadders();

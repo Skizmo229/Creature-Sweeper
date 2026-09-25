@@ -1,4 +1,4 @@
-$ src/sim/lethal.ts 3 extreme
+$ src/sim/cli/lethal.ts 3 extreme
 
 EXTREME, 3 seeds a board — perfect deduction, safest guessing
 

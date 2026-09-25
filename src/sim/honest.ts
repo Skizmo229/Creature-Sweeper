@@ -3,11 +3,11 @@
  * and when deduction runs out either spends mana or takes a guess and eats the
  * damage.
  *
- * It lives apart from `spellvalue.ts` because that file is a CLI that runs at
- * import, and more than one measurement needs the same player — a second copy
- * of it would be the `design/opening.py` failure over again. `spellvalue.ts`
- * measures spells with it; `forced.ts` measures how many of its forced guesses
- * a complete deducer would not have needed.
+ * A library, like `solver.ts` and `autoplay.ts`: the command-line measurements
+ * in `cli/` run on import and share this one player, because a second copy of
+ * it would drift. `cli/spellvalue.ts` measures spells with it; `cli/forced.ts`
+ * measures how many of its forced guesses a complete deducer would not have
+ * needed.
  */
 
 import type { Game } from '../engine/game.js';
@@ -28,6 +28,21 @@ import { placementRule } from '../engine/placement/registry.js';
  * event the fight itself emits, which says exactly what it spared.
  */
 export type Policy = 'none' | 'reveal' | 'census' | 'census-best' | 'exercise' | 'workout' | 'gym';
+
+/**
+ * The policies that measure each spell, keyed by every spell, so a new one cannot be added without
+ * saying how it is measured. Declaration order is the order the measurements print. WORKOUT's
+ * `workout` and `gym` are Exercise under that ladder's own rule and are measured on their own.
+ */
+export const SPELL_POLICIES: Readonly<Record<SpellId, readonly Policy[]>> = {
+  reveal: ['reveal'],
+  // `census-best` casts where the count demonstrably unlocks something: what Census is worth
+  // when aimed perfectly, against `census`, aimed by judgement.
+  census: ['census', 'census-best'],
+  exercise: ['exercise'],
+  // Not measured yet: the honest player has no policy for it, though ORACLE offers it.
+  beacon: [],
+};
 
 export interface Run {
   cleared: boolean;

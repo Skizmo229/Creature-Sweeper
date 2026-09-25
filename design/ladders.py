@@ -7,7 +7,8 @@ using the tuning identity found in mamono sweeper's own data:
     the top `lock` thresholds are exactly C_k (full-tier-clear gates)
     the rest are alpha_k * C_k, alpha ramping from alpha0 up to 0.70
 """
-import json, math
+import json, math, tomllib
+from dataclasses import dataclass
 
 from pathlib import Path
 
@@ -173,622 +174,37 @@ def damage(L, E):
 
 
 # ---------- per-type ladder schedules ---------------------------------------
-# Each entry is a 10-long list: one value per board.
+# The schedules live in ladder_types.toml, one [[type]] per ladder, with the schema written out at
+# its top. This is the schema enforced: a typo or a short schedule fails here, naming the ladder,
+# rather than as a board that quietly is not the one that was tuned.
 
-TYPES = [
-    dict(
-        id="easy", name="EASY", tint="#b3ab1e", archetype="descending",
-        axis="Gentle boards to learn on",
-        blurb="Start here. Sparse boards that grow a little each time, so you can learn how the "
-              "numbers add up before anything gets crowded.",
-        size=[(16,16),(18,16),(20,16),(22,16),(24,16),(24,18),(26,18),(28,18),(28,20),(30,20)],
-        tiers=[5]*10,
-        density=[.117,.126,.134,.143,.151,.160,.169,.177,.186,.195],
-        hp=[10]*10,
-        lock=[2]*10,
-        alpha0=[.70,.68,.66,.64,.62,.60,.58,.56,.54,.52],
-        boss=None,
-        # No Sweep here. EASY is where the sum rule is learned, and a button
-        # that reads the numbers for you takes away the one thing it is for.
-        sweep=False,
-    ),
-    dict(
-        id="normal", name="NORMAL", tint="#8a5a12", archetype="descending",
-        axis="The classic game",
-        blurb="The classic game: five tiers on a 30x16 board. Creatures pack in tighter for five "
-              "boards, then the board itself starts to grow.",
-        size=[(30,16)]*5+[(32,17),(34,18),(36,19),(38,20),(40,20)],
-        tiers=[5]*10,
-        density=[.206,.213,.220,.227,.234,.241,.248,.256,.263,.270],
-        hp=[10]*10,
-        lock=[2,2,2,2,2,3,3,3,3,3],
-        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
-        boss=None,
-    ),
-    dict(
-        id="extreme", name="EXTREME", tint="#3b28d6", archetype="flat",
-        axis="Strong creatures everywhere",
-        blurb="Strong creatures are as common as weak ones, so no number is safe to assume. Boards "
-              "pack tighter and HP falls from 10 to 8.",
-        size=[(30,16)]*4+[(32,18)]*3+[(34,20)]*3,
-        tiers=[5]*10,
-        density=[.260,.269,.278,.287,.296,.304,.313,.322,.331,.340],
-        hp=[10,10,10,10,9,9,9,8,8,8],
-        lock=[2,2,2,2,3,3,3,3,4,4],
-        alpha0=[.400,.389,.378,.367,.356,.344,.333,.322,.311,.300],
-        boss=None,
-    ),
-    dict(
-        id="arcane", name="ARCANE", tint="#2aa39a", archetype="descending",
-        axis="Magic: Reveal and Census",
-        blurb="Magic arrives. Earn mana by exploring and fighting, then spend it on Reveal and Census "
-              "when deduction runs out. Boards run denser to match.",
-        size=[(30,16)]*3+[(32,17)]*2+[(34,18)]*2+[(36,19)]*2+[(38,20)],
-        tiers=[5]*10,
-        density=[.265,.274,.283,.292,.301,.310,.319,.328,.337,.345],
-        hp=[10]*10,
-        lock=[2,2,2,2,2,3,3,3,3,3],
-        alpha0=[.320,.311,.302,.293,.284,.276,.267,.258,.249,.240],
-        boss=None,
-        spells=["reveal", "census"],
-        start_mana=75,
-    ),
-    dict(
-        id="oracle", name="ORACLE", tint="#7e5bd6", archetype="flat",
-        axis="Every spell, little HP",
-        blurb="Six tiers, all equally common, and only 8 HP falling to 6. Every spell is on offer - "
-              "Census, Reveal, Exercise and Beacon - and you will need them.",
-        size=[(32,18)]*3+[(34,19)]*2+[(36,20)]*2+[(38,21)]*2+[(40,22)],
-        tiers=[6]*10,
-        density=[.258,.266,.274,.282,.290,.298,.306,.314,.322,.330],
-        hp=[8,8,8,8,7,7,7,7,6,6],
-        lock=[3,3,3,4,4,4,5,5,5,5],
-        alpha0=[.180,.174,.168,.162,.156,.150,.144,.138,.132,.126],
-        boss=None,
-        spells=["reveal", "census", "exercise", "beacon"],
-        start_mana=75,
-    ),
-    dict(
-        id="checker", name="CHECKERBOARD", tint="#4f5d75", archetype="descending",
-        axis="Tiers split by square colour",
-        # Six tiers rather than five, and that is the one structural choice
-        # here. The parity split has to be even for the balance promise to
-        # leave the distribution alone: at five tiers three of them are odd and
-        # two are even, so the even pair would carry half the board between
-        # them and the curve would buckle. At six it is three against three and
-        # the archetype's own shape survives nearly intact.
-        blurb="Even tiers stand only on light squares, odd tiers only on dark; empty ground can be "
-              "anywhere. Light neighbours always add up to an even number, so whether a number is odd "
-              "or even is decided by its dark neighbours alone.",
-        placement="checker",
-        # Even cell counts throughout, or one colour gets a square more than
-        # the other. Every width here is even, which is enough on its own.
-        size=[(30,16)]*3+[(32,17)]*2+[(34,18)]*2+[(36,19)]*2+[(38,20)],
-        tiers=[6]*10,
-        # Measured, not inherited, and the one number here that had to be.
-        # The colour rule is a large, constant, free read -- so at NORMAL's own
-        # schedule (25.0-33.0%) the honest player from `sim:spells` was cornered
-        # 0.0 times on board 1 and 0.6 on board 10 and cleared every board of
-        # the ladder, which is a ladder with nothing in it. Walking the density
-        # up until the curve matched HIVE's, the other variant that compensates
-        # for an easier board by packing it, lands here: 0.3 forced guesses
-        # rising to 2.9, against HIVE's 0.3 to 2.8 and CROSS's 0.3 to 2.4.
-        #
-        # It runs past the 34% the rest of the game treats as the point a board
-        # stops being a puzzle, and that ceiling is the reason this is the only
-        # dial that moved. 34% was measured on boards where a covered cell
-        # could be ANY tier; here its colour has already ruled out half of them,
-        # so the same density carries about half the ambiguity. HIVE (35%) and
-        # ARCANE (34.5%) already sit past it for smaller versions of the same
-        # reason.
-        #
-        # One difference from HIVE is worth keeping: the clear rate falls much
-        # more slowly -- 92% of board 10 against HIVE's 80% -- because a guess
-        # on this board is a guess whose parity you already know, so it is
-        # cheaper. More guesses, each worth less. That is DUNGEON's doorway
-        # finding again, arrived at from a completely different direction.
-        density=[.275,.287,.299,.312,.324,.336,.348,.361,.373,.385],
-        hp=[10]*10,
-        lock=[2,2,2,2,2,3,3,3,3,3],
-        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
-        boss=None,
-    ),
-    dict(
-        id="pairs", name="PAIRS", tint="#b5482a", archetype="descending",
-        axis="Creatures come in pairs",
-        blurb="Every creature touches exactly one other creature, and no two pairs touch. A beaten "
-              "creature's number is its partner's tier, and once both halves are found the ground "
-              "around them is safe. Boards grow rather than crowd.",
-        placement="pairs",
-        # SIZE IS THE AXIS, and it is the only ladder here where that was
-        # forced rather than chosen. Every other variant compensates for an
-        # easier board by packing it; this one cannot, because its own rule
-        # caps how tightly it can be packed. See the density note below. What
-        # is left is area: deduction on this board is local, so a bigger board
-        # is more places to be cornered, and the honest player's forced guesses
-        # track cells almost linearly where they barely moved with density.
-        size=[(30,16),(32,17),(33,18),(35,19),(36,20),(38,21),(40,22),(41,23),(43,23),(44,24)],
-        tiers=[5]*10,
-        # Bounded at BOTH ends, which is new here, and the ceiling is the
-        # binding one.
-        #
-        # THE CEILING IS STRUCTURAL. Dominoes that may not touch cannot exceed
-        # two cells in every six (33.3%), and a random lay-down jams far below
-        # that -- 24.8-25.6% over 200 seeds across these board sizes. The quota
-        # has to be landed EXACTLY, because C_k assumed it, so the schedule
-        # stops where placement is still reliable rather than where the board
-        # stops being a puzzle. At 26% it places on every seed within 40
-        # restarts; at 28% on one seed in four.
-        #
-        # THE FLOOR WAS A MEASUREMENT AND IT WENT THE OPPOSITE WAY TO THE
-        # GUESS. The rule was expected to give the board away -- sparse,
-        # clustered, big voids. It does the reverse: the exclusion ring around
-        # every pair spreads the creatures EVENLY, and clustering is what makes
-        # a zero-region, so the auto-opening comes out 30-65% SMALLER than a
-        # uniform board of the same density (6.9% against 10.0% at 20.6%), and
-        # cells hiding nothing at all drop from 18.8% to 10.7%.
-        #
-        # So the range left is four points, and inside it density does almost
-        # nothing: measured with the honest player from `sim:spells`, walking
-        # 20% to 25% on a FIXED board moved the forced guesses from 0.0 to 1.5
-        # and left the first six boards at 0.0 -- a ladder with nothing in it,
-        # the same failure ARCANE had before it was retuned. Growing the board
-        # across the same span gives 0.2 rising to 2.1, which is the curve
-        # wanted. Density is still scheduled because it is free to move and
-        # every point helps; it is simply not what carries this ladder.
-        density=[.212,.219,.225,.230,.234,.238,.242,.245,.248,.250],
-        # HP IS NOT A DIAL HERE, and that is worth stating because it looks
-        # like the obvious one. This mode's characteristic gamble is "exactly
-        # one of these k cells holds a tier T, the rest are empty" with T read
-        # straight off a dead creature's number -- so a wrong guess is one
-        # known, lethal blow rather than an accumulation. Measured: the whole
-        # ladder at HP 12 and at HP 14 clears the same share of every board as
-        # at HP 10, to the point. It keeps NORMAL's 10.
-        hp=[10]*10,
-        lock=[2,2,2,2,2,3,3,3,3,3],
-        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
-        boss=None,
-        # The continuation cannot climb density the way every other variant
-        # does -- the packing ceiling binds, not the point a board stops being
-        # a puzzle -- so it is pinned at the tuned ladder's last step and the
-        # schedule grows the board instead, which is the axis anyway.
-        ceiling=dict(density_cap=.250),
-    ),
-    dict(
-        id="dominoes", name="DOMINOES", tint="#d8cfb6", archetype="flat",
-        axis="A double-six domino set",
-        blurb="PAIRS dealt as a double-six domino set: every pairing of tiers 1-6 appears once per "
-              "set, so every tier is equally common. Later boards deal more sets, packed tighter.",
-        placement="dominoes",
-        # SIX TIERS ON EVERY BOARD - a double-six set, the classic one - so the
-        # tier count is not a dial here at all. That leaves exactly two: how
-        # many copies of the set, and how tightly the board packs them.
-        #
-        # Density is the one that matters, and it matters more on this board
-        # than on any other measured so far. With the honest player from
-        # `sim:spells`, four sets at the top cleared board 10 88% of the time
-        # at 22.5% density and 45% at 25% - a steeper cliff than any ladder in
-        # the game, because a flat six-tier set makes every forced guess as
-        # likely to land on a tier 6 as a tier 1. The set COUNT barely moved
-        # it: topping out at three, four or five sets all collapsed at 25%.
-        # So the band runs 18.5% to 23.5%, well under the packing ceiling, and
-        # the ceiling is left to the scaling boards.
-        #
-        # Measured over 60 seeds a board: 0.1 forced guesses rising to 2.2,
-        # 98% cleared falling to 70%. Harder than PAIRS's 83%, which is right
-        # for the ladder you reach by clearing PAIRS.
-        tiers=[6]*10,
-        sets=[1,1,2,2,2,3,3,3,4,4],
-        # Derived, not hand-picked: each is the board nearest the target
-        # density at a sane aspect. The creature count comes in whole sets, so
-        # between one set count and the next the ONLY way to raise density is
-        # a smaller board - boards 6 to 8 hold the same 126 creatures on 594
-        # cells shrinking to 561. It is the one ladder in the game that gets
-        # harder by getting smaller.
-        size=[(19,12),(20,11),(27,16),(26,16),(27,15),(33,18),(32,18),(33,17),(35,21),(34,21)],
-        # Not consulted by `board_row` for this type - the set decides the
-        # quantity and the board decides the density. The continuation reads
-        # it, though: each scaling board adds a set and carries this schedule
-        # on toward the packing ceiling, which is where the opt-in boards live.
-        density=[0.185,0.1906,0.1961,0.2017,0.2072,0.2128,0.2183,0.2239,0.2294,0.235],
-        hp=[10]*10,
-        lock=[2,2,2,2,2,3,3,3,3,3],
-        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
-        boss=None,
-        ceiling=dict(density_cap=.250),
-    ),
-    dict(
-        id="workout", name="WORKOUT", tint="#0b7285", archetype="descending",
-        axis="Exercise, over and over",
-        blurb="NORMAL's boards with deeper level gates and one spell: Exercise, which fights your next "
-              "battle a level higher and pays double EXP if you win. It starts at 30 mana and costs 10 "
-              "more each cast; every level-up takes 10 back off.",
-        # NORMAL's sizes, so the only things that differ are the ones this
-        # ladder is about.
-        size=[(30,16)]*5+[(32,17),(34,18),(36,19),(38,20),(40,20)],
-        tiers=[5]*10,
-        # Measured with the honest player from `sim:spells`, 40 seeds a board.
-        # At NORMAL's own density the deeper lock barely registered on boards
-        # 1-5 and the player cast Exercise once or twice a board, spending a
-        # tenth of its mana - nothing for the spell to do. Two points denser,
-        # with the full lock from board 4, gives 0.1 forced guesses rising to
-        # 5.7 spell-less, and clears 100% falling to 85% casting Exercise at
-        # each forced guess - mean 96.6% over the ten against NORMAL's 98.8%
-        # (spell-less, same player). "A little harder than NORMAL" was the
-        # brief, and that is what this is.
-        #
-        # What the measurement said about the double EXP, which is worth
-        # knowing before tuning on it: very little. A player who also farms it
-        # - takes every named creature at or one past its level on a charge
-        # whenever the price is back at 30 - casts about five times a board
-        # rather than two and clears the same share. The cheap casts are rationed
-        # by level-ups, and a five-tier board has four of them. The spell earns
-        # its clear rate by making forced guesses survivable, as it does on
-        # ORACLE and DUNGEON; the EXP is what makes casting it feel good.
-        density=[.226,.233,.240,.247,.254,.261,.268,.276,.283,.290],
-        hp=[10]*10,
-        # Deeper than NORMAL's 2-3, and this is the dial the mode is built on.
-        # A locked gate is "kill every creature at or below this tier", so it
-        # holds your level down, and a level held down is what makes the fight
-        # one tier up come round often - the exact fight Exercise makes free.
-        # Double EXP is the way over the wall: a kill made on a borrowed level
-        # pays twice, so a gate can be reached before its tier is cleared.
-        # 4 is the most a five-tier board has: every threshold a C_k gate.
-        lock=[3,3,3,4,4,4,4,4,4,4],
-        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
-        boss=None,
-        spells=["exercise"],
-        # One Exercise exactly, the same reasoning as 75 being one Reveal.
-        start_mana=30,
-        # Exercise here costs `base`, `step` more each cast, and `relief` less
-        # for each level gained, never below `base`. A kill made on a borrowed
-        # level pays `exp_multiplier` times its EXP. All of it resets with the
-        # board, as mana does.
-        workout=dict(base=30, step=10, relief=10, exp_multiplier=2),
-    ),
-    dict(
-        id="packs", name="PACKS", tint="#58687c", archetype="flat",
-        axis="Packs of one of every tier",
-        blurb="Creatures travel in packs of six - one of every tier, all touching - and no two packs "
-              "touch. Whatever a pack has not shown yet is all that can hide beside it; a complete "
-              "pack is ringed by empty ground.",
-        placement="packs",
-        # DENSITY IS THE AXIS, and the board grows a little every step as well
-        # -- not for difficulty but for granularity. Creatures come in packs of
-        # six, so on a 480-cell board one pack is 1.25 density points, and a
-        # schedule held on one size rounded neighbouring boards to the SAME
-        # board. Growing a column or a row each step gives every board its own
-        # pack count.
-        #
-        # Measured with the honest player from `sim:spells`, taught the pack
-        # rule, 120 seeds a board: 0.2 forced guesses rising to 5.2, 99%
-        # cleared falling to 70% -- DOMINOES's 70% at the top, the other ladder
-        # you reach by clearing PAIRS.
-        #
-        # Two things about how it got here. First guess was NORMAL-plus-a-bit
-        # (26-34%), because packs leave so much ground open; it cleared 35% of
-        # board 10 at 7.2 forced guesses. The flat curve is what that missed: a
-        # tier 6 is as common as a tier 1, so an open board is still an
-        # expensive one to guess on. Second, the guess count here runs well
-        # ahead of the clear rate -- 5.2 guesses against DOMINOES's 2.2 at the
-        # same 70% -- which is the CHECKERBOARD and DUNGEON signature again: a
-        # guess beside a pack is capped by the tiers that pack has not shown,
-        # so it is a cheaper guess. More guesses, each worth less.
-        size=[(30,16),(30,16),(31,16),(31,17),(32,17),(33,17),(33,18),(34,18),(35,19),(36,19)],
-        tiers=[6]*10,
-        density=[.230,.240,.250,.260,.270,.280,.290,.300,.310,.320],
-        hp=[10]*10,
-        lock=[2,2,2,2,2,3,3,3,3,3],
-        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
-        boss=None,
-    ),
-    dict(
-        id="congo", name="CONGO LINE", tint="#c2410c", archetype="flat",
-        axis="Lines of one of every tier",
-        blurb="Creatures dance in lines of six - one of every tier, stepping up, down, left or right, "
-              "never bunched into a 2x2 - and the tier 6 always leads. No two lines touch. A line can "
-              "only carry on from its ends, so the ground around a half-found line is mostly empty.",
-        placement="congo",
-        # PACKS with a shape and an order imposed, so it starts from PACKS's
-        # schedule and is measured from there. See the tuning note below.
-        size=[(30,16),(30,16),(31,16),(31,17),(32,17),(33,17),(33,18),(34,18),(35,19),(36,19)],
-        tiers=[6]*10,
-        density=[.230,.240,.250,.260,.270,.280,.290,.300,.310,.320],
-        hp=[10]*10,
-        lock=[2,2,2,2,2,3,3,3,3,3],
-        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
-        boss=None,
-        # Just under the 34% the lines can be laid down at, because the
-        # continuation rounds creatures to whole lines and 34% of 740 cells
-        # rounds to 34.1%.
-        ceiling=dict(density_cap=.335),
-    ),
-    dict(
-        id="hive", name="HIVE", tint="#a8324f", archetype="descending",
-        axis="Hexagonal cells",
-        blurb="Hexagons: six neighbours instead of eight. Numbers run lower and blank areas open "
-              "wider, so the boards are packed denser to make up for it.",
-        size=[(30,16)]*3+[(32,17)]*2+[(34,18)]*2+[(36,19)]*2+[(40,20)],
-        tiers=[5]*10,
-        density=[.260,.270,.280,.290,.300,.310,.320,.330,.340,.350],
-        hp=[10]*10,
-        lock=[2,2,2,2,2,3,3,3,3,3],
-        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
-        boss=None,
-        topology="hex",
-    ),
-    dict(
-        id="wraparound", name="WRAPAROUND", tint="#1d6a9e", archetype="descending",
-        axis="No edges, no corners",
-        blurb="NORMAL's boards with every edge joined - off the right is the left, off the top is the "
-              "bottom. There are no edges or corners to work in from.",
-        size=[(30,16)]*5+[(32,17),(34,18),(36,19),(38,20),(40,20)],
-        tiers=[5]*10,
-        density=[.206,.213,.220,.227,.234,.241,.248,.256,.263,.270],
-        hp=[10]*10,
-        lock=[2,2,2,2,2,3,3,3,3,3],
-        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
-        boss=None,
-        wrap="both",
-    ),
-    dict(
-        id="donut", name="DONUT", tint="#b06a1d", archetype="descending",
-        axis="A ring with a hole",
-        blurb="A ring with a hole in the middle, so there are two rims to work in from. Reveal and "
-              "Census available.",
-        size=[(30,16)]*3+[(34,18)]*2+[(36,19)]*2+[(38,20)]*2+[(40,21)],
-        tiers=[5]*10,
-        density=[.230,.238,.246,.254,.262,.270,.278,.286,.294,.302],
-        hp=[10]*10,
-        lock=[2,2,2,2,2,3,3,3,3,3],
-        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
-        boss=None,
-        shape="donut", shape_param=5,
-        spells=["reveal", "census"],
-        start_mana=75,
-    ),
-    dict(
-        id="cross", name="CROSS", tint="#4a8f3a", archetype="descending",
-        axis="Four narrow arms",
-        blurb="Four narrow arms around a hub. Each arm is nearly all edge and plays like its own "
-              "small puzzle. Reveal and Census available.",
-        size=[(26,22)]*3+[(28,24)]*2+[(30,26)]*2+[(32,28)]*2+[(34,30)],
-        tiers=[5]*10,
-        # Retuned for its spells: the schedule was derived for a spell-less
-        # board, and magic is what ARCANE runs denser for. Measured with the
-        # honest player, 60 seeds a board: the old schedule was cornered 13.1
-        # times over the ladder and cleared 94%, against ARCANE's 24.0 and 82%.
-        # 2.5 points up brings it to 21.8 and 89%, and board 10 to 5.0 stuck
-        # and 63% cleared, against ARCANE's 5.1 and 63%. No single shift
-        # matches both: CROSS's guesses are cheaper (an arm is nearly all rim),
-        # so matching the clear rate would overshoot the guesses. Tops out at
-        # 33.3%.
-        density=[.260,.268,.276,.284,.292,.300,.308,.316,.324,.332],
-        hp=[10]*10,
-        lock=[2,2,2,2,2,3,3,3,3,3],
-        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
-        boss=None,
-        shape="cross", shape_param=8,
-        spells=["reveal", "census"],
-        start_mana=75,
-    ),
-    dict(
-        id="wrapped_cross", name="WRAPPED CROSS", tint="#2f8f7e", archetype="descending",
-        axis="A cross whose arms loop",
-        # Joining the arm tips makes the board EASIER, which is the opposite of
-        # what wrapping does to a rectangle and the only interesting thing
-        # about this ladder. WRAPAROUND is harder than NORMAL because it
-        # deletes the free rim a sweeper player braces against. A cross has
-        # almost nothing but rim, so it loses very little of that -- and what
-        # it gains is bigger: CROSS is four dead-end corridors sharing a hub,
-        # and joining the tips turns them into two loops, so a player stuck at
-        # one tip can work in from the other. Same argument as DUNGEON's
-        # walls, pointed the other way: what sets the forced-guess count is
-        # how many separate puzzles the board is cut into.
-        #
-        # Measured with the honest player from `sim:spells`, 25 seeds a board,
-        # at CROSS's own schedule: 0.0-2.3 forced guesses a board against
-        # CROSS's 0.3-2.4, and 92% of board 10 cleared against 80%. So the
-        # schedule is CROSS's shifted up 1.2 density points, which puts it back
-        # on CROSS's curve: 0.1-2.7 guesses and 84% cleared. It tops out at
-        # 31.9%, still inside the 34% the rest of the game treats as the point
-        # a board stops being a puzzle.
-        #
-        # CROSS then moved 2.5 points up for its spells, and this moved with
-        # it, keeping the 1.2 between them. Re-measured at 60 seeds rather than
-        # assumed: 21.7 stuck points over the ladder against CROSS's 21.8, so
-        # it is still on CROSS's curve, clearing 84% against 89%. The price is
-        # the opening boards, 1.3-1.9 stuck against CROSS's 0.9-1.2 -- joined
-        # tips cost the most where the board is small. Tops out at 34.4%, past
-        # 34 by as much as ARCANE's own 34.5.
-        blurb="A cross with opposite arm tips joined, turning four dead ends into two loops - stuck "
-              "at one end, work in from the other. Reveal and Census available.",
-        size=[(26,22)]*3+[(28,24)]*2+[(30,26)]*2+[(32,28)]*2+[(34,30)],
-        tiers=[5]*10,
-        density=[.272,.280,.288,.296,.304,.312,.320,.328,.336,.344],
-        hp=[10]*10,
-        lock=[2,2,2,2,2,3,3,3,3,3],
-        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
-        boss=None,
-        shape="cross", shape_param=8,
-        wrap="both",
-        spells=["reveal", "census"],
-        start_mana=75,
-    ),
-    dict(
-        id="diamond", name="DIAMOND", tint="#8f3fa0", archetype="descending",
-        axis="Stepped diamond edges",
-        blurb="A diamond-shaped board. Its stepped edges give you more edge cells to read from than a "
-              "straight rim. Reveal and Census available.",
-        size=[(32,18)]*3+[(36,20)]*2+[(40,22)]*2+[(44,24)]*2+[(48,26)],
-        tiers=[5]*10,
-        # Retuned for its spells, the way CROSS was. The old schedule was the
-        # gentlest shaped ladder by a distance -- cornered 10.9 times over the
-        # ladder and clearing 95%, 60 seeds a board, against ARCANE's 24.0 and
-        # 82% -- because the stepped rim is free information at every step.
-        # 4 points up gives 20.1 and 84%, and the complete deducer agrees
-        # (9.5 forced guesses and 92% against ARCANE's 10.7 and 93%). Tops out
-        # at 33.7%.
-        density=[.265,.273,.281,.289,.297,.305,.313,.321,.329,.337],
-        hp=[10]*10,
-        lock=[2,2,2,2,2,3,3,3,3,3],
-        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
-        boss=None,
-        shape="diamond",
-        spells=["reveal", "census"],
-        start_mana=75,
-    ),
-    dict(
-        id="cave", name="RAGGED CAVE", tint="#8a7050", archetype="descending",
-        axis="A new cave every seed",
-        blurb="Tunnels and caverns, a different cave every seed. Almost every cell is near an edge, "
-              "so it reads easily and is packed denser for it. Reveal and Census available.",
-        size=[(38,19),(38,20),(40,20),(42,21),(42,22),(44,23),(44,24),(46,25),(48,25),(50,26)],
-        # Chosen, not measured -- see shape_cells. Held at 40% of the bounding
-        # box: the cave is grown inside a wobbling rim with caverns punched out
-        # of it, and that is about what such a space can hold while still
-        # leaving room for the caverns. Push it higher and the generator keeps
-        # its promises but runs out of places to put a cavern, which costs the
-        # board its character; lower and the cave stops spanning its box.
-        cells=[290,305,320,355,370,405,420,460,480,525],
-        tiers=[5]*10,
-        density=[.245,.253,.261,.269,.277,.285,.293,.301,.309,.317],
-        hp=[10]*10,
-        lock=[2,2,2,2,2,3,3,3,3,3],
-        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
-        boss=None,
-        shape="cave",
-        spells=["reveal", "census"],
-        start_mana=75,
-    ),
-    dict(
-        id="dungeon", name="DUNGEON", tint="#7a5c9e", archetype="descending",
-        axis="Crawl room by room",
-        blurb="Rooms joined by one-cell hallways, new every seed. You may only act within two steps "
-              "of ground you have uncovered. Hallways and doorways are always empty; the creatures "
-              "are all in the rooms. Reveal, Census and Exercise available.",
-        size=[(36,20),(38,20),(38,22),(40,22),(42,22),(42,24),(44,24),(46,26),(48,26),(50,28)],
-        # Chosen, not measured -- see shape_cells. About 40% of the bounding
-        # box, the same share the cave holds: rooms need a wall between them
-        # for the hallways to run down, so a dungeon cannot be packed much
-        # tighter than a cave can.
-        cells=[288,304,332,352,368,404,420,480,500,560],
-        tiers=[5]*10,
-        density=[.130,.145,.160,.175,.190,.205,.220,.235,.250,.265],
-        hp=[10]*10,
-        lock=[2,2,2,2,2,3,3,3,3,3],
-        alpha0=[.300,.291,.282,.273,.264,.256,.247,.238,.229,.220],
-        boss=None,
-        # Measured, not chosen by feel. The cap came down with the schedule
-        # when the crawl rule landed: having to gamble on what is in front of
-        # you rather than on the cheapest square anywhere costs far more HP per
-        # forced guess, so the density a deductive player can still get through
-        # dropped by about a third. 18% is a little past board 10, which leaves
-        # the continuation somewhere to go without walking it off the cliff.
-        ceiling=dict(density_cap=.27),
-        shape="dungeon",
-        # The crawl rule: you may only act within two steps of ground you have
-        # already uncovered, counted through adjacency so it stops at a wall
-        # rather than reaching through one. It is what makes the map unfold
-        # from where you are standing instead of being a plan you read at once,
-        # and it is the reason the rooms being separate puzzles reads as
-        # exploring rather than as being blocked.
-        reach=2,
-        spells=["reveal", "census", "exercise"],
-        start_mana=75,
-    ),
-    dict(
-        id="blind", name="BLIND", tint="#8a8a8a", archetype="descending",
-        axis="No fighting, 1 HP",
-        blurb="No fighting: 1 HP, and any creature ends the board. Win by uncovering every empty "
-              "cell. Tiers rise from five to seven.",
-        size=[(30,16)]*3+[(34,18)]*3+[(38,20)]*2+[(42,22)]*2,
-        tiers=[5,5,5,5,5,6,6,7,7,7],
-        density=[.206,.214,.222,.231,.239,.247,.255,.264,.272,.280],
-        hp=[1]*10,
-        lock=[0]*10,
-        alpha0=[0]*10,
-        boss=None,
-        search=True,
-    ),
-    dict(
-        id="huge", name="HUGE", tint="#1d7a2e", archetype="descending",
-        axis="Nine tiers, huge boards",
-        blurb="Nine tiers on a huge board, with 30 HP falling to 24. The top tier is only one to "
-              "three creatures, and you reach max level just in time to face them.",
-        size=[(50,25),(50,25),(52,26),(52,26),(54,27),(54,27),(56,28),(56,28),(60,30),(60,30)],
-        tiers=[9]*10,
-        density=[.208,.214,.220,.226,.232,.238,.243,.249,.255,.260],
-        hp=[30,30,28,28,26,26,25,25,24,24],
-        lock=[4,4,4,5,5,5,6,6,6,7],
-        alpha0=[.19,.18,.18,.17,.16,.16,.15,.14,.13,.12],
-        boss=[1,1,1,1,2,2,2,2,3,3],
-    ),
-    dict(
-        id="huge_extreme", name="HUGE x EXTREME", tint="#4b2fd6", archetype="flat",
-        axis="The hardest ladder",
-        blurb="The hardest ladder: HUGE's nine tiers, EXTREME's flat spread, and 10 HP. By the end, "
-              "every level-up past the first needs every creature below it cleared.",
-        size=[(50,25),(50,25),(52,26),(52,26),(54,27),(54,27),(56,28),(56,28),(58,29),(58,29)],
-        tiers=[9]*10,
-        # Retuned so board 10 is winnable, which it was not: measured with the
-        # complete deducer from `sim:forced`, a PERFECT player cleared 25% of
-        # board 7 and none of boards 8-10 (20 seeds), because lock 7-8 of 9 on
-        # boards this dense makes the last creature of a tier the one sitting
-        # in a 50/50 over and over. Holding the maximum lock (8) and cutting
-        # density could not fix it short of board 1's density. Lock stops at 7
-        # and density steps back at board 7 to pay for that lock step, landing
-        # boards 7-10 at 65 / 55 / 65 / 60% for a perfect player and board 10 at
-        # 10% for the honest one — the hardest board in the game, but one a
-        # strong player can win.
-        density=[.259,.266,.273,.281,.284,.286,.278,.279,.280,.281],
-        hp=[10,10,10,9,9,9,9,8,8,8],
-        lock=[5,5,5,6,6,6,7,7,7,7],
-        alpha0=[.083,.080,.077,.074,.070,.066,.062,.058,.054,.050],
-        boss=None,
-    ),
-    dict(
-        id="huge_blind", name="HUGE x BLIND", tint="#6e6e6e", archetype="descending",
-        axis="The marathon",
-        blurb="BLIND on the largest boards in the game: nine tiers, 1 HP, no fighting. A test of "
-              "endurance.",
-        size=[(50,25),(50,25),(54,27),(54,27),(56,28),(56,28),(60,30),(60,30),(64,32),(64,32)],
-        tiers=[9]*10,
-        density=[.208,.215,.222,.229,.236,.243,.250,.257,.264,.270],
-        hp=[1]*10,
-        lock=[0]*10,
-        alpha0=[0]*10,
-        boss=[1,1,1,1,2,2,2,2,3,3],
-        search=True,
-    ),
-    dict(
-        id="sudoku", name="SUDOKU", tint="#b45cc9", archetype="flat",
-        axis="Tiers follow Sudoku rules",
-        blurb="A 9x9 board where tiers 0-8 follow Sudoku's rules: each appears once per row, column "
-              "and 3x3 box. The nine empty cells start open, some tiers are given in gold, and every "
-              "board can be solved without guessing.",
-        placement="sudoku",
-        size=[(9, 9)] * 10,
-        tiers=[8] * 10,
-        # Fixed by the rule: nine of each of the eight creature tiers, nine empties.
-        density=[72 / 81] * 10,
-        # Measured: generation cost per board is flat to about 18 givens, 15x at
-        # 16, 45x at 14, and there is no guess-free board at all below about 11.
-        # The schedule stops at 15 because the cost curve turns over there, not
-        # because the boards stop being interesting.
-        givens=[26, 24, 22, 21, 20, 19, 18, 17, 16, 15],
-        hp=[20, 20, 19, 19, 18, 18, 17, 16, 15, 14],
-        # The continuation stops where generation does. Timed: 14 givens costs
-        # 6ms a board, 13 costs 20ms, 12 costs ~100ms, and at 11 the generator
-        # refuses six boards in eight. So 12 is the floor, which gives SUDOKU
-        # one of the shortest continuations - correctly, because the rule took
-        # its other dials away.
-        ceiling=dict(givens_floor=12),
-        lock=[3, 3, 4, 4, 5, 5, 6, 6, 7, 7],
-        alpha0=[.55, .53, .51, .49, .47, .45, .43, .41, .39, .37],
-        boss=None,
-    ),
-]
+REQUIRED = ("id", "name", "tint", "archetype", "axis", "blurb",
+            "size", "tiers", "density", "hp", "lock", "alpha0")
+OPTIONAL = ("boss", "sweep", "spells", "start_mana", "workout", "placement", "sets", "givens",
+            "topology", "wrap", "shape", "shape_param", "cells", "reach", "search", "ceiling")
+# The fields that are one value per board.
+SCHEDULES = ("size", "tiers", "density", "hp", "lock", "alpha0", "boss", "sets", "givens", "cells")
+
+
+def load_types(path=HERE / "ladder_types.toml"):
+    """Every type's schedule, checked against the schema. TOML has no null, so a type without a
+    boss count omits it and reads back as None."""
+    with open(path, "rb") as f:
+        types = tomllib.load(f)["type"]
+    for t in types:
+        where = t.get("id", "a type with no id")
+        missing = [k for k in REQUIRED if k not in t]
+        unknown = [k for k in t if k not in REQUIRED + OPTIONAL]
+        if missing or unknown:
+            raise ValueError(f"{where}: missing {missing}, unknown {unknown}")
+        for k in SCHEDULES:
+            if k in t and len(t[k]) != 10:
+                raise ValueError(f"{where}: {k} has {len(t[k])} entries, one per board is 10")
+        t.setdefault("boss", None)
+    return types
+
+
+TYPES = load_types()
 
 # ---------- boards beyond 10 -------------------------------------------------
 # The tuned ladder is ten boards and stays ten boards. Everything past it is a
@@ -1089,15 +505,47 @@ def carved_room(shape, w, h):
     return (w - 2) * (h - 2)
 
 
-def board_row(t, n, W, H, T, lock, alpha0, hp, density, boss, givens, cells_override,
-              sets=None):
+@dataclass(frozen=True)
+class BoardDials:
+    """One board's dials: entry n of each schedule for the tuned ten, or a row of the
+    continuation. `boss`, `givens`, `cells` and `sets` exist only on the ladders that have them."""
+    n: int
+    size: tuple
+    tiers: int
+    lock: int
+    alpha0: float
+    hp: int
+    density: float
+    boss: int | None = None
+    givens: int | None = None
+    cells: int | None = None
+    sets: int | None = None
+
+    @classmethod
+    def tuned(cls, t, i):
+        """Board i + 1 of a type's tuned ladder."""
+        at = lambda key: t[key][i] if t.get(key) else None
+        return cls(n=i + 1, size=tuple(t["size"][i]), tiers=t["tiers"][i], lock=t["lock"][i],
+                   alpha0=t["alpha0"][i], hp=t["hp"][i], density=t["density"][i],
+                   boss=at("boss"), givens=at("givens"), cells=at("cells"), sets=at("sets"))
+
+    @classmethod
+    def continued(cls, row):
+        """A continuation row from `extend`, numbered later, once it is known to be a new board."""
+        return cls(n=0, **row)
+
+
+def board_row(t, d):
     """One board's row. Shared by the tuned ten and the continuation, because a
     board past 10 is the same kind of object built from the same rules - only
     the schedule feeding it differs."""
+    n, (W, H), T = d.n, d.size, d.tiers
+    lock, alpha0, hp, density, boss, givens, sets = (
+        d.lock, d.alpha0, d.hp, d.density, d.boss, d.givens, d.sets)
     shape = t.get("shape", "rect")
     shape_param = t.get("shape_param", 0)
     if shape in ("cave", "dungeon"):
-        cells = cells_override
+        cells = d.cells
         # The generator keeps a one-cell margin all round and cannot carve
         # more than what is inside it. Caught here, where the schedule is
         # written, rather than on the board.
@@ -1190,107 +638,98 @@ def monotone(boards):
     return boards
 
 
+def tuned_boards(t):
+    """The ten boards of a type's ladder, made monotone."""
+    return monotone([board_row(t, BoardDials.tuned(t, i)) for i in range(10)])
+
+
+def continued_boards(t, boards):
+    """Boards 11..N: the schedules continued past the tuned ten, built by the same `board_row`
+    and made monotone against board 10, so the step off the end of the ladder is a step up like
+    every other."""
+    # Walk the whole schedule horizon, make it monotone, and only THEN
+    # drop the repeats. The order matters: two candidates can differ only
+    # in an alpha-scaled threshold, and monotone() is what lifts the later
+    # one up to the earlier and makes them the same board. Deduplicating
+    # first would let that pair through.
+    candidates = []
+    floor_C = cumulative_exp(boards[-1]["quantity"])
+    for row in extend(t):
+        cand = board_row(t, BoardDials.continued(row))
+        # A board that offers LESS exp than the one before it cannot be a
+        # step up, and its thresholds could not be lifted to match even if
+        # we wanted them to - there would not be the EXP on the board to
+        # meet them. See the module note: a wider CROSS can be a smaller
+        # one, because its arm width depends on the parity of the box.
+        # Only the battle ladders. A search type has no level economy at
+        # all - no thresholds, no gates - so C_k says nothing about its
+        # difficulty, and BLIND's own tuned ten already step C_1 backwards
+        # when the tier count rises and the distribution spreads wider.
+        C = cumulative_exp(cand["quantity"])
+        if not t.get("search", False):
+            if any(C[k] < floor_C[k] for k in range(min(len(C), len(floor_C)))):
+                continue
+            floor_C = C
+        candidates.append(cand)
+    monotone([boards[-1]] + candidates)
+
+    # A step that yields the board we already have is skipped, not treated
+    # as the end: the schedules move at very different rates and a slow one
+    # takes two or three steps to earn a board.
+    extended = []
+    for nxt in candidates:
+        prev = extended[-1] if extended else boards[-1]
+        if {k: v for k, v in nxt.items() if k != "n"} == \
+           {k: v for k, v in prev.items() if k != "n"}:
+            continue
+        nxt["n"] = 11 + len(extended)
+        extended.append(nxt)
+        if len(extended) >= CEILINGS["max_extended"]:
+            break
+    return extended
+
+
+def ladder_record(t, boards, extended):
+    """A type as ladders.json carries it: its identity, rules, unlock gates and boards."""
+    return dict(
+        id=t["id"], name=t["name"], tint=t["tint"], axis=t["axis"],
+        blurb=t["blurb"], archetype=t["archetype"],
+        search=t.get("search", False),
+        postgame=t["id"] in POSTGAME,
+        placement=t.get("placement", "uniform"),
+        spells=t.get("spells", []),
+        start_mana=t.get("start_mana", 0),
+        **({"workout": t["workout"]} if t.get("workout") else {}),
+        **({"sweep": False} if t.get("sweep") is False else {}),
+        topology=t.get("topology", "square"),
+        shape=t.get("shape", "rect"),
+        shape_param=t.get("shape_param", 0),
+        # 0 means the whole board is in reach, which is every type but one.
+        reach=t.get("reach", 0),
+        wrap=t.get("wrap", "none"),
+        # Full Run: one HP pool for the whole 10-board run, taken from
+        # board 1. The per-board HP schedule is ignored in that mode, and
+        # board 1 is the most generous entry in every schedule, so the
+        # ceiling never drops below what a later board was tuned against.
+        run_hp=t["hp"][0],
+        requires=UNLOCKS[t["id"]],
+        # Boards cleared anywhere, counting each once. 0 means no such gate.
+        requires_boards=UNLOCK_BOARDS.get(t["id"], 0),
+        # Full Runs completed on distinct types. 0 means no such gate.
+        requires_runs=UNLOCK_RUNS.get(t["id"], 0),
+        boards=boards,
+        # Boards 11..N. Unlocked by clearing board 10, and deliberately
+        # NOT part of `boards`: the ladder is ten, a Full Run is ten, and
+        # clearing the type is still board 10.
+        extended=extended,
+    )
+
+
 def build():
     out = []
     for t in TYPES:
-        boards = []
-        for n in range(10):
-            W, H = t["size"][n]
-            T = t["tiers"][n]
-            shape = t.get("shape", "rect")
-            shape_param = t.get("shape_param", 0)
-            boards.append(board_row(
-                t, n + 1, W, H, T,
-                lock=t["lock"][n], alpha0=t["alpha0"][n], hp=t["hp"][n],
-                density=t["density"][n],
-                boss=t["boss"][n] if t["boss"] else None,
-                givens=t["givens"][n] if t.get("givens") else None,
-                cells_override=t["cells"][n] if t.get("cells") else None,
-                sets=t["sets"][n] if t.get("sets") else None,
-            ))
-        monotone(boards)
-
-        # The continuation. Built from the same function against continued
-        # schedules, then made monotone against board 10 so the step off the
-        # end of the ladder is a step up like every other.
-        # Walk the whole schedule horizon, make it monotone, and only THEN
-        # drop the repeats. The order matters: two candidates can differ only
-        # in an alpha-scaled threshold, and monotone() is what lifts the later
-        # one up to the earlier and makes them the same board. Deduplicating
-        # first would let that pair through.
-        candidates = []
-        floor_C = cumulative_exp(boards[-1]["quantity"])
-        for row in extend(t):
-            cand = board_row(
-                t, 0, row["size"][0], row["size"][1], row["tiers"],
-                lock=row["lock"], alpha0=row["alpha0"], hp=row["hp"],
-                density=row["density"], boss=row.get("boss"),
-                givens=row.get("givens"), cells_override=row.get("cells"),
-                sets=row.get("sets"),
-            )
-            # A board that offers LESS exp than the one before it cannot be a
-            # step up, and its thresholds could not be lifted to match even if
-            # we wanted them to - there would not be the EXP on the board to
-            # meet them. See the module note: a wider CROSS can be a smaller
-            # one, because its arm width depends on the parity of the box.
-            # Only the battle ladders. A search type has no level economy at
-            # all - no thresholds, no gates - so C_k says nothing about its
-            # difficulty, and BLIND's own tuned ten already step C_1 backwards
-            # when the tier count rises and the distribution spreads wider.
-            C = cumulative_exp(cand["quantity"])
-            if not t.get("search", False):
-                if any(C[k] < floor_C[k] for k in range(min(len(C), len(floor_C)))):
-                    continue
-                floor_C = C
-            candidates.append(cand)
-        monotone([boards[-1]] + candidates)
-
-        # A step that yields the board we already have is skipped, not treated
-        # as the end: the schedules move at very different rates and a slow one
-        # takes two or three steps to earn a board.
-        extended = []
-        for nxt in candidates:
-            prev = extended[-1] if extended else boards[-1]
-            if {k: v for k, v in nxt.items() if k != "n"} == \
-               {k: v for k, v in prev.items() if k != "n"}:
-                continue
-            nxt["n"] = 11 + len(extended)
-            extended.append(nxt)
-            if len(extended) >= CEILINGS["max_extended"]:
-                break
-
-        out.append(dict(
-            id=t["id"], name=t["name"], tint=t["tint"], axis=t["axis"],
-            blurb=t["blurb"], archetype=t["archetype"],
-            search=t.get("search", False),
-            postgame=t["id"] in POSTGAME,
-            placement=t.get("placement", "uniform"),
-            spells=t.get("spells", []),
-            start_mana=t.get("start_mana", 0),
-            **({"workout": t["workout"]} if t.get("workout") else {}),
-            **({"sweep": False} if t.get("sweep") is False else {}),
-            topology=t.get("topology", "square"),
-            shape=t.get("shape", "rect"),
-            shape_param=t.get("shape_param", 0),
-            # 0 means the whole board is in reach, which is every type but one.
-            reach=t.get("reach", 0),
-            wrap=t.get("wrap", "none"),
-            # Full Run: one HP pool for the whole 10-board run, taken from
-            # board 1. The per-board HP schedule is ignored in that mode, and
-            # board 1 is the most generous entry in every schedule, so the
-            # ceiling never drops below what a later board was tuned against.
-            run_hp=t["hp"][0],
-            requires=UNLOCKS[t["id"]],
-            # Boards cleared anywhere, counting each once. 0 means no such gate.
-            requires_boards=UNLOCK_BOARDS.get(t["id"], 0),
-            # Full Runs completed on distinct types. 0 means no such gate.
-            requires_runs=UNLOCK_RUNS.get(t["id"], 0),
-            boards=boards,
-            # Boards 11..N. Unlocked by clearing board 10, and deliberately
-            # NOT part of `boards`: the ladder is ten, a Full Run is ten, and
-            # clearing the type is still board 10.
-            extended=extended,
-        ))
+        boards = tuned_boards(t)
+        out.append(ladder_record(t, boards, continued_boards(t, boards)))
     order = {k: i for i, k in enumerate(MAINLINE + MAGIC + TOPOLOGY + PUZZLE + POSTGAME)}
     out.sort(key=lambda t: order[t["id"]])
     return out

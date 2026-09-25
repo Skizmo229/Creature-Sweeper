@@ -1,9 +1,9 @@
 /**
  * How many of the honest player's forced guesses were really forced.
  *
- *   npx tsx src/sim/forced.ts [seeds]           every battle ladder, one row each
- *   npx tsx src/sim/forced.ts [seeds] oracle    one ladder, board by board
- *   npx tsx src/sim/forced.ts [seeds] oracle 7-10   only those boards
+ *   npx tsx src/sim/cli/forced.ts [seeds]           every battle ladder, one row each
+ *   npx tsx src/sim/cli/forced.ts [seeds] oracle    one ladder, board by board
+ *   npx tsx src/sim/cli/forced.ts [seeds] oracle 7-10   only those boards
  *
  * Every forced-guess figure in CLAUDE.md comes from the honest player in
  * `honest.ts`, which deduces locally — Sweep's bound, exact tiers, pairs of
@@ -30,12 +30,12 @@
  * be zero or nothing above them means anything.
  */
 
-import { loadLadders } from '../data.js';
-import { boardConfig, type LadderType } from '../engine/config.js';
-import { Game } from '../engine/game.js';
-import { placementRule } from '../engine/placement/registry.js';
-import { play, type Run } from './honest.js';
-import { solve } from './solver.js';
+import { loadLadders } from '../../data.js';
+import { boardConfig, type LadderType } from '../../engine/config.js';
+import { Game } from '../../engine/game.js';
+import { placementRule } from '../../engine/placement/registry.js';
+import { play, type Run } from '../honest.js';
+import { solve } from '../solver.js';
 
 interface Row {
   honest: Run[];

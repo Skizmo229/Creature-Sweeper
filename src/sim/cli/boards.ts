@@ -8,10 +8,10 @@
  * tier-order player clears the board without losing a point of HP.
  */
 
-import { loadLadders } from '../data.js';
-import { boardConfig } from '../engine/config.js';
-import { Game } from '../engine/game.js';
-import { autoplaySearch, autoplayTierOrder } from './autoplay.js';
+import { loadLadders } from '../../data.js';
+import { boardConfig } from '../../engine/config.js';
+import { Game } from '../../engine/game.js';
+import { autoplaySearch, autoplayTierOrder } from '../autoplay.js';
 
 const seeds = Number(process.argv[2] ?? 20);
 const ladders = loadLadders();

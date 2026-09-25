@@ -59,6 +59,32 @@ test covers Escape and the Full Run guard, and pins the walkthrough's still-live
 with three `it.fails` tests. `design/test_ladders.py` gives the generator tests of its own, run by
 CI. The hand-built board fixtures three files each kept a copy of are in `test/helpers.ts`.
 
+Phase 6 done on branch `m3-6-data-tooling`. The ladder schedules are `design/ladder_types.toml`
+with a schema `ladders.py` enforces (the JSON regenerates to the same bytes); `board_row` takes one
+`BoardDials` and `build()` is split in three; the spell-value sim reads `SPELL_POLICIES`, keyed by
+every spell (which surfaced that nothing measures Beacon); the command-line sims are in
+`src/sim/cli/`; and `test/docs.test.ts` holds the README and architecture maps to the tree.
+
+**The targets (section 9) as of 24 September 2026:**
+
+| Measure | Target | Now |
+| --- | ---: | ---: |
+| Files to change to add a placement rule | 8 or fewer | 9, with its ladder |
+| Placement branch sites | about 10 | 12 in 5 files, 8 of them in `ladders.py` |
+| Longest function, engine and UI | 100 (warn), 150 (hard) | 142 (`buildGameScreen`) |
+| Largest file, engine and UI | 600 | `app.ts`, 711 non-blank lines |
+| CLAUDE.md | under 150 | 56 |
+| Comment lines describing past behaviour | 0 | 0 |
+| Unreferenced exports | 0, enforced | 0, knip in `npm run check` |
+| CI | the full set | typecheck, lint, knip, format, tests, golden, Python tests, ladders |
+| Files to change to add a spell | 6 or fewer | not re-walked |
+
+What is left for the milestone is phase 2's own bar: eight size warnings in the engine and UI.
+Four files over 600 lines (`app.ts`, `victory.ts`, `shape/dungeon.ts`, `game.ts`) and four
+functions over 100 (`buildGameScreen`, `gameplaySection`, `buildSaveBackup`, `playVictory`). The
+sims carry four more long functions (`solve`, `feasible`, `play`, `main`) and one long file
+(`honest.ts`), which the plan ranks lower.
+
 ---
 
 ## 1. The short version

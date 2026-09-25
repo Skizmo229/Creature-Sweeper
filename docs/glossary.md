@@ -75,7 +75,7 @@ shape, topology, wrap, placement, spells...) plus a seed. Boards are pure functi
 seed).
 
 **Schedule.** A ladder's per-board values for one dial (density, lock, HP, size, alpha0...),
-written as ten-element lists in `design/ladders.py`.
+written as ten-element lists in `design/ladder_types.toml`.
 
 **Density.** Creatures divided by present cells. 34% is the battle ceiling the game treats as
 the point a board stops being a puzzle; a few ladders sit past it for stated reasons.
