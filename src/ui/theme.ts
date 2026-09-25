@@ -11,6 +11,7 @@
  */
 
 import type { SfxPackId, VictoryId, PipShape, TypeTheme } from './looks.js';
+import type { SfxEvent } from './sfx.js';
 
 /** Every creature-icon shape, in the order the picker shows them. */
 export const PIP_SHAPES: readonly PipShape[] = [
@@ -38,6 +39,22 @@ export const SFX_NAMES: Record<SfxPackId, string> = {
   blip: 'Blips — arcade square waves',
   thud: 'Thuds — low and dry',
   glass: 'Glass — bright and brittle',
+};
+
+/** Every sound event, in the order the sound check lays them out. */
+export const SFX_EVENT_NAMES: Record<SfxEvent, string> = {
+  open: 'Open',
+  cascade: 'Cascade',
+  mark: 'Mark',
+  note: 'Note',
+  sweep: 'Sweep',
+  blocked: 'Blocked',
+  kill: 'Kill',
+  battle: 'Hit',
+  levelup: 'Level-up',
+  spell: 'Spell',
+  win: 'Win',
+  lose: 'Lose',
 };
 
 export const VICTORY_NAMES: Record<VictoryId, string> = {

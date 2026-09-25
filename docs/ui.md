@@ -135,6 +135,19 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - Sound is synthesised. The `AudioContext` is built lazily on the first sound and resumed on every
   call; every entry point swallows its own failure; one sound per action, the loudest event wins.
   Muting is not the same as the OFF pack, and the speaker is repainted from `applyPresentation`.
+- The sound check (a button under the Sound effects gallery) plays any pack's sound through
+  `Sfx.audition`, which ignores the chosen pack and the throttle but not mute. Keys assigned there
+  play only while its window is open. Its keyboard (C2 to C7, equal temperament) retunes the last
+  sound clicked or played by its key: every voice is scaled by one factor, so the first lands on
+  the chosen note and the rest keep their intervals. Keys and pitches are saved in the
+  presentation settings (`soundCheck`, sounds named `pack:event`), so a backup code carries them
+  and Reset presentation clears them. The pitches reach the game's own mixer (`Sfx.setPitches`,
+  from `applyPresentation`) only while "Custom pitches in play" is on, which it is not by default. Clicking the keyboard hands the computer's keys to it (A to
+  K the white keys, the row above the black, Z and X the octave); Shift pressed and released alone
+  swaps between that and the assigned keys, and Escape steps back one mode before it closes the
+  window. Its volume slider (0 to 300% of each sound's level) is saved beside them and is passed
+  to `Sfx.audition` alone, so the game's own sounds never hear it. Note names are green, apart
+  from the ladder's accent.
 - Two families of clear effect: ambient (confetti, burst, ripple, sparkle) and icon (tumble,
   cascade, pop, burn, three wipes). Icon effects take the board's glyphs (`VictorySource`),
   pre-rendered per tier into an atlas at twice the cell size, and the board stops drawing them

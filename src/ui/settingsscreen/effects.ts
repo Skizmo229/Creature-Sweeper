@@ -15,7 +15,8 @@ import { type SfxPackId, type VictoryId } from '../looks.js';
 import { playVictory } from '../victory/play.js';
 import { type ScreenContext, typeName } from './context.js';
 import { DEMO_CELL, renderPreview } from './render.js';
-import { type Choice, gallery, wideRow } from './widgets.js';
+import { openSoundCheck } from './soundcheck.js';
+import { type Choice, gallery, row, toggle, wideRow } from './widgets.js';
 
 /**
  * The board-clear demo currently running, if any. Module-level because a screen rebuild throws
@@ -39,11 +40,11 @@ export function stopSettingsDemo(): void {
 
 export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, ident, settings } = ctx;
-  wideRow(
-    host,
-    'Sound effects',
-    'Synthesised rather than sampled — a pack is a table of tones, not a folder of files. ' +
-      'Picking one plays it.',
+  const check = el('button', 'ghost small soundcheck-open', 'Sound check');
+  check.setAttribute('aria-haspopup', 'dialog');
+  check.addEventListener('click', () => openSoundCheck(ctx));
+  const stack = el('div', 'settings-stack');
+  stack.append(
     gallery(
       [
         { value: DEFAULT, label: `Game type default — ${SFX_NAMES[ident.sfx]}` },
@@ -61,6 +62,23 @@ export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
       },
       true,
     ),
+    check,
+  );
+  wideRow(
+    host,
+    'Sound effects',
+    'Synthesised rather than sampled — a pack is a table of tones, not a folder of files. ' +
+      'Picking one plays it. Sound check plays any sound from any pack, and keys can be ' +
+      'assigned to sounds there.',
+    stack,
+  );
+  // Updates only the store, like the sound gallery: nothing on the screen is drawn in terms of it.
+  row(
+    host,
+    'Custom pitches in play',
+    toggle(p.customPitches, (v) => settings.setPresentation({ customPitches: v })),
+    'Sounds you have retuned in the sound check play at their new pitch during games too. Off, ' +
+      'every sound plays at its own pitch, and the sound check keeps your tuning for later.',
   );
 }
 

@@ -1189,6 +1189,209 @@ button.board-card:hover:not(:disabled) {
   text-align: center;
 }
 
+/* The sound check: every pack's sounds as a grid of buttons, in the picker's
+   window. A button wears the keys assigned to it; while a sound is being
+   picked for a key the grid is outlined, and the chosen one lit. */
+button.soundcheck-open {
+  align-self: flex-start;
+}
+.soundcheck-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.soundcheck-status {
+  font-size: 0.78rem;
+  color: var(--tint);
+}
+.soundcheck-volume {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  flex: 0 1 260px;
+}
+.soundcheck-volume .settings-slider {
+  flex: 1;
+}
+.soundcheck-volume .settings-value {
+  min-width: 5ch;
+}
+.soundcheck-pack {
+  margin: 14px 0 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.soundcheck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 6px;
+}
+.soundcheck.choosing .soundcheck-grid {
+  outline: 1px dashed var(--tint);
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+button.soundcheck-sound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 52px;
+  justify-content: center;
+}
+button.soundcheck-sound:active {
+  background: var(--panel);
+}
+button.soundcheck-sound.picking {
+  border-color: var(--tint);
+  box-shadow: inset 0 0 0 1px var(--tint);
+}
+.soundcheck-key {
+  font-size: 0.68rem;
+  color: var(--tint);
+  min-height: 1em;
+}
+button.soundcheck-sound.tuning {
+  background: var(--panel);
+  border-color: var(--tint);
+}
+
+/* The keyboard under the grid, held to the bottom of the window as the packs
+   scroll past, so the sound just clicked can be retuned without scrolling to
+   it. The negative offset and padding match the card's own bottom padding, so
+   nothing shows through below it. Ivory and black because it is a keyboard,
+   whatever the ladder's colours. */
+.soundcheck-pitch {
+  position: sticky;
+  bottom: -20px;
+  margin: 16px -18px -20px;
+  padding: 4px 18px 20px;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+}
+.soundcheck-pitch .soundcheck-pack {
+  margin: 0;
+}
+.soundcheck-pitch .soundcheck-tools {
+  margin: 8px 0;
+}
+.piano-scroll {
+  overflow-x: auto;
+}
+.piano {
+  --white-w: 24px;
+  --black-w: 14px;
+  position: relative;
+  display: flex;
+  width: calc(var(--whites) * var(--white-w));
+  height: 96px;
+}
+button.piano-key {
+  padding: 0;
+  border-radius: 0 0 3px 3px;
+}
+button.piano-key.white {
+  flex: 0 0 var(--white-w);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 4px;
+  background: #ebe6d6;
+  border-color: #3a3a33;
+}
+/* `--at` is how many white keys come before it, so it sits on that seam. */
+button.piano-key.black {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: calc(var(--at) * var(--white-w) - var(--black-w) / 2);
+  width: var(--black-w);
+  height: 60%;
+  background: #1b1b18;
+  border-color: #1b1b18;
+}
+/* Note names are green wherever they appear, apart from the ladder's accent
+   that the keys and states wear: dark on the ivory keys, light on the panel. */
+.piano-label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: #1d7a3a;
+  pointer-events: none;
+}
+.soundcheck-note {
+  color: #5fd37b;
+}
+/* The sound's own pitch wears a dot; the chosen one lights up. */
+button.piano-key.own::after {
+  content: '';
+  position: absolute;
+  bottom: 18px;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: var(--tint);
+}
+button.piano-key.black.own::after {
+  bottom: 6px;
+  left: 50%;
+}
+button.piano-key.white.own::after {
+  left: 50%;
+}
+button.piano-key.chosen {
+  background: var(--tint);
+  border-color: var(--tint);
+}
+button.piano-key.chosen.own::after {
+  background: #1b1b18;
+}
+/* Played from the computer's keys: the panel's edge lights, each key wears the
+   letter that plays it, a held note goes down, and the sounds above rest. */
+.soundcheck-pitch.playing {
+  border-top-color: var(--tint);
+  box-shadow: inset 0 2px 0 var(--tint);
+}
+.soundcheck.resting {
+  opacity: 0.55;
+}
+.piano-letter {
+  position: absolute;
+  left: 0;
+  right: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-align: center;
+  pointer-events: none;
+}
+button.piano-key.white .piano-letter {
+  bottom: 30px;
+  color: #3a3a33;
+}
+button.piano-key.black .piano-letter {
+  bottom: 16px;
+  color: #ebe6d6;
+}
+button.piano-key.white {
+  position: relative;
+}
+button.piano-key.chosen .piano-letter,
+button.piano-key.pressed .piano-letter {
+  color: #1b1b18;
+}
+button.piano-key.pressed {
+  background: var(--tint);
+  border-color: var(--tint);
+  filter: brightness(0.8);
+}
+.piano-scroll.idle button.piano-key:disabled {
+  opacity: 0.45;
+}
+
 /* An interface font's example: two of the HUD's readouts in the face, one
    above the other, at the size the HUD first shipped at, in a box no smaller
    than a thumbnail, so its tiles stand level with the placeholder's. It wears
