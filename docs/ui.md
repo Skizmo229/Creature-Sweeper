@@ -39,9 +39,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   the card's width, so CHECKERBOARD comes down a little at laptop width, and any long word at a
   large text size. A name with a space in it breaks there first.
 - The menus' cards have heavy edges, by request: a 2px border on a game-type card, with an 8px strip
-  of the ladder's colour down its left, and a 2px white outline on a board tile (an outline,
-  because a tile's border carries its state). A hover turns a card's whole edge the ladder's
-  colour, a tile's outline included, and darkens a game-type card's strip so it still stands apart.
+  of the ladder's colour down its left, and a 3px warm-grey edge on a board tile (a 1px border
+  inside a 2px outline of the same colour, because a tile's border carries its state). A hover
+  turns a card's whole edge the ladder's colour, a tile's outline included, and darkens a game-type
+  card's strip so it still stands apart.
 - The settings screen's Back button is pinned to the top of the window, so the way out is always
   in reach however far down the screen is scrolled.
 

@@ -6,8 +6,8 @@
   --panel: #23231b;
   --panel-2: #2e2e24;
   --line: #3b3b2e;
-  /* The outline every board tile carries. White on purpose — see .board-card. */
-  --card-outline: #ffffff;
+  /* The edge every board tile carries, border and outline in one colour — see .board-card. */
+  --card-outline: #7b7265;
   --ink: #ece7d6;
   --muted: #948f7b;
   --tint: #d99a34;
@@ -190,17 +190,16 @@ button.type-card:hover:not(:disabled) {
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 10px;
 }
-/* Every board tile carries a white outline, 2px by request.
-   
-   It is an `outline` rather than a `border` for two reasons. The border is
-   already carrying STATE on these tiles — the tint says cleared, or Full Run,
-   or scaling — so painting it white would have cost the one thing the colour
-   was saying. And the scaling tile is a div rather than a button, so it never
-   picked up the button border at all and had been sitting there with no edge
-   on it; an outline lands on all three kinds without caring what they are.
-   
+/* Every board tile carries a 3px warm-grey edge, by request: a 1px border
+   with a 2px outline around it in the same colour, so the two read as one.
+
+   The outer part is an `outline` because the border carries STATE on these
+   tiles — the tint says cleared, or Full Run, or scaling — and widening it
+   would have made the state shout. The scaling tile is a div rather than a
+   button, so it states its border here rather than inheriting a button's.
+
    Dimming comes for free: a locked tile is already at 0.4 opacity, so its
-   outline dims with it and locked still reads as locked. The focus ring wins
+   edge dims with it and locked still reads as locked. The focus ring wins
    over this without needing to say so, because `button:focus-visible` is the
    more specific selector. */
 .board-card {
@@ -211,6 +210,7 @@ button.type-card:hover:not(:disabled) {
   flex-direction: column;
   gap: 3px;
   position: relative;
+  border: 1px solid var(--card-outline);
   outline: 2px solid var(--card-outline);
 }
 /* A hover colours the whole edge. The button rule turns only the border,
@@ -802,7 +802,7 @@ button.board-card:hover:not(:disabled) {
   border-color: var(--tint);
 }
 .run-card:disabled {
-  border-color: var(--line);
+  border-color: var(--card-outline);
 }
 /* "FULL RUN" where a board card puts one or two digits, so it takes a size
    that fits two words on one line instead of the digit's 1.5rem. */
