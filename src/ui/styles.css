@@ -608,6 +608,34 @@ button.board-card:hover:not(:disabled) {
 }
 
 /*
+ * A board's first clear holds its card back, by request, so the clear effect
+ * plays over the board itself, undimmed and with no card in the middle of it.
+ * Until the hold is up the overlay is clear but still takes the pointer, so
+ * the board cannot be zoomed or panned out from under the effect, and the card
+ * is hidden, so none of its buttons can be pressed unseen; Escape still leaves
+ * the board. Then the dimming and the card fade in together. No timer: leaving
+ * the screen takes the card with it, so there is nothing to cancel.
+ */
+.overlay.held {
+  --hold: 3s;
+  animation: overlay-dim 200ms ease-out var(--hold) both;
+}
+.overlay.held > .overlay-card {
+  animation: overlay-arrive 200ms ease-out var(--hold) both;
+}
+@keyframes overlay-dim {
+  from {
+    background-color: transparent;
+  }
+}
+@keyframes overlay-arrive {
+  from {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/*
  * The rules card is the one overlay carrying prose rather than a score, so it
  * is wider and ranged left — three blocks of centred text is a poster, not
  * something anyone reads. Its body takes the ordinary ink colour and leaves

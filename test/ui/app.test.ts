@@ -189,6 +189,28 @@ describe('the app', () => {
     expect(app.progress.boardRecord('normal', 1).perfect).toBe(true);
   });
 
+  it("holds the card back on a board's first clear, and on nothing else", () => {
+    const held = (): boolean => document.querySelector('.overlay')!.classList.contains('held');
+    const clear = (): void => {
+      autoplayTierOrder(app.current!);
+      app.finish();
+    };
+    app.play('normal', 1, 7);
+    clear();
+    expect(held()).toBe(true);
+    // The save has the clear now, so a replay shows the card at once.
+    app.play('normal', 1, 7);
+    clear();
+    expect(held()).toBe(false);
+    app.play('normal', 2, 7);
+    app.apply(app.current!.forfeit());
+    expect(held()).toBe(false);
+    // Never in a Full Run, even on a board the save has no clear of.
+    app.runFull('easy', 7);
+    clear();
+    expect(held()).toBe(false);
+  });
+
   it('a lost board shows GAME OVER and offers to try again', () => {
     app.play('easy', 1, 7);
     const game = app.current!;
