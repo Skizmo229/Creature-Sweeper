@@ -27,6 +27,14 @@ interface Driver {
     onCellPrimary(x: number, y: number): void;
   };
   showSettings(back: () => void): void;
+  showTypes(): void;
+  ask(opts: {
+    title: string;
+    body: string;
+    confirmLabel: string;
+    cancelLabel: string;
+    onConfirm(): void;
+  }): void;
   buildGameScreen(): void;
   readonly mode: { pendingSpell: string | null; notesMode: boolean; markMode: number };
 }
@@ -178,12 +186,8 @@ describe('Escape and the entry modes', () => {
     expect(app.current?.status).toBe('playing');
   });
 
-  /*
-   * Known bug (issue #6): the key handler does not know which screen is showing, and the board a
-   * player left is still held, so keys reach a board that is not on screen. `it.fails` pins the
-   * bug: these pass while it stands and fail, as a reminder to flip them, once it is fixed.
-   */
-  it.fails('leaves the board under the settings screen alone', () => {
+  // Keys reach a board only while it is on screen (issue #6).
+  it('leaves the board under the settings screen alone', () => {
     app.play('arcane', 1, 7);
     app.actions.pickSpell('reveal');
     app.showSettings(() => app.buildGameScreen());
@@ -193,22 +197,50 @@ describe('Escape and the entry modes', () => {
     expect(app.mode.notesMode).toBe(false);
   });
 
-  it.fails('never lets Escape on the settings screen discard the board under it', () => {
+  it('treats Escape on the settings screen as Back, to the same board', () => {
     app.play('normal', 1, 7);
     const game = app.current;
     app.showSettings(() => app.buildGameScreen());
     key('Escape');
-    key('Escape');
-    document.querySelector<HTMLButtonElement>('.settings-screen .title-bar button')?.click();
     expect(onGame()).toBe(true);
     expect(app.current).toBe(game);
+    expect(game?.status).toBe('playing');
   });
 
-  it.fails('sends no key to a board the player has left', () => {
+  it('goes back to the run, without asking to abandon it, from settings over a Full Run', () => {
+    app.runFull('easy', 7);
+    app.showSettings(() => app.buildGameScreen());
+    key('Escape');
+    expect(document.querySelector('.overlay')).toBeNull();
+    expect(onGame()).toBe(true);
+    expect(text('.board-label')).toContain('board 1 of 10');
+  });
+
+  it('goes back to the ladder list from settings opened there', () => {
+    app.showSettings(() => app.showTypes());
+    key('Escape');
+    expect(document.querySelector('.settings-screen')).toBeNull();
+    expect(document.querySelectorAll('.type-card').length).toBe(24);
+  });
+
+  it('sends no key to a board the player has left', () => {
     app.play('normal', 1, 7);
     key('Escape');
     expect(onGame()).toBe(false);
     key('n');
     expect(app.mode.notesMode).toBe(false);
+  });
+
+  it('still lets Escape answer a question off the board', () => {
+    app.ask({
+      title: 'SURE?',
+      body: 'A question on the ladder list.',
+      confirmLabel: 'Yes',
+      cancelLabel: 'No',
+      onConfirm: () => {},
+    });
+    expect(text('.overlay h2')).toBe('SURE?');
+    key('Escape');
+    expect(document.querySelector('.overlay')).toBeNull();
   });
 });

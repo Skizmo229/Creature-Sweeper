@@ -2,8 +2,6 @@
  * What the player's input does on a board: a click, a right-click, a tier or a spell picked, the
  * pencil toggled, Sweep, and every key. `App` owns the state and hands this a host that reads it
  * live; every action ends in `apply` (the events) or `refresh` (the screen).
- *
- * Known gap (issue #6): the key handler does not know which screen is showing.
  */
 
 import type { Game } from '../../engine/game.js';
@@ -17,13 +15,10 @@ import type { EntryMode } from './mode.js';
 export interface BoardActionsHost {
   game(): Game | null;
   view(): BoardView | null;
-  /** A question overlay is open. */
-  asking(): boolean;
   readonly mode: EntryMode;
   readonly sfx: Sfx;
   apply(events: GameEvent[]): void;
   refresh(): void;
-  closeAsk(): void;
   leaveGame(): void;
 }
 
@@ -95,16 +90,8 @@ export class BoardActions {
     this.h.apply(events);
   }
 
+  /** A key pressed while the board is on screen; `App` sends nothing else here. */
   onKey(e: KeyboardEvent): void {
-    // A question is modal: Escape answers "no" and nothing else reaches the board.
-    if (this.h.asking()) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        this.h.closeAsk();
-      }
-      return;
-    }
-
     const game = this.h.game();
     if (!game) return;
 
