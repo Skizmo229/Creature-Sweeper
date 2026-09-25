@@ -64,7 +64,8 @@ src/ui/         the prototype
   progress.ts     the save: clears, best times, unlocks
   savefile.ts     the CS1: backup code
   sfx.ts          synthesised sound packs
-  victory/        the board-clear effects: play.ts runs one over the board
+  victory/        the board-clear effects: play.ts runs one, stage.ts is what they share,
+                  ambient.ts paints over the board, icons.ts animates its creatures
   pinch.ts, hexgeom.ts   arithmetic kept DOM-free so tests can reach it
 src/sim/        headless measurement, all driving the real engine (see docs/tuning.md)
   honest.ts       the honest player: sees what a player sees, deduces locally, guesses or casts
