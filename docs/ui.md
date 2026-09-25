@@ -42,7 +42,8 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   of the ladder's colour down its left, and a 3px warm-grey edge on a board tile (a 1px border
   inside a 2px outline of the same colour, because a tile's border carries its state). A hover
   turns a card's whole edge the ladder's colour, a tile's outline included, and darkens a game-type
-  card's strip so it still stands apart.
+  card's strip so it still stands apart. Where the strip goes is a setting (`menuStrip`): the left
+  edge by default, both vertical edges, all four, or none.
 - The settings screen's Back button is pinned to the top of the window, so the way out is always
   in reach however far down the screen is scrolled.
 

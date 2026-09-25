@@ -1,6 +1,6 @@
 /**
  * The Presentation section's drawn settings: creature icons, board palette, the board's font and
- * the interface's, text size, the cursor highlight, the strike-through and the zoom ceiling. Every
+ * the interface's, text size, the game types' palette strip, the cursor highlight, the strike-through and the zoom ceiling. Every
  * example is a real board, or for the interface a copy of the HUD (decision 0025).
  */
 
@@ -16,6 +16,7 @@ import {
   OFF,
   HIGHLIGHT_NAMES,
   type HighlightStyle,
+  type MenuStrip,
 } from '../settings.js';
 import { PIP_NAMES, PIP_SHAPES, tierColor } from '../theme.js';
 import { LOOK_IDS, type PipShape, lookFor, themeFor } from '../looks.js';
@@ -216,6 +217,32 @@ export function textSizeRow(ctx: ScreenContext, host: HTMLElement): void {
     'The HUD, the menus and this screen. The board is left alone — it is sized by its cells, ' +
       'which the zoom controls.',
     textControl,
+  );
+}
+
+/** Each option is shown on a copy of this ladder's own card from the ladder list. */
+export function menuStripRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p, typeId } = ctx;
+  const card = (strip: MenuStrip) => (): HTMLElement => {
+    const demo = el('div', `type-card strip-${strip} strip-demo`);
+    demo.append(el('span', 'type-name', typeName(typeId)));
+    demo.append(el('span', 'type-meta', 'Board 1'));
+    return demo;
+  };
+  wideRow(
+    host,
+    'Palette strip on the game types',
+    'Where each card on the list of game types wears its ladder’s colour.',
+    gallery(
+      [
+        { value: 'left', label: 'Default — down the left side', example: card('left') },
+        { value: 'sides', label: 'Palette strip on vertical sides', example: card('sides') },
+        { value: 'all', label: 'Palette strip on all sides', example: card('all') },
+        { value: OFF, label: 'No palette strip', example: card(OFF) },
+      ],
+      p.menuStrip,
+      (v) => ctx.pick({ menuStrip: v as MenuStrip }),
+    ),
   );
 }
 

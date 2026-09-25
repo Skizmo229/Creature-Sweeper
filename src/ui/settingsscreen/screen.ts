@@ -21,6 +21,7 @@ import {
   interfaceFontRow,
   paletteRow,
   strikeRow,
+  menuStripRow,
   textSizeRow,
   zoomRow,
 } from './look.js';
@@ -79,6 +80,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   boardFontRow(ctx, look);
   interfaceFontRow(ctx, look);
   textSizeRow(ctx, look);
+  menuStripRow(ctx, look);
   highlightRow(ctx, look);
   strikeRow(ctx, look);
   zoomRow(ctx, look);

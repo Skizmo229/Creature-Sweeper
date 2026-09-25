@@ -144,10 +144,9 @@ button.small {
   text-align: left;
   padding: 14px 16px;
   background: var(--panel);
-  /* Twice a button's edge, by request. */
-  border-width: 2px;
-  /* The ladder's colour (its palette's accent), 8px wide by request. */
-  border-left: 8px solid var(--tint);
+  /* Twice a button's edge, by request. Stated in full, because the settings
+     screen's example of this card is not a button. */
+  border: 2px solid var(--button-line);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -166,10 +165,36 @@ button.small {
    interface. `--word-em` is the name's longest word in ems (`fitNames`, in
    screens/ladders.ts), so such a name comes down just far enough to fit. A
    name with a space in it breaks there first. */
+/* The ladder's colour (its palette's accent), 8px wide by request, on the
+   edges the player chose (`menuStrip`). */
+.type-card.strip-left {
+  border-left: 8px solid var(--tint);
+}
+.type-card.strip-sides {
+  border-left: 8px solid var(--tint);
+  border-right: 8px solid var(--tint);
+}
+.type-card.strip-all {
+  border: 8px solid var(--tint);
+}
 /* A hover turns the edge the ladder's colour, so the strip darkens to stay
-   distinct from it. */
-button.type-card:hover:not(:disabled) {
-  border-left-color: color-mix(in srgb, var(--tint) 55%, black);
+   distinct from it. With no strip there is nothing to keep apart. */
+button.type-card.strip-left:hover:not(:disabled) {
+  border-left-color: var(--strip-hover);
+}
+button.type-card.strip-sides:hover:not(:disabled) {
+  border-left-color: var(--strip-hover);
+  border-right-color: var(--strip-hover);
+}
+button.type-card.strip-all:hover:not(:disabled) {
+  border-color: var(--strip-hover);
+}
+.type-card {
+  --strip-hover: color-mix(in srgb, var(--tint) 55%, black);
+}
+/* The settings screen's example of each strip: a card's width, not a gallery tile's. */
+.strip-demo {
+  width: 170px;
 }
 .type-name {
   font-size: min(1.5rem, 100cqi / var(--word-em, 0.01));
