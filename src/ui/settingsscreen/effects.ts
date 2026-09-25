@@ -8,13 +8,13 @@ import { randomSeed } from '../../engine/rng.js';
 import type { GameEvent } from '../../engine/types.js';
 import { el } from '../dom.js';
 import { flashRim } from '../game/flash.js';
-import { PREVIEW_SEED, clearedBoard, sampleBoard } from '../preview.js';
+import { PREVIEW_SEED, clearedBoard } from '../preview.js';
 import { DEFAULT, type FightRim, OFF } from '../settings.js';
 import { SFX_NAMES, VICTORY_NAMES } from '../theme.js';
 import { type SfxPackId, type VictoryId } from '../looks.js';
 import { playVictory } from '../victory/play.js';
 import { type ScreenContext, typeName } from './context.js';
-import { CHIP_CELL, DEMO_CELL, renderPreview } from './render.js';
+import { DEMO_CELL, renderPreview } from './render.js';
 import { type Choice, gallery, wideRow } from './widgets.js';
 
 /**
@@ -82,9 +82,7 @@ const fought = (damage: number): GameEvent => ({
 export function fightRimRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, settings, currentTheme } = ctx;
   const demo = el('div', 'rim-demo');
-  demo.append(
-    renderPreview(sampleBoard(), currentTheme, ctx.display(), { cell: CHIP_CELL }).canvas,
-  );
+  demo.append(ctx.chipBoard(currentTheme)());
 
   const acts = el('div', 'rim-demo-acts');
   const act = (label: string, events: GameEvent[]): void => {

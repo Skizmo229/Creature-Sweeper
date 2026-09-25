@@ -1011,7 +1011,7 @@ button.small {
   border-radius: 5px;
   cursor: pointer;
   /* The caption is the option's name, so it must not be clipped to the
-     thumbnail's width — the palette names are far wider than a 4x3 board. */
+     thumbnail's width — many a palette's name is wider than its board. */
   max-width: 190px;
 }
 .preview-chip:hover {

@@ -87,12 +87,30 @@ function cellsOf(game: Game, pick: (c: Cell) => boolean): Cell[] {
 }
 
 /**
- * The standard example: some covered tiles, some cleared floor with numbers,
- * a couple of defeated creatures and one cell the player has marked.
+ * Beat the `count` strongest creatures. A creature glyph is only ever visible
+ * once it has been beaten — a live one is under a covered tile — so showing the
+ * icons at all means showing defeated ones, which is also what puts the
+ * strike-through in the picture.
  *
- * A creature glyph is only ever visible once it has been beaten — a live one
- * is under a covered tile — so showing the icons at all means showing defeated
- * ones, which is also what puts the strike-through in the picture.
+ * Highest tiers first: a tier 4 draws four pips and a tier 1 draws one, so
+ * the big ones are the ones that actually show what a pip SHAPE looks like.
+ * Taking them in reading order picked whatever the seed happened to put top
+ * left, and half the time that was a single dot.
+ */
+function beatStrongest(game: Game, count: number): void {
+  const byTier = cellsOf(game, (c) => c.tier > 0).sort((a, b) => b.tier - a.tier);
+  for (const cell of byTier.slice(0, count)) game.open(cell.x, cell.y);
+}
+
+/** One mark, so the green ink and the chosen font are both on show. */
+function markOne(game: Game): void {
+  const covered = cellsOf(game, (c) => !c.open);
+  if (covered[0]) game.setMark(covered[0].x, covered[0].y, Math.min(3, game.config.tiers));
+}
+
+/**
+ * The cursor-highlight examples' board: some covered tiles, some cleared floor
+ * with numbers, a defeated creature and one cell the player has marked.
  *
  * The empty cells opened are chosen from those with a number on them. An empty
  * cell numbered 0 cascades, and on a board this small one cascade uncovers
@@ -100,22 +118,11 @@ function cellsOf(game: Game, pick: (c: Cell) => boolean): Cell[] {
  */
 function buildSample(config: BoardConfig, creatures: number, empties: number): Game {
   const game = Game.create(config, SEED);
-
-  // Highest tiers first: a tier 4 draws four pips and a tier 1 draws one, so
-  // the big ones are the ones that actually show what a pip SHAPE looks like.
-  // Taking them in reading order picked whatever the seed happened to put top
-  // left, and half the time that was a single dot.
-  const byTier = cellsOf(game, (c) => c.tier > 0).sort((a, b) => b.tier - a.tier);
-  for (const cell of byTier.slice(0, creatures)) {
-    game.open(cell.x, cell.y);
-  }
+  beatStrongest(game, creatures);
   for (const cell of cellsOf(game, (c) => c.tier === 0 && c.num > 0).slice(0, empties)) {
     game.open(cell.x, cell.y);
   }
-  // One mark, so the green ink and the chosen font are both on show.
-  const covered = cellsOf(game, (c) => !c.open);
-  if (covered[0]) game.setMark(covered[0].x, covered[0].y, Math.min(3, config.tiers));
-
+  markOne(game);
   return game;
 }
 
@@ -129,27 +136,98 @@ const once = (key: string, make: () => Game): Game => {
   return made;
 };
 
-/** The 4x3 square example used by the icon, palette, font and strike galleries. */
-export function sampleBoard(): Game {
-  return once('square', () => buildSample(previewConfig(), 2, 3));
+/**
+ * The standard example, which the icon, palette, board font and strike
+ * galleries draw and the glow after a fight is shown on. It carries everything
+ * a palette paints and a face draws (decision 0034): every digit from 0 to 9 in
+ * the ink, a beaten creature's number in `hot` (see `samplePin`), covered tiles
+ * with their edge, open floor, a mark, and two beaten creatures wearing their
+ * glyphs.
+ *
+ * Seven creatures of five tiers on twenty cells: the sums run high enough for a
+ * two-digit number, which is the only way the ink ever writes a 0 (an empty
+ * cell numbered 0 is left blank), and the three beaten are a 5, a 4 and a 3.
+ */
+const SAMPLE_CONFIG = previewConfig({
+  width: 5,
+  height: 4,
+  tiers: 5,
+  quantity: [2, 2, 1, 1, 1],
+});
+
+/** The digits the ink is showing: those of every number on open ground. */
+function digitsOnShow(game: Game): Set<string> {
+  const shown = new Set<string>();
+  for (const cell of cellsOf(game, (c) => c.open && c.tier === 0 && c.num > 0)) {
+    for (const digit of String(cell.num)) shown.add(digit);
+  }
+  return shown;
 }
 
 /**
- * The defeated creature on an example board with the most pips.
- *
- * Derived rather than written down as a coordinate, because what the gallery
- * needs is not "a cell" but "a cell the setting can be SEEN on" — and a hover
- * setting about defeated creatures shows nothing at all if it is pinned over
- * floor. The highest tier for the same reason `buildSample` opens the highest
- * tiers: a tier 4 is four pips, so it is where a shape swap reads and where
- * counting the pips is most worth replacing with a digit.
- *
- * Headless like everything else here — it queries a board and returns a
- * coordinate; the pinning itself is the renderer's job.
+ * One deal of the standard example. Floor is opened only where its number shows
+ * a digit not yet on show, in reading order, so each digit tends to appear once
+ * and the rest of the board stays covered.
  */
-export function topDefeatedCell(game: Game): { x: number; y: number } {
-  const best = cellsOf(game, (c) => c.open && c.tier > 0).sort((a, b) => b.tier - a.tier)[0];
-  return best ? { x: best.x, y: best.y } : { x: 0, y: 0 };
+function dealSample(seed: number): Game {
+  const game = Game.create(SAMPLE_CONFIG, seed);
+  beatStrongest(game, 3);
+  for (const cell of cellsOf(game, (c) => !c.open && c.tier === 0 && c.num > 0)) {
+    const shown = digitsOnShow(game);
+    if ([...String(cell.num)].some((digit) => !shown.has(digit))) game.open(cell.x, cell.y);
+  }
+  markOne(game);
+  return game;
+}
+
+/**
+ * Whether a deal shows everything the standard example promises: all ten
+ * digits in the ink, with at least a quarter of the board still covered,
+ * because the tile is half of what a palette paints.
+ */
+function showsEverything(game: Game): boolean {
+  const cells = cellsOf(game, () => true);
+  const covered = cells.filter((c) => !c.open).length;
+  return digitsOnShow(game).size === 10 && covered * 4 >= cells.length;
+}
+
+/**
+ * Deals to try before giving up. About one deal in 140 shows everything, and
+ * the first from the fixed seed is the 102nd, found in about 6 ms in Node
+ * (measured over 50,000 deals on 25 Sep 2026).
+ */
+const MAX_DEALS = 10000;
+
+/**
+ * The standard example, dealt by rejection the way SUDOKU's boards are: the
+ * first layout from the fixed seed on that shows everything. Asking each
+ * layout for the digits, rather than writing down a seed that happened to show
+ * them, means a change to the generator moves the example instead of quietly
+ * breaking it.
+ */
+export function sampleBoard(): Game {
+  return once('standard', () => {
+    for (let i = 0; i < MAX_DEALS; i++) {
+      const game = dealSample(SEED + i);
+      if (showsEverything(game)) return game;
+    }
+    throw new Error(`no example board in ${MAX_DEALS} deals shows every digit`);
+  });
+}
+
+/**
+ * The cell the standard example holds the cursor over: its weakest beaten
+ * creature, so the two with the most pips keep their glyphs. A beaten creature
+ * under the cursor shows its number in the palette's `hot`, the only place a
+ * board uses that colour (decision 0012), so a thumbnail that never held the
+ * cursor there would show every colour of a palette but one.
+ *
+ * Headless like everything else here: it names a cell, and the pinning itself
+ * is the renderer's job.
+ */
+export function samplePin(): Cell {
+  const beaten = cellsOf(sampleBoard(), (c) => c.open && c.tier > 0);
+  return beaten.sort((a, b) => a.tier - b.tier)[0]!;
 }
 
 /**
