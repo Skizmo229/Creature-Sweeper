@@ -620,7 +620,7 @@ button.board-card:hover:not(:disabled) {
  * the screen takes the card with it, so there is nothing to cancel.
  */
 .overlay.held {
-  --hold: 3s;
+  --hold: 2.5s;
   animation: overlay-dim 200ms ease-out var(--hold) both;
 }
 .overlay.held > .overlay-card {
