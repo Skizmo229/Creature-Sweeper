@@ -26,6 +26,10 @@ DOM library at all, which is how the engine is proven headless), ESLint, knip, t
 check, the test suite and the golden simulator outputs. Each is also its own script:
 `typecheck`, `lint`, `knip`, `format` / `format:check`, `test`, `sim:golden:check`.
 
+If you touched `design/ladders.py`, also run `npm run test:py`: the generator's own tests
+(`design/test_ladders.py`, standard-library `unittest`, so still no packages). CI runs them beside
+the check that `ladders.json` is what the generator produces.
+
 ## The four facts a change must not break
 
 They are covered by `test/invariants.test.ts` and by `npm run sim`, and every one of them fails

@@ -24,12 +24,13 @@ jobs:
     # Tuning data flows one way, ladders.py -> design/data/ladders.json -> the engine, and the
     # engine never copies a number out of it. This proves the committed JSON is the generator's
     # output and not a hand edit.
-    name: ladders.json is what ladders.py produces
+    name: ladders.py passes its own tests, and ladders.json is what it produces
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+      - run: python -m unittest discover -s design -p "test_*.py" -v
       - run: python design/ladders.py
       - run: git diff --exit-code -- design/data
