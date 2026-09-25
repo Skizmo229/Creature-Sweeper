@@ -11,6 +11,11 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - Confirmations go through `App.ask()`, an in-page overlay, never `window.confirm`: a suppressed
   dialog returns false instantly and the button silently dies. While a question is up, Escape
   answers it and every other key is swallowed.
+- A board's keys reach it only while it is on screen (`App.onKey` checks the game screen is
+  built), never under the settings screen or after the player has left it (issue #6). On the
+  settings screen Escape is Back, to wherever it was opened from; a picker open over it takes the
+  first Escape itself. On a board, Escape backs out one thing at a time: the spell, the tier, then
+  the board (a Full Run asks first).
 - `.overlay` is `position: fixed`, because only the game screen is exactly one viewport tall.
 - The LV palette is modal. Pencilling needs a mode *and* a tier, so entering pencil mode arms a
   tier (and hands it back on exit unless the player chose it); the toggle is labelled with the

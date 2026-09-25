@@ -56,15 +56,15 @@ export class App {
   private readonly actions = new BoardActions({
     game: () => this.game,
     view: () => this.view,
-    asking: () => this.askOverlay !== null,
     mode: this.mode,
     sfx: this.sfx,
     apply: (events) => this.apply(events),
     refresh: () => this.refresh(),
-    closeAsk: () => this.closeAsk(),
     leaveGame: () => this.leaveGame(),
   });
   private readonly clock = new BoardClock();
+  /** Where the settings screen goes back to while it is showing; Escape takes the same route. */
+  private settingsBack: (() => void) | null = null;
   /** The open modal overlay (a question, the how-to, the save backup), if any. */
   private askOverlay: HTMLElement | null = null;
   /** Stops a running board-clear effect; a screen rebuild must call it. */
@@ -98,7 +98,7 @@ export class App {
 
   constructor(root: HTMLElement) {
     this.root = root;
-    window.addEventListener('keydown', (e) => this.actions.onKey(e));
+    window.addEventListener('keydown', (e) => this.onKey(e));
     window.addEventListener('resize', () => this.view?.fit());
     // A settings change has to reach the board the player came from, not just the next one.
     this.settings.onChange(() => this.applyPresentation());
@@ -173,6 +173,30 @@ export class App {
     this.root.replaceChildren();
     this.view = null;
     this.els = null;
+    this.settingsBack = null;
+  }
+
+  /**
+   * The one key listener. A question is modal on every screen: Escape answers "no" and nothing
+   * else gets through. Otherwise the board's keys reach it only while it is on screen, never under
+   * the settings screen or after the player has left it, and on the settings screen Escape is Back.
+   */
+  private onKey(e: KeyboardEvent): void {
+    if (this.askOverlay) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        this.closeAsk();
+      }
+      return;
+    }
+    if (this.els) {
+      this.actions.onKey(e);
+      return;
+    }
+    if (e.key === 'Escape' && this.settingsBack) {
+      e.preventDefault();
+      this.settingsBack();
+    }
   }
 
   private showTypes(): void {
@@ -234,6 +258,7 @@ export class App {
    */
   private showSettings(back: () => void): void {
     this.clearScreen();
+    this.settingsBack = back;
     this.root.append(
       buildSettingsScreen({
         settings: this.settings,
