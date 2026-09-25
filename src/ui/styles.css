@@ -85,8 +85,15 @@ body {
   font-size-adjust: ex-height calc(var(--ex-height) * var(--title-ex-fix, 1));
 }
 
+/* The browser's own stylesheet sets its `font` shorthand on every form
+   control, which resets the face and the size adjust along with it. Both are
+   inherited back, so a label's lowercase stands where the text around it
+   does rather than growing or shrinking with the face (see body). Any rule
+   that gives a control back its face gives back the adjust too;
+   test/fonts.test.ts holds that. */
 button {
   font-family: inherit;
+  font-size-adjust: inherit;
   font-size: 0.85rem;
   color: var(--ink);
   background: var(--panel-2);
@@ -878,8 +885,10 @@ button.small {
   line-height: 1.45;
 }
 
+/* Given back its face and size adjust, as a button is. */
 .settings-select {
   font-family: inherit;
+  font-size-adjust: inherit;
   font-size: 0.78rem;
   color: var(--ink);
   background: var(--panel-2);
