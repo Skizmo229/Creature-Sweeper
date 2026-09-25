@@ -141,6 +141,8 @@ button.small {
   text-align: left;
   padding: 14px 16px;
   background: var(--panel);
+  /* Twice a button's edge, by request. */
+  border-width: 2px;
   border-left: 4px solid var(--tint);
   display: flex;
   flex-direction: column;
@@ -182,7 +184,7 @@ button.small {
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 10px;
 }
-/* Every board tile carries a white outline.
+/* Every board tile carries a white outline, 2px by request.
    
    It is an `outline` rather than a `border` for two reasons. The border is
    already carrying STATE on these tiles — the tint says cleared, or Full Run,
@@ -203,7 +205,7 @@ button.small {
   flex-direction: column;
   gap: 3px;
   position: relative;
-  outline: 1px solid var(--card-outline);
+  outline: 2px solid var(--card-outline);
 }
 .board-card.done {
   border-color: var(--tint);
