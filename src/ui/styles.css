@@ -9,6 +9,8 @@
   /* The edge of anything clickable: lighter than --line, which frames panels,
      so a control reads against the near-black background. */
   --button-line: #6b665b;
+  /* Text on a button filled with colour (primary, armed, hovered): white, by request. */
+  --button-ink: #ffffff;
   /* The edge every board tile carries, border and outline in one colour — see .board-card. */
   --card-outline: #7b7265;
   --ink: #ece7d6;
@@ -121,7 +123,7 @@ button:disabled {
 }
 button.primary {
   background: var(--tint);
-  color: #17170f;
+  color: var(--button-ink);
   border-color: var(--tint);
   font-weight: 700;
 }
@@ -510,7 +512,7 @@ button.board-card:hover:not(:disabled) {
 }
 .counter.active {
   background: var(--tint);
-  color: #17170f;
+  color: var(--button-ink);
   border-color: var(--tint);
   font-weight: 700;
 }
@@ -524,7 +526,7 @@ button.board-card:hover:not(:disabled) {
 .counter[data-tier].active {
   background: var(--tier);
   border-color: var(--tier);
-  color: #17170f;
+  color: var(--button-ink);
 }
 .counter.gilded,
 .counter.gilded.active {
@@ -569,7 +571,7 @@ button.board-card:hover:not(:disabled) {
 }
 .sweep.assist:hover:not(:disabled) {
   background: var(--tint);
-  color: #17170f;
+  color: var(--button-ink);
 }
 
 .hint {
@@ -802,12 +804,12 @@ button.board-card:hover:not(:disabled) {
 }
 .spell:hover:not(:disabled) {
   background: #7ad9ff;
-  color: #0b1418;
+  color: var(--button-ink);
   border-color: #7ad9ff;
 }
 .spell.armed {
   background: #7ad9ff;
-  color: #0b1418;
+  color: var(--button-ink);
   border-color: #7ad9ff;
   border-style: solid;
   font-weight: 700;
