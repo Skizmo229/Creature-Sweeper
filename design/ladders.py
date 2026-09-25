@@ -252,18 +252,8 @@ def _step(vals):
     return (vals[-1] - vals[0]) / (len(vals) - 1)
 
 
-def extend(t):
-    """Boards 11..N for one type, as rows in the same shape the schedule uses."""
-    search = t.get("search", False)
-    sudoku = t.get("placement") == "sudoku"
-    over = t.get("ceiling", {})
-    max_w = over.get("max_w", CEILINGS["max_w"])
-    max_h = over.get("max_h", CEILINGS["max_h"])
-    # "HP at its floor" means the floor the tuned ladder already chose. EXTREME
-    # bottoms out at 8 and ORACLE at 6 deliberately; continuing the erosion
-    # past that invents a difficulty those ladders never claimed - it took
-    # EXTREME to HP 2 before this was pinned.
-    hp_floor = over.get("hp_floor", min(t["hp"]))
+def _density_cap(t):
+    """The highest density the continuation may give this type's boards."""
     # Sudoku's density is fixed by its own rule at 72/81, so the battle cap
     # would clamp it to a third of the board and destroy the mode. Density is
     # not one of its dials at all - the givens are.
@@ -278,10 +268,53 @@ def extend(t):
     # a deductive player can still get through is roughly half what an open
     # board tolerates; carrying it on to 34% would continue the schedule into
     # boards nobody can finish.
-    d_cap = 1.0 if sudoku else max(
-        t["density"][-1],
-        over.get("density_cap",
-                 CEILINGS["density_search"] if search else CEILINGS["density_battle"]))
+    if t.get("placement") == "sudoku":
+        return 1.0
+    default = CEILINGS["density_search"] if t.get("search", False) else CEILINGS["density_battle"]
+    return max(t["density"][-1], t.get("ceiling", {}).get("density_cap", default))
+
+
+def _domino_box(t, T, i, density, max_w, max_h):
+    """Step i of a domino ladder's continuation: its board size and its number of sets, or None
+    once a set no longer fits the largest board."""
+    # A domino board's creatures come in whole sets, so the step past
+    # board 10 is one more set, and the board is sized to hold it at
+    # the density cap rather than extrapolated from the size schedule.
+    # Extrapolating is what every other ladder does and it is wrong
+    # here: the schedule's own growth would lay seven sets on a board
+    # sized for about six and run past the packing ceiling, which
+    # config.ts refuses outright. Once a set no longer fits the largest
+    # board there is simply no further step, and the loop ends there.
+    s_next = t["sets"][-1] + i
+    creatures = T * (T + 1) * s_next
+    # Keep the ladder's own landscape shape. Pinning the height at the
+    # ceiling and deriving the width was the first version, and it made
+    # the first scaling board 21x32 - a portrait board after ten
+    # landscape ones. Only once the natural shape stops fitting does
+    # the height go to the ceiling to buy width.
+    cells = creatures / density
+    h = min(max_h, max(1, round(math.sqrt(cells / 1.75))))
+    w = math.ceil(creatures / (density * h))
+    if w > max_w:
+        h = max_h
+        w = math.ceil(creatures / (density * h))
+        if w > max_w:
+            return None
+    return (w, h), s_next
+
+
+def extend(t):
+    """Boards 11..N for one type, as rows in the same shape the schedule uses."""
+    search = t.get("search", False)
+    over = t.get("ceiling", {})
+    max_w = over.get("max_w", CEILINGS["max_w"])
+    max_h = over.get("max_h", CEILINGS["max_h"])
+    # "HP at its floor" means the floor the tuned ladder already chose. EXTREME
+    # bottoms out at 8 and ORACLE at 6 deliberately; continuing the erosion
+    # past that invents a difficulty those ladders never claimed - it took
+    # EXTREME to HP 2 before this was pinned.
+    hp_floor = over.get("hp_floor", min(t["hp"]))
+    d_cap = _density_cap(t)
 
     ws = [sz[0] for sz in t["size"]]
     hs = [sz[1] for sz in t["size"]]
@@ -323,31 +356,10 @@ def extend(t):
             row["givens"] = max(over.get("givens_floor", 12),
                                 round(t["givens"][-1] + dgiv * i))
         if t.get("placement") == "dominoes":
-            # A domino board's creatures come in whole sets, so the step past
-            # board 10 is one more set, and the board is sized to hold it at
-            # the density cap rather than extrapolated from the size schedule.
-            # Extrapolating is what every other ladder does and it is wrong
-            # here: the schedule's own growth would lay seven sets on a board
-            # sized for about six and run past the packing ceiling, which
-            # config.ts refuses outright. Once a set no longer fits the largest
-            # board there is simply no further step, and the loop ends there.
-            s_next = t["sets"][-1] + i
-            creatures = T * (T + 1) * s_next
-            # Keep the ladder's own landscape shape. Pinning the height at the
-            # ceiling and deriving the width was the first version, and it made
-            # the first scaling board 21x32 - a portrait board after ten
-            # landscape ones. Only once the natural shape stops fitting does
-            # the height go to the ceiling to buy width.
-            cells = creatures / row["density"]
-            h = min(max_h, max(1, round(math.sqrt(cells / 1.75))))
-            w = math.ceil(creatures / (row["density"] * h))
-            if w > max_w:
-                h = max_h
-                w = math.ceil(creatures / (row["density"] * h))
-                if w > max_w:
-                    break
-            row["size"] = (w, h)
-            row["sets"] = s_next
+            box = _domino_box(t, T, i, row["density"], max_w, max_h)
+            if box is None:
+                break
+            row["size"], row["sets"] = box
         if t.get("cells") is not None:
             # A carved shape's count is chosen, never measured - same 40% of
             # the bounding box the tuned ten hold, and still inside the margin
