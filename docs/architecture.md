@@ -22,17 +22,21 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   cast.ts         what each spell does, behind the SpellHost interface
   sweep.ts        Sweep's proof: safeCells and its named proofs; the Sudoku harvest
   reach.ts        the crawl rule: withinReach and computeSealed
-  placement/      the placement rules, one module each
+  placement/      the placement rules: one record per rule, and nobody else names one
+    rule.ts         PlacementRule, the contract every rule meets
+    registry.ts     RULES, keyed by every Placement; placementRule()
+    deal.ts         the shuffle-and-take and the other pieces of a deal the rules share
+    uniform.ts      the original: shuffle and take
     sudoku.ts       the Sudoku placement and its guess-free generator
     checker.ts      the checkerboard placement: colour fixes a tier's parity; hiddenCap
-    pairs.ts        the pairing placement: non-touching dominoes; ringIsFree; isPaired
+    pairs.ts        the pairing placement: non-touching dominoes; ringIsFree
     dominoes.ts     pairs dealt as a full domino set
-    packs.ts        non-touching packs of one-of-every-tier; missingFrom; isPacked
+    packs.ts        non-touching packs of one-of-every-tier; missingFrom
     congo.ts        packs strung into orthogonal lines led by the top tier
   game.ts         the state machine: open, mark, note, sweep, cast, forfeit, fight
   run.ts          Full Run: ten boards, one HP pool
   settings.ts     the gameplay dials, their defaults and directions
-  config.ts       reads ladders.json rows into BoardConfig; validates each placement
+  config.ts       reads ladders.json rows into BoardConfig; has each placement rule check its row
 src/ui/         the prototype
   app.ts          the router: screens, the cross-screen state, the keyboard, the actions
   dom.ts          el(), the one DOM helper
@@ -65,7 +69,7 @@ design/         ladders.py (the generator), data/ (its output), the design refer
 docs/           this folder
 ```
 
-## Three rules the layout enforces
+## Four rules the layout enforces
 
 **The engine is headless and must stay that way.** Over every import in `src/`, `src/engine`
 imports nothing outside itself; `src/sim` never imports `src/ui`; `src/ui` never imports
@@ -83,6 +87,14 @@ engine. Anything that *iterates* the grid instead (creature placement, the searc
 `safeCells`, the renderer) is where a new board feature actually costs work. A hole (`present:
 false`) neighbours nothing in both directions, guarded at the top of `neighbours()`.
 
+**A placement rule is asked, never named.** Everything that differs between placements is a
+member of the rule's `PlacementRule` record: its config check, its deal, what the pencil may
+offer, Sweep's proofs, what the renderer draws, and what the instruments need. The generator,
+`safeCells`, `noteCandidates`, the renderer, the hint, the honest player and the solver call
+`placementRule(config.placement)` and never compare the name, so a new rule reaches all of them
+by existing. `RULES` is keyed by the whole `Placement` union, which makes a name without a rule,
+or a rule missing a hook, a compile error (decision 0029).
+
 **Tuning data flows one way**: `design/ladders.py` writes `design/data/ladders.json`, `config.ts`
 reads it, and the engine never duplicates a number from it. `ladders.py` does carry its own copy of
 the shape predicates, because it must count a shape's cells before it can apportion creatures;
@@ -97,10 +109,11 @@ ladder recorded. CI regenerates the JSON and fails on any difference.
    dungeon is a per-cell predicate; those two are grown from the seed to an exact cell count that
    the ladder chose (`shapeParam`), because `C_k` needs the quota fixed before the board exists.
    The dungeon also returns which cells are room floor (the only cells a creature may stand on).
-2. The placement deals the tiers into the spawnable cells. Uniform is shuffle-and-take; the
-   checkerboard keeps one pool per colour; pairs and packs pick *where* first and deal into those
-   cells; dominoes and packs deal their own tiers because their grouping must survive the deal;
-   sudoku fills a solved grid. A placement never changes the quantities.
+2. The placement rule deals the tiers into the spawnable cells (`PlacementRule.deal`). Uniform is
+   shuffle-and-take; the checkerboard keeps one pool per colour; pairs and packs pick *where*
+   first and deal into those cells; dominoes and packs deal their own tiers because their
+   grouping must survive the deal; sudoku fills a solved grid. A placement never changes the
+   quantities.
 3. `computeNumbers` writes every cell's number through `neighbours()`.
 4. The opening rule reveals the first cells, and the clock starts.
 

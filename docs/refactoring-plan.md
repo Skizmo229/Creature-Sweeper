@@ -27,8 +27,18 @@ Every split was verified behaviour-neutral: golden outputs byte-identical, and f
 canvas hashes of ten boards in four states unchanged. ESLint's size warnings went from 25 to 15;
 the largest remaining in the engine and UI are `generateGrid` (phase 3 dissolves it into the
 registry), the settings screen's gameplay section, `playVictory` and the pointer handler, and no
-UI or engine file is over 800 lines (`app.ts` 780, from 2,138). Next: phase 3, the placement
-registry.
+UI or engine file is over 800 lines (`app.ts` 780, from 2,138).
+
+Phase 3's placement registry done on 24 September 2026 on branch `m3-3-placement-registry`
+(decision 0029): `src/engine/placement/` holds one `PlacementRule` record per rule, and config,
+the generator, the pencil, Sweep, the renderer, the hint, the honest player and the solver ask the
+rule instead of naming it. Comparisons of a placement's name went from 53 in 14 files to 12 in 5,
+8 of them in `ladders.py` (phase 6) and the rest the uniform baseline in the placement experiment
+and three tests. Adding a rule is 6 hand-edited files plus the ladder that carries it (the
+walkthrough measured about 19). Verified behaviour-neutral: golden outputs byte-identical after
+every commit, the sims outside the golden set byte-identical against `main`, and canvas hashes of
+seven ladders in three states unchanged. `generateGrid` left the size warnings (15 to 14).
+Remaining in phase 3: the shape registry and the per-ladder presentation record.
 
 ---
 

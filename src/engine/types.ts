@@ -144,7 +144,9 @@ export type OpeningRule =
   | 'empties';
 
 /**
- * How creatures are laid out among the cells.
+ * How creatures are laid out among the cells. Each is a `PlacementRule` in
+ * `src/engine/placement/`, listed in `registry.ts`, and is asked rather than
+ * named everywhere else.
  *
  * 'uniform' is the original: shuffle the cells and deal out `quantity`.
  * 'sudoku' constrains the tiers to a Sudoku solution over the digits 0-8,

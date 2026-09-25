@@ -100,8 +100,8 @@ that may not touch. A creature's number **is** its partner's tier. `ringIsFree` 
 both Sweep proofs in one: if the partner is within your level, or already open, every other
 covered neighbour is empty ground. Neither can run away, because a freed ring holds one partner
 and blank ground. `pairCandidates` gives the pencil: empty ground or exactly the partner's tier.
-Every reader of the rule asks `isPaired`, which covers DOMINOES too; five separate checks would be
-five places to hand a domino board none of the deduction.
+DOMINOES takes every one of those hooks from the pairing rule by reference (decision 0029); a
+domino board that read any of them differently would lose the deduction silently.
 
 The rule spreads creatures evenly, so openings are the smallest in the game and the ladder's axis
 is *size*, not density: non-touching dominoes jam at about 25%, and the quota must land exactly, so
@@ -120,7 +120,7 @@ Creatures stand in connected packs of one of every tier, and no two packs touch 
 `neighbours()`, so a diagonal counts). `missingFrom` is the Sweep proof: the strongest tier a
 pack has not shown yet; when that is within your level, or nothing is missing, the ring is free.
 Computed over the component of *open* creatures, which errs safe. `packCandidates` gives the
-pencil the tiers the neighbouring pack has not shown. `isPacked` covers CONGO LINE too. Density is
+pencil the tiers the neighbouring pack has not shown. CONGO LINE takes all of it by reference. Density is
 the dial (22.5 to 31.6%), and the board grows a row or column every step for granularity.
 
 **CONGO LINE** strings each pack into an orthogonal line led by the tier 6, with no member

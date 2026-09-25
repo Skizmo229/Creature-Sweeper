@@ -71,7 +71,7 @@ which is the thing a Minesweeper player gets wrong first and why the rules card 
 a placement rule that says anything about a tier says something about every number it sits
 behind, which is why CHECKERBOARD's colour rule reaches the whole of deduction.
 
-- **Where it lives:** `computeNumbers` and `neighbours()` in `src/engine/board.ts`. Adjacency is
+- **Where it lives:** `computeNumbers` and `neighbours()` in `src/engine/grid.ts`. Adjacency is
   in exactly one function; see `docs/architecture.md`.
 
 ## Rules that follow from the four

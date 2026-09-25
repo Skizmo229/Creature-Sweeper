@@ -29,7 +29,7 @@ resource: see `docs/invariants.md`, fact 2.
 
 **Opening.** The cells revealed before the first move. `'auto'` reveals the zero-region whose
 cascade uncovers the most cells; `'none'` reveals nothing; `'empties'` reveals every empty cell
-(SUDOKU only). `findBestOpening` in `src/engine/board.ts`. The clock starts when the opening is
+(SUDOKU only). `findBestOpening` in `src/engine/opening.ts`. The clock starts when the opening is
 dealt, because reading it is the first thing the player does.
 
 **Cascade.** Opening a cell whose number is 0 opens its neighbours, recursively.
@@ -106,7 +106,8 @@ Cut-away cells are **absent** (`present: false`), not empty. Parameters are alwa
 
 **Placement.** The rule that decides where creatures stand: uniform, sudoku, checker, pairs,
 dominoes, packs, congo. A placement never changes how many creatures there are. `Placement`;
-per-rule modules in `src/engine/`. See `docs/modes.md`.
+one `PlacementRule` per rule in `src/engine/placement/`, listed in `registry.ts`. See
+`docs/modes.md`.
 
 **Mask.** The boolean grid of which cells exist for a shape; the dungeon also has a **spawnable**
 mask (room floor only).
