@@ -388,10 +388,10 @@ describe('spell availability', () => {
 
 describe('spell shortcuts', () => {
   /**
-   * Keys the board already owns, from `onKey` in src/ui/app.ts. Spell letters
-   * are checked after these, so a clash would not break Sweep — it would just
-   * mean the spell's own key silently never fires, which is worse than a test
-   * failing here.
+   * Keys the board already owns, from `onKey` in src/ui/game/actions.ts. Spell
+   * letters are checked after these, so a clash would not break Sweep — it
+   * would just mean the spell's own key silently never fires, which is worse
+   * than a test failing here.
    */
   const RESERVED = ['s', 'd', 'f'];
 

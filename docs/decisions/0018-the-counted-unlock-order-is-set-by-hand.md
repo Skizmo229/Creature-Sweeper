@@ -5,7 +5,8 @@
 ## Context
 The variant ladders do not teach each other, so chaining them made a player grind shapes they had no
 interest in; counting boards cleared anywhere lets them arrive from any direction. They opened
-easiest-first at first.
+easiest-first at first, and DOMINOES and PACKS were gated on clearing PAIRS until they joined the
+count.
 
 ## Decision
 WRAPAROUND 15, CROSS 20, HIVE 25, DIAMOND 30, PAIRS 35, DOMINOES 40, WORKOUT 45, PACKS 50, DONUT

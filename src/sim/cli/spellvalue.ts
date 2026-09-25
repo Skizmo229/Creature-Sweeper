@@ -14,11 +14,9 @@
  * amount of certainty through either one.
  *
  * The deduction here is deliberately the game's own — the bound Sweep proves,
- * plus exact tiers from Reveal's marks — with one addition, which is that it
- * also reasons from a Census count. The engine's `safeCells` does not, and
- * that asymmetry is itself one of the things being measured: a spell whose
- * answer the game cannot act on is worth less than the same answer in a form
- * it can.
+ * plus exact tiers from Reveal's marks, plus the Census count, which Sweep
+ * reads as well (`provenByCensus` in `engine/sweep.ts`). A spell whose answer
+ * the game cannot act on is worth less than the same answer in a form it can.
  *
  *   npx tsx src/sim/cli/spellvalue.ts [seeds]          every magic ladder
  *   npx tsx src/sim/cli/spellvalue.ts [seeds] arcane   one ladder, board by board

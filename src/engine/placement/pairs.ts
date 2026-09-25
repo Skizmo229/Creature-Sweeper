@@ -101,7 +101,7 @@ const PAIR_MAX_DENSITY = 0.26;
  * Lay down `total / 2` dominoes among `candidates`, no two touching.
  *
  * Adjacency arrives as a callback rather than being imported, which keeps this
- * module clear of `board.ts` — the same reason `checker.ts` is pure coordinate
+ * module clear of `grid.ts` — the same reason `checker.ts` is pure coordinate
  * arithmetic. It also means the rule gets hex, wrapped seams and cut-out
  * shapes for nothing, because `neighbours()` already knows about all three.
  *

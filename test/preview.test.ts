@@ -8,9 +8,9 @@
  * makes in words, held to in code.
  *
  * Imported headlessly on purpose. `preview.ts` builds boards and renders
- * nothing — `renderPreview` lives in `settingsscreen.ts` for exactly this
- * reason — so the examples can be inspected in Node like the engine's own,
- * under a tsconfig that has no DOM library at all.
+ * nothing — `renderPreview` lives in `settingsscreen/render.ts` for exactly
+ * this reason — so the examples can be inspected in Node like the engine's
+ * own, under a tsconfig that has no DOM library at all.
  */
 
 import { describe, expect, it } from 'vitest';

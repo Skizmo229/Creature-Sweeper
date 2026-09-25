@@ -430,7 +430,6 @@ export class App {
 
   // ---------------------------------------------------------------- actions
 
-  /** Untargeted spells fire at once; targeted ones arm and wait for a cell. */
   /**
    * Back out to board select. A run cannot be resumed, so leaving one asks first; a single board
    * is replayable at will and needs no guard.

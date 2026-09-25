@@ -22,5 +22,5 @@ for token, path in (("/*__LADDERS__*/", "ladders.json"),
 assert not any(t in tpl for t in ("__LADDERS__", "__OPENING__", "__PLACEMENT__", "__PLACEMENT_RULES__"))
 assert not any(0x400 < ord(c) < 0x500 for c in tpl), "stray Cyrillic character"
 
-io.open(HERE / "reference.html", "w", encoding="utf-8").write(tpl)
+io.open(HERE / "reference.html", "w", encoding="utf-8", newline="\n").write(tpl)
 print("reference.html", len(tpl), "chars")

@@ -1,7 +1,7 @@
 /**
  * Pinch-zoom arithmetic, kept apart from `BoardView` so it can be tested.
  *
- * The test pass compiles with no DOM library at all, and `boardview.ts` is
+ * The test pass compiles with no DOM library at all, and `board/view.ts` is
  * made of canvas calls, so anything a test needs from it has to live somewhere
  * a Node test can import without dragging `CanvasRenderingContext2D` along —
  * the same reason `preview.ts` builds boards and renders nothing.

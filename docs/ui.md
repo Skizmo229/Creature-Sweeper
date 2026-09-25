@@ -24,9 +24,9 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   follows the same mode, and Shift inverts it for one keystroke. `markMode` is -1 for "nothing
   selected", because tier 0 is a real pencil choice. An armed tier and an armed spell are mutually
   exclusive; each arming clears the other.
-- The cursor says whether *this* click would land (`App.clickLands`): reach while opening or
-  casting, only annotation's own refusals while a tier is armed. The palette strikes through tiers
-  the pencil refuses for the hovered cell.
+- The cursor says whether *this* click would land (`BoardActions.clickLands`): reach while opening
+  or casting, only annotation's own refusals while a tier is armed. The palette strikes through
+  tiers the pencil refuses for the hovered cell.
 - Two fingers pinch-zoom, and no lift in a touch that ever had two fingers down opens a cell. Only
   `pointerType === 'touch'` is tracked. The arithmetic is in `pinch.ts`.
 - The board refits whenever its stage changes size (`ResizeObserver`), keeping a zoom the player
@@ -62,10 +62,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 ## Settings screen
 
 - Every visual setting shows its options as tiles, and every tile is a real `Game` drawn by the
-  real `BoardView` (`preview.ts` builds the boards; `settingsscreen.ts` renders them). Every tile
-  in a gallery draws the same board from the same seed, so only the setting differs. The example
-  boards open the highest tiers, show defeated creatures (the only way to show a glyph), and open
-  numbered empty cells so a cascade does not clear the board.
+  real `BoardView` (`preview.ts` builds the boards; `settingsscreen/render.ts` renders them).
+  Every tile in a gallery draws the same board from the same seed, so only the setting differs.
+  The example boards open the highest tiers, show defeated creatures (the only way to show a
+  glyph), and open numbered empty cells so a cascade does not clear the board.
 - Icons, palette and font show two tiles, Default and User choice; the full gallery opens in a
   picker inside the settings element, which catches Escape in the capture phase.
 - Picking a visual option rebuilds the whole screen and carries the scroll position, because the

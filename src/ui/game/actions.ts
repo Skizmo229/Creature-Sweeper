@@ -45,6 +45,7 @@ export class BoardActions {
     this.h.apply(game.open(x, y));
   }
 
+  /** Untargeted spells fire at once; targeted ones arm and wait for a cell. */
   pickSpell(id: SpellId): void {
     const game = this.h.game();
     if (!game || game.status !== 'playing' || !game.canCast(id)) return;
