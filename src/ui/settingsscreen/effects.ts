@@ -85,8 +85,9 @@ export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
       // Heard on release rather than a sound per step of the drag.
       () => ctx.onPreview('levelup'),
     ),
-    'How loud every sound in play is. Letting go of the slider plays a sound at the new level. ' +
-      'The sound check keeps a volume of its own.',
+    'How loud every sound in play is, up to three times its usual level. Past 100% the loudest ' +
+      'sounds are held back so nothing blasts; the quiet ones grow. Letting go of the slider ' +
+      'plays a sound at the new level. The sound check keeps a volume of its own.',
   );
   // Updates only the store, like the sound gallery: nothing on the screen is drawn in terms of it.
   row(

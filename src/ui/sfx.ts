@@ -184,6 +184,23 @@ export function sfxRatio(pack: SfxPackId, event: SfxEvent, note: number | undefi
  */
 const THROTTLE_MS = 45;
 
+/**
+ * Headroom: several voices can overlap during a sweep, and clipping the sum is far worse than any
+ * of them being slightly quiet.
+ */
+const MASTER_GAIN = 0.5;
+
+/**
+ * Where the volume gate starts holding sound down, in dBFS. The loudest voice in any pack peaks at
+ * 0.3, which the master gain makes 0.15 (about -16.5 dBFS), so at 100% nothing reaches it.
+ */
+const LIMIT_DB = -12;
+/** 20:1, the compressor's ceiling: above the threshold, 20 dB in comes out as 1. */
+const LIMIT_RATIO = 20;
+/** Seconds. Fast enough to catch the start of a sting, slow enough not to distort its tone. */
+const LIMIT_ATTACK = 0.003;
+const LIMIT_RELEASE = 0.1;
+
 /** The gain an envelope starts and ends at: an exponential ramp cannot reach zero. */
 const SILENT = 0.0001;
 
@@ -306,10 +323,23 @@ export class Sfx {
     }
     this.ctx = new Ctor();
     this.master = this.ctx.createGain();
-    // Headroom: several voices can overlap during a sweep, and clipping the
-    // sum is far worse than any of them being slightly quiet.
-    this.master.gain.value = 0.5;
-    this.master.connect(this.ctx.destination);
+    this.master.gain.value = MASTER_GAIN;
+    this.master.connect(this.limiter(this.ctx)).connect(this.ctx.destination);
     return this.ctx;
+  }
+
+  /**
+   * The volume gate: a compressor set hard enough to act as a limiter. At the packs' own level
+   * the loudest sound peaks below its threshold and passes untouched; turned up, quiet sounds
+   * grow and loud ones are held near the threshold, so no setting can blast the player.
+   */
+  private limiter(ctx: AudioContext): DynamicsCompressorNode {
+    const gate = ctx.createDynamicsCompressor();
+    gate.threshold.value = LIMIT_DB;
+    gate.knee.value = 0;
+    gate.ratio.value = LIMIT_RATIO;
+    gate.attack.value = LIMIT_ATTACK;
+    gate.release.value = LIMIT_RELEASE;
+    return gate;
   }
 }

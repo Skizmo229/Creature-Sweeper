@@ -45,14 +45,14 @@ describe('the sound effects volume', () => {
       r.textContent?.startsWith('Sound effects volume'),
     )!;
     const range = setting.querySelector<HTMLInputElement>('input[type=range]')!;
-    range.value = '0.35';
+    range.value = '2.35';
     range.dispatchEvent(new Event('input'));
     expect(heard).toEqual([]);
     range.dispatchEvent(new Event('change'));
 
-    expect(Settings.load().presentation.sfxVolume).toBe(0.35);
-    expect(setting.querySelector('.settings-value')!.textContent).toBe('35%');
-    expect(heard).toEqual([['levelup', 0.35]]);
+    expect(Settings.load().presentation.sfxVolume).toBe(2.35);
+    expect(setting.querySelector('.settings-value')!.textContent).toBe('235%');
+    expect(heard).toEqual([['levelup', 2.35]]);
     expect(Settings.load().presentation.soundCheck.volume).toBe(1);
   });
 
@@ -63,6 +63,6 @@ describe('the sound effects volume', () => {
       SETTINGS_KEY,
       JSON.stringify({ version: 1, presentation: { sfxVolume: 7 } }),
     );
-    expect(Settings.load().presentation.sfxVolume).toBe(1);
+    expect(Settings.load().presentation.sfxVolume).toBe(3);
   });
 });
