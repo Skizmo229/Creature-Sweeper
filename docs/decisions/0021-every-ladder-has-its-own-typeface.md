@@ -1,6 +1,6 @@
 # 0021. Every ladder has a bundled typeface, and the title wears Griffy
 
-2026-09-22. Status: adopted.
+2026-09-22. Status: adopted; the unique face per ladder is replaced by 0031.
 
 ## Context
 Five system stacks could not give twenty-four distinct looks, and Georgia had old-style figures

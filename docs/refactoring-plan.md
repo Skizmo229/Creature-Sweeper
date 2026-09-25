@@ -40,7 +40,11 @@ every commit, the sims outside the golden set byte-identical against `main`, and
 seven ladders in three states unchanged. `generateGrid` left the size warnings (15 to 14).
 The shape registry followed on branch `m3-3b-shape-registry` (decision 0030):
 `src/engine/shape/` holds one `ShapeRule` per shape, `shape.ts` and its `switch` are gone, and
-config and the generator ask the shape. Remaining in phase 3: the per-ladder presentation record.
+config and the generator ask the shape. The per-ladder presentation record finished the phase on
+branch `m3-3c-ladder-presentation` (decision 0031): `src/ui/looks.ts` holds one look per ladder,
+and a ladder may share a bundled face, so a new ladder needs no new font. Adding a placement rule
+with its ladder is now 9 hand-edited files, from about 19; the plan's target was 8, and the extra
+one is the pair of test lists that deliberately pin the ladder set. Phase 3 is done.
 
 ---
 

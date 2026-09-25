@@ -69,8 +69,8 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - The clear-effect demo runs over a genuinely won board carrying one of every tier the real board
   uses (`previewTiers()` reads the live game). Test deals a new board; picking an effect replays
   on the same one. The demo seed is module-level so it outlives a rebuild.
-- Every "game type default" option names what it resolves to (`TYPE_IDENTITY` in `theme.ts`,
-  `TYPE_FONTS` in `typefaces.ts`, stitched by `identityFor`).
+- Every "game type default" option names what it resolves to (the ladder's record in `LOOKS`,
+  `src/ui/looks.ts`, read through `lookFor`).
 - Text size scales the interface (root font size, everything in rem) and not the board, applied
   on release with a HUD copy following the thumb.
 - The cursor-highlight gallery draws on the grid of the ladder the player came from and needs
