@@ -177,7 +177,7 @@ describe('Escape and the entry modes', () => {
   });
 
   /*
-   * Known bug: the key handler does not know which screen is showing, and the board a player
+   * Known bug (issue #6): the key handler does not know which screen is showing, and the board a player
    * left is still held, so keys reach a board that is not on screen. `it.fails` pins the bug:
    * these pass while it stands and fail, as a reminder to flip them, once it is fixed.
    */
