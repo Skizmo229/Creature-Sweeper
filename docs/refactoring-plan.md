@@ -71,19 +71,22 @@ every spell (which surfaced that nothing measures Beacon); the command-line sims
 | --- | ---: | ---: |
 | Files to change to add a placement rule | 8 or fewer | 9, with its ladder |
 | Placement branch sites | about 10 | 12 in 5 files, 8 of them in `ladders.py` |
-| Longest function, engine and UI | 100 (warn), 150 (hard) | 142 (`buildGameScreen`) |
-| Largest file, engine and UI | 600 | `app.ts`, 711 non-blank lines |
+| Longest function, engine and UI | 100 (warn), 150 (hard) | under 100: no warning |
+| Largest file, engine and UI | 600 | under 600: no warning |
 | CLAUDE.md | under 150 | 56 |
 | Comment lines describing past behaviour | 0 | 0 |
 | Unreferenced exports | 0, enforced | 0, knip in `npm run check` |
 | CI | the full set | typecheck, lint, knip, format, tests, golden, Python tests, ladders |
 | Files to change to add a spell | 6 or fewer | not re-walked |
 
-What is left for the milestone is phase 2's own bar: eight size warnings in the engine and UI.
-Four files over 600 lines (`app.ts`, `victory.ts`, `shape/dungeon.ts`, `game.ts`) and four
-functions over 100 (`buildGameScreen`, `gameplaySection`, `buildSaveBackup`, `playVictory`). The
-sims carry four more long functions (`solve`, `feasible`, `play`, `main`) and one long file
-(`honest.ts`), which the plan ranks lower.
+Phase 2's own bar, cleared the same day on branch `m3-2b-size-warnings`: the eight size warnings
+in the engine and UI are gone. `game.ts` lost the fight to `fight.ts`; `shape/dungeon.ts` its floor
+plan to `shape/floorplan.ts`; `app.ts` the player's input to `game/actions.ts`; `victory.ts` became
+`victory/` (play, stage, ambient, icons); and `buildGameScreen`, `gameplaySection`,
+`buildSaveBackup` and `playVictory` were split into named parts. Each move was checked
+behaviour-neutral (golden outputs, the HTML of twenty screens, and pixel hashes of all eleven
+clear effects). What remains is in the sims, which the plan ranks lower: four long functions
+(`solve`, `feasible`, `play`, `main`) and one long file (`honest.ts`).
 
 ---
 

@@ -7,16 +7,9 @@
  */
 
 import type { BoardConfig, Cell, GameEvent, GameStatus, SweepOptions } from './types.js';
-import { Progression, resolveBattle, expForTier } from './combat.js';
+import { Progression } from './combat.js';
 import { SPELLS, type SpellId } from './spells.js';
-import {
-  DEFAULT_GAMEPLAY,
-  type GameplaySettings,
-  biteFor,
-  cellsPerMana,
-  effectiveHp,
-  manaRewardFor,
-} from './settings.js';
+import { DEFAULT_GAMEPLAY, type GameplaySettings, cellsPerMana, effectiveHp } from './settings.js';
 import { hasNote, hasNotes, lowestNote, noteBit, toggleNote as toggleNoteBit } from './notes.js';
 import { placementRule } from './placement/registry.js';
 import { mulberry32 } from './rng.js';
@@ -26,6 +19,7 @@ import { safeCells as provenSafe } from './sweep.js';
 import { type Grid, inBounds, neighbours } from './grid.js';
 import { findBestOpening, findFallbackOpening } from './opening.js';
 import { generateGrid } from './generate.js';
+import { fight, revealAllCreatures } from './fight.js';
 
 export interface GameOptions {
   /**
@@ -246,7 +240,7 @@ export class Game {
       }
     }
 
-    if (cell.tier > 0 && cell.alive) events.push(...this.fight(cell));
+    if (cell.tier > 0 && cell.alive) events.push(...fight(this, cell));
     if (this.status === 'playing') events.push(...this.checkSearchWin());
     return events;
   }
@@ -457,7 +451,7 @@ export class Game {
   forfeit(): GameEvent[] {
     if (this.status !== 'playing') return [{ type: 'blocked', reason: 'game-over' }];
     this.status = 'lost';
-    this.revealAllCreatures();
+    revealAllCreatures(this.grid);
     return [{ type: 'lost' }];
   }
 
@@ -594,88 +588,9 @@ export class Game {
     return revealed;
   }
 
-  private fight(cell: Cell): GameEvent[] {
-    const events: GameEvent[] = [];
-
-    // Exercise is spent on the fight itself, not on the damage afterwards:
-    // you swing at the borrowed level, so a creature that would have taken
-    // three rounds off you takes two. The creature's fate is unchanged, and it
-    // still pays its EXP in full — nothing here can skip that.
-    const lent = this.exerciseCharge;
-    this.exerciseCharge = 0;
-    const bite = biteFor(cell.tier, this.settings);
-    const result = resolveBattle(this.level + lent, this.hp, cell.tier, bite);
-    const taken = result.damage;
-    this.hp = Math.max(0, this.hp - taken);
-
-    // WORKOUT pays extra EXP for a kill made on a borrowed level. Extra, never
-    // less: the gates are C_k, so a kill paying short could strand one, but a
-    // kill paying over only reaches a gate sooner. The bonus is counted here so
-    // the event can say what it was worth.
-    const workout = this.config.workout;
-    const bonusExp =
-      lent > 0 && workout && result.defeated
-        ? expForTier(cell.tier) * (workout.expMultiplier - 1)
-        : 0;
-    if (lent > 0) {
-      const unaided = resolveBattle(this.level, this.hp + taken, cell.tier, bite).damage;
-      events.push({ type: 'exercised', levels: lent, spared: unaided - taken, bonusExp });
-    }
-    events.push({
-      type: 'battle',
-      x: cell.x,
-      y: cell.y,
-      tier: cell.tier,
-      damage: taken,
-      defeated: result.defeated,
-    });
-
-    if (result.defeated) {
-      cell.alive = false;
-      this.remaining[cell.tier - 1] = (this.remaining[cell.tier - 1] ?? 0) - 1;
-      // Every removal must pay full EXP. The upper level thresholds are the
-      // TOTAL exp available from tiers at or below k, so a creature that dies
-      // without paying makes that threshold permanently unreachable.
-      this.mana += manaRewardFor(cell.tier, this.settings);
-      const levelBefore = this.level;
-      if (this.progression.award(expForTier(cell.tier) + bonusExp)) {
-        events.push({ type: 'levelUp', level: this.level });
-        // Levelling eases WORKOUT's price, a step per level gained. A double
-        // kill can buy two levels at once, and both count.
-        if (workout) {
-          this.exerciseSurcharge = Math.max(
-            0,
-            this.exerciseSurcharge - workout.relief * (this.level - levelBefore),
-          );
-        }
-      }
-      if (this.creaturesLeft() === 0 && !this.config.search) {
-        this.status = 'won';
-        events.push({ type: 'won' });
-        return events;
-      }
-    }
-
-    if (this.hp <= 0) {
-      this.hp = 0;
-      this.status = 'lost';
-      this.revealAllCreatures();
-      events.push({ type: 'lost' });
-    }
-    return events;
-  }
-
   private checkSearchWin(): GameEvent[] {
     if (!this.config.search || this.openEmptyCount < this.totalEmpty) return [];
     this.status = 'won';
     return [{ type: 'won' }];
-  }
-
-  private revealAllCreatures(): void {
-    for (const row of this.grid) {
-      for (const cell of row) {
-        if (cell.tier > 0) cell.open = true;
-      }
-    }
   }
 }

@@ -17,7 +17,8 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
     registry.ts     SHAPES, keyed by every BoardShape; shapeRule()
     fixed.ts        the per-cell predicates: rect, donut, cross, diamond
     cave.ts         the ragged cave generator
-    dungeon.ts      the dungeon map: rooms, one-cell hallways, doorways and their pockets
+    floorplan.ts    the dungeon's floor plan: rooms, and one-cell hallways between them
+    dungeon.ts      the dungeon map: the budget spent exactly, doorways and their pockets
   generate.ts     dealing the creatures: shape, then placement rule, then numbers
   opening.ts      choosing the opening
   notes.ts        pencil marks as a bitmask
@@ -36,7 +37,8 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
     dominoes.ts     pairs dealt as a full domino set
     packs.ts        non-touching packs of one-of-every-tier; missingFrom
     congo.ts        packs strung into orthogonal lines led by the top tier
-  game.ts         the state machine: open, mark, note, sweep, cast, forfeit, fight
+  fight.ts        a fight: Exercise's borrowed level, the damage, the kill's EXP, won or lost
+  game.ts         the state machine: open, mark, note, sweep, cast, forfeit
   run.ts          Full Run: ten boards, one HP pool
   settings.ts     the gameplay dials, their defaults and directions
   config.ts       reads ladders.json rows into BoardConfig; has each placement rule check its row
@@ -48,8 +50,9 @@ src/ui/         the prototype
   screens/        one builder per screen: ladders, boards, howto, backup
   overlays/       ask.ts: the in-page yes/no question (never window.confirm)
   game/           the game screen: screen.ts (furniture), hud.ts (filling it in), mode.ts
-                  (what a click does: tier, pencil, spell), hint.ts, sound.ts, clock.ts,
-                  outcome.ts (the clear, loss and run overlays)
+                  (what a click will do: tier, pencil, spell), actions.ts (what the player's
+                  clicks and keys do), hint.ts, sound.ts, clock.ts, outcome.ts (the clear, loss
+                  and run overlays)
   board/          the canvas: view.ts (state, fit, zoom, render order), geometry.ts,
                   digits.ts, paint.ts (cell painters), overlays.ts (silhouette, seams, bonds,
                   highlight), input.ts (pointer, wheel, pinch)
@@ -62,7 +65,8 @@ src/ui/         the prototype
   progress.ts     the save: clears, best times, unlocks
   savefile.ts     the CS1: backup code
   sfx.ts          synthesised sound packs
-  victory.ts      the board-clear effects
+  victory/        the board-clear effects: play.ts runs one, stage.ts is what they share,
+                  ambient.ts paints over the board, icons.ts animates its creatures
   pinch.ts, hexgeom.ts   arithmetic kept DOM-free so tests can reach it
 src/sim/        headless measurement, all driving the real engine (see docs/tuning.md)
   honest.ts       the honest player: sees what a player sees, deduces locally, guesses or casts
@@ -137,8 +141,9 @@ would leave the rest unreachable.
 ## How a click flows
 
 `BoardInput` (in `src/ui/board/input.ts`) turns pointer events into the view's four callbacks
-(open, mark, hover, and whether a click would land). `App` decides what the click means from its
-`EntryMode` (an armed tier, pencil mode, an armed spell) and calls one engine method: `game.open`,
+(open, mark, hover, and whether a click would land). `BoardActions` (`game/actions.ts`) decides what
+the click, or a key, means from the `EntryMode` (an armed tier, pencil mode, an armed spell) and
+calls one engine method: `game.open`,
 `game.setMark`, `game.toggleNote`, `game.cast` or `game.sweep`. Every engine action returns the
 events it caused (`GameEvent[]`: revealed, battle, levelUp, marked, noted, blocked, won, lost,
 spell, exercised). `App.apply` hands them to the sound (`game/sound.ts`), the celebration and the

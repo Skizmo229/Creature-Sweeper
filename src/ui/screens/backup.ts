@@ -71,6 +71,15 @@ export function buildSaveBackup(draft: string, error: string, a: SaveBackupActio
     ),
   );
 
+  appendExport(card, current, code);
+  appendRestore(card, current, draft, error, a);
+
+  overlay.append(card);
+  return overlay;
+}
+
+/** The way out: this browser's save as a code, to copy or to download as a file. */
+function appendExport(card: HTMLElement, current: SaveBundle, code: string): void {
   card.append(el('p', 'backup-label', `This browser — ${describeSave(current)}`));
   const out = el('textarea', 'backup-code');
   out.readOnly = true;
@@ -110,7 +119,19 @@ export function buildSaveBackup(draft: string, error: string, a: SaveBackupActio
   });
   exportRow.append(copy, download);
   card.append(exportRow);
+}
 
+/**
+ * The way back in: a code pasted or loaded from a file, checked, and restored only after the
+ * player confirms, because it replaces this browser's save.
+ */
+function appendRestore(
+  card: HTMLElement,
+  current: SaveBundle,
+  draft: string,
+  error: string,
+  a: SaveBackupActions,
+): void {
   card.append(el('p', 'backup-label', 'Restore — paste a code or load a file'));
   const input = el('textarea', 'backup-code');
   input.rows = 4;
@@ -172,7 +193,4 @@ export function buildSaveBackup(draft: string, error: string, a: SaveBackupActio
   close.addEventListener('click', a.close);
   importRow.append(restore, load, close);
   card.append(importRow);
-
-  overlay.append(card);
-  return overlay;
 }
