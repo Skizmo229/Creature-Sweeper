@@ -155,14 +155,8 @@ const LOOKS: Record<string, LadderLook> = {
     victory: 'sparkle',
   },
   oracle: {
-    // `hot` is rose rather than the light violet it shipped with, for the same
-    // reason PAIRS moved: at #c08bff it sat 75 RGB units from `ink`, so a
-    // creature's number and an ordinary number read as one pale lavender. The
-    // warm fix PAIRS took is NOT available here — this ladder carries Reveal,
-    // which writes GIVEN_COLOR, and an amber `hot` lands 58 units off that gold.
-    // Rose clears the gold by 124, clears Census's cyan, and keeps the violet
-    // family the palette is built on. 181 from `ink`, and 5.8:1 on the floor —
-    // the same contrast NORMAL and HUGE x EXTREME have always shipped.
+    // `hot` is rose: clear of `ink`, and, because Reveal writes givens here, clear of
+    // GIVEN_COLOR's gold and Census's cyan, keeping the violet family (decision 0032).
     palette: {
       tile: '#5b3fa8',
       tileEdge: '#3d2a74',
@@ -193,14 +187,9 @@ const LOOKS: Record<string, LadderLook> = {
     victory: 'wipe',
   },
   pairs: {
-    // `hot` is amber rather than the pale orange it shipped with, and on this
-    // ladder that is legibility rather than taste. A defeated creature's number
-    // is its PARTNER'S TIER, so it is the one number on the board that most
-    // needs to be told apart from an ordinary floor number at a glance. It is
-    // not drawn on pairing boards at the moment (see `BoardView.drawOpen`), so
-    // this is kept for if it comes back — and #ffb07a sat 85 units from `ink` in RGB,
-    // which reads as the same pale colour. Amber is 139 away and also contrasts
-    // BETTER against the floor (11.3:1 against 10.1), so nothing was traded.
+    // `hot` is amber, far from the pale `ink` and better against the floor. A beaten
+    // creature's number is its partner's tier here, though hover does not show it on
+    // pairing boards (decision 0012); the palette is worn elsewhere too (decision 0032).
     palette: {
       tile: '#b5482a',
       tileEdge: '#82301b',
@@ -245,10 +234,6 @@ const LOOKS: Record<string, LadderLook> = {
     victory: 'cascade',
   },
   workout: {
-    // Wolf grey with amber eyes: a pack. Measured the same way as the rest — `hot`
-    // 178 from `ink` and 10.4:1 on the floor, and a mark on a covered tile 3.3:1,
-    // in NORMAL's range. No spells here, so an amber `hot` has no gold annotation
-    // to collide with.
     // Pool-tile teal: a gym. Amber `hot` is safe here because the only spell is
     // Exercise, which writes no gold annotation. 195 from `ink`, 10.0:1 on the
     // floor, and a mark on a covered tile 3.2:1, in NORMAL's range.
@@ -268,6 +253,10 @@ const LOOKS: Record<string, LadderLook> = {
     victory: 'burst',
   },
   packs: {
+    // Wolf grey with amber eyes: a pack. Measured the same way as the rest — `hot`
+    // 178 from `ink` and 10.4:1 on the floor, and a mark on a covered tile 3.3:1,
+    // in NORMAL's range. No spells here, so an amber `hot` has no gold annotation
+    // to collide with.
     palette: {
       tile: '#58687c',
       tileEdge: '#3c4859',
@@ -308,12 +297,8 @@ const LOOKS: Record<string, LadderLook> = {
     victory: 'cascade',
   },
   hive: {
-    // HIVE and DONUT traded palettes, by request: honey amber for the hive, and
-    // DONUT in strawberry frosting. Only the colours moved — each kept its own
-    // pip. The trade also fixed DONUT's `hot`: that ladder carries Reveal, and
-    // the amber it had sat 27 units from GIVEN_COLOR's gold; the rose it has now
-    // is 108 clear, and 97 from its own `ink`. HIVE has no spells, so amber is
-    // safe there, 114 from `ink`.
+    // Honey amber for the hive, with its own pip. No spells here, so an amber `hot`
+    // has no gold annotation to collide with (decision 0032).
     palette: {
       tile: '#b06a1d',
       tileEdge: '#7d4711',
@@ -344,6 +329,8 @@ const LOOKS: Record<string, LadderLook> = {
     victory: 'wipeRadial',
   },
   donut: {
+    // Strawberry frosting. `hot` is rose, clear of the gold, because Reveal writes
+    // givens here (decision 0032).
     palette: {
       tile: '#a8324f',
       tileEdge: '#78203a',
@@ -434,11 +421,8 @@ const LOOKS: Record<string, LadderLook> = {
     victory: 'burn',
   },
   sudoku: {
-    // Magenta, not the light violet it shipped with (74 units from `ink`, which
-    // reads as the same colour). Gold is doubly unavailable on this ladder:
-    // every given is drawn in GIVEN_COLOR, so an amber `hot` would be 21 units
-    // from the one annotation this board is covered in. Magenta is 160 clear of
-    // it and 126 from `ink`, at 6.7:1 on the floor.
+    // `hot` is magenta: clear of `ink`, and gold is unavailable on a board covered in
+    // givens drawn in GIVEN_COLOR (decision 0032).
     palette: {
       tile: '#7d4a8f',
       tileEdge: '#573165',
@@ -454,16 +438,10 @@ const LOOKS: Record<string, LadderLook> = {
     victory: 'wipeDown',
   },
   blind: {
-    // A saturated azure rather than the pale blue it shipped with. This is the
-    // hardest `ink` in the set to sit beside — a neutral near-white — so the
-    // only thing that separates from it is SATURATION, not hue: #9fd8ff was 78
-    // units away and #3fb8f0 is 176. Kept bright (7.7:1) rather than taken
-    // darker for a few more units of separation, because this ladder's boards
-    // are among the largest in the game and so are drawn at the smallest cells.
-    //
-    // Worth knowing why this matters at all on a ladder that never defeats a
-    // creature: a palette is a PLAYER setting, so BLIND's is worn on boards
-    // that do.
+    // `hot` is a saturated azure: beside a neutral near-white `ink`, only saturation
+    // separates. Kept bright because these boards draw the smallest cells. It matters
+    // on a ladder that never beats a creature because a palette is a player setting,
+    // worn on boards that do (decision 0032).
     palette: {
       tile: '#8a8a8a',
       tileEdge: '#616161',

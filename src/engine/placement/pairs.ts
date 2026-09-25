@@ -311,7 +311,8 @@ export const PAIRS_RULE: PlacementRule = {
   ringProof: (_view, level) => (cell, ring) => ringIsFree(cell, ring, level),
   emptied: NOTHING_EMPTIED,
   // A beaten creature's number is its partner's tier, and hovering does not show it, by request:
-  // a lone digit read as the creature's own level. Sweep and the pencil still read it.
+  // a lone digit read as the creature's own level (decision 0012). Sweep and the pencil still
+  // read it.
   display: { ...PLAIN_DISPLAY, bonds: 'every', hoverShowsNumber: false },
   pools: ONE_POOL,
   groups: 'pairs',

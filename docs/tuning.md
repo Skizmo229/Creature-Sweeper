@@ -64,20 +64,29 @@ other; it does not rank the placement-rule ladders against them.
 
 ## What the spells are worth, measured
 
-- Reveal is worth 60 to 70 times Census as played: 0.94 HP saved per cast against 0.01, 0.0126
-  per mana against 0.0003. Census is not weak, it is unaimable: cast where it demonstrably unlocks
-  something it is worth 0.28 HP, but such a spot exists 0.1 to 0.3 times a board and a player hits
-  it 2 to 9% of the time.
+Measured 24 September 2026 with `npm run sim:spells` at 40 seeds over every board of every magic
+ladder, each spell against playing spell-less on the ladders that offer it:
+
+| Spell | Mana | HP saved a cast | HP saved a mana | Clear rate gained |
+| --- | ---: | ---: | ---: | ---: |
+| Reveal | 75 | 0.97 | 0.0129 | 5.1 points |
+| Census, as played | 30 | 0.001 | 0.0000 | 0.0 |
+| Census, where it demonstrably helps | 30 | 0.48 | 0.0158 | 0.8 |
+| Exercise | 150 | 0.90 | 0.0098 | 2.5 |
+
+- Reveal is the most valuable spell by a wide margin. Census is not weak, it is unaimable: cast
+  where it demonstrably unlocks something it is worth more per mana than Reveal, but such a spot
+  exists 0.1 to 0.3 times a board and a player hits it 2 to 9% of the time (an earlier
+  measurement).
 - Reveal's ring (the empty ground around its target) is 45% of the spell and gives nothing away.
   It cannot cascade off a creature, because every neighbour of a tier-N cell carries at least N.
-- Exercise is the best spell per cast (0.91 HP) and the worst per mana; it lifts the clear rate
-  more than Reveal because it makes the unavoidable guess survivable. At 150 it is out of reach on
-  DUNGEON's first boards.
+- Exercise is close to Reveal per cast and the worst per mana: it makes the unavoidable guess
+  survivable rather than avoiding it. At 150 it is out of reach on DUNGEON's first boards.
 - Spell value is a hump: a spell only pays where a board is hard enough to corner the player and
   still winnable. ARCANE was retuned (26.5 to 34.5%) so its late boards have something to fix.
-- The affordability test says three things: the cheapest spell is castable many times (floor 15),
-  the dearest at least twice (floor 3), and the pool covers one of everything (floor 1.8); DUNGEON
-  board 1 sets all three floors.
+- The affordability test (`test/spells.test.ts`) makes two claims: every board's whole pool buys
+  its cheapest spell more than five times and its dearest more than once. On the ladder data of
+  24 September 2026 the floors are 7.5 and 1.5, both set by DUNGEON board 1.
 - "Share of the pool spent" is the wrong measure of scarcity; the right one is what it would cost
   to buy out every moment a deductive player is cornered, as a share of the pool: 40 to 86% on the
   late boards, 2 to 30% on the early ones.

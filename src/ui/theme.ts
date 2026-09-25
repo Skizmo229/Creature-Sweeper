@@ -96,7 +96,7 @@ export const OUT_OF_REACH_COLOR = '#ff5a5a';
  * annotation on the board you are not allowed to change.
  *
  * Reveal writes one of these too, on every ladder that carries magic. Same
- * argument exactly: a tier you bought for 25 mana is the board talking, not a
+ * argument exactly: a tier you bought with mana is the board talking, not a
  * hypothesis you wrote down, and it should neither look like one nor be
  * rubbed out like one.
  */

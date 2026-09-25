@@ -58,11 +58,11 @@ const DUNGEON_MARGIN = 1;
  * puzzles, each needing its own foothold, and the count is what decides how
  * often a player is cornered with nothing to deduce from.
  *
- * Rooms were originally rolled at a fixed size, which meant a bigger board
- * simply held more of them: the room count nearly doubled across the ladder,
- * putting an untuned difficulty ramp on the one axis that matters most. Sizing
- * rooms from the budget instead holds the count steady, so board 10 is a
- * bigger version of board 1 rather than a differently-shaped game.
+ * Rooms are sized from the budget rather than rolled at a fixed size, which
+ * holds the count steady, so board 10 is a bigger version of board 1 rather
+ * than a differently-shaped game. At a fixed size a bigger board simply holds
+ * more rooms, an untuned difficulty ramp on the one axis that matters most
+ * (decision 0003).
  */
 const ROOM_COUNT = 7;
 /**
@@ -663,12 +663,10 @@ function spawnableCells(present: Mask, hall: Mask, bw: number, bh: number): Mask
   // ground hugs the entrance and the room proper is still the risk.
   //
   // ORTHO for "next to the door", the full ring for "touches a wall", and the
-  // asymmetry is the whole reason this fits. Taking the ring on BOTH was tried
-  // first and it does not merely run dense, it cannot generate: spawnable fell
-  // to 55% of the map against a floor of 78%, every plan was refused and
-  // `dungeonMap` threw on every board. Rooms here are small — ROOM_COUNT pins
-  // seven of them — so most of a room's perimeter is already both wall-adjacent
-  // and door-adjacent, and the ring swallowed the perimeter whole.
+  // asymmetry is the whole reason this fits. The ring on BOTH cannot generate:
+  // rooms here are small (ROOM_COUNT pins seven of them), so most of a room's
+  // perimeter is both wall-adjacent and door-adjacent, the ring swallows it
+  // whole, and too little floor is left for any plan (decision 0003).
   //
   // Out of bounds counts as wall, which is correct and not an accident of the
   // lookup: the plan is laid out inside DUNGEON_MARGIN, so the edge of the box

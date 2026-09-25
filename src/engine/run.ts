@@ -57,9 +57,9 @@ export interface FullRunOptions extends Pick<BoardOptions, 'opening'> {
   /**
    * The player's gameplay dials, applied to every board of the run.
    *
-   * This is where `hpRegenRatio` is finally spent: it is the fraction of the
-   * pool the heal restores, and at its default of 0.5 it is exactly the rule
-   * the mode shipped with. A Full Run is the only place in the game that heals
+   * This is where `hpRegenRatio` is spent: it is the fraction of the pool the
+   * heal restores, and its default of 0.5 is the half heal of decision 0015.
+   * A Full Run is the only place in the game that heals
    * at all, which is why the dial lives here and nowhere else.
    */
   settings?: GameplaySettings;

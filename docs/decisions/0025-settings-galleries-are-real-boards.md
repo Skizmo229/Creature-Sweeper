@@ -16,4 +16,5 @@ a genuinely won board carrying one of every tier the real board uses.
 
 ## Consequences
 About twelve thumbnails per rebuild instead of seventy. Every "game type default" names what it
-resolves to. Anything added to `preview.ts` stays DOM-free.
+resolves to. Anything added to `preview.ts` stays DOM-free. The cursor-highlight examples, hex for
+everyone at first, follow the player's ladder by request: square on square ladders, hex on HIVE.

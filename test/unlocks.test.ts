@@ -146,9 +146,8 @@ describe('every gate can actually be met', () => {
    * these tests exist for. Scaling boards are left out on purpose, so a
    * player who never goes past board 10 must still reach everything.
    *
-   * This replaced a stricter claim, that every gate fit inside the 70 boards
-   * the type-gated ladders offer. The schedule now steps by five to 80, so the
-   * top three gates need a variant played first, which is the intent.
+   * The schedule steps by five to 80, so the top three gates need a variant
+   * played first, which is the intent (decision 0018).
    */
   function walkCountedGates(): { reached: Set<string>; budget: number } {
     const reached = new Set<string>();

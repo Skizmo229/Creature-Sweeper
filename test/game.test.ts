@@ -175,9 +175,9 @@ describe('open()', () => {
   });
 
   it('treats a defeated creature as open ground — its number is shown on hover', () => {
-    // It used to flip between sprite and number on a click. Hovering shows the
-    // number now, which is the renderer's alone, so a click here is a click on
-    // open ground: refused, and nothing about the cell changes.
+    // Hovering shows the number, which is the renderer's alone (decision 0012),
+    // so a click here is a click on open ground: refused, and nothing about the
+    // cell changes.
     const game = Game.create(tinyConfig(), 7);
     // two creatures, so defeating one does not end the board
     paint(game, [

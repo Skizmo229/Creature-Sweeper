@@ -111,12 +111,10 @@ export function isAtLeastAsHard(s: GameplaySettings): boolean {
 /**
  * How hard a Sweep mode is, as an order: off is hardest, on is easiest.
  *
- * Sweep used to be absent from the hardness check, and the argument for that
- * was sound while the default was 'on': both other modes take a tool away, so
- * nothing could be easier than the default. Charging it by default inverts
- * that — 'on' is now unlimited access to a tool the tuned game rations, and a
- * player who switched to it would have been handed records and unlocks for a
- * strictly easier game. The charge size is the same argument in miniature: a
+ * Ranked because Sweep is charged by default (decision 0014): 'on' is
+ * unlimited access to a tool the tuned game rations, and a player who switched
+ * to it would otherwise be handed records and unlocks for a strictly easier
+ * game. The charge size is the same argument in miniature: a
  * bank of 1 cell per sweep is nearly 'on' wearing a meter, so it has to be
  * compared rather than assumed finite-and-therefore-harder.
  */

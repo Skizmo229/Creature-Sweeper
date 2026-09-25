@@ -119,11 +119,9 @@ describe('the ladder', () => {
 
 describe('the board', () => {
   it('gives a creature its partner’s tier as its number', () => {
-    // The number IS the partner's tier. It used to start flipped on every
-    // pairing board, so a kill showed the fact and a click uncovered the art;
-    // that preset is gone, by request, and so is showing it on hover — a lone
-    // digit over a creature read as its own level. The engine still holds it,
-    // and Sweep's partner proof and the pencil's candidates still read it.
+    // The number IS the partner's tier. Hover does not show it on pairing
+    // boards, by request (decision 0012), but the engine holds it, and Sweep's
+    // partner proof and the pencil's candidates read it.
     const game = Game.create(boardConfig(ladders, 'dominoes', 5), SEEDS[0]!);
     for (const cell of game.grid.flat()) {
       if (cell.tier === 0) continue;

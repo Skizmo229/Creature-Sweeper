@@ -155,12 +155,10 @@ export function topDefeatedCell(game: Game): { x: number; y: number } {
 /**
  * The cursor-highlight examples, on the grid the player's ladder is played on.
  *
- * It used to be hex for everyone, on the argument that on a square board "true
- * neighbours" and "flat 3x3 block" light the same eight cells and so look like
- * a choice that does nothing. By request it now follows the ladder: square
- * boxes on every square ladder, where the two styles really do behave alike,
- * and hex on HIVE, where they part — six cells against eight. A preview of a
- * board the player is not on was answering a question they had not asked.
+ * Square boxes on every square ladder, where "true neighbours" and "flat 3x3
+ * block" light the same eight cells, and hex on HIVE, where they part (six
+ * cells against eight). By request: a preview of a board the player is not on
+ * answers a question they had not asked (decision 0025).
  *
  * Both are 5x4, so the pinned cell sits clear of every edge and its whole ring
  * is on the board whichever grid is drawn.

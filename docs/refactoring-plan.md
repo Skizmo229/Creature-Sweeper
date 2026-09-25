@@ -46,6 +46,12 @@ and a ladder may share a bundled face, so a new ladder needs no new font. Adding
 with its ladder is now 9 hand-edited files, from about 19; the plan's target was 8, and the extra
 one is the pair of test lists that deliberately pin the ladder set. Phase 3 is done.
 
+Phase 4 started on 24 September 2026 on branch `m3-4-comment-pass`. The wrong numbers are fixed
+and re-measured (the spell values, dated, in `docs/tuning.md`), and the comment lines narrating
+past behaviour are down from 28 to none: each now says what is true and names the decision that
+holds the history, with decision 0032 new for the palette changes. The rest of phase 4 continues
+as files are touched.
+
 ---
 
 ## 1. The short version
