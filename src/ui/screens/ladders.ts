@@ -99,6 +99,7 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
     list.append(card);
   }
   wrap.append(list);
+  fitNames(list);
 
   const tools = el('div', 'tools');
   const unlockAll = el('label', 'toggle');
@@ -127,4 +128,26 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
   wrap.append(tools);
 
   return wrap;
+}
+
+/**
+ * Records each ladder name's longest word in ems (`--word-em`), which the stylesheet divides into
+ * the card's width to keep the name inside its card (see `.type-name`). Measured once every face
+ * has arrived, since the width is the face's; the card's width is the stylesheet's, so a resize
+ * needs nothing from here. A name that cannot be measured stays at full size.
+ */
+function fitNames(list: HTMLElement): void {
+  const names = [...list.querySelectorAll<HTMLElement>('.type-name')];
+  const faces = names.map((n) => document.fonts.load(`700 1rem ${n.style.fontFamily}`));
+  void Promise.allSettled(faces).then(() => {
+    // Every name narrowed before any is read, so the page lays out once, not once per name.
+    for (const n of names) n.style.width = 'min-content';
+    const ems = names.map(
+      (n) => n.getBoundingClientRect().width / parseFloat(getComputedStyle(n).fontSize),
+    );
+    names.forEach((n, i) => {
+      n.style.width = '';
+      if (ems[i]! > 0) n.style.setProperty('--word-em', String(ems[i]));
+    });
+  });
 }

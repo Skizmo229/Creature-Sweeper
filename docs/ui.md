@@ -34,6 +34,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - The clock starts when the board is dealt. Time Attack counts down from the player's own best and
   reports expiry through `game.forfeit`; it is frame-driven, so a hidden tab registers expiry on
   its next frame.
+- The ladder list's names are 1.5rem, by request, and never wider than their card. Each records its
+  longest word in ems once its face has arrived (`fitNames`), and the stylesheet caps its size by
+  the card's width, so CHECKERBOARD comes down a little at laptop width, and any long word at a
+  large text size. A name with a space in it breaks there first.
 
 ## The board
 
