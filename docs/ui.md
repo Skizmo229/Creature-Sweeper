@@ -137,7 +137,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   Muting is not the same as the OFF pack, and the speaker is repainted from `applyPresentation`.
 - The sound check (a button under the Sound effects gallery) plays any pack's sound through
   `Sfx.audition`, which ignores the chosen pack and the throttle but not mute. Keys assigned there
-  play only while its window is open, and last for the session; they are never saved.
+  play only while its window is open, and last for the session; they are never saved. Its keyboard
+  (C2 to C7, equal temperament) retunes the last sound clicked: every voice is scaled by one
+  factor, so the first lands on the chosen note and the rest keep their intervals. Session-only,
+  and never heard in play.
 - Two families of clear effect: ambient (confetti, burst, ripple, sparkle) and icon (tumble,
   cascade, pop, burn, three wipes). Icon effects take the board's glyphs (`VictorySource`),
   pre-rendered per tier into an atlas at twice the cell size, and the board stops drawing them

@@ -149,6 +149,11 @@ const PACKS: Record<SfxPackId, Pack> = {
   },
 };
 
+/** Where a sound starts, in Hz: its first voice's opening frequency. */
+export function sfxPitch(pack: SfxPackId, event: SfxEvent): number {
+  return PACKS[pack][event][0].from;
+}
+
 /**
  * Shortest gap between two sounds of the same event, in milliseconds.
  *
@@ -196,13 +201,14 @@ export class Sfx {
    * Play one event from any pack, whichever is chosen, and unthrottled: the
    * sound check, where every press is one deliberate sound. Silence is still
    * the caller's to decide, since the pack being off is no reason not to
-   * audition one.
+   * audition one. `ratio` transposes every voice by the same factor, so a
+   * sound keeps its shape at any pitch.
    */
-  audition(pack: SfxPackId, event: SfxEvent): void {
-    if (!this.dead) this.sound(pack, event);
+  audition(pack: SfxPackId, event: SfxEvent, ratio = 1): void {
+    if (!this.dead) this.sound(pack, event, ratio);
   }
 
-  private sound(pack: SfxPackId, event: SfxEvent): void {
+  private sound(pack: SfxPackId, event: SfxEvent, ratio = 1): void {
     try {
       const ctx = this.context();
       if (!ctx || !this.master) return;
@@ -210,20 +216,22 @@ export class Sfx {
       // was backgrounded can suspend it again later.
       if (ctx.state === 'suspended') void ctx.resume();
 
-      for (const v of PACKS[pack][event]) this.voice(ctx, this.master, v);
+      for (const v of PACKS[pack][event]) this.voice(ctx, this.master, v, ratio);
     } catch {
       this.dead = true;
     }
   }
 
   /** A single oscillator with an attack/decay envelope. */
-  private voice(ctx: AudioContext, out: GainNode, v: Voice): void {
+  private voice(ctx: AudioContext, out: GainNode, v: Voice, ratio: number): void {
     const at = ctx.currentTime + (v.delay ?? 0);
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = v.wave;
-    osc.frequency.setValueAtTime(v.from, at);
-    if (v.to !== v.from) osc.frequency.exponentialRampToValueAtTime(Math.max(1, v.to), at + v.dur);
+    osc.frequency.setValueAtTime(v.from * ratio, at);
+    if (v.to !== v.from) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(1, v.to * ratio), at + v.dur);
+    }
 
     // A short attack rather than a hard start: an instant jump to peak gain
     // clicks audibly, and with a click per opened cell that is the loudest

@@ -1242,6 +1242,101 @@ button.soundcheck-sound.picking {
   color: var(--tint);
   min-height: 1em;
 }
+button.soundcheck-sound.tuning {
+  background: var(--panel);
+  border-color: var(--tint);
+}
+
+/* The keyboard under the grid, held to the bottom of the window as the packs
+   scroll past, so the sound just clicked can be retuned without scrolling to
+   it. The negative offset and padding match the card's own bottom padding, so
+   nothing shows through below it. Ivory and black because it is a keyboard,
+   whatever the ladder's colours. */
+.soundcheck-pitch {
+  position: sticky;
+  bottom: -20px;
+  margin: 16px -18px -20px;
+  padding: 4px 18px 20px;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+}
+.soundcheck-pitch .soundcheck-pack {
+  margin: 0;
+}
+.soundcheck-pitch .soundcheck-tools {
+  margin: 8px 0;
+}
+.piano-scroll {
+  overflow-x: auto;
+}
+.piano {
+  --white-w: 24px;
+  --black-w: 14px;
+  position: relative;
+  display: flex;
+  width: calc(var(--whites) * var(--white-w));
+  height: 96px;
+}
+button.piano-key {
+  padding: 0;
+  border-radius: 0 0 3px 3px;
+}
+button.piano-key.white {
+  flex: 0 0 var(--white-w);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 4px;
+  background: #ebe6d6;
+  border-color: #3a3a33;
+}
+/* `--at` is how many white keys come before it, so it sits on that seam. */
+button.piano-key.black {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: calc(var(--at) * var(--white-w) - var(--black-w) / 2);
+  width: var(--black-w);
+  height: 60%;
+  background: #1b1b18;
+  border-color: #1b1b18;
+}
+.piano-label {
+  font-size: 0.55rem;
+  color: #3a3a33;
+  pointer-events: none;
+}
+/* The sound's own pitch wears a dot; the chosen one lights up. */
+button.piano-key.own::after {
+  content: '';
+  position: absolute;
+  bottom: 18px;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: var(--tint);
+}
+button.piano-key.black.own::after {
+  bottom: 6px;
+  left: 50%;
+}
+button.piano-key.white.own {
+  position: relative;
+}
+button.piano-key.white.own::after {
+  left: 50%;
+}
+button.piano-key.chosen {
+  background: var(--tint);
+  border-color: var(--tint);
+}
+button.piano-key.chosen.own::after {
+  background: #1b1b18;
+}
+.piano-scroll.idle button.piano-key:disabled {
+  opacity: 0.45;
+}
 
 /* An interface font's example: two of the HUD's readouts in the face, one
    above the other, at the size the HUD first shipped at, in a box no smaller
