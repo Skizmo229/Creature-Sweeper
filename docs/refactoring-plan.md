@@ -69,7 +69,7 @@ every spell (which surfaced that nothing measures Beacon); the command-line sims
 
 | Measure | Target | Now |
 | --- | ---: | ---: |
-| Files to change to add a placement rule | 8 or fewer | 9, with its ladder |
+| Files to change to add a placement rule | 8 or fewer | 8, with its ladder |
 | Placement branch sites | about 10 | 12 in 5 files, 8 of them in `ladders.py` |
 | Longest function, engine and UI | 100 (warn), 150 (hard) | under 100: no warning |
 | Largest file, engine and UI | 600 | under 600: no warning |
@@ -85,8 +85,12 @@ plan to `shape/floorplan.ts`; `app.ts` the player's input to `game/actions.ts`; 
 `victory/` (play, stage, ambient, icons); and `buildGameScreen`, `gameplaySection`,
 `buildSaveBackup` and `playVictory` were split into named parts. Each move was checked
 behaviour-neutral (golden outputs, the HTML of twenty screens, and pixel hashes of all eleven
-clear effects). What remains is in the sims, which the plan ranks lower: four long functions
-(`solve`, `feasible`, `play`, `main`) and one long file (`honest.ts`).
+clear effects). The sims followed: the honest player's deduction is `sim/deduce.ts`, the
+complete deducer's search a class in `sim/search.ts`, and `play` and the spell sim's `main` are
+split, so ESLint reports no size warning anywhere in `src`. `Placement` and `BoardShape` are now
+their registries' keys, which takes a placement rule with its ladder to 8 files. The honest player
+casts Beacon, and the measurement says it is priced out of reach (`docs/tuning.md`, open question
+7). Every target in the table is met; spell-addition is the one not re-walked.
 
 ---
 
