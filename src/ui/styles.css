@@ -2,10 +2,13 @@
 @import './fonts.css';
 
 :root {
-  --bg: #17170f;
+  --bg: #181a1b;
   --panel: #23231b;
   --panel-2: #2e2e24;
   --line: #3b3b2e;
+  /* The edge of anything clickable: lighter than --line, which frames panels,
+     so a control reads against the near-black background. */
+  --button-line: #6b665b;
   /* The edge every board tile carries, border and outline in one colour — see .board-card. */
   --card-outline: #7b7265;
   --ink: #ece7d6;
@@ -100,7 +103,7 @@ button {
   font-size: 0.85rem;
   color: var(--ink);
   background: var(--panel-2);
-  border: 1px solid var(--line);
+  border: 1px solid var(--button-line);
   border-radius: 4px;
   padding: 8px 14px;
   cursor: pointer;
@@ -844,7 +847,7 @@ button.board-card:hover:not(:disabled) {
   font-size: 0.8rem;
   line-height: 1.5;
   background: transparent;
-  border-color: var(--line);
+  border-color: var(--button-line);
 }
 .scale-arrow:hover:not(:disabled) {
   border-color: var(--tint);
@@ -958,7 +961,7 @@ button.board-card:hover:not(:disabled) {
   font-size: 0.78rem;
   color: var(--ink);
   background: var(--panel-2);
-  border: 1px solid var(--line);
+  border: 1px solid var(--button-line);
   border-radius: 4px;
   padding: 7px 8px;
   width: 100%;
@@ -1070,7 +1073,7 @@ button.board-card:hover:not(:disabled) {
   gap: 6px;
   padding: 8px;
   background: var(--panel-2);
-  border: 1px solid var(--line);
+  border: 1px solid var(--button-line);
   border-radius: 5px;
   cursor: pointer;
   /* The caption is the option's name, so it must not be clipped to the
@@ -1241,8 +1244,8 @@ button.board-card:hover:not(:disabled) {
   display: grid;
   place-items: center;
   padding: 0;
-  background: rgba(28, 28, 21, 0.9);
-  border: 1px solid var(--line);
+  background: rgba(24, 26, 27, 0.9);
+  border: 1px solid var(--button-line);
   border-radius: 4px;
   color: var(--ink);
   cursor: pointer;
