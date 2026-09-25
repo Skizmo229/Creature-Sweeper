@@ -33,7 +33,12 @@ import { loadLadders } from '../data.js';
 import { boardConfig } from '../engine/config.js';
 import { Game } from '../engine/game.js';
 import { SPELLS, type SpellId } from '../engine/spells.js';
-import { type Policy, type Run, play } from './honest.js';
+import { type Policy, type Run, SPELL_POLICIES, play } from './honest.js';
+
+/** Every measured policy with the spell it casts, in the order the tables print them. */
+const MEASURED: ReadonlyArray<{ policy: Policy; spell: SpellId }> = (
+  Object.keys(SPELL_POLICIES) as SpellId[]
+).flatMap((spell) => SPELL_POLICIES[spell].map((policy) => ({ policy, spell })));
 
 /**
  * WORKOUT, board by board, under the two ways a player can hold Exercise.
@@ -102,8 +107,8 @@ function byBoard(seeds: number, typeId: string): void {
   // A column per spell the ladder actually offers, so the table answers "what
   // is this ladder's loadout worth on this ladder" rather than reporting on a
   // spell nobody there can cast.
-  const offered = (['reveal', 'census', 'exercise'] as const).filter((id) =>
-    (type.spells ?? []).includes(id),
+  const offered = (Object.keys(SPELL_POLICIES) as SpellId[]).filter(
+    (id) => SPELL_POLICIES[id].length > 0 && (type.spells ?? []).includes(id),
   );
 
   console.log(
@@ -119,10 +124,11 @@ function byBoard(seeds: number, typeId: string): void {
 
     // Same seeds for every policy, so the difference between two columns is
     // the spell and never the board.
-    const withSpell = new Map<Policy, Run[]>();
+    const withSpell = new Map<SpellId, Run[]>();
     for (const id of offered) {
+      const policy = SPELL_POLICIES[id][0]!;
       const runs: Run[] = [];
-      for (let s = 0; s < seeds; s++) runs.push(play(Game.create(cfg, seedAt(s)), id, id));
+      for (let s = 0; s < seeds; s++) runs.push(play(Game.create(cfg, seedAt(s)), policy, id));
       withSpell.set(id, runs);
     }
     const mean = (rs: Run[], pick: (r: Run) => number) =>
@@ -185,9 +191,10 @@ function main(): void {
 
   for (const type of magic) {
     let typeBase: Run[] = [];
-    for (const policy of ['none', 'reveal', 'census', 'census-best', 'exercise'] as const) {
-      const spellId: SpellId | null =
-        policy === 'none' ? null : policy === 'census-best' ? 'census' : policy;
+    for (const { policy, spell: spellId } of [
+      { policy: 'none' as Policy, spell: null },
+      ...MEASURED,
+    ]) {
       if (spellId && !(type.spells ?? []).includes(spellId)) continue;
       const runs: Run[] = [];
 
@@ -246,7 +253,7 @@ function main(): void {
   console.log('spell        cost   hp saved/cast   hp saved/mana   clear rate  +pts');
   const perMana: Array<[SpellId, number, number]> = [];
 
-  for (const policy of ['reveal', 'census', 'census-best', 'exercise'] as const) {
+  for (const { policy, spell: id } of MEASURED) {
     const rs = totals.get(policy);
     const against = baselines.get(policy);
     if (!rs || !against) continue;
@@ -255,7 +262,6 @@ function main(): void {
     const spent = mean(rs, (r) => r.manaSpent);
     const clear = mean(rs, (r) => (r.cleared ? 1 : 0));
     const baseClearHere = mean(against, (r) => (r.cleared ? 1 : 0));
-    const id: SpellId = policy === 'census-best' ? 'census' : policy;
     perMana.push([id, SPELLS[id].cost, savedTotal / Math.max(0.001, spent)]);
     console.log(
       `${policy.padEnd(12)} ${String(SPELLS[id].cost).padStart(4)}   ` +

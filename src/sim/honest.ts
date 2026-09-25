@@ -29,6 +29,21 @@ import { placementRule } from '../engine/placement/registry.js';
  */
 export type Policy = 'none' | 'reveal' | 'census' | 'census-best' | 'exercise' | 'workout' | 'gym';
 
+/**
+ * The policies that measure each spell, keyed by every spell, so a new one cannot be added without
+ * saying how it is measured. Declaration order is the order the measurements print. WORKOUT's
+ * `workout` and `gym` are Exercise under that ladder's own rule and are measured on their own.
+ */
+export const SPELL_POLICIES: Readonly<Record<SpellId, readonly Policy[]>> = {
+  reveal: ['reveal'],
+  // `census-best` casts where the count demonstrably unlocks something: what Census is worth
+  // when aimed perfectly, against `census`, aimed by judgement.
+  census: ['census', 'census-best'],
+  exercise: ['exercise'],
+  // Not measured yet: the honest player has no policy for it, though ORACLE offers it.
+  beacon: [],
+};
+
 export interface Run {
   cleared: boolean;
   hpLost: number;
