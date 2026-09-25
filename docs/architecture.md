@@ -36,7 +36,8 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
     dominoes.ts     pairs dealt as a full domino set
     packs.ts        non-touching packs of one-of-every-tier; missingFrom
     congo.ts        packs strung into orthogonal lines led by the top tier
-  game.ts         the state machine: open, mark, note, sweep, cast, forfeit, fight
+  fight.ts        a fight: Exercise's borrowed level, the damage, the kill's EXP, won or lost
+  game.ts         the state machine: open, mark, note, sweep, cast, forfeit
   run.ts          Full Run: ten boards, one HP pool
   settings.ts     the gameplay dials, their defaults and directions
   config.ts       reads ladders.json rows into BoardConfig; has each placement rule check its row
