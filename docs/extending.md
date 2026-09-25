@@ -123,7 +123,8 @@ and the two test lists that pin the ladder set.
 
 1. `PresentationSettings`, its default and its reader in `src/ui/settings.ts` (the reader ignores
    unknown keys, so old saves need no migration; a retired setting can simply go).
-2. A row in `settingsscreen.ts`, as a gallery of real boards where the setting is visual, with the
-   "game type default" option naming what it resolves to.
-3. `BoardDisplay` in `boardview.ts` if the renderer reads it, and `App.boardDisplay`.
+2. A row in `src/ui/settingsscreen/` (`look.ts` for a setting that is drawn, `effects.ts` for one
+   that plays itself), called from `screen.ts`, as a gallery of real boards where the setting is
+   visual, with any "game type default" option naming what it resolves to.
+3. `BoardDisplay` in `src/ui/board/view.ts` if the renderer reads it, and `App.boardDisplay`.
 4. `test/preview.test.ts` if it has an example board.
