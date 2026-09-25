@@ -201,7 +201,7 @@ export class Game {
 
     // A defeated creature is open ground like any other. Its own number is
     // shown while the cursor is over it, which is the renderer's business and
-    // changes nothing here — it used to be a click toggle held on the cell.
+    // changes nothing here (decision 0012).
     if (cell.open) return [{ type: 'blocked', reason: 'already-open' }];
 
     // The crawl rule, on boards that have one: you may only open ground

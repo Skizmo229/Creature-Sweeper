@@ -5,13 +5,9 @@
  *   npx tsx src/sim/placement.ts [trials]
  *     writes design/data/placement.json and design/data/placement-rules.json
  *
- * Replaces `design/placement.py`, and for the reason `opening.ts` replaced
- * `opening.py`: that file reimplemented the board in numpy — its own neighbour
- * sums, its own flood fill for the opening — and a second implementation only
- * stays honest until the first one grows. It had already stopped: it knew
- * nothing about hex grids, the checkerboard or the pairing. Here every number
- * is the engine's own `computeNumbers`, every opening its own
- * `findBestOpening`, and every adjacency its own `neighbours()`.
+ * Every number is the engine's own `computeNumbers`, every opening its own
+ * `findBestOpening`, and every adjacency its own `neighbours()`: a second
+ * implementation of the board only stays honest until the first one grows.
  *
  * Two tables.
  *
@@ -19,12 +15,12 @@
  * table means what it always meant: the same creatures on three test beds,
  * only WHERE they go changing. Scatter and the two topologies are the engine's
  * own generator. The four clustering strategies — triads, triads with pairs,
- * lairs, bands — were design explorations that never shipped, so they exist
- * only here; they build a tier layout and hand it to the engine to measure,
- * which is the half that could drift.
+ * lairs, bands — are design explorations no ladder uses, so they exist only
+ * here; they build a tier layout and hand it to the engine to measure, which
+ * is the half that could drift.
  *
- * `placement-rules.json` is what the old script could not do: each placement
- * rule that DID ship, on its own ladder's board 5, against the very same
+ * `placement-rules.json` measures each placement rule a ladder uses, on its
+ * own ladder's board 5, against the very same
  * creatures scattered uniformly. That is the direct measurement of what a rule
  * costs or hands back in opening, which is what the PAIRS note ("the rule was
  * expected to give the board away and does the reverse") argues from.
@@ -328,7 +324,7 @@ for (const [name, id] of beds) {
 }
 writeFileSync(resolve(DATA, 'placement.json'), JSON.stringify(rows, null, 1));
 
-// ---------- every shipped rule, against its own creatures scattered ----------
+// ---------- every rule a ladder uses, against its own creatures scattered ----------
 
 console.log(
   '\n=== each shipped placement rule on its own board 5, against the same creatures scattered ===',

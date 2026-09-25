@@ -12,7 +12,7 @@
  * **An AudioContext cannot be created before a gesture.** Browsers start one
  * suspended and refuse to run it until the player has clicked something, so
  * the context is built lazily on the first sound and resumed on every call.
- * Building it in the constructor worked in dev and shipped silent.
+ * Built in the constructor, before any gesture, it stays silent.
  *
  * **Sound must never be able to break the game.** Every entry point is
  * wrapped: a blocked context, a missing WebAudio implementation or a browser

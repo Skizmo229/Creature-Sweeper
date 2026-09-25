@@ -134,8 +134,8 @@ describe('the ceilings hold', () => {
 
   it('never drops HP below the floor the tuned ladder chose', () => {
     // EXTREME bottoms out at 8 and ORACLE at 6 on purpose. Continuing the
-    // erosion past that invents difficulty the ladder never claimed — it took
-    // EXTREME to HP 2 before this was pinned.
+    // erosion past that invents difficulty the ladder never claimed: unpinned,
+    // it takes EXTREME to HP 2.
     for (const type of ladders) {
       const floor = Math.min(...type.boards.map((b) => b.hp));
       for (const row of type.extended) {

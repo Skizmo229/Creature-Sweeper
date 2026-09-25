@@ -47,8 +47,8 @@ export class BoardInput {
   private readonly touches = new Map<number, { x: number; y: number }>();
   private pinch: PinchStart | null = null;
   /**
-   * This touch has been a pinch at some point, so no lift in it may open a cell. A two-finger
-   * touch used to do exactly that, which on a phone is a way to end a run by zooming.
+   * This touch has been a pinch at some point, so no lift in it may open a cell: on a phone, a
+   * lift at the end of a zoom that opened a cell would be a way to end a run by zooming.
    */
   private gesture = false;
 

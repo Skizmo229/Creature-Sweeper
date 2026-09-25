@@ -631,10 +631,8 @@ describe('the dungeon', () => {
   });
 
   /**
-   * One cell wide, which is what the mode was changed to be. The old design
-   * made every cell part of a 2x2 block and so could not have expressed this
-   * at all; what replaced it is the elbow choice in `carveHalls` plus
-   * `thinHalls`, and this is the assertion both of them exist for.
+   * One cell wide: the elbow choice in `carveHalls` and `thinHalls` exist for
+   * this assertion (decision 0003).
    */
   it('keeps every hallway one cell wide', () => {
     eachBoard(({ cfg, hall }, label) => {
@@ -722,15 +720,11 @@ describe('the dungeon', () => {
    * their pockets, so it is smaller than the board and the density the ladder
    * quotes is not the one you feel.
    *
-   * This used to assert the SHARE — room floor above 77% of the map — and that
-   * was only ever a proxy. The thing that matters is the felt density, because
-   * that is what decides whether a board still plays as a puzzle, and the
-   * share mattered solely because density/share is it. The pocket broke the
-   * proxy without breaking the property: small boards cannot reach a 77% share
-   * at all, being mostly room perimeter, yet board 1 still only plays at ~22%
-   * because its nominal density is 12.8%.
-   *
-   * So the bound is stated directly now. 35% rather than the 34% ceiling: the
+   * The bound is on the felt density, because that decides whether a board
+   * still plays as a puzzle, and not on the share of room floor, which is only
+   * a proxy for it: small boards, being mostly room perimeter, cannot reach a
+   * high share, yet board 1 plays at ~22% because its nominal density is 12.8%
+   * (decision 0003). 35% rather than the 34% ceiling: the
    * worst seed in 40 reaches 34.9%, and HIVE at 35% and CHECKERBOARD at 38.5%
    * already sit past 34% for reasons of their own. If this ever fails, the
    * honest fix is DUNGEON's density schedule, not this number.

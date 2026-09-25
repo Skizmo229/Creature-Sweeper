@@ -10,7 +10,7 @@ import type { GameFont } from '../typefaces.js';
 
 /**
  * How tall a digit stands, as a share of the font size, in the face every number on the board
- * was sized for (JetBrains Mono, as near as makes no difference the old monospace stack).
+ * was sized for (JetBrains Mono).
  */
 const DIGIT_HEIGHT = 0.73;
 /** How far a face may be resized to reach DIGIT_HEIGHT, either way. */
