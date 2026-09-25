@@ -23,6 +23,7 @@ import {
 } from '../src/ui/typefaces.js';
 
 const CSS = readFileSync('src/ui/fonts.css', 'utf8');
+const STYLES = readFileSync('src/ui/styles.css', 'utf8');
 const LICENCES = readFileSync('public/FONT-LICENSES.txt', 'utf8');
 
 /** Every @font-face in fonts.css: family, weight range, file. */
@@ -93,6 +94,20 @@ describe('fonts.css', () => {
     const offered = new Set(FONT_IDS.map((id) => familyOf(FONTS[id].stack)));
     offered.add(familyOf(TITLE_FONT.stack));
     for (const f of FACES) expect(offered, f.family).toContain(f.family);
+  });
+});
+
+describe('styles.css', () => {
+  it('gives a form control back its size adjust wherever it gives back the face', () => {
+    // The browser's own stylesheet resets both on a button or a select. A rule that inherits the
+    // face back and not the adjust leaves the control's text sized by its em, not by the body's
+    // rule, so it grows or shrinks with the face; nothing else would notice.
+    const rules = [...STYLES.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+){([^}]*)}/g)];
+    const restoring = rules.filter(([, , body]) => /font-family:\s*inherit/.test(body!));
+    expect(restoring.length).toBeGreaterThan(0);
+    for (const [, selector, body] of restoring) {
+      expect(body, selector!.trim()).toMatch(/font-size-adjust:\s*inherit/);
+    }
   });
 });
 

@@ -107,6 +107,9 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   the interface uses `font-size-adjust: ex-height 0.52`, with `--ex-fix` per face, and anything
   that sets a face inline must declare its own adjust. A face can arrive a frame late, so
   `BoardView` repaints once when it lands and caches metrics only after.
+- The browser's own stylesheet resets the face and the adjust on a button or a select. A rule that
+  gives a control back its face (`font-family: inherit`) gives back the adjust too, or its labels
+  grow and shrink with the face; `test/fonts.test.ts` holds that.
 - No glyph in the chrome can be assumed: the settings button is a word, the mute speaker is inline
   SVG. Only Latin-1 and general punctuation are safe.
 
