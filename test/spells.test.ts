@@ -180,7 +180,7 @@ describe('Reveal', () => {
    * A revealed tier is the board talking, not the player guessing, so it
    * carries the same `given` flag a Sudoku clue does — which is what makes it
    * render gold instead of green, and what stops a stray right-click rubbing
-   * out 25 mana of information that cannot be bought back.
+   * out information bought with mana that cannot be bought back.
    */
   it('writes a given, not a player mark', () => {
     const game = Game.create(magicConfig(), 7);
@@ -447,10 +447,8 @@ describe('spell shortcuts', () => {
   });
 
   /**
-   * Cheapest first, and derived from the prices rather than written down —
-   * a stored order is a second place the truth lives. Reveal and Census
-   * shipped the other way round because Reveal was written first, which put
-   * the 25 before the 10 and made the row read as an arbitrary list.
+   * Cheapest first, and derived from the prices rather than written down: a
+   * stored order is a second place the truth lives (decision 0006).
    */
   it('offers spells cheapest first, whatever order the ladder lists them', () => {
     const costs = SPELL_ORDER.map((id) => SPELLS[id].cost);
@@ -517,27 +515,16 @@ describe('the magic ladders', () => {
   /**
    * A board too poor to use the spells it offers is mistuned rather than hard.
    *
-   * What "too poor" means moved when the prices tripled, and this is the one
-   * revision of this bar that is not a climbdown. The first two were: the
-   * original claim (the dearest spell, castable five times over) was a fair
-   * proxy only while mana was free, and DUNGEON broke it twice simply by being
-   * a more interesting ladder than the bar expected.
+   * The prices are meant to bite (decision 0013): you cannot answer
+   * everything, so a bar asserting you can afford one of everything would
+   * contradict the thing the prices are for. Two claims catch a genuinely
+   * broken ladder rather than a deliberately tight one:
    *
-   * This time the DESIGN changed. Measured at the old prices, buying your way
-   * out of every forced guess on a board cost 1-32% of its whole pool, so no
-   * ladder could run out of mana by playing well and price was inert
-   * everywhere. At 3x it costs 40-86% on the late boards, which is the point:
-   * you can no longer answer everything, so which moments to buy is a
-   * decision. A bar asserting you can afford one of everything would now
-   * contradict the thing the prices are for, so it is gone.
-   *
-   * Two claims survive, because both still catch a genuinely broken ladder
-   * rather than a deliberately tight one:
-   *
-   *   the loadout is usable       — the CHEAPEST spell many times over,
-   *                                 measured floor 6.7 at DUNGEON #1;
+   *   the loadout is usable       — the CHEAPEST spell many times over;
    *   nothing on offer is a tease — the DEAREST castable at least once on
-   *                                 every board, floor 1.3 at DUNGEON #1.
+   *                                 every board.
+   *
+   * The measured floors are in `docs/tuning.md`.
    *
    * The pool is the whole one: kills, exploration and the starting hand.
    */

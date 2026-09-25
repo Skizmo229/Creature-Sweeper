@@ -11,15 +11,12 @@
  * mana-rich and EXP-poor, late on the reverse, so spells are most available
  * exactly when you are weakest and thin out as your level takes over.
  *
- * THE PRICES ARE MEANT TO BITE, and for most of this game's life they did not.
- * Measured at the old 25/10/50/100, buying your way out of every moment a
- * deductive player was cornered cost 1-32% of a board's whole pool — so no
- * ladder could run out of mana by playing well, and doubling or halving every
- * price would have changed nothing anywhere. They are 3x that now, which puts
- * the same shopping list at 40-86% on the late boards: you can no longer
- * answer everything, and which moments to buy is the decision. The early
- * boards stay cheap (2-30%) on purpose, because that is where the spells are
- * being introduced.
+ * THE PRICES ARE MEANT TO BITE. Buying your way out of every moment a
+ * deductive player is cornered costs a large share of a late board's pool, so
+ * you cannot answer everything, and which moments to buy is the decision. The
+ * early boards stay cheap on purpose, because that is where the spells are
+ * introduced. The measurements are in decision 0013 and `docs/tuning.md`;
+ * `test/spells.test.ts` asserts the share.
  *
  * One consequence worth keeping in view: this is a single global table, and it
  * should stay one — with one deliberate exception, WORKOUT, whose Exercise runs
@@ -140,9 +137,8 @@ export function spellLabel(id: SpellId): string {
  *
  * Derived from the prices rather than written down, for the same reason
  * `spellKey` is derived from the name — a stored order is a second place the
- * truth lives, and the two drift. Reveal and Census shipped the other way
- * round because Reveal was written first, which put the dearer of the two
- * first and made the row read as an arbitrary list instead of a price list.
+ * truth lives, and the two drift (decision 0006). A row in declaration order
+ * reads as an arbitrary list rather than a price list.
  *
  * Ties break on id, so the order is total and stable rather than dependent on
  * however the record happened to be declared.
