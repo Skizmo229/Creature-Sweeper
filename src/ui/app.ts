@@ -30,7 +30,7 @@ import { buildLadderList } from './screens/ladders.js';
 import { Settings } from './settings.js';
 import { buildSettingsScreen } from './settingsscreen/screen.js';
 import { Sfx } from './sfx.js';
-import { playVictory } from './victory.js';
+import { playVictory } from './victory/play.js';
 
 export class App {
   private readonly root: HTMLElement;

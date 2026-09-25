@@ -10,7 +10,7 @@ import { PREVIEW_SEED, clearedBoard } from '../preview.js';
 import { DEFAULT, OFF } from '../settings.js';
 import { SFX_NAMES, VICTORY_NAMES } from '../theme.js';
 import { type SfxPackId, type VictoryId } from '../looks.js';
-import { playVictory } from '../victory.js';
+import { playVictory } from '../victory/play.js';
 import { type ScreenContext, typeName } from './context.js';
 import { DEMO_CELL, renderPreview } from './render.js';
 import { type Choice, gallery, wideRow } from './widgets.js';
