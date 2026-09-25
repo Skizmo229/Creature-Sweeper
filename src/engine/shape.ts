@@ -7,8 +7,8 @@
 import type { BoardShape } from './types.js';
 import type { Rng } from './rng.js';
 import { type Mask, blankMask } from './grid.js';
-import { caveMask } from './cave.js';
-import { dungeonMap } from './dungeon.js';
+import { caveMask } from './shape/cave.js';
+import { dungeonMap } from './shape/dungeon.js';
 
 /**
  * Does this cell of the bounding box exist, for the given shape?

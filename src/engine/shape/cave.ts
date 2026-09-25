@@ -2,8 +2,8 @@
  * The ragged cave shape. See decision 0002 for why it is grown rather than trimmed.
  */
 
-import { type Rng, randInt } from './rng.js';
-import { type Mask, blankMask, countPresent } from './grid.js';
+import { type Rng, randInt } from '../rng.js';
+import { type Mask, blankMask, countPresent } from '../grid.js';
 
 /**
  * The ragged cave: a blob of caverns and passages, seeded, and built from

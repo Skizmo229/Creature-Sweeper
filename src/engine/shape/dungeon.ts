@@ -35,7 +35,7 @@
  * rather than as a passage, whatever its width.
  */
 
-import { type Rng, randInt, shuffle } from './rng.js';
+import { type Rng, randInt, shuffle } from '../rng.js';
 
 /**
  * Cells of bounding box kept clear all round.

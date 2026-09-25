@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { boardConfig, cumulativeExp, findType } from '../src/engine/config.js';
-import { dungeonMap } from '../src/engine/dungeon.js';
+import { dungeonMap } from '../src/engine/shape/dungeon.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import { Game } from '../src/engine/game.js';
 import { autoplaySearch, autoplayTierOrder } from '../src/sim/autoplay.js';

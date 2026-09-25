@@ -13,8 +13,9 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   combat.ts       damage, EXP, mana rewards, the Progression (level/thresholds)
   grid.ts         cells, neighbours() (the one adjacency function), computeNumbers, masks
   shape.ts        which cells exist for a shape; presentCellCount; buildShape
-  cave.ts         the ragged cave generator
-  dungeon.ts      the dungeon map: rooms, one-cell hallways, doorways and their pockets
+  shape/          the seeded shapes
+    cave.ts         the ragged cave generator
+    dungeon.ts      the dungeon map: rooms, one-cell hallways, doorways and their pockets
   generate.ts     dealing the creatures: shape, then placement rule, then numbers
   opening.ts      choosing the opening
   notes.ts        pencil marks as a bitmask
