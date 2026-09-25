@@ -38,7 +38,8 @@ creature_sweeper/
 │  ├─ main.ts     browser entry
 │  └─ data.ts     Node-only loader for the ladder data
 ├─ test/          vitest; helpers.ts holds the shared fixtures; golden/ the simulator fingerprints
-├─ scripts/       golden.mjs (behaviour-preservation harness), package.mjs (the itch.io zip)
+├─ scripts/       golden.mjs (behaviour-preservation harness), package.mjs (the itch.io zip),
+│                 playtest.cmd (double-click: build, zip and play)
 ├─ public/        served as-is: FONT-LICENSES.txt
 ├─ design/
 │  ├─ ladder_types.toml     each ladder's schedules            <- edit this to tune
@@ -73,6 +74,7 @@ npm run sim:lethal -- 30 extreme   # whether any of those guesses could kill
 npm run sim:sudoku -- 8 --sweep    # SUDOKU build cost and how tight each board plays
 npm run build          # production build (relative paths, for itch.io)
 npm run package        # build and zip dist/ into release/
+npm run playtest       # package, then open the build in the browser (or double-click scripts/playtest.cmd)
 ```
 
 Regenerating the ladder data, in order: `python design/ladders.py`, then (slow) `npx tsx

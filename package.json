@@ -12,6 +12,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "package": "vite build && node scripts/package.mjs",
+    "playtest": "npm run package && vite preview --open",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:py": "python -m unittest discover -s design -p \"test_*.py\"",
