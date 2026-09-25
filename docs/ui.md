@@ -40,7 +40,8 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   large text size. A name with a space in it breaks there first.
 - The menus' cards have heavy edges, by request: a 2px border on a game-type card, with an 8px strip
   of the ladder's colour down its left, and a 2px white outline on a board tile (an outline,
-  because a tile's border carries its state).
+  because a tile's border carries its state). A hover turns a card's whole edge the ladder's
+  colour, a tile's outline included.
 
 ## The board
 

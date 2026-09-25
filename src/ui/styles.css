@@ -208,6 +208,12 @@ button.small {
   position: relative;
   outline: 2px solid var(--card-outline);
 }
+/* A hover colours the whole edge. The button rule turns only the border,
+   which is the thin line inside the outline. The scaling tile is not a
+   button and is not clickable as a whole, so it has no hover of its own. */
+button.board-card:hover:not(:disabled) {
+  outline-color: var(--tint);
+}
 .board-card.done {
   border-color: var(--tint);
 }
