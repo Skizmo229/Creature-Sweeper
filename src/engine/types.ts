@@ -1,5 +1,7 @@
 /** Core types for the rules engine. No rendering, no DOM, no I/O. */
 
+import type { Placement } from './placement/registry.js';
+import type { BoardShape } from './shape/registry.js';
 import type { SpellId } from './spells.js';
 
 /** 0 = empty ground; 1..tiers = a creature of that power level. */
@@ -122,7 +124,7 @@ export type Wrap = 'none' | 'horizontal' | 'both';
  * `shape/dungeon.ts`. Each is a `ShapeRule` in `src/engine/shape/`, listed in
  * `registry.ts`.
  */
-export type BoardShape = 'rect' | 'donut' | 'cross' | 'diamond' | 'cave' | 'dungeon';
+export type { BoardShape };
 
 /** How a board hands the player their first move. */
 export type OpeningRule =
@@ -144,36 +146,7 @@ export type OpeningRule =
    */
   | 'empties';
 
-/**
- * How creatures are laid out among the cells. Each is a `PlacementRule` in
- * `src/engine/placement/`, listed in `registry.ts`, and is asked rather than
- * named everywhere else.
- *
- * 'uniform' is the original: shuffle the cells and deal out `quantity`.
- * 'sudoku' constrains the tiers to a Sudoku solution over the digits 0-8,
- * which fixes the quantities at nine of each and therefore fixes `C_k` on
- * every board of the ladder. See `sudoku.ts` for why that is the whole design.
- * 'checker' colours the board and sends even tiers to the light squares and
- * odd tiers to the dark ones, so a cell's colour halves the alphabet of tiers
- * it could be hiding; see `checker.ts`.
- * 'pairs' gives every creature exactly one creature neighbour, which makes the
- * occupied cells non-touching dominoes and makes a creature's own number its
- * partner's tier; see `pairs.ts`.
- * 'dominoes' is 'pairs' with the tiers dealt as a full domino set, every
- * pairing {a,b} exactly once, which makes the distribution flat by
- * construction; see `dominoes.ts`.
- * 'packs' is 'pairs' grown to groups of one-of-every-tier: connected packs that
- * may not touch, which again makes the distribution flat; see `packs.ts`.
- * 'congo' is 'packs' strung out: each pack is an orthogonal line with no 2x2
- * block in it, led by the strongest tier; see `congo.ts`.
- *
- * None of them touches `quantity`, which is why none of them can reach C_k:
- * a placement decides where a board's creatures stand, never how many there
- * are or what they are worth. 'pairs' comes closest and still does not — it
- * requires the TOTAL to be even, which is a constraint on what `ladders.py`
- * may ask for rather than something the placement changes.
- */
-export type Placement = 'uniform' | 'sudoku' | 'checker' | 'pairs' | 'dominoes' | 'packs' | 'congo';
+export type { Placement };
 
 export interface BoardConfig {
   /** Game type id, e.g. "normal". */

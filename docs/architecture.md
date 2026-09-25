@@ -70,7 +70,9 @@ src/ui/         the prototype
   pinch.ts, hexgeom.ts   arithmetic kept DOM-free so tests can reach it
 src/sim/        headless measurement, all driving the real engine (see docs/tuning.md)
   honest.ts       the honest player: sees what a player sees, deduces locally, guesses or casts
+  deduce.ts       what the honest player concludes: constraints, what is safe, where to guess
   solver.ts       the complete deducer, the floor under the honest player's forced guesses
+  search.ts       the complete deducer's search: bounds propagation, tier counts, one layout
   autoplay.ts     the omniscient tier-order player that proves the zero-damage guarantee
   cli/            one command-line entry per measurement, run on import
 src/data.ts     Node-only loader for ladders.json; CS_LADDERS points it at a candidate file
@@ -108,8 +110,8 @@ member of the rule's `PlacementRule` record: its config check, its deal, what th
 offer, Sweep's proofs, what the renderer draws, and what the instruments need. The generator,
 `safeCells`, `noteCandidates`, the renderer, the hint, the honest player and the solver call
 `placementRule(config.placement)` and never compare the name, so a new rule reaches all of them
-by existing. `RULES` is keyed by the whole `Placement` union, which makes a name without a rule,
-or a rule missing a hook, a compile error (decision 0029). Shapes work the same way through
+by existing. `Placement` is `RULES`'s keys, so a name without a rule cannot exist, and a rule
+missing a hook is a compile error (decision 0029). Shapes work the same way through
 `shapeRule(config.shape)` and `SHAPES` in `src/engine/shape/` (decision 0030).
 
 **Tuning data flows one way**: `design/ladders.py` reads the schedules in

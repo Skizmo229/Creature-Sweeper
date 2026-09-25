@@ -40,6 +40,15 @@
 import type { Game } from '../engine/game.js';
 import type { Cell } from '../engine/types.js';
 import { placementRule } from '../engine/placement/registry.js';
+import {
+  type Constraint,
+  type Model,
+  type Problem,
+  Search,
+  type Sum,
+  highest,
+  lowest,
+} from './search.js';
 
 export interface SolveOptions {
   /** Search nodes one question may use before it is left undecided. */
@@ -66,28 +75,6 @@ export interface Solution {
   /** Whether the frontier was searched as one system. */
   joint: boolean;
 }
-
-interface Constraint {
-  readonly vars: number[];
-  readonly target: number;
-}
-
-interface Model {
-  readonly tiers: number;
-  /** Covered cells some number touches. */
-  readonly vars: Cell[];
-  readonly dom: number[];
-  readonly cons: Constraint[];
-  readonly consOf: number[][];
-  /** Creatures of each tier still unaccounted for; index 0 unused. */
-  readonly remaining: number[];
-  /** Covered cells no number touches, and what each could hold. */
-  readonly interior: Cell[];
-  readonly interiorDom: number[];
-}
-
-const lowest = (m: number): number => 31 - Math.clz32(m & -m);
-const highest = (m: number): number => 31 - Math.clz32(m);
 
 function buildModel(game: Game): Model | null {
   const tiers = game.config.tiers;
@@ -153,283 +140,10 @@ function buildModel(game: Game): Model | null {
   return { tiers, vars, dom, cons, consOf, remaining, interior, interiorDom: interior.map(domOf) };
 }
 
-/**
- * A sum over some cells that must land in [lo, hi]. Exact on the board. A range
- * once the cells outside a local window are summarised by what they could
- * hold, which only ever admits MORE layouts — so a local window that has no
- * room for a dangerous cell is a proof, and one that does is merely a reason
- * to look wider.
- */
-interface Sum {
-  readonly vars: number[];
-  readonly lo: number;
-  readonly hi: number;
-}
-
-interface Problem {
-  readonly members: number[];
-  readonly sums: Sum[];
-}
-
-/** Every cell the screen proves at or below the player's level. */
-export function solve(game: Game, opts: SolveOptions = {}): Solution {
-  const budget = opts.budget ?? 20000;
-  const jointVars = opts.jointVars ?? 40;
-  const model = buildModel(game);
-  if (!model) return { safe: [], undecided: 0, inconsistent: true, joint: false };
-
-  const { tiers, vars, dom, cons, consOf, remaining, interior, interiorDom } = model;
-  const n = vars.length;
-  const level = opts.threshold ?? game.level;
-  const every = (1 << (tiers + 1)) - 1;
-  const above = level >= tiers ? 0 : every & ~((1 << (level + 1)) - 1);
-  const joint = n <= jointVars;
-
-  // ---- search state, shared by every question asked of this board
-  const cur = new Int32Array(n);
-  const counts = new Int32Array(tiers + 1);
-  const seen = new Int32Array(n);
-  const sumsOf: number[][] = new Array<number[]>(n);
-  const trail: number[] = [];
-  const queue: number[] = [];
-  let queued = new Uint8Array(0);
-  let interiorSeen = 0;
-  let nodes = 0;
-
-  // The interior's capacity per pool, because a tier fits only on cells of its
-  // own pool: the checkerboard's colours, one pool everywhere else.
-  const pools = placementRule(game.config.placement).pools;
-  const poolIds = new Map<string, number>();
-  const poolId = (key: string): number => {
-    const known = poolIds.get(key);
-    if (known !== undefined) return known;
-    poolIds.set(key, poolIds.size);
-    return poolIds.size - 1;
-  };
-  const tierPool = [0];
-  for (let t = 1; t <= tiers; t++) tierPool.push(poolId(pools.forTier(t)));
-  const capacity: number[] = [];
-  for (const c of interior) {
-    const id = poolId(pools.of(c.x, c.y));
-    capacity[id] = (capacity[id] ?? 0) + 1;
-  }
-  const need = new Array<number>(poolIds.size);
-  const leftover = (t: number): number => remaining[t]! - counts[t]!;
-  const interiorFits = (): boolean => {
-    need.fill(0);
-    for (let t = 1; t <= tiers; t++) need[tierPool[t]!] += leftover(t);
-    for (let id = 0; id < need.length; id++) if (need[id]! > (capacity[id] ?? 0)) return false;
-    return true;
-  };
-
-  const span = (lo: number, hi: number): number => {
-    const a = Math.max(lo, 0);
-    const b = Math.min(hi, tiers);
-    return a > b ? 0 : ((1 << (b + 1)) - 1) & ~((1 << a) - 1);
-  };
-  const single = (d: number): boolean => (d & (d - 1)) === 0;
-
-  /**
-   * Is there a layout of `p` within domains `d`? True leaves it in `cur`; null
-   * means the budget ran out first. `bold` has each cell not yet shown
-   * dangerous try its dangerous values first, so one layout settles as many as
-   * it can — worth it in a small window, ruinous across a whole piece, where
-   * the ordinary lowest-first order finds a layout far faster.
-   */
-  function feasible(
-    p: Problem,
-    d: ArrayLike<number>,
-    start: number,
-    leaf: (() => boolean) | null,
-    bold = false,
-    limit = budget,
-  ): boolean | null {
-    const { members, sums } = p;
-    for (const w of members) {
-      cur[w] = d[w]!;
-      sumsOf[w] = [];
-    }
-    sums.forEach((s, i) => {
-      for (const w of s.vars) sumsOf[w]!.push(i);
-    });
-    if (queued.length < sums.length) queued = new Uint8Array(sums.length * 2);
-    queued.fill(0, 0, sums.length);
-    queue.length = 0;
-    trail.length = 0;
-    nodes = 0;
-
-    // A tier can only bind if fewer are left than cells that could take it.
-    let bindable = 0;
-    for (let t = 1; t <= tiers; t++) {
-      let could = 0;
-      for (const w of members) if (cur[w]! & (1 << t)) could++;
-      if (could > remaining[t]!) bindable |= 1 << t;
-    }
-
-    const enqueue = (s: number): void => {
-      if (!queued[s]) {
-        queued[s] = 1;
-        queue.push(s);
-      }
-    };
-    const flush = (): void => {
-      for (const s of queue) queued[s] = 0;
-      queue.length = 0;
-    };
-    const narrow = (w: number, nd: number): void => {
-      trail.push(w, cur[w]!);
-      cur[w] = nd;
-      for (const s of sumsOf[w]!) enqueue(s);
-    };
-    const undo = (mark: number): void => {
-      while (trail.length > mark) {
-        const old = trail.pop()!;
-        cur[trail.pop()!] = old;
-      }
-    };
-
-    // Bounds propagation: every cell behind a number lies between what the
-    // number still needs with its neighbours at their most and at their least.
-    // A bound gone stale mid-pass is looser than the true one, so filtering on
-    // it is still sound, and the sum is queued again anyway.
-    const propagate = (): boolean => {
-      while (queue.length) {
-        const i = queue.pop()!;
-        queued[i] = 0;
-        const s = sums[i]!;
-        let lo = 0;
-        let hi = 0;
-        for (const w of s.vars) {
-          lo += lowest(cur[w]!);
-          hi += highest(cur[w]!);
-        }
-        if (s.hi < lo || s.lo > hi) {
-          flush();
-          return false;
-        }
-        for (const w of s.vars) {
-          const m = cur[w]!;
-          if (single(m)) continue;
-          const wl = lowest(m);
-          const wh = highest(m);
-          const min = s.lo - (hi - wh);
-          const max = s.hi - (lo - wl);
-          if (min <= wl && max >= wh) continue;
-          const nd = m & span(min, max);
-          if (!nd) {
-            flush();
-            return false;
-          }
-          narrow(w, nd);
-        }
-      }
-      return true;
-    };
-
-    const countAll = (): void => {
-      counts.fill(0);
-      for (const w of members) {
-        const m = cur[w]!;
-        if (single(m) && m > 1) counts[lowest(m)]!++;
-      }
-    };
-
-    // The tier counts: none exceeded, and a tier used up is out of every other cell.
-    const tally = (): boolean => {
-      if (!bindable) return true;
-      countAll();
-      let spent = 0;
-      for (let t = 1; t <= tiers; t++) {
-        if (counts[t]! > remaining[t]!) return false;
-        if (counts[t] === remaining[t] && bindable & (1 << t)) spent |= 1 << t;
-      }
-      if (!spent) return true;
-      for (const w of members) {
-        const m = cur[w]!;
-        if (single(m) || !(m & spent)) continue;
-        const nd = m & ~spent;
-        if (!nd) return false;
-        narrow(w, nd);
-      }
-      return true;
-    };
-
-    const settle = (): boolean => {
-      do {
-        if (!propagate()) return false;
-        if (!tally()) {
-          flush();
-          return false;
-        }
-      } while (queue.length);
-      return true;
-    };
-
-    for (let i = 0; i < sums.length; i++) enqueue(i);
-    if (!settle()) return false;
-    if (!members.length) {
-      if (!leaf) return true;
-      countAll();
-      return leaf();
-    }
-
-    // Outward from the cell being asked about, so a contradiction near it is
-    // met near the root rather than after the far side of the board is laid.
-    const order: number[] = [];
-    const put = new Set<number>();
-    const visit = (w: number): void => {
-      if (!put.has(w)) {
-        put.add(w);
-        order.push(w);
-      }
-    };
-    visit(start >= 0 ? start : members[0]!);
-    for (let i = 0; i < order.length; i++) {
-      for (const s of sumsOf[order[i]!]!) for (const w of sums[s]!.vars) visit(w);
-    }
-    for (const w of members) visit(w);
-
-    const dfs = (from: number): boolean | null => {
-      let i = from;
-      while (i < order.length && single(cur[order[i]!]!)) i++;
-      if (i === order.length) {
-        if (!leaf) return true;
-        countAll();
-        return leaf();
-      }
-      if (++nodes > limit) return null;
-      const w = order[i]!;
-      const m = cur[w]!;
-      const high = bold && (seen[w]! & above) === 0;
-      for (let k = 0; k <= tiers; k++) {
-        const x = high ? tiers - k : k;
-        if (!(m & (1 << x))) continue;
-        const mark = trail.length;
-        narrow(w, 1 << x);
-        if (settle()) {
-          const r = dfs(i + 1);
-          if (r === true) return true;
-          if (r === null) {
-            undo(mark);
-            return null;
-          }
-        }
-        undo(mark);
-      }
-      return false;
-    };
-    return dfs(0);
-  }
-
-  function record(p: Problem): void {
-    for (const w of p.members) seen[w]! |= cur[w]!;
-    if (!joint) return;
-    counts.fill(0);
-    for (const w of p.members) if (cur[w]! > 1) counts[lowest(cur[w]!)]!++;
-    for (let t = 1; t <= tiers; t++) if (leftover(t) > 0) interiorSeen |= 1 << t;
-  }
-
-  // ---- the pieces of frontier that share no number
+/** The pieces of frontier that share no number, each exact; one piece holding everything if joint. */
+function pieces(model: Model, joint: boolean): Problem[] {
+  const { cons, consOf } = model;
+  const n = model.vars.length;
   const parent = Array.from({ length: n }, (_, i) => i);
   const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i]!)));
   for (const c of cons) for (const v of c.vars.slice(1)) parent[find(v)] = find(c.vars[0]!);
@@ -449,61 +163,85 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
     for (const s of sums) if (!s.vars.every((w) => inside.has(w))) throw new Error('piece leaks');
     return { members, sums };
   };
-  const whole = joint
-    ? [exact(Array.from({ length: n }, (_, i) => i))]
-    : [...groups.values()].map(exact);
+  return joint ? [exact(Array.from({ length: n }, (_, i) => i))] : [...groups.values()].map(exact);
+}
+
+/** The cells within `radius` numbers of v, with every number that reaches
+ *  outside the window relaxed to what its outside cells could make up. */
+function window(model: Model, v: number, radius: number, d: ArrayLike<number>): Problem {
+  const { cons, consOf } = model;
+  const inside = new Set([v]);
+  let ring = [v];
+  for (let r = 0; r < radius; r++) {
+    const next: number[] = [];
+    for (const w of ring) {
+      for (const c of consOf[w]!)
+        for (const u of cons[c]!.vars)
+          if (!inside.has(u)) {
+            inside.add(u);
+            next.push(u);
+          }
+    }
+    ring = next;
+  }
+  const touched = new Set<number>();
+  for (const w of inside) for (const c of consOf[w]!) touched.add(c);
+  const sums: Sum[] = [];
+  for (const c of touched) {
+    const { vars: vs, target } = cons[c]!;
+    const own: number[] = [];
+    let oLo = 0;
+    let oHi = 0;
+    for (const w of vs) {
+      if (inside.has(w)) own.push(w);
+      else {
+        oLo += lowest(d[w]!);
+        oHi += highest(d[w]!);
+      }
+    }
+    sums.push({ vars: own, lo: target - oHi, hi: target - oLo });
+  }
+  return { members: [...inside], sums };
+}
+
+/** Every cell the screen proves at or below the player's level. */
+export function solve(game: Game, opts: SolveOptions = {}): Solution {
+  const budget = opts.budget ?? 20000;
+  const jointVars = opts.jointVars ?? 40;
+  const model = buildModel(game);
+  if (!model) return { safe: [], undecided: 0, inconsistent: true, joint: false };
+
+  const { tiers, vars, dom, interior, interiorDom } = model;
+  const n = vars.length;
+  const level = opts.threshold ?? game.level;
+  const every = (1 << (tiers + 1)) - 1;
+  const above = level >= tiers ? 0 : every & ~((1 << (level + 1)) - 1);
+  const joint = n <= jointVars;
+  const search = new Search(
+    model,
+    placementRule(game.config.placement).pools,
+    above,
+    joint,
+    budget,
+  );
+  const { cur, seen } = search;
+
+  const whole = pieces(model, joint);
   const home = new Map<number, Problem>();
   for (const p of whole) for (const w of p.members) home.set(w, p);
-
-  /** The cells within `radius` numbers of v, with every number that reaches
-   *  outside the window relaxed to what its outside cells could make up. */
-  const window = (v: number, radius: number, d: ArrayLike<number>): Problem => {
-    const inside = new Set([v]);
-    let ring = [v];
-    for (let r = 0; r < radius; r++) {
-      const next: number[] = [];
-      for (const w of ring) {
-        for (const c of consOf[w]!)
-          for (const u of cons[c]!.vars)
-            if (!inside.has(u)) {
-              inside.add(u);
-              next.push(u);
-            }
-      }
-      ring = next;
-    }
-    const touched = new Set<number>();
-    for (const w of inside) for (const c of consOf[w]!) touched.add(c);
-    const sums: Sum[] = [];
-    for (const c of touched) {
-      const { vars: vs, target } = cons[c]!;
-      const own: number[] = [];
-      let oLo = 0;
-      let oHi = 0;
-      for (const w of vs) {
-        if (inside.has(w)) own.push(w);
-        else {
-          oLo += lowest(d[w]!);
-          oHi += highest(d[w]!);
-        }
-      }
-      sums.push({ vars: own, lo: target - oHi, hi: target - oLo });
-    }
-    return { members: [...inside], sums };
-  };
 
   // A given at or below your level is a free kill with its tier already on it.
   const safe: Cell[] = game.grid
     .flat()
     .filter((c) => c.present && !c.open && c.given && c.mark <= level);
   let undecided = 0;
-  const leaf = joint ? interiorFits : null;
+  const leaf = joint ? () => search.interiorFits() : null;
 
   // A first layout of every piece: proves the model admits one at all.
   for (const p of whole) {
-    const r = feasible(p, dom, -1, leaf);
+    const r = search.feasible(p, dom, -1, leaf);
     if (r === false) return { safe: [], undecided: 0, inconsistent: true, joint };
-    if (r === true) record(p);
+    if (r === true) search.record(p);
   }
 
   for (let v = 0; v < n; v++) {
@@ -522,9 +260,9 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
     // side of a piece is only loosely tied to the near side.
     let settled = false;
     for (const radius of [2, 4]) {
-      const local = window(v, radius, d);
+      const local = window(model, v, radius, d);
       if (local.members.length >= p.members.length) break;
-      const r = feasible(local, d, v, null, true, budget >> 2);
+      const r = search.feasible(local, d, v, null, true, budget >> 2);
       if (r === false) {
         safe.push(vars[v]!);
         settled = true;
@@ -533,16 +271,16 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
       if (r !== true) continue;
       const fixed = d.slice();
       for (const w of local.members) fixed[w] = cur[w]!;
-      if (feasible(p, fixed, v, leaf, false, budget >> 2) === true) {
-        record(p);
+      if (search.feasible(p, fixed, v, leaf, false, budget >> 2) === true) {
+        search.record(p);
         settled = true;
         break;
       }
     }
     if (settled) continue;
 
-    const r = feasible(p, d, v, leaf);
-    if (r === true) record(p);
+    const r = search.feasible(p, d, v, leaf);
+    if (r === true) search.record(p);
     else if (r === false) safe.push(vars[v]!);
     else undecided++;
   }
@@ -560,13 +298,13 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
     (classes.get(d) ?? classes.set(d, []).get(d)!).push(c);
   });
   for (const [d, cells] of classes) {
-    if (!joint || interiorSeen & d) continue;
-    const r = feasible(whole[0]!, dom, -1, () => {
-      if (!interiorFits()) return false;
-      for (let t = 1; t <= tiers; t++) if (d & (1 << t) && leftover(t) > 0) return true;
+    if (!joint || search.interiorSeen & d) continue;
+    const r = search.feasible(whole[0]!, dom, -1, () => {
+      if (!search.interiorFits()) return false;
+      for (let t = 1; t <= tiers; t++) if (d & (1 << t) && search.leftover(t) > 0) return true;
       return false;
     });
-    if (r === true) record(whole[0]!);
+    if (r === true) search.record(whole[0]!);
     else if (r === false) safe.push(...cells);
     else undecided++;
   }
