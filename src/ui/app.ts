@@ -562,7 +562,8 @@ export class App {
       seed: this.seed,
       won,
       perfect,
-      firstClear,
+      // The wait is for watching the clear effect, so with the effect off there is none.
+      held: firstClear && this.settings.victoryEffect(this.typeId) !== null,
       timeExpired: this.clock.timeExpired,
       seconds,
       fatal: this.fatalBattle,

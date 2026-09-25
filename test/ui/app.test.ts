@@ -189,7 +189,7 @@ describe('the app', () => {
     expect(app.progress.boardRecord('normal', 1).perfect).toBe(true);
   });
 
-  it("holds the card back on a board's first clear, and on nothing else", () => {
+  it("holds the card back on a board's first clear with an effect to watch, and on nothing else", () => {
     const held = (): boolean => document.querySelector('.overlay')!.classList.contains('held');
     const clear = (): void => {
       autoplayTierOrder(app.current!);
@@ -205,6 +205,13 @@ describe('the app', () => {
     app.play('normal', 2, 7);
     app.apply(app.current!.forfeit());
     expect(held()).toBe(false);
+    // A first clear still, but with the clear effect off there is nothing to wait for.
+    app.settings.setPresentation({ victory: 'off' });
+    app.play('normal', 2, 7);
+    clear();
+    expect(app.progress.boardRecord('normal', 2).cleared).toBe(true);
+    expect(held()).toBe(false);
+    app.settings.setPresentation({ victory: 'default' });
     // Never in a Full Run, even on a board the save has no clear of.
     app.runFull('easy', 7);
     clear();

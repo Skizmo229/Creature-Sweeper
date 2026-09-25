@@ -608,9 +608,9 @@ button.board-card:hover:not(:disabled) {
 }
 
 /*
- * A board's first clear holds its card back, by request, so the clear effect
- * plays over the board itself, undimmed and with no card in the middle of it.
- * Until the hold is up the overlay is clear but still takes the pointer, so
+ * A board's first clear, with a clear effect on, holds its card back, by
+ * request, so the effect plays over the board itself, undimmed and with no
+ * card in the middle of it. Until the hold is up the overlay is clear but still takes the pointer, so
  * the board cannot be zoomed or panned out from under the effect, and the card
  * is hidden, so none of its buttons can be pressed unseen; Escape still leaves
  * the board. Then the dimming and the card fade in together. No timer: leaving
