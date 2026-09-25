@@ -208,41 +208,50 @@ function main(): void {
       if (policy === 'none') typeBase = runs;
       else (baselines.get(policy) ?? baselines.set(policy, []).get(policy)!).push(...typeBase);
 
-      const mean = (pick: (r: Run) => number) =>
-        runs.reduce((s, r) => s + pick(r), 0) / runs.length;
-      console.log(
-        `${type.name.padEnd(13)} ${policy.padEnd(12)} ` +
-          `${(100 * mean((r) => (r.cleared ? 1 : 0))).toFixed(1).padStart(6)}%  ` +
-          `${mean((r) => r.hpLost)
-            .toFixed(2)
-            .padStart(7)}   ` +
-          `${mean((r) => r.guesses)
-            .toFixed(1)
-            .padStart(7)}  ` +
-          `${mean((r) => r.stuckPoints)
-            .toFixed(1)
-            .padStart(5)}  ` +
-          `${mean((r) => r.casts)
-            .toFixed(1)
-            .padStart(5)}  ` +
-          `${(
-            (100 * mean((r) => r.castsThatHelped)) /
-            Math.max(
-              0.001,
-              mean((r) => r.casts),
-            )
-          )
-            .toFixed(0)
-            .padStart(5)}%  ` +
-          `${mean((r) => r.manaSpent)
-            .toFixed(0)
-            .padStart(10)}  ` +
-          `${((100 * mean((r) => r.manaSpent)) / mean((r) => r.manaPool)).toFixed(0).padStart(6)}%`,
-      );
+      printPolicyRow(type.name, policy, runs);
     }
     console.log('');
   }
 
+  printValueTable(totals, baselines);
+}
+
+/** One ladder under one policy: the row of the per-ladder table. */
+function printPolicyRow(typeName: string, policy: Policy, runs: Run[]): void {
+  const mean = (pick: (r: Run) => number) => runs.reduce((s, r) => s + pick(r), 0) / runs.length;
+  console.log(
+    `${typeName.padEnd(13)} ${policy.padEnd(12)} ` +
+      `${(100 * mean((r) => (r.cleared ? 1 : 0))).toFixed(1).padStart(6)}%  ` +
+      `${mean((r) => r.hpLost)
+        .toFixed(2)
+        .padStart(7)}   ` +
+      `${mean((r) => r.guesses)
+        .toFixed(1)
+        .padStart(7)}  ` +
+      `${mean((r) => r.stuckPoints)
+        .toFixed(1)
+        .padStart(5)}  ` +
+      `${mean((r) => r.casts)
+        .toFixed(1)
+        .padStart(5)}  ` +
+      `${(
+        (100 * mean((r) => r.castsThatHelped)) /
+        Math.max(
+          0.001,
+          mean((r) => r.casts),
+        )
+      )
+        .toFixed(0)
+        .padStart(5)}%  ` +
+      `${mean((r) => r.manaSpent)
+        .toFixed(0)
+        .padStart(10)}  ` +
+      `${((100 * mean((r) => r.manaSpent)) / mean((r) => r.manaPool)).toFixed(0).padStart(6)}%`,
+  );
+}
+
+/** Each spell against playing spell-less, on the ladders that offer it, and the fair price. */
+function printValueTable(totals: Map<Policy, Run[]>, baselines: Map<Policy, Run[]>): void {
   const mean = (rs: Run[], pick: (r: Run) => number) =>
     rs.reduce((s, r) => s + pick(r), 0) / rs.length;
   const base = totals.get('none')!;
