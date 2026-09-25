@@ -8,3 +8,6 @@
 # Binary: never normalise, never diff as text.
 *.png  binary
 *.pdn  binary
+
+# cmd.exe misreads batch files with LF endings; these stay CRLF everywhere.
+*.cmd  text eol=crlf

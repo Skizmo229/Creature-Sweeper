@@ -80,7 +80,8 @@ src/main.ts     browser entry; window.cs in dev
 test/           vitest; test/helpers.ts holds the shared fixtures (the ladder data, the seeds,
                 hand-built boards); test/golden/ the sim fingerprints; test/ui/ the
                 browser-environment smoke test (happy-dom)
-scripts/        golden.mjs (the golden harness), package.mjs (the itch.io zip)
+scripts/        golden.mjs (the golden harness), package.mjs (the itch.io zip), playtest.cmd
+                (double-click to build, zip and open the build in the browser)
 design/         ladder_types.toml (each ladder's schedules), ladders.py (the generator) and
                 test_ladders.py (its own tests, `npm run test:py`),
                 data/ (its output), the design reference page
