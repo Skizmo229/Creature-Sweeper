@@ -6,6 +6,7 @@ raw-ring            0  110.0   88.7   78.3      0.0
 named-kill          0  168.3   60.0   64.7      0.0
 met-partner         0    0.0    0.0    0.0      0.0
 corridor            0    0.0    0.0    0.0      0.0
+sprinkles           0    0.0    0.0    0.0      0.0
 residual-ring       1  352.7  264.3  268.3      0.0
 last-cell           1  147.0  115.0  114.0      0.0
 census-ring         1    0.0    0.0    0.0      0.0

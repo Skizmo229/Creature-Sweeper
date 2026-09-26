@@ -31,6 +31,7 @@ import {
   drawHighlight,
   drawSeams,
   drawSilhouette,
+  drawSprinkles,
 } from './overlays.js';
 import {
   type Paint,
@@ -429,8 +430,9 @@ export class BoardView implements InputHost {
         else drawTile(p, cell, cx, cy);
       }
     }
-    // What is written on the tiles goes on in a pass of its own, so anything drawn across two
-    // tiles can go between the two passes and still leave a mark or a note readable.
+    // Over the tiles, since a sprinkle lies across two of them, and under what is written on them,
+    // so a mark or a note stays readable on a sprinkle.
+    drawSprinkles(p);
     for (const row of game.grid) {
       for (const cell of row) {
         if (!cell.present) continue;

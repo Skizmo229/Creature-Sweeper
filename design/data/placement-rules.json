@@ -118,5 +118,25 @@
    "max_num": 8
   },
   "delta": 12
+ },
+ {
+  "ladder": "SPRINKLE DONUT",
+  "id": "sprinkle_donut",
+  "rule": "sprinkles",
+  "cells": 961,
+  "creatures": 264,
+  "scatter": {
+   "opening": 6,
+   "zeros": 1,
+   "avg_num": 9.41,
+   "max_num": 22
+  },
+  "shipped": {
+   "opening": 10,
+   "zeros": 5,
+   "avg_num": 8.42,
+   "max_num": 22
+  },
+  "delta": 67
  }
 ]

@@ -62,6 +62,7 @@ export function makeCell(x: number, y: number): Cell {
     open: false,
     alive: false,
     occupied: false,
+    partner: null,
     present: true,
     mark: 0,
     given: false,

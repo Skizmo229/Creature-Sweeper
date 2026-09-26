@@ -110,6 +110,7 @@ as a bound; `docs/invariants.md`). The ids are the catalogue's.
 | 0 | `named-kill` | a cell marked at or under your level is a free kill | all |
 | 0 | `met-partner` | a creature beside a creature has met its partner; the rest of its ring is empty | pairs, dominoes |
 | 0 | `corridor` | a one-wide passage and the room cell it arrives at are empty | dungeon |
+| 0 | `sprinkles` | where every creature is drawn, a plain cell is empty and a sprinkle is a creature | sprinkle donut |
 | 1 | `residual-ring` | subtract the tiers you can see; a remainder at or under your level frees the ring, a remainder of 0 empties it | all |
 | 1 | `last-cell` | a number with one covered neighbour left has named it | all |
 | 1 | `counters` | a tier whose counter reads 0 is gone; when every tier left is at or under your level, everything is free | all |
@@ -134,6 +135,8 @@ tricks run in the catalogue's order and the first to conclude a cell takes the c
 of the catalogue has no technique of its own: a finished pack's ring is what `residual-ring`
 opens, because every member's number then leaves a remainder of 0, and a technique for it
 concluded nothing in 150 games (measured 25 September 2026), so the catalogue says so instead.
+Counting the sprinkles has none either: where the board draws every creature the reader counts
+them under each number, and the Census bound (`census-ring`, grade 1) reads the count.
 
 ### The loop
 
@@ -321,7 +324,8 @@ is what calibrates the technique costs and the retune targets once the game has 
 Recorded with `npm run sim:human -- 40` on the ladder data of 25 September 2026, and again on
 26 September with the eight ladders merged that day (every earlier figure reproduced exactly):
 every ladder but SUDOKU, its ten tuned boards, 40 seeds each, spell-less, numbers hidden where
-the game hides them, `unsound` 0 throughout. Stuck points, guesses, lethal guesses and HP lost are per board;
+the game hides them, `unsound` 0 throughout. SPRINKLE DONUT's row was measured on its own the
+same day, when it was added (decision 0046). Stuck points, guesses, lethal guesses and HP lost are per board;
 "need" is the share of boards on which the grade-4 player needed a trick of that grade or above;
 "avail" is the moves on offer per pass above grade 0; "#10" is board 10's clear rate.
 
@@ -356,6 +360,7 @@ the game hides them, `unsound` 0 throughout. Stuck points, guesses, lethal guess
 | ULTRA HIVE | 0.4 | 99% | 0.4 | 0.4 | 0.0 | 99% | 0.4 | 23% | 1% | 1% | 10.6 | 95 | 95% | 95% |
 | PETRI DISH | 0.3 | 100% | 0.3 | 0.3 | 0.0 | 100% | 0.1 | 52% | 1% | 1% | 10.6 | 105 | 100% | 100% |
 | PATROL | 0.0 | 100% | 0.0 | 0.0 | 0.0 | 100% | 0.0 | 0% | 0% | 0% | 1.0 | 84 | 100% | 100% |
+| SPRINKLE DONUT (new) | 3.4 | 82% | 3.3 | 3.3 | 0.4 | 82% | 4.0 | 100% | 12% | 6% | 3.9 | 243 | 65% | 68% |
 | BLIND (retuned) | 1.1 | 46% | 0.9 | 0.9 | 0.9 | 60% | 0.4 | 100% | 26% | 24% | 5.5 | 142 | 25% | 28% |
 | HUGE x BLIND (retuned) | 1.1 | 44% | 0.8 | 0.8 | 0.8 | 63% | 0.4 | 100% | 29% | 28% | 8.6 | 221 | 18% | 33% |
 
@@ -407,6 +412,11 @@ What it says, read on the day it was recorded:
   player about as often as ARCANE does and STAR alone leans on grade 3 (14% of boards);
   PATROL's moves-on-offer figure is 1.0 by construction, one open per reading where the
   creatures walk, and the player waited out every stuck point and never guessed.
+- **SPRINKLE DONUT was tuned onto the target from the start.** With every creature shown, a
+  cell is never a question of where, only of what, and density is the whole dial: at 56.4 to
+  59.1% a grade-2 player clears 93% of board 1 falling to 65% of board 10. What it demands is
+  sums over counted creatures, with DONUT's scanning (3.3 to 4.9 moves on offer per pass) and a
+  what-if or a count on a fifth to a quarter of the top boards.
 - **The search ladders are single-mistake games a deducer loses.** Before its retune BLIND
   forced two to three guesses a board and every one is death: 4 to 7% cleared, 0% of board 10.
   Both rows are as retuned on 26 September 2026 (decisions 0043 and 0044, density 16.5 to 19.7%

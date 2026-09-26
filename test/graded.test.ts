@@ -42,6 +42,7 @@ const KINDS = [
   'pyramid',
   'petri',
   'gear',
+  'sprinkle_donut',
 ];
 
 const wrongIn = (run: GradedRun): number => run.unsound + run.trickDamage + run.rescueDamage;
@@ -117,8 +118,9 @@ describe('the graded player', () => {
       }
     }
     const silent = TRICK_IDS.filter((t) => fires[t] + pencils[t] === 0);
-    // Two reads the cheaper ones nearly always pre-empt have direct tests below.
-    expect(silent).toEqual(['census-ring', 'line-reach']);
+    // The line's ends, which the cheaper reads nearly always pre-empt, has a direct test below;
+    // so has the Census bound, which fires here on SPRINKLE DONUT, where the board shows the count.
+    expect(silent).toEqual(['line-reach']);
     const concluded = TRICK_IDS.filter((t) => fires[t] > 0);
     expect(concluded).toEqual(expect.arrayContaining(['subtract', 'overlap', 'bounds', 'what-if']));
     expect(concluded).toEqual(expect.arrayContaining(['accounted', 'last-of-tier', 'corridor']));

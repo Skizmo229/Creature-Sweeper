@@ -54,6 +54,11 @@ export function hintText(game: Game | null, mode: EntryMode): string {
       `top-left corner · ${sweep} · ${spell}`
     );
   }
+  // Where every creature is drawn, the drawing is the rule, so it is said once where it is used.
+  const shown =
+    game && placementRule(game.config.placement).display.showsCreatures
+      ? ' · each sprinkle is two creatures, and anything else is empty'
+      : '';
   if (game && game.config.reach > 0) {
     const ground = game.config.marksExtendReach
       ? 'ground you have uncovered, or a mark beside it'
@@ -61,10 +66,10 @@ export function hintText(game: Game | null, mode: EntryMode): string {
     const crawl = game.sealedIn()
       ? `Walled in — reach lifted until you can move again, so anywhere is open`
       : `Click to open, within ${game.config.reach} of ${ground} (red cursor means out of reach)`;
-    return `${crawl} · right-click or a LV button to mark · ${sweep} · ${spell}`;
+    return `${crawl}${shown} · right-click or a LV button to mark · ${sweep} · ${spell}`;
   }
   return (
-    `Click to open · right-click or a LV button to mark · N pencils candidates · ` +
+    `Click to open${shown} · right-click or a LV button to mark · N pencils candidates · ` +
     `${sweep} · ${spell}`
   );
 }

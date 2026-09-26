@@ -3198,5 +3198,105 @@
   "worst": 232,
   "pct": 79.9,
   "nozero": 0
+ },
+ {
+  "type": "sprinkle_donut",
+  "board": 1,
+  "density": 56.4,
+  "median": 9,
+  "p05": 5,
+  "worst": 1,
+  "pct": 2.2,
+  "nozero": 0
+ },
+ {
+  "type": "sprinkle_donut",
+  "board": 2,
+  "density": 56.9,
+  "median": 9,
+  "p05": 5,
+  "worst": 1,
+  "pct": 2.2,
+  "nozero": 0
+ },
+ {
+  "type": "sprinkle_donut",
+  "board": 3,
+  "density": 57.4,
+  "median": 9,
+  "p05": 5,
+  "worst": 1,
+  "pct": 2.2,
+  "nozero": 0
+ },
+ {
+  "type": "sprinkle_donut",
+  "board": 4,
+  "density": 57.5,
+  "median": 9,
+  "p05": 5,
+  "worst": 1,
+  "pct": 2,
+  "nozero": 0
+ },
+ {
+  "type": "sprinkle_donut",
+  "board": 5,
+  "density": 57.9,
+  "median": 9,
+  "p05": 5,
+  "worst": 1,
+  "pct": 2,
+  "nozero": 0
+ },
+ {
+  "type": "sprinkle_donut",
+  "board": 6,
+  "density": 58.2,
+  "median": 9,
+  "p05": 5,
+  "worst": 1,
+  "pct": 1.8,
+  "nozero": 0
+ },
+ {
+  "type": "sprinkle_donut",
+  "board": 7,
+  "density": 58.6,
+  "median": 9,
+  "p05": 5,
+  "worst": 1,
+  "pct": 1.8,
+  "nozero": 0
+ },
+ {
+  "type": "sprinkle_donut",
+  "board": 8,
+  "density": 58.3,
+  "median": 9,
+  "p05": 5,
+  "worst": 1,
+  "pct": 1.6,
+  "nozero": 0
+ },
+ {
+  "type": "sprinkle_donut",
+  "board": 9,
+  "density": 58.7,
+  "median": 9,
+  "p05": 5,
+  "worst": 1,
+  "pct": 1.6,
+  "nozero": 0
+ },
+ {
+  "type": "sprinkle_donut",
+  "board": 10,
+  "density": 59.1,
+  "median": 9,
+  "p05": 6,
+  "worst": 1,
+  "pct": 1.5,
+  "nozero": 0
  }
 ]

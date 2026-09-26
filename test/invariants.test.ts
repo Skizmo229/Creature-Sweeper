@@ -15,10 +15,11 @@ import { clearableWithoutGuessing } from '../src/engine/placement/sudoku.js';
 import { hiddenCap, shadeOf } from '../src/engine/placement/checker.js';
 import { ladders, battleTypes, boardsOf, SEEDS, UNGATED_SWEEP } from './helpers.js';
 import { shapeRule } from '../src/engine/shape/registry.js';
+import { placementRule } from '../src/engine/placement/registry.js';
 
 describe('ladder data', () => {
-  it('has thirty-two types of ten boards', () => {
-    expect(ladders).toHaveLength(32);
+  it('has thirty-three types of ten boards', () => {
+    expect(ladders).toHaveLength(33);
     for (const type of ladders) expect(type.boards).toHaveLength(10);
   });
 
@@ -115,10 +116,16 @@ describe('the auto-opening', () => {
     for (const type of ladders) {
       for (const board of type.boards) {
         const cfg = boardConfig(ladders, type.id, board.n);
+        // A blank cell and its ring, except where every creature is shown: there any open cell is
+        // a foothold, since each neighbour is plainly empty or a creature. SPRINKLE DONUT runs so
+        // dense that a blank cell is often on the rim, and on a few seeds there is none at all.
+        const least = placementRule(cfg.placement).display.showsCreatures ? 1 : 9;
         for (const seed of SEEDS) {
           const game = Game.create(cfg, seed);
           const opened = game.grid.flat().filter((c) => c.open);
-          expect(opened.length, `${type.id}#${board.n} opened nothing`).toBeGreaterThanOrEqual(9);
+          expect(opened.length, `${type.id}#${board.n} opened nothing`).toBeGreaterThanOrEqual(
+            least,
+          );
           expect(
             opened.every((c) => c.tier === 0),
             `${type.id}#${board.n} opening uncovered a creature`,
@@ -134,12 +141,14 @@ describe('the auto-opening', () => {
  * most: that a board with one can still be cleared without paying HP.
  */
 describe('the crawl rule on the real ladders', () => {
-  it('is carried by DUNGEON and PETRI DISH, and by nothing else', () => {
+  it('is carried by DUNGEON, PETRI DISH and SPRINKLE DONUT, and by nothing else', () => {
     const crawling = ladders.filter((t) => (t.reach ?? 0) > 0).map((t) => t.id);
-    expect(crawling).toEqual(['dungeon', 'petri']);
+    expect(crawling).toEqual(['dungeon', 'petri', 'sprinkle_donut']);
     expect(boardConfig(ladders, 'dungeon', 1)).toMatchObject({ reach: 2 });
     expect(boardConfig(ladders, 'dungeon', 1).marksExtendReach).toBeUndefined();
-    expect(boardConfig(ladders, 'petri', 1)).toMatchObject({ reach: 1, marksExtendReach: true });
+    for (const id of ['petri', 'sprinkle_donut']) {
+      expect(boardConfig(ladders, id, 1)).toMatchObject({ reach: 1, marksExtendReach: true });
+    }
   });
 
   /**
@@ -173,7 +182,7 @@ describe('the crawl rule on the real ladders', () => {
    * rather than only in the simulator.
    */
   it('never costs a board its zero-damage clear', () => {
-    for (const id of ['dungeon', 'petri']) {
+    for (const id of ['dungeon', 'petri', 'sprinkle_donut']) {
       for (const board of findType(ladders, id).boards) {
         const cfg = boardConfig(ladders, id, board.n);
         for (const seed of SEEDS) {
@@ -205,6 +214,7 @@ describe('board shapes', () => {
       'gear',
       'petri',
       'pyramid',
+      'sprinkle_donut',
       'star',
       'ultra_hive',
       'valentines',

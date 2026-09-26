@@ -7,7 +7,8 @@
  * where the placement rule shows its number on hover (`display.hoverShowsNumber`, false on the
  * pairing rules, decision 0012). A switch lets a measurement peek anyway, so that what hiding the
  * number costs can be measured rather than argued. A covered cell's tier, number and life are
- * never read here; the one hidden read the instrument makes is the alarm in `graded.ts`.
+ * never read here, except whether it holds a creature where the game draws that
+ * (`display.showsCreatures`); the one hidden read the instrument makes is the alarm in `graded.ts`.
  *
  * A constraint is one visible number with the tiers already on show subtracted: open neighbours
  * count their tier, and the player's own marks count as the tier they claim, because the graded
@@ -28,7 +29,10 @@ export interface Constraint {
   readonly residual: number;
   /** Covered, unmarked neighbours. Marked ones are subtracted as the tier they claim. */
   readonly unknown: readonly Cell[];
-  /** Creatures among `unknown`, once a Census has counted this cell's ring; null until then. */
+  /**
+   * Creatures among `unknown`, once a Census has counted this cell's ring or where the board
+   * shows every creature; null otherwise.
+   */
   readonly creatures: number | null;
 }
 
@@ -72,6 +76,9 @@ export function readBoard(game: Game, peek: boolean): Reading {
   // Where the creatures walk a mark is a route, not a claim about a cell (PATROL), so nothing
   // marked is subtracted there; the graded player writes no marks on such a board anyway.
   const claims = game.marksAreClaims;
+  // Where the board draws every creature where it stands (SPRINKLE DONUT), a person counts the
+  // creatures under a number as a Census would, so the count is read off what is drawn.
+  const shown = placementRule(game.config.placement).display.showsCreatures;
   for (const cell of game.grid.flat()) {
     if (!cell.present) continue;
     if (!cell.open) {
@@ -93,7 +100,8 @@ export function readBoard(game: Game, peek: boolean): Reading {
       } else covered.push(n);
     }
     if (!covered.length) continue;
-    const creatures = cell.census === null ? null : cell.census - counted;
+    let creatures = cell.census === null ? null : cell.census - counted;
+    if (shown) creatures = covered.filter((n) => n.tier > 0).length;
     const c: Constraint = { cell, residual, unknown: covered, creatures };
     constraints.push(c);
     for (const n of covered) {

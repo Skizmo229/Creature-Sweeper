@@ -228,6 +228,42 @@ whole dial (18.5 to 23.5%), and it gets harder by getting *smaller* between set 
 creature's number is not drawn on these two ladders, by request, though the engine and the proofs
 still read it.
 
+## SPRINKLE DONUT
+
+DONUT's ring with every creature's place shown. The creatures stand in pairs, each beside its
+partner, and each pair is drawn as one sprinkle lying across its two cells, in the palette's `hot`,
+so the player knows where every creature is and has only its tier to find. Unlike PAIRS's, the
+pairs may touch, and like PAIRS's they are tier-blind: a pair says nothing about the tiers in it.
+The sprinkle is the pairing's whole job, the look and the way two touching pairs are told apart
+(`src/engine/placement/sprinkles.ts`, decision 0046). Partners may be diagonal, as on PAIRS, so a
+sprinkle lies at any of four angles. It carries PETRI DISH's growth rule, a reach of one that a
+mark beside uncovered ground extends (decision 0039), from DONUT's single opening, so the player
+eats round the ring from one place. At these densities that opening is small, a blank cell and its
+ring, on the rim on a third of boards, and on 1 to 3% no blank at all and the safest single cell;
+the sprinkles make any of them a foothold, since every neighbour is shown. No spells: Census would
+count what the board already shows.
+
+Showing the places makes every number a Census: the hidden sum and how many creatures share it.
+`shownCap` is that as Sweep's per-cell bound, the biggest of k creatures under a hidden sum s being
+at most s - (k - 1), and `emptied` is the plain ground, which Sweep opens a ring at a time, so one
+press opens every empty cell the frontier can reach. The pencil offers empty ground on a plain
+cell and anything else on a sprinkle. A beaten creature's number is an ordinary sum here, so
+hovering shows it. What breaks it: a sprinkle drawn where no creature stands, or a creature left
+without one, would make every proof lie; the fault finder holds every creature to a partner beside
+it, paired back, and `test/sprinkles.test.ts` holds the cap and `emptied` to never calling a
+creature free, however far a board is played. The graded player reads the places at a glance
+(grade 0, the sprinkles) and counts them under every number (grade 1, the Census bound).
+
+The rule gives away so much that density is the whole dial, and it has a cliff. At DONUT's
+schedule (29 to 36.2%) a grade-2 player cleared 98 to 100% of every board; at a flat 55% it
+cleared 98% of board 1 and 88% of board 10, at 65% 45% and 15%, and at 75% nothing (40 seeds a
+board, 26 September 2026). It ships at 56.4 to 59.1%, where a grade-2 player clears 93% of
+board 1 falling to 68% of board 10 (60 seeds), the placement ladders' human target, stepping two
+creatures a board within each box because a smooth ramp this shallow would repeat a board once the
+quota rounds to an even number. The honest player, which never bounds a sum by its count, finds
+it harder (90% of board 1 falling to 40% of board 10), as it finds the round DONUT. The pairs lay
+down at any density up to 90%, so the packing never binds.
+
 ## PACKS and CONGA LINE
 
 Creatures stand in connected packs of one of every tier, and no two packs touch (touching is

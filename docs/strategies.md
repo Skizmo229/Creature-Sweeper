@@ -79,6 +79,10 @@ one-cell notch in a room's wall is not a passage, it is room floor, and can hold
 and touching no other pack. A pack that has shown every tier is finished, and every covered cell
 around it is empty ground.
 
+**The sprinkles** (SPRINKLE DONUT). Every creature is drawn where it stands, each pair as one
+sprinkle across its two cells. A covered cell with no sprinkle is empty ground, free at any level;
+a cell under a sprinkle is a creature, never empty ground.
+
 ## 3. Grade 1: one number
 
 **Subtract what you can see.** Open ground counts 0 and a beaten creature counts its tier, so
@@ -123,6 +127,11 @@ number is still covered and the hidden amount is even, that square is empty, at 
 number *is* its partner's tier, because nothing else it touches is a creature. If it has one
 covered neighbour left, that is the partner and you know its tier; if its number is at or below
 your level, the whole ring is free.
+
+**Count the sprinkles** (SPRINKLE DONUT). A number says how much tier is hidden around it, and the
+sprinkles say how many creatures share it, as a Census would. Each is worth at least 1, so the
+biggest can be no more than the remainder less one for every other: a 3 over three sprinkles is
+three tier 1s, and a 5 over three is nothing above a 3.
 
 ## 4. Grade 2: two numbers
 
@@ -253,6 +262,13 @@ exactly this hunt: the top thresholds are met by killing every creature of a tie
 - **ULTRA HIVE.** HIVE's hexagons on a board that is itself a hexagon: six straight edges to
   read in from, and every number still the sum of six neighbours at most. Play it as HIVE with
   the rim's help.
+- **SPRINKLE DONUT.** DONUT's ring with every creature shown, two to a sprinkle, and PETRI DISH's
+  growth rule from a single opening. Nothing is ever a guess about *where*, only about *what*:
+  open the plain ground beside you freely (Sweep does it a ring at a time), count the sprinkles
+  under every number, and take the free kills the counts give you to level. The walls are pairs
+  standing shoulder to shoulder; a mark on a sprinkle beside your ground lets you reach the cell
+  past it, so name what you can and step over it. The sprinkles are tier-blind, so a pair's two
+  halves need not match.
 - **PETRI DISH.** A round dish that opens at its three largest blank areas, and you may only open
   a cell touching ground you have uncovered, so each colony grows from its own edge. A mark you
   make beside uncovered ground counts as ground for that purpose while it touches some: naming
@@ -361,11 +377,13 @@ effort for a player; it does not subtract numbers from each other, name a last c
 | the free kill | `named-kill` | 0 |
 | met partner | `met-partner` | 0 |
 | corridors | `corridor` | 0 |
+| the sprinkles | `sprinkles` | 0 |
 | subtract what you can see | `residual-ring` | 1 |
 | the last cell | `last-cell` | 1 |
 | the counters | `counters` | 1 |
 | the lone dark square | `lone-dark` | 1 |
 | the partner's tier | `partner-number` | 1 |
+| count the sprinkles | read by `census-ring`: the board shows the count a Census gives | 1 |
 | the whole pack | read by `residual-ring`: a finished pack's numbers all leave 0 | 1 |
 | subtraction, the 1-2-1 | `subtract` | 2 |
 | overlap | `overlap` | 2 |

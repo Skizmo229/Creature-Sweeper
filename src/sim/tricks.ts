@@ -9,7 +9,8 @@
  *
  * Every trick reads only what a person can see (`reader.ts`), and the placement rules are asked
  * through their hooks rather than named: `groups` for the pairing and pack readings, `cap` and
- * `emptied` for the colour and line proofs, `noteCandidates` for what the pencil would offer.
+ * `emptied` for the colour and line proofs, `noteCandidates` for what the pencil would offer,
+ * `display.showsCreatures` for a board that draws every creature where it stands.
  * A rule reading that needs a hidden number is skipped unless the view may peek.
  */
 
@@ -38,6 +39,7 @@ export type TrickId =
   | 'named-kill'
   | 'met-partner'
   | 'corridor'
+  | 'sprinkles'
   | 'residual-ring'
   | 'last-cell'
   | 'census-ring'
@@ -173,6 +175,16 @@ const corridor: Trick = {
   grade: 0,
   apply(v, m) {
     for (const cell of v.scaffold) if (coveredUnmarked(cell)) m.open.add(cell);
+  },
+};
+
+// Where the board draws every creature where it stands, a plain cell is empty ground and a
+// sprinkle is a creature: what the pencil offers on each, which is what the board shows.
+const sprinkles: Trick = {
+  grade: 0,
+  apply(v, m) {
+    if (!placementRule(v.game.config.placement).display.showsCreatures) return;
+    for (const cell of v.reading.unknown) settle(v, cell, v.game.noteCandidates(cell), m);
   },
 };
 
@@ -498,6 +510,7 @@ export const TRICKS: Readonly<Record<TrickId, Trick>> = {
   'named-kill': namedKill,
   'met-partner': metPartner,
   corridor,
+  sprinkles,
   'residual-ring': residualRing,
   'last-cell': lastCell,
   'census-ring': censusRing,

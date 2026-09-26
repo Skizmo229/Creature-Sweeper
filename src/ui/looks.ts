@@ -301,6 +301,27 @@ const LOOKS: Record<string, LadderLook> = {
     sfx: 'thud',
     victory: 'wipe',
   },
+  sprinkle_donut: {
+    // Vanilla icing over the dough: a covered tile is the glaze, uncovered ground the warm dough
+    // under it, and every pair of creatures a sprinkle on the glaze, drawn in `hot`. So `hot` is a
+    // pink dark enough to read on the glaze (2.9:1, with the sprinkle's rim) and light enough for
+    // a beaten creature's number on the floor (4.0:1), 169 from `ink`. No spells, so nothing
+    // writes gold (decision 0032).
+    palette: {
+      tile: '#fbf5ee',
+      tileEdge: '#e2d3c4',
+      floor: '#4a2e17',
+      ink: '#fbead6',
+      hot: '#ff4f93',
+      pip: 'ring',
+      accent: '#ff79ad',
+    },
+    // DONUT's bakery-sign face (decision 0031).
+    font: 'sniglet',
+    sfx: 'chime',
+    // Falling chips, as sprinkles fall.
+    victory: 'confetti',
+  },
   hive: {
     // Honey amber for the hive, with its own pip. No spells here, so an amber `hot`
     // has no gold annotation to collide with (decision 0032).
