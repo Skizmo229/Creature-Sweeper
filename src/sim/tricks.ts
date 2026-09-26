@@ -7,6 +7,9 @@
  * applies what the lowest yielding grade found, which is how "what did this board demand" is
  * measured (docs/human-tuning-plan.md).
  *
+ * Each conclusion carries its `Why`: the visible numbers and cells the proof read, so that a
+ * teacher can point at them (docs/teaching-plan.md). The graded player does not read it.
+ *
  * Every trick reads only what a person can see (`reader.ts`), and the placement rules are asked
  * through their hooks rather than named: `groups` for the pairing and pack readings, `cap` and
  * `emptied` for the colour and line proofs, `noteCandidates` for what the pencil would offer,
@@ -69,6 +72,17 @@ export interface View {
   readonly scaffold: ReadonlySet<Cell>;
 }
 
+/**
+ * What a conclusion rests on, so that a teacher can point at it: the visible numbers the proof
+ * read, and any other visible cell it read (a beaten creature whose partner is being named, a
+ * pack's shown member, the mark being harvested). Both empty where the proof is the board's own
+ * rule and nothing on it: a corridor, a sprinkle, the counters.
+ */
+export interface Why {
+  readonly constraints: readonly Constraint[];
+  readonly cells: readonly Cell[];
+}
+
 /** What a trick proposes. */
 export interface Moves {
   /** Safe to open at the current level: empty ground, or a creature at or under it. */
@@ -77,6 +91,8 @@ export interface Moves {
   readonly mark: Map<Cell, number>;
   /** Candidates narrowed to this mask. */
   readonly narrow: Map<Cell, number>;
+  /** Why each cell above was concluded; the first proof to reach a cell keeps it. */
+  readonly because: Map<Cell, Why>;
 }
 
 export interface Trick {
@@ -85,7 +101,21 @@ export interface Trick {
 }
 
 export function noMoves(): Moves {
-  return { open: new Set(), mark: new Map(), narrow: new Map() };
+  return { open: new Set(), mark: new Map(), narrow: new Map(), because: new Map() };
+}
+
+/** A proof that reads these numbers, and these other cells. */
+function by(constraints: readonly Constraint[], cells: readonly Cell[] = []): Why {
+  return { constraints, cells };
+}
+
+/** A proof that reads nothing on the board but its rule. */
+const RULE: Why = by([]);
+
+/** Propose a cell as safe to open, remembering why. */
+function open(m: Moves, cell: Cell, why: Why): void {
+  m.open.add(cell);
+  if (!m.because.has(cell)) m.because.set(cell, why);
 }
 
 /**
@@ -93,20 +123,29 @@ export function noMoves(): Moves {
  * to open; one tier left and it is named; otherwise the pencil is narrowed. Empty ground alone
  * is a candidate set at or under any level, so `{0}` opens at level 0 too.
  */
-function settle(view: View, cell: Cell, mask: number, moves: Moves): void {
+function settle(view: View, cell: Cell, mask: number, moves: Moves, why: Why): void {
   const before = view.domain(cell);
   const dom = before & mask;
   if (dom === 0) return;
   if (highestTier(dom) <= view.level) moves.open.add(cell);
   else if ((dom & (dom - 1)) === 0) moves.mark.set(cell, lowestTier(dom));
   else if (dom !== before) moves.narrow.set(cell, dom);
+  else return;
+  if (!moves.because.has(cell)) moves.because.set(cell, why);
 }
 
 /** What some cells can be, given that together they sum to something in [lo, hi]. */
-function concludeSum(view: View, cells: readonly Cell[], lo: number, hi: number, m: Moves): void {
+function concludeSum(
+  view: View,
+  cells: readonly Cell[],
+  lo: number,
+  hi: number,
+  m: Moves,
+  why: Why,
+): void {
   if (hi < 0 || lo > hi || !cells.length) return;
   if (hi <= view.level) {
-    for (const c of cells) m.open.add(c);
+    for (const c of cells) open(m, c, why);
     return;
   }
   const sup = supported(
@@ -115,7 +154,7 @@ function concludeSum(view: View, cells: readonly Cell[], lo: number, hi: number,
     hi,
   );
   if (!sup) return;
-  cells.forEach((c, i) => settle(view, c, sup[i]!, m));
+  cells.forEach((c, i) => settle(view, c, sup[i]!, m, why));
 }
 
 /** The least and the most some cells can add up to. */
@@ -140,7 +179,7 @@ const rawRing: Trick = {
   apply(v, m) {
     for (const c of v.reading.constraints) {
       if (c.cell.num > v.level) continue;
-      for (const n of c.unknown) m.open.add(n);
+      for (const n of c.unknown) open(m, n, by([c]));
     }
   },
 };
@@ -149,7 +188,7 @@ const namedKill: Trick = {
   grade: 0,
   apply(v, m) {
     if (v.level <= 0) return;
-    for (const [cell, mark] of v.reading.marked) if (mark <= v.level) m.open.add(cell);
+    for (const [cell, mark] of v.reading.marked) if (mark <= v.level) open(m, cell, by([], [cell]));
   },
 };
 
@@ -162,11 +201,13 @@ const metPartner: Trick = {
     for (const cell of v.game.grid.flat()) {
       if (!cell.present || !openCreature(cell)) continue;
       const ns = v.game.neighboursOf(cell);
-      if (!ns.some(openCreature)) continue;
-      for (const n of ns) if (coveredUnmarked(n)) m.open.add(n);
+      const partner = ns.find(openCreature);
+      if (!partner) continue;
+      for (const n of ns) if (coveredUnmarked(n)) open(m, n, by([], [cell, partner]));
     }
     for (const cell of v.reading.unknown) {
-      if (v.game.neighboursOf(cell).filter(openCreature).length >= 2) m.open.add(cell);
+      const creatures = v.game.neighboursOf(cell).filter(openCreature);
+      if (creatures.length >= 2) open(m, cell, by([], creatures));
     }
   },
 };
@@ -174,7 +215,7 @@ const metPartner: Trick = {
 const corridor: Trick = {
   grade: 0,
   apply(v, m) {
-    for (const cell of v.scaffold) if (coveredUnmarked(cell)) m.open.add(cell);
+    for (const cell of v.scaffold) if (coveredUnmarked(cell)) open(m, cell, RULE);
   },
 };
 
@@ -184,7 +225,7 @@ const sprinkles: Trick = {
   grade: 0,
   apply(v, m) {
     if (!placementRule(v.game.config.placement).display.showsCreatures) return;
-    for (const cell of v.reading.unknown) settle(v, cell, v.game.noteCandidates(cell), m);
+    for (const cell of v.reading.unknown) settle(v, cell, v.game.noteCandidates(cell), m, RULE);
   },
 };
 
@@ -195,7 +236,7 @@ const residualRing: Trick = {
   apply(v, m) {
     for (const c of v.reading.constraints) {
       if (c.residual > v.level) continue;
-      for (const n of c.unknown) m.open.add(n);
+      for (const n of c.unknown) open(m, n, by([c]));
     }
   },
 };
@@ -205,7 +246,7 @@ const lastCell: Trick = {
   apply(v, m) {
     for (const c of v.reading.constraints) {
       if (c.unknown.length !== 1 || c.residual < 1 || c.residual > v.game.config.tiers) continue;
-      settle(v, c.unknown[0]!, noteBit(c.residual), m);
+      settle(v, c.unknown[0]!, noteBit(c.residual), m, by([c]));
     }
   },
 };
@@ -220,7 +261,7 @@ const censusRing: Trick = {
     for (const c of v.reading.constraints) {
       if (c.creatures === null || c.creatures > c.unknown.length) continue;
       if (c.creatures > 0 && c.residual - (c.creatures - 1) > v.level) continue;
-      for (const n of c.unknown) m.open.add(n);
+      for (const n of c.unknown) open(m, n, by([c]));
     }
   },
 };
@@ -230,11 +271,11 @@ const counters: Trick = {
   apply(v, m) {
     const r = v.reading;
     if (r.top <= v.level) {
-      for (const cell of r.unknown) m.open.add(cell);
+      for (const cell of r.unknown) open(m, cell, RULE);
       return;
     }
     for (const cell of r.unknown) {
-      if (v.domain(cell) & ~r.hidingMask) settle(v, cell, r.hidingMask, m);
+      if (v.domain(cell) & ~r.hidingMask) settle(v, cell, r.hidingMask, m, RULE);
     }
   },
 };
@@ -247,7 +288,9 @@ const loneDark: Trick = {
     const rule = placementRule(v.game.config.placement);
     for (const c of v.reading.constraints) {
       if (c.residual <= 0) continue;
-      for (const n of c.unknown) if (rule.cap(n, c.residual, c.unknown) === 0) m.open.add(n);
+      for (const n of c.unknown) {
+        if (rule.cap(n, c.residual, c.unknown) === 0) open(m, n, by([c]));
+      }
     }
   },
 };
@@ -260,8 +303,9 @@ const partnerNumber: Trick = {
     const rule = placementRule(v.game.config.placement);
     if (rule.groups !== 'pairs' || (!v.peek && !rule.display.hoverShowsNumber)) return;
     for (const cell of v.reading.unknown) {
-      if (v.game.neighboursOf(cell).filter(openCreature).length !== 1) continue;
-      settle(v, cell, v.game.noteCandidates(cell), m);
+      const creatures = v.game.neighboursOf(cell).filter(openCreature);
+      if (creatures.length !== 1) continue;
+      settle(v, cell, v.game.noteCandidates(cell), m, by([], creatures));
     }
   },
 };
@@ -279,7 +323,7 @@ const subtract: Trick = {
         if (!a.unknown.every((c) => b.unknown.includes(c))) continue;
         const rest = b.unknown.filter((c) => !a.unknown.includes(c));
         const d = b.residual - a.residual;
-        concludeSum(v, rest, d, d, m);
+        concludeSum(v, rest, d, d, m, by([a, b]));
       }
     }
   },
@@ -310,8 +354,9 @@ const overlap: Trick = {
           const lo = Math.max(0, a.residual - pHi, b.residual - qHi);
           const hi = Math.min(a.residual - pLo, b.residual - qLo, sumRange(v, shared)[1]);
           if (lo > hi) continue;
-          concludeSum(v, p, a.residual - hi, a.residual - lo, m);
-          concludeSum(v, q, b.residual - hi, b.residual - lo, m);
+          const why = by([a, b]);
+          concludeSum(v, p, a.residual - hi, a.residual - lo, m, why);
+          concludeSum(v, q, b.residual - hi, b.residual - lo, m, why);
         }
       }
     }
@@ -321,7 +366,9 @@ const overlap: Trick = {
 const bounds: Trick = {
   grade: 2,
   apply(v, m) {
-    for (const c of v.reading.constraints) concludeSum(v, c.unknown, c.residual, c.residual, m);
+    for (const c of v.reading.constraints) {
+      concludeSum(v, c.unknown, c.residual, c.residual, m, by([c]));
+    }
   },
 };
 
@@ -338,7 +385,7 @@ const colourCap: Trick = {
         const cap = rule.cap(n, c.residual, c.unknown);
         const offered = v.game.noteCandidates(n);
         if (cap >= c.residual && offered === all) continue;
-        settle(v, n, tiersUpTo(cap) & offered, m);
+        settle(v, n, tiersUpTo(cap) & offered, m, by([c]));
       }
     }
   },
@@ -354,7 +401,9 @@ const packGap: Trick = {
     const gaps = missingFrom(v.game.grid.flat(), (c) => v.game.neighboursOf(c), tiers);
     for (const [cell, gap] of gaps) {
       for (const n of v.game.neighboursOf(cell)) {
-        if (coveredUnmarked(n)) settle(v, n, tiersUpTo(gap) & v.game.noteCandidates(n), m);
+        if (coveredUnmarked(n)) {
+          settle(v, n, tiersUpTo(gap) & v.game.noteCandidates(n), m, by([], [cell]));
+        }
       }
     }
     const seen = new Set<Cell>();
@@ -377,7 +426,7 @@ const packGap: Trick = {
       const [only] = rim;
       const shown = new Set(piece.map((c) => c.tier));
       for (let t = 1; t <= tiers; t++) {
-        if (!shown.has(t) && coveredUnmarked(only!)) settle(v, only!, noteBit(t), m);
+        if (!shown.has(t) && coveredUnmarked(only!)) settle(v, only!, noteBit(t), m, by([], piece));
       }
     }
   },
@@ -433,7 +482,7 @@ const whatIf: Trick = {
         local.set(cell, noteBit(t));
         if (consistent(window, local)) survivors |= noteBit(t);
       }
-      if (survivors !== dom) settle(v, cell, survivors, m);
+      if (survivors !== dom) settle(v, cell, survivors, m, by([...window]));
     }
   },
 };
@@ -442,7 +491,7 @@ const lineReach: Trick = {
   grade: 3,
   apply(v, m) {
     for (const cell of placementRule(v.game.config.placement).emptied(v.game)) {
-      if (coveredUnmarked(cell)) m.open.add(cell);
+      if (coveredUnmarked(cell)) open(m, cell, RULE);
     }
   },
 };
@@ -456,16 +505,19 @@ const accounted: Trick = {
   apply(v, m) {
     const r = v.reading;
     const taken = new Set<Cell>();
+    const accounting: Constraint[] = [];
     let acc = 0;
     const byResidual = [...r.constraints].sort((a, b) => b.residual - a.residual);
     for (const c of byResidual) {
       if (c.unknown.some((n) => taken.has(n))) continue;
       for (const n of c.unknown) taken.add(n);
+      accounting.push(c);
       acc += c.residual;
     }
     const rest = r.totalHiding - acc;
     if (rest < 0) return;
-    for (const cell of r.unknown) if (!taken.has(cell)) settle(v, cell, tiersUpTo(rest), m);
+    const why = by(accounting);
+    for (const cell of r.unknown) if (!taken.has(cell)) settle(v, cell, tiersUpTo(rest), m, why);
   },
 };
 
@@ -480,9 +532,9 @@ const lastOfTier: Trick = {
       if (hiding <= 0) continue;
       const bit = noteBit(t);
       const taken = new Set<Cell>();
-      let forced = 0;
+      const forcing: Constraint[] = [];
       for (const c of r.constraints) {
-        if (forced >= hiding) break;
+        if (forcing.length >= hiding) break;
         if (c.unknown.some((n) => taken.has(n))) continue;
         if (!c.unknown.some((n) => hasNote(v.domain(n), t))) continue;
         if (
@@ -493,12 +545,15 @@ const lastOfTier: Trick = {
         ) {
           continue;
         }
-        forced++;
+        forcing.push(c);
         for (const n of c.unknown) taken.add(n);
       }
-      if (forced < hiding) continue;
+      if (forcing.length < hiding) continue;
+      const why = by(forcing);
       for (const cell of r.unknown) {
-        if (!taken.has(cell) && v.domain(cell) & bit) settle(v, cell, v.domain(cell) & ~bit, m);
+        if (!taken.has(cell) && v.domain(cell) & bit) {
+          settle(v, cell, v.domain(cell) & ~bit, m, why);
+        }
       }
     }
   },
