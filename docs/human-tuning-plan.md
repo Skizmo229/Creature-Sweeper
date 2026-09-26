@@ -310,7 +310,7 @@ is what calibrates the technique costs and the retune targets once the game has 
 | 4.3 | The baseline measurement, every ladder, grades 2 and 4 | done 25 September 2026, below |
 | 4.4 | The anchors: the Minesweeper board, the stars, the honest comparison | Minesweeper pending |
 | 4.5 | Decide the target per ladder with the owner | decided 26 September 2026, as proposed in section 7 |
-| 4.6 | Retune, one commit per ladder, decision record each | EXTREME and ORACLE done 26 September 2026; HUGE x EXTREME measured on target and left as is; BLIND done 26 September 2026 |
+| 4.6 | Retune, one commit per ladder, decision record each | EXTREME and ORACLE done 26 September 2026; HUGE x EXTREME measured on target and left as is; BLIND and HUGE x BLIND done 26 September 2026 |
 | 4.7 | Per-ladder tips and the tricks page | open |
 | 4.8 | Telemetry store and export | open |
 | 4.9 | Spending policies and attention in the graded player | spells and attention done 26 September 2026; deferral open |
@@ -357,7 +357,7 @@ the game hides them, `unsound` 0 throughout. Stuck points, guesses, lethal guess
 | PETRI DISH | 0.3 | 100% | 0.3 | 0.3 | 0.0 | 100% | 0.1 | 52% | 1% | 1% | 10.6 | 105 | 100% | 100% |
 | PATROL | 0.0 | 100% | 0.0 | 0.0 | 0.0 | 100% | 0.0 | 0% | 0% | 0% | 1.0 | 84 | 100% | 100% |
 | BLIND (retuned) | 1.1 | 46% | 0.9 | 0.9 | 0.9 | 60% | 0.4 | 100% | 26% | 24% | 5.5 | 142 | 25% | 28% |
-| HUGE x BLIND | 2.5 | 2% | 2.5 | 2.5 | 2.5 | 4% | 1.0 | 99% | 8% | 2% | 4.7 | 218 | 0% | 0% |
+| HUGE x BLIND (retuned) | 1.1 | 44% | 0.8 | 0.8 | 0.8 | 63% | 0.4 | 100% | 29% | 28% | 8.6 | 221 | 18% | 33% |
 
 What it says, read on the day it was recorded:
 
@@ -391,10 +391,11 @@ What it says, read on the day it was recorded:
   PATROL's moves-on-offer figure is 1.0 by construction, one open per reading where the
   creatures walk, and the player waited out every stuck point and never guessed.
 - **The search ladders are single-mistake games a deducer loses.** Before its retune BLIND
-  forced two to three guesses a board and every one is death: 4 to 7% cleared, 0% of board 10;
-  HUGE x BLIND still is. BLIND's row is as retuned on 26 September 2026 (decision 0043, density
-  16.5 to 19.7% in place of NORMAL's), on a target proposed for the one-mistake ladders and open
-  to being moved: 88% of board 1 falling to 28% of board 10 at grade 4. Notice what is left once
+  forced two to three guesses a board and every one is death: 4 to 7% cleared, 0% of board 10.
+  Both rows are as retuned on 26 September 2026 (decisions 0043 and 0044, density 16.5 to 19.7%
+  and 16.0 to 19.4% in place of NORMAL's and HUGE's), on a target proposed for the one-mistake
+  ladders and open to being moved: 88% and 78% of board 1 falling to 28% and 33% of board 10 at
+  grade 4. Notice what is left once
   the density is right: a quarter of its boards need a what-if or a count, the highest share of
   any ladder, because proving a cell empty is all there is.
 
