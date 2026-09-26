@@ -29,7 +29,7 @@ const TSX = createRequire(import.meta.url).resolve('tsx/cli');
 /**
  * What to run: name -> simulator script and its arguments.
  *
- * Together these exercise every ladder (cli/boards.ts sweeps all 689 boards), every Full Run, the
+ * Together these exercise every ladder (cli/boards.ts sweeps all 704 boards), every Full Run, the
  * honest player on a magic ladder, a crawl ladder and one of each placement rule, the complete
  * deducer, the lethal-guess policy, Sudoku generation and the topology experiment.
  */

@@ -3,9 +3,10 @@ import { Game } from '../src/engine/game.js';
 import { noteTiers } from '../src/engine/notes.js';
 import type { BoardConfig } from '../src/engine/types.js';
 import { DEFAULT_GAMEPLAY } from '../src/engine/settings.js';
-import { UNGATED_SWEEP, paint, testConfig } from './helpers.js';
+import { UNGATED_SWEEP, ladders, paint, testConfig } from './helpers.js';
 import { computeNumbers, neighbours } from '../src/engine/grid.js';
-import { findBestOpening } from '../src/engine/opening.js';
+import { BASE_ROWS, findBestOpening } from '../src/engine/opening.js';
+import { boardConfig } from '../src/engine/config.js';
 
 /** A small hand-built board so the assertions can be exact. */
 /** Reveal size of every candidate opening on the board, largest-first. */
@@ -91,6 +92,51 @@ describe('opening', () => {
   it('leaves the board cold when the rule is "none"', () => {
     const game = Game.create(testConfig({ opening: 'none' }), 42);
     expect(game.grid.flat().some((c) => c.open)).toBe(false);
+  });
+
+  it('deals the base face up: its empty ground open, its creatures givens, alive and covered', () => {
+    for (const seed of [1, 2, 3, 42]) {
+      const game = Game.create(testConfig({ opening: 'base', quantity: [6, 4, 3] }), seed);
+      const cells = game.grid.flat();
+      const base = new Set(game.grid.slice(-BASE_ROWS).flat());
+      for (const cell of base) {
+        if (cell.tier === 0) expect(cell.open, `(${cell.x},${cell.y})`).toBe(true);
+        else expect(cell).toMatchObject({ open: false, alive: true, given: true, mark: cell.tier });
+      }
+      // Givens only in the base, and a creature is never opened.
+      expect(cells.filter((c) => c.given).every((c) => base.has(c))).toBe(true);
+      expect(cells.some((c) => c.open && c.tier > 0)).toBe(false);
+      // The empty ground cascades as a click would: no open zero is left with a covered neighbour.
+      for (const cell of cells.filter((c) => c.open && c.num === 0)) {
+        expect(neighbours(game.grid, cell.x, cell.y).every((n) => n.open)).toBe(true);
+      }
+    }
+  });
+
+  it('pays nothing for the base: no EXP, no mana, and every creature still to be fought', () => {
+    const game = Game.create(
+      testConfig({ opening: 'base', quantity: [6, 4, 3], spells: ['reveal'], startMana: 75 }),
+      3,
+    );
+    const givens = game.grid.flat().filter((c) => c.given);
+    expect(givens.length).toBeGreaterThan(0);
+    expect(game.ex).toBe(0);
+    expect(game.mana).toBe(75);
+    expect(game.creaturesLeft()).toBe(13);
+    expect(game.marksPlaced.reduce((a, b) => a + b, 0)).toBe(givens.length);
+  });
+
+  it('reads a ladder’s own opening, and refuses one its placement deals itself', () => {
+    expect(boardConfig(ladders, 'pyramid', 1).opening).toBe('base');
+    expect(boardConfig(ladders, 'normal', 1).opening).toBe('auto');
+    const normal = structuredClone(ladders.find((t) => t.id === 'normal')!);
+    expect(() => boardConfig([{ ...normal, opening: 'sideways' }], 'normal', 1)).toThrow(
+      /unknown opening "sideways"/,
+    );
+    const sudoku = structuredClone(ladders.find((t) => t.id === 'sudoku')!);
+    expect(() => boardConfig([{ ...sudoku, opening: 'base' }], 'sudoku', 1)).toThrow(
+      /sudoku placement deals its own opening/,
+    );
   });
 });
 

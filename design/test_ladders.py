@@ -196,6 +196,14 @@ class TheContinuation(unittest.TestCase):
             for b in rows(t):
                 self.assertEqual((b["w"] * b["h"]) % 2, 0, f"{t['id']}#{b['n']}")
 
+    def test_keeps_a_pyramid_twice_as_wide_as_it_is_tall(self):
+        for t in BUILT:
+            if t.get("shape") != "pyramid":
+                continue
+            for b in rows(t):
+                self.assertEqual(b["w"], 2 * b["h"], f"{t['id']}#{b['n']}")
+                self.assertEqual(b["cells"], b["h"] * (b["h"] + 1), f"{t['id']}#{b['n']}")
+
     def test_keeps_the_givens_above_the_sudoku_generators_floor(self):
         for t in BUILT:
             if t.get("placement") != "sudoku":

@@ -34,6 +34,8 @@ def shape_present(shape, param, w, h, x, y):
         return abs(x - cx) <= param / 2 or abs(y - cy) <= param / 2
     if shape == "diamond":
         return abs(x - cx) / (w / 2) + abs(y - cy) / (h / 2) <= 1
+    if shape == "pyramid":
+        return abs(x - cx) < y + 1
     return True
 
 
@@ -181,7 +183,8 @@ def damage(L, E):
 REQUIRED = ("id", "name", "tint", "archetype", "axis", "blurb",
             "size", "tiers", "density", "hp", "lock", "alpha0")
 OPTIONAL = ("boss", "sweep", "spells", "start_mana", "workout", "placement", "sets", "givens",
-            "topology", "wrap", "shape", "shape_param", "cells", "reach", "search", "ceiling")
+            "topology", "wrap", "shape", "shape_param", "cells", "reach", "search", "ceiling",
+            "opening")
 # The fields that are one value per board.
 SCHEDULES = ("size", "tiers", "density", "hp", "lock", "alpha0", "boss", "sets", "givens", "cells")
 
@@ -337,9 +340,15 @@ def extend(t):
         # the two and pinning the faster one costs the least.
         if t.get("placement") == "checker" and w_next % 2:
             w_next -= 1
+        h_next = min(max_h, round(hs[-1] + dh * i))
+        # A pyramid fills a box exactly twice as wide as it is tall (PYRAMID_SHAPE in
+        # fixed.ts). Carried on separately the two schedules drift off that, which clips the
+        # base or leaves a margin, so the continuation takes the width from the height.
+        if t.get("shape") == "pyramid":
+            h_next = min(h_next, max_w // 2)
+            w_next = 2 * h_next
         row = dict(
-            size=(w_next,
-                  min(max_h, round(hs[-1] + dh * i))),
+            size=(w_next, h_next),
             tiers=T,
             density=min(d_cap, t["density"][-1] + dd * i),
             hp=max(hp_floor, round(t["hp"][-1] + dhp * i)),
@@ -457,7 +466,7 @@ def unlock_boards():
 # the way a player meets it.
 CATEGORIES = {
     "normal": ["easy", "normal", "huge", "extreme", "huge_extreme", "blind", "huge_blind"],
-    "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave"],
+    "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave", "pyramid"],
     "magic": ["arcane", "workout", "oracle", "dungeon"],
     "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku"],
 }
@@ -672,6 +681,8 @@ def ladder_record(t, boards, extended):
         search=t.get("search", False),
         postgame=t["id"] in POSTGAME,
         placement=t.get("placement", "uniform"),
+        # Absent means the placement rule's own; see readOpening in config.ts.
+        **({"opening": t["opening"]} if t.get("opening") else {}),
         spells=t.get("spells", []),
         start_mana=t.get("start_mana", 0),
         **({"workout": t["workout"]} if t.get("workout") else {}),

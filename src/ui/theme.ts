@@ -23,6 +23,7 @@ export const PIP_SHAPES: readonly PipShape[] = [
   'cross',
   'ring',
   'ringDiamond',
+  'triangle',
 ];
 
 export const PIP_NAMES: Record<PipShape, string> = {
@@ -33,6 +34,7 @@ export const PIP_NAMES: Record<PipShape, string> = {
   cross: 'Crosses',
   ring: 'Rings',
   ringDiamond: 'Hollow gems',
+  triangle: 'Pyramids',
 };
 
 /** What a pip is called: a shape's name, or a symbol's own. */
@@ -243,6 +245,13 @@ function pipPath(
       ctx.closePath();
       break;
     }
+    case 'triangle':
+      // Wider than it is tall, as a pyramid is, so it fills the pip's box rather than a third of it.
+      ctx.moveTo(cx, cy - r * 0.9);
+      ctx.lineTo(cx + r, cy + r * 0.85);
+      ctx.lineTo(cx - r, cy + r * 0.85);
+      ctx.closePath();
+      break;
     case 'ring':
     case 'circle':
     default:

@@ -66,6 +66,14 @@ export function findBestOpening(
   return best;
 }
 
+/** How many rows the 'base' opening deals face up, counted from the bottom of the box. */
+export const BASE_ROWS = 2;
+
+/** The cells of the bottom `rows` rows that exist, in reading order. */
+export function baseCells(grid: Grid, rows: number): Cell[] {
+  return grid.slice(-rows).flatMap((row) => row.filter((cell) => cell.present));
+}
+
 /**
  * Fallback for boards with no zero-region at all — unreachable at ladder
  * densities (28,000 simulated boards, zero failures) but possible in Free mode

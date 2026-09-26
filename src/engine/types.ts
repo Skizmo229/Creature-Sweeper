@@ -144,7 +144,13 @@ export type OpeningRule =
    * needs a zero cell whose neighbours are all empty too, and here every
    * empty cell is surrounded by creatures.
    */
-  | 'empties';
+  | 'empties'
+  /**
+   * Deal the bottom `BASE_ROWS` rows as if Reveal had been cast on every cell:
+   * empty ground opens, cascading as a click would, and a creature is written
+   * as a given, alive and waiting for the player to be ready for it. PYRAMID's.
+   */
+  | 'base';
 
 export type { Placement };
 

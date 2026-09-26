@@ -458,6 +458,7 @@ describe('the magic ladders', () => {
       'donut',
       'dungeon',
       'oracle',
+      'pyramid',
       'workout',
       'wrapped_cross',
     ]);

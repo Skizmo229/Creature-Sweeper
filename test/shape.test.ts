@@ -25,9 +25,9 @@ describe('the shape registry', () => {
   it('refuses a name it does not have', () => {
     expect(isShape('toString')).toBe(false);
     const type = structuredClone(ladders[0]!);
-    type.shape = 'star';
+    type.shape = 'moon';
     expect(() => boardConfig([type], type.id, 1)).toThrow(
-      /unknown shape "star" \(rect \| donut \| cross \| diamond \| cave \| dungeon\)/,
+      /unknown shape "moon" \(rect \| donut \| cross \| diamond \| pyramid \| cave \| dungeon\)/,
     );
   });
 

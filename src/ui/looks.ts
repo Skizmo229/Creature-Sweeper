@@ -11,7 +11,8 @@
 
 import type { FontId } from './typefaces.js';
 
-export type PipShape = 'circle' | 'square' | 'diamond' | 'hex' | 'cross' | 'ring' | 'ringDiamond';
+export type PipShape =
+  'circle' | 'square' | 'diamond' | 'hex' | 'cross' | 'ring' | 'ringDiamond' | 'triangle';
 
 /**
  * A symbol drawn as the pip, by its code point, written as `U+2764`: the player's own choice from
@@ -413,6 +414,25 @@ const LOOKS: Record<string, LadderLook> = {
     font: 'rubik',
     sfx: 'thud',
     victory: 'burn',
+  },
+  pyramid: {
+    // Sandstone, darkened until the green mark reads on it (2.6:1, EASY's olive was the warning),
+    // with a lapis `hot`: gold is out, because the base rows and Reveal both write givens here,
+    // and lavender sits 90 clear of Census's cyan and 103 of the nearest tier colour (decision 0032).
+    palette: {
+      tile: '#937232',
+      tileEdge: '#6a5223',
+      floor: '#1e1709',
+      ink: '#f4e6c4',
+      hot: '#a78bfa',
+      pip: 'triangle',
+      accent: '#c49a4a',
+    },
+    // Carved capitals, as on a monument.
+    font: 'cinzel',
+    // Stone set on stone, and blocks that tumble when it is done.
+    sfx: 'thud',
+    victory: 'tumble',
   },
   dungeon: {
     palette: {

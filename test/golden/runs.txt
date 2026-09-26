@@ -13,6 +13,7 @@ CROSS              10     5      10        3/3        0      10            -
 DIAMOND            10     5      10        3/3        0      10            -
 DONUT              10     5      10        3/3        0      10            -
 RAGGED CAVE        10     5      10        3/3        0      10            -
+PYRAMID            10     5      10        3/3        0      10            -
 ARCANE             10     5      10        3/3        0      10            -
 WORKOUT            10     5      10        3/3        0      10            -
 ORACLE              8     4      10        3/3        0       8            -
@@ -25,7 +26,7 @@ CHECKERBOARD       10     5      10        3/3        0      10            -
 CONGA LINE         10     5      10        3/3        0      10            -
 SUDOKU             20    10      10        3/3        0      20            -
 
-24/24 full runs completed by every seed at full HP (3 runs each, 720 boards simulated).
+25/25 full runs completed by every seed at full HP (3 runs each, 750 boards simulated).
 A full pool at the end means the heal was never needed — which is the zero-damage guarantee still holding ten boards deep.
 
 [exit 0]

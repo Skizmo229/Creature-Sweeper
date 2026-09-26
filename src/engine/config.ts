@@ -67,6 +67,8 @@ export interface LadderType {
   reach?: number;
   /** A key of the placement registry (`src/engine/placement/registry.ts`). Absent is uniform. */
   placement?: string;
+  /** How the board is opened, where the ladder chooses: an `OpeningRule`. Absent is the placement's. */
+  opening?: string;
   /**
    * The HP pool a Full Run gets for all ten boards, taken from board 1.
    *
@@ -208,6 +210,25 @@ function readReach(type: LadderType): number {
   return raw;
 }
 
+/** Every opening rule, for checking a ladder's choice at the boundary. */
+const OPENINGS: readonly OpeningRule[] = ['auto', 'none', 'empties', 'base'];
+
+/**
+ * The board's opening: the ladder's own where it names one, else its placement rule's. A ladder may
+ * only choose one where its rule opens automatically. A rule with an opening of its own (Sudoku's
+ * every empty cell) needs it, and overriding it would deal a board the rule was never checked on.
+ */
+function readOpening(type: LadderType, placement: Placement): OpeningRule {
+  const own = placementRule(placement).opening;
+  const raw = type.opening;
+  if (raw === undefined) return own;
+  const known = OPENINGS.find((rule) => rule === raw);
+  if (!known) throw new Error(`${type.id}: unknown opening "${raw}" (${OPENINGS.join(' | ')})`);
+  if (own !== 'auto')
+    throw new Error(`${type.id}: the ${placement} placement deals its own opening`);
+  return known;
+}
+
 /** The board's shape, refusing a type it cannot live on (each shape's `validate`). */
 function readShape(type: LadderType): BoardShape {
   const raw = type.shape ?? 'rect';
@@ -309,7 +330,7 @@ export function boardConfig(
     search: type.search,
     placement,
     givens: row.givens ?? 0,
-    opening: options.opening ?? placementRule(placement).opening,
+    opening: options.opening ?? readOpening(type, placement),
     reach: readReach(type),
     spells,
     startMana: type.start_mana ?? 0,

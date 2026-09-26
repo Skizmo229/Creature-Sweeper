@@ -17,7 +17,7 @@ import { SPELL_EFFECTS } from './cast.js';
 import { computeSealed, withinReach } from './reach.js';
 import { safeCells as provenSafe } from './sweep.js';
 import { type Grid, inBounds, neighbours } from './grid.js';
-import { findBestOpening, findFallbackOpening } from './opening.js';
+import { BASE_ROWS, baseCells, findBestOpening, findFallbackOpening } from './opening.js';
 import { generateGrid } from './generate.js';
 import { fight, revealAllCreatures } from './fight.js';
 
@@ -143,6 +143,7 @@ export class Game {
     const game = new Game(config, seed, grid, startHp, settings);
     if (config.opening === 'auto') game.applyOpening();
     else if (config.opening === 'empties') game.openEveryEmpty();
+    else if (config.opening === 'base') game.openBase();
     return game;
   }
 
@@ -552,6 +553,23 @@ export class Game {
     for (const row of this.grid) {
       for (const cell of row) {
         if (cell.present && cell.tier === 0) this.markOpen(cell);
+      }
+    }
+  }
+
+  /**
+   * Deal the bottom rows face up, as Reveal deals a cell: empty ground opens and cascades, and a
+   * creature is written as a given and left alive, to be fought when the player's level allows.
+   * Nothing is killed, so every creature still pays its EXP, and like any dealt opening none of it
+   * pays exploration mana (decision 0038).
+   */
+  private openBase(): void {
+    for (const cell of baseCells(this.grid, BASE_ROWS)) {
+      if (cell.tier === 0) {
+        this.reveal(cell);
+      } else {
+        this.applyMark(cell, cell.tier);
+        cell.given = true;
       }
     }
   }

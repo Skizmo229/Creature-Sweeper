@@ -41,6 +41,22 @@ lifted the usable share of the box from 26% to 40%. Its cell count is a promise:
 chosen per board in the ladder's `cells` schedule and the generator spends exactly that many, and
 the test `leaves exactly the cell count the ladder was tuned against` is the alarm.
 
+**PYRAMID** is a stepped pyramid, a per-cell mask: a two-cell cap and every row a cell wider on
+each side, in a box exactly twice as wide as it is tall, so `h` rows hold `h(h + 1)` cells (the
+continuation takes the width from the height to keep it so). Its opening is its own, `'base'`: the
+bottom two rows are dealt as Reveal deals a cell, empty ground opened and cascading as a click
+would, each creature written as a given and left alive to be fought when your level allows.
+Nothing is killed and nothing pays exploration mana, so the four facts stand untouched.
+
+The base makes the board nearly guess-free, and that was measured, not expected. At the stepped
+edge a base cell touches a single covered cell above it, so its number reads that cell exactly;
+the next cell along then has one unknown left, and so on, so each row unzips the one above. At
+ARCANE's schedule the honest player was stuck 0.2 times over the whole ladder against ARCANE's
+23.9, and cleared every board (60 seeds, 25 September 2026); eight density points more gave 4.0
+stuck and 100% cleared, fifteen more (41.5 to 49.5%) 14.6 and 99%. No density a board survives
+puts it on ARCANE's curve, so it ships at ARCANE's schedule as a ladder decided by deduction, the
+way SUDOKU is (decision 0038).
+
 ## DUNGEON
 
 Three kinds of cell, and the difference is the whole mode: a **room** is where creatures live; a
