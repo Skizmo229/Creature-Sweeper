@@ -30,7 +30,7 @@ import {
   snapRatio,
 } from '../engine/settings.js';
 import {
-  type PipShape,
+  type Pip,
   type SfxPackId,
   type TypeTheme,
   type VictoryId,
@@ -45,7 +45,8 @@ export const DEFAULT = 'default';
 /** "None at all" — only offered where silence is a sensible answer. */
 export const OFF = 'off';
 
-export type IconChoice = typeof DEFAULT | PipShape;
+/** A drawn shape, or a symbol from the custom-icon window, written as `U+2764`. */
+export type IconChoice = typeof DEFAULT | Pip;
 /** A game type id, whose palette is borrowed wholesale. */
 export type PaletteChoice = typeof DEFAULT | string;
 export type FontChoice = typeof DEFAULT | FontId;

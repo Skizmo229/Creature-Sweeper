@@ -10,8 +10,8 @@ import { sampleBoard, samplePin } from '../preview.js';
 import { DEFAULT, type PresentationSettings, type Settings } from '../settings.js';
 import type { SfxEvent } from '../sfx.js';
 import {
-  type PipShape,
   type LadderLook,
+  type Pip,
   type SfxPackId,
   type TypeTheme,
   lookFor,
@@ -53,7 +53,7 @@ export interface ScreenContext {
   readonly p: PresentationSettings;
   readonly ident: LadderLook;
   /** This ladder's icon as things currently stand, which a palette tile wears. */
-  readonly currentPip: PipShape;
+  readonly currentPip: Pip;
   /** This ladder's palette as things currently stand, which an icon tile wears. */
   readonly currentTheme: TypeTheme;
   /** The renderer's view of the current presentation, with overrides for one example. */

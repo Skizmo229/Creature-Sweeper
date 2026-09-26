@@ -57,10 +57,13 @@ src/ui/         the prototype
                   digits.ts, paint.ts (cell painters), overlays.ts (silhouette, seams, bonds,
                   highlight), input.ts (pointer, wheel, pinch)
   settings.ts     the presentation settings and the store
-  settingsscreen/  the settings form: context, widgets, render, look, effects, gameplay, screen
+  settingsscreen/  the settings form: context, widgets, render, look, effects, gameplay, screen;
+                  symbols.ts is the custom creature icon's window of symbols
   preview.ts      the settings screen's example boards (no rendering, so tests can build them)
   looks.ts        one record per ladder: palette, face, sound pack, clear effect (DOM-free)
   theme.ts        the global colours, the picker's names, creature glyphs
+  pipsymbols.ts   the symbols a pip can be drawn as: Dingbats and Wingdings 1 to 3, from
+                  pipsymbols.json, drawn in the faces in pipfont/ (DOM-free)
   typefaces.ts    the bundled faces
   progress.ts     the save: clears, best times, unlocks
   savefile.ts     the CS1: backup code
@@ -81,7 +84,8 @@ test/           vitest; test/helpers.ts holds the shared fixtures (the ladder da
                 hand-built boards); test/golden/ the sim fingerprints; test/ui/ the
                 browser-environment smoke test (happy-dom)
 scripts/        golden.mjs (the golden harness), package.mjs (the itch.io zip), playtest.cmd
-                (double-click to build, zip and open the build in the browser)
+                (double-click to build, zip and open the build in the browser), pip_symbols.py
+                (cuts the symbol faces in src/ui/pipfont/ from open fonts)
 design/         ladder_types.toml (each ladder's schedules), ladders.py (the generator) and
                 test_ladders.py (its own tests, `npm run test:py`),
                 data/ (its output), the design reference page

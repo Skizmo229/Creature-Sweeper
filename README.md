@@ -39,7 +39,8 @@ creature_sweeper/
 │  └─ data.ts     Node-only loader for the ladder data
 ├─ test/          vitest; helpers.ts holds the shared fixtures; golden/ the simulator fingerprints
 ├─ scripts/       golden.mjs (behaviour-preservation harness), package.mjs (the itch.io zip),
-│                 playtest.cmd (double-click: build, zip and play)
+│                 playtest.cmd (double-click: build, zip and play), pip_symbols.py (the icon
+│                 symbols' fonts)
 ├─ public/        served as-is: FONT-LICENSES.txt
 ├─ design/
 │  ├─ ladder_types.toml     each ladder's schedules            <- edit this to tune

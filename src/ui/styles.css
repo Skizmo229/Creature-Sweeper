@@ -1,5 +1,7 @@
-/* The bundled faces. First, because an @import anywhere else is ignored. */
+/* The bundled faces, and the symbols a creature's pips can be drawn as. First,
+   because an @import anywhere else is ignored. */
 @import './fonts.css';
+@import './pipfont/pipfont.css';
 
 :root {
   --bg: #181a1b;
@@ -1187,6 +1189,101 @@ button.board-card:hover:not(:disabled) {
   color: var(--muted);
   font-size: 0.72rem;
   text-align: center;
+}
+
+/* The custom creature icon: a tab per set, the set as its own code chart,
+   sixteen to a row, and beside it the chosen symbol on the example board. The
+   chart is set in the pip font alone, whose faces hold every symbol it shows,
+   with no size adjust: a symbol has no x-height to match. On a narrow screen
+   the example goes above the chart. */
+.overlay-card.symbol-card {
+  max-width: 860px;
+}
+.symbol-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+button.symbol-tab.active {
+  border-color: var(--tint);
+  box-shadow: inset 0 0 0 1px var(--tint);
+  background: var(--panel);
+  color: var(--tint);
+}
+.symbol-body {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.symbol-chart {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 560px;
+  display: grid;
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+  gap: 2px;
+}
+button.symbol-cell {
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-family: 'Pip Symbols';
+  font-size-adjust: none;
+  font-size: 1.15rem;
+  line-height: 1;
+  overflow: hidden;
+  border-radius: 3px;
+}
+button.symbol-cell.chosen {
+  border-color: var(--tint);
+  box-shadow: inset 0 0 0 1px var(--tint);
+  background: var(--panel);
+  color: var(--tint);
+}
+.symbol-gap {
+  aspect-ratio: 1;
+}
+.symbol-side {
+  flex: 0 0 auto;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  position: sticky;
+  top: 0;
+}
+.symbol-example canvas {
+  display: block;
+  border-radius: 3px;
+  cursor: inherit;
+}
+.symbol-name {
+  font-size: 0.85rem;
+  min-height: 1.3em;
+}
+.symbol-where {
+  font-size: 0.72rem;
+  color: var(--muted);
+  min-height: 1.2em;
+}
+button.symbol-use {
+  margin-top: 4px;
+}
+@media (max-width: 680px) {
+  .symbol-body {
+    flex-direction: column-reverse;
+  }
+  .symbol-side {
+    position: static;
+    width: auto;
+  }
+  button.symbol-cell {
+    font-size: 0.9rem;
+  }
 }
 
 /* The sound check: every pack's sounds as a grid of buttons, in the picker's

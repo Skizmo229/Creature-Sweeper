@@ -85,6 +85,12 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   ten digits, so a change to the generator moves it rather than breaking it.
 - Icons, palette and the two fonts show two tiles, Default and User choice; the full gallery opens
   in a picker inside the settings element, which catches Escape in the capture phase.
+- The icon picker's last tile, Custom, opens a window of symbols in place of the picker: all of
+  Dingbats and Wingdings 1 to 3, a tab per set, each laid out as its font's code chart, sixteen to a
+  row, with gaps where the font has nothing, so a symbol is where anyone who knows the font expects
+  it. Pointing at one, or focusing it, shows it on the standard example board; clicking chooses it
+  and "Use this symbol" (or a double click) saves it. The arrow keys move through the chart. The
+  window reopens on the set it last showed. Only one window is ever open, so Escape closes it alone.
 - The interface font's tiles are the one gallery that is not boards: each is a copy of the HUD's
   first two readouts, in the real HUD's classes, set in its face. Picking one dresses the whole
   screen at once, so the page is its own example.
@@ -133,6 +139,15 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   grow and shrink with the face; `test/fonts.test.ts` holds that.
 - No glyph in the chrome can be assumed: the settings button is a word, the mute speaker is inline
   SVG. Only Latin-1 and general punctuation are safe.
+- A creature's pips can be a symbol rather than a shape (`icons: 'U+2764'`). Wingdings is
+  Microsoft's and cannot ship, so the symbols are its Unicode equivalents, drawn from open fonts cut
+  down to them (`src/ui/pipfont/`, the one family `Pip Symbols`, one face per source with a
+  unicode-range each, so every symbol has exactly one face). `scripts/pip_symbols.py` rebuilds them
+  from `src/ui/pipsymbols.json`; `test/pipsymbols.test.ts` holds the table, the faces and the
+  licences together (decision 0035). A symbol is scaled so the longer side of its measured ink spans
+  the pip, centred on it; a gilded tier's halo is its outline stroked at 0.6 of a drawn pip's,
+  because stroking a symbol strokes its holes too. `BoardView` waits for the face of the symbol in
+  use as it waits for its number font.
 
 ## Sound and effects
 

@@ -12,8 +12,9 @@ package-lock.json
 # Recorded simulator output: byte-for-byte fingerprints, never reformatted.
 test/golden/
 
-# Bundled fonts.
+# Bundled fonts, and the symbol faces scripts/pip_symbols.py generates.
 src/ui/fonts/
+src/ui/pipfont/
 
 # Prose is kept out of the formatter so a reflow never lands in a code diff.
 *.md
