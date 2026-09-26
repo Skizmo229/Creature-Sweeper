@@ -692,18 +692,19 @@ name = "GEAR"
 tint = "#6b7a8c"
 archetype = "descending"
 axis = "Teeth outside, a hole inside"
-blurb = """  A gear: eight teeth round the rim and a hole through the middle, so there are edges to read   from outside and in. Reveal and Census available."""
+blurb = """  A gear: eight square teeth round the rim and a hole through the middle, so there are edges   to read from outside and in. Reveal and Census available."""
 # Square boxes, so the gear is round; the outline scales with the box.
-# The counts follow ARCANE's: 484 to 796 cells against its 480 to 760.
+# The counts follow ARCANE's: 488 to 748 cells against its 480 to 760.
 size = [[30, 30], [30, 30], [30, 30], [32, 32], [32, 32], [34, 34], [34, 34], [36, 36], [36, 36], [38, 38]]
 tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
-# On ARCANE's forced-guess curve, one point below ARCANE's schedule.
-# Measured with the honest player, 60 seeds a board, 25 September 2026:
-# at ARCANE's own schedule it was stuck 30.2 times over the ladder and
-# cleared 78%: harder than ARCANE (23.9, 82%), as DONUT was before it.
-# One point down gives 23.7 and 84%, and board 10 4.7 stuck and 58%
-# cleared against ARCANE's 5.1 and 63%.
-density = [0.255, 0.264, 0.273, 0.282, 0.291, 0.3, 0.309, 0.318, 0.327, 0.335]
+# On ARCANE's forced-guess curve, a point and a half below ARCANE's
+# schedule. Measured with the honest player, 60 seeds a board, 26
+# September 2026, after the teeth were made square and bigger at the
+# owner's request: one point down it was stuck 27.1 times over the ladder
+# and cleared 82%, against ARCANE's 23.9 and 82%; a point and a half down
+# gives 24.1 and 82%, and board 10 5.6 stuck and 63% cleared against
+# ARCANE's 5.1 and 63%. (The tapered teeth sat one point down.)
+density = [0.25, 0.259, 0.268, 0.277, 0.286, 0.295, 0.304, 0.313, 0.322, 0.33]
 hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
 lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
 alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]

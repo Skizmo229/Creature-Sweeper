@@ -28,7 +28,7 @@ DATA.mkdir(exist_ok=True)
 
 # The outlines, measured from the box's centre with cell centres at x + 0.5, using arithmetic and
 # square roots only, which round the same here as in JavaScript (see fixed.ts).
-GEAR = dict(root=0.82, hole=0.33, root_half_width=0.16, tip_half_width=0.12)
+GEAR = dict(root=0.7, hole=0.3, half_width=0.17)
 _S = math.sqrt(0.5)
 GEAR_TEETH = [(0, -1), (_S, -_S), (1, 0), (_S, _S), (0, 1), (-_S, _S), (-1, 0), (-_S, -_S)]
 
@@ -37,15 +37,14 @@ def _gear(w, h, dx, dy):
     tip = min(w, h) / 2
     hole = GEAR["hole"] * tip
     root = GEAR["root"] * tip
+    half = GEAR["half_width"] * tip
     r2 = dx * dx + dy * dy
-    if r2 < hole * hole or r2 > tip * tip:
+    if r2 < hole * hole:
         return False
     if r2 <= root * root:
         return True
-    along = (math.sqrt(r2) - root) / (tip - root)
-    half = tip * (GEAR["root_half_width"]
-                  + (GEAR["tip_half_width"] - GEAR["root_half_width"]) * along)
-    return any(dx * ux + dy * uy > 0 and abs(dx * uy - dy * ux) <= half for ux, uy in GEAR_TEETH)
+    return any(0 < dx * ux + dy * uy <= tip and abs(dx * uy - dy * ux) <= half
+               for ux, uy in GEAR_TEETH)
 
 
 CARD = dict(corner=0.09, pip=0.11, cols=(0.28, 0.72), rows=(0.25, 0.75))

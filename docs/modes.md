@@ -64,13 +64,14 @@ stuck and 100% cleared, fifteen more (41.5 to 49.5%) 14.6 and 99%. No density a 
 puts it on ARCANE's curve, so it ships at ARCANE's schedule as a ladder decided by deduction, the
 way SUDOKU is (decision 0038).
 
-**GEAR** is a gear, a per-cell mask in a square box: eight teeth, one pointing straight up, tapering
-from root to tip, round a hole a third of the radius across. Its proportions are shares of the box
-because the box is always square, so the outline plays the same on every board. Like DONUT it came
-out harder than ARCANE at ARCANE's schedule (30.2 stuck over the ladder, 78% cleared), and ships a
-density point below it, on ARCANE's curve (23.7 and 84% against 23.9 and 82%; 60 seeds, 25
-September 2026). It is the first ladder with a box of its own past the global 64x32: 45 square,
-inside the same 2,048 cells.
+**GEAR** is a gear, a per-cell mask in a square box: eight square teeth, one pointing straight up,
+about as wide as they are deep, round a hole three tenths of the radius across. The teeth point
+straight out, so the diagonal four step on a square grid; the owner chose that over upright blocks.
+Its proportions are shares of the box because the box is always square, so the outline plays the
+same on every board. It came out harder than ARCANE at ARCANE's schedule, as DONUT did, and ships a
+point and a half below it, on ARCANE's curve (24.1 stuck over the ladder and 82% cleared against
+23.9 and 82%; 60 seeds, 26 September 2026). It is the first ladder with a box of its own past the
+global 64x32: 45 square, inside the same 2,048 cells.
 
 **CARD** is a playing card, a per-cell mask in a box kept at a card's 5:7: rounded corners, and
 four suit-shaped holes where a Four's pips sit, spade and heart above, diamond and club below and

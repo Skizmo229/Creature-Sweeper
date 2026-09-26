@@ -54,10 +54,11 @@ const fromCentre = (w: number, h: number, x: number, y: number) => ({
 });
 
 /**
- * The gear's proportions, as shares of its tip radius (half the box's shorter side), from the
- * owner's drawing: eight teeth, one pointing straight up, tapering from root to tip, round a hole.
+ * The gear's proportions, as shares of its tip radius (half the box's shorter side): eight square
+ * teeth, one pointing straight up, about as wide as they are deep, round a hole. The owner chose
+ * square teeth pointing straight out over upright blocks, knowing the diagonal four step.
  */
-const GEAR = { root: 0.82, hole: 0.33, rootHalfWidth: 0.16, tipHalfWidth: 0.12 };
+const GEAR = { root: 0.7, hole: 0.3, halfWidth: 0.17 };
 
 /** The eight teeth's directions, from straight up, clockwise, as exact unit vectors. */
 const GEAR_TEETH: ReadonlyArray<readonly [number, number]> = [
@@ -76,15 +77,15 @@ export const GEAR_SHAPE = predicateShape('gear', (_param, w, h, x, y) => {
   const tip = Math.min(w, h) / 2;
   const hole = GEAR.hole * tip;
   const root = GEAR.root * tip;
+  const half = GEAR.halfWidth * tip;
   const r2 = dx * dx + dy * dy;
-  if (r2 < hole * hole || r2 > tip * tip) return false;
+  if (r2 < hole * hole) return false;
   if (r2 <= root * root) return true;
-  // Out among the teeth: inside one if close enough to its centre line, which narrows outward.
-  const along = (Math.sqrt(r2) - root) / (tip - root);
-  const half = tip * (GEAR.rootHalfWidth + (GEAR.tipHalfWidth - GEAR.rootHalfWidth) * along);
-  return GEAR_TEETH.some(
-    ([ux, uy]) => dx * ux + dy * uy > 0 && Math.abs(dx * uy - dy * ux) <= half,
-  );
+  // Out among the teeth: in one if within its width of its centre line and short of its flat tip.
+  return GEAR_TEETH.some(([ux, uy]) => {
+    const along = dx * ux + dy * uy;
+    return along > 0 && along <= tip && Math.abs(dx * uy - dy * ux) <= half;
+  });
 });
 
 /**
