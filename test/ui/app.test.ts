@@ -77,6 +77,16 @@ describe('the app', () => {
     expect(document.querySelector('.mute-toggle')).not.toBeNull();
   });
 
+  it('files the ladder list into its four categories, each in the order its ladders open', () => {
+    const columns = [...document.querySelectorAll('.type-group')].map((g) => ({
+      head: g.querySelector('.type-group-head')!.textContent,
+      names: [...g.querySelectorAll('.type-name')].map((n) => n.textContent),
+    }));
+    expect(columns.map((c) => c.head)).toEqual(['Normal', 'Shape', 'Magic', 'Special']);
+    expect(columns[1]!.names.slice(0, 3)).toEqual(['WRAPAROUND', 'WRAPPED CROSS', 'CROSS']);
+    expect(columns[2]!.names).toEqual(['ARCANE', 'WORKOUT', 'ORACLE', 'DUNGEON']);
+  });
+
   it('starts a board and shows the HUD and the hint', () => {
     app.play('normal', 1, 7);
     expect(document.querySelector('.screen.game')).not.toBeNull();

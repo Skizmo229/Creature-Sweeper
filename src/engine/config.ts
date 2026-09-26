@@ -30,6 +30,10 @@ export interface LadderBoard {
   givens?: number;
 }
 
+/** The menu's four groups, in the order it shows them. `CATEGORIES` in `ladders.py` fills them. */
+export const LADDER_CATEGORIES = ['normal', 'shape', 'magic', 'special'] as const;
+export type LadderCategory = (typeof LADDER_CATEGORIES)[number];
+
 /** One game type's ladder as `ladders.py` emits it. */
 export interface LadderType {
   id: string;
@@ -38,6 +42,8 @@ export interface LadderType {
   axis: string;
   blurb: string;
   archetype: string;
+  /** Where the menu files it: the original game's modes, or what the ladder is about. */
+  category: LadderCategory;
   search: boolean;
   postgame: boolean;
   /** Spell ids this type offers; absent or empty means no magic. */
@@ -82,20 +88,13 @@ export interface LadderType {
    * such gate.
    *
    * A different claim from `requires`: that one says "you are ready for this",
-   * this one says "you have played enough to be offered something new". The
-   * variant ladders use it because they do not teach each other — a hex grid
-   * teaches nothing about a torus — so chaining them was a fiction that made a
-   * player grind three shapes to reach a fourth they actually wanted.
+   * this one says "you have played enough to be offered something new". Most
+   * ladders use it because they do not teach each other — a hex grid teaches
+   * nothing about a torus — so chaining them was a fiction that made a player
+   * grind three shapes to reach a fourth they actually wanted. Every step of
+   * five opens the next ladder in each menu category (decision 0036).
    */
   requires_boards: number;
-  /**
-   * Full Runs completed, each on a different type. 0 means no such gate.
-   *
-   * The third claim: not readiness or time served but finishing something
-   * without a restart, which is what BLIND asks of every board. Distinct types
-   * so the same easy run three times does not count.
-   */
-  requires_runs: number;
   /** The tuned ladder: ten boards, and the thing "clearing a type" means. */
   boards: LadderBoard[];
   /**

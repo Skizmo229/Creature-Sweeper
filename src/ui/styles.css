@@ -145,9 +145,27 @@ button.small {
 
 /* -------------------------------------------------------------- ladder cards */
 
-.type-list {
+/* Four columns, one per category, falling to two and then one as the screen
+   narrows; each column is its ladders stacked in the order they open. */
+.type-groups {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 22px 14px;
+  align-items: start;
+}
+.type-group-head {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+}
+.type-list {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 .type-card {

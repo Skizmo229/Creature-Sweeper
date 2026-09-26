@@ -10,18 +10,12 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { LADDER_CATEGORIES } from '../src/engine/config.js';
 import { Progress, type SaveData } from '../src/ui/progress.js';
 import { ladders } from './helpers.js';
 
-/**
- * A save with a given set of types fully cleared and their boards recorded,
- * and a Full Run completed on each type in `ranTypes`.
- */
-function saveWith(
-  clearedTypes: string[],
-  extraBoards: Array<[string, number]> = [],
-  ranTypes: string[] = [],
-) {
+/** A save with a given set of types fully cleared and their boards recorded. */
+function saveWith(clearedTypes: string[], extraBoards: Array<[string, number]> = []) {
   const data: SaveData = {
     version: 1,
     types: {},
@@ -41,17 +35,46 @@ function saveWith(
   for (const [id, n] of extraBoards) {
     data.boards[`${id}#${n}`] = { cleared: true, perfect: false, bestTime: 1 };
   }
-  for (const id of ranTypes) {
-    data.runs[id] = { cleared: true, bestBoard: 10, bestHp: 1, bestTime: 1, attempts: 1 };
-  }
   return new Progress(data);
 }
 
+/** Boards 1..n of a type, cleared without clearing the type. */
+const firstBoards = (id: string, n: number): Array<[string, number]> =>
+  Array.from({ length: n }, (_, i) => [id, i + 1]);
+
+const gate = (id: string) => ladders.find((t) => t.id === id)!.requires_boards;
+
+describe('the menu categories', () => {
+  it('files every ladder under one of the four', () => {
+    for (const type of ladders) {
+      expect(LADDER_CATEGORIES, type.id).toContain(type.category);
+    }
+  });
+
+  it('keeps each category together, in the order the menu shows them', () => {
+    // The menu reads the data's order within a category, so a ladder filed
+    // out of its run would be listed in the right column but the wrong place.
+    const runs = ladders.map((t) => t.category).filter((c, i, all) => c !== all[i - 1]);
+    expect(runs).toEqual([...LADDER_CATEGORIES]);
+  });
+
+  it('puts the original game in Normal', () => {
+    const normal = ladders.filter((t) => t.category === 'normal').map((t) => t.id);
+    expect(normal).toEqual([
+      'easy',
+      'normal',
+      'huge',
+      'extreme',
+      'huge_extreme',
+      'blind',
+      'huge_blind',
+    ]);
+  });
+});
+
 describe('the shape of the graph', () => {
   it('starts somewhere', () => {
-    const open = ladders.filter(
-      (t) => !t.requires.length && !t.requires_boards && !t.requires_runs,
-    );
+    const open = ladders.filter((t) => !t.requires.length && !t.requires_boards);
     expect(open.map((t) => t.id)).toEqual(['easy']);
   });
 
@@ -77,22 +100,25 @@ describe('the shape of the graph', () => {
     for (const type of ladders) walk(type.id, []);
   });
 
-  it('gives the combined types both of their parents', () => {
+  it('gives the combined Normal ladders both of their parents, and nothing else', () => {
     // A ladder that is two ladders at once should not be reachable without
-    // having played the things it combines.
-    expect(ladders.find((t) => t.id === 'huge_extreme')!.requires.sort()).toEqual([
-      'extreme',
-      'huge',
-    ]);
-    expect(ladders.find((t) => t.id === 'huge_blind')!.requires.sort()).toEqual(['blind', 'huge']);
-    expect(ladders.find((t) => t.id === 'wrapped_cross')!.requires.sort()).toEqual([
-      'cross',
-      'wraparound',
-    ]);
-    // And it is gated on those two alone. A combined type taking a board
-    // count as well would be spending the one budget in this file that can
-    // deadlock a save, to say a thing its parents already say.
-    expect(ladders.find((t) => t.id === 'wrapped_cross')!.requires_boards).toBe(0);
+    // having played the things it combines. A board count as well would be
+    // spending the one budget in this file that can deadlock a save, to say a
+    // thing its parents already say.
+    for (const [id, parents] of [
+      ['huge_extreme', ['extreme', 'huge']],
+      ['huge_blind', ['blind', 'huge']],
+    ] as const) {
+      const type = ladders.find((t) => t.id === id)!;
+      expect(type.requires.sort()).toEqual(parents);
+      expect(type.requires_boards).toBe(0);
+    }
+  });
+
+  it('counts WRAPPED CROSS like any other shape, one step before CROSS', () => {
+    const wrapped = ladders.find((t) => t.id === 'wrapped_cross')!;
+    expect(wrapped.requires).toEqual([]);
+    expect(gate('cross') - gate('wrapped_cross')).toBe(5);
   });
 
   it('starts the counted gates at 15, after EASY and half of NORMAL', () => {
@@ -100,38 +126,22 @@ describe('the shape of the graph', () => {
     expect(Math.min(...counted.map((t) => t.requires_boards))).toBe(15);
   });
 
-  it('gates BLIND on three Full Runs and nothing else', () => {
-    const blind = ladders.find((t) => t.id === 'blind')!;
-    expect(blind.requires_runs).toBe(3);
-    expect(blind.requires_boards).toBe(0);
-    expect(blind.requires).toEqual([]);
+  it('opens the next ladder of every category on each step of five', () => {
+    // BLIND is held back past the end, so it is left out of its column here.
+    for (const category of LADDER_CATEGORIES) {
+      const gates = ladders
+        .filter((t) => t.category === category && t.requires_boards > 0 && t.id !== 'blind')
+        .map((t) => t.requires_boards);
+      expect(gates, category).toEqual(gates.map((_, i) => 15 + 5 * i));
+    }
   });
 
-  it('orders the menu by the gate that opens each type', () => {
-    // The variant ladders are ordered by their board count, so the menu reads
-    // in the order a player will actually meet it.
-    const counted = ladders.filter((t) => t.requires_boards > 0);
-    for (let i = 1; i < counted.length; i++) {
-      expect(counted[i]!.requires_boards, `${counted[i]!.id} is out of order`).toBeGreaterThan(
-        counted[i - 1]!.requires_boards,
-      );
-    }
-    expect(counted.map((t) => t.id)).toEqual([
-      'wraparound',
-      'cross',
-      'hive',
-      'diamond',
-      'pairs',
-      'dominoes',
-      'workout',
-      'packs',
-      'donut',
-      'checker',
-      'congo',
-      'cave',
-      'dungeon',
-      'sudoku',
-    ]);
+  it('gates BLIND on boards alone, one step after every other counted ladder', () => {
+    const blind = ladders.find((t) => t.id === 'blind')!;
+    expect(blind.requires).toEqual([]);
+    const others = ladders.filter((t) => t.id !== 'blind').map((t) => t.requires_boards);
+    expect(blind.requires_boards).toBe(Math.max(...others) + 5);
+    expect(blind.requires_boards).toBe(50);
   });
 });
 
@@ -145,9 +155,6 @@ describe('every gate can actually be met', () => {
    * walk never meets would be a save that can go no further - the deadlock
    * these tests exist for. Scaling boards are left out on purpose, so a
    * player who never goes past board 10 must still reach everything.
-   *
-   * The schedule steps by five to 80, so the top three gates need a variant
-   * played first, which is the intent (decision 0018).
    */
   function walkCountedGates(): { reached: Set<string>; budget: number } {
     const reached = new Set<string>();
@@ -156,7 +163,7 @@ describe('every gate can actually be met', () => {
     for (;;) {
       const before = reached.size;
       for (const type of ladders) {
-        if (reached.has(type.id) || type.requires_runs) continue;
+        if (reached.has(type.id)) continue;
         if (!type.requires.every((r) => reached.has(r))) continue;
         if (type.requires_boards > tuned()) continue;
         reached.add(type.id);
@@ -176,41 +183,20 @@ describe('every gate can actually be met', () => {
   });
 
   it('steps the board-count schedule by exactly five', () => {
-    const gates = ladders
-      .map((t) => t.requires_boards)
-      .filter((n) => n > 0)
-      .sort((a, b) => a - b);
+    const gates = [...new Set(ladders.map((t) => t.requires_boards).filter((n) => n > 0))].sort(
+      (a, b) => a - b,
+    );
     for (let i = 1; i < gates.length; i++) {
       expect(gates[i]! - gates[i - 1]!, `gap after ${gates[i - 1]}`).toBe(5);
     }
   });
 
-  it('keeps the Full Run gate inside what a player can reach without it', () => {
-    // A Full Run opens on a type's board 10, so the runs available without any
-    // run-gated type are one per type reachable on type-clears alone.
-    const free = ladders.filter((t) => !t.requires_boards && !t.requires_runs);
-    const reachable = new Set<string>();
-    for (;;) {
-      const before = reachable.size;
-      for (const type of free) {
-        if (type.requires.every((r) => reachable.has(r))) reachable.add(type.id);
-      }
-      if (reachable.size === before) break;
-    }
-    for (const type of ladders) {
-      expect(type.requires_runs, `${type.id} cannot be unlocked by any player`).toBeLessThanOrEqual(
-        reachable.size,
-      );
-    }
-  });
-
   it('reaches every type from an empty save by clearing things in some order', () => {
     // The real test: walk the graph the way a player would, and check nothing
-    // is left stranded. Clearing a type opens its Full Run, so the walk runs
-    // every type it clears.
+    // is left stranded.
     const cleared: string[] = [];
     for (let pass = 0; pass < ladders.length + 1; pass++) {
-      const progress = saveWith(cleared, [], cleared);
+      const progress = saveWith(cleared);
       for (const type of ladders) {
         if (cleared.includes(type.id)) continue;
         if (progress.isTypeUnlocked(ladders, type.id)) cleared.push(type.id);
@@ -222,10 +208,11 @@ describe('every gate can actually be met', () => {
 });
 
 describe('the gates as the game applies them', () => {
+  const openIn = (progress: Progress) =>
+    ladders.filter((t) => progress.isTypeUnlocked(ladders, t.id)).map((t) => t.id);
+
   it('opens nothing but EASY on a fresh save', () => {
-    const progress = new Progress();
-    const open = ladders.filter((t) => progress.isTypeUnlocked(ladders, t.id));
-    expect(open.map((t) => t.id)).toEqual(['easy']);
+    expect(openIn(new Progress())).toEqual(['easy']);
   });
 
   it('counts every cleared board once, scaling boards included', () => {
@@ -240,65 +227,41 @@ describe('the gates as the game applies them', () => {
   });
 
   it('holds a counted type shut one board short, and opens it on the next', () => {
-    const hive = ladders.find((t) => t.id === 'hive')!;
-    expect(hive.requires_boards).toBe(25);
+    expect(gate('cross')).toBe(25);
 
     // 24 boards: EASY's ten, NORMAL's ten, four of HUGE.
-    const short = saveWith(
-      ['easy', 'normal'],
-      [
-        ['huge', 1],
-        ['huge', 2],
-        ['huge', 3],
-        ['huge', 4],
-      ],
-    );
+    const short = saveWith(['easy', 'normal'], firstBoards('huge', 4));
     expect(short.boardsCleared()).toBe(24);
-    expect(short.isTypeUnlocked(ladders, 'hive')).toBe(false);
+    expect(short.isTypeUnlocked(ladders, 'cross')).toBe(false);
 
-    const enough = saveWith(
-      ['easy', 'normal'],
-      [
-        ['huge', 1],
-        ['huge', 2],
-        ['huge', 3],
-        ['huge', 4],
-        ['huge', 5],
-      ],
-    );
+    const enough = saveWith(['easy', 'normal'], firstBoards('huge', 5));
     expect(enough.boardsCleared()).toBe(25);
-    expect(enough.isTypeUnlocked(ladders, 'hive')).toBe(true);
+    expect(enough.isTypeUnlocked(ladders, 'cross')).toBe(true);
   });
 
-  it('does not open a counted type on type-clears alone', () => {
-    // Clearing EASY and NORMAL is 20 boards — readiness, but not time served.
-    const progress = saveWith(['easy', 'normal']);
-    expect(progress.isTypeUnlocked(ladders, 'hive')).toBe(false);
+  it('opens one ladder of each category at 15 boards', () => {
+    const fourteen = saveWith(['easy'], firstBoards('normal', 4));
+    expect(openIn(fourteen)).toEqual(['easy', 'normal']);
+    const fifteen = saveWith(['easy'], firstBoards('normal', 5));
+    expect(openIn(fifteen)).toEqual(['easy', 'normal', 'huge', 'wraparound', 'arcane', 'hive']);
   });
 
-  it('holds BLIND shut on two Full Runs, and opens it on a third', () => {
-    const two = saveWith(['easy', 'normal', 'huge'], [], ['easy', 'normal']);
-    expect(two.fullRunsCompleted()).toBe(2);
-    expect(two.isTypeUnlocked(ladders, 'blind')).toBe(false);
-    const three = saveWith(['easy', 'normal', 'huge'], [], ['easy', 'normal', 'huge']);
-    expect(three.fullRunsCompleted()).toBe(3);
-    expect(three.isTypeUnlocked(ladders, 'blind')).toBe(true);
+  it('opens HUGE and EXTREME on the count, not on clearing NORMAL', () => {
+    const fifteen = saveWith(['easy'], firstBoards('normal', 5));
+    expect(fifteen.isTypeUnlocked(ladders, 'huge')).toBe(true);
+    expect(fifteen.isTypeUnlocked(ladders, 'extreme')).toBe(false);
+    const twenty = saveWith(['easy'], firstBoards('normal', 9).concat([['huge', 1]]));
+    expect(twenty.typeRecord('normal').cleared).toBe(false);
+    expect(twenty.isTypeUnlocked(ladders, 'extreme')).toBe(true);
   });
 
-  it('counts a type once however many times its run was completed', () => {
-    // "Separate" runs means separate types: the save keeps one run record per
-    // type, so running EASY three times is still one.
-    const progress = saveWith(['easy'], [], ['easy']);
-    progress.recordRun('easy', { completed: true, reachedBoard: 10, hp: 5, seconds: 60 });
-    progress.recordRun('easy', { completed: true, reachedBoard: 10, hp: 5, seconds: 60 });
-    expect(progress.fullRunsCompleted()).toBe(1);
-    expect(progress.isTypeUnlocked(ladders, 'blind')).toBe(false);
-  });
-
-  it('does not count a run that fell short', () => {
-    const progress = saveWith(['easy', 'normal', 'huge'], [], ['easy', 'normal']);
-    progress.recordRun('huge', { completed: false, reachedBoard: 9, hp: 0, seconds: 60 });
-    expect(progress.fullRunsCompleted()).toBe(2);
+  it('holds BLIND shut at 49 boards, and opens it at 50', () => {
+    const cleared = ['easy', 'normal', 'huge', 'extreme'];
+    const short = saveWith(cleared, firstBoards('wraparound', 9));
+    expect(short.boardsCleared()).toBe(49);
+    expect(short.isTypeUnlocked(ladders, 'blind')).toBe(false);
+    const enough = saveWith(cleared, firstBoards('wraparound', 10));
+    expect(enough.isTypeUnlocked(ladders, 'blind')).toBe(true);
   });
 
   it('needs both parents for a combined type, not just one', () => {
@@ -306,12 +269,6 @@ describe('the gates as the game applies them', () => {
     expect(huge.isTypeUnlocked(ladders, 'huge_extreme')).toBe(false);
     const both = saveWith(['easy', 'normal', 'huge', 'extreme']);
     expect(both.isTypeUnlocked(ladders, 'huge_extreme')).toBe(true);
-  });
-
-  it('opens HUGE and EXTREME together off NORMAL', () => {
-    const progress = saveWith(['easy', 'normal']);
-    expect(progress.isTypeUnlocked(ladders, 'huge')).toBe(true);
-    expect(progress.isTypeUnlocked(ladders, 'extreme')).toBe(true);
   });
 
   it('still lets the prototype escape hatch open everything', () => {
