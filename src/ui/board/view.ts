@@ -32,7 +32,14 @@ import {
   drawSeams,
   drawSilhouette,
 } from './overlays.js';
-import { type Paint, drawCensus, drawCovered, drawOccupied, drawOpen } from './paint.js';
+import {
+  type Paint,
+  drawAnnotation,
+  drawCensus,
+  drawOccupied,
+  drawOpen,
+  drawTile,
+} from './paint.js';
 
 /**
  * The presentation settings the renderer actually reads. Passed in rather than reached for, so
@@ -419,7 +426,16 @@ export class BoardView implements InputHost {
         const { cx, cy } = centreOf(p.layout, cell.x, cell.y);
         if (cell.open) drawOpen(p, cell, cx, cy);
         else if (cell.occupied) drawOccupied(p, cx, cy);
-        else drawCovered(p, cell, cx, cy);
+        else drawTile(p, cell, cx, cy);
+      }
+    }
+    // What is written on the tiles goes on in a pass of its own, so anything drawn across two
+    // tiles can go between the two passes and still leave a mark or a note readable.
+    for (const row of game.grid) {
+      for (const cell of row) {
+        if (!cell.present) continue;
+        const { cx, cy } = centreOf(p.layout, cell.x, cell.y);
+        if (!cell.open && !cell.occupied) drawAnnotation(p, cell, cx, cy);
         if (cell.census !== null) drawCensus(p, cell, cx, cy);
       }
     }
