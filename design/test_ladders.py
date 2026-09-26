@@ -182,10 +182,12 @@ class TheContinuation(unittest.TestCase):
                 self.assertGreaterEqual(b["hp"], floor, f"{t['id']}#{b['n']}")
 
     def test_stays_inside_the_ceilings(self):
-        # A ladder may set its own box (a square one for a round outline), never a bigger board.
-        area = L.CEILINGS["max_w"] * L.CEILINGS["max_h"]
+        # A ladder may set its own box (a square one for a round outline), never a bigger board
+        # than the global one, unless its own tuned ladder already is (CARD's).
         for t in BUILT:
             over = next(x for x in L.TYPES if x["id"] == t["id"]).get("ceiling", {})
+            last = t["boards"][-1]
+            area = max(L.CEILINGS["max_w"] * L.CEILINGS["max_h"], last["w"] * last["h"])
             for b in t["extended"]:
                 where = f"{t['id']}#{b['n']}"
                 self.assertLessEqual(b["w"], over.get("max_w", L.CEILINGS["max_w"]), where)

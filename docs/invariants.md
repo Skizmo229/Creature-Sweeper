@@ -31,7 +31,7 @@ induction **every board is clearable without losing a single point of HP**, what
 distribution shape. HP is therefore a **guess budget**, spent on 50/50s and misreads, never a
 combat resource spent on required fights.
 
-- **What protects it:** `npm run sim` plays every one of the 722 boards with the omniscient
+- **What protects it:** `npm run sim` plays every one of the 737 boards with the omniscient
   tier-order player and exits non-zero if any cannot be cleared at full HP; `npm run sim:run` does
   the same ten boards deep for every Full Run; the tests do it on the tuned boards at three seeds.
 - **What breaks it:** healing inside a board (which turns HP into a combat resource; the Full Run

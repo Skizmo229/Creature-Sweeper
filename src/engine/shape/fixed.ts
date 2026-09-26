@@ -86,3 +86,65 @@ export const GEAR_SHAPE = predicateShape('gear', (_param, w, h, x, y) => {
     ([ux, uy]) => dx * ux + dy * uy > 0 && Math.abs(dx * uy - dy * ux) <= half,
   );
 });
+
+/**
+ * A playing card, in a box kept at a card's 5:7: rounded corners, and four suit-shaped holes where
+ * a Four's pips sit, spade and heart above, diamond and club below and upside down, as they are
+ * printed. Proportions are shares of the box's width, and each suit is drawn in a pip's own
+ * coordinates, `u` across and `v` down, each running -1 to 1 over the pip.
+ */
+const CARD = { corner: 0.09, pip: 0.11, cols: [0.28, 0.72], rows: [0.25, 0.75] } as const;
+
+/** The classic heart curve, point down, in its own units (about 2.3 across and tall). */
+function inHeartCurve(x: number, y: number): boolean {
+  const a = x * x + y * y - 1;
+  return a * a * a - x * x * y * y * y <= 0;
+}
+
+/** A spade's or a club's stem: a wedge from `top` to the pip's foot. */
+function inStem(u: number, v: number, top: number): boolean {
+  return v >= top && v <= 1 && Math.abs(u) <= 0.12 + (0.35 * (v - top)) / (1 - top);
+}
+
+/** A club's three lobes and a core between them, without which one cell is left stranded. */
+const CLUB_LOBES: ReadonlyArray<readonly [number, number]> = [
+  [0, -0.48],
+  [-0.48, 0.18],
+  [0.48, 0.18],
+  [0, 0],
+];
+const CLUB_LOBE = 0.46;
+
+const SUITS: Record<'spade' | 'heart' | 'diamond' | 'club', (u: number, v: number) => boolean> = {
+  spade: (u, v) => inHeartCurve(u * 1.2, (v + 0.275) * 1.545 + 0.12) || inStem(u, v, 0.2),
+  heart: (u, v) => inHeartCurve(u * 1.12, -v * 1.12 + 0.12),
+  diamond: (u, v) => Math.abs(u) / 0.72 + Math.abs(v) <= 1,
+  club: (u, v) =>
+    CLUB_LOBES.some(
+      ([cx, cy]) => (u - cx) * (u - cx) + (v - cy) * (v - cy) <= CLUB_LOBE * CLUB_LOBE,
+    ) || inStem(u, v, 0.1),
+};
+
+/** A Four's pips: column, row (the lower row printed upside down), suit. */
+const CARD_PIPS = [
+  [0, 0, SUITS.spade],
+  [1, 0, SUITS.heart],
+  [0, 1, SUITS.diamond],
+  [1, 1, SUITS.club],
+] as const;
+
+export const CARD_SHAPE = predicateShape('card', (_param, w, h, x, y) => {
+  const xc = x + 0.5;
+  const yc = y + 0.5;
+  const corner = CARD.corner * w;
+  const nx = Math.min(Math.max(xc, corner), w - corner);
+  const ny = Math.min(Math.max(yc, corner), h - corner);
+  if ((xc - nx) * (xc - nx) + (yc - ny) * (yc - ny) > corner * corner) return false;
+  const size = CARD.pip * w;
+  return !CARD_PIPS.some(([col, row, suit]) => {
+    const u = (xc - CARD.cols[col] * w) / size;
+    const v = (yc - CARD.rows[row] * h) / size;
+    const [pu, pv] = row === 1 ? [-u, -v] : [u, v];
+    return Math.abs(pu) <= 1.2 && Math.abs(pv) <= 1.2 && suit(pu, pv);
+  });
+});

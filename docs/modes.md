@@ -65,6 +65,17 @@ density point below it, on ARCANE's curve (23.7 and 84% against 23.9 and 82%; 60
 September 2026). It is the first ladder with a box of its own past the global 64x32: 45 square,
 inside the same 2,048 cells.
 
+**CARD** is a playing card, a per-cell mask in a box kept at a card's 5:7: rounded corners, and
+four suit-shaped holes where a Four's pips sit, spade and heart above, diamond and club below and
+upside down. It starts at 48x68, as the owner asked, four to six times the size of an ordinary
+board, and is the one ladder whose tuned boards are bigger than the continuation's global
+ceiling, so its continuation keeps board 10's card. It sits on ARCANE's forced-guess curve per
+board, which on a board this size means sparser per cell: at ARCANE's schedule it was stuck 53.3
+times over the ladder and cleared 60%, and it ships on a ramp from one density point below
+ARCANE's to three (24.4 stuck and 85% against 23.9 and 82%; 60 seeds, 25 September 2026). A club
+is three lobes and a core; without the core one cell was left stranded between the lobes, which
+the connectivity test caught.
+
 ## DUNGEON
 
 Three kinds of cell, and the difference is the whole mode: a **room** is where creatures live; a
@@ -180,6 +191,6 @@ proof finds nothing at this density; the Sudoku rule itself is deliberately abse
 ## BLIND and HUGE x BLIND
 
 Search boards: one HP, level 0, won by uncovering every empty cell, with the creatures still
-hidden at the win. BLIND climbs 5 to 7 tiers over its ladder. It opens at 55 boards cleared,
+hidden at the win. BLIND climbs 5 to 7 tiers over its ladder. It opens at 60 boards cleared,
 one step after every other counted ladder (decision 0036), and its Full Run heal rounds down to nothing, so a run there is a
 single-mistake run.

@@ -66,7 +66,7 @@ pencilling are exempt. `Game.inReach`; the exception is `Game.sealedIn`.
 
 ## Boards and ladders
 
-**Game type / ladder.** One of the 26 named modes (EASY, NORMAL, DUNGEON, ...). Each is a ladder
+**Game type / ladder.** One of the 27 named modes (EASY, NORMAL, DUNGEON, ...). Each is a ladder
 of ten tuned boards plus a **continuation** (boards 11 to N, held in `extended`, never in
 `boards`). `LadderType` in `src/engine/config.ts`.
 

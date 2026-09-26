@@ -17,8 +17,8 @@ import { ladders, battleTypes, boardsOf, SEEDS, UNGATED_SWEEP } from './helpers.
 import { shapeRule } from '../src/engine/shape/registry.js';
 
 describe('ladder data', () => {
-  it('has twenty-six types of ten boards', () => {
-    expect(ladders).toHaveLength(26);
+  it('has twenty-seven types of ten boards', () => {
+    expect(ladders).toHaveLength(27);
     for (const type of ladders) expect(type.boards).toHaveLength(10);
   });
 
@@ -187,6 +187,7 @@ describe('board shapes', () => {
     // variants were regated on boards cleared — and it has no business
     // failing a test about board geometry.
     expect(shaped.map((t) => t.id).sort()).toEqual([
+      'card',
       'cave',
       'cross',
       'diamond',

@@ -631,6 +631,36 @@ spells = ["reveal", "census"]
 start_mana = 75
 
 [[type]]
+id = "card"
+name = "CARD"
+tint = "#b3203a"
+archetype = "descending"
+axis = "Four suits cut out"
+blurb = """  A playing card, the size of four ordinary boards, with its four suits cut out where a Four's   pips sit. Every hole is another edge to read from. Reveal and Census available."""
+# A card's 5:7 portrait, starting at 48x68 as the owner asked, and growing
+# a sixth each way over the ladder.
+size = [[48, 68], [48, 68], [48, 68], [50, 71], [50, 71], [52, 74], [52, 74], [54, 76], [54, 76], [56, 79]]
+tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+# On ARCANE's forced-guess curve per board, which on boards four to six
+# times ARCANE's size means sparser per cell. Measured with the honest
+# player, 25 September 2026: at ARCANE's schedule it was stuck 53.3 times
+# over the ladder and cleared 60% (30 seeds); three points down all the
+# way matched ARCANE's late boards but left the first five nearly
+# guess-free. This ramp, 1 point down at board 1 to 3 at board 10, gives
+# 24.4 stuck and 85% cleared against ARCANE's 23.9 and 82%, and board 10
+# 5.1 stuck and 60% against 5.1 and 63% (60 seeds).
+density = [0.255, 0.262, 0.269, 0.276, 0.283, 0.29, 0.297, 0.304, 0.31, 0.315]
+hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
+alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
+# Past the global 64x32 from the first board, so the continuation keeps
+# board 10's card and moves only its other dials.
+ceiling = { max_w = 56, max_h = 79 }
+shape = "card"
+spells = ["reveal", "census"]
+start_mana = 75
+
+[[type]]
 id = "dungeon"
 name = "DUNGEON"
 tint = "#7a5c9e"

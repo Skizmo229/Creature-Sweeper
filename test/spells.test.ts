@@ -452,6 +452,7 @@ describe('the magic ladders', () => {
     // not where the menu happens to list them.
     expect(magicTypes.map((t) => t.id).sort()).toEqual([
       'arcane',
+      'card',
       'cave',
       'cross',
       'diamond',

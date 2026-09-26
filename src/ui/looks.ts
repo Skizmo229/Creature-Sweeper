@@ -452,6 +452,25 @@ const LOOKS: Record<string, LadderLook> = {
     // A ring turning out from the centre, like the gear itself.
     victory: 'wipeRadial',
   },
+  card: {
+    // A red card back on green baize, ivory ink. `hot` is lavender: gold is out because Reveal
+    // writes givens here, and it sits 90 clear of Census's cyan and 103 of the nearest tier colour
+    // (decision 0032). A mark on a covered tile is 4.2:1.
+    palette: {
+      tile: '#9e2a33',
+      tileEdge: '#6f1d24',
+      floor: '#0d1f16',
+      ink: '#f5ecd9',
+      hot: '#a78bfa',
+      pip: 'diamond',
+      accent: '#c9404b',
+    },
+    // A card's index is a bookish serif.
+    font: 'libre-baskerville',
+    sfx: 'chime',
+    // The creatures bounce off leaving trails: the card game everyone has watched finish.
+    victory: 'cascade',
+  },
   dungeon: {
     palette: {
       tile: '#6a5088',

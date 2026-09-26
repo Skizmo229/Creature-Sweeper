@@ -90,9 +90,14 @@ describe('the shape of the continuation', () => {
 describe('the ceilings hold', () => {
   it('never exceeds the largest board the tuned ladders reach', () => {
     // 64x32, as an area: a round outline keeps its own square box inside it (GEAR's is 45x45).
-    for (const cfg of ladders.flatMap((t) => scalingOf(t.id))) {
-      expect(cfg.width, `${cfg.typeId}#${cfg.board}`).toBeLessThanOrEqual(64);
-      expect(cfg.width * cfg.height, `${cfg.typeId}#${cfg.board}`).toBeLessThanOrEqual(64 * 32);
+    // A ladder whose tuned boards are already bigger (CARD's) keeps its board 10's.
+    for (const type of ladders) {
+      const last = type.boards[9]!;
+      const area = Math.max(64 * 32, last.w * last.h);
+      for (const cfg of scalingOf(type.id)) {
+        expect(cfg.width, `${cfg.typeId}#${cfg.board}`).toBeLessThanOrEqual(64);
+        expect(cfg.width * cfg.height, `${cfg.typeId}#${cfg.board}`).toBeLessThanOrEqual(area);
+      }
     }
   });
 
