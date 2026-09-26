@@ -343,7 +343,7 @@ the game hides them, `unsound` 0 throughout. Stuck points, guesses, lethal guess
 | DOMINOES | 0.3 | 99% | 0.3 | 0.3 | 0.0 | 99% | 0.4 | 56% | 1% | 1% | 7.7 | 98 | 95% | 95% |
 | WORKOUT | 0.7 | 99% | 0.6 | 0.6 | 0.0 | 100% | 0.6 | 78% | 7% | 7% | 6.2 | 147 | 98% | 98% |
 | PACKS | 0.5 | 99% | 0.4 | 0.4 | 0.0 | 99% | 0.5 | 69% | 3% | 2% | 6.9 | 111 | 98% | 98% |
-| DONUT | 1.9 | 95% | 1.9 | 1.9 | 0.1 | 95% | 2.3 | 96% | 1% | 1% | 3.5 | 174 | 80% | 80% |
+| DONUT (round) | 2.2 | 94% | 2.2 | 2.2 | 0.1 | 94% | 2.4 | 96% | 3% | 2% | 4.1 | 209 | 80% | 80% |
 | CHECKERBOARD | 0.2 | 100% | 0.2 | 0.2 | 0.0 | 100% | 0.1 | 67% | 2% | 0% | 7.8 | 140 | 100% | 100% |
 | CONGA LINE | 0.3 | 100% | 0.3 | 0.3 | 0.0 | 100% | 0.3 | 61% | 1% | 1% | 6.7 | 110 | 100% | 100% |
 | RAGGED CAVE | 1.1 | 97% | 1.1 | 1.1 | 0.1 | 97% | 1.3 | 80% | 6% | 5% | 5.2 | 118 | 90% | 90% |
@@ -379,7 +379,10 @@ What it says, read on the day it was recorded:
   day and left alone: boards 7 to 10 clear 70, 55, 60 and 63% at grade 4 (40 seeds), on the
   target already, since decision 0019 tuned it against the perfect deducer to about where the
   human target sits; board 8's 55% is within the noise of 40 seeds, about eight points. DONUT is the needle ladder: 3.5 moves on offer per pass, two guesses a
-  board, 80% of board 10.
+  board, 80% of board 10. Its row is as made round on 26 September 2026 (decision 0045), six
+  density points up to hold the square ring's 95% and 80%; the square ring's row was 1.9 stuck,
+  3.5 on offer and 174 effort. The honest player finds the round ring harder than the graded
+  player does (68% against 83% before).
 - **The graded player clears more than the honest player where guesses are dear.** EXTREME 80%
   against the honest player's 55%, ORACLE 60% against 48%: it holds a pencil, bounds two
   numbers that overlap, never guesses a cell it has named, and refuses a guess that could kill

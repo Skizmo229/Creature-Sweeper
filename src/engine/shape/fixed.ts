@@ -1,6 +1,6 @@
 /**
  * The shapes that are a per-cell predicate of the bounding box. Parameters are in cells: the
- * donut's ring thickness and the cross's arm width. The others take none; they are outlines drawn
+ * donut's ring thickness and the cross's arm width. The others take none. All are outlines drawn
  * to fill the box, and each ladder keeps its box at one aspect ratio so the outline plays the same
  * on every board. `design/ladders.py` carries a copy of each predicate (`shape_present`), because
  * it must count a shape's cells before it can apportion creatures; the test that the engine's count
@@ -10,11 +10,6 @@
 import { type ShapeRule, predicateShape } from './rule.js';
 
 export const RECT_SHAPE = predicateShape('rect', () => true);
-
-export const DONUT_SHAPE = predicateShape(
-  'donut',
-  (param, w, h, x, y) => x < param || y < param || x >= w - param || y >= h - param,
-);
 
 /**
  * The centre falls between two cells on an even width, so 36 across holds fewer cells than 35;
@@ -51,6 +46,19 @@ export const PYRAMID_SHAPE = predicateShape(
 const fromCentre = (w: number, h: number, x: number, y: number) => ({
   dx: x + 0.5 - w / 2,
   dy: y + 0.5 - h / 2,
+});
+
+/**
+ * A round ring: the circle's disc, as wide as the box's shorter side, less a hole `param` cells
+ * narrower in radius, so the ring is `param` cells thick all the way round. A ring thicker than
+ * the radius leaves no hole.
+ */
+export const DONUT_SHAPE = predicateShape('donut', (param, w, h, x, y) => {
+  const { dx, dy } = fromCentre(w, h, x, y);
+  const outer = Math.min(w, h) / 2;
+  const hole = Math.max(0, outer - param);
+  const r2 = dx * dx + dy * dy;
+  return r2 <= outer * outer && r2 >= hole * hole;
 });
 
 /**

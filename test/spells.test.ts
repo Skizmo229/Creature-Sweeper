@@ -536,7 +536,7 @@ describe('the magic ladders', () => {
       arcane: 5.0,
       oracle: 7.4,
       diamond: 1.5,
-      donut: 6.0,
+      donut: 7.0,
       cross: 2.5,
       cave: 5.5,
       dungeon: 3.9,

@@ -34,6 +34,12 @@ difficulty at all. A bigger box is not always a bigger board: CROSS's arms are `
 param / 2`, and `cx` falls between two cells on an even width, so 36 across holds fewer cells than
 35; the continuation refuses a candidate whose `C_k` went backwards.
 
+**DONUT** is round: the circle's disc in a square box, less a hole `param` cells narrower in
+radius, so the ring is six cells thick all the way round. Its staircase rims give more away than
+the square ring's straight ones did, and a thicker ring is easier, not harder, so it runs six
+points denser to play the same, to 36.2% (decision 0045). Seven cells cleared 98% of board 10
+even at 37%.
+
 **WRAPPED CROSS** is CROSS on a torus. Wrapping a *shape* does the opposite of wrapping a
 rectangle: a cross is nearly all rim, so it loses little information, and joining its four dead-end
 arms into two loops lets a player stuck at one tip work in from the other. It is easier than CROSS
