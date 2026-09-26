@@ -82,7 +82,10 @@ size = [[30, 16], [30, 16], [30, 16], [30, 16], [32, 18], [32, 18], [32, 18], [3
 tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
 density = [0.26, 0.269, 0.278, 0.287, 0.296, 0.304, 0.313, 0.322, 0.331, 0.34]
 hp = [10, 10, 10, 10, 9, 9, 9, 8, 8, 8]
-lock = [2, 2, 2, 2, 3, 3, 3, 3, 4, 4]
+# Lock 3 to the top, not 4: at lock 4 the graded player at grade 4 cleared 23% of board 9 and 8%
+# of board 10 (40 seeds, 26 September 2026); one short, 73% and 65%, on the target of 60 to 70%
+# for the top boards (decision 0041). Density and HP are unchanged.
+lock = [2, 2, 2, 2, 3, 3, 3, 3, 3, 3]
 alpha0 = [0.4, 0.389, 0.378, 0.367, 0.356, 0.344, 0.333, 0.322, 0.311, 0.3]
 
 [[type]]
@@ -116,7 +119,11 @@ size = [[32, 18], [32, 18], [32, 18], [34, 19], [34, 19], [36, 20], [36, 20], [3
 tiers = [6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
 density = [0.258, 0.266, 0.274, 0.282, 0.29, 0.298, 0.306, 0.314, 0.322, 0.33]
 hp = [8, 8, 8, 8, 7, 7, 7, 7, 6, 6]
-lock = [3, 3, 3, 4, 4, 4, 5, 5, 5, 5]
+# Lock 4 from board 4 to the top, not 5 from board 7: at lock 5 the graded player at grade 4,
+# spending mana, cleared 35, 15, 3 and 5% of boards 7 to 10 (40 seeds, 26 September 2026); one
+# short, 95, 95, 83 and 60%, board 10 on the target of 60 to 70%. Two more HP on 7 to 10 were
+# measured too and carried board 10 to 78%, past it, so they were not taken (decision 0042).
+lock = [3, 3, 3, 4, 4, 4, 4, 4, 4, 4]
 alpha0 = [0.18, 0.174, 0.168, 0.162, 0.156, 0.15, 0.144, 0.138, 0.132, 0.126]
 spells = ["reveal", "census", "exercise", "beacon"]
 start_mana = 75
@@ -870,7 +877,11 @@ blurb = """\
   Tiers rise from five to seven."""
 size = [[30, 16], [30, 16], [30, 16], [34, 18], [34, 18], [34, 18], [38, 20], [38, 20], [42, 22], [42, 22]]
 tiers = [5, 5, 5, 5, 5, 6, 6, 7, 7, 7]
-density = [0.206, 0.214, 0.222, 0.231, 0.239, 0.247, 0.255, 0.264, 0.272, 0.28]
+# Every creature is death here, so density is the whole dial. NORMAL's 20.6 to 28.0% cleared
+# 30% of board 1 and none of board 4 onward for the graded player at grade 4 (40 seeds,
+# 26 September 2026); this ramp clears 88% falling to 28%, the one-mistake ladder's own target
+# of about three quarters at the start and a third at the top (decision 0043).
+density = [0.165, 0.169, 0.172, 0.176, 0.179, 0.183, 0.186, 0.19, 0.193, 0.197]
 hp = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 lock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 alpha0 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -929,7 +940,11 @@ blurb = """\
   BLIND on the largest boards in the game: nine tiers, 1 HP, no fighting. A test of endurance."""
 size = [[50, 25], [50, 25], [54, 27], [54, 27], [56, 28], [56, 28], [60, 30], [60, 30], [64, 32], [64, 32]]
 tiers = [9, 9, 9, 9, 9, 9, 9, 9, 9, 9]
-density = [0.208, 0.215, 0.222, 0.229, 0.236, 0.243, 0.25, 0.257, 0.264, 0.27]
+# Every creature is death here, so density is the whole dial, as on BLIND. HUGE's 20.8 to
+# 27.0% cleared 28% of board 1 and none from board 3 onward for the graded player at grade 4
+# (40 seeds, 26 September 2026); this ramp clears 78% falling to 33%, on the one-mistake
+# ladders' target of about three quarters at the start and a third at the top (decision 0044).
+density = [0.16, 0.164, 0.168, 0.171, 0.175, 0.179, 0.183, 0.186, 0.19, 0.194]
 hp = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 lock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 alpha0 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]

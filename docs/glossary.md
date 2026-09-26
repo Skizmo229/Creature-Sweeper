@@ -19,8 +19,9 @@ creatures. See `docs/invariants.md`, fact 4.
 one round, no damage. Above it, damage follows a staircase, `E * (ceil(E / L) - 1)` for tier `E`
 at level `L`. `src/engine/combat.ts`.
 
-**EXP and thresholds.** Killing a creature pays its tier in EXP. The thresholds to each level are
-per board and come from the ladder data (`exp` in `BoardConfig`). See **tuning identity**.
+**EXP and thresholds.** Killing a creature of tier `E` pays `2^(E - 1)` EXP: 1, 2, 4, 8, 16
+(`expForTier` in `src/engine/combat.ts`; mana is the linear one). The thresholds to each level
+are per board and come from the ladder data (`exp` in `BoardConfig`). See **tuning identity**.
 
 **HP.** The player's hit points for one board, or one Full Run. A guess budget, not a combat
 resource: see `docs/invariants.md`, fact 2.
@@ -147,6 +148,18 @@ not a generator. Its budget is a node count, so it is deterministic.
 
 **Stuck point / forced guess.** A moment where a player has no move it can prove safe. The honest
 player's count is an upper bound; the solver's is the floor.
+
+**Graded player.** `src/sim/graded.ts`: the player that plays with a person's tricks up to a
+chosen **grade**, one pass at a time, and reports what a board demanded: the hardest grade
+needed, how often each grade was needed, the moves on offer when it had to look, and its guesses.
+The instrument Milestone 4 retunes the ladders against (`docs/human-tuning-plan.md`).
+
+**Grade.** How much a trick asks a person to hold in the head at once: 0 a glance, 1 one number,
+2 two numbers, 3 a supposition followed a step or two, 4 counting the board; the complete deducer
+is grade 5. `docs/strategies.md`.
+
+**Trick.** One technique of the graded player, `src/sim/tricks.ts`, one per entry of the
+catalogue, with an id such as `residual-ring` or `what-if`.
 
 **Clear rate.** Share of boards a player finishes. Guesses and clear rate disagree on ladders
 where a forced guess is cheap (DUNGEON's doorways, CHECKERBOARD's parity, DONUT's rims).

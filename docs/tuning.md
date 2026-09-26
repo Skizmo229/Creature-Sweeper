@@ -15,9 +15,10 @@ All in `src/sim/cli/`, all driving the real engine with fixed seeds, all determi
 | `npm run sim:spells -- N [ladder]` | The honest player, spell-less and with each spell policy: forced guesses, HP lost, clear rate, HP saved per cast and per mana. `POLICY=gym` plays WORKOUT as a farmer. |
 | `npm run sim:forced -- N [ladder] [a-b]` | The honest player beside a player that also takes the complete deducer's free moves, on the same seeds: what share of stuck points had a free move, how often a perfect deducer is still cornered, what share of boards is guess-free. Its `bad` and `hurt` columns must be zero. |
 | `npm run sim:lethal -- N ladders` | The perfect deducer guessing the cell with the lowest proven worst case: could any forced guess kill? |
+| `npm run sim:human -- N [ladder] [a-b]` | The graded player, a person's tricks up to a grade (`docs/strategies.md`): what each board demands, grade by grade; stuck points, lethal guesses and clear rate at each grade; moves on offer when it had to look. `--profile` counts each trick's conclusions, `--peek` reads the numbers PAIRS hides, `--solver` attaches the complete deducer, `--spells` spends mana as the catalogue advises, `--attention=R` looks near the last action first and counts the scans. Its `unsound` column must be zero. |
 | `npm run sim:sudoku -- N [--sweep]` | SUDOKU build cost per givens count and the tightest round of each board. |
 | `npx tsx src/sim/cli/opening.ts`, `placement.ts`, `topology.ts` | The opening, placement and topology experiments; the first two write `design/data/*.json` for the reference page. |
-| `npm run sim:golden` / `sim:golden:check` | Records or diffs the text of fourteen small runs of the above: the behaviour-preservation harness. |
+| `npm run sim:golden` / `sim:golden:check` | Records or diffs the text of sixteen small runs of the above: the behaviour-preservation harness. |
 
 The **honest player** (`src/sim/honest.ts`) reads only what a player can see and deduces locally,
 so every "cornered" figure it gives is an upper bound. The **complete deducer**
@@ -26,6 +27,13 @@ a free move; a perfect deducer is cornered 31 to 59% less on the plain and shape
 85% less on the placement-rule ladders, whose rules combine across numbers in ways local reading
 never reaches. The honest player still ranks the plain and shaped ladders consistently with each
 other; it does not rank the placement-rule ladders against them.
+
+The **graded player** (`src/sim/graded.ts`) is the instrument of Milestone 4
+(`docs/human-tuning-plan.md`): it plays with a person's tricks up to a chosen grade, one pass at a
+time, reads a beaten creature's number only where the game draws it, and reports the hardest
+grade a board demanded, how often each grade was needed, and how many moves were on offer when it
+had to look. Neither of the two above measures any of that, which is why the ladders are being
+retuned against it.
 
 ## The method
 
@@ -113,9 +121,11 @@ ladder, each spell against playing spell-less on the ladders that offer it:
    maximum, ORACLE 7 to 10 go from 23 / 3 / 0 / 3% cleared by a perfect player to 97 / 63 / 40 /
    47%, and EXTREME 9 to 10 from 20 / 7% to 60 / 60%; two more HP barely moves ORACLE; two short of
    maximum buys nothing more and runs the dial backwards. HUGE x EXTREME is deep everywhere and was
-   retuned (lock 7 on boards 7 to 10 and density stepped back) to make board 10 winnable. EXTREME
-   and ORACLE are left as they are pending a decision; the advice given was one short on both, with
-   two more HP on ORACLE 7 to 10.
+   retuned (lock 7 on boards 7 to 10 and density stepped back) to make board 10 winnable.
+   **Settled on 26 September 2026 on a human figure** (`docs/human-tuning-plan.md`): EXTREME holds
+   lock 3 to the top (decision 0041) and ORACLE lock 4 from board 7 (decision 0042), each taking
+   the graded player at grade 4 from single digits on board 10 to the 60 to 70% target; the two
+   extra HP on ORACLE were measured and not taken, since they carried board 10 past the target.
 4. **The placement-rule ladders play easier than their tuning says**, because they were tuned
    against the honest player, which understands their rules worse than a strong human. Re-deriving
    CHECKERBOARD, PAIRS, DOMINOES, PACKS and CONGA LINE against the solver is open. PAIRS and

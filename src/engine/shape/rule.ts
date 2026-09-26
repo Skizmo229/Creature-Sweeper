@@ -26,6 +26,12 @@ export interface ShapeRule {
    * before the board exists; every other shape's parameter is the type's `shape_param`, in cells.
    */
   readonly seeded: boolean;
+  /**
+   * Whether the shape keeps one-cell hallways, and the doorways they arrive at, empty of
+   * creatures (docs/modes.md, DUNGEON), so that a player may read them off the silhouette and
+   * walk them. Asked by the graded player's corridor reading (`src/sim/scaffold.ts`).
+   */
+  readonly hallways: boolean;
   /** Refuse a ladder type this shape cannot live on, throwing a message that names the type. */
   validate(type: ShapeType): void;
   /** How many cells the shape leaves in a `w` x `h` box. `ladders.py` must agree. */
@@ -55,6 +61,7 @@ export function predicateShape(
   return {
     id,
     seeded: false,
+    hallways: false,
     validate: () => {},
     cellCount: (param, w, h) => countPresent(maskOf(param, w, h), w, h),
     build: (param, w, h) => {

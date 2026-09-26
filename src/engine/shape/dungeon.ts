@@ -417,6 +417,7 @@ export function dungeonMap(w: number, h: number, target: number, rng: Rng): Dung
 export const DUNGEON_SHAPE: ShapeRule = {
   id: 'dungeon',
   seeded: true,
+  hallways: true,
   validate: refuseHexAndWrap('dungeon'),
   cellCount: (param) => param,
   build: (param, w, h, rng) => dungeonMap(w, h, param, rng),

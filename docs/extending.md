@@ -97,7 +97,9 @@ and the two test lists that pin the ladder set.
    dungeon) gets a module of its own ending with a `ShapeRule`: `seeded: true`, its parameter is
    the exact cell count, the generator must spend exactly that many, and `refuseHexAndWrap` is
    its `validate` unless it can be argued otherwise. `ladders.py` chooses the count per board.
-   `test/shape.test.ts` already holds the new shape's build to its own count.
+   `test/shape.test.ts` already holds the new shape's build to its own count. `hallways` is true
+   only for a shape that keeps one-cell passages and their doorways empty, which the graded
+   player then walks (`src/sim/scaffold.ts`).
 3. `ladders.py`: `shape_present` / `shape_cells` carry a copy of the predicate so the generator
    can apportion creatures; the test `agrees with the ladder generator on how many cells a shape
    leaves` guards the two copies.
@@ -147,6 +149,26 @@ and the two test lists that pin the ladder set.
    reaches it.
 3. `BoardDisplay` in `src/ui/board/view.ts` if the renderer reads it, and `App.boardDisplay`.
 4. `test/preview.test.ts` if it has an example board.
+
+## Adding a trick to the graded player (4 files, 5 with a golden re-record)
+
+The graded player (`src/sim/graded.ts`) plays with the tricks of `docs/strategies.md`, one
+technique per entry, so a new trick is an entry there first and a function second.
+
+1. **The catalogue.** Its entry in `docs/strategies.md`, at the grade it belongs to (how much a
+   person holds in the head at once), and its row in the table of section 10.
+2. **The technique.** A `Trick` in `src/sim/tricks.ts`, added to `TrickId` and to `TRICKS`, which
+   the compiler asks for. It reads only through `View` (`reader.ts`) and what a person can see:
+   a placement rule through its hooks (`groups`, `cap`, `emptied`, `noteCandidates`), never its
+   name; a beaten creature's number only where `numberVisible` says so. It proposes moves and
+   never touches the game. Concluding a cell with `settle` keeps the three outcomes (open, name,
+   narrow) consistent with the level.
+3. **The tests.** `test/graded.test.ts` already holds every trick to soundness on every kind of
+   board (`unsound` and `trickDamage` must be 0) and to firing somewhere; a trick the cheaper
+   reads usually pre-empt gets a direct test, as the line's ends have.
+4. **The plan.** Its row in the technique table of `docs/human-tuning-plan.md`, section 3.
+5. **The golden run.** `human-normal` fixes the printout of `npm run sim:human -- 3 normal`; a
+   trick that changes what a NORMAL board demands re-records it, and the commit says so.
 
 ## Adding creature-icon symbols, and a font to draw them
 

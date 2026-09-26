@@ -406,6 +406,7 @@ function caveMask(w: number, h: number, target: number, rng: Rng): Mask {
 export const CAVE_SHAPE: ShapeRule = {
   id: 'cave',
   seeded: true,
+  hallways: false,
   validate: refuseHexAndWrap('cave'),
   cellCount: (param) => param,
   build: (param, w, h, rng) => {

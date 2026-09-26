@@ -31,7 +31,8 @@ const TSX = createRequire(import.meta.url).resolve('tsx/cli');
  *
  * Together these exercise every ladder (cli/boards.ts sweeps all 848 boards), every Full Run, the
  * honest player on a magic ladder, a crawl ladder and one of each placement rule, the complete
- * deducer, the lethal-guess policy, Sudoku generation and the topology experiment.
+ * deducer, the lethal-guess policy, the graded player, Sudoku generation and the topology
+ * experiment.
  */
 const RUNS = {
   boards: ['src/sim/cli/boards.ts', '3'],
@@ -46,6 +47,8 @@ const RUNS = {
   'spells-workout': ['src/sim/cli/spellvalue.ts', '4', 'workout'],
   'forced-arcane': ['src/sim/cli/forced.ts', '3', 'arcane', '8-10'],
   'lethal-extreme': ['src/sim/cli/lethal.ts', '3', 'extreme'],
+  'human-normal': ['src/sim/cli/human.ts', '3', 'normal'],
+  'human-oracle': ['src/sim/cli/human.ts', '3', 'oracle', '8-10', '--profile'],
   sudoku: ['src/sim/cli/sudoku.ts', '3'],
   topology: ['src/sim/cli/topology.ts', '8'],
 };
