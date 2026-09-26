@@ -318,9 +318,10 @@ is what calibrates the technique costs and the retune targets once the game has 
 
 ### 9.1 Baseline, 25 September 2026
 
-Recorded with `npm run sim:human -- 40` on the ladder data of 25 September 2026: every ladder
-but SUDOKU, its ten tuned boards, 40 seeds each, spell-less, numbers hidden where the game hides
-them, `unsound` 0 throughout. Stuck points, guesses, lethal guesses and HP lost are per board;
+Recorded with `npm run sim:human -- 40` on the ladder data of 25 September 2026, and again on
+26 September with the eight ladders merged that day (every earlier figure reproduced exactly):
+every ladder but SUDOKU, its ten tuned boards, 40 seeds each, spell-less, numbers hidden where
+the game hides them, `unsound` 0 throughout. Stuck points, guesses, lethal guesses and HP lost are per board;
 "need" is the share of boards on which the grade-4 player needed a trick of that grade or above;
 "avail" is the moves on offer per pass above grade 0; "#10" is board 10's clear rate.
 
@@ -347,6 +348,14 @@ them, `unsound` 0 throughout. Stuck points, guesses, lethal guesses and HP lost 
 | CONGA LINE | 0.3 | 100% | 0.3 | 0.3 | 0.0 | 100% | 0.3 | 61% | 1% | 1% | 6.7 | 110 | 100% | 100% |
 | RAGGED CAVE | 1.1 | 97% | 1.1 | 1.1 | 0.1 | 97% | 1.3 | 80% | 6% | 5% | 5.2 | 118 | 90% | 90% |
 | DUNGEON | 0.9 | 96% | 0.8 | 0.8 | 0.1 | 97% | 1.2 | 62% | 4% | 3% | 5.7 | 71 | 93% | 93% |
+| PYRAMID | 0.0 | 100% | 0.0 | 0.0 | 0.0 | 100% | 0.0 | 6% | 0% | 0% | 16.1 | 64 | 100% | 100% |
+| GEAR | 0.8 | 98% | 0.8 | 0.8 | 0.0 | 99% | 0.8 | 81% | 4% | 4% | 6.7 | 145 | 90% | 95% |
+| CARD | 0.7 | 99% | 0.7 | 0.7 | 0.0 | 99% | 0.8 | 76% | 6% | 5% | 9.1 | 202 | 100% | 95% |
+| VALENTINES | 0.8 | 100% | 0.8 | 0.8 | 0.0 | 100% | 0.5 | 70% | 3% | 2% | 8.8 | 126 | 98% | 98% |
+| STAR | 1.0 | 98% | 0.9 | 0.9 | 0.0 | 98% | 1.1 | 76% | 14% | 13% | 7.7 | 127 | 98% | 98% |
+| ULTRA HIVE | 0.4 | 99% | 0.4 | 0.4 | 0.0 | 99% | 0.4 | 23% | 1% | 1% | 10.6 | 95 | 95% | 95% |
+| PETRI DISH | 0.3 | 100% | 0.3 | 0.3 | 0.0 | 100% | 0.1 | 52% | 1% | 1% | 10.6 | 105 | 100% | 100% |
+| PATROL | 0.0 | 100% | 0.0 | 0.0 | 0.0 | 100% | 0.0 | 0% | 0% | 0% | 1.0 | 84 | 100% | 100% |
 | BLIND | 2.4 | 4% | 2.3 | 2.3 | 2.3 | 7% | 0.9 | 98% | 7% | 5% | 3.8 | 119 | 0% | 0% |
 | HUGE x BLIND | 2.5 | 2% | 2.5 | 2.5 | 2.5 | 4% | 1.0 | 99% | 8% | 2% | 4.7 | 218 | 0% | 0% |
 
@@ -371,6 +380,11 @@ What it says, read on the day it was recorded:
   numbers that overlap, never guesses a cell it has named, and refuses a guess that could kill
   while another exists. The honest player's forced-guess curves remain the record of what the
   ladders were tuned to; these are the record of what they demand.
+- **The new ladders sit where their curves put them.** PYRAMID's face-up base rows make it as
+  gentle as EASY; GEAR, CARD, VALENTINES and STAR, tuned onto ARCANE's curve, corner a grade-2
+  player about as often as ARCANE does and STAR alone leans on grade 3 (14% of boards);
+  PATROL's moves-on-offer figure is 1.0 by construction, one open per reading where the
+  creatures walk, and the player waited out every stuck point and never guessed.
 - **The search ladders are single-mistake games a deducer loses.** BLIND and HUGE x BLIND force
   two to three guesses a board and every one is death: 4 to 7% cleared, 0% of board 10. The
   original rates its Blind five stars; whether these should be this unwinnable is a decision for
