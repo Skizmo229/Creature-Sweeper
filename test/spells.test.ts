@@ -534,7 +534,7 @@ describe('the magic ladders', () => {
     // Measured forced guesses a board, at board 10, per ladder.
     const stuckAtTen: Record<string, number> = {
       arcane: 5.0,
-      oracle: 6.0,
+      oracle: 7.4,
       diamond: 1.5,
       donut: 6.0,
       cross: 2.5,

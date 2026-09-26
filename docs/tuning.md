@@ -121,9 +121,11 @@ ladder, each spell against playing spell-less on the ladders that offer it:
    maximum, ORACLE 7 to 10 go from 23 / 3 / 0 / 3% cleared by a perfect player to 97 / 63 / 40 /
    47%, and EXTREME 9 to 10 from 20 / 7% to 60 / 60%; two more HP barely moves ORACLE; two short of
    maximum buys nothing more and runs the dial backwards. HUGE x EXTREME is deep everywhere and was
-   retuned (lock 7 on boards 7 to 10 and density stepped back) to make board 10 winnable. EXTREME
-   and ORACLE are left as they are pending a decision; the advice given was one short on both, with
-   two more HP on ORACLE 7 to 10.
+   retuned (lock 7 on boards 7 to 10 and density stepped back) to make board 10 winnable.
+   **Settled on 26 September 2026 on a human figure** (`docs/human-tuning-plan.md`): EXTREME holds
+   lock 3 to the top (decision 0041) and ORACLE lock 4 from board 7 (decision 0042), each taking
+   the graded player at grade 4 from single digits on board 10 to the 60 to 70% target; the two
+   extra HP on ORACLE were measured and not taken, since they carried board 10 past the target.
 4. **The placement-rule ladders play easier than their tuning says**, because they were tuned
    against the honest player, which understands their rules worse than a strong human. Re-deriving
    CHECKERBOARD, PAIRS, DOMINOES, PACKS and CONGA LINE against the solver is open. PAIRS and

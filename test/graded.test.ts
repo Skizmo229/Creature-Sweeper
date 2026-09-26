@@ -99,8 +99,26 @@ describe('the graded player', () => {
         }
       }
     }
+    // The rarest reads (a Census bound, a what-if) need the hard ladders' top boards and a few
+    // more seeds; still fixed, still cheap.
+    for (const id of ['extreme', 'oracle']) {
+      for (const board of [8, 10]) {
+        const cfg = boardConfig(ladders, id, board);
+        for (let s = 0; s < 6; s++) {
+          const run = play(Game.create(cfg, 0xf00d + s), {
+            grade: 4,
+            spells: cfg.spells.length > 0,
+          });
+          for (const t of TRICK_IDS) {
+            fires[t] += run.fires[t];
+            pencils[t] += run.pencils[t];
+          }
+        }
+      }
+    }
     const silent = TRICK_IDS.filter((t) => fires[t] + pencils[t] === 0);
-    expect(silent).toEqual(['line-reach']);
+    // Two reads the cheaper ones nearly always pre-empt have direct tests below.
+    expect(silent).toEqual(['census-ring', 'line-reach']);
     const concluded = TRICK_IDS.filter((t) => fires[t] > 0);
     expect(concluded).toEqual(expect.arrayContaining(['subtract', 'overlap', 'bounds', 'what-if']));
     expect(concluded).toEqual(expect.arrayContaining(['accounted', 'last-of-tier', 'corridor']));
@@ -177,10 +195,10 @@ describe('the graded player', () => {
 
   it('takes the complete deducer as its ceiling without harm', () => {
     let rescued = 0;
-    for (const id of ['extreme', 'oracle', 'checker']) {
+    for (const id of ['extreme', 'oracle', 'checker', 'donut']) {
       for (const board of [6, 10]) {
         const game = Game.create(boardConfig(ladders, id, board), 0xbeef + board);
-        const run = play(game, { grade: 2, rescue: (g) => solve(g, { budget: 5000 }).safe });
+        const run = play(game, { grade: 1, rescue: (g) => solve(g, { budget: 5000 }).safe });
         expect(wrongIn(run), `${id} #${board}`).toBe(0);
         rescued += run.rescued;
       }
@@ -225,5 +243,54 @@ describe('the graded player', () => {
     }
     expect(asked).toBeGreaterThan(0);
     expect(found).toBeGreaterThan(0);
+  });
+
+  it('reads a Census count as Sweep does, once one is cast where it decides something', () => {
+    // Cast where the count makes the ring provable and the remainder alone does not: the
+    // biggest creature is the remainder less one for every other. The test may read tiers to
+    // choose the cell; the trick reads only the count.
+    const cfg = boardConfig(ladders, 'arcane', 3);
+    let asked = 0;
+    for (const seed of [0x5eed, 0x5eed + 1, 0x5eed + 2]) {
+      const game = Game.create(cfg, seed);
+      const rng = mulberry32(seed);
+      let found = false;
+      while (game.status === 'playing' && !found) {
+        const level = game.level;
+        for (const cell of game.grid.flat()) {
+          if (!cell.present || !cell.open || cell.census !== null) continue;
+          const ring = game.neighboursOf(cell);
+          const covered = ring.filter((n) => !n.open && n.mark === 0);
+          if (covered.length < 2) continue;
+          const hidden = cell.num - ring.filter((n) => n.open).reduce((a, n) => a + n.tier, 0);
+          const count = covered.filter((n) => n.tier > 0).length;
+          if (hidden <= level || count === 0 || hidden - (count - 1) > level) continue;
+          expect(game.cast('census', cell.x, cell.y).some((b) => b.type === 'blocked')).toBe(false);
+          const view: View = {
+            game,
+            reading: readBoard(game, false),
+            level,
+            peek: false,
+            domain: () => everyTier(cfg.tiers),
+            scaffold: new Set(),
+          };
+          const moves = noMoves();
+          TRICKS['census-ring'].apply(view, moves);
+          for (const n of covered) {
+            expect(moves.open.has(n), `(${n.x},${n.y})`).toBe(true);
+            expect(n.tier).toBeLessThanOrEqual(level);
+          }
+          asked++;
+          found = true;
+          break;
+        }
+        if (found) break;
+        const free = game.grid.flat().filter((c) => c.present && !c.open && c.tier <= game.level);
+        if (!free.length) break;
+        const pick = free[Math.floor(rng() * free.length)]!;
+        game.open(pick.x, pick.y);
+      }
+    }
+    expect(asked).toBeGreaterThan(0);
   });
 });
