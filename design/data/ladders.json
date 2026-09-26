@@ -21,7 +21,6 @@
   "run_hp": 10,
   "requires": [],
   "requires_boards": 0,
-  "requires_runs": 0,
   "boards": [
    {
     "n": 1,
@@ -968,7 +967,6 @@
    "easy"
   ],
   "requires_boards": 0,
-  "requires_runs": 0,
   "boards": [
    {
     "n": 1,
@@ -1911,11 +1909,8 @@
   "reach": 0,
   "wrap": "none",
   "run_hp": 30,
-  "requires": [
-   "normal"
-  ],
-  "requires_boards": 0,
-  "requires_runs": 0,
+  "requires": [],
+  "requires_boards": 15,
   "boards": [
    {
     "n": 1,
@@ -2780,11 +2775,8 @@
   "reach": 0,
   "wrap": "none",
   "run_hp": 10,
-  "requires": [
-   "normal"
-  ],
-  "requires_boards": 0,
-  "requires_runs": 0,
+  "requires": [],
+  "requires_boards": 20,
   "boards": [
    {
     "n": 1,
@@ -3894,7 +3886,6 @@
    "extreme"
   ],
   "requires_boards": 0,
-  "requires_runs": 0,
   "boards": [
    {
     "n": 1,
@@ -5110,8 +5101,7 @@
   "wrap": "none",
   "run_hp": 1,
   "requires": [],
-  "requires_boards": 0,
-  "requires_runs": 3,
+  "requires_boards": 50,
   "boards": [
    {
     "n": 1,
@@ -5803,7 +5793,6 @@
    "blind"
   ],
   "requires_boards": 0,
-  "requires_runs": 0,
   "boards": [
    {
     "n": 1,
@@ -6272,7 +6261,6 @@
   "run_hp": 10,
   "requires": [],
   "requires_boards": 15,
-  "requires_runs": 0,
   "boards": [
    {
     "n": 1,
@@ -7218,12 +7206,8 @@
   "reach": 0,
   "wrap": "both",
   "run_hp": 10,
-  "requires": [
-   "cross",
-   "wraparound"
-  ],
-  "requires_boards": 0,
-  "requires_runs": 0,
+  "requires": [],
+  "requires_boards": 20,
   "boards": [
    {
     "n": 1,
@@ -7927,8 +7911,7 @@
   "wrap": "none",
   "run_hp": 10,
   "requires": [],
-  "requires_boards": 20,
-  "requires_runs": 0,
+  "requires_boards": 25,
   "boards": [
    {
     "n": 1,
@@ -8633,7 +8616,6 @@
   "run_hp": 10,
   "requires": [],
   "requires_boards": 30,
-  "requires_runs": 0,
   "boards": [
    {
     "n": 1,
@@ -9175,8 +9157,7 @@
   "wrap": "none",
   "run_hp": 10,
   "requires": [],
-  "requires_boards": 55,
-  "requires_runs": 0,
+  "requires_boards": 35,
   "boards": [
    {
     "n": 1,
@@ -10069,8 +10050,7 @@
   "wrap": "none",
   "run_hp": 10,
   "requires": [],
-  "requires_boards": 70,
-  "requires_runs": 0,
+  "requires_boards": 40,
   "boards": [
    {
     "n": 1,
@@ -10665,11 +10645,8 @@
   "reach": 0,
   "wrap": "none",
   "run_hp": 10,
-  "requires": [
-   "normal"
-  ],
-  "requires_boards": 0,
-  "requires_runs": 0,
+  "requires": [],
+  "requires_boards": 15,
   "boards": [
    {
     "n": 1,
@@ -11702,8 +11679,7 @@
   "wrap": "none",
   "run_hp": 10,
   "requires": [],
-  "requires_boards": 45,
-  "requires_runs": 0,
+  "requires_boards": 20,
   "boards": [
    {
     "n": 1,
@@ -12651,11 +12627,8 @@
   "reach": 0,
   "wrap": "none",
   "run_hp": 8,
-  "requires": [
-   "arcane"
-  ],
-  "requires_boards": 0,
-  "requires_runs": 0,
+  "requires": [],
+  "requires_boards": 25,
   "boards": [
    {
     "n": 1,
@@ -13671,8 +13644,7 @@
   "wrap": "none",
   "run_hp": 10,
   "requires": [],
-  "requires_boards": 75,
-  "requires_runs": 0,
+  "requires_boards": 30,
   "boards": [
    {
     "n": 1,
@@ -14211,8 +14183,7 @@
   "wrap": "none",
   "run_hp": 10,
   "requires": [],
-  "requires_boards": 25,
-  "requires_runs": 0,
+  "requires_boards": 15,
   "boards": [
    {
     "n": 1,
@@ -15156,8 +15127,7 @@
   "wrap": "none",
   "run_hp": 10,
   "requires": [],
-  "requires_boards": 35,
-  "requires_runs": 0,
+  "requires_boards": 20,
   "boards": [
    {
     "n": 1,
@@ -15804,8 +15774,7 @@
   "wrap": "none",
   "run_hp": 10,
   "requires": [],
-  "requires_boards": 40,
-  "requires_runs": 0,
+  "requires_boards": 25,
   "boards": [
    {
     "n": 1,
@@ -16353,8 +16322,7 @@
   "wrap": "none",
   "run_hp": 10,
   "requires": [],
-  "requires_boards": 50,
-  "requires_runs": 0,
+  "requires_boards": 30,
   "boards": [
    {
     "n": 1,
@@ -17540,8 +17508,7 @@
   "wrap": "none",
   "run_hp": 10,
   "requires": [],
-  "requires_boards": 60,
-  "requires_runs": 0,
+  "requires_boards": 35,
   "boards": [
    {
     "n": 1,
@@ -18466,8 +18433,7 @@
   "wrap": "none",
   "run_hp": 10,
   "requires": [],
-  "requires_boards": 65,
-  "requires_runs": 0,
+  "requires_boards": 40,
   "boards": [
    {
     "n": 1,
@@ -19653,8 +19619,7 @@
   "wrap": "none",
   "run_hp": 20,
   "requires": [],
-  "requires_boards": 80,
-  "requires_runs": 0,
+  "requires_boards": 45,
   "boards": [
    {
     "n": 1,

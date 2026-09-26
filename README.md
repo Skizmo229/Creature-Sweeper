@@ -113,15 +113,18 @@ so live.
 (689 boards in all) and a Full Run (all ten on one HP pool).
 
 ```
-main line   EASY -> NORMAL -> { HUGE, EXTREME } -> HUGE x EXTREME (needs both)
-magic       NORMAL -> ARCANE -> ORACLE
-variants    unlocked by BOARDS CLEARED ANYWHERE, not by each other:
-            WRAPAROUND 15 · CROSS 20 · HIVE 25 · DIAMOND 30 · PAIRS 35 · DOMINOES 40
-            WORKOUT 45 · PACKS 50 · DONUT 55 · CHECKERBOARD 60 · CONGA LINE 65
-            RAGGED CAVE 70 · DUNGEON 75 · SUDOKU 80
-full runs   BLIND needs Full Runs completed on 3 different types
-combined    WRAPPED CROSS needs CROSS and WRAPAROUND
-post-game   HUGE x BLIND needs HUGE and BLIND
+start       EASY -> NORMAL
+counted     every 5 BOARDS CLEARED ANYWHERE opens the next ladder in each category:
+boards      Normal     Shape          Magic     Special
+  15        HUGE       WRAPAROUND     ARCANE    HIVE
+  20        EXTREME    WRAPPED CROSS  WORKOUT   PAIRS
+  25                   CROSS          ORACLE    DOMINOES
+  30                   DIAMOND        DUNGEON   PACKS
+  35                   DONUT                    CHECKERBOARD
+  40                   RAGGED CAVE              CONGA LINE
+  45                                            SUDOKU
+  50        BLIND
+combined    HUGE x EXTREME needs HUGE and EXTREME; HUGE x BLIND needs HUGE and BLIND
 ```
 
 The cut-out shapes (DONUT, CROSS, WRAPPED CROSS, DIAMOND, RAGGED CAVE, DUNGEON) carry ARCANE's

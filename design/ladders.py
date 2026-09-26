@@ -374,79 +374,47 @@ def extend(t):
 # ---------- unlocks ----------------------------------------------------------
 # Two kinds of gate, and they mean different things.
 #
-# A TYPE gate ("clear NORMAL") is a statement about readiness: this ladder
+# A TYPE gate ("clear EASY") is a statement about readiness: this ladder
 # teaches something the next one assumes. HUGE x EXTREME needs both of its
 # parents because it is literally both of them at once, and HUGE x BLIND needs
 # HUGE and BLIND for the same reason - a combined type should not be reachable
 # without having played the things it combines.
 #
 # A BOARD-COUNT gate ("clear 25 boards, anywhere") is a statement about time
-# served. The variant ladders do not teach each other - a hex grid teaches you
-# nothing about a torus, and neither teaches you Sudoku - so chaining them
-# would be a fiction, and would make a player who wants the ragged cave grind
-# three shapes they have no interest in first (decision 0018). Counting boards
-# lets them arrive from whatever direction they like, and spaces the variants
-# out across the whole game rather than bunching them behind one branch.
+# served. Most ladders do not teach each other - a hex grid teaches you nothing
+# about a torus, and neither teaches you Sudoku - so chaining them would be a
+# fiction, and would make a player who wants the ragged cave grind three shapes
+# they have no interest in first (decision 0018). Counting boards lets them
+# arrive from whatever direction they like.
 UNLOCKS = {
     "easy": [],
     "normal": ["easy"],
-    # HUGE and EXTREME are siblings off NORMAL, not a chain, so the player
-    # picks which wall to walk into first.
-    "huge": ["normal"],
-    "extreme": ["normal"],
     # Both parents: this ladder is the two of them at once.
     "huge_extreme": ["huge", "extreme"],
-    # Magic hangs off NORMAL as its own branch rather than being spliced into
-    # the main line, so the tuned ladders stay exactly as they were measured.
-    "arcane": ["normal"],
-    "oracle": ["arcane"],
-    "checker": [],
-    "pairs": [],
-    # Not gated on PAIRS: they are on the board-count schedule, by request
-    # (decision 0018), and still open after PAIRS because their counts are
-    # higher.
-    "dominoes": [],
-    "packs": [],
-    "workout": [],
-    "congo": [],
-    "hive": [],
-    "wraparound": [],
-    "diamond": [],
-    "donut": [],
-    "cross": [],
-    # Same argument as HUGE x EXTREME: a ladder that is two ladders at once
-    # should not be reachable without having played the things it combines.
-    # It also keeps the board-count schedule untouched, which is the one thing
-    # in this file that can deadlock a save if it is crowded.
-    "wrapped_cross": ["cross", "wraparound"],
-    "cave": [],
-    "dungeon": [],
-    "sudoku": [],
-    "blind": [],
-    # Same argument as HUGE x EXTREME.
     "huge_blind": ["huge", "blind"],
 }
 
 # Boards cleared anywhere in the game, counting each board once. 0 means the
 # type has no board-count gate at all.
 #
-# The schedule runs 15 to 80 in steps of exactly five, by request, so a new
-# counted ladder is a new slot at the end rather than a gap shared. It starts at
-# 15 so the first variant arrives after EASY and half of NORMAL, not on EASY
-# alone.
+# Every five boards from 15 opens the next ladder in each menu category that
+# has one left (decision 0036), so a step offers a choice of what kind of
+# thing to play next rather than the next thing. It starts at 15 so the first
+# step arrives after EASY and half of NORMAL, not on EASY alone. Within a
+# category the order follows CATEGORIES, and BLIND waits one step past the
+# last of the rest, where its old Full Run gate used to put it: 1 HP with no
+# fighting is the game's hardest discipline, not its next lesson.
 #
-# The types that gate on type-clears alone offer 70 ladder boards between them
-# (EASY, NORMAL, HUGE, EXTREME, HUGE x EXTREME, ARCANE, ORACLE), so the top of
-# the schedule - CAVE at 70 is the last reachable that way - asks a player
-# who never touches a variant to play one. Every earlier variant is ten more
-# tuned boards, so the gates are still met without a single scaling board;
-# `test/unlocks.test.ts` walks the schedule in order to check exactly that.
-# Scaling boards past 10 count too, for a player who would rather go deep.
+# The type gates alone offer 20 ladder boards (EASY, NORMAL), past the first
+# step at 15, and every step opens at least ten boards for the five it asks,
+# so the schedule is met without a single scaling board;
+# `test/unlocks.test.ts` walks it in order to check exactly that. Scaling
+# boards past 10 count too, for a player who would rather go deep.
 #
 # THE ORDER IS A DESIGN CHOICE, not the measured difficulty ranking (decision
 # 0018). It is set by hand to pace what the player meets. For reference, the
 # honest player from `sim:spells`, spell-less, 30 seeds a board, mean clear rate
-# over the tuned ten, ranks them:
+# over the tuned ten, ranks the ladders that used to be counted:
 #
 #   WRAPAROUND 99.0   DUNGEON 97.7   CHECKERBOARD 97.4   DIAMOND 95.5
 #   CROSS 94.0        CONGA LINE 92.8 HIVE 92.7          PAIRS 92.1
@@ -455,42 +423,25 @@ UNLOCKS = {
 # Spell-less on purpose, so every ladder is measured by the same player; the
 # shaped ladders carry spells in play, which only makes them gentler than this.
 # HIVE and PAIRS are within the noise of each other. SUDOKU cannot be measured
-# on the same scale -- it is guess-free by construction -- so it keeps the top
-# slot. BLIND is not on this schedule at all; see UNLOCK_RUNS.
-# The biggest departure from that ranking is DUNGEON, the second easiest,
-# placed last before SUDOKU. It carries spells and the crawl rule, and arriving
-# late means the player has usually met spells on ARCANE first.
-UNLOCK_BOARDS = {
-    "wraparound": 15,
-    "cross": 20,
-    "hive": 25,
-    "diamond": 30,
-    "pairs": 35,
-    "dominoes": 40,
-    "workout": 45,
-    "packs": 50,
-    "donut": 55,
-    "checker": 60,
-    "congo": 65,
-    "cave": 70,
-    "dungeon": 75,
-    "sudoku": 80,
-}
+# on the same scale -- it is guess-free by construction -- so it closes its
+# category. DUNGEON, the second easiest, closes Magic: it carries spells and
+# the crawl rule, and by then the player has met every spell on ARCANE,
+# WORKOUT and ORACLE.
+BOARD_STEP = 5
+FIRST_STEP = 15
+BLIND_AFTER_STEPS = 1
 
-# Full Runs completed, on that many DIFFERENT types. 0 means no such gate.
-#
-# A third kind of gate, and it says something neither of the others can: not
-# "you are ready" or "you have played a lot", but "you have finished something
-# without being allowed to start again". BLIND is 1 HP and any creature ends the
-# board, which is exactly the discipline a Full Run - one HP pool carried across
-# ten boards - is practice for. Distinct types, so it cannot be met by running
-# EASY three times.
-#
-# It cannot strand a save: a Full Run opens on clearing a type's board 10, and
-# EASY, NORMAL and HUGE are all reachable on type-clears alone.
-UNLOCK_RUNS = {
-    "blind": 3,
-}
+
+def unlock_boards():
+    """Each counted ladder's gate: the n-th of its category opens on step n."""
+    gates = {}
+    for cat, ids in CATEGORIES.items():
+        counted = [t for t in ids if t not in UNLOCKS and t != "blind"]
+        for i, tid in enumerate(counted):
+            gates[tid] = FIRST_STEP + BOARD_STEP * i
+    gates["blind"] = max(gates.values()) + BOARD_STEP * BLIND_AFTER_STEPS
+    return gates
+
 
 # The menu's four categories, and the order within each. Every type is in
 # exactly one. A ladder sits where its main idea is, not where its rules
@@ -511,6 +462,7 @@ CATEGORIES = {
     "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku"],
 }
 CATEGORY = {tid: cat for cat, ids in CATEGORIES.items() for tid in ids}
+UNLOCK_BOARDS = unlock_boards()
 POSTGAME = ["blind", "huge_blind"]
 
 
@@ -735,11 +687,9 @@ def ladder_record(t, boards, extended):
         # board 1 is the most generous entry in every schedule, so the
         # ceiling never drops below what a later board was tuned against.
         run_hp=t["hp"][0],
-        requires=UNLOCKS[t["id"]],
+        requires=UNLOCKS.get(t["id"], []),
         # Boards cleared anywhere, counting each once. 0 means no such gate.
         requires_boards=UNLOCK_BOARDS.get(t["id"], 0),
-        # Full Runs completed on distinct types. 0 means no such gate.
-        requires_runs=UNLOCK_RUNS.get(t["id"], 0),
         boards=boards,
         # Boards 11..N. Unlocked by clearing board 10, and deliberately
         # NOT part of `boards`: the ladder is ten, a Full Run is ten, and

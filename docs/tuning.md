@@ -58,8 +58,8 @@ other; it does not rank the placement-rule ladders against them.
   damage is a staircase, so two levels clears two steps at once.
 - The Full Run heal is half the pool, rounded down (so BLIND's pool of 1 heals nothing). A first
   guess; both ends are one number away in `run.ts`.
-- The counted unlock schedule steps by five from 15 to 80, in a hand-set order that does not
-  follow difficulty. `test/unlocks.test.ts` walks it and fails if any gate is unreachable on tuned
+- The counted unlock schedule opens one ladder per menu category every five boards from 15, BLIND
+  last at 50, in a hand-set order that does not follow difficulty (decision 0036). `test/unlocks.test.ts` walks it and fails if any gate is unreachable on tuned
   boards alone.
 
 ## What the spells are worth, measured
@@ -126,6 +126,6 @@ ladder, each spell against playing spell-less on the ladders that offer it:
 7. **Beacon is priced out of play.** At 300 it is affordable at 2% of ORACLE's stuck points
    (measured 24 September 2026, above), so ORACLE effectively offers three spells. Whether to
    reprice it, or to let it be the late, rare purchase it is, is a design call.
-8. **Smaller:** BLIND's unlock timing (three Full Runs) is a guess; pinch-zoom has only met
+8. **Smaller:** BLIND's unlock timing (50 boards) is a guess; pinch-zoom has only met
    synthetic touch events; touch has no hover, so a beaten creature's number is unreachable on a
    phone.

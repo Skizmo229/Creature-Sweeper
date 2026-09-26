@@ -80,10 +80,6 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
       if (type.requires_boards > cleared) {
         needs.push(`${cleared} / ${type.requires_boards} boards cleared`);
       }
-      const runs = progress.fullRunsCompleted();
-      if (type.requires_runs > runs) {
-        needs.push(`${runs} / ${type.requires_runs} Full Runs completed, each on a different type`);
-      }
       meta.textContent = `Locked — ${needs.join(' · ')}`;
     } else if (rec.cleared) {
       const run = progress.runRecord(type.id);

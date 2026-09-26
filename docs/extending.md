@@ -114,8 +114,9 @@ and the two test lists that pin the ladder set.
    ten-element schedules (the schema is written at the top of the file and enforced on load).
    Then its place in `CATEGORIES` in `design/ladders.py`, which files it under one of the menu's
    four columns and sets where in the column it sits. Regenerate `ladders.json`.
-2. An unlock: `requires`, or a slot on the counted schedule (`UNLOCK_BOARDS`, steps of five), or
-   `requires_runs`. `test/unlocks.test.ts` fails if a save can be stranded.
+2. An unlock: a place in its `CATEGORIES` column puts it on the counted schedule, which opens
+   one ladder per column every five boards (decision 0036); a ladder that combines two others
+   takes `requires` in `UNLOCKS` instead. `test/unlocks.test.ts` fails if a save can be stranded.
 3. An entry in `LOOKS` in `src/ui/looks.ts`: palette (with a pip shape of its own), face, sound
    pack and clear effect, with the reason for each. The face is any bundled one; a ladder may
    share a face with another (decision 0031), so no new font is needed. `test/fonts.test.ts`
