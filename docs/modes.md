@@ -82,6 +82,14 @@ schedule it came out gentler than ARCANE (17.4 stuck over the ladder, 85% cleare
 density point above it, on ARCANE's curve (23.3 and 80% against 23.9 and 82%; 60 seeds, 25
 September 2026), topping out at 35.5%.
 
+**STAR** is a regular five-pointed star, point up, as large as its box allows; each point narrows
+to a single cell. The star fills only a third of its box, so its boxes are large for the cells
+they hold, and board 10's is already past the global ceiling, so the continuation keeps it. Its
+ten corners are written out as numbers, not computed, so the two copies of the predicate agree
+exactly. At ARCANE's schedule it came out harder than ARCANE (32.5 stuck over the ladder, 76%
+cleared), and ships two density points below it, on ARCANE's curve (24.6 and 84% against 23.9
+and 82%; 60 seeds, 25 September 2026).
+
 ## DUNGEON
 
 Three kinds of cell, and the difference is the whole mode: a **room** is where creatures live; a
@@ -197,6 +205,6 @@ proof finds nothing at this density; the Sudoku rule itself is deliberately abse
 ## BLIND and HUGE x BLIND
 
 Search boards: one HP, level 0, won by uncovering every empty cell, with the creatures still
-hidden at the win. BLIND climbs 5 to 7 tiers over its ladder. It opens at 65 boards cleared,
+hidden at the win. BLIND climbs 5 to 7 tiers over its ladder. It opens at 70 boards cleared,
 one step after every other counted ladder (decision 0036), and its Full Run heal rounds down to nothing, so a run there is a
 single-mistake run.

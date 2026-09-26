@@ -10,7 +10,7 @@ All in `src/sim/cli/`, all driving the real engine with fixed seeds, all determi
 
 | Command | What it measures |
 | --- | --- |
-| `npm run sim [-- seeds]` | Clears every one of the 761 boards with the omniscient tier-order player. Reports the opening and HP lost; exits non-zero if any board cannot be cleared at full HP. The regression gate for `ladders.py`. |
+| `npm run sim [-- seeds]` | Clears every one of the 774 boards with the omniscient tier-order player. Reports the opening and HP lost; exits non-zero if any board cannot be cleared at full HP. The regression gate for `ladders.py`. |
 | `npm run sim:run` | Completes every type's Full Run ten boards deep on one HP pool. |
 | `npm run sim:spells -- N [ladder]` | The honest player, spell-less and with each spell policy: forced guesses, HP lost, clear rate, HP saved per cast and per mana. `POLICY=gym` plays WORKOUT as a farmer. |
 | `npm run sim:forced -- N [ladder] [a-b]` | The honest player beside a player that also takes the complete deducer's free moves, on the same seeds: what share of stuck points had a free move, how often a perfect deducer is still cornered, what share of boards is guess-free. Its `bad` and `hurt` columns must be zero. |
@@ -59,7 +59,7 @@ other; it does not rank the placement-rule ladders against them.
 - The Full Run heal is half the pool, rounded down (so BLIND's pool of 1 heals nothing). A first
   guess; both ends are one number away in `run.ts`.
 - The counted unlock schedule opens one ladder per menu category every five boards from 15, BLIND
-  last at 65, in a hand-set order that does not follow difficulty (decision 0036). `test/unlocks.test.ts` walks it and fails if any gate is unreachable on tuned
+  last at 70, in a hand-set order that does not follow difficulty (decision 0036). `test/unlocks.test.ts` walks it and fails if any gate is unreachable on tuned
   boards alone.
 
 ## What the spells are worth, measured
@@ -123,6 +123,6 @@ ladder, each spell against playing spell-less on the ladders that offer it:
    level them. Left alone deliberately.
 6. **Marks are not gated the way the pencil is** (a mark may claim the wrong parity on
    CHECKERBOARD). A decision, left open.
-7. **Smaller:** BLIND's unlock timing (65 boards) is a guess; pinch-zoom has only met
+7. **Smaller:** BLIND's unlock timing (70 boards) is a guess; pinch-zoom has only met
    synthetic touch events; touch has no hover, so a beaten creature's number is unreachable on a
    phone.

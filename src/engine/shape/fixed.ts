@@ -162,3 +162,51 @@ export const HEART_SHAPE = predicateShape('heart', (_param, w, h, x, y) => {
     (-dy / (h / 2)) * HEART.halfHeight + HEART.lift,
   );
 });
+
+/**
+ * A regular five-pointed star, point up, as large as the box allows. Its ten corners' directions
+ * are written out as numbers, the sines and cosines of 18 and 54 degrees, rather than computed, so
+ * the two copies of the predicate share them exactly; the inner corners sit at the regular
+ * pentagram's ratio, (3 - sqrt 5) / 2 of the outer. Inside is the even-odd crossing test.
+ */
+const STAR = {
+  cos18: 0.9510565162951535,
+  sin18: 0.3090169943749474,
+  cos54: 0.5877852522924731,
+  sin54: 0.8090169943749475,
+  inner: 0.3819660112501051,
+};
+
+/** From the top point, clockwise: outer and inner corners alternate. */
+const STAR_CORNERS: ReadonlyArray<readonly [number, number]> = [
+  [0, -1],
+  [STAR.cos54, -STAR.sin54],
+  [STAR.cos18, -STAR.sin18],
+  [STAR.cos18, STAR.sin18],
+  [STAR.cos54, STAR.sin54],
+  [0, 1],
+  [-STAR.cos54, STAR.sin54],
+  [-STAR.cos18, STAR.sin18],
+  [-STAR.cos18, -STAR.sin18],
+  [-STAR.cos54, -STAR.sin54],
+];
+
+export const STAR_SHAPE = predicateShape('star', (_param, w, h, x, y) => {
+  // The star is 2 cos 18 of its radius across and 1 + sin 54 tall, its centre below the box's.
+  const radius = Math.min(w / (2 * STAR.cos18), h / (1 + STAR.sin54));
+  const cx = w / 2;
+  const cy = h / 2 + ((1 - STAR.sin54) * radius) / 2;
+  const corners = STAR_CORNERS.map(([ux, uy], i) => {
+    const r = i % 2 === 0 ? radius : radius * STAR.inner;
+    return [cx + ux * r, cy + uy * r] as const;
+  });
+  const px = x + 0.5;
+  const py = y + 0.5;
+  let inside = false;
+  for (let i = 0, j = corners.length - 1; i < corners.length; j = i++) {
+    const [xi, yi] = corners[i]!;
+    const [xj, yj] = corners[j]!;
+    if (yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+});

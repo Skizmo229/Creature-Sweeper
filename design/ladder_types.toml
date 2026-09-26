@@ -688,6 +688,33 @@ spells = ["reveal", "census"]
 start_mana = 75
 
 [[type]]
+id = "star"
+name = "STAR"
+tint = "#d4a017"
+archetype = "descending"
+axis = "Five points"
+blurb = """  A five-pointed star. Each point narrows to a single cell, all edge, and they meet round a   pentagon in the middle. Reveal and Census available."""
+# A star fills a third of its box, so the box is big for the cells it
+# holds: 472 to 750 cells against ARCANE's 480 to 760.
+size = [[39, 37], [39, 37], [39, 37], [41, 39], [41, 39], [44, 42], [44, 42], [46, 44], [46, 44], [49, 47]]
+tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+# On ARCANE's forced-guess curve, two points below ARCANE's schedule.
+# Measured with the honest player, 60 seeds a board, 25 September 2026:
+# at ARCANE's own schedule it was stuck 32.5 times over the ladder and
+# cleared 76%, harder than ARCANE (23.9, 82%); two points down gives 24.6
+# and 84%, board 10 4.9 stuck and 58% against ARCANE's 5.1 and 63%.
+density = [0.245, 0.254, 0.263, 0.272, 0.281, 0.29, 0.299, 0.308, 0.317, 0.325]
+hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
+alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
+# Board 10's box is already past the global 64x32, so the continuation
+# keeps it and moves only the other dials, as CARD's does.
+ceiling = { max_w = 49, max_h = 47 }
+shape = "star"
+spells = ["reveal", "census"]
+start_mana = 75
+
+[[type]]
 id = "dungeon"
 name = "DUNGEON"
 tint = "#7a5c9e"

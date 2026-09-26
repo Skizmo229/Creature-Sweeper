@@ -21,7 +21,8 @@ export type PipShape =
   | 'ringDiamond'
   | 'triangle'
   | 'gear'
-  | 'heart';
+  | 'heart'
+  | 'star';
 
 /**
  * A symbol drawn as the pip, by its code point, written as `U+2764`: the player's own choice from
@@ -496,6 +497,23 @@ const LOOKS: Record<string, LadderLook> = {
     font: 'baloo-2',
     sfx: 'chime',
     victory: 'confetti',
+  },
+  star: {
+    // A night sky, with ORACLE's rose for `hot`: gold is out because Reveal writes givens here,
+    // and it sits 76 clear of the tier-5 pink and 124 of the gold (decision 0032).
+    palette: {
+      tile: '#3a55a0',
+      tileEdge: '#27396e',
+      floor: '#080c1c',
+      ink: '#dfe7ff',
+      hot: '#fa4f7a',
+      pip: 'star',
+      accent: '#6f8fe0',
+    },
+    // A theatre marquee: a name in lights.
+    font: 'bungee',
+    sfx: 'glass',
+    victory: 'sparkle',
   },
   dungeon: {
     palette: {

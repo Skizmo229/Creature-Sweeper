@@ -65,9 +65,9 @@ npm run typecheck      # twice: the second pass compiles the engine, sims and te
 npm run lint           # ESLint, failing on any warning; the size warnings are the readability bar Milestone 3 set
 npm run knip           # unused files and exports
 npm run format         # Prettier (format:check to verify)
-npm test               # 504 tests, including the invariants
+npm test               # 505 tests, including the invariants
 npm run sim:golden:check   # re-run fourteen fixed-seed simulator runs and diff against test/golden/
-npm run sim            # clear every one of the 761 boards headlessly (-- 200 for more seeds)
+npm run sim            # clear every one of the 774 boards headlessly (-- 200 for more seeds)
 npm run sim:run        # complete every type's Full Run
 npm run sim:spells -- 40 dungeon   # what each spell is worth on one ladder, board by board
 npm run sim:forced -- 30 oracle    # how many forced guesses a perfect deducer still faces
@@ -109,8 +109,8 @@ creature, how Sweep is gated, Time Attack). Settings that make the game harder r
 anything easier than the tuned game records no clear, no unlock and no best time, and the game says
 so live.
 
-**Game types.** 28 ladders of ten tuned boards, each with a scaling continuation past board 10
-(761 boards in all) and a Full Run (all ten on one HP pool).
+**Game types.** 29 ladders of ten tuned boards, each with a scaling continuation past board 10
+(774 boards in all) and a Full Run (all ten on one HP pool).
 
 ```
 start       EASY -> NORMAL
@@ -126,16 +126,17 @@ boards      Normal     Shape          Magic     Special
   50                   GEAR
   55                   CARD
   60                   VALENTINES
-  65        BLIND
+  65                   STAR
+  70        BLIND
 combined    HUGE x EXTREME needs HUGE and EXTREME; HUGE x BLIND needs HUGE and BLIND
 ```
 
 The menu shows the ladders in those four columns; Normal is the original game's seven modes.
 
 The cut-out shapes (DONUT, CROSS, WRAPPED CROSS, DIAMOND, RAGGED CAVE, PYRAMID, GEAR, CARD,
-VALENTINES, DUNGEON) carry ARCANE's loadout; DUNGEON also carries Exercise and the crawl rule,
-and PYRAMID starts with its bottom two rows face up. What each mode's rule is and what the engine deduces from
-it is in `docs/modes.md`.
+VALENTINES, STAR, DUNGEON) carry ARCANE's loadout; DUNGEON also carries Exercise and the crawl rule,
+and PYRAMID starts with its bottom two rows face up. What each mode's rule is and what the engine
+deduces from it is in `docs/modes.md`.
 
 ## The load-bearing facts
 

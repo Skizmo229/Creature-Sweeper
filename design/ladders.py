@@ -98,6 +98,33 @@ def _heart(w, h, dx, dy):
                         (-dy / (h / 2)) * HEART["half_height"] + HEART["lift"])
 
 
+STAR = dict(cos18=0.9510565162951535, sin18=0.3090169943749474, cos54=0.5877852522924731,
+            sin54=0.8090169943749475, inner=0.3819660112501051)
+STAR_CORNERS = [(0, -1), (STAR["cos54"], -STAR["sin54"]), (STAR["cos18"], -STAR["sin18"]),
+                (STAR["cos18"], STAR["sin18"]), (STAR["cos54"], STAR["sin54"]), (0, 1),
+                (-STAR["cos54"], STAR["sin54"]), (-STAR["cos18"], STAR["sin18"]),
+                (-STAR["cos18"], -STAR["sin18"]), (-STAR["cos54"], -STAR["sin54"])]
+
+
+def _star(w, h, x, y):
+    radius = min(w / (2 * STAR["cos18"]), h / (1 + STAR["sin54"]))
+    cx = w / 2
+    cy = h / 2 + ((1 - STAR["sin54"]) * radius) / 2
+    corners = [(cx + ux * (radius if i % 2 == 0 else radius * STAR["inner"]),
+                cy + uy * (radius if i % 2 == 0 else radius * STAR["inner"]))
+               for i, (ux, uy) in enumerate(STAR_CORNERS)]
+    px, py = x + 0.5, y + 0.5
+    inside = False
+    j = len(corners) - 1
+    for i in range(len(corners)):
+        xi, yi = corners[i]
+        xj, yj = corners[j]
+        if (yi > py) != (yj > py) and px < ((xj - xi) * (py - yi)) / (yj - yi) + xi:
+            inside = not inside
+        j = i
+    return inside
+
+
 def shape_present(shape, param, w, h, x, y):
     cx, cy = (w - 1) / 2, (h - 1) / 2
     dx, dy = x + 0.5 - w / 2, y + 0.5 - h / 2
@@ -115,6 +142,8 @@ def shape_present(shape, param, w, h, x, y):
         return _card(w, h, x, y)
     if shape == "heart":
         return _heart(w, h, dx, dy)
+    if shape == "star":
+        return _star(w, h, x, y)
     return True
 
 
@@ -546,7 +575,7 @@ def unlock_boards():
 CATEGORIES = {
     "normal": ["easy", "normal", "huge", "extreme", "huge_extreme", "blind", "huge_blind"],
     "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave", "pyramid",
-              "gear", "card", "valentines"],
+              "gear", "card", "valentines", "star"],
     "magic": ["arcane", "workout", "oracle", "dungeon"],
     "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku"],
 }

@@ -26,6 +26,7 @@ export const PIP_SHAPES: readonly PipShape[] = [
   'triangle',
   'gear',
   'heart',
+  'star',
 ];
 
 export const PIP_NAMES: Record<PipShape, string> = {
@@ -39,6 +40,7 @@ export const PIP_NAMES: Record<PipShape, string> = {
   triangle: 'Pyramids',
   gear: 'Gears',
   heart: 'Hearts',
+  star: 'Stars',
 };
 
 /** What a pip is called: a shape's name, or a symbol's own. */
@@ -287,6 +289,16 @@ function pipPath(
       ctx.moveTo(cx, cy + r * 0.9);
       ctx.bezierCurveTo(cx - r * 1.3, cy, cx - r * 0.95, cy - r * 1.2, cx, cy - r * 0.5);
       ctx.bezierCurveTo(cx + r * 0.95, cy - r * 1.2, cx + r * 1.3, cy, cx, cy + r * 0.9);
+      ctx.closePath();
+      break;
+    case 'star':
+      // Five points, the inner corners at the regular pentagram's ratio, nudged down so it sits
+      // centred in the pip's box rather than on its own centre.
+      for (let k = 0; k < 10; k++) {
+        const angle = (k * Math.PI) / 5 - Math.PI / 2;
+        const reach = k % 2 === 0 ? r * 1.1 : r * 0.42;
+        ctx.lineTo(cx + reach * Math.cos(angle), cy + r * 0.1 + reach * Math.sin(angle));
+      }
       ctx.closePath();
       break;
     case 'ring':

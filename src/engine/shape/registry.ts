@@ -14,6 +14,7 @@ import {
   HEART_SHAPE,
   PYRAMID_SHAPE,
   RECT_SHAPE,
+  STAR_SHAPE,
 } from './fixed.js';
 import { CAVE_SHAPE } from './cave.js';
 import { DUNGEON_SHAPE } from './dungeon.js';
@@ -27,6 +28,7 @@ export const SHAPES = {
   gear: GEAR_SHAPE,
   card: CARD_SHAPE,
   heart: HEART_SHAPE,
+  star: STAR_SHAPE,
   cave: CAVE_SHAPE,
   dungeon: DUNGEON_SHAPE,
 } as const satisfies Readonly<Record<string, ShapeRule>>;
