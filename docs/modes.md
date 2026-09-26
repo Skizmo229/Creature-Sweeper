@@ -75,14 +75,15 @@ global 64x32: 45 square, inside the same 2,048 cells.
 
 **CARD** is a playing card, a per-cell mask in a box kept at a card's 5:7: rounded corners, and
 four suit-shaped holes where a Four's pips sit, spade and heart above, diamond and club below and
-upside down. It starts at 48x68, as the owner asked, four to six times the size of an ordinary
-board, and is the one ladder whose tuned boards are bigger than the continuation's global
-ceiling, so its continuation keeps board 10's card. It sits on ARCANE's forced-guess curve per
-board, which on a board this size means sparser per cell: at ARCANE's schedule it was stuck 53.3
-times over the ladder and cleared 60%, and it ships on a ramp from one density point below
-ARCANE's to three (24.4 stuck and 85% against 23.9 and 82%; 60 seeds, 25 September 2026). A club
-is three lobes and a core; without the core one cell was left stranded between the lobes, which
-the connectivity test caught.
+upside down. The suits are drawn cell by cell, 11 wide and 10 to 12 tall, the same size on every
+board (`SUIT_ART`, with its copy in `ladders.py`): drawn as curves at this size they read as
+blobs, and the owner chose the drawn ones. It started at 48x68 and was made smaller at the
+owner's request, 30x42 growing to 35x49, twice an ordinary board; the tall box would be clipped
+by the continuation's global 64x32, so the continuation keeps board 10's card. It sits on
+ARCANE's forced-guess curve per board, which on a board this size means sparser per cell: at
+ARCANE's schedule it was stuck 51.3 times over the ladder and cleared 62%, and it ships on a ramp
+from 4.2 density points below ARCANE's to 3.7 (23.1 stuck and 85% against 23.9 and 82%; 120
+seeds, 26 September 2026).
 
 **VALENTINES** is a heart, a per-cell mask filling a square box: the classic heart curve, the
 same the card's heart suit is cut with, stretched to the box's exact extents. At ARCANE's

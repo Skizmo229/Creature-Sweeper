@@ -735,27 +735,29 @@ tint = "#b3203a"
 archetype = "descending"
 axis = "Four suits cut out"
 blurb = """\
-  A playing card, the size of four ordinary boards, with its four suits cut out where a Four's \
-  pips sit. Every hole is another edge to read from. Reveal and Census available."""
-# A card's 5:7 portrait, starting at 48x68 as the owner asked, and growing
-# a sixth each way over the ladder.
-size = [[48, 68], [48, 68], [48, 68], [50, 71], [50, 71], [52, 74], [52, 74], [54, 76], [54, 76], [56, 79]]
+  A playing card, twice the size of an ordinary board, with its four suits cut out where a \
+  Four's pips sit. Every hole is another edge to read from. Reveal and Census available."""
+# A card's 5:7 portrait. It started at 48x68; the owner then asked for a
+# smaller card with bigger suits, and chose suits drawn cell by cell, 11
+# wide, over curves. 30x42 at board 1, growing a sixth each way: 984 to
+# 1,439 cells.
+size = [[30, 42], [30, 42], [30, 42], [31, 44], [31, 44], [33, 46], [33, 46], [34, 48], [34, 48], [35, 49]]
 tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
-# On ARCANE's forced-guess curve per board, which on boards four to six
-# times ARCANE's size means sparser per cell. Measured with the honest
-# player, 25 September 2026: at ARCANE's schedule it was stuck 53.3 times
-# over the ladder and cleared 60% (30 seeds); three points down all the
-# way matched ARCANE's late boards but left the first five nearly
-# guess-free. This ramp, 1 point down at board 1 to 3 at board 10, gives
-# 24.4 stuck and 85% cleared against ARCANE's 23.9 and 82%, and board 10
-# 5.1 stuck and 60% against 5.1 and 63% (60 seeds).
-density = [0.255, 0.262, 0.269, 0.276, 0.283, 0.29, 0.297, 0.304, 0.31, 0.315]
+# On ARCANE's forced-guess curve per board, which on boards twice
+# ARCANE's size means sparser per cell. Measured with the honest player,
+# 26 September 2026: at ARCANE's schedule it was stuck 51.3 times over the
+# ladder and cleared 62% (60 seeds); ramps shifted down stayed flatter
+# than ARCANE's, too many guesses early and too few late, so this one
+# starts 4.2 points below ARCANE's and ends 3.7 below: 23.1 stuck and 85%
+# cleared against ARCANE's 23.9 and 82%, and board 10 4.9 stuck against
+# 5.1 (120 seeds).
+density = [0.223, 0.232, 0.241, 0.251, 0.26, 0.27, 0.279, 0.289, 0.298, 0.308]
 hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
 lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
 alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
-# Past the global 64x32 from the first board, so the continuation keeps
-# board 10's card and moves only its other dials.
-ceiling = { max_w = 56, max_h = 79 }
+# A tall box the global 64x32 would clip, so the continuation keeps board
+# 10's card and moves only its other dials.
+ceiling = { max_w = 35, max_h = 49 }
 shape = "card"
 spells = ["reveal", "census"]
 start_mana = 75

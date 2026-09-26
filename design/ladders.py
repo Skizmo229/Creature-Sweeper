@@ -47,9 +47,64 @@ def _gear(w, h, dx, dy):
                for ux, uy in GEAR_TEETH)
 
 
-CARD = dict(corner=0.09, pip=0.11, cols=(0.28, 0.72), rows=(0.25, 0.75))
-CLUB_LOBES = ((0, -0.48), (-0.48, 0.18), (0.48, 0.18), (0, 0))
-CLUB_LOBE = 0.46
+CARD = dict(corner=0.09, cols=(0.28, 0.72), rows=(0.25, 0.75))
+SUIT_ART = dict(
+    spade=[
+        ".....#.....",
+        "....###....",
+        "...#####...",
+        "..#######..",
+        ".#########.",
+        "###########",
+        "###########",
+        "###########",
+        ".###.#.###.",
+        ".....#.....",
+        "....###....",
+        "...#####...",
+    ],
+    heart=[
+        ".###...###.",
+        "#####.#####",
+        "###########",
+        "###########",
+        "###########",
+        ".#########.",
+        "..#######..",
+        "...#####...",
+        "....###....",
+        ".....#.....",
+    ],
+    diamond=[
+        ".....#.....",
+        "....###....",
+        "....###....",
+        "...#####...",
+        "..#######..",
+        ".#########.",
+        ".#########.",
+        "..#######..",
+        "...#####...",
+        "....###....",
+        "....###....",
+        ".....#.....",
+    ],
+    club=[
+        "....###....",
+        "...#####...",
+        "...#####...",
+        "...#####...",
+        ".##.###.##.",
+        "####.#.####",
+        "###########",
+        "####.#.####",
+        ".##..#..##.",
+        ".....#.....",
+        "....###....",
+        "...#####...",
+    ],
+)
+CARD_PIPS = ((0, 0, "spade"), (1, 0, "heart"), (0, 1, "diamond"), (1, 1, "club"))
 
 
 def _heart_curve(x, y):
@@ -57,18 +112,13 @@ def _heart_curve(x, y):
     return a * a * a - x * x * y * y * y <= 0
 
 
-def _stem(u, v, top):
-    return top <= v <= 1 and abs(u) <= 0.12 + (0.35 * (v - top)) / (1 - top)
-
-
-SUITS = dict(
-    spade=lambda u, v: _heart_curve(u * 1.2, (v + 0.275) * 1.545 + 0.12) or _stem(u, v, 0.2),
-    heart=lambda u, v: _heart_curve(u * 1.12, -v * 1.12 + 0.12),
-    diamond=lambda u, v: abs(u) / 0.72 + abs(v) <= 1,
-    club=lambda u, v: any((u - cx) * (u - cx) + (v - cy) * (v - cy) <= CLUB_LOBE * CLUB_LOBE
-                          for cx, cy in CLUB_LOBES) or _stem(u, v, 0.1),
-)
-CARD_PIPS = ((0, 0, "spade"), (1, 0, "heart"), (0, 1, "diamond"), (1, 1, "club"))
+def _in_suit(art, cx, cy, flipped, x, y):
+    rows, cols = len(art), len(art[0])
+    i = x - math.floor(cx - cols / 2 + 0.5)
+    j = y - math.floor(cy - rows / 2 + 0.5)
+    if not (0 <= i < cols and 0 <= j < rows):
+        return False
+    return (art[rows - 1 - j][cols - 1 - i] if flipped else art[j][i]) == "#"
 
 
 def _card(w, h, x, y):
@@ -78,15 +128,9 @@ def _card(w, h, x, y):
     ny = min(max(yc, corner), h - corner)
     if (xc - nx) * (xc - nx) + (yc - ny) * (yc - ny) > corner * corner:
         return False
-    size = CARD["pip"] * w
-    for col, row, suit in CARD_PIPS:
-        u = (xc - CARD["cols"][col] * w) / size
-        v = (yc - CARD["rows"][row] * h) / size
-        if row == 1:
-            u, v = -u, -v
-        if abs(u) <= 1.2 and abs(v) <= 1.2 and SUITS[suit](u, v):
-            return False
-    return True
+    return not any(_in_suit(SUIT_ART[suit], CARD["cols"][col] * w, CARD["rows"][row] * h,
+                            row == 1, x, y)
+                   for col, row, suit in CARD_PIPS)
 
 
 HEART = dict(half_width=1.135, half_height=1.118, lift=0.118)
