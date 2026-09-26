@@ -10019,68 +10019,14 @@
   "boards": [
    {
     "n": 1,
-    "w": 30,
-    "h": 16,
+    "w": 28,
+    "h": 28,
     "cells": 360,
-    "monsters": 83,
-    "density": 23.1,
+    "monsters": 90,
+    "density": 25.0,
     "tiers": 5,
     "quantity": [
-     28,
-     22,
-     17,
-     11,
-     5
-    ],
-    "hp": 10,
-    "lock": 2,
-    "exp": [
-     8,
-     50,
-     140,
-     228
-    ],
-    "givens": null,
-    "total_exp": 308,
-    "empty": 277
-   },
-   {
-    "n": 2,
-    "w": 30,
-    "h": 16,
-    "cells": 360,
-    "monsters": 86,
-    "density": 23.9,
-    "tiers": 5,
-    "quantity": [
-     29,
-     23,
-     17,
-     11,
-     6
-    ],
-    "hp": 10,
-    "lock": 2,
-    "exp": [
-     8,
-     52,
-     143,
-     231
-    ],
-    "givens": null,
-    "total_exp": 327,
-    "empty": 274
-   },
-   {
-    "n": 3,
-    "w": 30,
-    "h": 16,
-    "cells": 360,
-    "monsters": 89,
-    "density": 24.7,
-    "tiers": 5,
-    "quantity": [
-     29,
+     30,
      24,
      18,
      12,
@@ -10089,49 +10035,76 @@
     "hp": 10,
     "lock": 2,
     "exp": [
-     8,
-     54,
-     149,
-     245
+     9,
+     55,
+     150,
+     246
     ],
     "givens": null,
-    "total_exp": 341,
-    "empty": 271
+    "total_exp": 342,
+    "empty": 270
    },
    {
-    "n": 4,
-    "w": 34,
-    "h": 18,
-    "cells": 420,
-    "monsters": 107,
-    "density": 25.5,
+    "n": 2,
+    "w": 28,
+    "h": 28,
+    "cells": 360,
+    "monsters": 93,
+    "density": 25.8,
     "tiers": 5,
     "quantity": [
-     36,
-     29,
-     21,
-     14,
-     7
+     31,
+     25,
+     19,
+     12,
+     6
     ],
     "hp": 10,
     "lock": 2,
     "exp": [
-     10,
-     66,
-     178,
-     290
+     9,
+     57,
+     157,
+     253
     ],
     "givens": null,
-    "total_exp": 402,
-    "empty": 313
+    "total_exp": 349,
+    "empty": 267
    },
    {
-    "n": 5,
-    "w": 34,
-    "h": 18,
-    "cells": 420,
+    "n": 3,
+    "w": 28,
+    "h": 28,
+    "cells": 360,
+    "monsters": 96,
+    "density": 26.7,
+    "tiers": 5,
+    "quantity": [
+     32,
+     26,
+     19,
+     13,
+     6
+    ],
+    "hp": 10,
+    "lock": 2,
+    "exp": [
+     9,
+     59,
+     160,
+     264
+    ],
+    "givens": null,
+    "total_exp": 360,
+    "empty": 264
+   },
+   {
+    "n": 4,
+    "w": 31,
+    "h": 31,
+    "cells": 400,
     "monsters": 110,
-    "density": 26.2,
+    "density": 27.5,
     "tiers": 5,
     "quantity": [
      37,
@@ -10150,152 +10123,150 @@
     ],
     "givens": null,
     "total_exp": 415,
-    "empty": 310
+    "empty": 290
+   },
+   {
+    "n": 5,
+    "w": 31,
+    "h": 31,
+    "cells": 400,
+    "monsters": 113,
+    "density": 28.2,
+    "tiers": 5,
+    "quantity": [
+     38,
+     30,
+     23,
+     15,
+     7
+    ],
+    "hp": 10,
+    "lock": 2,
+    "exp": [
+     10,
+     69,
+     190,
+     310
+    ],
+    "givens": null,
+    "total_exp": 422,
+    "empty": 287
    },
    {
     "n": 6,
-    "w": 36,
-    "h": 19,
-    "cells": 450,
-    "monsters": 122,
-    "density": 27.1,
+    "w": 33,
+    "h": 33,
+    "cells": 440,
+    "monsters": 128,
+    "density": 29.1,
     "tiers": 5,
     "quantity": [
-     41,
-     33,
-     24,
-     16,
-     8
-    ],
-    "hp": 10,
-    "lock": 3,
-    "exp": [
-     10,
-     107,
-     203,
-     331
-    ],
-    "givens": null,
-    "total_exp": 459,
-    "empty": 328
-   },
-   {
-    "n": 7,
-    "w": 36,
-    "h": 19,
-    "cells": 450,
-    "monsters": 125,
-    "density": 27.8,
-    "tiers": 5,
-    "quantity": [
-     42,
-     33,
-     25,
+     43,
+     34,
+     26,
      17,
      8
     ],
     "hp": 10,
     "lock": 3,
     "exp": [
-     10,
-     108,
-     208,
-     344
+     11,
+     111,
+     215,
+     351
     ],
     "givens": null,
-    "total_exp": 472,
-    "empty": 325
+    "total_exp": 479,
+    "empty": 312
+   },
+   {
+    "n": 7,
+    "w": 33,
+    "h": 33,
+    "cells": 440,
+    "monsters": 131,
+    "density": 29.8,
+    "tiers": 5,
+    "quantity": [
+     44,
+     35,
+     26,
+     17,
+     9
+    ],
+    "hp": 10,
+    "lock": 3,
+    "exp": [
+     11,
+     114,
+     218,
+     354
+    ],
+    "givens": null,
+    "total_exp": 498,
+    "empty": 309
    },
    {
     "n": 8,
-    "w": 38,
-    "h": 20,
-    "cells": 480,
-    "monsters": 137,
-    "density": 28.5,
+    "w": 35,
+    "h": 35,
+    "cells": 484,
+    "monsters": 148,
+    "density": 30.6,
     "tiers": 5,
     "quantity": [
-     46,
-     37,
-     27,
-     18,
-     9
-    ],
-    "hp": 10,
-    "lock": 3,
-    "exp": [
-     11,
-     120,
-     228,
-     372
-    ],
-    "givens": null,
-    "total_exp": 516,
-    "empty": 343
-   },
-   {
-    "n": 9,
-    "w": 38,
-    "h": 20,
-    "cells": 480,
-    "monsters": 141,
-    "density": 29.4,
-    "tiers": 5,
-    "quantity": [
-     47,
-     38,
-     28,
-     19,
-     9
-    ],
-    "hp": 10,
-    "lock": 3,
-    "exp": [
-     11,
-     123,
-     235,
-     387
-    ],
-    "givens": null,
-    "total_exp": 531,
-    "empty": 339
-   },
-   {
-    "n": 10,
-    "w": 40,
-    "h": 21,
-    "cells": 510,
-    "monsters": 154,
-    "density": 30.2,
-    "tiers": 5,
-    "quantity": [
-     51,
-     41,
-     31,
-     21,
+     49,
+     39,
+     30,
+     20,
      10
     ],
     "hp": 10,
     "lock": 3,
     "exp": [
-     11,
-     133,
-     257,
-     425
+     12,
+     127,
+     247,
+     407
     ],
     "givens": null,
-    "total_exp": 585,
-    "empty": 356
-   }
-  ],
-  "extended": [
+    "total_exp": 567,
+    "empty": 336
+   },
    {
-    "n": 11,
-    "w": 41,
-    "h": 22,
-    "cells": 530,
+    "n": 9,
+    "w": 35,
+    "h": 35,
+    "cells": 484,
+    "monsters": 152,
+    "density": 31.4,
+    "tiers": 5,
+    "quantity": [
+     51,
+     41,
+     30,
+     20,
+     10
+    ],
+    "hp": 10,
+    "lock": 3,
+    "exp": [
+     12,
+     133,
+     253,
+     413
+    ],
+    "givens": null,
+    "total_exp": 573,
+    "empty": 332
+   },
+   {
+    "n": 10,
+    "w": 37,
+    "h": 37,
+    "cells": 508,
     "monsters": 164,
-    "density": 30.9,
+    "density": 32.3,
     "tiers": 5,
     "quantity": [
      54,
@@ -10307,54 +10278,56 @@
     "hp": 10,
     "lock": 3,
     "exp": [
-     11,
+     12,
      142,
      274,
      450
     ],
     "givens": null,
     "total_exp": 626,
-    "empty": 366
-   },
+    "empty": 344
+   }
+  ],
+  "extended": [
    {
-    "n": 12,
-    "w": 42,
-    "h": 22,
-    "cells": 540,
-    "monsters": 172,
-    "density": 31.9,
+    "n": 11,
+    "w": 38,
+    "h": 38,
+    "cells": 508,
+    "monsters": 168,
+    "density": 33.1,
     "tiers": 5,
     "quantity": [
-     57,
-     46,
+     56,
+     45,
      34,
-     23,
-     12
+     22,
+     11
     ],
     "hp": 10,
     "lock": 3,
     "exp": [
      12,
-     149,
-     285,
-     469
+     146,
+     282,
+     458
     ],
     "givens": null,
-    "total_exp": 661,
-    "empty": 368
+    "total_exp": 634,
+    "empty": 340
    },
    {
-    "n": 13,
-    "w": 43,
-    "h": 23,
-    "cells": 560,
-    "monsters": 183,
-    "density": 32.7,
+    "n": 12,
+    "w": 39,
+    "h": 39,
+    "cells": 536,
+    "monsters": 181,
+    "density": 33.8,
     "tiers": 5,
     "quantity": [
      61,
-     49,
-     37,
+     48,
+     36,
      24,
      12
     ],
@@ -10362,55 +10335,109 @@
     "lock": 3,
     "exp": [
      12,
-     159,
-     307,
-     499
+     157,
+     301,
+     493
     ],
     "givens": null,
-    "total_exp": 691,
-    "empty": 377
+    "total_exp": 685,
+    "empty": 355
+   },
+   {
+    "n": 13,
+    "w": 40,
+    "h": 40,
+    "cells": 548,
+    "monsters": 186,
+    "density": 33.9,
+    "tiers": 5,
+    "quantity": [
+     62,
+     50,
+     37,
+     25,
+     12
+    ],
+    "hp": 10,
+    "lock": 3,
+    "exp": [
+     12,
+     162,
+     310,
+     510
+    ],
+    "givens": null,
+    "total_exp": 702,
+    "empty": 362
    },
    {
     "n": 14,
-    "w": 44,
-    "h": 23,
-    "cells": 570,
-    "monsters": 190,
-    "density": 33.3,
+    "w": 41,
+    "h": 41,
+    "cells": 564,
+    "monsters": 192,
+    "density": 34.0,
     "tiers": 5,
     "quantity": [
-     63,
+     64,
      51,
      38,
-     25,
+     26,
      13
     ],
     "hp": 10,
     "lock": 3,
     "exp": [
      12,
-     165,
-     317,
-     517
+     166,
+     318,
+     526
     ],
     "givens": null,
-    "total_exp": 725,
-    "empty": 380
+    "total_exp": 734,
+    "empty": 372
    },
    {
     "n": 15,
-    "w": 46,
-    "h": 24,
-    "cells": 600,
-    "monsters": 204,
-    "density": 34.0,
+    "w": 42,
+    "h": 42,
+    "cells": 584,
+    "monsters": 199,
+    "density": 34.1,
+    "tiers": 5,
+    "quantity": [
+     66,
+     53,
+     40,
+     27,
+     13
+    ],
+    "hp": 10,
+    "lock": 4,
+    "exp": [
+     66,
+     172,
+     332,
+     548
+    ],
+    "givens": null,
+    "total_exp": 756,
+    "empty": 385
+   },
+   {
+    "n": 16,
+    "w": 43,
+    "h": 43,
+    "cells": 596,
+    "monsters": 203,
+    "density": 34.1,
     "tiers": 5,
     "quantity": [
      68,
      54,
      41,
      27,
-     14
+     13
     ],
     "hp": 10,
     "lock": 4,
@@ -10421,21 +10448,21 @@
      556
     ],
     "givens": null,
-    "total_exp": 780,
-    "empty": 396
+    "total_exp": 764,
+    "empty": 393
    },
    {
-    "n": 16,
-    "w": 47,
-    "h": 24,
-    "cells": 610,
-    "monsters": 207,
+    "n": 17,
+    "w": 44,
+    "h": 44,
+    "cells": 616,
+    "monsters": 209,
     "density": 33.9,
     "tiers": 5,
     "quantity": [
      69,
-     55,
-     41,
+     56,
+     42,
      28,
      14
     ],
@@ -10443,27 +10470,27 @@
     "lock": 4,
     "exp": [
      69,
-     179,
-     343,
-     567
+     181,
+     349,
+     573
     ],
     "givens": null,
-    "total_exp": 791,
-    "empty": 403
+    "total_exp": 797,
+    "empty": 407
    },
    {
-    "n": 17,
-    "w": 48,
-    "h": 25,
-    "cells": 630,
-    "monsters": 214,
+    "n": 18,
+    "w": 45,
+    "h": 45,
+    "cells": 624,
+    "monsters": 212,
     "density": 34.0,
     "tiers": 5,
     "quantity": [
      71,
      57,
-     43,
-     29,
+     42,
+     28,
      14
     ],
     "hp": 10,
@@ -10471,417 +10498,12 @@
     "exp": [
      71,
      185,
-     357,
-     589
+     353,
+     577
     ],
     "givens": null,
-    "total_exp": 813,
-    "empty": 416
-   },
-   {
-    "n": 18,
-    "w": 49,
-    "h": 25,
-    "cells": 640,
-    "monsters": 218,
-    "density": 34.1,
-    "tiers": 5,
-    "quantity": [
-     73,
-     58,
-     44,
-     29,
-     14
-    ],
-    "hp": 10,
-    "lock": 4,
-    "exp": [
-     73,
-     189,
-     365,
-     597
-    ],
-    "givens": null,
-    "total_exp": 821,
-    "empty": 422
-   },
-   {
-    "n": 19,
-    "w": 50,
-    "h": 26,
-    "cells": 660,
-    "monsters": 224,
-    "density": 33.9,
-    "tiers": 5,
-    "quantity": [
-     74,
-     60,
-     45,
-     30,
-     15
-    ],
-    "hp": 10,
-    "lock": 4,
-    "exp": [
-     74,
-     194,
-     374,
-     614
-    ],
-    "givens": null,
-    "total_exp": 854,
-    "empty": 436
-   },
-   {
-    "n": 20,
-    "w": 51,
-    "h": 27,
-    "cells": 680,
-    "monsters": 231,
-    "density": 34.0,
-    "tiers": 5,
-    "quantity": [
-     77,
-     62,
-     46,
-     31,
-     15
-    ],
-    "hp": 10,
-    "lock": 4,
-    "exp": [
-     77,
-     201,
-     385,
-     633
-    ],
-    "givens": null,
-    "total_exp": 873,
-    "empty": 449
-   },
-   {
-    "n": 21,
-    "w": 52,
-    "h": 27,
-    "cells": 690,
-    "monsters": 235,
-    "density": 34.1,
-    "tiers": 5,
-    "quantity": [
-     78,
-     63,
-     47,
-     31,
-     16
-    ],
-    "hp": 10,
-    "lock": 4,
-    "exp": [
-     78,
-     204,
-     392,
-     640
-    ],
-    "givens": null,
-    "total_exp": 896,
-    "empty": 455
-   },
-   {
-    "n": 22,
-    "w": 53,
-    "h": 28,
-    "cells": 710,
-    "monsters": 241,
-    "density": 33.9,
-    "tiers": 5,
-    "quantity": [
-     81,
-     64,
-     48,
-     32,
-     16
-    ],
-    "hp": 10,
-    "lock": 4,
-    "exp": [
-     81,
-     209,
-     401,
-     657
-    ],
-    "givens": null,
-    "total_exp": 913,
-    "empty": 469
-   },
-   {
-    "n": 23,
-    "w": 54,
-    "h": 28,
-    "cells": 720,
-    "monsters": 245,
-    "density": 34.0,
-    "tiers": 5,
-    "quantity": [
-     82,
-     65,
-     49,
-     33,
-     16
-    ],
-    "hp": 10,
-    "lock": 4,
-    "exp": [
-     82,
-     212,
-     408,
-     672
-    ],
-    "givens": null,
-    "total_exp": 928,
-    "empty": 475
-   },
-   {
-    "n": 24,
-    "w": 56,
-    "h": 29,
-    "cells": 750,
-    "monsters": 255,
-    "density": 34.0,
-    "tiers": 5,
-    "quantity": [
-     85,
-     68,
-     51,
-     34,
-     17
-    ],
-    "hp": 10,
-    "lock": 4,
-    "exp": [
-     85,
-     221,
-     425,
-     697
-    ],
-    "givens": null,
-    "total_exp": 969,
-    "empty": 495
-   },
-   {
-    "n": 25,
-    "w": 57,
-    "h": 29,
-    "cells": 760,
-    "monsters": 258,
-    "density": 33.9,
-    "tiers": 5,
-    "quantity": [
-     86,
-     69,
-     52,
-     34,
-     17
-    ],
-    "hp": 10,
-    "lock": 4,
-    "exp": [
-     86,
-     224,
-     432,
-     704
-    ],
-    "givens": null,
-    "total_exp": 976,
-    "empty": 502
-   },
-   {
-    "n": 26,
-    "w": 58,
-    "h": 30,
-    "cells": 780,
-    "monsters": 265,
-    "density": 34.0,
-    "tiers": 5,
-    "quantity": [
-     88,
-     71,
-     53,
-     35,
-     18
-    ],
-    "hp": 10,
-    "lock": 4,
-    "exp": [
-     88,
-     230,
-     442,
-     722
-    ],
-    "givens": null,
-    "total_exp": 1010,
-    "empty": 515
-   },
-   {
-    "n": 27,
-    "w": 59,
-    "h": 30,
-    "cells": 790,
-    "monsters": 269,
-    "density": 34.1,
-    "tiers": 5,
-    "quantity": [
-     89,
-     72,
-     54,
-     36,
-     18
-    ],
-    "hp": 10,
-    "lock": 4,
-    "exp": [
-     89,
-     233,
-     449,
-     737
-    ],
-    "givens": null,
-    "total_exp": 1025,
-    "empty": 521
-   },
-   {
-    "n": 28,
-    "w": 60,
-    "h": 31,
-    "cells": 810,
-    "monsters": 275,
-    "density": 34.0,
-    "tiers": 5,
-    "quantity": [
-     92,
-     73,
-     55,
-     37,
-     18
-    ],
-    "hp": 10,
-    "lock": 4,
-    "exp": [
-     92,
-     238,
-     458,
-     754
-    ],
-    "givens": null,
-    "total_exp": 1042,
-    "empty": 535
-   },
-   {
-    "n": 29,
-    "w": 61,
-    "h": 32,
-    "cells": 830,
-    "monsters": 282,
-    "density": 34.0,
-    "tiers": 5,
-    "quantity": [
-     94,
-     75,
-     56,
-     38,
-     19
-    ],
-    "hp": 10,
-    "lock": 4,
-    "exp": [
-     94,
-     244,
-     468,
-     772
-    ],
-    "givens": null,
-    "total_exp": 1076,
-    "empty": 548
-   },
-   {
-    "n": 30,
-    "w": 62,
-    "h": 32,
-    "cells": 840,
-    "monsters": 286,
-    "density": 34.0,
-    "tiers": 5,
-    "quantity": [
-     96,
-     76,
-     57,
-     38,
-     19
-    ],
-    "hp": 10,
-    "lock": 4,
-    "exp": [
-     96,
-     248,
-     476,
-     780
-    ],
-    "givens": null,
-    "total_exp": 1084,
-    "empty": 554
-   },
-   {
-    "n": 31,
-    "w": 63,
-    "h": 32,
-    "cells": 850,
-    "monsters": 289,
-    "density": 34.0,
-    "tiers": 5,
-    "quantity": [
-     96,
-     77,
-     58,
-     39,
-     19
-    ],
-    "hp": 10,
-    "lock": 4,
-    "exp": [
-     96,
-     250,
-     482,
-     794
-    ],
-    "givens": null,
-    "total_exp": 1098,
-    "empty": 561
-   },
-   {
-    "n": 32,
-    "w": 64,
-    "h": 32,
-    "cells": 860,
-    "monsters": 292,
-    "density": 34.0,
-    "tiers": 5,
-    "quantity": [
-     97,
-     78,
-     58,
-     39,
-     20
-    ],
-    "hp": 10,
-    "lock": 4,
-    "exp": [
-     97,
-     253,
-     485,
-     797
-    ],
-    "givens": null,
-    "total_exp": 1117,
-    "empty": 568
+    "total_exp": 801,
+    "empty": 412
    }
   ]
  },

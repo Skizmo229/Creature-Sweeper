@@ -181,7 +181,10 @@ def shape_present(shape, param, w, h, x, y):
     cx, cy = (w - 1) / 2, (h - 1) / 2
     dx, dy = x + 0.5 - w / 2, y + 0.5 - h / 2
     if shape == "donut":
-        return x < param or y < param or x >= w - param or y >= h - param
+        outer = min(w, h) / 2
+        hole = max(0, outer - param)
+        r2 = dx * dx + dy * dy
+        return hole * hole <= r2 <= outer * outer
     if shape == "cross":
         return abs(x - cx) <= param / 2 or abs(y - cy) <= param / 2
     if shape == "diamond":

@@ -535,12 +535,22 @@ axis = "A ring with a hole"
 blurb = """\
   A ring with a hole in the middle, so there are two rims to work in from. Reveal and Census \
   available."""
-size = [[30, 16], [30, 16], [30, 16], [34, 18], [34, 18], [36, 19], [36, 19], [38, 20], [38, 20], [40, 21]]
+# Square boxes, since the ring is round (26 September 2026, at the owner's request): a 5-cell
+# ring leaves 360 cells on board 1 and 508 on board 10, about the 360 to 510 the square ring
+# left in the wide boxes it had before.
+size = [[28, 28], [28, 28], [28, 28], [31, 31], [31, 31], [33, 33], [33, 33], [35, 35], [35, 35], [37, 37]]
 tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
-density = [0.23, 0.238, 0.246, 0.254, 0.262, 0.27, 0.278, 0.286, 0.294, 0.302]
+# Two points above the square ring's schedule. The round ring's staircase rims give more away:
+# at the old schedule the graded player at grade 2 cleared 98% over the ladder and 93% of board
+# 10, against the square ring's 95% and 80%; two points up gives 95% and 80% (40 seeds, 26
+# September 2026). A thicker ring is easier still, not harder: a 7-cell one cleared 98% of board
+# 10 at 37% density.
+density = [0.25, 0.258, 0.266, 0.274, 0.282, 0.29, 0.298, 0.306, 0.314, 0.322]
 hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
 lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
 alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
+# A square box inside the global 2,048 cells, as GEAR's is.
+ceiling = { max_w = 45, max_h = 45 }
 shape = "donut"
 shape_param = 5
 spells = ["reveal", "census"]
