@@ -535,24 +535,24 @@ axis = "A ring with a hole"
 blurb = """\
   A ring with a hole in the middle, so there are two rims to work in from. Reveal and Census \
   available."""
-# Square boxes, since the ring is round (26 September 2026, at the owner's request): a 5-cell
-# ring leaves 360 cells on board 1 and 508 on board 10, about the 360 to 510 the square ring
-# left in the wide boxes it had before.
+# Square boxes, since the ring is round (26 September 2026, at the owner's request): a 6-cell
+# ring leaves 408 cells on board 1 and 596 on board 10.
 size = [[28, 28], [28, 28], [28, 28], [31, 31], [31, 31], [33, 33], [33, 33], [35, 35], [35, 35], [37, 37]]
 tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
-# Two points above the square ring's schedule. The round ring's staircase rims give more away:
-# at the old schedule the graded player at grade 2 cleared 98% over the ladder and 93% of board
-# 10, against the square ring's 95% and 80%; two points up gives 95% and 80% (40 seeds, 26
-# September 2026). A thicker ring is easier still, not harder: a 7-cell one cleared 98% of board
-# 10 at 37% density.
-density = [0.25, 0.258, 0.266, 0.274, 0.282, 0.29, 0.298, 0.306, 0.314, 0.322]
+# Six points above the square ring's schedule. The round ring's staircase rims give more away,
+# and a thicker ring more still: at the square ring's schedule the graded player at grade 2
+# cleared 98% over the ladder and 93% of board 10 on a 5-cell ring, against the square ring's 95%
+# and 80%, and on a 6-cell ring 99% and 93% at two points up, 97% and 88% at four; six points up
+# gives 94% and 80% (40 seeds, 26 September 2026). A 7-cell ring cleared 98% of board 10 even at
+# 37%.
+density = [0.29, 0.298, 0.306, 0.314, 0.322, 0.33, 0.338, 0.346, 0.354, 0.362]
 hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
 lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
 alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
 # A square box inside the global 2,048 cells, as GEAR's is.
 ceiling = { max_w = 45, max_h = 45 }
 shape = "donut"
-shape_param = 5
+shape_param = 6
 spells = ["reveal", "census"]
 start_mana = 75
 
