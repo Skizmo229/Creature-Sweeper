@@ -132,6 +132,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   licences in `public/FONT-LICENSES.txt`, `@font-face` in `fonts.css`. `test/fonts.test.ts` checks
   all of it, and that every ladder names a bundled face, which two ladders may share (decision
   0031).
+- One more family is bundled for the creature icons, not for text: `Pip Symbols`, four faces cut
+  from open Noto fonts to the 782 symbols the custom icon offers (`src/ui/pipfont/`, their
+  `@font-face` in `pipfont/pipfont.css`, licences in the same file). `test/pipsymbols.test.ts`
+  checks them as `test/fonts.test.ts` checks the rest; see the creature-icon bullet below.
 - A face must have lining figures; Georgia's old-style figures made numbers jump. Check a
   candidate's OS/2 metrics with fontTools: Aladin and Gluten misstate cap height
   (`capHeightFix`) and Aladin its x-height (`exHeightFix`).
