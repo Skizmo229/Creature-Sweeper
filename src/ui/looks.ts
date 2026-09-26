@@ -12,7 +12,7 @@
 import type { FontId } from './typefaces.js';
 
 export type PipShape =
-  'circle' | 'square' | 'diamond' | 'hex' | 'cross' | 'ring' | 'ringDiamond' | 'triangle';
+  'circle' | 'square' | 'diamond' | 'hex' | 'cross' | 'ring' | 'ringDiamond' | 'triangle' | 'gear';
 
 /**
  * A symbol drawn as the pip, by its code point, written as `U+2764`: the player's own choice from
@@ -433,6 +433,24 @@ const LOOKS: Record<string, LadderLook> = {
     // Stone set on stone, and blocks that tumble when it is done.
     sfx: 'thud',
     victory: 'tumble',
+  },
+  gear: {
+    // Gunmetal, with a `hot` of red-hot metal: DOMINOES's red, 83 clear of the tier-4 orange and 123
+    // of the gold that Reveal writes here, and 5.7:1 on the floor (decision 0032).
+    palette: {
+      tile: '#5a6470',
+      tileEdge: '#3d454e',
+      floor: '#111418',
+      ink: '#dde4ea',
+      hot: '#ff4d6d',
+      pip: 'gear',
+      accent: '#8a97a6',
+    },
+    // Machined corners.
+    font: 'chakra-petch',
+    sfx: 'thud',
+    // A ring turning out from the centre, like the gear itself.
+    victory: 'wipeRadial',
   },
   dungeon: {
     palette: {

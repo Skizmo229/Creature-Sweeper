@@ -41,3 +41,48 @@ export const PYRAMID_SHAPE = predicateShape(
   'pyramid',
   (_param, w, _h, x, y) => Math.abs(x - (w - 1) / 2) < y + 1,
 );
+
+/**
+ * The outlines below are measured from the box's centre in cells, cell centres at `x + 0.5`, and
+ * use nothing but arithmetic and square roots. Those round the same way in JavaScript and in
+ * Python; a sine or an arctangent may not, and `ladders.py`'s copy has to leave the same cells to
+ * the last one.
+ */
+const fromCentre = (w: number, h: number, x: number, y: number) => ({
+  dx: x + 0.5 - w / 2,
+  dy: y + 0.5 - h / 2,
+});
+
+/**
+ * The gear's proportions, as shares of its tip radius (half the box's shorter side), from the
+ * owner's drawing: eight teeth, one pointing straight up, tapering from root to tip, round a hole.
+ */
+const GEAR = { root: 0.82, hole: 0.33, rootHalfWidth: 0.16, tipHalfWidth: 0.12 };
+
+/** The eight teeth's directions, from straight up, clockwise, as exact unit vectors. */
+const GEAR_TEETH: ReadonlyArray<readonly [number, number]> = [
+  [0, -1],
+  [Math.SQRT1_2, -Math.SQRT1_2],
+  [1, 0],
+  [Math.SQRT1_2, Math.SQRT1_2],
+  [0, 1],
+  [-Math.SQRT1_2, Math.SQRT1_2],
+  [-1, 0],
+  [-Math.SQRT1_2, -Math.SQRT1_2],
+];
+
+export const GEAR_SHAPE = predicateShape('gear', (_param, w, h, x, y) => {
+  const { dx, dy } = fromCentre(w, h, x, y);
+  const tip = Math.min(w, h) / 2;
+  const hole = GEAR.hole * tip;
+  const root = GEAR.root * tip;
+  const r2 = dx * dx + dy * dy;
+  if (r2 < hole * hole || r2 > tip * tip) return false;
+  if (r2 <= root * root) return true;
+  // Out among the teeth: inside one if close enough to its centre line, which narrows outward.
+  const along = (Math.sqrt(r2) - root) / (tip - root);
+  const half = tip * (GEAR.rootHalfWidth + (GEAR.tipHalfWidth - GEAR.rootHalfWidth) * along);
+  return GEAR_TEETH.some(
+    ([ux, uy]) => dx * ux + dy * uy > 0 && Math.abs(dx * uy - dy * ux) <= half,
+  );
+});

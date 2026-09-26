@@ -24,6 +24,7 @@ export const PIP_SHAPES: readonly PipShape[] = [
   'ring',
   'ringDiamond',
   'triangle',
+  'gear',
 ];
 
 export const PIP_NAMES: Record<PipShape, string> = {
@@ -35,6 +36,7 @@ export const PIP_NAMES: Record<PipShape, string> = {
   ring: 'Rings',
   ringDiamond: 'Hollow gems',
   triangle: 'Pyramids',
+  gear: 'Gears',
 };
 
 /** What a pip is called: a shape's name, or a symbol's own. */
@@ -199,6 +201,17 @@ const DIE_FACES: Record<number, readonly number[]> = {
   9: [0, 1, 2, 3, 4, 5, 6, 7, 8],
 };
 
+/** The gear pip: its teeth, one tooth's outline as (share of the radius, share of a tooth's pitch),
+ *  and the hole. */
+const GEAR_PIP_TEETH = 6;
+const GEAR_PIP_OUTLINE: ReadonlyArray<readonly [number, number]> = [
+  [0.72, -0.32],
+  [1, -0.17],
+  [1, 0.17],
+  [0.72, 0.32],
+];
+const GEAR_PIP_HOLE = 0.34;
+
 function pipPath(
   ctx: CanvasRenderingContext2D,
   shape: PipShape,
@@ -252,6 +265,21 @@ function pipPath(
       ctx.lineTo(cx - r, cy + r * 0.85);
       ctx.closePath();
       break;
+    case 'gear': {
+      // Six teeth rather than the board's eight, which is as many as a pip a few pixels across can
+      // show, round a hole cut the other way so a plain fill leaves it empty.
+      const step = (Math.PI * 2) / GEAR_PIP_TEETH;
+      for (let k = 0; k < GEAR_PIP_TEETH; k++) {
+        for (const [radius, offset] of GEAR_PIP_OUTLINE) {
+          const angle = (k + offset) * step - Math.PI / 2;
+          ctx.lineTo(cx + radius * r * Math.cos(angle), cy + radius * r * Math.sin(angle));
+        }
+      }
+      ctx.closePath();
+      ctx.moveTo(cx + r * GEAR_PIP_HOLE, cy);
+      ctx.arc(cx, cy, r * GEAR_PIP_HOLE, 0, Math.PI * 2, true);
+      break;
+    }
     case 'ring':
     case 'circle':
     default:

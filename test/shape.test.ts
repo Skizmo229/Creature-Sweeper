@@ -27,7 +27,7 @@ describe('the shape registry', () => {
     const type = structuredClone(ladders[0]!);
     type.shape = 'moon';
     expect(() => boardConfig([type], type.id, 1)).toThrow(
-      /unknown shape "moon" \(rect \| donut \| cross \| diamond \| pyramid \| cave \| dungeon\)/,
+      /unknown shape "moon" \(rect \| donut \| cross \| diamond \| pyramid \| gear \| cave \| dungeon\)/,
     );
   });
 

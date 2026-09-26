@@ -26,8 +26,31 @@ DATA.mkdir(exist_ok=True)
 # the `cells` figure emitted here for every board, so any drift fails loudly
 # rather than quietly mistuning a ladder.
 
+# The outlines, measured from the box's centre with cell centres at x + 0.5, using arithmetic and
+# square roots only, which round the same here as in JavaScript (see fixed.ts).
+GEAR = dict(root=0.82, hole=0.33, root_half_width=0.16, tip_half_width=0.12)
+_S = math.sqrt(0.5)
+GEAR_TEETH = [(0, -1), (_S, -_S), (1, 0), (_S, _S), (0, 1), (-_S, _S), (-1, 0), (-_S, -_S)]
+
+
+def _gear(w, h, dx, dy):
+    tip = min(w, h) / 2
+    hole = GEAR["hole"] * tip
+    root = GEAR["root"] * tip
+    r2 = dx * dx + dy * dy
+    if r2 < hole * hole or r2 > tip * tip:
+        return False
+    if r2 <= root * root:
+        return True
+    along = (math.sqrt(r2) - root) / (tip - root)
+    half = tip * (GEAR["root_half_width"]
+                  + (GEAR["tip_half_width"] - GEAR["root_half_width"]) * along)
+    return any(dx * ux + dy * uy > 0 and abs(dx * uy - dy * ux) <= half for ux, uy in GEAR_TEETH)
+
+
 def shape_present(shape, param, w, h, x, y):
     cx, cy = (w - 1) / 2, (h - 1) / 2
+    dx, dy = x + 0.5 - w / 2, y + 0.5 - h / 2
     if shape == "donut":
         return x < param or y < param or x >= w - param or y >= h - param
     if shape == "cross":
@@ -36,6 +59,8 @@ def shape_present(shape, param, w, h, x, y):
         return abs(x - cx) / (w / 2) + abs(y - cy) / (h / 2) <= 1
     if shape == "pyramid":
         return abs(x - cx) < y + 1
+    if shape == "gear":
+        return _gear(w, h, dx, dy)
     return True
 
 
@@ -466,7 +491,8 @@ def unlock_boards():
 # the way a player meets it.
 CATEGORIES = {
     "normal": ["easy", "normal", "huge", "extreme", "huge_extreme", "blind", "huge_blind"],
-    "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave", "pyramid"],
+    "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave", "pyramid",
+              "gear"],
     "magic": ["arcane", "workout", "oracle", "dungeon"],
     "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku"],
 }

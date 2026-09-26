@@ -182,11 +182,15 @@ class TheContinuation(unittest.TestCase):
                 self.assertGreaterEqual(b["hp"], floor, f"{t['id']}#{b['n']}")
 
     def test_stays_inside_the_ceilings(self):
+        # A ladder may set its own box (a square one for a round outline), never a bigger board.
+        area = L.CEILINGS["max_w"] * L.CEILINGS["max_h"]
         for t in BUILT:
+            over = next(x for x in L.TYPES if x["id"] == t["id"]).get("ceiling", {})
             for b in t["extended"]:
                 where = f"{t['id']}#{b['n']}"
-                self.assertLessEqual(b["w"], L.CEILINGS["max_w"], where)
-                self.assertLessEqual(b["h"], L.CEILINGS["max_h"], where)
+                self.assertLessEqual(b["w"], over.get("max_w", L.CEILINGS["max_w"]), where)
+                self.assertLessEqual(b["h"], over.get("max_h", L.CEILINGS["max_h"]), where)
+                self.assertLessEqual(b["w"] * b["h"], area, where)
                 self.assertLessEqual(b["tiers"], L.CEILINGS["tier"], where)
 
     def test_keeps_a_checkerboard_even(self):

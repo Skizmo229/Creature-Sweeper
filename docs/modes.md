@@ -57,6 +57,14 @@ stuck and 100% cleared, fifteen more (41.5 to 49.5%) 14.6 and 99%. No density a 
 puts it on ARCANE's curve, so it ships at ARCANE's schedule as a ladder decided by deduction, the
 way SUDOKU is (decision 0038).
 
+**GEAR** is a gear, a per-cell mask in a square box: eight teeth, one pointing straight up, tapering
+from root to tip, round a hole a third of the radius across. Its proportions are shares of the box
+because the box is always square, so the outline plays the same on every board. Like DONUT it came
+out harder than ARCANE at ARCANE's schedule (30.2 stuck over the ladder, 78% cleared), and ships a
+density point below it, on ARCANE's curve (23.7 and 84% against 23.9 and 82%; 60 seeds, 25
+September 2026). It is the first ladder with a box of its own past the global 64x32: 45 square,
+inside the same 2,048 cells.
+
 ## DUNGEON
 
 Three kinds of cell, and the difference is the whole mode: a **room** is where creatures live; a
@@ -172,6 +180,6 @@ proof finds nothing at this density; the Sudoku rule itself is deliberately abse
 ## BLIND and HUGE x BLIND
 
 Search boards: one HP, level 0, won by uncovering every empty cell, with the creatures still
-hidden at the win. BLIND climbs 5 to 7 tiers over its ladder. It opens at 50 boards cleared,
+hidden at the win. BLIND climbs 5 to 7 tiers over its ladder. It opens at 55 boards cleared,
 one step after every other counted ladder (decision 0036), and its Full Run heal rounds down to nothing, so a run there is a
 single-mistake run.
