@@ -310,7 +310,7 @@ is what calibrates the technique costs and the retune targets once the game has 
 | 4.3 | The baseline measurement, every ladder, grades 2 and 4 | done 25 September 2026, below |
 | 4.4 | The anchors: the Minesweeper board, the stars, the honest comparison | Minesweeper pending |
 | 4.5 | Decide the target per ladder with the owner | decided 26 September 2026, as proposed in section 7 |
-| 4.6 | Retune, one commit per ladder, decision record each | EXTREME and ORACLE done 26 September 2026; HUGE x EXTREME measured on target and left as is; BLIND and HUGE x BLIND done 26 September 2026 |
+| 4.6 | Retune, one commit per ladder, decision record each | EXTREME and ORACLE done 26 September 2026; HUGE x EXTREME measured on target and left as is; BLIND and HUGE x BLIND done 26 September 2026; the plain ladders measured and left as they are, since only the lock reaches the target (9.1) |
 | 4.7 | Per-ladder tips and the tricks page | open |
 | 4.8 | Telemetry store and export | open |
 | 4.9 | Spending policies and attention in the graded player | spells and attention done 26 September 2026; deferral open |
@@ -385,6 +385,20 @@ What it says, read on the day it was recorded:
   numbers that overlap, never guesses a cell it has named, and refuses a guess that could kill
   while another exists. The honest player's forced-guess curves remain the record of what the
   ladders were tuned to; these are the record of what they demand.
+- **The plain ladders cannot be brought to the adopted target by density, only by the lock.**
+  Measured 26 September 2026 at 40 seeds on candidate files: NORMAL at the 34% ceiling (27.5 to
+  34.0%, seven points up) still clears 100% at grade 2 with 1.3 forced guesses on board 10;
+  WRAPAROUND at the same schedule 100%; HUGE six points up (26.8 to 32.0%) 98 to 100%, its 24
+  to 30 HP absorbing 5.8 HP of guesses on board 10; HIVE is at its 35% ceiling already. Only
+  the lock moves them: HIVE with lock 4 on boards 8 to 10 clears 88, 80 and 60%, and forced
+  guesses go from 0.5 to 4.9, 6.7 and 7.2 a board, which is exactly the guess-decided top that
+  decisions 0041 and 0042 took off EXTREME and ORACLE. So the target as written (a grade-2
+  player at 90% falling to 70%) is the wrong target for a descending-distribution ladder at a
+  shallow lock: such a ladder is always clearable by a reader who misses nothing, and what it
+  costs a person is scanning (12 to 19 moves on offer per pass, 74 to 151 effort on NORMAL and
+  HUGE) and the slips telemetry will measure. No plain ladder was moved. If the owner wants
+  NORMAL, WRAPAROUND, HUGE or HIVE to bite at the top, the lever is the lock one deeper on the
+  last three boards, and the price is the kind of hardness, not the amount.
 - **The new ladders sit where their curves put them.** PYRAMID's face-up base rows make it as
   gentle as EASY; GEAR, CARD, VALENTINES and STAR, tuned onto ARCANE's curve, corner a grade-2
   player about as often as ARCANE does and STAR alone leans on grade 3 (14% of boards);
