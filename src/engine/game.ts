@@ -20,7 +20,7 @@ import { type Grid, inBounds, neighbours } from './grid.js';
 import { dealOpening } from './opening.js';
 import { Patrol } from './patrol.js';
 import { generateGrid } from './generate.js';
-import { fight, revealAllCreatures } from './fight.js';
+import { fight, revealAllCells, revealAllCreatures } from './fight.js';
 
 export interface GameOptions {
   /**
@@ -610,6 +610,7 @@ export class Game {
   private checkSearchWin(): GameEvent[] {
     if (!this.config.search || this.openEmptyCount < this.totalEmpty) return [];
     this.status = 'won';
+    revealAllCells(this.grid);
     return [{ type: 'won' }];
   }
 }

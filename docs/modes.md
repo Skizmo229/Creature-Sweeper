@@ -269,7 +269,7 @@ proof finds nothing at this density; the Sudoku rule itself is deliberately abse
 
 ## BLIND and HUGE x BLIND
 
-Search boards: one HP, level 0, won by uncovering every empty cell, with the creatures still
-hidden at the win. BLIND climbs 5 to 7 tiers over its ladder. It opens at 70 boards cleared,
+Search boards: one HP, level 0, won by uncovering every empty cell, the creatures untouched until
+the win uncovers them. BLIND climbs 5 to 7 tiers over its ladder. It opens at 70 boards cleared,
 one step after every other counted ladder (decision 0036), and its Full Run heal rounds down to nothing, so a run there is a
 single-mistake run.

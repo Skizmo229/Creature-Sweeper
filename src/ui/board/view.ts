@@ -452,9 +452,8 @@ export class BoardView implements InputHost {
   }
 
   /**
-   * Where every creature glyph is right now, in CSS pixels relative to this canvas. Covered
-   * creatures are included: a search board is won with its creatures still hidden, and a clear
-   * effect that shows the player what they had been walking past is a better ending.
+   * Where every creature glyph is right now, in CSS pixels relative to this canvas, fought or not:
+   * a win uncovers the whole board, so a search board's creatures, never touched, are here too.
    */
   creatureSprites(): VictorySprite[] {
     const game = this.game;

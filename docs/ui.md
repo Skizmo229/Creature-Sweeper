@@ -178,12 +178,15 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   window. Its volume slider (0 to 300% of each sound's level) is saved beside them and is passed
   to `Sfx.audition` alone, so the game's own sounds never hear it. Note names are green, apart
   from the ladder's accent.
+- A clear uncovers every cell still covered, by request (`revealAllCells`): the empty ground a
+  battle board never needed opened shows its number, and a search board's creatures, never
+  fought, show as a loss shows them. The clear effect plays over the uncovered board.
 - Two families of clear effect: ambient (confetti, burst, ripple, sparkle) and icon (tumble,
   cascade, pop, burn, three wipes). Icon effects take the board's glyphs (`VictorySource`),
   pre-rendered per tier into an atlas at twice the cell size, and the board stops drawing them
   until the effect hands them back, even when cut short. Physics effects step by measured time
   clamped to 1/20 s; ambient ones keep a fixed step. Cascade never clears its canvas and fades the
-  element instead. Sprites include covered creatures, for the search boards. Burn clips the real
+  element instead. Sprites include creatures never fought, for the search boards. Burn clips the real
   glyph. Effects draw on their own layer, stacked inside the stage (`isolation: isolate`), so the
   clear card covers the effect, by request, rather than the effect's glyphs flying across the
   card's buttons.

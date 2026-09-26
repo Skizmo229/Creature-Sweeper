@@ -35,10 +35,13 @@ describe('mana', () => {
     expect(game.mana).toBe(5);
     game.progression.level = 4; // so the fight is free and cannot end the run
 
-    game.open(1, 1);
+    const events = game.open(1, 1);
     // Two sources, both in play: the kill pays its tier, and the cascade round
     // that lone creature pays the exploration trickle for the ground it opened.
-    const emptyOpened = game.grid.flat().filter((c) => c.open && c.tier === 0).length;
+    // Read off the event, not the grid: the kill wins the board, and the win
+    // uncovers the rest of it.
+    const opened = events.flatMap((e) => (e.type === 'revealed' ? e.cells : []));
+    const emptyOpened = opened.filter(({ x, y }) => game.grid[y]![x]!.tier === 0).length;
     expect(game.mana).toBe(5 + 4 + Math.floor(emptyOpened / MANA_PER_EMPTY_CELLS));
   });
 

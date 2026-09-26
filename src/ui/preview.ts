@@ -268,11 +268,9 @@ export function zoomSampleBoard(): Game {
  * A board that has actually been cleared, for the board-clear effect.
  *
  * Genuinely won, not a board dressed up as one: every creature is beaten and
- * `status` is 'won', which is the state the effect fires over in play.
- *
- * Order matters. The empty ground goes first and the creatures last, because
- * the win lands on the final kill and `open` refuses everything afterwards —
- * clearing the creatures first would leave half the floor covered.
+ * `status` is 'won', which is the state the effect fires over in play. Only
+ * the creatures are opened: the final kill wins the board, and the win
+ * uncovers the floor, exactly as it does in play.
  *
  * The only example that takes a seed, and the only one not memoised. The other
  * galleries compare a setting ACROSS tiles and so need one another's boards to
@@ -325,7 +323,6 @@ export function clearedBoard(seed: number = SEED, tiers = 5): Game {
     }),
     seed,
   );
-  for (const cell of cellsOf(game, (c) => c.tier === 0)) game.open(cell.x, cell.y);
   for (const cell of cellsOf(game, (c) => c.tier > 0)) game.open(cell.x, cell.y);
   return game;
 }

@@ -83,6 +83,7 @@ export function fight(host: FightHost, cell: Cell): GameEvent[] {
     }
     if (host.creaturesLeft() === 0 && !host.config.search) {
       host.status = 'won';
+      revealAllCells(host.grid);
       events.push({ type: 'won' });
       return events;
     }
@@ -102,6 +103,22 @@ export function revealAllCreatures(grid: Grid): void {
   for (const row of grid) {
     for (const cell of row) {
       if (cell.tier > 0) {
+        cell.open = true;
+        cell.occupied = false;
+      }
+    }
+  }
+}
+
+/**
+ * Uncover every cell still covered, as a won board does: the empty ground a battle board never
+ * needed opened, and the creatures a search board is won without touching. By request, so a clear
+ * ends on the whole board. Holes stay holes.
+ */
+export function revealAllCells(grid: Grid): void {
+  for (const row of grid) {
+    for (const cell of row) {
+      if (cell.present) {
         cell.open = true;
         cell.occupied = false;
       }
