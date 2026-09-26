@@ -310,7 +310,7 @@ is what calibrates the technique costs and the retune targets once the game has 
 | 4.3 | The baseline measurement, every ladder, grades 2 and 4 | done 25 September 2026, below |
 | 4.4 | The anchors: the Minesweeper board, the stars, the honest comparison | Minesweeper pending |
 | 4.5 | Decide the target per ladder with the owner | decided 26 September 2026, as proposed in section 7 |
-| 4.6 | Retune, one commit per ladder, decision record each | EXTREME and ORACLE first, in progress |
+| 4.6 | Retune, one commit per ladder, decision record each | EXTREME and ORACLE done 26 September 2026; HUGE x EXTREME measured on target and left as is |
 | 4.7 | Per-ladder tips and the tricks page | open |
 | 4.8 | Telemetry store and export | open |
 | 4.9 | Spending policies and attention in the graded player | spells and attention done 26 September 2026; deferral open |
@@ -375,7 +375,10 @@ What it says, read on the day it was recorded:
   their board 10 cleared at 0 to 8% even at grade 4 (HUGE x EXTREME at 63% since its retune).
   The rows above are as retuned on 26 September 2026 (decisions 0041 and 0042, the lock one
   short on the top boards): board 10 now 65% on EXTREME and, spending mana, 60% on ORACLE
-  (35% spell-less, which is what the table shows). DONUT is the needle ladder: 3.5 moves on offer per pass, two guesses a
+  (35% spell-less, which is what the table shows). HUGE x EXTREME was measured next on the same
+  day and left alone: boards 7 to 10 clear 70, 55, 60 and 63% at grade 4 (40 seeds), on the
+  target already, since decision 0019 tuned it against the perfect deducer to about where the
+  human target sits; board 8's 55% is within the noise of 40 seeds, about eight points. DONUT is the needle ladder: 3.5 moves on offer per pass, two guesses a
   board, 80% of board 10.
 - **The graded player clears more than the honest player where guesses are dear.** EXTREME 80%
   against the honest player's 55%, ORACLE 60% against 48%: it holds a pencil, bounds two
