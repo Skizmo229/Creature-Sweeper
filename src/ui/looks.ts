@@ -263,6 +263,25 @@ const LOOKS: Record<string, LadderLook> = {
     sfx: 'blip',
     victory: 'burst',
   },
+  petri: {
+    // Agar green, with crystal violet for `hot`, the stain that shows a colony up. No spells here;
+    // violet is 117 from `ink` and 103 clear of the nearest tier colour (decision 0032). A mark on
+    // a covered tile is 2.9:1, green on green being the one pairing this palette has to watch.
+    palette: {
+      tile: '#447a5c',
+      tileEdge: '#2f5641',
+      floor: '#08140e',
+      ink: '#d8f3e3',
+      hot: '#a78bfa',
+      pip: 'circle',
+      accent: '#6fbf94',
+    },
+    // A laboratory instrument's readout, and glassware.
+    font: 'space-mono',
+    sfx: 'glass',
+    // Rings spreading outward, as a colony does.
+    victory: 'ripple',
+  },
   hive: {
     // Honey amber for the hive, with its own pip. No spells here, so an amber `hot`
     // has no gold annotation to collide with (decision 0032).

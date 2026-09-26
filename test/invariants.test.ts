@@ -17,8 +17,8 @@ import { ladders, battleTypes, boardsOf, SEEDS, UNGATED_SWEEP } from './helpers.
 import { shapeRule } from '../src/engine/shape/registry.js';
 
 describe('ladder data', () => {
-  it('has thirty types of ten boards', () => {
-    expect(ladders).toHaveLength(30);
+  it('has thirty-one types of ten boards', () => {
+    expect(ladders).toHaveLength(31);
     for (const type of ladders) expect(type.boards).toHaveLength(10);
   });
 
@@ -134,10 +134,12 @@ describe('the auto-opening', () => {
  * most: that a board with one can still be cleared without paying HP.
  */
 describe('the crawl rule on the real ladders', () => {
-  it('is carried by DUNGEON and by nothing else', () => {
+  it('is carried by DUNGEON and PETRI DISH, and by nothing else', () => {
     const crawling = ladders.filter((t) => (t.reach ?? 0) > 0).map((t) => t.id);
-    expect(crawling).toEqual(['dungeon']);
-    expect(boardConfig(ladders, 'dungeon', 1).reach).toBe(2);
+    expect(crawling).toEqual(['dungeon', 'petri']);
+    expect(boardConfig(ladders, 'dungeon', 1)).toMatchObject({ reach: 2 });
+    expect(boardConfig(ladders, 'dungeon', 1).marksExtendReach).toBeUndefined();
+    expect(boardConfig(ladders, 'petri', 1)).toMatchObject({ reach: 1, marksExtendReach: true });
   });
 
   /**
@@ -145,9 +147,10 @@ describe('the crawl rule on the real ladders', () => {
    * frontier, so the board would advance one ring at a time and no deduction
    * could be acted on until the cascade happened to arrive beside it. It is
    * refused rather than clamped, because it is a different game rather than a
-   * harder one and should be chosen on purpose.
+   * harder one and should be chosen on purpose: PETRI DISH chose it, paired
+   * with marks that extend it, and only that pairing is accepted.
    */
-  it('refuses a reach of one, and anything that is not a count of steps', () => {
+  it('refuses a reach of one on its own, and anything that is not a count of steps', () => {
     const dungeon = findType(ladders, 'dungeon');
     for (const bad of [1, -2, 1.5]) {
       expect(
@@ -155,6 +158,10 @@ describe('the crawl rule on the real ladders', () => {
         `reach ${bad}`,
       ).toThrow();
     }
+    const petri = findType(ladders, 'petri');
+    expect(() => boardConfig([{ ...petri, reach_marks: false }], 'petri', 1)).toThrow(/reach of 1/);
+    const normal = findType(ladders, 'normal');
+    expect(() => boardConfig([{ ...normal, reach_marks: true }], 'normal', 1)).toThrow(/extend/);
   });
 
   /**
@@ -166,13 +173,15 @@ describe('the crawl rule on the real ladders', () => {
    * rather than only in the simulator.
    */
   it('never costs a board its zero-damage clear', () => {
-    for (const board of findType(ladders, 'dungeon').boards) {
-      const cfg = boardConfig(ladders, 'dungeon', board.n);
-      for (const seed of SEEDS) {
-        const game = Game.create(cfg, seed);
-        const result = autoplayTierOrder(game);
-        expect(result.cleared, `dungeon#${board.n} seed ${seed} walled in`).toBe(true);
-        expect(result.hpLost, `dungeon#${board.n} seed ${seed} paid HP`).toBe(0);
+    for (const id of ['dungeon', 'petri']) {
+      for (const board of findType(ladders, id).boards) {
+        const cfg = boardConfig(ladders, id, board.n);
+        for (const seed of SEEDS) {
+          const game = Game.create(cfg, seed);
+          const result = autoplayTierOrder(game);
+          expect(result.cleared, `${id}#${board.n} seed ${seed} walled in`).toBe(true);
+          expect(result.hpLost, `${id}#${board.n} seed ${seed} paid HP`).toBe(0);
+        }
       }
     }
   });
@@ -194,6 +203,7 @@ describe('board shapes', () => {
       'donut',
       'dungeon',
       'gear',
+      'petri',
       'pyramid',
       'star',
       'ultra_hive',

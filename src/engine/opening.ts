@@ -14,7 +14,7 @@ export interface Opening {
 
 /**
  * Find the opening the game hands the player: the zero-region whose cascade
- * reveals the most cells.
+ * reveals the most cells, the first in reading order on a tie.
  *
  * "Size" counts the region *and* its fringe of numbered cells, because that is
  * what the player actually gets to see. A zero cell is empty ground whose
@@ -26,10 +26,37 @@ export function findBestOpening(
   topology: Topology = 'square',
   wrap: Wrap = 'none',
 ): Opening | null {
+  let best: Opening | null = null;
+  for (const region of zeroRegions(grid, coveredOnly, topology, wrap)) {
+    if (!best || region.cells.length > best.cells.length) best = region;
+  }
+  return best;
+}
+
+/** How many separate openings the 'islands' rule deals. */
+export const ISLANDS = 3;
+
+/**
+ * The `count` zero-regions whose cascades reveal the most cells, largest first, ties in reading
+ * order. Separate by construction: two zero-regions that touched would be one. Their fringes may
+ * share a numbered cell, so two islands can meet at an edge, but never through a blank.
+ */
+export function findOpenings(
+  grid: Grid,
+  count: number,
+  topology: Topology = 'square',
+  wrap: Wrap = 'none',
+): Opening[] {
+  const regions = zeroRegions(grid, false, topology, wrap);
+  return regions.sort((a, b) => b.cells.length - a.cells.length).slice(0, count);
+}
+
+/** Every zero-region and what its cascade would reveal, in reading order of its first cell. */
+function zeroRegions(grid: Grid, coveredOnly: boolean, topology: Topology, wrap: Wrap): Opening[] {
   const h = grid.length;
   const w = grid[0]!.length;
   const seen: boolean[][] = Array.from({ length: h }, () => new Array<boolean>(w).fill(false));
-  let best: Opening | null = null;
+  const regions: Opening[] = [];
 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -57,13 +84,10 @@ export function findBestOpening(
         }
       }
 
-      if (!best || revealed.size > best.cells.length) {
-        best = { cells: [...revealed], zeroCount: region.length };
-      }
+      regions.push({ cells: [...revealed], zeroCount: region.length });
     }
   }
-
-  return best;
+  return regions;
 }
 
 /** How many rows the 'base' opening deals face up, counted from the bottom of the box. */

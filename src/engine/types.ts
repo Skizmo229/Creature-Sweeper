@@ -150,7 +150,12 @@ export type OpeningRule =
    * empty ground opens, cascading as a click would, and a creature is written
    * as a given, alive and waiting for the player to be ready for it. PYRAMID's.
    */
-  | 'base';
+  | 'base'
+  /**
+   * Reveal the `ISLANDS` zero-regions whose cascades uncover the most cells, so the board starts
+   * as separate footholds to grow out from. PETRI DISH's.
+   */
+  | 'islands';
 
 export type { Placement };
 
@@ -206,6 +211,14 @@ export interface BoardConfig {
    * can walk into it.
    */
   readonly reach: number;
+  /**
+   * PETRI DISH's companion to a one-step reach: a covered cell the player has marked counts as
+   * uncovered ground for reach, but only while it is itself within reach of ground really
+   * uncovered. So a mark carries the reach one step past a creature the player has named, and
+   * marks cannot be chained across the board. Nothing checks the mark is right, since the answer
+   * would tell the player whether it was. Optional so every config built by hand stays unchanged.
+   */
+  readonly marksExtendReach?: boolean;
   /** Spells this game type offers. Empty means no magic. */
   readonly spells: readonly SpellId[];
   /** Mana in hand at the start, so the opening moves are not spell-less. */

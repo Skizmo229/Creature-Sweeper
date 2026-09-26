@@ -29,7 +29,8 @@ resource: see `docs/invariants.md`, fact 2.
 
 **Opening.** The cells revealed before the first move. `'auto'` reveals the zero-region whose
 cascade uncovers the most cells; `'none'` reveals nothing; `'empties'` reveals every empty cell
-(SUDOKU only). `findBestOpening` in `src/engine/opening.ts`. The clock starts when the opening is
+(SUDOKU only); `'base'` deals the bottom two rows face up (PYRAMID); `'islands'` reveals the three
+largest zero-regions (PETRI DISH). `findBestOpening` and `findOpenings` in `src/engine/opening.ts`. The clock starts when the opening is
 dealt, because reading it is the first thing the player does.
 
 **Cascade.** Opening a cell whose number is 0 opens its neighbours, recursively.
@@ -60,13 +61,14 @@ prices Exercise by its own rule (`WorkoutRule`).
 **Search board.** A board won by uncovering every empty cell rather than by killing every
 creature (BLIND, HUGE x BLIND). No level economy.
 
-**Reach / the crawl rule.** On DUNGEON, a cell may only be opened, or targeted by a spell, within
-`reach` steps of already-open ground, counted as a walk through `neighbours()`. Marking and
-pencilling are exempt. `Game.inReach`; the exception is `Game.sealedIn`.
+**Reach / the crawl rule.** On DUNGEON and PETRI DISH, a cell may only be opened, or targeted by a
+spell, within `reach` steps of already-open ground, counted as a walk through `neighbours()`.
+Marking and pencilling are exempt. On PETRI DISH a mark touching open ground counts as open
+ground too (`marksExtendReach`). `Game.inReach`; the exception is `Game.sealedIn`.
 
 ## Boards and ladders
 
-**Game type / ladder.** One of the 30 named modes (EASY, NORMAL, DUNGEON, ...). Each is a ladder
+**Game type / ladder.** One of the 31 named modes (EASY, NORMAL, DUNGEON, ...). Each is a ladder
 of ten tuned boards plus a **continuation** (boards 11 to N, held in `extended`, never in
 `boards`). `LadderType` in `src/engine/config.ts`.
 

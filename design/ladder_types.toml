@@ -27,7 +27,8 @@
 #   topology, wrap     "hex"; "horizontal" or "both"
 #   shape, shape_param a board shape (src/engine/shape/registry.ts) and its size in cells
 #   cells              the seeded shapes: schedule of exact cell counts
-#   reach              the crawl rule's radius (DUNGEON)
+#   reach              the crawl rule's radius (DUNGEON, PETRI DISH)
+#   reach_marks        true where a mark touching uncovered ground counts as uncovered for reach
 #   opening            how the board is opened: "base" deals its bottom two rows face up
 #                      (PYRAMID); absent is the placement rule's own, usually the largest blank area
 #   search             true on a search ladder: level 0, won by uncovering every empty cell
@@ -435,6 +436,40 @@ alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
 ceiling = { max_w = 45, max_h = 45 }
 topology = "hex"
 shape = "hexagon"
+
+[[type]]
+id = "petri"
+name = "PETRI DISH"
+tint = "#4f9a78"
+archetype = "descending"
+axis = "Three colonies, grown outward"
+blurb = """  A round dish that starts with its three largest blank areas open. You may only open a cell   touching ground you have uncovered, or touching a mark you have made beside it, so each   colony grows from its edge."""
+# Square boxes, so the dish is round: 491 to 804 cells against HIVE's 480
+# to 800.
+size = [[25, 25], [25, 25], [25, 25], [26, 26], [26, 26], [28, 28], [28, 28], [30, 30], [30, 30], [32, 32]]
+tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+# On HIVE's forced-guess curve, two points above HIVE's schedule, and
+# nearly never lost there. Measured with the honest player, 25 September
+# 2026: at HIVE's schedule the plain circle was stuck 22.3 times over the
+# ladder (60 seeds); the three islands took that to 6.5, the one-step
+# reach to 14.6, and both together to 4.6 with 99.8% cleared. Two points
+# up gives 11.5 stuck against HIVE's 12.2 (150 seeds) and clears 99.9%:
+# a guess here is always on the frontier beside numbers, so it is cheap.
+# HP, not density, is the lever if the dish should be deadlier.
+density = [0.28, 0.29, 0.3, 0.31, 0.32, 0.33, 0.34, 0.35, 0.36, 0.37]
+hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
+alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
+# A square box inside the global 2,048 cells, as GEAR's is.
+ceiling = { max_w = 45, max_h = 45 }
+shape = "circle"
+opening = "islands"
+# The crawl rule at a single step: only a cell touching uncovered ground
+# may be opened. A mark counts as uncovered ground while it touches ground
+# really uncovered, so naming a creature on the frontier lets you reach
+# past it, and marks cannot be chained across the dish. Decision 0039.
+reach = 1
+reach_marks = true
 
 [[type]]
 id = "wraparound"

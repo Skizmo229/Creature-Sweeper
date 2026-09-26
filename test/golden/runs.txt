@@ -30,8 +30,9 @@ CHECKERBOARD       10     5      10        3/3        0      10            -
 CONGA LINE         10     5      10        3/3        0      10            -
 SUDOKU             20    10      10        3/3        0      20            -
 ULTRA HIVE         10     5      10        3/3        0      10            -
+PETRI DISH         10     5      10        3/3        0      10            -
 
-30/30 full runs completed by every seed at full HP (3 runs each, 900 boards simulated).
+31/31 full runs completed by every seed at full HP (3 runs each, 930 boards simulated).
 A full pool at the end means the heal was never needed — which is the zero-damage guarantee still holding ten boards deep.
 
 [exit 0]

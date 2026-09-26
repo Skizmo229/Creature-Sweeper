@@ -65,6 +65,8 @@ export interface LadderType {
    * Absent or 0 means the whole board, which is every type but DUNGEON.
    */
   reach?: number;
+  /** PETRI DISH: a mark touching uncovered ground counts as uncovered for reach. */
+  reach_marks?: boolean;
   /** A key of the placement registry (`src/engine/placement/registry.ts`). Absent is uniform. */
   placement?: string;
   /** How the board is opened, where the ladder chooses: an `OpeningRule`. Absent is the placement's. */
@@ -194,24 +196,32 @@ function readWrap(type: LadderType, row: LadderBoard): 'none' | 'horizontal' | '
 /**
  * The crawl rule's radius, validated here so a typo cannot reach the engine.
  *
- * A reach of 1 is refused rather than clamped: at one step the only cells you
- * may ever open are the ones already touching your frontier, so the board
- * advances a single ring at a time and no deduction can be acted on until the
- * cascade happens to arrive next to it. It is not a hard mode, it is a
- * different game, and if one is ever wanted it should be chosen deliberately
- * rather than reached by decrementing a number.
+ * A reach of 1 is refused on its own rather than clamped: at one step the only
+ * cells you may ever open are the ones already touching your frontier, so the
+ * board advances a single ring at a time and no deduction can be acted on until
+ * the cascade happens to arrive next to it. It is not a hard mode, it is a
+ * different game. PETRI DISH chose it deliberately, paired with marks that
+ * extend it a step past a named creature (`reach_marks`), and only that pairing
+ * is accepted, so it is still never reached by decrementing a number
+ * (decision 0039).
  */
 function readReach(type: LadderType): number {
   const raw = type.reach ?? 0;
   if (!Number.isInteger(raw) || raw < 0) {
     throw new Error(`${type.id}: reach is ${raw}; it must be a whole number of steps`);
   }
-  if (raw === 1) throw new Error(`${type.id}: a reach of 1 opens only the frontier ring`);
+  if (raw === 1 && !type.reach_marks) {
+    throw new Error(
+      `${type.id}: a reach of 1 opens only the frontier ring, unless marks extend it`,
+    );
+  }
+  if (type.reach_marks && raw === 0)
+    throw new Error(`${type.id}: marks extend a reach it has not got`);
   return raw;
 }
 
 /** Every opening rule, for checking a ladder's choice at the boundary. */
-const OPENINGS: readonly OpeningRule[] = ['auto', 'none', 'empties', 'base'];
+const OPENINGS: readonly OpeningRule[] = ['auto', 'none', 'empties', 'base', 'islands'];
 
 /**
  * The board's opening: the ladder's own where it names one, else its placement rule's. A ladder may
@@ -332,6 +342,7 @@ export function boardConfig(
     givens: row.givens ?? 0,
     opening: options.opening ?? readOpening(type, placement),
     reach: readReach(type),
+    ...(type.reach_marks ? { marksExtendReach: true } : {}),
     spells,
     startMana: type.start_mana ?? 0,
     ...(workout ? { workout } : {}),

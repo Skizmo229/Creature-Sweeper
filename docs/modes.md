@@ -130,6 +130,26 @@ and barely the danger; HP is the lever for deadliness.
 Reveal pushes the frontier here, because opened cells are what reach is measured from, which is
 why DUNGEON carries Exercise too: a forced guess there is a guess on what is in front of you.
 
+## PETRI DISH
+
+A round dish, a disc of square cells, that opens with its three largest blank areas (`'islands'`)
+and carries the crawl rule at a single step: you may open only a cell touching ground you have
+uncovered, so each colony grows from its edge. A reach of one on its own is refused, because the
+board would advance a ring at a time and no deduction could be acted on until the cascade happened
+to arrive beside it; it is accepted here paired with **marks that extend it** (`reach_marks`). A
+covered cell you have marked counts as uncovered ground while it is itself within reach of ground
+really uncovered, so naming a creature on the frontier lets you reach past it, and marks cannot be
+chained across the dish. Nothing checks the mark is right, because the answer would tell you
+whether it was. The sealed-in exception is DUNGEON's, and it reads open ground only, never marks,
+or marking a cell and watching the rule lift would say what lay beyond it (decision 0039).
+
+Measured, both rules make the dish gentler, not harder. At HIVE's schedule the plain circle was
+stuck 22.3 times over the ladder; three islands took that to 6.5, the one-step reach to 14.6, and
+both to 4.6 with 99.8% cleared (60 seeds, 25 September 2026). A guess on this board is always a
+frontier cell beside numbers, so it is cheap. It ships two density points above HIVE's schedule,
+on HIVE's forced-guess curve (11.5 stuck against 12.2, 150 seeds), topping out at 37%, and still
+clears 99.9%: HP, not density, is the lever if it should be deadlier. No spells.
+
 ## CHECKERBOARD
 
 Light squares hold even tiers, dark squares odd, and empty ground goes anywhere (pinning tier 0 to

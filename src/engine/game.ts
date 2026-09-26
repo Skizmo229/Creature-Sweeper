@@ -17,7 +17,14 @@ import { SPELL_EFFECTS } from './cast.js';
 import { computeSealed, withinReach } from './reach.js';
 import { safeCells as provenSafe } from './sweep.js';
 import { type Grid, inBounds, neighbours } from './grid.js';
-import { BASE_ROWS, baseCells, findBestOpening, findFallbackOpening } from './opening.js';
+import {
+  BASE_ROWS,
+  ISLANDS,
+  baseCells,
+  findBestOpening,
+  findFallbackOpening,
+  findOpenings,
+} from './opening.js';
 import { generateGrid } from './generate.js';
 import { fight, revealAllCreatures } from './fight.js';
 
@@ -144,6 +151,7 @@ export class Game {
     if (config.opening === 'auto') game.applyOpening();
     else if (config.opening === 'empties') game.openEveryEmpty();
     else if (config.opening === 'base') game.openBase();
+    else if (config.opening === 'islands') game.openIslands();
     return game;
   }
 
@@ -555,6 +563,19 @@ export class Game {
         if (cell.present && cell.tier === 0) this.markOpen(cell);
       }
     }
+  }
+
+  /**
+   * Open the `ISLANDS` largest blank areas, each with its fringe, as separate footholds. A board
+   * without one falls back as the single opening does.
+   */
+  private openIslands(): void {
+    const islands = findOpenings(this.grid, ISLANDS, this.config.topology, this.config.wrap);
+    if (!islands.length) {
+      this.applyOpening();
+      return;
+    }
+    for (const island of islands) for (const cell of island.cells) this.markOpen(cell);
   }
 
   /**

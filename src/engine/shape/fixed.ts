@@ -237,3 +237,10 @@ export const HEXAGON_SHAPE: ShapeRule = {
     }
   },
 };
+
+/** A disc as wide as the box's shorter side: every cell whose centre is inside the circle. */
+export const CIRCLE_SHAPE = predicateShape('circle', (_param, w, h, x, y) => {
+  const { dx, dy } = fromCentre(w, h, x, y);
+  const radius = Math.min(w, h) / 2;
+  return dx * dx + dy * dy <= radius * radius;
+});

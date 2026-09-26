@@ -7,6 +7,7 @@
 import type { ShapeRule } from './rule.js';
 import {
   CARD_SHAPE,
+  CIRCLE_SHAPE,
   CROSS_SHAPE,
   DIAMOND_SHAPE,
   DONUT_SHAPE,
@@ -31,6 +32,7 @@ export const SHAPES = {
   heart: HEART_SHAPE,
   star: STAR_SHAPE,
   hexagon: HEXAGON_SHAPE,
+  circle: CIRCLE_SHAPE,
   cave: CAVE_SHAPE,
   dungeon: DUNGEON_SHAPE,
 } as const satisfies Readonly<Record<string, ShapeRule>>;

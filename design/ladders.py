@@ -155,6 +155,9 @@ def shape_present(shape, param, w, h, x, y):
         return _star(w, h, x, y)
     if shape == "hexagon":
         return _hexagon(w, h, x, y)
+    if shape == "circle":
+        radius = min(w, h) / 2
+        return dx * dx + dy * dy <= radius * radius
     return True
 
 
@@ -303,7 +306,7 @@ REQUIRED = ("id", "name", "tint", "archetype", "axis", "blurb",
             "size", "tiers", "density", "hp", "lock", "alpha0")
 OPTIONAL = ("boss", "sweep", "spells", "start_mana", "workout", "placement", "sets", "givens",
             "topology", "wrap", "shape", "shape_param", "cells", "reach", "search", "ceiling",
-            "opening")
+            "opening", "reach_marks")
 # The fields that are one value per board.
 SCHEDULES = ("size", "tiers", "density", "hp", "lock", "alpha0", "boss", "sets", "givens", "cells")
 
@@ -595,7 +598,7 @@ CATEGORIES = {
               "gear", "card", "valentines", "star"],
     "magic": ["arcane", "workout", "oracle", "dungeon"],
     "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku",
-                "ultra_hive"],
+                "ultra_hive", "petri"],
 }
 CATEGORY = {tid: cat for cat, ids in CATEGORIES.items() for tid in ids}
 UNLOCK_BOARDS = unlock_boards()
@@ -819,6 +822,8 @@ def ladder_record(t, boards, extended):
         shape_param=t.get("shape_param", 0),
         # 0 means the whole board is in reach, which is every type but one.
         reach=t.get("reach", 0),
+        # PETRI DISH: a mark touching uncovered ground counts as uncovered for reach.
+        **({"reach_marks": True} if t.get("reach_marks") else {}),
         wrap=t.get("wrap", "none"),
         # Full Run: one HP pool for the whole 10-board run, taken from
         # board 1. The per-board HP schedule is ignored in that mode, and

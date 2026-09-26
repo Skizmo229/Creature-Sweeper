@@ -5,7 +5,7 @@ import type { BoardConfig } from '../src/engine/types.js';
 import { DEFAULT_GAMEPLAY } from '../src/engine/settings.js';
 import { UNGATED_SWEEP, ladders, paint, testConfig } from './helpers.js';
 import { computeNumbers, neighbours } from '../src/engine/grid.js';
-import { BASE_ROWS, findBestOpening } from '../src/engine/opening.js';
+import { BASE_ROWS, ISLANDS, findBestOpening, findOpenings } from '../src/engine/opening.js';
 import { boardConfig } from '../src/engine/config.js';
 
 /** A small hand-built board so the assertions can be exact. */
@@ -92,6 +92,31 @@ describe('opening', () => {
   it('leaves the board cold when the rule is "none"', () => {
     const game = Game.create(testConfig({ opening: 'none' }), 42);
     expect(game.grid.flat().some((c) => c.open)).toBe(false);
+  });
+
+  it('finds the islands: the largest blank areas, biggest first', () => {
+    for (const seed of [1, 2, 3, 42]) {
+      const game = Game.create(testConfig({ width: 16, height: 16, quantity: [10, 8, 6] }), seed);
+      const sizes = everyOpeningSize(game.grid).sort((a, b) => b - a);
+      const found = findOpenings(game.grid, ISLANDS).map((o) => o.cells.length);
+      expect(found).toEqual(sizes.slice(0, ISLANDS));
+    }
+  });
+
+  it('opens exactly the islands, and never a creature', () => {
+    for (const seed of [1, 2, 3, 42]) {
+      const config = testConfig({
+        width: 16,
+        height: 16,
+        quantity: [10, 8, 6],
+        opening: 'islands',
+      });
+      const game = Game.create(config, seed);
+      const want = new Set(findOpenings(game.grid, ISLANDS).flatMap((o) => o.cells));
+      const open = game.grid.flat().filter((c) => c.open);
+      expect(new Set(open), `seed ${seed}`).toEqual(want);
+      expect(open.every((c) => c.tier === 0)).toBe(true);
+    }
   });
 
   it('deals the base face up: its empty ground open, its creatures givens, alive and covered', () => {

@@ -39,10 +39,12 @@ export function hintText(game: Game | null, mode: EntryMode): string {
   // would explain a click doing nothing, so it is said here. Once the board has sealed the player
   // in the rule has lifted, and saying so is the difference between an escape hatch and a bug.
   if (game && game.config.reach > 0) {
+    const ground = game.config.marksExtendReach
+      ? 'ground you have uncovered, or a mark beside it'
+      : 'ground you have uncovered';
     const crawl = game.sealedIn()
       ? `Walled in — reach lifted until you can move again, so anywhere is open`
-      : `Click to open, within ${game.config.reach} of ground you have uncovered ` +
-        `(red cursor means out of reach)`;
+      : `Click to open, within ${game.config.reach} of ${ground} (red cursor means out of reach)`;
     return `${crawl} · right-click or a LV button to mark · ${sweep} · ${spell}`;
   }
   return (
