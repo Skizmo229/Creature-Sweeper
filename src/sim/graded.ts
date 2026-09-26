@@ -49,6 +49,11 @@ export interface GradedOptions {
   observe?: boolean;
   /** Spend mana on the ladder's spells at a stuck point and before a dear guess. */
   spells?: boolean;
+  /**
+   * Look first within this many cells of the last action, and scan the whole board only when
+   * nothing there yields; 0 or absent looks everywhere at once. A first model of attention.
+   */
+  attention?: number;
 }
 
 export interface GradedRun {
@@ -83,6 +88,8 @@ export interface GradedRun {
   waits: number;
   casts: number;
   manaSpent: number;
+  /** Passes on which nothing near the last action yielded and the whole board was scanned. */
+  scans: number;
   /** HP lost on a cell a trick called safe. Anything but 0 is a bug. */
   trickDamage: number;
   /** Times a trick opened, named or narrowed a cell wrongly. Anything but 0 is a bug. */
@@ -104,6 +111,9 @@ const NARROW_ROUNDS = 12;
 
 /** How long a stuck point is waited out where the creatures walk, in laps of the longest route. */
 const PATIENCE_LAPS = 1;
+
+/** What scanning the whole board costs, over the pass that then finds something. A first guess. */
+const SCAN_COST = 4;
 
 /** Information casts allowed at one stuck point before the gamble is taken. */
 const CASTS_AT_A_STUCK_POINT = 2;
@@ -130,6 +140,7 @@ export function play(game: Game, options: GradedOptions): GradedRun {
     waits: 0,
     casts: 0,
     manaSpent: 0,
+    scans: 0,
     trickDamage: 0,
     unsound: 0,
     unsoundBy: Object.fromEntries(TRICK_IDS.map((id) => [id, 0])) as Record<TrickId, number>,
@@ -177,6 +188,8 @@ class Player {
   private readonly all: number;
   /** Information casts at the current stuck point. */
   castsHere = 0;
+  /** Where the player last acted, which is where it looks first when attention is bounded. */
+  private focus: Cell | null = null;
 
   constructor(
     private readonly game: Game,
@@ -208,40 +221,77 @@ class Player {
     };
   }
 
-  /** One pass: the cheapest grade with a move, applied. False when stuck. */
+  /**
+   * One pass: the cheapest grade with a move, applied. False when stuck. With attention bounded
+   * each grade is tried near the last action first and then over the whole board, so the grade
+   * stays what is measured and locality only decides where a grade is found; a grade found only
+   * by scanning is counted and costed.
+   */
   pass(): boolean {
-    const { game, run } = this;
+    const radius = this.options.attention ?? 0;
     for (const grade of GRADES) {
       if (grade > this.options.grade) return false;
-      for (let round = 0; round < NARROW_ROUNDS; round++) {
-        const reading = readBoard(game, this.options.peek ?? false);
-        const view = this.view(reading);
-        const moves = noMoves();
-        let narrowed = 0;
-        for (const id of TRICK_IDS) {
-          const trick = TRICKS[id];
-          if (trick.grade !== grade) continue;
-          const found = noMoves();
-          trick.apply(view, found);
-          narrowed += this.narrow(id, found);
-          this.credit(id, found, moves);
-        }
-        const applied = this.apply(moves, game.patrols);
-        if (applied > 0) {
-          run.passesByGrade[grade]!++;
-          run.movesByGrade[grade]! += applied;
-          run.hardestGrade = Math.max(run.hardestGrade, grade);
-          run.effort += PASS_COST[grade]!;
-          if (grade > 0) {
-            run.availableSum += applied;
-            run.availablePasses++;
-          }
+      if (radius > 0 && this.focus) {
+        if (this.passOver(grade, radius)) return true;
+        if (this.passOver(grade, 0)) {
+          this.run.scans++;
+          this.run.effort += SCAN_COST;
           return true;
         }
-        if (!narrowed) break;
-      }
+      } else if (this.passOver(grade, 0)) return true;
     }
     return false;
+  }
+
+  /** One grade over the numbers within `radius` of the focus, or over all of them for 0. */
+  private passOver(grade: Grade, radius: number): boolean {
+    const { game, run } = this;
+    for (let round = 0; round < NARROW_ROUNDS; round++) {
+      const reading = this.nearby(readBoard(game, this.options.peek ?? false), radius);
+      const view = this.view(reading);
+      const moves = noMoves();
+      let narrowed = 0;
+      for (const id of TRICK_IDS) {
+        const trick = TRICKS[id];
+        if (trick.grade !== grade) continue;
+        const found = noMoves();
+        trick.apply(view, found);
+        narrowed += this.narrow(id, found);
+        this.credit(id, found, moves);
+      }
+      const applied = this.apply(moves, game.patrols);
+      if (applied > 0) {
+        run.passesByGrade[grade]!++;
+        run.movesByGrade[grade]! += applied;
+        run.hardestGrade = Math.max(run.hardestGrade, grade);
+        run.effort += PASS_COST[grade]!;
+        if (grade > 0) {
+          run.availableSum += applied;
+          run.availablePasses++;
+        }
+        return true;
+      }
+      if (!narrowed) break;
+    }
+    return false;
+  }
+
+  /** The reading with only the numbers within `radius` of the focus, or all of it for 0. */
+  private nearby(reading: Reading, radius: number): Reading {
+    const at = this.focus;
+    if (radius <= 0 || !at) return reading;
+    const constraints = reading.constraints.filter(
+      (c) => Math.abs(c.cell.x - at.x) <= radius && Math.abs(c.cell.y - at.y) <= radius,
+    );
+    const touching = new Map<Cell, Constraint[]>();
+    for (const c of constraints) {
+      for (const n of c.unknown) {
+        const list = touching.get(n);
+        if (list) list.push(c);
+        else touching.set(n, [c]);
+      }
+    }
+    return { ...reading, constraints, touching };
   }
 
   /** Narrow the pencil by what a trick found, and count what was new. */
@@ -315,6 +365,7 @@ class Player {
     for (const [cell, tier] of moves.mark) {
       if (game.status !== 'playing') break;
       if (!game.setMark(cell.x, cell.y, tier).some((e) => e.type === 'blocked')) applied++;
+      this.focus = cell;
     }
     for (const cell of moves.open) {
       if (game.status !== 'playing') break;
@@ -323,6 +374,7 @@ class Player {
       if (!game.open(cell.x, cell.y).some((e) => e.type === 'blocked')) applied++;
       run.trickDamage += hp - game.hp;
       this.domains.delete(cell);
+      this.focus = cell;
       // Where the creatures walk the open was a move, and the reading is stale after it.
       if (oneAtATime) break;
     }
@@ -406,6 +458,7 @@ class Player {
     game.open(cell.x, cell.y);
     if (game.hp < hp) run.guessesHurt++;
     this.domains.delete(cell);
+    this.focus = cell;
   }
 
   /**

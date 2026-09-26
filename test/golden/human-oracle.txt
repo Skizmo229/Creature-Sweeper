@@ -21,6 +21,7 @@ what-if             3    0.0    0.0    0.0      0.1
 line-reach          3    0.0    0.0    0.0      0.0
 accounted           4    0.0    0.0    0.0      0.0
 last-of-tier        4    0.0    0.0    0.0      0.0
+scans                    0.0    0.0    0.0
 passes >= 1            136.0  110.3   52.7
 
 [exit 0]

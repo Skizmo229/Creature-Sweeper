@@ -309,11 +309,11 @@ is what calibrates the technique costs and the retune targets once the game has 
 | 4.2 | The graded player, its CLI, tests and golden run | done 25 September 2026 |
 | 4.3 | The baseline measurement, every ladder, grades 2 and 4 | done 25 September 2026, below |
 | 4.4 | The anchors: the Minesweeper board, the stars, the honest comparison | Minesweeper pending |
-| 4.5 | Decide the target per ladder with the owner | open |
-| 4.6 | Retune, one ladder per branch, decision record each | open |
+| 4.5 | Decide the target per ladder with the owner | decided 26 September 2026, as proposed in section 7 |
+| 4.6 | Retune, one commit per ladder, decision record each | EXTREME and ORACLE first, in progress |
 | 4.7 | Per-ladder tips and the tricks page | open |
 | 4.8 | Telemetry store and export | open |
-| 4.9 | Spending policies and deferral in the graded player | open |
+| 4.9 | Spending policies and attention in the graded player | spells and attention done 26 September 2026; deferral open |
 | 4.10 | Re-measure against telemetry; revise the costs | after release |
 
 ### 9.1 Baseline, 25 September 2026
@@ -395,14 +395,23 @@ What it says, read on the day it was recorded:
 1. **The grades are an opinion until telemetry.** They follow the Sudoku raters' practice and the
    mamono community's own account of how it plays, and they are consistent with each other, but
    the cost of a grade-3 what-if against ten grade-1 subtractions is a guess.
-2. **Attention is modelled by counting, not by missing.** The player finds every move of the
-   yielding grade; the "moves available" figure says how hard that would have been. A bounded
-   working set (only the numbers near the last action) is the next step if the figure does not
-   separate the ladders.
+2. **Attention is a first model.** With `--attention=R` the player looks within R cells of its
+   last action first and scans the whole board only when nothing there yields at that grade, so
+   the grade stays what is measured and locality only decides where a grade is found; a scan is
+   counted (`scans`) and costed (`SCAN_COST`). Measured 26 September 2026 at ten seeds over the
+   ten boards, radius 6: HUGE scans 200 times a ladder against NORMAL's 79, and per pass
+   WRAPAROUND scans most (a third of its passes, with no edges to anchor on) and EXTREME least
+   (one in twelve, its frontier dense enough that the next move is close). So the figure
+   separates the ladders, on size and on shape. What it still does not model is missing a move
+   that is in view; that needs telemetry to calibrate.
 3. **Marks are always right.** The trusted wrong mark is the community's fatal error and is not
    modelled; a seeded error rate is the third knob, after attention and deferral.
-4. **Spell-less.** The magic ladders were tuned dense because the spells compensate; their
-   human figures are a floor until the honest player's policies are ported.
+4. **Spells are a policy, not a person.** With `--spells` the player spends mana before HP the
+   way section 8 of the catalogue says (Reveal on the cell it would gamble on, else Census on
+   the number over it, else Beacon, two information casts a stuck point; an Exercise before a
+   guess whose worst case is above the level). The baseline in 9.1 is spell-less; the magic
+   ladders' retunes are measured with spells on. Whether people spend that well, or hoard, is a
+   telemetry question.
 5. **CONGA LINE's adjacency reads are graded with its reach read** at grade 3, because the engine
    proves them together in `emptied`; splitting them is a later refinement.
 6. **SUDOKU** needs its own catalogue (singles, hidden singles) and is not measured.
