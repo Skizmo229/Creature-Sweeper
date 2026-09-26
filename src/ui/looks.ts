@@ -355,16 +355,17 @@ const LOOKS: Record<string, LadderLook> = {
     victory: 'wipeRadial',
   },
   donut: {
-    // Strawberry frosting. `hot` is rose, clear of the gold, because Reveal writes
-    // givens here (decision 0032).
+    // An unglazed cake donut: golden-brown crust for a covered tile, the dark fried dough under
+    // it for uncovered ground. `hot` is raspberry, 118 clear of the gold because Reveal writes
+    // givens here, 156 from `ink`, and 5.5:1 on the floor (decisions 0032 and 0047).
     palette: {
-      tile: '#a8324f',
-      tileEdge: '#78203a',
-      floor: '#260a13',
-      ink: '#f2c9d3',
-      hot: '#ff7a9c',
+      tile: '#c98d4e',
+      tileEdge: '#95602c',
+      floor: '#2a190c',
+      ink: '#f5dfc0',
+      hot: '#ff5577',
       pip: 'ring',
-      accent: '#d4536f',
+      accent: '#e0a060',
     },
     // Doughy, like a bakery sign.
     font: 'sniglet',
