@@ -3098,5 +3098,105 @@
   "worst": 25,
   "pct": 5.2,
   "nozero": 0
+ },
+ {
+  "type": "patrol",
+  "board": 1,
+  "density": 6.5,
+  "median": 417,
+  "p05": 339,
+  "worst": 217,
+  "pct": 86.9,
+  "nozero": 0
+ },
+ {
+  "type": "patrol",
+  "board": 2,
+  "density": 6.7,
+  "median": 412,
+  "p05": 324,
+  "worst": 216,
+  "pct": 85.8,
+  "nozero": 0
+ },
+ {
+  "type": "patrol",
+  "board": 3,
+  "density": 6.9,
+  "median": 409,
+  "p05": 327,
+  "worst": 241,
+  "pct": 85.2,
+  "nozero": 0
+ },
+ {
+  "type": "patrol",
+  "board": 4,
+  "density": 7.3,
+  "median": 404,
+  "p05": 283,
+  "worst": 189,
+  "pct": 84.2,
+  "nozero": 0
+ },
+ {
+  "type": "patrol",
+  "board": 5,
+  "density": 7.5,
+  "median": 400,
+  "p05": 281,
+  "worst": 189,
+  "pct": 83.3,
+  "nozero": 0
+ },
+ {
+  "type": "patrol",
+  "board": 6,
+  "density": 7.5,
+  "median": 453,
+  "p05": 347,
+  "worst": 250,
+  "pct": 83.3,
+  "nozero": 0
+ },
+ {
+  "type": "patrol",
+  "board": 7,
+  "density": 7.8,
+  "median": 502,
+  "p05": 323,
+  "worst": 268,
+  "pct": 82,
+  "nozero": 0
+ },
+ {
+  "type": "patrol",
+  "board": 8,
+  "density": 8,
+  "median": 566,
+  "p05": 433,
+  "worst": 271,
+  "pct": 82.7,
+  "nozero": 0
+ },
+ {
+  "type": "patrol",
+  "board": 9,
+  "density": 8.3,
+  "median": 616,
+  "p05": 441,
+  "worst": 295,
+  "pct": 81.1,
+  "nozero": 0
+ },
+ {
+  "type": "patrol",
+  "board": 10,
+  "density": 8.5,
+  "median": 639,
+  "p05": 374,
+  "worst": 232,
+  "pct": 79.9,
+  "nozero": 0
  }
 ]
