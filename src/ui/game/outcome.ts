@@ -81,7 +81,7 @@ export function buildBoardOutcome(o: BoardOutcome): HTMLElement {
   );
 
   if (won && o.perfect) {
-    card.append(el('p', 'overlay-note', 'No damage taken — every board can be cleared this way.'));
+    card.append(el('p', 'overlay-note', 'No damage taken'));
   }
   // A loss is the moment of most attention in the game, and on the teaching ladder it says what
   // killed you. "Took your last N" rather than "cost N": a battle event reports HP actually lost,
