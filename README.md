@@ -166,4 +166,4 @@ International**. See [`LICENSE-DOCS`](LICENSE-DOCS).
 
 Neither licence covers the third-party material described above, none of which is in this
 repository. Creature Sweeper is an independent implementation, not affiliated with or endorsed by
-the author of mamono sweeper.
+the author of mamono sweeper Hojamaka Games (though we do think they are cool and you should check out their games).
