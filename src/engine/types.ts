@@ -24,6 +24,12 @@ export interface Cell {
    */
   occupied: boolean;
   /**
+   * SPRINKLE DONUT only: where this creature's partner stands, the other half of its sprinkle.
+   * Null on empty ground and on every other board. It says where the pair lies and nothing about
+   * either tier (`src/engine/placement/sprinkles.ts`).
+   */
+  partner: { readonly x: number; readonly y: number } | null;
+  /**
    * False for cells cut away by the board's shape. Absent cells are neighbours
    * of nothing and belong to no win condition — they are holes, not ground.
    */

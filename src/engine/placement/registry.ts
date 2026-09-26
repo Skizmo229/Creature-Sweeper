@@ -13,6 +13,7 @@ import { DOMINOES_RULE } from './dominoes.js';
 import { PACKS_RULE } from './packs.js';
 import { CONGO_RULE } from './congo.js';
 import { PATROL_RULE } from './patrol.js';
+import { SPRINKLES_RULE } from './sprinkles.js';
 
 export const RULES = {
   uniform: UNIFORM_RULE,
@@ -23,6 +24,7 @@ export const RULES = {
   packs: PACKS_RULE,
   congo: CONGO_RULE,
   patrol: PATROL_RULE,
+  sprinkles: SPRINKLES_RULE,
 } as const satisfies Readonly<Record<string, PlacementRule>>;
 
 /**

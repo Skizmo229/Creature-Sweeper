@@ -149,6 +149,14 @@ export interface PlacementDisplay {
   readonly bonds: 'every' | 'orthogonal' | 'none';
   /** Whether hovering a beaten creature shows its number (decision 0012). */
   readonly hoverShowsNumber: boolean;
+  /**
+   * Whether every covered creature is drawn where it stands (SPRINKLE DONUT, each pair as one
+   * sprinkle across its two cells), so the player sees which covered cells hold a creature and how
+   * many share every number, and only the tiers are hidden. The rule's pencil, `cap` and
+   * `emptied` carry the same fact to Sweep; a reader that counts the creatures under a number, as
+   * a Census does, may count these.
+   */
+  readonly showsCreatures: boolean;
 }
 
 /** Nothing drawn for the rule beyond the creatures themselves. */
@@ -157,6 +165,7 @@ export const PLAIN_DISPLAY: PlacementDisplay = {
   boxRules: 0,
   bonds: 'none',
   hoverShowsNumber: true,
+  showsCreatures: false,
 };
 
 /** What a rule reads off a board in play. `Game` satisfies it. */

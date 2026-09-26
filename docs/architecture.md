@@ -40,6 +40,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
     packs.ts        non-touching packs of one-of-every-tier; missingFrom
     congo.ts        packs strung into orthogonal lines led by the top tier
     patrol.ts       square routes that never share a cell, laid biggest first
+    sprinkles.ts    pairs free to touch, every creature's place shown; shownCap
   fight.ts        a fight: Exercise's borrowed level, the damage, the kill's EXP, won or lost
   game.ts         the state machine: open, mark, note, sweep, cast, forfeit
   run.ts          Full Run: ten boards, one HP pool

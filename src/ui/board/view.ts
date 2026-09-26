@@ -31,8 +31,16 @@ import {
   drawHighlight,
   drawSeams,
   drawSilhouette,
+  drawSprinkles,
 } from './overlays.js';
-import { type Paint, drawCensus, drawCovered, drawOccupied, drawOpen } from './paint.js';
+import {
+  type Paint,
+  drawAnnotation,
+  drawCensus,
+  drawOccupied,
+  drawOpen,
+  drawTile,
+} from './paint.js';
 
 /**
  * The presentation settings the renderer actually reads. Passed in rather than reached for, so
@@ -419,7 +427,17 @@ export class BoardView implements InputHost {
         const { cx, cy } = centreOf(p.layout, cell.x, cell.y);
         if (cell.open) drawOpen(p, cell, cx, cy);
         else if (cell.occupied) drawOccupied(p, cx, cy);
-        else drawCovered(p, cell, cx, cy);
+        else drawTile(p, cell, cx, cy);
+      }
+    }
+    // Over the tiles, since a sprinkle lies across two of them, and under what is written on them,
+    // so a mark or a note stays readable on a sprinkle.
+    drawSprinkles(p);
+    for (const row of game.grid) {
+      for (const cell of row) {
+        if (!cell.present) continue;
+        const { cx, cy } = centreOf(p.layout, cell.x, cell.y);
+        if (!cell.open && !cell.occupied) drawAnnotation(p, cell, cx, cy);
         if (cell.census !== null) drawCensus(p, cell, cx, cy);
       }
     }

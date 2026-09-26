@@ -71,7 +71,14 @@ function fillWash(ctx: CanvasRenderingContext2D, alpha: number): void {
   ctx.restore();
 }
 
+/** A covered tile and what is written on it, in one pass: what the ghost band draws. */
 export function drawCovered(p: Paint, cell: Cell, cx: number, cy: number): void {
+  drawTile(p, cell, cx, cy);
+  drawAnnotation(p, cell, cx, cy);
+}
+
+/** A covered tile: its fill, the rule's wash and its bevel. */
+export function drawTile(p: Paint, cell: Cell, cx: number, cy: number): void {
   const { ctx, theme } = p;
   const size = p.layout.cellPx;
 
@@ -84,7 +91,11 @@ export function drawCovered(p: Paint, cell: Cell, cx: number, cy: number): void 
   ctx.strokeStyle = theme.tileEdge;
   ctx.lineWidth = Math.max(1, size / 10);
   ctx.stroke();
+}
 
+/** What the player, or the board, wrote on a covered tile: a mark, or pencil notes. */
+export function drawAnnotation(p: Paint, cell: Cell, cx: number, cy: number): void {
+  const { ctx } = p;
   if (cell.mark > 0) {
     const box = contentBox(p.layout, cx, cy);
     // Outlined, because green alone vanishes on a light tile like EASY's olive.

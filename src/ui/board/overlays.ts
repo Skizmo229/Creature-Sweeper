@@ -186,6 +186,72 @@ export function drawBonds(p: Paint): void {
   ctx.restore();
 }
 
+/** How far a sprinkle reaches past the centre of each of its cells, in cells. */
+const SPRINKLE_REACH = 0.24;
+/** A sprinkle's half-width, in cells. */
+const SPRINKLE_HALF_WIDTH = 0.15;
+/** Its rim, drawn round the fill so a sprinkle reads on a pale tile and on a dark one. */
+const SPRINKLE_RIM = 'rgba(40, 8, 24, 0.5)';
+/** The shine along a sprinkle, drawn only where a cell is big enough for it to read as one. */
+const SPRINKLE_SHINE = 'rgba(255, 255, 255, 0.4)';
+const SPRINKLE_SHINE_MIN_CELL = 16;
+
+/**
+ * Every covered creature where it stands, where the placement rule shows them (SPRINKLE DONUT):
+ * each pair as one sprinkle lying across its two cells, in the palette's danger colour, so two
+ * pairs that touch are still two sprinkles. Once one of a pair is beaten, the half left covered
+ * keeps its end of the sprinkle, broken off where the two cells meet.
+ */
+export function drawSprinkles(p: Paint): void {
+  const { ctx, game, layout } = p;
+  if (!placementRule(game.config.placement).display.showsCreatures) return;
+  const s = layout.cellPx;
+  const reach = s * SPRINKLE_REACH;
+  const half = Math.max(1.5, s * SPRINKLE_HALF_WIDTH);
+  const rim = Math.max(1, s / 20);
+  const w = game.config.width;
+  const pieces: Array<[number, number, number, number]> = [];
+
+  for (const row of game.grid) {
+    for (const cell of row) {
+      if (!cell.present || cell.open || cell.occupied || cell.tier === 0 || !cell.partner) continue;
+      const mate = game.grid[cell.partner.y]![cell.partner.x]!;
+      const covered = !mate.open && !mate.occupied;
+      // Both covered: one sprinkle, drawn from the end with the lower index.
+      if (covered && mate.y * w + mate.x < cell.y * w + cell.x) continue;
+      const a = centreOf(layout, cell.x, cell.y);
+      const b = centreOf(layout, mate.x, mate.y);
+      const length = Math.hypot(b.cx - a.cx, b.cy - a.cy);
+      const ux = (b.cx - a.cx) / length;
+      const uy = (b.cy - a.cy) / length;
+      // A round cap adds `half` to each end, so the line stops that much short of where it ends.
+      const from = reach - half;
+      const to = covered ? length + reach - half : length / 2 - half;
+      pieces.push([a.cx - ux * from, a.cy - uy * from, a.cx + ux * to, a.cy + uy * to]);
+    }
+  }
+  if (!pieces.length) return;
+
+  ctx.save();
+  ctx.lineCap = 'round';
+  // One sprinkle at a time, rim, fill and shine, so where two cross the later lies on top.
+  const stroke = (piece: readonly number[], style: string, width: number, nudge = 0): void => {
+    const [x0, y0, x1, y1] = piece as [number, number, number, number];
+    ctx.strokeStyle = style;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(x0 - nudge, y0 - nudge);
+    ctx.lineTo(x1 - nudge, y1 - nudge);
+    ctx.stroke();
+  };
+  for (const piece of pieces) {
+    stroke(piece, SPRINKLE_RIM, 2 * (half + rim));
+    stroke(piece, p.theme.hot, 2 * half);
+    if (s >= SPRINKLE_SHINE_MIN_CELL) stroke(piece, SPRINKLE_SHINE, half * 0.5, half * 0.3);
+  }
+  ctx.restore();
+}
+
 /**
  * Dashed line where the board truly ends and the repeat begins. Drawn per cell rather than as
  * one line down the bounding box, because on a shaped board most of a joined edge is hole; on a

@@ -644,7 +644,7 @@ CATEGORIES = {
               "gear", "card", "valentines", "star"],
     "magic": ["arcane", "workout", "oracle", "dungeon"],
     "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku",
-                "ultra_hive", "petri", "patrol"],
+                "ultra_hive", "petri", "patrol", "sprinkle_donut"],
 }
 CATEGORY = {tid: cat for cat, ids in CATEGORIES.items() for tid in ids}
 UNLOCK_BOARDS = unlock_boards()
@@ -745,12 +745,13 @@ def board_row(t, d):
                 tiers=T, quantity=q, hp=hp, lock=lock, exp=ea, givens=givens,
                 total_exp=C[-1], empty=cells - sum(q),
             )
-        if t.get("placement") == "pairs":
+        if t.get("placement") in ("pairs", "sprinkles"):
             # Every creature has exactly one partner, so an odd total leaves
             # one of them with nobody. Rounded DOWN rather than up, because the
-            # packing this rule needs has a ceiling and the schedule already
-            # runs close to it -- a quota nudged upward is the one direction
-            # that can make a board fail to generate.
+            # packing PAIRS needs has a ceiling and its schedule already runs
+            # close to it -- a quota nudged upward is the one direction that
+            # can make a board fail to generate. SPRINKLE DONUT's pairs may
+            # touch and pack far looser, and round the same way.
             M -= M % 2
         if t["archetype"] == "flat":
             w = shape_flat(T if boss is None else T - 1)

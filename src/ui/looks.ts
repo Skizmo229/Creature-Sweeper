@@ -301,6 +301,27 @@ const LOOKS: Record<string, LadderLook> = {
     sfx: 'thud',
     victory: 'wipe',
   },
+  sprinkle_donut: {
+    // Vanilla icing over the dough: a covered tile is the glaze, uncovered ground the warm dough
+    // under it, and every pair of creatures a sprinkle on the glaze, drawn in `hot`. So `hot` is a
+    // pink dark enough to read on the glaze (2.9:1, with the sprinkle's rim) and light enough for
+    // a beaten creature's number on the floor (4.0:1), 169 from `ink`. No spells, so nothing
+    // writes gold (decision 0032).
+    palette: {
+      tile: '#fbf5ee',
+      tileEdge: '#e2d3c4',
+      floor: '#4a2e17',
+      ink: '#fbead6',
+      hot: '#ff4f93',
+      pip: 'ring',
+      accent: '#ff79ad',
+    },
+    // DONUT's bakery-sign face (decision 0031).
+    font: 'sniglet',
+    sfx: 'chime',
+    // Falling chips, as sprinkles fall.
+    victory: 'confetti',
+  },
   hive: {
     // Honey amber for the hive, with its own pip. No spells here, so an amber `hot`
     // has no gold annotation to collide with (decision 0032).
@@ -334,16 +355,17 @@ const LOOKS: Record<string, LadderLook> = {
     victory: 'wipeRadial',
   },
   donut: {
-    // Strawberry frosting. `hot` is rose, clear of the gold, because Reveal writes
-    // givens here (decision 0032).
+    // An unglazed cake donut: golden-brown crust for a covered tile, the dark fried dough under
+    // it for uncovered ground. `hot` is raspberry, 118 clear of the gold because Reveal writes
+    // givens here, 156 from `ink`, and 5.5:1 on the floor (decisions 0032 and 0047).
     palette: {
-      tile: '#a8324f',
-      tileEdge: '#78203a',
-      floor: '#260a13',
-      ink: '#f2c9d3',
-      hot: '#ff7a9c',
+      tile: '#c98d4e',
+      tileEdge: '#95602c',
+      floor: '#2a190c',
+      ink: '#f5dfc0',
+      hot: '#ff5577',
       pip: 'ring',
-      accent: '#d4536f',
+      accent: '#e0a060',
     },
     // Doughy, like a bakery sign.
     font: 'sniglet',

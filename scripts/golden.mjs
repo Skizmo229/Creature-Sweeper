@@ -29,7 +29,7 @@ const TSX = createRequire(import.meta.url).resolve('tsx/cli');
 /**
  * What to run: name -> simulator script and its arguments.
  *
- * Together these exercise every ladder (cli/boards.ts sweeps all 848 boards), every Full Run, the
+ * Together these exercise every ladder (cli/boards.ts sweeps all 884 boards), every Full Run, the
  * honest player on a magic ladder, a crawl ladder and one of each placement rule, the complete
  * deducer, the lethal-guess policy, the graded player, Sudoku generation and the topology
  * experiment.
@@ -45,6 +45,7 @@ const RUNS = {
   'spells-packs': ['src/sim/cli/spellvalue.ts', '4', 'packs'],
   'spells-congo': ['src/sim/cli/spellvalue.ts', '4', 'congo'],
   'spells-workout': ['src/sim/cli/spellvalue.ts', '4', 'workout'],
+  'spells-sprinkles': ['src/sim/cli/spellvalue.ts', '4', 'sprinkle_donut'],
   'forced-arcane': ['src/sim/cli/forced.ts', '3', 'arcane', '8-10'],
   'lethal-extreme': ['src/sim/cli/lethal.ts', '3', 'extreme'],
   'human-normal': ['src/sim/cli/human.ts', '3', 'normal'],
