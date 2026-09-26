@@ -417,7 +417,9 @@ name = "ULTRA HIVE"
 tint = "#c98a12"
 archetype = "descending"
 axis = "Hex cells on a hexagon"
-blurb = """  HIVE's hexagons, on a board that is itself a hexagon: six straight edges to read in from, and   every number still the sum of six neighbours at most."""
+blurb = """\
+  HIVE's hexagons, on a board that is itself a hexagon: six straight edges to read in from, and \
+  every number still the sum of six neighbours at most."""
 # A regular hexagon of R cells a side holds 3R(R + 1) + 1 cells in a box
 # 2R + 1 square: R from 12 to 16, 469 to 817 cells against HIVE's 480 to
 # 800.
@@ -443,7 +445,10 @@ name = "PETRI DISH"
 tint = "#4f9a78"
 archetype = "descending"
 axis = "Three colonies, grown outward"
-blurb = """  A round dish that starts with its three largest blank areas open. You may only open a cell   touching ground you have uncovered, or touching a mark you have made beside it, so each   colony grows from its edge."""
+blurb = """\
+  A round dish that starts with its three largest blank areas open. You may only open a cell \
+  touching ground you have uncovered, or touching a mark you have made beside it, so each colony \
+  grows from its edge."""
 # Square boxes, so the dish is round: 491 to 804 cells against HIVE's 480
 # to 800.
 size = [[25, 25], [25, 25], [25, 25], [26, 26], [26, 26], [28, 28], [28, 28], [30, 30], [30, 30], [32, 32]]
@@ -477,7 +482,10 @@ name = "PATROL"
 tint = "#c0752a"
 archetype = "descending"
 axis = "The creatures walk"
-blurb = """  Every creature walks a square beat, a cell per move, clockwise from its top-left corner: a   tier 3 walks three cells a side. Every click, sweep or wait is a move. A creature on ground   you have uncovered shows as a ?, and a mark draws a creature's whole route."""
+blurb = """\
+  Every creature walks a square beat, a cell per move, clockwise from its top-left corner: a \
+  tier 3 walks three cells a side. Every click, sweep or wait is a move. A creature on ground \
+  you have uncovered shows as a ?, and a mark draws a creature's whole route."""
 # NORMAL's boards, tiers, HP and gates. Not NORMAL's density: every
 # creature holds its route for good, 4 cells a tier, and no two routes
 # share a cell, so NORMAL's 21-27% would need more route than the board
@@ -665,7 +673,10 @@ name = "PYRAMID"
 tint = "#b8924a"
 archetype = "descending"
 axis = "Two rows start face up"
-blurb = """  A stepped pyramid, a cell wider on each side every row down. The bottom two rows start face   up: their empty ground open, and every creature there shown with its tier, waiting for you.   Reveal and Census available."""
+blurb = """\
+  A stepped pyramid, a cell wider on each side every row down. The bottom two rows start face \
+  up: their empty ground open, and every creature there shown with its tier, waiting for you. \
+  Reveal and Census available."""
 # The box is kept exactly twice as wide as it is tall, which is the shape
 # the pyramid fills; a row n cells down is 2n + 2 wide, so the board holds
 # h(h + 1) cells. The counts follow ARCANE's, 506 to 756 against its 480
@@ -692,7 +703,9 @@ name = "GEAR"
 tint = "#6b7a8c"
 archetype = "descending"
 axis = "Teeth outside, a hole inside"
-blurb = """  A gear: eight square teeth round the rim and a hole through the middle, so there are edges   to read from outside and in. Reveal and Census available."""
+blurb = """\
+  A gear: eight square teeth round the rim and a hole through the middle, so there are edges to \
+  read from outside and in. Reveal and Census available."""
 # Square boxes, so the gear is round; the outline scales with the box.
 # The counts follow ARCANE's: 488 to 748 cells against its 480 to 760.
 size = [[30, 30], [30, 30], [30, 30], [32, 32], [32, 32], [34, 34], [34, 34], [36, 36], [36, 36], [38, 38]]
@@ -721,7 +734,9 @@ name = "CARD"
 tint = "#b3203a"
 archetype = "descending"
 axis = "Four suits cut out"
-blurb = """  A playing card, the size of four ordinary boards, with its four suits cut out where a Four's   pips sit. Every hole is another edge to read from. Reveal and Census available."""
+blurb = """\
+  A playing card, the size of four ordinary boards, with its four suits cut out where a Four's \
+  pips sit. Every hole is another edge to read from. Reveal and Census available."""
 # A card's 5:7 portrait, starting at 48x68 as the owner asked, and growing
 # a sixth each way over the ladder.
 size = [[48, 68], [48, 68], [48, 68], [50, 71], [50, 71], [52, 74], [52, 74], [54, 76], [54, 76], [56, 79]]
@@ -751,7 +766,9 @@ name = "VALENTINES"
 tint = "#c2185b"
 archetype = "descending"
 axis = "A heart"
-blurb = """  A heart-shaped board: two rounded lobes over a long taper to the point. Reveal and Census   available."""
+blurb = """\
+  A heart-shaped board: two rounded lobes over a long taper to the point. Reveal and Census \
+  available."""
 # Square boxes, so the heart keeps its proportions; the outline scales with
 # the box. The counts follow ARCANE's: 490 to 738 cells against 480 to 760.
 size = [[26, 26], [26, 26], [26, 26], [27, 27], [27, 27], [29, 29], [29, 29], [31, 31], [31, 31], [32, 32]]
@@ -778,7 +795,9 @@ name = "STAR"
 tint = "#d4a017"
 archetype = "descending"
 axis = "Five points"
-blurb = """  A five-pointed star. Each point narrows to a single cell, all edge, and they meet round a   pentagon in the middle. Reveal and Census available."""
+blurb = """\
+  A five-pointed star. Each point narrows to a single cell, all edge, and they meet round a \
+  pentagon in the middle. Reveal and Census available."""
 # A star fills a third of its box, so the box is big for the cells it
 # holds: 472 to 750 cells against ARCANE's 480 to 760.
 size = [[39, 37], [39, 37], [39, 37], [41, 39], [41, 39], [44, 42], [44, 42], [46, 44], [46, 44], [49, 47]]
