@@ -7,6 +7,7 @@ import { UNGATED_SWEEP, ladders, paint, testConfig } from './helpers.js';
 import { computeNumbers, neighbours } from '../src/engine/grid.js';
 import { BASE_ROWS, ISLANDS, findBestOpening, findOpenings } from '../src/engine/opening.js';
 import { boardConfig } from '../src/engine/config.js';
+import { autoplayTierOrder } from '../src/sim/autoplay.js';
 
 /** A small hand-built board so the assertions can be exact. */
 /** Reveal size of every candidate opening on the board, largest-first. */
@@ -277,6 +278,53 @@ describe('open()', () => {
       for (const cell of row) if (cell.tier === 0) game.open(cell.x, cell.y);
     }
     expect(game.status).toBe('won');
+  });
+
+  it('uncovers the ground a won battle board never needed opened', () => {
+    const game = Game.create(testConfig(), 7);
+    paint(game, [
+      '1.......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
+    game.open(0, 0);
+    expect(game.status).toBe('won');
+    expect(game.grid.flat().filter((c) => !c.open)).toEqual([]);
+  });
+
+  it("uncovers a won search board's creatures without fighting them", () => {
+    const cfg = testConfig({ search: true, startLevel: 0, exp: [9999, 9999], quantity: [1, 0, 0] });
+    const game = Game.create(cfg, 7);
+    paint(game, [
+      '1.......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
+    game.open(7, 7);
+    expect(game.status).toBe('won');
+    const creature = game.cellAt(0, 0)!;
+    expect(creature.open).toBe(true);
+    expect(creature.alive).toBe(true);
+    expect(game.creaturesLeft()).toBe(1);
+    expect(game.hp).toBe(game.maxHp);
+  });
+
+  it("leaves a won board's holes as holes", () => {
+    const game = Game.create(boardConfig(ladders, 'donut', 1), 0xc0ffee);
+    expect(autoplayTierOrder(game).cleared).toBe(true);
+    const cells = game.grid.flat();
+    expect(cells.some((c) => !c.present)).toBe(true);
+    expect(cells.every((c) => c.open === c.present)).toBe(true);
   });
 });
 
