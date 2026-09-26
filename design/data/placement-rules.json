@@ -98,5 +98,25 @@
    "max_num": 23
   },
   "delta": 159
+ },
+ {
+  "ladder": "PATROL",
+  "id": "patrol",
+  "rule": "patrol",
+  "cells": 480,
+  "creatures": 36,
+  "scatter": {
+   "opening": 356.5,
+   "zeros": 248,
+   "avg_num": 1.29,
+   "max_num": 10
+  },
+  "shipped": {
+   "opening": 401,
+   "zeros": 224,
+   "avg_num": 1.29,
+   "max_num": 8
+  },
+  "delta": 12
  }
 ]
