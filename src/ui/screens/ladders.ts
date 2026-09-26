@@ -1,10 +1,11 @@
 /**
  * The ladder list: every game type, locked or not, with what it takes to unlock it and how far
- * the player has got. Each name wears the face its ladder's screens do, its own unless the player
+ * the player has got, in four columns by category (decision 0036). Each name wears the face its ladder's screens do, its own unless the player
  * chose one for the interface, so the list previews the ladders (decision 0021). The tools under
  * it reach the how-to, settings, the save backup and the reset.
  */
 
+import { LADDER_CATEGORIES, type LadderCategory } from '../../engine/config.js';
 import { easierThanDefault } from '../../engine/settings.js';
 import { el } from '../dom.js';
 import { ladders } from '../ladders.js';
@@ -25,6 +26,14 @@ export interface LadderListActions {
   resetProgress(): void;
   setUnlockAll(on: boolean): void;
 }
+
+/** Each column's heading. Normal is the original game's seven modes; the rest say what a ladder is about. */
+const CATEGORY_NAMES: Record<LadderCategory, string> = {
+  normal: 'Normal',
+  shape: 'Shape',
+  magic: 'Magic',
+  special: 'Special',
+};
 
 export function buildLadderList(a: LadderListActions): HTMLElement {
   const { progress, settings } = a;
@@ -53,7 +62,17 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
   }
   wrap.append(head);
 
-  const list = el('div', 'type-list');
+  // One column per category, each in the data's order, which is the order its ladders open.
+  const groups = el('div', 'type-groups');
+  const lists = new Map<LadderCategory, HTMLElement>();
+  for (const category of LADDER_CATEGORIES) {
+    const group = el('section', 'type-group');
+    group.append(el('h2', 'type-group-head', CATEGORY_NAMES[category]));
+    const list = el('div', 'type-list');
+    group.append(list);
+    groups.append(group);
+    lists.set(category, list);
+  }
   for (const type of ladders) {
     const unlocked = progress.isTypeUnlocked(ladders, type.id);
     const rec = progress.typeRecord(type.id);
@@ -92,10 +111,10 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
     card.append(meta);
     card.append(el('span', 'type-axis', type.axis));
     card.addEventListener('click', () => a.pickType(type.id));
-    list.append(card);
+    lists.get(type.category)!.append(card);
   }
-  wrap.append(list);
-  fitNames(list);
+  wrap.append(groups);
+  fitNames(groups);
 
   const tools = el('div', 'tools');
   const unlockAll = el('label', 'toggle');

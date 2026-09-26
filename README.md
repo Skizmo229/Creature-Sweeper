@@ -127,6 +127,8 @@ boards      Normal     Shape          Magic     Special
 combined    HUGE x EXTREME needs HUGE and EXTREME; HUGE x BLIND needs HUGE and BLIND
 ```
 
+The menu shows the ladders in those four columns; Normal is the original game's seven modes.
+
 The cut-out shapes (DONUT, CROSS, WRAPPED CROSS, DIAMOND, RAGGED CAVE, DUNGEON) carry ARCANE's
 loadout; DUNGEON also carries Exercise and the crawl rule. What each mode's rule is and what the
 engine deduces from it is in `docs/modes.md`.
