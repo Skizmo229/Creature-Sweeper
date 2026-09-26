@@ -29,14 +29,8 @@ import {
   type SweepMode,
   snapRatio,
 } from '../engine/settings.js';
-import {
-  type Pip,
-  type SfxPackId,
-  type TypeTheme,
-  type VictoryId,
-  lookFor,
-  themeFor,
-} from './looks.js';
+import type { Pip, SfxPackId, TypeTheme, VictoryId } from './looktypes.js';
+import { lookFor, themeFor } from './looks.js';
 import { type FontId, type GameFont, TITLE_FONT, fontFor, migrateFontChoice } from './typefaces.js';
 import { SETTINGS_KEY as KEY } from './savefile.js';
 

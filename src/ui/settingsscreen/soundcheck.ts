@@ -12,7 +12,7 @@
  */
 
 import { el } from '../dom.js';
-import type { SfxPackId } from '../looks.js';
+import type { SfxPackId } from '../looktypes.js';
 import { MAX_SOUND_CHECK_VOLUME, type Settings } from '../settings.js';
 import { type SfxEvent, sfxPitch, sfxRatio, sfxSoundId } from '../sfx.js';
 import { SFX_EVENT_NAMES, SFX_NAMES } from '../theme.js';

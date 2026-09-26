@@ -17,7 +17,7 @@ import {
   NOTE_COLOR,
   drawCreature,
 } from '../theme.js';
-import { type TypeTheme } from '../looks.js';
+import type { TypeTheme } from '../looktypes.js';
 import type { GameFont } from '../typefaces.js';
 import { setNumberFont } from './digits.js';
 import { type Layout, contentBox } from './geometry.js';

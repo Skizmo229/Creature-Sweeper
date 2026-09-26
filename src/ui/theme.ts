@@ -10,7 +10,7 @@
  * same everywhere. Shape is decoration; colour is information.
  */
 
-import type { GlyphPip, Pip, PipShape, SfxPackId, TypeTheme, VictoryId } from './looks.js';
+import type { GlyphPip, Pip, PipShape, SfxPackId, TypeTheme, VictoryId } from './looktypes.js';
 import { PIP_FAMILY, findSymbol, glyphChar, isGlyphPip } from './pipsymbols.js';
 import type { SfxEvent } from './sfx.js';
 

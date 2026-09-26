@@ -9,7 +9,7 @@
 import type { Game } from '../../engine/game.js';
 import type { Cell } from '../../engine/types.js';
 import { DEFAULT_MAX_ZOOM, type HighlightStyle } from '../settings.js';
-import type { TypeTheme } from '../looks.js';
+import type { TypeTheme } from '../looktypes.js';
 import { PIP_FAMILY, glyphChar, isGlyphPip } from '../pipsymbols.js';
 import { FONTS, type GameFont } from '../typefaces.js';
 import type { VictorySource, VictorySprite } from '../victory/play.js';

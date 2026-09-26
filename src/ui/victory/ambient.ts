@@ -2,7 +2,7 @@
  * The ambient effects: decoration drawn over the board, knowing nothing about what is underneath.
  */
 
-import type { VictoryId } from '../looks.js';
+import type { VictoryId } from '../looktypes.js';
 import type { Painter, Stage } from './stage.js';
 
 interface Particle {

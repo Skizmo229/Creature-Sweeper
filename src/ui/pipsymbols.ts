@@ -12,7 +12,7 @@
  * DOM-free, so the headless tests can hold the table to the fonts.
  */
 
-import type { GlyphPip, Pip } from './looks.js';
+import type { GlyphPip, Pip } from './looktypes.js';
 import table from './pipsymbols.json';
 
 /** The family every symbol is drawn in, as a CSS font-family value. */

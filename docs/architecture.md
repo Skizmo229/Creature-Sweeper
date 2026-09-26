@@ -62,6 +62,7 @@ src/ui/         the prototype
                   symbols.ts is the custom creature icon's window of symbols
   preview.ts      the settings screen's example boards (no rendering, so tests can build them)
   looks.ts        one record per ladder: palette, face, sound pack, clear effect (DOM-free)
+  looktypes.ts    what a look is made of: the pip shapes, the palette, sound packs, clear effects
   theme.ts        the global colours, the picker's names, creature glyphs
   pipsymbols.ts   the symbols a pip can be drawn as: Dingbats and Wingdings 1 to 3, from
                   pipsymbols.json, drawn in the faces in pipfont/ (DOM-free)
