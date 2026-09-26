@@ -483,6 +483,7 @@ export const CONGO_RULE: PlacementRule = {
   validate: validateCongo,
   opening: 'auto',
   deal: dealCongo,
+  patrols: false,
   // A congo line is a pack, so every pack reading holds; the line's shape adds `emptied`.
   coveredCanBeEmpty: PACKS_RULE.coveredCanBeEmpty,
   candidates: PACKS_RULE.candidates,

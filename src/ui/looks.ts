@@ -9,66 +9,7 @@
  * two ladders may share a face (decision 0031).
  */
 
-import type { FontId } from './typefaces.js';
-
-export type PipShape = 'circle' | 'square' | 'diamond' | 'hex' | 'cross' | 'ring' | 'ringDiamond';
-
-/**
- * A symbol drawn as the pip, by its code point, written as `U+2764`: the player's own choice from
- * the custom-icon window (`pipsymbols.ts`). No ladder wears one by default.
- */
-export type GlyphPip = `U+${string}`;
-
-/** What a creature's pips are drawn as: a drawn shape, or a symbol from the pip font. */
-export type Pip = PipShape | GlyphPip;
-
-export interface TypeTheme {
-  /** Covered tile. */
-  tile: string;
-  /** Covered tile's shaded edge, for the bevel. */
-  tileEdge: string;
-  /** Uncovered ground. */
-  floor: string;
-  /** Number ink on open ground. */
-  ink: string;
-  /** This type's danger accent — used for the number on a creature's cell. */
-  hot: string;
-  pip: Pip;
-  /** UI accent for this type. */
-  accent: string;
-}
-
-/** Sound packs. See `sfx.ts` — each is a set of synthesis recipes, not files. */
-export type SfxPackId = 'chime' | 'blip' | 'thud' | 'glass';
-
-/**
- * Board-clear celebrations. See `victory/`.
- *
- * Two families. The first four are ambient — decoration drawn over the board,
- * knowing nothing about what is underneath. The rest animate the board's own
- * creature glyphs, which is why they need the renderer to hand those glyphs
- * over for the length of the animation.
- */
-export type VictoryId =
-  | 'confetti'
-  | 'burst'
-  | 'ripple'
-  | 'sparkle'
-  | 'tumble'
-  | 'cascade'
-  | 'pop'
-  | 'burn'
-  | 'wipe'
-  | 'wipeDown'
-  | 'wipeRadial';
-
-/** A ladder's defaults. The player can override each; this is what "game type default" means. */
-export interface LadderLook {
-  palette: TypeTheme;
-  font: FontId;
-  sfx: SfxPackId;
-  victory: VictoryId;
-}
+import type { LadderLook, TypeTheme } from './looktypes.js';
 
 const LOOKS: Record<string, LadderLook> = {
   easy: {
@@ -305,6 +246,61 @@ const LOOKS: Record<string, LadderLook> = {
     sfx: 'chime',
     victory: 'cascade',
   },
+  ultra_hive: {
+    // Darker honey, and a lavender `hot`, the flower on the comb. No spells here, so nothing writes
+    // gold; lavender is 142 from `ink` and 103 clear of the nearest tier colour (decision 0032).
+    palette: {
+      tile: '#9a6a0c',
+      tileEdge: '#6b4a08',
+      floor: '#1c1203',
+      ink: '#fbe7b5',
+      hot: '#a78bfa',
+      pip: 'hex',
+      accent: '#d49a1e',
+    },
+    // HIVE's own face and sound: the same comb, grown.
+    font: 'gluten',
+    sfx: 'blip',
+    victory: 'burst',
+  },
+  petri: {
+    // Agar green, with crystal violet for `hot`, the stain that shows a colony up. No spells here;
+    // violet is 117 from `ink` and 103 clear of the nearest tier colour (decision 0032). A mark on
+    // a covered tile is 2.9:1, green on green being the one pairing this palette has to watch.
+    palette: {
+      tile: '#447a5c',
+      tileEdge: '#2f5641',
+      floor: '#08140e',
+      ink: '#d8f3e3',
+      hot: '#a78bfa',
+      pip: 'circle',
+      accent: '#6fbf94',
+    },
+    // A laboratory instrument's readout, and glassware.
+    font: 'space-mono',
+    sfx: 'glass',
+    // Rings spreading outward, as a colony does.
+    victory: 'ripple',
+  },
+  patrol: {
+    // Olive drab, and an alarm red for `hot`, which on this board is also the "?" of a creature
+    // walking on uncovered ground: DOMINOES's red, 83 clear of the tier-4 orange and 5.7:1 on the
+    // floor. No spells, so nothing writes gold (decision 0032). A mark on a covered tile is 3.4:1.
+    palette: {
+      tile: '#5f6650',
+      tileEdge: '#42473a',
+      floor: '#13150e',
+      ink: '#e9edc9',
+      hot: '#ff4d6d',
+      pip: 'cross',
+      accent: '#8a9170',
+    },
+    // Stencilled, like a sentry post's sign.
+    font: 'black-ops-one',
+    // Boots, and a band that marches them off.
+    sfx: 'thud',
+    victory: 'wipe',
+  },
   hive: {
     // Honey amber for the hive, with its own pip. No spells here, so an amber `hot`
     // has no gold annotation to collide with (decision 0032).
@@ -413,6 +409,96 @@ const LOOKS: Record<string, LadderLook> = {
     font: 'rubik',
     sfx: 'thud',
     victory: 'burn',
+  },
+  pyramid: {
+    // Sandstone, darkened until the green mark reads on it (2.6:1, EASY's olive was the warning),
+    // with a lapis `hot`: gold is out, because the base rows and Reveal both write givens here,
+    // and lavender sits 90 clear of Census's cyan and 103 of the nearest tier colour (decision 0032).
+    palette: {
+      tile: '#937232',
+      tileEdge: '#6a5223',
+      floor: '#1e1709',
+      ink: '#f4e6c4',
+      hot: '#a78bfa',
+      pip: 'triangle',
+      accent: '#c49a4a',
+    },
+    // Carved capitals, as on a monument.
+    font: 'cinzel',
+    // Stone set on stone, and blocks that tumble when it is done.
+    sfx: 'thud',
+    victory: 'tumble',
+  },
+  gear: {
+    // Gunmetal, with a `hot` of red-hot metal: DOMINOES's red, 83 clear of the tier-4 orange and 123
+    // of the gold that Reveal writes here, and 5.7:1 on the floor (decision 0032).
+    palette: {
+      tile: '#5a6470',
+      tileEdge: '#3d454e',
+      floor: '#111418',
+      ink: '#dde4ea',
+      hot: '#ff4d6d',
+      pip: 'gear',
+      accent: '#8a97a6',
+    },
+    // Machined corners.
+    font: 'chakra-petch',
+    sfx: 'thud',
+    // A ring turning out from the centre, like the gear itself.
+    victory: 'wipeRadial',
+  },
+  card: {
+    // A red card back on green baize, ivory ink. `hot` is lavender: gold is out because Reveal
+    // writes givens here, and it sits 90 clear of Census's cyan and 103 of the nearest tier colour
+    // (decision 0032). A mark on a covered tile is 4.2:1.
+    palette: {
+      tile: '#9e2a33',
+      tileEdge: '#6f1d24',
+      floor: '#0d1f16',
+      ink: '#f5ecd9',
+      hot: '#a78bfa',
+      pip: 'diamond',
+      accent: '#c9404b',
+    },
+    // A card's index is a bookish serif.
+    font: 'libre-baskerville',
+    sfx: 'chime',
+    // The creatures bounce off leaving trails: the card game everyone has watched finish.
+    victory: 'cascade',
+  },
+  valentines: {
+    // Deep rose on a wine floor. `hot` is lavender: gold is out because Reveal writes givens here,
+    // and it sits 90 clear of Census's cyan and 103 of the nearest tier colour (decision 0032).
+    palette: {
+      tile: '#b0254f',
+      tileEdge: '#7d1a38',
+      floor: '#22070f',
+      ink: '#fbd3df',
+      hot: '#a78bfa',
+      pip: 'heart',
+      accent: '#e0487a',
+    },
+    // Bouncy and warm, PAIRS's face, for another ladder about couples.
+    font: 'baloo-2',
+    sfx: 'chime',
+    victory: 'confetti',
+  },
+  star: {
+    // A night sky, with ORACLE's rose for `hot`: gold is out because Reveal writes givens here,
+    // and it sits 76 clear of the tier-5 pink and 124 of the gold (decision 0032).
+    palette: {
+      tile: '#3a55a0',
+      tileEdge: '#27396e',
+      floor: '#080c1c',
+      ink: '#dfe7ff',
+      hot: '#fa4f7a',
+      pip: 'star',
+      accent: '#6f8fe0',
+    },
+    // A theatre marquee: a name in lights.
+    font: 'bungee',
+    sfx: 'glass',
+    victory: 'sparkle',
   },
   dungeon: {
     palette: {

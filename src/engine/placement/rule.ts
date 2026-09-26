@@ -73,6 +73,12 @@ export interface PlacementRule {
    * after it returns.
    */
   deal(d: Deal): void;
+  /**
+   * True where the creatures walk (PATROL): each steps along its route after every action, so the
+   * board a proof reads is the board as it stands this move, and a mark is a route rather than a
+   * claim (`src/engine/patrol.ts`).
+   */
+  readonly patrols: boolean;
 
   /** False where the opening uncovers every empty cell, so a covered cell is always a creature. */
   readonly coveredCanBeEmpty: boolean;
@@ -162,6 +168,9 @@ export interface RuleView {
 
 /** Is every covered neighbour of this open cell free? `ring` is its neighbours. */
 export type RingProof = (cell: Cell, ring: readonly Cell[]) => boolean;
+
+/** The rules whose pencil offers every tier on every cell: they say nothing about a cell. */
+export const NO_CANDIDATES = (): null => null;
 
 /** The rules with no whole-ring proof and nothing proven empty. */
 export const NO_RING_PROOF = (): null => null;

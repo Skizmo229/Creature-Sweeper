@@ -18,6 +18,12 @@ export interface Cell {
   /** True while a creature here is undefeated. Always false for empty ground. */
   alive: boolean;
   /**
+   * PATROL only: uncovered ground a walking creature is standing on. The cell is covered again
+   * while it stands there, so every rule reads it as unknown, and it is drawn as a "?"; it is
+   * uncovered ground again when the creature walks on (`src/engine/patrol.ts`).
+   */
+  occupied: boolean;
+  /**
    * False for cells cut away by the board's shape. Absent cells are neighbours
    * of nothing and belong to no win condition — they are holes, not ground.
    */
@@ -144,7 +150,18 @@ export type OpeningRule =
    * needs a zero cell whose neighbours are all empty too, and here every
    * empty cell is surrounded by creatures.
    */
-  | 'empties';
+  | 'empties'
+  /**
+   * Deal the bottom `BASE_ROWS` rows as if Reveal had been cast on every cell:
+   * empty ground opens, cascading as a click would, and a creature is written
+   * as a given, alive and waiting for the player to be ready for it. PYRAMID's.
+   */
+  | 'base'
+  /**
+   * Reveal the `ISLANDS` zero-regions whose cascades uncover the most cells, so the board starts
+   * as separate footholds to grow out from. PETRI DISH's.
+   */
+  | 'islands';
 
 export type { Placement };
 
@@ -200,6 +217,14 @@ export interface BoardConfig {
    * can walk into it.
    */
   readonly reach: number;
+  /**
+   * PETRI DISH's companion to a one-step reach: a covered cell the player has marked counts as
+   * uncovered ground for reach, but only while it is itself within reach of ground really
+   * uncovered. So a mark carries the reach one step past a creature the player has named, and
+   * marks cannot be chained across the board. Nothing checks the mark is right, since the answer
+   * would tell the player whether it was. Optional so every config built by hand stays unchanged.
+   */
+  readonly marksExtendReach?: boolean;
   /** Spells this game type offers. Empty means no magic. */
   readonly spells: readonly SpellId[];
   /** Mana in hand at the start, so the opening moves are not spell-less. */
@@ -252,7 +277,9 @@ export type GameEvent =
   /** A spell resolved. `detail` is what it told you, if anything. */
   | { type: 'spell'; id: SpellId; x?: number; y?: number; detail?: string }
   /** Exercise lent levels to this fight, and what that spared you. */
-  | { type: 'exercised'; levels: number; spared: number; bonusExp: number };
+  | { type: 'exercised'; levels: number; spared: number; bonusExp: number }
+  /** PATROL's creatures each took a step; `moves` is how many actions the board has seen. */
+  | { type: 'moved'; moves: number };
 
 export type BlockReason =
   /** The cell is marked above your level — the guard that protects you. */

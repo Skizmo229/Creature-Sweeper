@@ -16,6 +16,7 @@ import type { Progress } from '../../src/ui/progress.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import type { Settings } from '../../src/ui/settings.js';
 import { FONTS, TITLE_FONT } from '../../src/ui/typefaces.js';
+import { ladders } from '../../src/ui/ladders.js';
 
 /** The app's surface as the test drives it, private members included, the way the dev console does. */
 interface Driver {
@@ -72,7 +73,7 @@ beforeEach(() => {
 
 describe('the app', () => {
   it('boots to the ladder list with every type on it', () => {
-    expect(document.querySelectorAll('.type-card').length).toBe(24);
+    expect(document.querySelectorAll('.type-card').length).toBe(ladders.length);
     expect(text('h1')).toContain('Creature Sweeper');
     expect(document.querySelector('.mute-toggle')).not.toBeNull();
   });
@@ -359,7 +360,7 @@ describe('Escape and the entry modes', () => {
     app.showSettings(() => app.showTypes());
     key('Escape');
     expect(document.querySelector('.settings-screen')).toBeNull();
-    expect(document.querySelectorAll('.type-card').length).toBe(24);
+    expect(document.querySelectorAll('.type-card').length).toBe(ladders.length);
   });
 
   it('sends no key to a board the player has left', () => {

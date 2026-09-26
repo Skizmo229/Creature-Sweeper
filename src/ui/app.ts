@@ -414,6 +414,7 @@ export class App {
       },
       toggleNotes: () => this.actions.toggleNotesMode(),
       sweep: (useMarks) => this.actions.doSweep(useMarks),
+      wait: () => this.actions.doWait(),
       pickSpell: (id) => this.actions.pickSpell(id),
       cancelSpell: () => {
         this.mode.cancelSpell();

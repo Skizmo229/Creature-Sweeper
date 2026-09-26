@@ -15,17 +15,19 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   shape/          the board shapes: one record per shape, which cells exist and may hold a creature
     rule.ts         ShapeRule, the contract; predicateShape; refuseHexAndWrap
     registry.ts     SHAPES, keyed by every BoardShape; shapeRule()
-    fixed.ts        the per-cell predicates: rect, donut, cross, diamond
+    fixed.ts        the per-cell predicates: rect, donut, cross, diamond, pyramid, gear,
+                  card, heart, star, hexagon, circle
     cave.ts         the ragged cave generator
     floorplan.ts    the dungeon's floor plan: rooms, and one-cell hallways between them
     dungeon.ts      the dungeon map: the budget spent exactly, doorways and their pockets
   generate.ts     dealing the creatures: shape, then placement rule, then numbers
-  opening.ts      choosing the opening
+  opening.ts      choosing the opening and dealing it (`dealOpening`)
   notes.ts        pencil marks as a bitmask
   spells.ts       the four spells, their prices, the mana economy, spellKey
   cast.ts         what each spell does, behind the SpellHost interface
   sweep.ts        Sweep's proof: safeCells and its named proofs; the Sudoku harvest
   reach.ts        the crawl rule: withinReach and computeSealed
+  patrol.ts       PATROL's walking creatures: routes, the step after every action, route marks
   placement/      the placement rules: one record per rule, and nobody else names one
     rule.ts         PlacementRule, the contract every rule meets
     registry.ts     RULES, keyed by every Placement; placementRule()
@@ -37,6 +39,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
     dominoes.ts     pairs dealt as a full domino set
     packs.ts        non-touching packs of one-of-every-tier; missingFrom
     congo.ts        packs strung into orthogonal lines led by the top tier
+    patrol.ts       square routes that never share a cell, laid biggest first
   fight.ts        a fight: Exercise's borrowed level, the damage, the kill's EXP, won or lost
   game.ts         the state machine: open, mark, note, sweep, cast, forfeit
   run.ts          Full Run: ten boards, one HP pool
@@ -61,6 +64,7 @@ src/ui/         the prototype
                   symbols.ts is the custom creature icon's window of symbols
   preview.ts      the settings screen's example boards (no rendering, so tests can build them)
   looks.ts        one record per ladder: palette, face, sound pack, clear effect (DOM-free)
+  looktypes.ts    what a look is made of: the pip shapes, the palette, sound packs, clear effects
   theme.ts        the global colours, the picker's names, creature glyphs
   pipsymbols.ts   the symbols a pip can be drawn as: Dingbats and Wingdings 1 to 3, from
                   pipsymbols.json, drawn in the faces in pipfont/ (DOM-free)

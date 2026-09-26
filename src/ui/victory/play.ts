@@ -27,7 +27,7 @@
  */
 
 import { TIER_COLORS } from '../theme.js';
-import { type TypeTheme, type VictoryId } from '../looks.js';
+import type { TypeTheme, VictoryId } from '../looktypes.js';
 import { ambientPainter } from './ambient.js';
 import { iconPainter } from './icons.js';
 import { type Stage, type VictorySource, type VictorySprite, buildAtlas } from './stage.js';

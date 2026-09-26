@@ -26,14 +26,181 @@ DATA.mkdir(exist_ok=True)
 # the `cells` figure emitted here for every board, so any drift fails loudly
 # rather than quietly mistuning a ladder.
 
+# The outlines, measured from the box's centre with cell centres at x + 0.5, using arithmetic and
+# square roots only, which round the same here as in JavaScript (see fixed.ts).
+GEAR = dict(root=0.7, hole=0.3, half_width=0.17)
+_S = math.sqrt(0.5)
+GEAR_TEETH = [(0, -1), (_S, -_S), (1, 0), (_S, _S), (0, 1), (-_S, _S), (-1, 0), (-_S, -_S)]
+
+
+def _gear(w, h, dx, dy):
+    tip = min(w, h) / 2
+    hole = GEAR["hole"] * tip
+    root = GEAR["root"] * tip
+    half = GEAR["half_width"] * tip
+    r2 = dx * dx + dy * dy
+    if r2 < hole * hole:
+        return False
+    if r2 <= root * root:
+        return True
+    return any(0 < dx * ux + dy * uy <= tip and abs(dx * uy - dy * ux) <= half
+               for ux, uy in GEAR_TEETH)
+
+
+CARD = dict(corner=0.09, cols=(0.28, 0.72), rows=(0.25, 0.75))
+SUIT_ART = dict(
+    spade=[
+        ".....#.....",
+        "....###....",
+        "...#####...",
+        "..#######..",
+        ".#########.",
+        "###########",
+        "###########",
+        "###########",
+        ".###.#.###.",
+        ".....#.....",
+        "....###....",
+        "...#####...",
+    ],
+    heart=[
+        ".###...###.",
+        "#####.#####",
+        "###########",
+        "###########",
+        "###########",
+        ".#########.",
+        "..#######..",
+        "...#####...",
+        "....###....",
+        ".....#.....",
+    ],
+    diamond=[
+        ".....#.....",
+        "....###....",
+        "....###....",
+        "...#####...",
+        "..#######..",
+        ".#########.",
+        ".#########.",
+        "..#######..",
+        "...#####...",
+        "....###....",
+        "....###....",
+        ".....#.....",
+    ],
+    club=[
+        "....###....",
+        "...#####...",
+        "...#####...",
+        "...#####...",
+        ".##.###.##.",
+        "####.#.####",
+        "###########",
+        "####.#.####",
+        ".##..#..##.",
+        ".....#.....",
+        "....###....",
+        "...#####...",
+    ],
+)
+CARD_PIPS = ((0, 0, "spade"), (1, 0, "heart"), (0, 1, "diamond"), (1, 1, "club"))
+
+
+def _heart_curve(x, y):
+    a = x * x + y * y - 1
+    return a * a * a - x * x * y * y * y <= 0
+
+
+def _in_suit(art, cx, cy, flipped, x, y):
+    rows, cols = len(art), len(art[0])
+    i = x - math.floor(cx - cols / 2 + 0.5)
+    j = y - math.floor(cy - rows / 2 + 0.5)
+    if not (0 <= i < cols and 0 <= j < rows):
+        return False
+    return (art[rows - 1 - j][cols - 1 - i] if flipped else art[j][i]) == "#"
+
+
+def _card(w, h, x, y):
+    xc, yc = x + 0.5, y + 0.5
+    corner = CARD["corner"] * w
+    nx = min(max(xc, corner), w - corner)
+    ny = min(max(yc, corner), h - corner)
+    if (xc - nx) * (xc - nx) + (yc - ny) * (yc - ny) > corner * corner:
+        return False
+    return not any(_in_suit(SUIT_ART[suit], CARD["cols"][col] * w, CARD["rows"][row] * h,
+                            row == 1, x, y)
+                   for col, row, suit in CARD_PIPS)
+
+
+HEART = dict(half_width=1.135, half_height=1.118, lift=0.118)
+
+
+def _heart(w, h, dx, dy):
+    return _heart_curve((dx / (w / 2)) * HEART["half_width"],
+                        (-dy / (h / 2)) * HEART["half_height"] + HEART["lift"])
+
+
+STAR = dict(cos18=0.9510565162951535, sin18=0.3090169943749474, cos54=0.5877852522924731,
+            sin54=0.8090169943749475, inner=0.3819660112501051)
+STAR_CORNERS = [(0, -1), (STAR["cos54"], -STAR["sin54"]), (STAR["cos18"], -STAR["sin18"]),
+                (STAR["cos18"], STAR["sin18"]), (STAR["cos54"], STAR["sin54"]), (0, 1),
+                (-STAR["cos54"], STAR["sin54"]), (-STAR["cos18"], STAR["sin18"]),
+                (-STAR["cos18"], -STAR["sin18"]), (-STAR["cos54"], -STAR["sin54"])]
+
+
+def _star(w, h, x, y):
+    radius = min(w / (2 * STAR["cos18"]), h / (1 + STAR["sin54"]))
+    cx = w / 2
+    cy = h / 2 + ((1 - STAR["sin54"]) * radius) / 2
+    corners = [(cx + ux * (radius if i % 2 == 0 else radius * STAR["inner"]),
+                cy + uy * (radius if i % 2 == 0 else radius * STAR["inner"]))
+               for i, (ux, uy) in enumerate(STAR_CORNERS)]
+    px, py = x + 0.5, y + 0.5
+    inside = False
+    j = len(corners) - 1
+    for i in range(len(corners)):
+        xi, yi = corners[i]
+        xj, yj = corners[j]
+        if (yi > py) != (yj > py) and px < ((xj - xi) * (py - yi)) / (yj - yi) + xi:
+            inside = not inside
+        j = i
+    return inside
+
+
+def _hexagon(w, h, x, y):
+    # Odd-r offset rows to axial coordinates, as neighbours() lays hex cells out.
+    radius = (min(w, h) - 1) // 2
+    cx, cy = w // 2, h // 2
+    dq = x - (y - (y & 1)) // 2 - (cx - (cy - (cy & 1)) // 2)
+    dr = y - cy
+    return max(abs(dq), abs(dr), abs(dq + dr)) <= radius
+
+
 def shape_present(shape, param, w, h, x, y):
     cx, cy = (w - 1) / 2, (h - 1) / 2
+    dx, dy = x + 0.5 - w / 2, y + 0.5 - h / 2
     if shape == "donut":
         return x < param or y < param or x >= w - param or y >= h - param
     if shape == "cross":
         return abs(x - cx) <= param / 2 or abs(y - cy) <= param / 2
     if shape == "diamond":
         return abs(x - cx) / (w / 2) + abs(y - cy) / (h / 2) <= 1
+    if shape == "pyramid":
+        return abs(x - cx) < y + 1
+    if shape == "gear":
+        return _gear(w, h, dx, dy)
+    if shape == "card":
+        return _card(w, h, x, y)
+    if shape == "heart":
+        return _heart(w, h, dx, dy)
+    if shape == "star":
+        return _star(w, h, x, y)
+    if shape == "hexagon":
+        return _hexagon(w, h, x, y)
+    if shape == "circle":
+        radius = min(w, h) / 2
+        return dx * dx + dy * dy <= radius * radius
     return True
 
 
@@ -181,7 +348,8 @@ def damage(L, E):
 REQUIRED = ("id", "name", "tint", "archetype", "axis", "blurb",
             "size", "tiers", "density", "hp", "lock", "alpha0")
 OPTIONAL = ("boss", "sweep", "spells", "start_mana", "workout", "placement", "sets", "givens",
-            "topology", "wrap", "shape", "shape_param", "cells", "reach", "search", "ceiling")
+            "topology", "wrap", "shape", "shape_param", "cells", "reach", "search", "ceiling",
+            "opening", "reach_marks")
 # The fields that are one value per board.
 SCHEDULES = ("size", "tiers", "density", "hp", "lock", "alpha0", "boss", "sets", "givens", "cells")
 
@@ -337,9 +505,21 @@ def extend(t):
         # the two and pinning the faster one costs the least.
         if t.get("placement") == "checker" and w_next % 2:
             w_next -= 1
+        h_next = min(max_h, round(hs[-1] + dh * i))
+        # A pyramid fills a box exactly twice as wide as it is tall (PYRAMID_SHAPE in
+        # fixed.ts). Carried on separately the two schedules drift off that, which clips the
+        # base or leaves a margin, so the continuation takes the width from the height.
+        if t.get("shape") == "pyramid":
+            h_next = min(h_next, max_w // 2)
+            w_next = 2 * h_next
+        # A hexagon R cells a side fills a box 2R + 1 square (HEXAGON_SHAPE in fixed.ts). An even
+        # side adds an empty row and column and not a cell, so the continuation keeps it odd.
+        if t.get("shape") == "hexagon":
+            side = min(w_next, h_next)
+            side -= 1 - side % 2
+            w_next = h_next = side
         row = dict(
-            size=(w_next,
-                  min(max_h, round(hs[-1] + dh * i))),
+            size=(w_next, h_next),
             tiers=T,
             density=min(d_cap, t["density"][-1] + dd * i),
             hp=max(hp_floor, round(t["hp"][-1] + dhp * i)),
@@ -457,9 +637,11 @@ def unlock_boards():
 # the way a player meets it.
 CATEGORIES = {
     "normal": ["easy", "normal", "huge", "extreme", "huge_extreme", "blind", "huge_blind"],
-    "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave"],
+    "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave", "pyramid",
+              "gear", "card", "valentines", "star"],
     "magic": ["arcane", "workout", "oracle", "dungeon"],
-    "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku"],
+    "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku",
+                "ultra_hive", "petri", "patrol"],
 }
 CATEGORY = {tid: cat for cat, ids in CATEGORIES.items() for tid in ids}
 UNLOCK_BOARDS = unlock_boards()
@@ -672,6 +854,8 @@ def ladder_record(t, boards, extended):
         search=t.get("search", False),
         postgame=t["id"] in POSTGAME,
         placement=t.get("placement", "uniform"),
+        # Absent means the placement rule's own; see readOpening in config.ts.
+        **({"opening": t["opening"]} if t.get("opening") else {}),
         spells=t.get("spells", []),
         start_mana=t.get("start_mana", 0),
         **({"workout": t["workout"]} if t.get("workout") else {}),
@@ -681,6 +865,8 @@ def ladder_record(t, boards, extended):
         shape_param=t.get("shape_param", 0),
         # 0 means the whole board is in reach, which is every type but one.
         reach=t.get("reach", 0),
+        # PETRI DISH: a mark touching uncovered ground counts as uncovered for reach.
+        **({"reach_marks": True} if t.get("reach_marks") else {}),
         wrap=t.get("wrap", "none"),
         # Full Run: one HP pool for the whole 10-board run, taken from
         # board 1. The per-board HP schedule is ignored in that mode, and

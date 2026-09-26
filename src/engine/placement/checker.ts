@@ -196,6 +196,7 @@ export const CHECKER_RULE: PlacementRule = {
       COLOURS,
       (shade) => ` on the ${shade} squares, which is every tier of that parity`,
     ),
+  patrols: false,
   coveredCanBeEmpty: true,
   // The square's colour: the pencil refuses the other parity. Marks are not refused, by decision.
   candidates: (cell, view) => {

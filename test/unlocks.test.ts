@@ -141,7 +141,7 @@ describe('the shape of the graph', () => {
     expect(blind.requires).toEqual([]);
     const others = ladders.filter((t) => t.id !== 'blind').map((t) => t.requires_boards);
     expect(blind.requires_boards).toBe(Math.max(...others) + 5);
-    expect(blind.requires_boards).toBe(50);
+    expect(blind.requires_boards).toBe(70);
   });
 });
 
@@ -255,13 +255,17 @@ describe('the gates as the game applies them', () => {
     expect(twenty.isTypeUnlocked(ladders, 'extreme')).toBe(true);
   });
 
-  it('holds BLIND shut at 49 boards, and opens it at 50', () => {
-    const cleared = ['easy', 'normal', 'huge', 'extreme'];
-    const short = saveWith(cleared, firstBoards('wraparound', 9));
-    expect(short.boardsCleared()).toBe(49);
+  it('holds BLIND shut one board short of its gate, and opens it on the gate', () => {
+    // Whole ladders from the Shape column, then boards of the next, to land on an exact count.
+    const shapes = ladders.filter((t) => t.category === 'shape').map((t) => t.id);
+    const saveOf = (boards: number) => {
+      const whole = shapes.slice(0, Math.floor(boards / 10));
+      return saveWith(whole, firstBoards(shapes[whole.length]!, boards % 10));
+    };
+    const short = saveOf(gate('blind') - 1);
+    expect(short.boardsCleared()).toBe(gate('blind') - 1);
     expect(short.isTypeUnlocked(ladders, 'blind')).toBe(false);
-    const enough = saveWith(cleared, firstBoards('wraparound', 10));
-    expect(enough.isTypeUnlocked(ladders, 'blind')).toBe(true);
+    expect(saveOf(gate('blind')).isTypeUnlocked(ladders, 'blind')).toBe(true);
   });
 
   it('needs both parents for a combined type, not just one', () => {

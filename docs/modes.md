@@ -20,6 +20,13 @@ cell.
 **HIVE** is a hex grid: six neighbours, so every number is lower and blank regions are commoner,
 and it runs denser (35%) to compensate.
 
+**ULTRA HIVE** is HIVE on a regular hexagon of hex cells, `R` cells a side in a box `2R + 1`
+square (the continuation keeps the side odd, since an even one adds an empty row and not a cell).
+The shape refuses square cells and wrapping. Its six straight edges barely move it: at HIVE's own
+schedule it was stuck 10.7 times over the ladder and cleared 92% against HIVE's 12.2 and 93%, and
+it ships half a density point above HIVE, on HIVE's curve (12.5 and 91%; 150 seeds, 25 September
+2026), topping out at 35.5%. Like HIVE it has no spells.
+
 **DONUT, CROSS, DIAMOND** are per-cell masks. Parameters are in cells, never in fractions of the
 board: a ring "20% of the width" thick is nine cells on a long side and four on a short one, the
 same board playing two different games. Once parameterised in cells, aspect ratio stops affecting
@@ -40,6 +47,57 @@ cannot fail for want of space. The rim is a superellipse (power 2.6) with wobble
 lifted the usable share of the box from 26% to 40%. Its cell count is a promise: the count is
 chosen per board in the ladder's `cells` schedule and the generator spends exactly that many, and
 the test `leaves exactly the cell count the ladder was tuned against` is the alarm.
+
+**PYRAMID** is a stepped pyramid, a per-cell mask: a two-cell cap and every row a cell wider on
+each side, in a box exactly twice as wide as it is tall, so `h` rows hold `h(h + 1)` cells (the
+continuation takes the width from the height to keep it so). Its opening is its own, `'base'`: the
+bottom two rows are dealt as Reveal deals a cell, empty ground opened and cascading as a click
+would, each creature written as a given and left alive to be fought when your level allows.
+Nothing is killed and nothing pays exploration mana, so the four facts stand untouched.
+
+The base makes the board nearly guess-free, and that was measured, not expected. At the stepped
+edge a base cell touches a single covered cell above it, so its number reads that cell exactly;
+the next cell along then has one unknown left, and so on, so each row unzips the one above. At
+ARCANE's schedule the honest player was stuck 0.2 times over the whole ladder against ARCANE's
+23.9, and cleared every board (60 seeds, 25 September 2026); eight density points more gave 4.0
+stuck and 100% cleared, fifteen more (41.5 to 49.5%) 14.6 and 99%. No density a board survives
+puts it on ARCANE's curve, so it ships at ARCANE's schedule as a ladder decided by deduction, the
+way SUDOKU is (decision 0038).
+
+**GEAR** is a gear, a per-cell mask in a square box: eight square teeth, one pointing straight up,
+about as wide as they are deep, round a hole three tenths of the radius across. The teeth point
+straight out, so the diagonal four step on a square grid; the owner chose that over upright blocks.
+Its proportions are shares of the box because the box is always square, so the outline plays the
+same on every board. It came out harder than ARCANE at ARCANE's schedule, as DONUT did, and ships a
+point and a half below it, on ARCANE's curve (24.1 stuck over the ladder and 82% cleared against
+23.9 and 82%; 60 seeds, 26 September 2026). It is the first ladder with a box of its own past the
+global 64x32: 45 square, inside the same 2,048 cells.
+
+**CARD** is a playing card, a per-cell mask in a box kept at a card's 5:7: rounded corners, and
+four suit-shaped holes where a Four's pips sit, spade and heart above, diamond and club below and
+upside down. The suits are drawn cell by cell, 11 wide and 10 to 12 tall, the same size on every
+board (`SUIT_ART`, with its copy in `ladders.py`): drawn as curves at this size they read as
+blobs, and the owner chose the drawn ones. It started at 48x68 and was made smaller at the
+owner's request, 30x42 growing to 35x49, twice an ordinary board; the tall box would be clipped
+by the continuation's global 64x32, so the continuation keeps board 10's card. It sits on
+ARCANE's forced-guess curve per board, which on a board this size means sparser per cell: at
+ARCANE's schedule it was stuck 51.3 times over the ladder and cleared 62%, and it ships on a ramp
+from 4.2 density points below ARCANE's to 3.7 (23.1 stuck and 85% against 23.9 and 82%; 120
+seeds, 26 September 2026).
+
+**VALENTINES** is a heart, a per-cell mask filling a square box: the classic heart curve, the
+same the card's heart suit is cut with, stretched to the box's exact extents. At ARCANE's
+schedule it came out gentler than ARCANE (17.4 stuck over the ladder, 85% cleared), and ships a
+density point above it, on ARCANE's curve (23.3 and 80% against 23.9 and 82%; 60 seeds, 25
+September 2026), topping out at 35.5%.
+
+**STAR** is a regular five-pointed star, point up, as large as its box allows; each point narrows
+to a single cell. The star fills only a third of its box, so its boxes are large for the cells
+they hold, and board 10's is already past the global ceiling, so the continuation keeps it. Its
+ten corners are written out as numbers, not computed, so the two copies of the predicate agree
+exactly. At ARCANE's schedule it came out harder than ARCANE (32.5 stuck over the ladder, 76%
+cleared), and ships two density points below it, on ARCANE's curve (24.6 and 84% against 23.9
+and 82%; 60 seeds, 25 September 2026).
 
 ## DUNGEON
 
@@ -73,6 +131,56 @@ and barely the danger; HP is the lever for deadliness.
 
 Reveal pushes the frontier here, because opened cells are what reach is measured from, which is
 why DUNGEON carries Exercise too: a forced guess there is a guess on what is in front of you.
+
+## PETRI DISH
+
+A round dish, a disc of square cells, that opens with its three largest blank areas (`'islands'`)
+and carries the crawl rule at a single step: you may open only a cell touching ground you have
+uncovered, so each colony grows from its edge. A reach of one on its own is refused, because the
+board would advance a ring at a time and no deduction could be acted on until the cascade happened
+to arrive beside it; it is accepted here paired with **marks that extend it** (`reach_marks`). A
+covered cell you have marked counts as uncovered ground while it is itself within reach of ground
+really uncovered, so naming a creature on the frontier lets you reach past it, and marks cannot be
+chained across the dish. Nothing checks the mark is right, because the answer would tell you
+whether it was. The sealed-in exception is DUNGEON's, and it reads open ground only, never marks,
+or marking a cell and watching the rule lift would say what lay beyond it (decision 0039).
+
+Measured, both rules make the dish gentler, not harder. At HIVE's schedule the plain circle was
+stuck 22.3 times over the ladder; three islands took that to 6.5, the one-step reach to 14.6, and
+both to 4.6 with 99.8% cleared (60 seeds, 25 September 2026). A guess on this board is always a
+frontier cell beside numbers, so it is cheap. It ships two density points above HIVE's schedule,
+on HIVE's forced-guess curve (11.5 stuck against 12.2, 150 seeds), topping out at 37%, and still
+clears 99.9%: HP, not density, is the lever if it should be deadlier. No spells.
+
+## PATROL
+
+The creatures walk. A tier-t creature walks the edge of a square t cells a side, one cell per
+action, clockwise from the square's top-left corner, where every creature starts: t cells right, t
+down, t left, t up, home after 4t moves. Every open (a cascade and a fight count once), every
+Sweep and every **Wait** (`W`, free) is a move; a mark or a note is not. The routes never share a
+cell, so two creatures never meet and a beaten creature lies where nobody else walks, still
+counted in the numbers as it is everywhere. The numbers are the sums round each cell as the board
+stands this move, worked out again after every step (`src/engine/patrol.ts`).
+
+A creature that walks onto ground you have uncovered covers the cell again while it stands there
+(`occupied`), drawn as a **?**: every rule and proof reads it as unknown, and clicking it fights
+it. When it walks on, the cell is uncovered ground again, with anything written on it rubbed out.
+A **mark is a route**: a mark of tier t draws a tier-t creature's whole route with the marked
+cell as its top-left corner, on every covered cell of it, so the mark guard covers everywhere that
+creature can step; the same mark again takes it off, and where routes cross a cell shows the
+higher. Because a route is not a claim about where a creature stands, Sweep reads no marks here,
+and the "Sweep + marks" button is not offered. Notes are ordinary.
+
+The price is density. Every creature holds its route for good, four cells a tier, and NORMAL's tier
+mix averages about nine route cells a creature, so NORMAL's 21 to 27% would need more route than
+the board has cells. The owner chose routes that never cross over that density, and the deal packs
+at most 8.5% reliably: PATROL runs NORMAL's boards, tiers, HP and gates on a ramp from 6.5 to
+8.5%. At that density the opening uncovers most of the board (409 of 480 cells on board 1, 586 of
+800 on board 10), so most creatures walk in plain sight as a ?, and the honest player, taught to
+read the board afresh after every move and to wait out a stuck point, was never stuck and cleared
+every board (60 seeds, 25 September 2026; NORMAL: 2.0 stuck over the ladder, 99% cleared). The
+difficulty is keeping up with a board that changes every move, which no instrument here measures
+(decision 0040).
 
 ## CHECKERBOARD
 
@@ -156,6 +264,6 @@ proof finds nothing at this density; the Sudoku rule itself is deliberately abse
 ## BLIND and HUGE x BLIND
 
 Search boards: one HP, level 0, won by uncovering every empty cell, with the creatures still
-hidden at the win. BLIND climbs 5 to 7 tiers over its ladder. It opens at 50 boards cleared,
+hidden at the win. BLIND climbs 5 to 7 tiers over its ladder. It opens at 70 boards cleared,
 one step after every other counted ladder (decision 0036), and its Full Run heal rounds down to nothing, so a run there is a
 single-mistake run.

@@ -6,7 +6,7 @@
  */
 
 import { el } from '../dom.js';
-import type { GlyphPip, Pip } from '../looks.js';
+import type { GlyphPip, Pip } from '../looktypes.js';
 import {
   type PipSymbol,
   SYMBOL_COUNT,

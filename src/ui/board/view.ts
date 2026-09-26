@@ -9,7 +9,7 @@
 import type { Game } from '../../engine/game.js';
 import type { Cell } from '../../engine/types.js';
 import { DEFAULT_MAX_ZOOM, type HighlightStyle } from '../settings.js';
-import type { TypeTheme } from '../looks.js';
+import type { TypeTheme } from '../looktypes.js';
 import { PIP_FAMILY, glyphChar, isGlyphPip } from '../pipsymbols.js';
 import { FONTS, type GameFont } from '../typefaces.js';
 import type { VictorySource, VictorySprite } from '../victory/play.js';
@@ -32,7 +32,7 @@ import {
   drawSeams,
   drawSilhouette,
 } from './overlays.js';
-import { type Paint, drawCensus, drawCovered, drawOpen } from './paint.js';
+import { type Paint, drawCensus, drawCovered, drawOccupied, drawOpen } from './paint.js';
 
 /**
  * The presentation settings the renderer actually reads. Passed in rather than reached for, so
@@ -418,6 +418,7 @@ export class BoardView implements InputHost {
         if (!cell.present) continue; // a hole is drawn as nothing at all
         const { cx, cy } = centreOf(p.layout, cell.x, cell.y);
         if (cell.open) drawOpen(p, cell, cx, cy);
+        else if (cell.occupied) drawOccupied(p, cx, cy);
         else drawCovered(p, cell, cx, cy);
         if (cell.census !== null) drawCensus(p, cell, cx, cy);
       }

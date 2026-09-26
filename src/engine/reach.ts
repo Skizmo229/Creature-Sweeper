@@ -24,25 +24,13 @@ export interface ReachView {
  * asks this nine times a frame. A board with nothing open at all is entirely in reach, so a reach
  * rule over `opening: 'none'` cannot present a board the player is forbidden to touch.
  *
+ * On a board whose marks extend reach, a marked cell counts as ground when it is itself within
+ * reach of open ground, asked without marks, which is what stops marks chaining.
+ *
  * The caller answers `sealedIn` first; this is the geometry alone.
  */
 export function withinReach(game: ReachView, cell: Cell): boolean {
-  const { reach } = game.config;
-  const seen = new Set<Cell>([cell]);
-  let frontier: Cell[] = [cell];
-
-  for (let step = 0; step < reach; step++) {
-    const next: Cell[] = [];
-    for (const at of frontier) {
-      for (const n of game.neighboursOf(at)) {
-        if (seen.has(n)) continue;
-        seen.add(n);
-        if (n.open) return true;
-        next.push(n);
-      }
-    }
-    frontier = next;
-  }
+  if (reachesGround(game, cell, game.config.marksExtendReach === true)) return true;
 
   // Nothing within reach is open. Before refusing, check the board has an open cell anywhere.
   for (const row of game.grid) {
@@ -51,11 +39,34 @@ export function withinReach(game: ReachView, cell: Cell): boolean {
   return true;
 }
 
+/** Is there open ground, or a mark that counts as ground, within `reach` steps of this cell? */
+function reachesGround(game: ReachView, cell: Cell, viaMarks: boolean): boolean {
+  const seen = new Set<Cell>([cell]);
+  let frontier: Cell[] = [cell];
+
+  for (let step = 0; step < game.config.reach; step++) {
+    const next: Cell[] = [];
+    for (const at of frontier) {
+      for (const n of game.neighboursOf(at)) {
+        if (seen.has(n)) continue;
+        seen.add(n);
+        if (n.open) return true;
+        if (viaMarks && n.mark > 0 && reachesGround(game, n, false)) return true;
+        next.push(n);
+      }
+    }
+    frontier = next;
+  }
+  return false;
+}
+
 /**
  * Has the board sealed the player in: is there no covered cell within reach of open ground that
  * can be opened at their level? One flood from every open cell at once, `reach` rings deep.
  * Read off `level` alone, not `level + exerciseCharge`: the question is whether the BOARD has
- * sealed you, not whether you hold a purchase that would open it.
+ * sealed you, not whether you hold a purchase that would open it. Marks never count here, even
+ * where they extend reach: if they did, marking a cell and watching the rule lift would say what
+ * lay beyond it.
  */
 export function computeSealed(game: ReachView): boolean {
   let frontier: Cell[] = [];

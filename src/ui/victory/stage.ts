@@ -4,7 +4,7 @@
  */
 
 import { drawCreature } from '../theme.js';
-import type { TypeTheme } from '../looks.js';
+import type { TypeTheme } from '../looktypes.js';
 
 /** One creature glyph, as the board is currently drawing it. */
 export interface VictorySprite {

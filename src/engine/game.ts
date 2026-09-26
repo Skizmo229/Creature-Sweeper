@@ -17,7 +17,8 @@ import { SPELL_EFFECTS } from './cast.js';
 import { computeSealed, withinReach } from './reach.js';
 import { safeCells as provenSafe } from './sweep.js';
 import { type Grid, inBounds, neighbours } from './grid.js';
-import { findBestOpening, findFallbackOpening } from './opening.js';
+import { dealOpening } from './opening.js';
+import { Patrol } from './patrol.js';
 import { generateGrid } from './generate.js';
 import { fight, revealAllCreatures } from './fight.js';
 
@@ -87,6 +88,8 @@ export class Game {
 
   private openEmptyCount = 0;
   private readonly totalEmpty: number;
+  /** The walking creatures and the routes drawn for them, on a PATROL board; null elsewhere. */
+  private readonly patrol: Patrol | null;
 
   private constructor(
     config: BoardConfig,
@@ -105,6 +108,8 @@ export class Game {
     this.remaining = [...config.quantity];
     this.mana = config.startMana;
     this.marksPlaced = new Array<number>(config.tiers).fill(0);
+    // Read off the board as dealt, before the opening, while every creature is on its corner.
+    this.patrol = placementRule(config.placement).patrols ? new Patrol(grid) : null;
     // A board may arrive with marks already on it — the Sudoku placement pins
     // its givens that way — so the counters are read off the grid rather than
     // assumed empty.
@@ -141,8 +146,7 @@ export class Game {
     const rng = mulberry32(seed);
     const grid = generateGrid(config, rng);
     const game = new Game(config, seed, grid, startHp, settings);
-    if (config.opening === 'auto') game.applyOpening();
-    else if (config.opening === 'empties') game.openEveryEmpty();
+    dealOpening(game);
     return game;
   }
 
@@ -182,7 +186,25 @@ export class Game {
 
   /** Cells that Sweep would open. The proof is in `sweep.ts`. */
   safeCells(options: SweepOptions = {}): Cell[] {
-    return provenSafe(this, options);
+    return provenSafe(this, this.marksAreClaims ? options : { ...options, useMarks: false });
+  }
+
+  /** Whether the creatures walk (PATROL): every action moves each a step along its route. */
+  get patrols(): boolean {
+    return this.patrol !== null;
+  }
+
+  /** Actions taken so far on a board whose creatures walk; 0 on every other board. */
+  get moves(): number {
+    return this.patrol?.moves ?? 0;
+  }
+
+  /**
+   * Whether a mark claims what stands on its cell. Not on PATROL, where a mark is a creature's
+   * route, so Sweep reads no marks there however it is asked.
+   */
+  get marksAreClaims(): boolean {
+    return this.patrol === null;
   }
 
   // ---------------------------------------------------------------- actions
@@ -242,7 +264,24 @@ export class Game {
 
     if (cell.tier > 0 && cell.alive) events.push(...fight(this, cell));
     if (this.status === 'playing') events.push(...this.checkSearchWin());
+    // A sweep is one action however many cells it opens, so it moves the creatures once, itself.
+    if (!this.sweeping) events.push(...this.moveOn());
     return events;
+  }
+
+  /**
+   * PATROL's Wait: let the creatures take a step and do nothing else. An action like any other, so
+   * it moves them; it opens nothing, so it banks no Sweep charge.
+   */
+  wait(): GameEvent[] {
+    if (this.status !== 'playing') return [{ type: 'blocked', reason: 'game-over' }];
+    if (!this.patrol) return [{ type: 'blocked', reason: 'no-effect' }];
+    return this.moveOn();
+  }
+
+  /** After an action, on a board whose creatures walk and are still in play: a step each. */
+  private moveOn(): GameEvent[] {
+    return this.patrol && this.status === 'playing' ? this.patrol.step(this) : [];
   }
 
   /**
@@ -278,6 +317,8 @@ export class Game {
     if (this.status !== 'playing') return [{ type: 'blocked', reason: 'game-over' }];
     const cell = this.cellAt(x, y);
     if (!cell) return [{ type: 'blocked', reason: 'out-of-bounds' }];
+    // On PATROL a mark is a route drawn from this cell as its corner, which may be uncovered.
+    if (this.patrol) return this.patrol.mark(this, cell, mark);
     if (cell.open) return [{ type: 'blocked', reason: 'already-open' }];
     // A given is the board talking, not the player. Re-marking toggles a mark
     // off, so without this the player could rub out a clue they cannot get
@@ -436,6 +477,7 @@ export class Game {
     if (events.length > 0 && this.settings.sweep === 'charge') {
       this.sweepCharge -= this.chargeNeeded;
     }
+    if (events.length > 0) events.push(...this.moveOn());
     return events;
   }
 
@@ -514,6 +556,7 @@ export class Game {
         : { type: 'spell', id, detail: outcome.detail },
     );
     if (this.status === 'playing') events.push(...this.checkSearchWin());
+    events.push(...this.moveOn());
     return events;
   }
 
@@ -530,36 +573,12 @@ export class Game {
 
   // ---------------------------------------------------------------- internals
 
-  /** Reveal the board's starting region before the player touches anything. */
-  private applyOpening(): void {
-    const best = findBestOpening(this.grid, false, this.config.topology, this.config.wrap);
-    if (best) {
-      for (const cell of best.cells) this.markOpen(cell);
-      return;
-    }
-    const fallback = findFallbackOpening(this.grid, this.config.topology, this.config.wrap);
-    if (fallback) this.reveal(fallback);
-  }
-
-  /**
-   * Open every empty cell on the board — the Sudoku opening.
-   *
-   * There are exactly nine of them, one per row, column and box, because tier
-   * 0 is one of the nine digits. They pay no EXP and no exploration mana: like
-   * the dealt opening everywhere else, they are not the player's work.
-   */
-  private openEveryEmpty(): void {
-    for (const row of this.grid) {
-      for (const cell of row) {
-        if (cell.present && cell.tier === 0) this.markOpen(cell);
-      }
-    }
-  }
-
   /** Open one cell without cascading. Engine-internal, for `cast.ts`. */
   markOpen(cell: Cell): boolean {
     if (cell.open) return false;
     cell.open = true;
+    // A creature standing on uncovered ground, opened: it is fought where it stands.
+    cell.occupied = false;
     // Opening ground is one of the two things that can unseal a crawl board.
     this.sealed = null;
     if (cell.tier === 0) this.openEmptyCount++;

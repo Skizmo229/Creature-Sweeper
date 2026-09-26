@@ -9,14 +9,8 @@ import { ladders } from '../ladders.js';
 import { sampleBoard, samplePin } from '../preview.js';
 import { DEFAULT, type PresentationSettings, type Settings } from '../settings.js';
 import type { SfxEvent } from '../sfx.js';
-import {
-  type LadderLook,
-  type Pip,
-  type SfxPackId,
-  type TypeTheme,
-  lookFor,
-  themeFor,
-} from '../looks.js';
+import type { LadderLook, Pip, SfxPackId, TypeTheme } from '../looktypes.js';
+import { lookFor, themeFor } from '../looks.js';
 import { CHIP_CELL, DEMO_CELL, renderPreview } from './render.js';
 
 export interface SettingsScreenOptions {
