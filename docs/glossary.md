@@ -53,8 +53,8 @@ marks. **Charged** Sweep (the default) is rationed: ten hand-opened cells buy on
 `Game.safeCells`, `Game.sweep`.
 
 **Spells.** Census (30 mana, counts a cell's creature neighbours), Reveal (75, tells you a cell's
-tier as a given and opens the empty ground around it), Exercise (150, lends a level to the next
-fight), Beacon (300, opens the largest untouched zero-region). `src/engine/spells.ts`. WORKOUT
+tier as a given and opens the empty ground around it), Beacon (85, opens the largest untouched
+zero-region), Exercise (150, lends a level to the next fight). `src/engine/spells.ts`. WORKOUT
 prices Exercise by its own rule (`WorkoutRule`).
 
 **Search board.** A board won by uncovering every empty cell rather than by killing every

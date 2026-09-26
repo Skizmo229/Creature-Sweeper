@@ -396,12 +396,12 @@ describe('spell shortcuts', () => {
   const RESERVED = ['s', 'd', 'f'];
 
   it('gives every spell the letter its name starts with', () => {
-    expect(SPELL_ORDER.map((id) => spellKey(id))).toEqual(['c', 'r', 'e', 'b']);
+    expect(SPELL_ORDER.map((id) => spellKey(id))).toEqual(['c', 'r', 'b', 'e']);
     expect(SPELL_ORDER.map((id) => spellLabel(id))).toEqual([
       '[C]ensus',
       '[R]eveal',
-      '[E]xercise',
       '[B]eacon',
+      '[E]xercise',
     ]);
   });
 

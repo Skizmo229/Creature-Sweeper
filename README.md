@@ -92,7 +92,7 @@ In dev, `window.cs` exposes the running app (`cs.play('normal', 3)`, `cs.current
 DOMINOES) · right-click or a LV button to mark · number keys act on the cell under the cursor,
 marking or pencilling according to the Entry mode · `N` switches that mode · `Shift`+digit does
 the other one for that keystroke · `S` sweeps what is proven safe · `D` also trusts your marks · a
-spell's bracketed letter casts it (`C`ensus, `R`eveal, `E`xercise, `B`eacon, offered cheapest
+spell's bracketed letter casts it (`C`ensus, `R`eveal, `B`eacon, `E`xercise, offered cheapest
 first) · scroll or `+`/`-` to zoom, `F` to reset · `Esc` backs out.
 
 **Settings** are two separate things. The presentation half (creature icons, board palette, board
