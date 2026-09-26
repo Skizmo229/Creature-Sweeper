@@ -7,6 +7,7 @@
  *   npm run sim:human -- [seeds] normal --profile  how often each trick fired, per board
  *   npm run sim:human -- [seeds] pairs --peek      read numbers the game hides (PAIRS, DOMINOES)
  *   npm run sim:human -- [seeds] oracle --solver   with the complete deducer attached: `forced`
+ *   npm run sim:human -- [seeds] oracle --spells   spending mana: Reveal, Census, Beacon, Exercise
  *
  * The graded player (`graded.ts`) plays with the tricks of `docs/strategies.md` up to a grade,
  * one pass at a time, and records the hardest grade a board demanded, how often each grade was
@@ -38,6 +39,7 @@ const seedAt = (s: number): number => s * 2654435761 + 11;
 
 interface Flags {
   peek: boolean;
+  spells: boolean;
   profile: boolean;
   solver: boolean;
 }
@@ -46,7 +48,7 @@ function measure(type: LadderType, board: number, seeds: number, grade: Grade, f
   const cfg = boardConfig(loadLadders(), type.id, board);
   const runs: GradedRun[] = [];
   for (let s = 0; s < seeds; s++) {
-    const options: GradedOptions = { grade, peek: f.peek };
+    const options: GradedOptions = { grade, peek: f.peek, spells: f.spells };
     if (f.solver) options.rescue = (g) => solve(g).safe;
     runs.push(play(Game.create(cfg, seedAt(s)), options));
   }
@@ -197,6 +199,7 @@ function profile(seeds: number, type: LadderType, only: [number, number] | undef
 const args = process.argv.slice(2);
 const flags: Flags = {
   peek: args.includes('--peek'),
+  spells: args.includes('--spells'),
   profile: args.includes('--profile'),
   solver: args.includes('--solver'),
 };

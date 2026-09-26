@@ -28,6 +28,8 @@ export interface Constraint {
   readonly residual: number;
   /** Covered, unmarked neighbours. Marked ones are subtracted as the tier they claim. */
   readonly unknown: readonly Cell[];
+  /** Creatures among `unknown`, once a Census has counted this cell's ring; null until then. */
+  readonly creatures: number | null;
 }
 
 /** The board as the graded player sees it on one pass. */
@@ -79,14 +81,20 @@ export function readBoard(game: Game, peek: boolean): Reading {
     }
     if (!numberVisible(game, cell, peek)) continue;
     let residual = cell.num;
+    let counted = 0;
     const covered: Cell[] = [];
     for (const n of game.neighboursOf(cell)) {
-      if (n.open) residual -= n.tier;
-      else if (claims && n.mark > 0) residual -= n.mark;
-      else covered.push(n);
+      if (n.open) {
+        residual -= n.tier;
+        if (n.tier > 0) counted++;
+      } else if (claims && n.mark > 0) {
+        residual -= n.mark;
+        counted++;
+      } else covered.push(n);
     }
     if (!covered.length) continue;
-    const c: Constraint = { cell, residual, unknown: covered };
+    const creatures = cell.census === null ? null : cell.census - counted;
+    const c: Constraint = { cell, residual, unknown: covered, creatures };
     constraints.push(c);
     for (const n of covered) {
       const list = touching.get(n);

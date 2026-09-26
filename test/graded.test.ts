@@ -53,8 +53,15 @@ describe('the graded player', () => {
     let cleared = 0;
     for (const id of KINDS) {
       for (const board of [2, 6, 10]) {
-        const game = Game.create(boardConfig(ladders, id, board), 0xbeef + board);
-        const run = play(game, { grade: 4 });
+        const cfg = boardConfig(ladders, id, board);
+        // Once spell-less, and once spending where the ladder has spells to spend.
+        const spells = cfg.spells.length > 0;
+        const game = Game.create(cfg, 0xbeef + board);
+        const run = play(game, { grade: 4, spells });
+        if (spells) {
+          const dry = play(Game.create(cfg, 0xbeef + board), { grade: 4 });
+          if (wrongIn(dry)) wrong.push(`${id} #${board} spell-less: ${dry.unsound} wrong`);
+        }
         if (wrongIn(run)) {
           const by = TRICK_IDS.filter((t) => run.unsoundBy[t] > 0).join(', ');
           wrong.push(`${id} #${board}: ${run.unsound} wrong (${by}), ${run.trickDamage} HP`);
@@ -82,7 +89,9 @@ describe('the graded player', () => {
           [0xbeef + board, false],
           [0xbeef + board + 1000, id === 'pairs'],
         ] as const) {
-          const run = play(Game.create(boardConfig(ladders, id, board), seed), { grade: 4, peek });
+          const cfg = boardConfig(ladders, id, board);
+          const spells = cfg.spells.length > 0;
+          const run = play(Game.create(cfg, seed), { grade: 4, peek, spells });
           for (const t of TRICK_IDS) {
             fires[t] += run.fires[t];
             pencils[t] += run.pencils[t];

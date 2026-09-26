@@ -40,6 +40,7 @@ export type TrickId =
   | 'corridor'
   | 'residual-ring'
   | 'last-cell'
+  | 'census-ring'
   | 'counters'
   | 'lone-dark'
   | 'partner-number'
@@ -199,6 +200,19 @@ const lastCell: Trick = {
 
 // A tier whose creatures are all dead, or all marked, is hiding nowhere; when nothing above the
 // level is hiding at all, every covered cell is free.
+// A Census says how many creatures share the remainder; each is worth at least 1, so the
+// biggest is the remainder less one for every other. Sweep proves the same.
+const censusRing: Trick = {
+  grade: 1,
+  apply(v, m) {
+    for (const c of v.reading.constraints) {
+      if (c.creatures === null || c.creatures > c.unknown.length) continue;
+      if (c.creatures > 0 && c.residual - (c.creatures - 1) > v.level) continue;
+      for (const n of c.unknown) m.open.add(n);
+    }
+  },
+};
+
 const counters: Trick = {
   grade: 1,
   apply(v, m) {
@@ -486,6 +500,7 @@ export const TRICKS: Readonly<Record<TrickId, Trick>> = {
   corridor,
   'residual-ring': residualRing,
   'last-cell': lastCell,
+  'census-ring': censusRing,
   counters,
   'lone-dark': loneDark,
   'partner-number': partnerNumber,

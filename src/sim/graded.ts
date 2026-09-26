@@ -24,7 +24,8 @@ import type { Cell } from '../engine/types.js';
 import { damageIfSurvived } from '../engine/combat.js';
 import { hasNote, noteBit } from '../engine/notes.js';
 import { mulberry32 } from '../engine/rng.js';
-import { type Reading, everyTier, highestTier, readBoard } from './reader.js';
+import type { SpellId } from '../engine/spells.js';
+import { type Constraint, type Reading, everyTier, highestTier, readBoard } from './reader.js';
 import {
   GRADES,
   type Grade,
@@ -46,6 +47,8 @@ export interface GradedOptions {
   rescue?: (game: Game) => Cell[];
   /** Ask the rescue and ignore it, to count the stuck points it would have rescued. */
   observe?: boolean;
+  /** Spend mana on the ladder's spells at a stuck point and before a dear guess. */
+  spells?: boolean;
 }
 
 export interface GradedRun {
@@ -78,6 +81,8 @@ export interface GradedRun {
   rescueDamage: number;
   /** Times the player let the creatures walk rather than guess, where they walk (PATROL). */
   waits: number;
+  casts: number;
+  manaSpent: number;
   /** HP lost on a cell a trick called safe. Anything but 0 is a bug. */
   trickDamage: number;
   /** Times a trick opened, named or narrowed a cell wrongly. Anything but 0 is a bug. */
@@ -100,6 +105,9 @@ const NARROW_ROUNDS = 12;
 /** How long a stuck point is waited out where the creatures walk, in laps of the longest route. */
 const PATIENCE_LAPS = 1;
 
+/** Information casts allowed at one stuck point before the gamble is taken. */
+const CASTS_AT_A_STUCK_POINT = 2;
+
 export function play(game: Game, options: GradedOptions): GradedRun {
   const run: GradedRun = {
     cleared: false,
@@ -120,6 +128,8 @@ export function play(game: Game, options: GradedOptions): GradedRun {
     couldRescue: 0,
     rescueDamage: 0,
     waits: 0,
+    casts: 0,
+    manaSpent: 0,
     trickDamage: 0,
     unsound: 0,
     unsoundBy: Object.fromEntries(TRICK_IDS.map((id) => [id, 0])) as Record<TrickId, number>,
@@ -140,6 +150,7 @@ export function play(game: Game, options: GradedOptions): GradedRun {
     }
     if (player.pass()) {
       waited = 0;
+      player.castsHere = 0;
       continue;
     }
     if (waited < patience) {
@@ -150,6 +161,7 @@ export function play(game: Game, options: GradedOptions): GradedRun {
     }
     run.stuckPoints++;
     waited = 0;
+    if (player.spend()) continue;
     if (player.rescue()) continue;
     player.guess();
   }
@@ -163,6 +175,8 @@ class Player {
   private readonly scaffold: ReadonlySet<Cell>;
   private readonly draw: () => number;
   private readonly all: number;
+  /** Information casts at the current stuck point. */
+  castsHere = 0;
 
   constructor(
     private readonly game: Game,
@@ -345,17 +359,12 @@ class Player {
    * among the visible numbers touching it, capped by the pencil and the top live tier; a cell no
    * number touches is worth the top tier at worst and the counters' average on average.
    */
-  guess(): void {
-    const { game, run } = this;
-    const reading = readBoard(game, this.options.peek ?? false);
+  private pick(reading: Reading): Gamble | null {
+    const { game } = this;
     const field = reading.unknown.filter((c) => game.inReach(c));
-    if (!field.length) {
-      game.forfeit();
-      return;
-    }
+    if (!field.length) return null;
     const loose = reading.totalHiding / Math.max(1, reading.unknown.length);
-    let best: Cell | null = null;
-    let bestKey: number[] = [];
+    let best: Gamble | null = null;
     let ties = 0;
     for (const cell of field) {
       const near = reading.touching.get(cell) ?? [];
@@ -367,17 +376,30 @@ class Player {
       }
       const worst = ceiling <= game.level ? 0 : damageIfSurvived(game.level, ceiling);
       const key = [worst >= game.hp ? 1 : 0, ceiling, mean, -near.length];
-      const order = compare(key, bestKey);
-      if (best === null || order < 0) {
-        best = cell;
-        bestKey = key;
+      const order = best ? compare(key, best.key) : -1;
+      if (order < 0) {
+        best = { cell, key, ceiling, near };
         ties = 1;
       } else if (order === 0 && this.draw() * ++ties < 1) {
-        best = cell;
+        best = { cell, key, ceiling, near };
       }
     }
-    const cell = best!;
-    if (bestKey[0] === 1) run.lethalGuesses++;
+    return best;
+  }
+
+  /** Gamble, spending an Exercise first where the worst case is above the level and it can. */
+  guess(): void {
+    const { game, run } = this;
+    const gamble = this.pick(readBoard(game, this.options.peek ?? false));
+    if (!gamble) {
+      game.forfeit();
+      return;
+    }
+    const { cell } = gamble;
+    if (this.options.spells && gamble.ceiling > game.level && game.exerciseCharge === 0) {
+      this.cast('exercise');
+    }
+    if (gamble.key[0] === 1) run.lethalGuesses++;
     run.guesses++;
     run.effort += GUESS_COST;
     const hp = game.hp;
@@ -385,6 +407,49 @@ class Player {
     if (game.hp < hp) run.guessesHurt++;
     this.domains.delete(cell);
   }
+
+  /**
+   * Spend mana before HP (docs/strategies.md, section 8): at a stuck point, Reveal on the cell
+   * that would otherwise be gambled on, else Census on the number over it that a count would
+   * tighten most, else Beacon; at most `CASTS_AT_A_STUCK_POINT` information casts a stuck point,
+   * as the honest player allows itself. True when something was cast, so the board is re-read.
+   */
+  spend(): boolean {
+    const { game } = this;
+    if (!this.options.spells || this.castsHere >= CASTS_AT_A_STUCK_POINT) return false;
+    const gamble = this.pick(readBoard(game, this.options.peek ?? false));
+    if (!gamble) return false;
+    if (this.cast('reveal', gamble.cell)) return true;
+    let target: Constraint | null = null;
+    for (const c of gamble.near) {
+      if (c.cell.census !== null) continue;
+      if (!target || c.residual / c.unknown.length > target.residual / target.unknown.length) {
+        target = c;
+      }
+    }
+    if (target && this.cast('census', target.cell)) return true;
+    return this.cast('beacon');
+  }
+
+  /** Cast if the ladder offers it and the mana is there; count it. */
+  private cast(id: SpellId, target?: Cell): boolean {
+    const { game, run } = this;
+    if (!game.canCast(id)) return false;
+    const before = game.mana;
+    const events = target ? game.cast(id, target.x, target.y) : game.cast(id);
+    if (events.some((e) => e.type === 'blocked')) return false;
+    run.casts++;
+    run.manaSpent += before - game.mana;
+    if (id !== 'exercise') this.castsHere++;
+    return true;
+  }
+}
+
+interface Gamble {
+  cell: Cell;
+  key: number[];
+  ceiling: number;
+  near: readonly Constraint[];
 }
 
 function compare(a: readonly number[], b: readonly number[]): number {

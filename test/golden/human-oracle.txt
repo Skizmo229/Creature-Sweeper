@@ -8,6 +8,7 @@ met-partner         0    0.0    0.0    0.0      0.0
 corridor            0    0.0    0.0    0.0      0.0
 residual-ring       1  249.0  189.0   78.7      0.0
 last-cell           1  125.0  100.7   41.7      0.0
+census-ring         1    0.0    0.0    0.0      0.0
 counters            1    0.0    0.0    0.0      2.3
 lone-dark           1    0.0    0.0    0.0      0.0
 partner-number      1    0.0    0.0    0.0      0.0
