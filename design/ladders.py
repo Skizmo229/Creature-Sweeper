@@ -492,18 +492,25 @@ UNLOCK_RUNS = {
     "blind": 3,
 }
 
-# Menu order. HUGE sits before EXTREME, and the variant ladders are ordered by
-# the board count that opens them, so the menu reads in the order a player
-# will actually meet it.
-MAINLINE = ["easy", "normal", "huge", "extreme", "huge_extreme"]
-MAGIC = ["arcane", "oracle"]
-# The variant lane, in the order its gates open (see UNLOCK_BOARDS). A
-# combined type sits right after the last of its parents to open. The list is
-# menu order, not a taxonomy -- a placement rule sits here beside the
-# topologies and the shapes because that is where a player meets it.
-TOPOLOGY = ["wraparound", "cross", "wrapped_cross", "hive", "diamond", "pairs", "dominoes",
-            "workout", "packs", "donut", "checker", "congo", "cave", "dungeon"]
-PUZZLE = ["sudoku"]
+# The menu's four categories, and the order within each. Every type is in
+# exactly one. A ladder sits where its main idea is, not where its rules
+# happen to be implemented: DUNGEON is a shape in the engine but a spell
+# ladder to play, and HIVE is a topology that plays as a special rule.
+#
+#   normal   the original game's seven modes
+#   shape    the board's outline or its edges are the point
+#   magic    the spells are the point
+#   special  everything else, mostly a placement rule
+#
+# Within a category the order is the order its gates open, so the menu reads
+# the way a player meets it.
+CATEGORIES = {
+    "normal": ["easy", "normal", "huge", "extreme", "huge_extreme", "blind", "huge_blind"],
+    "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave"],
+    "magic": ["arcane", "workout", "oracle", "dungeon"],
+    "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku"],
+}
+CATEGORY = {tid: cat for cat, ids in CATEGORIES.items() for tid in ids}
 POSTGAME = ["blind", "huge_blind"]
 
 
@@ -709,6 +716,7 @@ def ladder_record(t, boards, extended):
     return dict(
         id=t["id"], name=t["name"], tint=t["tint"], axis=t["axis"],
         blurb=t["blurb"], archetype=t["archetype"],
+        category=CATEGORY[t["id"]],
         search=t.get("search", False),
         postgame=t["id"] in POSTGAME,
         placement=t.get("placement", "uniform"),
@@ -745,7 +753,7 @@ def build():
     for t in TYPES:
         boards = tuned_boards(t)
         out.append(ladder_record(t, boards, continued_boards(t, boards)))
-    order = {k: i for i, k in enumerate(MAINLINE + MAGIC + TOPOLOGY + PUZZLE + POSTGAME)}
+    order = {k: i for i, k in enumerate(sum(CATEGORIES.values(), []))}
     out.sort(key=lambda t: order[t["id"]])
     return out
 

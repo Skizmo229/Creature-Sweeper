@@ -119,6 +119,9 @@ average step. Unlocked by clearing board 10.
 **Full Run.** All ten boards of a type back to back on one HP pool with a half-pool heal between
 boards; level, EXP and mana reset each board. `src/engine/run.ts`.
 
+**Category.** The menu column a ladder is filed under: Normal (the original game's seven modes),
+Shape, Magic or Special. `CATEGORIES` in `design/ladders.py`, `category` in the data.
+
 **Unlock gates.** `requires` (types whose board 10 must be cleared), `requires_boards` (boards
 cleared anywhere), `requires_runs` (Full Runs completed on distinct types). `src/ui/progress.ts`.
 

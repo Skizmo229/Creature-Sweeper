@@ -10,6 +10,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { LADDER_CATEGORIES } from '../src/engine/config.js';
 import { Progress, type SaveData } from '../src/ui/progress.js';
 import { ladders } from './helpers.js';
 
@@ -46,6 +47,34 @@ function saveWith(
   }
   return new Progress(data);
 }
+
+describe('the menu categories', () => {
+  it('files every ladder under one of the four', () => {
+    for (const type of ladders) {
+      expect(LADDER_CATEGORIES, type.id).toContain(type.category);
+    }
+  });
+
+  it('keeps each category together, in the order the menu shows them', () => {
+    // The menu reads the data's order within a category, so a ladder filed
+    // out of its run would be listed in the right column but the wrong place.
+    const runs = ladders.map((t) => t.category).filter((c, i, all) => c !== all[i - 1]);
+    expect(runs).toEqual([...LADDER_CATEGORIES]);
+  });
+
+  it('puts the original game in Normal', () => {
+    const normal = ladders.filter((t) => t.category === 'normal').map((t) => t.id);
+    expect(normal).toEqual([
+      'easy',
+      'normal',
+      'huge',
+      'extreme',
+      'huge_extreme',
+      'blind',
+      'huge_blind',
+    ]);
+  });
+});
 
 describe('the shape of the graph', () => {
   it('starts somewhere', () => {
@@ -107,31 +136,17 @@ describe('the shape of the graph', () => {
     expect(blind.requires).toEqual([]);
   });
 
-  it('orders the menu by the gate that opens each type', () => {
-    // The variant ladders are ordered by their board count, so the menu reads
-    // in the order a player will actually meet it.
-    const counted = ladders.filter((t) => t.requires_boards > 0);
-    for (let i = 1; i < counted.length; i++) {
-      expect(counted[i]!.requires_boards, `${counted[i]!.id} is out of order`).toBeGreaterThan(
-        counted[i - 1]!.requires_boards,
-      );
+  it('orders each category by the gate that opens each type', () => {
+    // Within a column the counted ladders are ordered by their board count, so
+    // the menu reads in the order a player will actually meet it.
+    for (const category of LADDER_CATEGORIES) {
+      const counted = ladders.filter((t) => t.category === category && t.requires_boards > 0);
+      for (let i = 1; i < counted.length; i++) {
+        expect(counted[i]!.requires_boards, `${counted[i]!.id} is out of order`).toBeGreaterThan(
+          counted[i - 1]!.requires_boards,
+        );
+      }
     }
-    expect(counted.map((t) => t.id)).toEqual([
-      'wraparound',
-      'cross',
-      'hive',
-      'diamond',
-      'pairs',
-      'dominoes',
-      'workout',
-      'packs',
-      'donut',
-      'checker',
-      'congo',
-      'cave',
-      'dungeon',
-      'sudoku',
-    ]);
   });
 });
 

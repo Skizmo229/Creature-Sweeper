@@ -30,6 +30,10 @@ export interface LadderBoard {
   givens?: number;
 }
 
+/** The menu's four groups, in the order it shows them. `CATEGORIES` in `ladders.py` fills them. */
+export const LADDER_CATEGORIES = ['normal', 'shape', 'magic', 'special'] as const;
+export type LadderCategory = (typeof LADDER_CATEGORIES)[number];
+
 /** One game type's ladder as `ladders.py` emits it. */
 export interface LadderType {
   id: string;
@@ -38,6 +42,8 @@ export interface LadderType {
   axis: string;
   blurb: string;
   archetype: string;
+  /** Where the menu files it: the original game's modes, or what the ladder is about. */
+  category: LadderCategory;
   search: boolean;
   postgame: boolean;
   /** Spell ids this type offers; absent or empty means no magic. */

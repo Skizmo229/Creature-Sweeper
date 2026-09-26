@@ -112,7 +112,8 @@ and the two test lists that pin the ladder set.
 
 1. A `[[type]]` in `design/ladder_types.toml`: id, name, tint, archetype, axis, blurb, and the
    ten-element schedules (the schema is written at the top of the file and enforced on load).
-   Regenerate `ladders.json`.
+   Then its place in `CATEGORIES` in `design/ladders.py`, which files it under one of the menu's
+   four columns and sets where in the column it sits. Regenerate `ladders.json`.
 2. An unlock: `requires`, or a slot on the counted schedule (`UNLOCK_BOARDS`, steps of five), or
    `requires_runs`. `test/unlocks.test.ts` fails if a save can be stranded.
 3. An entry in `LOOKS` in `src/ui/looks.ts`: palette (with a pip shape of its own), face, sound
