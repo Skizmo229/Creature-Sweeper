@@ -13,6 +13,15 @@ import type { FontId } from './typefaces.js';
 
 export type PipShape = 'circle' | 'square' | 'diamond' | 'hex' | 'cross' | 'ring' | 'ringDiamond';
 
+/**
+ * A symbol drawn as the pip, by its code point, written as `U+2764`: the player's own choice from
+ * the custom-icon window (`pipsymbols.ts`). No ladder wears one by default.
+ */
+export type GlyphPip = `U+${string}`;
+
+/** What a creature's pips are drawn as: a drawn shape, or a symbol from the pip font. */
+export type Pip = PipShape | GlyphPip;
+
 export interface TypeTheme {
   /** Covered tile. */
   tile: string;
@@ -24,7 +33,7 @@ export interface TypeTheme {
   ink: string;
   /** This type's danger accent — used for the number on a creature's cell. */
   hot: string;
-  pip: PipShape;
+  pip: Pip;
   /** UI accent for this type. */
   accent: string;
 }

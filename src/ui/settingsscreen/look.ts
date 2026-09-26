@@ -1,7 +1,8 @@
 /**
- * The Presentation section's drawn settings: creature icons, board palette, the board's font and
- * the interface's, text size, the game types' palette strip, the cursor highlight, the strike-through and the zoom ceiling. Every
- * example is a real board, or for the interface a copy of the HUD (decision 0025).
+ * The Presentation section's drawn settings: creature icons (the window of symbols behind the
+ * custom tile is in `symbols.ts`), board palette, the board's font and the interface's, text
+ * size, the game types' palette strip, the cursor highlight, the strike-through and the zoom
+ * ceiling. Every example is a real board, or for the interface a copy of the HUD (decision 0025).
  */
 
 import { el } from '../dom.js';
@@ -16,36 +17,55 @@ import {
   OFF,
   HIGHLIGHT_NAMES,
   type HighlightStyle,
+  type IconChoice,
   type MenuStrip,
 } from '../settings.js';
-import { PIP_NAMES, PIP_SHAPES, tierColor } from '../theme.js';
-import { LOOK_IDS, type PipShape, lookFor, themeFor } from '../looks.js';
+import { PIP_NAMES, PIP_SHAPES, pipName, tierColor } from '../theme.js';
+import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
+import { SYMBOL_COUNT, isGlyphPip } from '../pipsymbols.js';
 import { FONTS, FONT_IDS, type FontId, type GameFont, LEGIBLE_FONT } from '../typefaces.js';
 import { type ScreenContext, typeName } from './context.js';
 import { CHIP_CELL, renderPreview } from './render.js';
+import { openSymbolWindow } from './symbols.js';
 import { type Choice, choiceRow, gallery, slider, wideRow } from './widgets.js';
 
 export function iconsRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, typeId, currentTheme } = ctx;
+  const { p, typeId, currentTheme, currentPip } = ctx;
+  const own = themeFor(typeId).pip;
+  const symbol = isGlyphPip(p.icons) ? p.icons : null;
+  const pick = (v: string): void => ctx.pick({ icons: v as IconChoice });
+  // Lit when a symbol is the icon in force; clicking it opens the window of symbols either way.
+  const custom: Choice = {
+    value: symbol ?? '',
+    label: symbol ? `Custom: ${pipName(symbol)}` : 'Custom — any symbol',
+    example: symbol
+      ? ctx.chipBoard({ ...currentTheme, pip: symbol })
+      : () =>
+          el('div', 'picker-placeholder', `${SYMBOL_COUNT} symbols from Dingbats and Wingdings`),
+    open: () => openSymbolWindow(ctx, currentPip, pick),
+  };
   choiceRow(ctx.host, host, {
     label: 'Creature icons',
     hint:
-      'The shape of a creature’s pips. Pip colour stays global — a tier 4 is the same ' +
-      'colour everywhere — and a creature is only ever visible once you have beaten it, which ' +
-      'is why the examples show defeated ones.',
+      'The shape of a creature’s pips, or any symbol from Dingbats and Wingdings. Pip colour ' +
+      'stays global — a tier 4 is the same colour everywhere — and a creature is only ever ' +
+      'visible once you have beaten it, which is why the examples show defeated ones.',
     title: 'Choose creature icons',
     current: p.icons,
     fallback: {
       value: DEFAULT,
-      label: `Default — ${PIP_NAMES[themeFor(typeId).pip]}`,
-      example: ctx.chipBoard({ ...currentTheme, pip: themeFor(typeId).pip }),
+      label: `Default — ${pipName(own)}`,
+      example: ctx.chipBoard({ ...currentTheme, pip: own }),
     },
-    options: PIP_SHAPES.map((shape): Choice => ({
-      value: shape,
-      label: PIP_NAMES[shape],
-      example: ctx.chipBoard({ ...currentTheme, pip: shape }),
-    })),
-    onPick: (v) => ctx.pick({ icons: v as PipShape | typeof DEFAULT }),
+    options: [
+      ...PIP_SHAPES.map((shape): Choice => ({
+        value: shape,
+        label: PIP_NAMES[shape],
+        example: ctx.chipBoard({ ...currentTheme, pip: shape }),
+      })),
+      custom,
+    ],
+    onPick: pick,
   });
 }
 

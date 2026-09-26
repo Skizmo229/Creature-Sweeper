@@ -10,6 +10,7 @@ import type { Game } from '../../engine/game.js';
 import type { Cell } from '../../engine/types.js';
 import { DEFAULT_MAX_ZOOM, type HighlightStyle } from '../settings.js';
 import type { TypeTheme } from '../looks.js';
+import { PIP_FAMILY, glyphChar, isGlyphPip } from '../pipsymbols.js';
 import { FONTS, type GameFont } from '../typefaces.js';
 import type { VictorySource, VictorySprite } from '../victory/play.js';
 import {
@@ -115,10 +116,11 @@ export class BoardView implements InputHost {
   private readonly options: BoardViewOptions;
 
   /**
-   * The face this view has asked the browser for and is waiting on, so a repaint is requested
-   * once per face rather than once per frame drawn before it arrives.
+   * The faces this view has asked the browser for and is waiting on, so a repaint is requested
+   * once per face rather than once per frame drawn before it arrives: the board's font, and the
+   * pip font's face for a symbol the creatures are drawn as.
    */
-  private awaitingFont: string | null = null;
+  private readonly awaitingFonts = new Set<string>();
 
   /**
    * Watches the stage, so the board refits when the space it has changes for any reason, not
@@ -361,23 +363,30 @@ export class BoardView implements InputHost {
   // ----------------------------------------------------------------- render
 
   /**
-   * Repaint once the board's face has loaded, if it has not yet. The interface reflows when a
+   * Repaint once the board's faces have loaded, if they have not yet. The interface reflows when a
    * face lands and the board cannot: a canvas keeps whatever it last drew. Asking is also what
    * starts the download.
    */
   private awaitFont(): void {
     const face = this.display.font;
-    const probe = `${face.weight} 16px ${face.stack}`;
-    if (this.awaitingFont === probe || document.fonts.check(probe)) return;
-    this.awaitingFont = probe;
-    document.fonts.load(probe).then(
+    this.awaitFace(`${face.weight} 16px ${face.stack}`);
+    const pip = this.theme?.pip;
+    // The pip font is one family of several faces, each holding some of the symbols, so it is
+    // the face for this symbol that is waited on.
+    if (pip && isGlyphPip(pip)) this.awaitFace(`16px ${PIP_FAMILY}`, glyphChar(pip));
+  }
+
+  private awaitFace(probe: string, text?: string): void {
+    const key = `${probe}|${text ?? ''}`;
+    if (this.awaitingFonts.has(key) || document.fonts.check(probe, text)) return;
+    this.awaitingFonts.add(key);
+    document.fonts.load(probe, text).then(
       () => {
-        if (this.awaitingFont !== probe) return; // the face changed meanwhile
-        this.awaitingFont = null;
+        this.awaitingFonts.delete(key);
         this.render();
       },
       () => {
-        this.awaitingFont = null;
+        this.awaitingFonts.delete(key);
       },
     );
   }
