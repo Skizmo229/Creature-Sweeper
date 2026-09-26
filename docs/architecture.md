@@ -27,6 +27,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   cast.ts         what each spell does, behind the SpellHost interface
   sweep.ts        Sweep's proof: safeCells and its named proofs; the Sudoku harvest
   reach.ts        the crawl rule: withinReach and computeSealed
+  patrol.ts       PATROL's walking creatures: routes, the step after every action, route marks
   placement/      the placement rules: one record per rule, and nobody else names one
     rule.ts         PlacementRule, the contract every rule meets
     registry.ts     RULES, keyed by every Placement; placementRule()
@@ -38,6 +39,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
     dominoes.ts     pairs dealt as a full domino set
     packs.ts        non-touching packs of one-of-every-tier; missingFrom
     congo.ts        packs strung into orthogonal lines led by the top tier
+    patrol.ts       square routes that never share a cell, laid biggest first
   fight.ts        a fight: Exercise's borrowed level, the damage, the kill's EXP, won or lost
   game.ts         the state machine: open, mark, note, sweep, cast, forfeit
   run.ts          Full Run: ten boards, one HP pool

@@ -10,7 +10,7 @@ All in `src/sim/cli/`, all driving the real engine with fixed seeds, all determi
 
 | Command | What it measures |
 | --- | --- |
-| `npm run sim [-- seeds]` | Clears every one of the 814 boards with the omniscient tier-order player. Reports the opening and HP lost; exits non-zero if any board cannot be cleared at full HP. The regression gate for `ladders.py`. |
+| `npm run sim [-- seeds]` | Clears every one of the 848 boards with the omniscient tier-order player. Reports the opening and HP lost; exits non-zero if any board cannot be cleared at full HP. The regression gate for `ladders.py`. |
 | `npm run sim:run` | Completes every type's Full Run ten boards deep on one HP pool. |
 | `npm run sim:spells -- N [ladder]` | The honest player, spell-less and with each spell policy: forced guesses, HP lost, clear rate, HP saved per cast and per mana. `POLICY=gym` plays WORKOUT as a farmer. |
 | `npm run sim:forced -- N [ladder] [a-b]` | The honest player beside a player that also takes the complete deducer's free moves, on the same seeds: what share of stuck points had a free move, how often a perfect deducer is still cornered, what share of boards is guess-free. Its `bad` and `hurt` columns must be zero. |
@@ -49,7 +49,8 @@ other; it does not rank the placement-rule ladders against them.
 
 - 34% density is the battle ceiling: past it a board stops being a puzzle. HIVE (35%), ARCANE
   (34.5%) and CHECKERBOARD (38.5%) sit past it for stated reasons (`docs/modes.md`).
-- Placement ceilings: PAIRS 26% (`PAIR` jams at 24.8 to 25.6%), PACKS 36%, CONGA LINE 34%.
+- Placement ceilings: PAIRS 26% (`PAIR` jams at 24.8 to 25.6%), PACKS 36%, CONGA LINE 34%,
+  PATROL 8.6% (its routes never jammed at 8.5% in 300 seeds and jammed on 5 to 50% at 9%).
 - Spell prices 30 / 75 / 85 / 150 (Census, Reveal, Beacon, Exercise), one global table on purpose:
   income (pools span 150 to 1,233) and demand (forced guesses 0.1 to 6.0 a board) already carry the
   variation between ladders. Starting mana is 75 because it is "one Reveal exactly"; anything that

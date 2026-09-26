@@ -118,6 +118,15 @@ function subtractPairs(constraints: Constraint[]): Constraint[] {
   return derived;
 }
 
+/**
+ * Write down a tier the player has proved. Where the creatures walk a mark is a route, so there
+ * the name goes on the one cell instead, and holds until the next move (`honest.ts` rubs it out).
+ */
+function name(game: Game, cell: Cell, tier: number): void {
+  if (game.patrols) game.applyMark(cell, tier);
+  else game.setMark(cell.x, cell.y, tier);
+}
+
 /** Everything the board says, directly and by subtraction. */
 export function allConstraints(game: Game): Constraint[] {
   const direct = constraintsOf(game);
@@ -152,13 +161,15 @@ export function nameWhatIsCertain(game: Game): boolean {
       if (game.status === 'playing') {
         game.open(cell.x, cell.y);
         learned = true;
+        // Where the creatures walk the open was a move, and this reading of the board is stale.
+        if (game.patrols) return true;
       }
     }
 
     if (c.unknown.length !== 1) continue;
     const cell = c.unknown[0]!;
     if (cell.mark > 0 || cell.open || c.residual === 0) continue;
-    game.setMark(cell.x, cell.y, Math.min(9, c.residual));
+    name(game, cell, Math.min(9, c.residual));
     learned = true;
   }
   const paired = namePairs(game);
@@ -208,7 +219,7 @@ function namePairs(game: Game): boolean {
     // Still out there, so it is one of the covered cells — and if that is the
     // only one left, it is named without a guess.
     if (covered.length === 1 && covered[0]!.mark === 0 && cell.num > 0) {
-      game.setMark(covered[0]!.x, covered[0]!.y, Math.min(9, cell.num));
+      name(game, covered[0]!, Math.min(9, cell.num));
       learned = true;
     }
   }
@@ -255,7 +266,7 @@ function namePacks(game: Game): boolean {
     let missing = 0;
     for (let t = 1; t <= tiers; t++) if (!found.has(t)) missing = t;
     if (only!.mark === 0 && missing > 0) {
-      game.setMark(only!.x, only!.y, missing);
+      name(game, only!, missing);
       learned = true;
     }
   }

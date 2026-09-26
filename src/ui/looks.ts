@@ -282,6 +282,25 @@ const LOOKS: Record<string, LadderLook> = {
     // Rings spreading outward, as a colony does.
     victory: 'ripple',
   },
+  patrol: {
+    // Olive drab, and an alarm red for `hot`, which on this board is also the "?" of a creature
+    // walking on uncovered ground: DOMINOES's red, 83 clear of the tier-4 orange and 5.7:1 on the
+    // floor. No spells, so nothing writes gold (decision 0032). A mark on a covered tile is 3.4:1.
+    palette: {
+      tile: '#5f6650',
+      tileEdge: '#42473a',
+      floor: '#13150e',
+      ink: '#e9edc9',
+      hot: '#ff4d6d',
+      pip: 'cross',
+      accent: '#8a9170',
+    },
+    // Stencilled, like a sentry post's sign.
+    font: 'black-ops-one',
+    // Boots, and a band that marches them off.
+    sfx: 'thud',
+    victory: 'wipe',
+  },
   hive: {
     // Honey amber for the hive, with its own pip. No spells here, so an amber `hot`
     // has no gold annotation to collide with (decision 0032).

@@ -12,6 +12,7 @@ import { PAIRS_RULE } from './pairs.js';
 import { DOMINOES_RULE } from './dominoes.js';
 import { PACKS_RULE } from './packs.js';
 import { CONGO_RULE } from './congo.js';
+import { PATROL_RULE } from './patrol.js';
 
 export const RULES = {
   uniform: UNIFORM_RULE,
@@ -21,6 +22,7 @@ export const RULES = {
   dominoes: DOMINOES_RULE,
   packs: PACKS_RULE,
   congo: CONGO_RULE,
+  patrol: PATROL_RULE,
 } as const satisfies Readonly<Record<string, PlacementRule>>;
 
 /**

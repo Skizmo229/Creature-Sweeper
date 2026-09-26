@@ -31,8 +31,9 @@ CONGA LINE         10     5      10        3/3        0      10            -
 SUDOKU             20    10      10        3/3        0      20            -
 ULTRA HIVE         10     5      10        3/3        0      10            -
 PETRI DISH         10     5      10        3/3        0      10            -
+PATROL             10     5      10        3/3        0      10            -
 
-31/31 full runs completed by every seed at full HP (3 runs each, 930 boards simulated).
+32/32 full runs completed by every seed at full HP (3 runs each, 960 boards simulated).
 A full pool at the end means the heal was never needed — which is the zero-damage guarantee still holding ten boards deep.
 
 [exit 0]

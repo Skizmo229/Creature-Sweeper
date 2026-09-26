@@ -20,6 +20,8 @@ export interface GameScreenActions {
   pencilEmpty(): void;
   toggleNotes(): void;
   sweep(useMarks: boolean): void;
+  /** PATROL's Wait: the creatures take a step and nothing else happens. */
+  wait(): void;
   pickSpell(id: SpellId): void;
   cancelSpell(): void;
 }
@@ -35,6 +37,8 @@ export interface GameScreenElements {
   notesBtn: HTMLButtonElement;
   sweepSafeBtn: HTMLButtonElement | null;
   sweepMarkBtn: HTMLButtonElement | null;
+  /** PATROL's Wait, which also shows how many moves the board has seen. */
+  waitBtn: HTMLButtonElement | null;
   spellBtns: HTMLButtonElement[];
   hint: HTMLParagraphElement;
 }
@@ -133,7 +137,7 @@ function buildPalette(
   a: GameScreenActions,
 ): Pick<
   GameScreenElements,
-  'counters' | 'emptyNoteBtn' | 'notesBtn' | 'sweepSafeBtn' | 'sweepMarkBtn'
+  'counters' | 'emptyNoteBtn' | 'notesBtn' | 'sweepSafeBtn' | 'sweepMarkBtn' | 'waitBtn'
 > & { palette: HTMLElement } {
   const palette = el('div', 'palette');
   const counters: HTMLButtonElement[] = [];
@@ -172,14 +176,24 @@ function buildPalette(
     sweepSafeBtn.addEventListener('click', () => a.sweep(false));
     palette.append(sweepSafeBtn);
 
-    sweepMarkBtn = el('button', 'sweep assist', 'Sweep + marks');
-    sweepMarkBtn.title =
-      'Also trust your marks as correct tier claims. ' +
-      'Reaches further, but a wrong mark can cost HP.';
-    sweepMarkBtn.addEventListener('click', () => a.sweep(true));
-    palette.append(sweepMarkBtn);
+    // Where a mark is a creature's route rather than a claim, there is nothing for it to trust.
+    if (game.marksAreClaims) {
+      sweepMarkBtn = el('button', 'sweep assist', 'Sweep + marks');
+      sweepMarkBtn.title =
+        'Also trust your marks as correct tier claims. ' +
+        'Reaches further, but a wrong mark can cost HP.';
+      sweepMarkBtn.addEventListener('click', () => a.sweep(true));
+      palette.append(sweepMarkBtn);
+    }
   }
-  return { palette, counters, emptyNoteBtn, notesBtn, sweepSafeBtn, sweepMarkBtn };
+  let waitBtn: HTMLButtonElement | null = null;
+  if (game.patrols) {
+    waitBtn = el('button', 'sweep wait', '[W]ait');
+    waitBtn.title = 'Let the creatures take a step without doing anything else. Costs nothing.';
+    waitBtn.addEventListener('click', a.wait);
+    palette.append(waitBtn);
+  }
+  return { palette, counters, emptyNoteBtn, notesBtn, sweepSafeBtn, sweepMarkBtn, waitBtn };
 }
 
 /** The spell row, on a ladder that offers any: one button per spell, and Cancel. */

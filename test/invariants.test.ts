@@ -17,8 +17,8 @@ import { ladders, battleTypes, boardsOf, SEEDS, UNGATED_SWEEP } from './helpers.
 import { shapeRule } from '../src/engine/shape/registry.js';
 
 describe('ladder data', () => {
-  it('has thirty-one types of ten boards', () => {
-    expect(ladders).toHaveLength(31);
+  it('has thirty-two types of ten boards', () => {
+    expect(ladders).toHaveLength(32);
     for (const type of ladders) expect(type.boards).toHaveLength(10);
   });
 

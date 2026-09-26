@@ -41,7 +41,7 @@ describe('the placement registry', () => {
     const type = structuredClone(ladders[0]!);
     type.placement = 'triads';
     expect(() => boardConfig([type], type.id, 1)).toThrow(
-      /unknown placement "triads" \(uniform \| sudoku \| checker \| pairs \| dominoes \| packs \| congo\)/,
+      /unknown placement "triads" \(uniform \| sudoku \| checker \| pairs \| dominoes \| packs \| congo \| patrol\)/,
     );
   });
 });

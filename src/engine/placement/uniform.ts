@@ -5,6 +5,7 @@
 
 import { ONE_POOL, dealByPool, shapeLeftTooFew } from './deal.js';
 import {
+  NO_CANDIDATES,
   NOTHING_EMPTIED,
   NO_RING_PROOF,
   PLAIN_DISPLAY,
@@ -17,8 +18,9 @@ export const UNIFORM_RULE: PlacementRule = {
   validate: () => {},
   opening: 'auto',
   deal: (d) => dealByPool(d, ONE_POOL, shapeLeftTooFew(d.cfg)),
+  patrols: false,
   coveredCanBeEmpty: true,
-  candidates: () => null,
+  candidates: NO_CANDIDATES,
   guessFree: false,
   cap: WHOLE_SUM,
   ringProof: NO_RING_PROOF,

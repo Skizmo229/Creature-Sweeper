@@ -61,6 +61,11 @@ prices Exercise by its own rule (`WorkoutRule`).
 **Search board.** A board won by uncovering every empty cell rather than by killing every
 creature (BLIND, HUGE x BLIND). No level economy.
 
+**Patrol / move / route.** On PATROL every creature walks a square route, one cell per **move**
+(an open, a Sweep or a Wait), clockwise from its top-left corner; routes never share a cell. A
+creature standing on uncovered ground covers it and shows as a ?; a mark there draws a route.
+`src/engine/patrol.ts`, `Game.wait`, `Game.moves`.
+
 **Reach / the crawl rule.** On DUNGEON and PETRI DISH, a cell may only be opened, or targeted by a
 spell, within `reach` steps of already-open ground, counted as a walk through `neighbours()`.
 Marking and pencilling are exempt. On PETRI DISH a mark touching open ground counts as open
@@ -68,7 +73,7 @@ ground too (`marksExtendReach`). `Game.inReach`; the exception is `Game.sealedIn
 
 ## Boards and ladders
 
-**Game type / ladder.** One of the 31 named modes (EASY, NORMAL, DUNGEON, ...). Each is a ladder
+**Game type / ladder.** One of the 32 named modes (EASY, NORMAL, DUNGEON, ...). Each is a ladder
 of ten tuned boards plus a **continuation** (boards 11 to N, held in `extended`, never in
 `boards`). `LadderType` in `src/engine/config.ts`.
 

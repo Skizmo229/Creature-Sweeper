@@ -101,7 +101,10 @@ export function fight(host: FightHost, cell: Cell): GameEvent[] {
 export function revealAllCreatures(grid: Grid): void {
   for (const row of grid) {
     for (const cell of row) {
-      if (cell.tier > 0) cell.open = true;
+      if (cell.tier > 0) {
+        cell.open = true;
+        cell.occupied = false;
+      }
     }
   }
 }

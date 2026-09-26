@@ -18,6 +18,12 @@ export interface Cell {
   /** True while a creature here is undefeated. Always false for empty ground. */
   alive: boolean;
   /**
+   * PATROL only: uncovered ground a walking creature is standing on. The cell is covered again
+   * while it stands there, so every rule reads it as unknown, and it is drawn as a "?"; it is
+   * uncovered ground again when the creature walks on (`src/engine/patrol.ts`).
+   */
+  occupied: boolean;
+  /**
    * False for cells cut away by the board's shape. Absent cells are neighbours
    * of nothing and belong to no win condition — they are holes, not ground.
    */
@@ -271,7 +277,9 @@ export type GameEvent =
   /** A spell resolved. `detail` is what it told you, if anything. */
   | { type: 'spell'; id: SpellId; x?: number; y?: number; detail?: string }
   /** Exercise lent levels to this fight, and what that spared you. */
-  | { type: 'exercised'; levels: number; spared: number; bonusExp: number };
+  | { type: 'exercised'; levels: number; spared: number; bonusExp: number }
+  /** PATROL's creatures each took a step; `moves` is how many actions the board has seen. */
+  | { type: 'moved'; moves: number };
 
 export type BlockReason =
   /** The cell is marked above your level — the guard that protects you. */

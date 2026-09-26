@@ -150,6 +150,36 @@ frontier cell beside numbers, so it is cheap. It ships two density points above 
 on HIVE's forced-guess curve (11.5 stuck against 12.2, 150 seeds), topping out at 37%, and still
 clears 99.9%: HP, not density, is the lever if it should be deadlier. No spells.
 
+## PATROL
+
+The creatures walk. A tier-t creature walks the edge of a square t cells a side, one cell per
+action, clockwise from the square's top-left corner, where every creature starts: t cells right, t
+down, t left, t up, home after 4t moves. Every open (a cascade and a fight count once), every
+Sweep and every **Wait** (`W`, free) is a move; a mark or a note is not. The routes never share a
+cell, so two creatures never meet and a beaten creature lies where nobody else walks, still
+counted in the numbers as it is everywhere. The numbers are the sums round each cell as the board
+stands this move, worked out again after every step (`src/engine/patrol.ts`).
+
+A creature that walks onto ground you have uncovered covers the cell again while it stands there
+(`occupied`), drawn as a **?**: every rule and proof reads it as unknown, and clicking it fights
+it. When it walks on, the cell is uncovered ground again, with anything written on it rubbed out.
+A **mark is a route**: a mark of tier t draws a tier-t creature's whole route with the marked
+cell as its top-left corner, on every covered cell of it, so the mark guard covers everywhere that
+creature can step; the same mark again takes it off, and where routes cross a cell shows the
+higher. Because a route is not a claim about where a creature stands, Sweep reads no marks here,
+and the "Sweep + marks" button is not offered. Notes are ordinary.
+
+The price is density. Every creature holds its route for good, four cells a tier, and NORMAL's tier
+mix averages about nine route cells a creature, so NORMAL's 21 to 27% would need more route than
+the board has cells. The owner chose routes that never cross over that density, and the deal packs
+at most 8.5% reliably: PATROL runs NORMAL's boards, tiers, HP and gates on a ramp from 6.5 to
+8.5%. At that density the opening uncovers most of the board (409 of 480 cells on board 1, 586 of
+800 on board 10), so most creatures walk in plain sight as a ?, and the honest player, taught to
+read the board afresh after every move and to wait out a stuck point, was never stuck and cleared
+every board (60 seeds, 25 September 2026; NORMAL: 2.0 stuck over the ladder, 99% cleared). The
+difficulty is keeping up with a board that changes every move, which no instrument here measures
+(decision 0040).
+
 ## CHECKERBOARD
 
 Light squares hold even tiers, dark squares odd, and empty ground goes anywhere (pinning tier 0 to

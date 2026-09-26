@@ -395,6 +395,7 @@ export const PACKS_RULE: PlacementRule = {
   validate: validatePacks,
   opening: 'auto',
   deal: dealPackBoard,
+  patrols: false,
   coveredCanBeEmpty: true,
   candidates: (cell, view) => packCandidates(cell, (c) => view.neighboursOf(c), view.config.tiers),
   guessFree: false,

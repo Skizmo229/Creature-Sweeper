@@ -472,6 +472,29 @@ reach = 1
 reach_marks = true
 
 [[type]]
+id = "patrol"
+name = "PATROL"
+tint = "#c0752a"
+archetype = "descending"
+axis = "The creatures walk"
+blurb = """  Every creature walks a square beat, a cell per move, clockwise from its top-left corner: a   tier 3 walks three cells a side. Every click, sweep or wait is a move. A creature on ground   you have uncovered shows as a ?, and a mark draws a creature's whole route."""
+# NORMAL's boards, tiers, HP and gates. Not NORMAL's density: every
+# creature holds its route for good, 4 cells a tier, and no two routes
+# share a cell, so NORMAL's 21-27% would need more route than the board
+# has cells. The owner chose routes that never cross over that density.
+size = [[30, 16], [30, 16], [30, 16], [30, 16], [30, 16], [32, 17], [34, 18], [36, 19], [38, 20], [40, 20]]
+tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+# NORMAL's ramp scaled to what routes can pack: the deal never jammed at
+# 8.5% in 300 seeds on any of these boards, and jammed on 5-50% of seeds
+# at 9% (25 September 2026). The continuation holds at the same ceiling.
+density = [0.065, 0.067, 0.069, 0.072, 0.074, 0.076, 0.078, 0.081, 0.083, 0.085]
+hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
+alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
+placement = "patrol"
+ceiling = { density_cap = 0.085 }
+
+[[type]]
 id = "wraparound"
 name = "WRAPAROUND"
 tint = "#1d6a9e"

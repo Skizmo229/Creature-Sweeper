@@ -598,7 +598,7 @@ CATEGORIES = {
               "gear", "card", "valentines", "star"],
     "magic": ["arcane", "workout", "oracle", "dungeon"],
     "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku",
-                "ultra_hive", "petri"],
+                "ultra_hive", "petri", "patrol"],
 }
 CATEGORY = {tid: cat for cat, ids in CATEGORIES.items() for tid in ids}
 UNLOCK_BOARDS = unlock_boards()

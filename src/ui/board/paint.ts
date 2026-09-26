@@ -107,6 +107,24 @@ export function drawCovered(p: Paint, cell: Cell, cx: number, cy: number): void 
 }
 
 /**
+ * A PATROL creature standing on ground the player uncovered: the floor, and a "?" in the board's
+ * danger colour. Its tier is not drawn, because it has not been fought; where it walks says it.
+ */
+export function drawOccupied(p: Paint, cx: number, cy: number): void {
+  const { ctx, theme } = p;
+  const box = contentBox(p.layout, cx, cy);
+  tracePath(p, cx, cy);
+  ctx.fillStyle = theme.floor;
+  ctx.fill();
+  ctx.save();
+  ctx.fillStyle = theme.hot;
+  const { centre } = setNumberFont(ctx, p.font, box.size * 0.62);
+  ctx.textAlign = 'center';
+  ctx.fillText('?', cx, cy + centre);
+  ctx.restore();
+}
+
+/**
  * Pencil marks, laid out as a fixed 3-wide grid of slots. Fixed is the point: a candidate always
  * sits in the same corner of the cell whether or not its neighbours are still in the set, so the
  * player reads the pattern rather than the digits. Slot 0 is empty ground and shows a dot,
