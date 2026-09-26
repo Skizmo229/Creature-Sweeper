@@ -87,6 +87,21 @@ Big Shoulders Display
 Griffy (the title)
   Copyright (c) 2012 by Font Diner, Inc DBA Neapolitan (diner@fontdiner.com) with Reseved Font Name "Griffy"
 
+The creature-icon symbols (src/ui/pipfont/) are cut from the following, each
+subset to the symbols it supplies:
+
+Noto Sans Symbols 2
+  Copyright 2022 The Noto Project Authors (https://github.com/notofonts/symbols)
+
+Noto Sans Symbols
+  Copyright 2022 The Noto Project Authors (https://github.com/notofonts/symbols)
+
+Noto Emoji
+  Copyright 2013 Google LLC (https://github.com/googlefonts/noto-emoji)
+
+Noto Sans
+  Copyright 2022 The Noto Project Authors (https://github.com/notofonts/latin-greek-cyrillic)
+
 
 -----------------------------------------------------------
 SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007

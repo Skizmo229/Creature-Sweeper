@@ -30,6 +30,10 @@ export interface LadderBoard {
   givens?: number;
 }
 
+/** The menu's four groups, in the order it shows them. `CATEGORIES` in `ladders.py` fills them. */
+export const LADDER_CATEGORIES = ['normal', 'shape', 'magic', 'special'] as const;
+export type LadderCategory = (typeof LADDER_CATEGORIES)[number];
+
 /** One game type's ladder as `ladders.py` emits it. */
 export interface LadderType {
   id: string;
@@ -38,6 +42,8 @@ export interface LadderType {
   axis: string;
   blurb: string;
   archetype: string;
+  /** Where the menu files it: the original game's modes, or what the ladder is about. */
+  category: LadderCategory;
   search: boolean;
   postgame: boolean;
   /** Spell ids this type offers; absent or empty means no magic. */
@@ -59,8 +65,12 @@ export interface LadderType {
    * Absent or 0 means the whole board, which is every type but DUNGEON.
    */
   reach?: number;
+  /** PETRI DISH: a mark touching uncovered ground counts as uncovered for reach. */
+  reach_marks?: boolean;
   /** A key of the placement registry (`src/engine/placement/registry.ts`). Absent is uniform. */
   placement?: string;
+  /** How the board is opened, where the ladder chooses: an `OpeningRule`. Absent is the placement's. */
+  opening?: string;
   /**
    * The HP pool a Full Run gets for all ten boards, taken from board 1.
    *
@@ -82,20 +92,13 @@ export interface LadderType {
    * such gate.
    *
    * A different claim from `requires`: that one says "you are ready for this",
-   * this one says "you have played enough to be offered something new". The
-   * variant ladders use it because they do not teach each other — a hex grid
-   * teaches nothing about a torus — so chaining them was a fiction that made a
-   * player grind three shapes to reach a fourth they actually wanted.
+   * this one says "you have played enough to be offered something new". Most
+   * ladders use it because they do not teach each other — a hex grid teaches
+   * nothing about a torus — so chaining them was a fiction that made a player
+   * grind three shapes to reach a fourth they actually wanted. Every step of
+   * five opens the next ladder in each menu category (decision 0036).
    */
   requires_boards: number;
-  /**
-   * Full Runs completed, each on a different type. 0 means no such gate.
-   *
-   * The third claim: not readiness or time served but finishing something
-   * without a restart, which is what BLIND asks of every board. Distinct types
-   * so the same easy run three times does not count.
-   */
-  requires_runs: number;
   /** The tuned ladder: ten boards, and the thing "clearing a type" means. */
   boards: LadderBoard[];
   /**
@@ -193,20 +196,47 @@ function readWrap(type: LadderType, row: LadderBoard): 'none' | 'horizontal' | '
 /**
  * The crawl rule's radius, validated here so a typo cannot reach the engine.
  *
- * A reach of 1 is refused rather than clamped: at one step the only cells you
- * may ever open are the ones already touching your frontier, so the board
- * advances a single ring at a time and no deduction can be acted on until the
- * cascade happens to arrive next to it. It is not a hard mode, it is a
- * different game, and if one is ever wanted it should be chosen deliberately
- * rather than reached by decrementing a number.
+ * A reach of 1 is refused on its own rather than clamped: at one step the only
+ * cells you may ever open are the ones already touching your frontier, so the
+ * board advances a single ring at a time and no deduction can be acted on until
+ * the cascade happens to arrive next to it. It is not a hard mode, it is a
+ * different game. PETRI DISH chose it deliberately, paired with marks that
+ * extend it a step past a named creature (`reach_marks`), and only that pairing
+ * is accepted, so it is still never reached by decrementing a number
+ * (decision 0039).
  */
 function readReach(type: LadderType): number {
   const raw = type.reach ?? 0;
   if (!Number.isInteger(raw) || raw < 0) {
     throw new Error(`${type.id}: reach is ${raw}; it must be a whole number of steps`);
   }
-  if (raw === 1) throw new Error(`${type.id}: a reach of 1 opens only the frontier ring`);
+  if (raw === 1 && !type.reach_marks) {
+    throw new Error(
+      `${type.id}: a reach of 1 opens only the frontier ring, unless marks extend it`,
+    );
+  }
+  if (type.reach_marks && raw === 0)
+    throw new Error(`${type.id}: marks extend a reach it has not got`);
   return raw;
+}
+
+/** Every opening rule, for checking a ladder's choice at the boundary. */
+const OPENINGS: readonly OpeningRule[] = ['auto', 'none', 'empties', 'base', 'islands'];
+
+/**
+ * The board's opening: the ladder's own where it names one, else its placement rule's. A ladder may
+ * only choose one where its rule opens automatically. A rule with an opening of its own (Sudoku's
+ * every empty cell) needs it, and overriding it would deal a board the rule was never checked on.
+ */
+function readOpening(type: LadderType, placement: Placement): OpeningRule {
+  const own = placementRule(placement).opening;
+  const raw = type.opening;
+  if (raw === undefined) return own;
+  const known = OPENINGS.find((rule) => rule === raw);
+  if (!known) throw new Error(`${type.id}: unknown opening "${raw}" (${OPENINGS.join(' | ')})`);
+  if (own !== 'auto')
+    throw new Error(`${type.id}: the ${placement} placement deals its own opening`);
+  return known;
 }
 
 /** The board's shape, refusing a type it cannot live on (each shape's `validate`). */
@@ -310,8 +340,9 @@ export function boardConfig(
     search: type.search,
     placement,
     givens: row.givens ?? 0,
-    opening: options.opening ?? placementRule(placement).opening,
+    opening: options.opening ?? readOpening(type, placement),
     reach: readReach(type),
+    ...(type.reach_marks ? { marksExtendReach: true } : {}),
     spells,
     startMana: type.start_mana ?? 0,
     ...(workout ? { workout } : {}),

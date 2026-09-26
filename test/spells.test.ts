@@ -393,15 +393,15 @@ describe('spell shortcuts', () => {
    * would just mean the spell's own key silently never fires, which is worse
    * than a test failing here.
    */
-  const RESERVED = ['s', 'd', 'f'];
+  const RESERVED = ['s', 'd', 'f', 'w'];
 
   it('gives every spell the letter its name starts with', () => {
-    expect(SPELL_ORDER.map((id) => spellKey(id))).toEqual(['c', 'r', 'e', 'b']);
+    expect(SPELL_ORDER.map((id) => spellKey(id))).toEqual(['c', 'r', 'b', 'e']);
     expect(SPELL_ORDER.map((id) => spellLabel(id))).toEqual([
       '[C]ensus',
       '[R]eveal',
-      '[E]xercise',
       '[B]eacon',
+      '[E]xercise',
     ]);
   });
 
@@ -452,12 +452,17 @@ describe('the magic ladders', () => {
     // not where the menu happens to list them.
     expect(magicTypes.map((t) => t.id).sort()).toEqual([
       'arcane',
+      'card',
       'cave',
       'cross',
       'diamond',
       'donut',
       'dungeon',
+      'gear',
       'oracle',
+      'pyramid',
+      'star',
+      'valentines',
       'workout',
       'wrapped_cross',
     ]);

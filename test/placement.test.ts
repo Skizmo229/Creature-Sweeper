@@ -29,10 +29,10 @@ describe('the placement registry', () => {
     for (const [key, rule] of Object.entries(RULES)) expect(rule.id).toBe(key);
   });
 
-  it('is what the config reads', () => {
+  it('is what the config reads, where the ladder names no opening of its own', () => {
     for (const type of ladders) {
       const cfg = boardConfig(ladders, type.id, 1);
-      expect(cfg.opening, type.id).toBe(RULES[cfg.placement].opening);
+      expect(cfg.opening, type.id).toBe(type.opening ?? RULES[cfg.placement].opening);
     }
   });
 
@@ -41,7 +41,7 @@ describe('the placement registry', () => {
     const type = structuredClone(ladders[0]!);
     type.placement = 'triads';
     expect(() => boardConfig([type], type.id, 1)).toThrow(
-      /unknown placement "triads" \(uniform \| sudoku \| checker \| pairs \| dominoes \| packs \| congo\)/,
+      /unknown placement "triads" \(uniform \| sudoku \| checker \| pairs \| dominoes \| packs \| congo \| patrol\)/,
     );
   });
 });

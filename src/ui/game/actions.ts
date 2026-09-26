@@ -91,6 +91,13 @@ export class BoardActions {
     this.h.apply(events);
   }
 
+  /** PATROL's Wait. The engine refuses it anywhere else, so the key can ask on every board. */
+  doWait(): void {
+    const game = this.h.game();
+    if (!game || game.status !== 'playing' || !game.patrols) return;
+    this.h.apply(game.wait());
+  }
+
   /** A key pressed while the board is on screen; `App` sends nothing else here. */
   onKey(e: KeyboardEvent): void {
     const game = this.h.game();
@@ -112,6 +119,11 @@ export class BoardActions {
     if (key === 'd') {
       e.preventDefault();
       this.doSweep(true);
+      return;
+    }
+    if (key === 'w' && game.patrols) {
+      e.preventDefault();
+      this.doWait();
       return;
     }
     if (e.key === '+' || e.key === '=') {

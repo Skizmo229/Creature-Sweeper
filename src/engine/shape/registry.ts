@@ -5,7 +5,19 @@
  */
 
 import type { ShapeRule } from './rule.js';
-import { CROSS_SHAPE, DIAMOND_SHAPE, DONUT_SHAPE, RECT_SHAPE } from './fixed.js';
+import {
+  CARD_SHAPE,
+  CIRCLE_SHAPE,
+  CROSS_SHAPE,
+  DIAMOND_SHAPE,
+  DONUT_SHAPE,
+  GEAR_SHAPE,
+  HEART_SHAPE,
+  HEXAGON_SHAPE,
+  PYRAMID_SHAPE,
+  RECT_SHAPE,
+  STAR_SHAPE,
+} from './fixed.js';
 import { CAVE_SHAPE } from './cave.js';
 import { DUNGEON_SHAPE } from './dungeon.js';
 
@@ -14,6 +26,13 @@ export const SHAPES = {
   donut: DONUT_SHAPE,
   cross: CROSS_SHAPE,
   diamond: DIAMOND_SHAPE,
+  pyramid: PYRAMID_SHAPE,
+  gear: GEAR_SHAPE,
+  card: CARD_SHAPE,
+  heart: HEART_SHAPE,
+  star: STAR_SHAPE,
+  hexagon: HEXAGON_SHAPE,
+  circle: CIRCLE_SHAPE,
   cave: CAVE_SHAPE,
   dungeon: DUNGEON_SHAPE,
 } as const satisfies Readonly<Record<string, ShapeRule>>;

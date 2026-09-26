@@ -1,6 +1,6 @@
 # 0018. The counted unlock order is set by hand, in steps of five from 15 to 80
 
-2026-09-21. Status: adopted.
+2026-09-21. Status: schedule superseded by 0036 (25 September 2026); counting boards stands.
 
 ## Context
 The variant ladders do not teach each other, so chaining them made a player grind shapes they had no

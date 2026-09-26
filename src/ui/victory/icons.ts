@@ -4,7 +4,7 @@
  */
 
 import { tierColor } from '../theme.js';
-import type { VictoryId } from '../looks.js';
+import type { VictoryId } from '../looktypes.js';
 import { type Mover, type Painter, type Stage, type VictorySprite, blit } from './stage.js';
 
 export function iconPainter(effect: VictoryId, stage: Stage): Painter {

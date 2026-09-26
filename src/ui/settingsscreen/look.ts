@@ -1,50 +1,80 @@
 /**
- * The Presentation section's drawn settings: creature icons, board palette, the board's font and
- * the interface's, text size, the cursor highlight, the strike-through and the zoom ceiling. Every
- * example is a real board, or for the interface a copy of the HUD (decision 0025).
+ * The Presentation section's drawn settings: creature icons (the window of symbols behind the
+ * custom tile is in `symbols.ts`), board palette, the board's font and the interface's, text
+ * size, the game types' palette strip, the cursor highlight, the strike-through and the zoom
+ * ceiling. Every example is a real board, or for the interface a copy of the HUD (decision 0025).
  */
 
 import { el } from '../dom.js';
 import { ladders } from '../ladders.js';
-import { HIGHLIGHT_PIN, highlightSampleBoard, zoomSampleBoard } from '../preview.js';
+import {
+  HIGHLIGHT_PIN,
+  highlightSampleBoard,
+  sampleBoard,
+  samplePin,
+  zoomSampleBoard,
+} from '../preview.js';
 import {
   DEFAULT,
   MAX_MAX_ZOOM,
+  MAX_PREVIEW_SIZE,
   MAX_TEXT_SIZE,
   MIN_MAX_ZOOM,
+  MIN_PREVIEW_SIZE,
   MIN_TEXT_SIZE,
   OFF,
   HIGHLIGHT_NAMES,
   type HighlightStyle,
+  type IconChoice,
+  type MenuStrip,
 } from '../settings.js';
-import { PIP_NAMES, PIP_SHAPES, tierColor } from '../theme.js';
-import { LOOK_IDS, type PipShape, lookFor, themeFor } from '../looks.js';
+import { PIP_NAMES, PIP_SHAPES, pipName, tierColor } from '../theme.js';
+import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
+import { SYMBOL_COUNT, isGlyphPip } from '../pipsymbols.js';
 import { FONTS, FONT_IDS, type FontId, type GameFont, LEGIBLE_FONT } from '../typefaces.js';
-import { type ScreenContext, typeName } from './context.js';
-import { CHIP_CELL, renderPreview } from './render.js';
+import { type PresentationPatch, type ScreenContext, previewCell, typeName } from './context.js';
+import { CHIP_CELL } from './render.js';
+import { renderPreview } from './render.js';
+import { openSymbolWindow } from './symbols.js';
 import { type Choice, choiceRow, gallery, slider, wideRow } from './widgets.js';
 
 export function iconsRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, typeId, currentTheme } = ctx;
+  const { p, typeId, currentTheme, currentPip } = ctx;
+  const own = themeFor(typeId).pip;
+  const symbol = isGlyphPip(p.icons) ? p.icons : null;
+  const pick = (v: string): void => ctx.pick({ icons: v as IconChoice });
+  // Lit when a symbol is the icon in force; clicking it opens the window of symbols either way.
+  const custom: Choice = {
+    value: symbol ?? '',
+    label: symbol ? `Custom: ${pipName(symbol)}` : 'Custom — any symbol',
+    example: symbol
+      ? ctx.chipBoard({ ...currentTheme, pip: symbol })
+      : () =>
+          el('div', 'picker-placeholder', `${SYMBOL_COUNT} symbols from Dingbats and Wingdings`),
+    open: () => openSymbolWindow(ctx, currentPip, pick),
+  };
   choiceRow(ctx.host, host, {
     label: 'Creature icons',
     hint:
-      'The shape of a creature’s pips. Pip colour stays global — a tier 4 is the same ' +
-      'colour everywhere — and a creature is only ever visible once you have beaten it, which ' +
-      'is why the examples show defeated ones.',
+      'The shape of a creature’s pips, or any symbol from Dingbats and Wingdings. Pip colour ' +
+      'stays global — a tier 4 is the same colour everywhere — and a creature is only ever ' +
+      'visible once you have beaten it, which is why the examples show defeated ones.',
     title: 'Choose creature icons',
     current: p.icons,
     fallback: {
       value: DEFAULT,
-      label: `Default — ${PIP_NAMES[themeFor(typeId).pip]}`,
-      example: ctx.chipBoard({ ...currentTheme, pip: themeFor(typeId).pip }),
+      label: `Default — ${pipName(own)}`,
+      example: ctx.chipBoard({ ...currentTheme, pip: own }),
     },
-    options: PIP_SHAPES.map((shape): Choice => ({
-      value: shape,
-      label: PIP_NAMES[shape],
-      example: ctx.chipBoard({ ...currentTheme, pip: shape }),
-    })),
-    onPick: (v) => ctx.pick({ icons: v as PipShape | typeof DEFAULT }),
+    options: [
+      ...PIP_SHAPES.map((shape): Choice => ({
+        value: shape,
+        label: PIP_NAMES[shape],
+        example: ctx.chipBoard({ ...currentTheme, pip: shape }),
+      })),
+      custom,
+    ],
+    onPick: pick,
   });
 }
 
@@ -175,6 +205,20 @@ export function interfaceFontRow(ctx: ScreenContext, host: HTMLElement): void {
 }
 
 /**
+ * Save a setting that resizes the screen, from a slider in `control`. Rebuilding reflows
+ * everything above the row, so the row is held where the player's pointer left it rather than
+ * where the scroll offset says. `control` carries `data-setting`, so its rebuilt copy is found.
+ */
+function pickHoldingRow(ctx: ScreenContext, control: HTMLElement, patch: PresentationPatch): void {
+  const before = control.getBoundingClientRect().top;
+  ctx.pick(patch);
+  const after = document
+    .querySelector(`[data-setting="${control.dataset.setting}"]`)
+    ?.getBoundingClientRect().top;
+  if (after !== undefined) window.scrollBy(0, after - before);
+}
+
+/**
  * The whole page is the example, but not DURING a drag: resizing every line on the screen moves
  * the slider out from under the pointer. So a copy of the HUD follows the thumb, and the page
  * itself changes once, on release.
@@ -196,16 +240,7 @@ export function textSizeRow(ctx: ScreenContext, host: HTMLElement): void {
       p.textSize,
       (v) => `${Math.round(v * 100)}%`,
       showTextSize,
-      (v) => {
-        // Rebuilding reflows everything above this row, so hold the row where the player's
-        // pointer left it rather than where the scroll offset says.
-        const before = textControl.getBoundingClientRect().top;
-        ctx.pick({ textSize: v });
-        const after = document
-          .querySelector('[data-setting="textSize"]')
-          ?.getBoundingClientRect().top;
-        if (after !== undefined) window.scrollBy(0, after - before);
-      },
+      (v) => pickHoldingRow(ctx, textControl, { textSize: v }),
     ),
   );
   textControl.append(textDemo);
@@ -219,6 +254,74 @@ export function textSizeRow(ctx: ScreenContext, host: HTMLElement): void {
   );
 }
 
+/**
+ * Every example board on this screen is drawn again at the new size, so, like the text size, the
+ * screen changes on release; while the thumb moves, one thumbnail beside it follows. The zoom
+ * example is left alone: it is drawn at the size it sets.
+ */
+export function previewSizeRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p, currentTheme } = ctx;
+  const sample = el('div', 'preview-size-demo');
+  const drawSample = (size: number): void => {
+    sample.replaceChildren(
+      renderPreview(sampleBoard(), currentTheme, ctx.display({ highlight: null }), {
+        cell: previewCell(CHIP_CELL, size),
+        pin: samplePin(),
+      }).canvas,
+    );
+  };
+  drawSample(p.previewSize);
+
+  const control = el('div', 'settings-stack');
+  control.dataset.setting = 'previewSize';
+  control.append(
+    slider(
+      MIN_PREVIEW_SIZE,
+      MAX_PREVIEW_SIZE,
+      0.05,
+      p.previewSize,
+      (v) => `${Math.round(v * 100)}%`,
+      drawSample,
+      (v) => pickHoldingRow(ctx, control, { previewSize: v }),
+    ),
+  );
+  control.append(sample);
+
+  wideRow(
+    host,
+    'Preview size',
+    'The example boards on this screen, and in the windows it opens. The zoom example below is ' +
+      'left at the size it shows, since that size is its point.',
+    control,
+  );
+}
+
+/** Each option is shown on a copy of this ladder's own card from the ladder list. */
+export function menuStripRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p, typeId } = ctx;
+  const card = (strip: MenuStrip) => (): HTMLElement => {
+    const demo = el('div', `type-card strip-${strip} strip-demo`);
+    demo.append(el('span', 'type-name', typeName(typeId)));
+    demo.append(el('span', 'type-meta', 'Board 1'));
+    return demo;
+  };
+  wideRow(
+    host,
+    'Palette strip on the game types',
+    'Where each card on the list of game types wears its ladder’s colour.',
+    gallery(
+      [
+        { value: 'left', label: 'Default — down the left side', example: card('left') },
+        { value: 'sides', label: 'Palette strip on vertical sides', example: card('sides') },
+        { value: 'all', label: 'Palette strip on all sides', example: card('all') },
+        { value: OFF, label: 'No palette strip', example: card(OFF) },
+      ],
+      p.menuStrip,
+      (v) => ctx.pick({ menuStrip: v as MenuStrip }),
+    ),
+  );
+}
+
 /** Drawn on the grid of the ladder the player came from: hex on HIVE, square boxes elsewhere. */
 export function highlightRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, typeId, currentTheme } = ctx;
@@ -228,7 +331,7 @@ export function highlightRow(ctx: ScreenContext, host: HTMLElement): void {
       highlightSampleBoard(hex ? 'hex' : 'square'),
       currentTheme,
       ctx.display({ highlight }),
-      { cell: CHIP_CELL, pin: HIGHLIGHT_PIN },
+      { cell: ctx.chipCell, pin: HIGHLIGHT_PIN },
     ).canvas;
 
   wideRow(

@@ -1,6 +1,6 @@
 # 0013. Spell prices are 30 / 75 / 150 / 300, and starting mana is 75
 
-2026-09-21. Status: adopted.
+2026-09-21. Status: adopted. Beacon's price superseded by 0037.
 
 ## Context
 At 25 / 10 / 50 / 100, buying your way out of every moment a deductive player is cornered cost 1 to

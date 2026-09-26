@@ -28,6 +28,7 @@ import { expForTier } from '../combat.js';
 import { ONE_POOL } from './deal.js';
 import {
   type Deal,
+  NO_CANDIDATES,
   NOTHING_EMPTIED,
   NO_RING_PROOF,
   PLAIN_DISPLAY,
@@ -521,10 +522,11 @@ export const SUDOKU_RULE: PlacementRule = {
   // through to the single-cell fallback.
   opening: 'empties',
   deal: fillSudoku,
+  patrols: false,
   // The opening uncovered every empty cell, so nothing covered can be tier 0. The pencil refuses
   // nothing else: a row already holding a 3 does not strike the 3, that is the player's work.
   coveredCanBeEmpty: false,
-  candidates: () => null,
+  candidates: NO_CANDIDATES,
   guessFree: true,
   cap: WHOLE_SUM,
   ringProof: NO_RING_PROOF,

@@ -26,14 +26,181 @@ DATA.mkdir(exist_ok=True)
 # the `cells` figure emitted here for every board, so any drift fails loudly
 # rather than quietly mistuning a ladder.
 
+# The outlines, measured from the box's centre with cell centres at x + 0.5, using arithmetic and
+# square roots only, which round the same here as in JavaScript (see fixed.ts).
+GEAR = dict(root=0.7, hole=0.3, half_width=0.17)
+_S = math.sqrt(0.5)
+GEAR_TEETH = [(0, -1), (_S, -_S), (1, 0), (_S, _S), (0, 1), (-_S, _S), (-1, 0), (-_S, -_S)]
+
+
+def _gear(w, h, dx, dy):
+    tip = min(w, h) / 2
+    hole = GEAR["hole"] * tip
+    root = GEAR["root"] * tip
+    half = GEAR["half_width"] * tip
+    r2 = dx * dx + dy * dy
+    if r2 < hole * hole:
+        return False
+    if r2 <= root * root:
+        return True
+    return any(0 < dx * ux + dy * uy <= tip and abs(dx * uy - dy * ux) <= half
+               for ux, uy in GEAR_TEETH)
+
+
+CARD = dict(corner=0.09, cols=(0.28, 0.72), rows=(0.25, 0.75))
+SUIT_ART = dict(
+    spade=[
+        ".....#.....",
+        "....###....",
+        "...#####...",
+        "..#######..",
+        ".#########.",
+        "###########",
+        "###########",
+        "###########",
+        ".###.#.###.",
+        ".....#.....",
+        "....###....",
+        "...#####...",
+    ],
+    heart=[
+        ".###...###.",
+        "#####.#####",
+        "###########",
+        "###########",
+        "###########",
+        ".#########.",
+        "..#######..",
+        "...#####...",
+        "....###....",
+        ".....#.....",
+    ],
+    diamond=[
+        ".....#.....",
+        "....###....",
+        "....###....",
+        "...#####...",
+        "..#######..",
+        ".#########.",
+        ".#########.",
+        "..#######..",
+        "...#####...",
+        "....###....",
+        "....###....",
+        ".....#.....",
+    ],
+    club=[
+        "....###....",
+        "...#####...",
+        "...#####...",
+        "...#####...",
+        ".##.###.##.",
+        "####.#.####",
+        "###########",
+        "####.#.####",
+        ".##..#..##.",
+        ".....#.....",
+        "....###....",
+        "...#####...",
+    ],
+)
+CARD_PIPS = ((0, 0, "spade"), (1, 0, "heart"), (0, 1, "diamond"), (1, 1, "club"))
+
+
+def _heart_curve(x, y):
+    a = x * x + y * y - 1
+    return a * a * a - x * x * y * y * y <= 0
+
+
+def _in_suit(art, cx, cy, flipped, x, y):
+    rows, cols = len(art), len(art[0])
+    i = x - math.floor(cx - cols / 2 + 0.5)
+    j = y - math.floor(cy - rows / 2 + 0.5)
+    if not (0 <= i < cols and 0 <= j < rows):
+        return False
+    return (art[rows - 1 - j][cols - 1 - i] if flipped else art[j][i]) == "#"
+
+
+def _card(w, h, x, y):
+    xc, yc = x + 0.5, y + 0.5
+    corner = CARD["corner"] * w
+    nx = min(max(xc, corner), w - corner)
+    ny = min(max(yc, corner), h - corner)
+    if (xc - nx) * (xc - nx) + (yc - ny) * (yc - ny) > corner * corner:
+        return False
+    return not any(_in_suit(SUIT_ART[suit], CARD["cols"][col] * w, CARD["rows"][row] * h,
+                            row == 1, x, y)
+                   for col, row, suit in CARD_PIPS)
+
+
+HEART = dict(half_width=1.135, half_height=1.118, lift=0.118)
+
+
+def _heart(w, h, dx, dy):
+    return _heart_curve((dx / (w / 2)) * HEART["half_width"],
+                        (-dy / (h / 2)) * HEART["half_height"] + HEART["lift"])
+
+
+STAR = dict(cos18=0.9510565162951535, sin18=0.3090169943749474, cos54=0.5877852522924731,
+            sin54=0.8090169943749475, inner=0.3819660112501051)
+STAR_CORNERS = [(0, -1), (STAR["cos54"], -STAR["sin54"]), (STAR["cos18"], -STAR["sin18"]),
+                (STAR["cos18"], STAR["sin18"]), (STAR["cos54"], STAR["sin54"]), (0, 1),
+                (-STAR["cos54"], STAR["sin54"]), (-STAR["cos18"], STAR["sin18"]),
+                (-STAR["cos18"], -STAR["sin18"]), (-STAR["cos54"], -STAR["sin54"])]
+
+
+def _star(w, h, x, y):
+    radius = min(w / (2 * STAR["cos18"]), h / (1 + STAR["sin54"]))
+    cx = w / 2
+    cy = h / 2 + ((1 - STAR["sin54"]) * radius) / 2
+    corners = [(cx + ux * (radius if i % 2 == 0 else radius * STAR["inner"]),
+                cy + uy * (radius if i % 2 == 0 else radius * STAR["inner"]))
+               for i, (ux, uy) in enumerate(STAR_CORNERS)]
+    px, py = x + 0.5, y + 0.5
+    inside = False
+    j = len(corners) - 1
+    for i in range(len(corners)):
+        xi, yi = corners[i]
+        xj, yj = corners[j]
+        if (yi > py) != (yj > py) and px < ((xj - xi) * (py - yi)) / (yj - yi) + xi:
+            inside = not inside
+        j = i
+    return inside
+
+
+def _hexagon(w, h, x, y):
+    # Odd-r offset rows to axial coordinates, as neighbours() lays hex cells out.
+    radius = (min(w, h) - 1) // 2
+    cx, cy = w // 2, h // 2
+    dq = x - (y - (y & 1)) // 2 - (cx - (cy - (cy & 1)) // 2)
+    dr = y - cy
+    return max(abs(dq), abs(dr), abs(dq + dr)) <= radius
+
+
 def shape_present(shape, param, w, h, x, y):
     cx, cy = (w - 1) / 2, (h - 1) / 2
+    dx, dy = x + 0.5 - w / 2, y + 0.5 - h / 2
     if shape == "donut":
         return x < param or y < param or x >= w - param or y >= h - param
     if shape == "cross":
         return abs(x - cx) <= param / 2 or abs(y - cy) <= param / 2
     if shape == "diamond":
         return abs(x - cx) / (w / 2) + abs(y - cy) / (h / 2) <= 1
+    if shape == "pyramid":
+        return abs(x - cx) < y + 1
+    if shape == "gear":
+        return _gear(w, h, dx, dy)
+    if shape == "card":
+        return _card(w, h, x, y)
+    if shape == "heart":
+        return _heart(w, h, dx, dy)
+    if shape == "star":
+        return _star(w, h, x, y)
+    if shape == "hexagon":
+        return _hexagon(w, h, x, y)
+    if shape == "circle":
+        radius = min(w, h) / 2
+        return dx * dx + dy * dy <= radius * radius
     return True
 
 
@@ -181,7 +348,8 @@ def damage(L, E):
 REQUIRED = ("id", "name", "tint", "archetype", "axis", "blurb",
             "size", "tiers", "density", "hp", "lock", "alpha0")
 OPTIONAL = ("boss", "sweep", "spells", "start_mana", "workout", "placement", "sets", "givens",
-            "topology", "wrap", "shape", "shape_param", "cells", "reach", "search", "ceiling")
+            "topology", "wrap", "shape", "shape_param", "cells", "reach", "search", "ceiling",
+            "opening", "reach_marks")
 # The fields that are one value per board.
 SCHEDULES = ("size", "tiers", "density", "hp", "lock", "alpha0", "boss", "sets", "givens", "cells")
 
@@ -337,9 +505,21 @@ def extend(t):
         # the two and pinning the faster one costs the least.
         if t.get("placement") == "checker" and w_next % 2:
             w_next -= 1
+        h_next = min(max_h, round(hs[-1] + dh * i))
+        # A pyramid fills a box exactly twice as wide as it is tall (PYRAMID_SHAPE in
+        # fixed.ts). Carried on separately the two schedules drift off that, which clips the
+        # base or leaves a margin, so the continuation takes the width from the height.
+        if t.get("shape") == "pyramid":
+            h_next = min(h_next, max_w // 2)
+            w_next = 2 * h_next
+        # A hexagon R cells a side fills a box 2R + 1 square (HEXAGON_SHAPE in fixed.ts). An even
+        # side adds an empty row and column and not a cell, so the continuation keeps it odd.
+        if t.get("shape") == "hexagon":
+            side = min(w_next, h_next)
+            side -= 1 - side % 2
+            w_next = h_next = side
         row = dict(
-            size=(w_next,
-                  min(max_h, round(hs[-1] + dh * i))),
+            size=(w_next, h_next),
             tiers=T,
             density=min(d_cap, t["density"][-1] + dd * i),
             hp=max(hp_floor, round(t["hp"][-1] + dhp * i)),
@@ -374,79 +554,47 @@ def extend(t):
 # ---------- unlocks ----------------------------------------------------------
 # Two kinds of gate, and they mean different things.
 #
-# A TYPE gate ("clear NORMAL") is a statement about readiness: this ladder
+# A TYPE gate ("clear EASY") is a statement about readiness: this ladder
 # teaches something the next one assumes. HUGE x EXTREME needs both of its
 # parents because it is literally both of them at once, and HUGE x BLIND needs
 # HUGE and BLIND for the same reason - a combined type should not be reachable
 # without having played the things it combines.
 #
 # A BOARD-COUNT gate ("clear 25 boards, anywhere") is a statement about time
-# served. The variant ladders do not teach each other - a hex grid teaches you
-# nothing about a torus, and neither teaches you Sudoku - so chaining them
-# would be a fiction, and would make a player who wants the ragged cave grind
-# three shapes they have no interest in first (decision 0018). Counting boards
-# lets them arrive from whatever direction they like, and spaces the variants
-# out across the whole game rather than bunching them behind one branch.
+# served. Most ladders do not teach each other - a hex grid teaches you nothing
+# about a torus, and neither teaches you Sudoku - so chaining them would be a
+# fiction, and would make a player who wants the ragged cave grind three shapes
+# they have no interest in first (decision 0018). Counting boards lets them
+# arrive from whatever direction they like.
 UNLOCKS = {
     "easy": [],
     "normal": ["easy"],
-    # HUGE and EXTREME are siblings off NORMAL, not a chain, so the player
-    # picks which wall to walk into first.
-    "huge": ["normal"],
-    "extreme": ["normal"],
     # Both parents: this ladder is the two of them at once.
     "huge_extreme": ["huge", "extreme"],
-    # Magic hangs off NORMAL as its own branch rather than being spliced into
-    # the main line, so the tuned ladders stay exactly as they were measured.
-    "arcane": ["normal"],
-    "oracle": ["arcane"],
-    "checker": [],
-    "pairs": [],
-    # Not gated on PAIRS: they are on the board-count schedule, by request
-    # (decision 0018), and still open after PAIRS because their counts are
-    # higher.
-    "dominoes": [],
-    "packs": [],
-    "workout": [],
-    "congo": [],
-    "hive": [],
-    "wraparound": [],
-    "diamond": [],
-    "donut": [],
-    "cross": [],
-    # Same argument as HUGE x EXTREME: a ladder that is two ladders at once
-    # should not be reachable without having played the things it combines.
-    # It also keeps the board-count schedule untouched, which is the one thing
-    # in this file that can deadlock a save if it is crowded.
-    "wrapped_cross": ["cross", "wraparound"],
-    "cave": [],
-    "dungeon": [],
-    "sudoku": [],
-    "blind": [],
-    # Same argument as HUGE x EXTREME.
     "huge_blind": ["huge", "blind"],
 }
 
 # Boards cleared anywhere in the game, counting each board once. 0 means the
 # type has no board-count gate at all.
 #
-# The schedule runs 15 to 80 in steps of exactly five, by request, so a new
-# counted ladder is a new slot at the end rather than a gap shared. It starts at
-# 15 so the first variant arrives after EASY and half of NORMAL, not on EASY
-# alone.
+# Every five boards from 15 opens the next ladder in each menu category that
+# has one left (decision 0036), so a step offers a choice of what kind of
+# thing to play next rather than the next thing. It starts at 15 so the first
+# step arrives after EASY and half of NORMAL, not on EASY alone. Within a
+# category the order follows CATEGORIES, and BLIND waits one step past the
+# last of the rest, where its old Full Run gate used to put it: 1 HP with no
+# fighting is the game's hardest discipline, not its next lesson.
 #
-# The types that gate on type-clears alone offer 70 ladder boards between them
-# (EASY, NORMAL, HUGE, EXTREME, HUGE x EXTREME, ARCANE, ORACLE), so the top of
-# the schedule - CAVE at 70 is the last reachable that way - asks a player
-# who never touches a variant to play one. Every earlier variant is ten more
-# tuned boards, so the gates are still met without a single scaling board;
-# `test/unlocks.test.ts` walks the schedule in order to check exactly that.
-# Scaling boards past 10 count too, for a player who would rather go deep.
+# The type gates alone offer 20 ladder boards (EASY, NORMAL), past the first
+# step at 15, and every step opens at least ten boards for the five it asks,
+# so the schedule is met without a single scaling board;
+# `test/unlocks.test.ts` walks it in order to check exactly that. Scaling
+# boards past 10 count too, for a player who would rather go deep.
 #
 # THE ORDER IS A DESIGN CHOICE, not the measured difficulty ranking (decision
 # 0018). It is set by hand to pace what the player meets. For reference, the
 # honest player from `sim:spells`, spell-less, 30 seeds a board, mean clear rate
-# over the tuned ten, ranks them:
+# over the tuned ten, ranks the ladders that used to be counted:
 #
 #   WRAPAROUND 99.0   DUNGEON 97.7   CHECKERBOARD 97.4   DIAMOND 95.5
 #   CROSS 94.0        CONGA LINE 92.8 HIVE 92.7          PAIRS 92.1
@@ -455,55 +603,48 @@ UNLOCKS = {
 # Spell-less on purpose, so every ladder is measured by the same player; the
 # shaped ladders carry spells in play, which only makes them gentler than this.
 # HIVE and PAIRS are within the noise of each other. SUDOKU cannot be measured
-# on the same scale -- it is guess-free by construction -- so it keeps the top
-# slot. BLIND is not on this schedule at all; see UNLOCK_RUNS.
-# The biggest departure from that ranking is DUNGEON, the second easiest,
-# placed last before SUDOKU. It carries spells and the crawl rule, and arriving
-# late means the player has usually met spells on ARCANE first.
-UNLOCK_BOARDS = {
-    "wraparound": 15,
-    "cross": 20,
-    "hive": 25,
-    "diamond": 30,
-    "pairs": 35,
-    "dominoes": 40,
-    "workout": 45,
-    "packs": 50,
-    "donut": 55,
-    "checker": 60,
-    "congo": 65,
-    "cave": 70,
-    "dungeon": 75,
-    "sudoku": 80,
-}
+# on the same scale -- it is guess-free by construction -- so it closes its
+# category. DUNGEON, the second easiest, closes Magic: it carries spells and
+# the crawl rule, and by then the player has met every spell on ARCANE,
+# WORKOUT and ORACLE.
+BOARD_STEP = 5
+FIRST_STEP = 15
+BLIND_AFTER_STEPS = 1
 
-# Full Runs completed, on that many DIFFERENT types. 0 means no such gate.
-#
-# A third kind of gate, and it says something neither of the others can: not
-# "you are ready" or "you have played a lot", but "you have finished something
-# without being allowed to start again". BLIND is 1 HP and any creature ends the
-# board, which is exactly the discipline a Full Run - one HP pool carried across
-# ten boards - is practice for. Distinct types, so it cannot be met by running
-# EASY three times.
-#
-# It cannot strand a save: a Full Run opens on clearing a type's board 10, and
-# EASY, NORMAL and HUGE are all reachable on type-clears alone.
-UNLOCK_RUNS = {
-    "blind": 3,
-}
 
-# Menu order. HUGE sits before EXTREME, and the variant ladders are ordered by
-# the board count that opens them, so the menu reads in the order a player
-# will actually meet it.
-MAINLINE = ["easy", "normal", "huge", "extreme", "huge_extreme"]
-MAGIC = ["arcane", "oracle"]
-# The variant lane, in the order its gates open (see UNLOCK_BOARDS). A
-# combined type sits right after the last of its parents to open. The list is
-# menu order, not a taxonomy -- a placement rule sits here beside the
-# topologies and the shapes because that is where a player meets it.
-TOPOLOGY = ["wraparound", "cross", "wrapped_cross", "hive", "diamond", "pairs", "dominoes",
-            "workout", "packs", "donut", "checker", "congo", "cave", "dungeon"]
-PUZZLE = ["sudoku"]
+def unlock_boards():
+    """Each counted ladder's gate: the n-th of its category opens on step n."""
+    gates = {}
+    for cat, ids in CATEGORIES.items():
+        counted = [t for t in ids if t not in UNLOCKS and t != "blind"]
+        for i, tid in enumerate(counted):
+            gates[tid] = FIRST_STEP + BOARD_STEP * i
+    gates["blind"] = max(gates.values()) + BOARD_STEP * BLIND_AFTER_STEPS
+    return gates
+
+
+# The menu's four categories, and the order within each. Every type is in
+# exactly one. A ladder sits where its main idea is, not where its rules
+# happen to be implemented: DUNGEON is a shape in the engine but a spell
+# ladder to play, and HIVE is a topology that plays as a special rule.
+#
+#   normal   the original game's seven modes
+#   shape    the board's outline or its edges are the point
+#   magic    the spells are the point
+#   special  everything else, mostly a placement rule
+#
+# Within a category the order is the order its gates open, so the menu reads
+# the way a player meets it.
+CATEGORIES = {
+    "normal": ["easy", "normal", "huge", "extreme", "huge_extreme", "blind", "huge_blind"],
+    "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave", "pyramid",
+              "gear", "card", "valentines", "star"],
+    "magic": ["arcane", "workout", "oracle", "dungeon"],
+    "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku",
+                "ultra_hive", "petri", "patrol"],
+}
+CATEGORY = {tid: cat for cat, ids in CATEGORIES.items() for tid in ids}
+UNLOCK_BOARDS = unlock_boards()
 POSTGAME = ["blind", "huge_blind"]
 
 
@@ -709,9 +850,12 @@ def ladder_record(t, boards, extended):
     return dict(
         id=t["id"], name=t["name"], tint=t["tint"], axis=t["axis"],
         blurb=t["blurb"], archetype=t["archetype"],
+        category=CATEGORY[t["id"]],
         search=t.get("search", False),
         postgame=t["id"] in POSTGAME,
         placement=t.get("placement", "uniform"),
+        # Absent means the placement rule's own; see readOpening in config.ts.
+        **({"opening": t["opening"]} if t.get("opening") else {}),
         spells=t.get("spells", []),
         start_mana=t.get("start_mana", 0),
         **({"workout": t["workout"]} if t.get("workout") else {}),
@@ -721,17 +865,17 @@ def ladder_record(t, boards, extended):
         shape_param=t.get("shape_param", 0),
         # 0 means the whole board is in reach, which is every type but one.
         reach=t.get("reach", 0),
+        # PETRI DISH: a mark touching uncovered ground counts as uncovered for reach.
+        **({"reach_marks": True} if t.get("reach_marks") else {}),
         wrap=t.get("wrap", "none"),
         # Full Run: one HP pool for the whole 10-board run, taken from
         # board 1. The per-board HP schedule is ignored in that mode, and
         # board 1 is the most generous entry in every schedule, so the
         # ceiling never drops below what a later board was tuned against.
         run_hp=t["hp"][0],
-        requires=UNLOCKS[t["id"]],
+        requires=UNLOCKS.get(t["id"], []),
         # Boards cleared anywhere, counting each once. 0 means no such gate.
         requires_boards=UNLOCK_BOARDS.get(t["id"], 0),
-        # Full Runs completed on distinct types. 0 means no such gate.
-        requires_runs=UNLOCK_RUNS.get(t["id"], 0),
         boards=boards,
         # Boards 11..N. Unlocked by clearing board 10, and deliberately
         # NOT part of `boards`: the ladder is ten, a Full Run is ten, and
@@ -745,7 +889,7 @@ def build():
     for t in TYPES:
         boards = tuned_boards(t)
         out.append(ladder_record(t, boards, continued_boards(t, boards)))
-    order = {k: i for i, k in enumerate(MAINLINE + MAGIC + TOPOLOGY + PUZZLE + POSTGAME)}
+    order = {k: i for i, k in enumerate(sum(CATEGORIES.values(), []))}
     out.sort(key=lambda t: order[t["id"]])
     return out
 

@@ -67,10 +67,13 @@ export function readBoard(game: Game, peek: boolean): Reading {
   const unknown: Cell[] = [];
   const marked = new Map<Cell, number>();
 
+  // Where the creatures walk a mark is a route, not a claim about a cell (PATROL), so nothing
+  // marked is subtracted there; the graded player writes no marks on such a board anyway.
+  const claims = game.marksAreClaims;
   for (const cell of game.grid.flat()) {
     if (!cell.present) continue;
     if (!cell.open) {
-      if (cell.mark > 0) marked.set(cell, cell.mark);
+      if (claims && cell.mark > 0) marked.set(cell, cell.mark);
       else unknown.push(cell);
       continue;
     }
@@ -79,7 +82,7 @@ export function readBoard(game: Game, peek: boolean): Reading {
     const covered: Cell[] = [];
     for (const n of game.neighboursOf(cell)) {
       if (n.open) residual -= n.tier;
-      else if (n.mark > 0) residual -= n.mark;
+      else if (claims && n.mark > 0) residual -= n.mark;
       else covered.push(n);
     }
     if (!covered.length) continue;

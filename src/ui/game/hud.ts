@@ -131,6 +131,9 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
             `${game.charge} banked. Cells a sweep opens do not charge it.`
           : 'Open only what is proven safe at your level. Can never cost HP.';
   }
+  // The move count is what a player times a creature's walk by: every creature was on its route's
+  // corner at move 0 and walks one cell a move.
+  if (els.waitBtn) els.waitBtn.textContent = `[W]ait · move ${game.moves}`;
   if (els.sweepMarkBtn) {
     // Only offered when the marks actually buy something the proof cannot.
     const extra = markCount - safeCount;

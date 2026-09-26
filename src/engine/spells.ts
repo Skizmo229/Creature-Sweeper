@@ -103,7 +103,8 @@ export const SPELLS: Record<SpellId, Spell> = {
   beacon: {
     id: 'beacon',
     name: 'Beacon',
-    cost: 300,
+    // Where a mana of it saves what a mana of Reveal does on ORACLE (decision 0037).
+    cost: 85,
     targeted: false,
     blurb: 'Open the largest untouched blank region. The unstuck button.',
   },

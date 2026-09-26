@@ -20,7 +20,7 @@
  * that takes a click handler down with it.
  */
 
-import type { SfxPackId } from './looks.js';
+import type { SfxPackId } from './looktypes.js';
 
 /** Everything the game can make a noise about. */
 export type SfxEvent =
@@ -149,6 +149,31 @@ const PACKS: Record<SfxPackId, Pack> = {
   },
 };
 
+/** How a sound is named where one is stored: the sound check's keys and pitches. */
+export const sfxSoundId = (pack: SfxPackId, event: SfxEvent): string => `${pack}:${event}`;
+
+/** Where a sound starts, in Hz: its first voice's opening frequency. */
+export function sfxPitch(pack: SfxPackId, event: SfxEvent): number {
+  return PACKS[pack][event][0].from;
+}
+
+/** Equal temperament from A4 at 440 Hz, in MIDI numbers, which the sound check tunes in. */
+const A4 = 69;
+const A4_HZ = 440;
+
+const noteHz = (note: number): number => A4_HZ * 2 ** ((note - A4) / 12);
+
+/** The MIDI number of a frequency, unrounded. */
+export const hzNote = (hz: number): number => A4 + 12 * Math.log2(hz / A4_HZ);
+
+/**
+ * The factor that moves a sound's first voice onto a note. Every voice is moved by the same
+ * factor, so a two-note sting stays the same interval and a slide keeps its shape.
+ */
+export function sfxRatio(pack: SfxPackId, event: SfxEvent, note: number | undefined): number {
+  return note === undefined ? 1 : noteHz(note) / sfxPitch(pack, event);
+}
+
 /**
  * Shortest gap between two sounds of the same event, in milliseconds.
  *
@@ -159,10 +184,34 @@ const PACKS: Record<SfxPackId, Pack> = {
  */
 const THROTTLE_MS = 45;
 
+/**
+ * Headroom: several voices can overlap during a sweep, and clipping the sum is far worse than any
+ * of them being slightly quiet.
+ */
+const MASTER_GAIN = 0.5;
+
+/**
+ * Where the volume gate starts holding sound down, in dBFS. The loudest voice in any pack peaks at
+ * 0.3, which the master gain makes 0.15 (about -16.5 dBFS), so at 100% nothing reaches it.
+ */
+const LIMIT_DB = -12;
+/** 20:1, the compressor's ceiling: above the threshold, 20 dB in comes out as 1. */
+const LIMIT_RATIO = 20;
+/** Seconds. Fast enough to catch the start of a sting, slow enough not to distort its tone. */
+const LIMIT_ATTACK = 0.003;
+const LIMIT_RELEASE = 0.1;
+
+/** The gain an envelope starts and ends at: an exponential ramp cannot reach zero. */
+const SILENT = 0.0001;
+
 export class Sfx {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private pack: SfxPackId | null = null;
+  /** Sounds retuned in the sound check, by `sfxSoundId`, when they are to be heard in play. */
+  private pitches: Readonly<Record<string, number>> = {};
+  /** The game's volume, scaling every sound `play` makes; `audition` is given its own. */
+  private volume = 1;
   private readonly lastAt = new Map<SfxEvent, number>();
   /** Set once anything throws, so a broken audio stack is not retried on
    *  every click for the rest of the session. */
@@ -171,6 +220,16 @@ export class Sfx {
   /** Choose the pack, or pass null for silence. */
   setPack(pack: SfxPackId | null): void {
     this.pack = pack;
+  }
+
+  /** Play these sounds at these notes (MIDI numbers), or pass `{}` for every sound's own. */
+  setPitches(pitches: Readonly<Record<string, number>>): void {
+    this.pitches = pitches;
+  }
+
+  /** Scale every sound the game plays, 0 for silent. */
+  setVolume(volume: number): void {
+    this.volume = volume;
   }
 
   get enabled(): boolean {
@@ -189,7 +248,23 @@ export class Sfx {
     const last = this.lastAt.get(event) ?? 0;
     if (now - last < THROTTLE_MS) return;
     this.lastAt.set(event, now);
+    const pack = this.pack!;
+    const ratio = sfxRatio(pack, event, this.pitches[sfxSoundId(pack, event)]);
+    this.sound(pack, event, ratio, this.volume);
+  }
 
+  /**
+   * Play one event from any pack, whichever is chosen, and unthrottled: the
+   * sound check, where every press is one deliberate sound. Silence is still
+   * the caller's to decide, since the pack being off is no reason not to
+   * audition one. `ratio` transposes every voice by the same factor, so a
+   * sound keeps its shape at any pitch; `volume` scales every voice's peak.
+   */
+  audition(pack: SfxPackId, event: SfxEvent, ratio = 1, volume = 1): void {
+    if (!this.dead) this.sound(pack, event, ratio, volume);
+  }
+
+  private sound(pack: SfxPackId, event: SfxEvent, ratio = 1, volume = 1): void {
     try {
       const ctx = this.context();
       if (!ctx || !this.master) return;
@@ -197,29 +272,33 @@ export class Sfx {
       // was backgrounded can suspend it again later.
       if (ctx.state === 'suspended') void ctx.resume();
 
-      const voices = PACKS[this.pack!][event];
-      for (const v of voices) this.voice(ctx, this.master, v);
+      for (const v of PACKS[pack][event]) this.voice(ctx, this.master, v, ratio, volume);
     } catch {
       this.dead = true;
     }
   }
 
   /** A single oscillator with an attack/decay envelope. */
-  private voice(ctx: AudioContext, out: GainNode, v: Voice): void {
+  private voice(ctx: AudioContext, out: GainNode, v: Voice, ratio: number, volume: number): void {
+    const peak = v.gain * volume;
+    // The envelope ramps from and to SILENT, and a peak at or below it has nothing to ramp to.
+    if (peak <= SILENT) return;
     const at = ctx.currentTime + (v.delay ?? 0);
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = v.wave;
-    osc.frequency.setValueAtTime(v.from, at);
-    if (v.to !== v.from) osc.frequency.exponentialRampToValueAtTime(Math.max(1, v.to), at + v.dur);
+    osc.frequency.setValueAtTime(v.from * ratio, at);
+    if (v.to !== v.from) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(1, v.to * ratio), at + v.dur);
+    }
 
     // A short attack rather than a hard start: an instant jump to peak gain
     // clicks audibly, and with a click per opened cell that is the loudest
     // thing in the mix.
     const attack = Math.min(0.012, v.dur / 3);
-    gain.gain.setValueAtTime(0.0001, at);
-    gain.gain.exponentialRampToValueAtTime(v.gain, at + attack);
-    gain.gain.exponentialRampToValueAtTime(0.0001, at + v.dur);
+    gain.gain.setValueAtTime(SILENT, at);
+    gain.gain.exponentialRampToValueAtTime(peak, at + attack);
+    gain.gain.exponentialRampToValueAtTime(SILENT, at + v.dur);
 
     osc.connect(gain);
     gain.connect(out);
@@ -244,10 +323,23 @@ export class Sfx {
     }
     this.ctx = new Ctor();
     this.master = this.ctx.createGain();
-    // Headroom: several voices can overlap during a sweep, and clipping the
-    // sum is far worse than any of them being slightly quiet.
-    this.master.gain.value = 0.5;
-    this.master.connect(this.ctx.destination);
+    this.master.gain.value = MASTER_GAIN;
+    this.master.connect(this.limiter(this.ctx)).connect(this.ctx.destination);
     return this.ctx;
+  }
+
+  /**
+   * The volume gate: a compressor set hard enough to act as a limiter. At the packs' own level
+   * the loudest sound peaks below its threshold and passes untouched; turned up, quiet sounds
+   * grow and loud ones are held near the threshold, so no setting can blast the player.
+   */
+  private limiter(ctx: AudioContext): DynamicsCompressorNode {
+    const gate = ctx.createDynamicsCompressor();
+    gate.threshold.value = LIMIT_DB;
+    gate.knee.value = 0;
+    gate.ratio.value = LIMIT_RATIO;
+    gate.attack.value = LIMIT_ATTACK;
+    gate.release.value = LIMIT_RELEASE;
+    return gate;
   }
 }

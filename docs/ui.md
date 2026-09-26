@@ -34,14 +34,20 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - The clock starts when the board is dealt. Time Attack counts down from the player's own best and
   reports expiry through `game.forfeit`; it is frame-driven, so a hidden tab registers expiry on
   its next frame.
+- The ladder list is four columns, one per category (Normal, Shape, Magic, Special), each in the
+  order its ladders open; they fall to two and then one as the screen narrows (decision 0036).
 - The ladder list's names are 1.5rem, by request, and never wider than their card. Each records its
   longest word in ems once its face has arrived (`fitNames`), and the stylesheet caps its size by
   the card's width, so CHECKERBOARD comes down a little at laptop width, and any long word at a
   large text size. A name with a space in it breaks there first.
 - The menus' cards have heavy edges, by request: a 2px border on a game-type card, with an 8px strip
-  of the ladder's colour down its left, and a 2px white outline on a board tile (an outline,
-  because a tile's border carries its state). A hover turns a card's whole edge the ladder's
-  colour, a tile's outline included.
+  of the ladder's colour down its left, and a 3px warm-grey edge on a board tile (a 1px border
+  inside a 2px outline of the same colour, because a tile's border carries its state). A hover
+  turns a card's whole edge the ladder's colour, a tile's outline included, and darkens a game-type
+  card's strip so it still stands apart. Where the strip goes is a setting (`menuStrip`): the left
+  edge by default, both vertical edges, all four, or none.
+- The settings screen's Back button is pinned to the top of the window, so the way out is always
+  in reach however far down the screen is scrolled.
 
 ## The board
 
@@ -81,6 +87,12 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   ten digits, so a change to the generator moves it rather than breaking it.
 - Icons, palette and the two fonts show two tiles, Default and User choice; the full gallery opens
   in a picker inside the settings element, which catches Escape in the capture phase.
+- The icon picker's last tile, Custom, opens a window of symbols in place of the picker: all of
+  Dingbats and Wingdings 1 to 3, a tab per set, each laid out as its font's code chart, sixteen to a
+  row, with gaps where the font has nothing, so a symbol is where anyone who knows the font expects
+  it. Pointing at one, or focusing it, shows it on the standard example board; clicking chooses it
+  and "Use this symbol" (or a double click) saves it. The arrow keys move through the chart. The
+  window reopens on the set it last showed. Only one window is ever open, so Escape closes it alone.
 - The interface font's tiles are the one gallery that is not boards: each is a copy of the HUD's
   first two readouts, in the real HUD's classes, set in its face. Picking one dresses the whole
   screen at once, so the page is its own example.
@@ -97,10 +109,19 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   `src/ui/looks.ts`, read through `lookFor`).
 - Text size scales the interface (root font size, everything in rem) and not the board, applied
   on release with a HUD copy following the thumb.
+- Preview size (50% to 300%) scales every example board on the screen and in its windows, by
+  request: the thumbnails, the glow and clear-effect demos and the custom icon's example. Not the
+  zoom example, which is drawn at the size it sets. Cells are rounded to whole pixels. Like text
+  size it applies on release, holding the row under the pointer, with one thumbnail following the
+  thumb; tiles and the symbol window's side panel grow with it (`--chip-w`).
 - The cursor-highlight gallery draws on the grid of the ladder the player came from and needs
   `BoardView.pinHover`, because a thumbnail has no cursor.
 - Settings that make the game easier than the tuned default record nothing (no clear, no unlock,
   no best time), and the screen, the ladder list and the clear overlay all say so.
+- Each gameplay slider is shaded by how far it sits from the tuned default, by request: toward
+  white as it gets easier (pure white at the easiest end), toward black as it gets harder (pure
+  black at the hardest). The readout beside it keeps the accent, since black text would vanish on
+  the dark panel.
 
 ## Fonts
 
@@ -113,6 +134,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   licences in `public/FONT-LICENSES.txt`, `@font-face` in `fonts.css`. `test/fonts.test.ts` checks
   all of it, and that every ladder names a bundled face, which two ladders may share (decision
   0031).
+- One more family is bundled for the creature icons, not for text: `Pip Symbols`, four faces cut
+  from open Noto fonts to the 782 symbols the custom icon offers (`src/ui/pipfont/`, their
+  `@font-face` in `pipfont/pipfont.css`, licences in the same file). `test/pipsymbols.test.ts`
+  checks them as `test/fonts.test.ts` checks the rest; see the creature-icon bullet below.
 - A face must have lining figures; Georgia's old-style figures made numbers jump. Check a
   candidate's OS/2 metrics with fontTools: Aladin and Gluten misstate cap height
   (`capHeightFix`) and Aladin its x-height (`exHeightFix`).
@@ -125,12 +150,34 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   grow and shrink with the face; `test/fonts.test.ts` holds that.
 - No glyph in the chrome can be assumed: the settings button is a word, the mute speaker is inline
   SVG. Only Latin-1 and general punctuation are safe.
+- A creature's pips can be a symbol rather than a shape (`icons: 'U+2764'`). Wingdings is
+  Microsoft's and cannot ship, so the symbols are its Unicode equivalents, drawn from open fonts cut
+  down to them (`src/ui/pipfont/`, the one family `Pip Symbols`, one face per source with a
+  unicode-range each, so every symbol has exactly one face). `scripts/pip_symbols.py` rebuilds them
+  from `src/ui/pipsymbols.json`; `test/pipsymbols.test.ts` holds the table, the faces and the
+  licences together (decision 0035). A symbol is scaled so the longer side of its measured ink spans
+  the pip, centred on it; a gilded tier's halo is its outline stroked at 0.6 of a drawn pip's,
+  because stroking a symbol strokes its holes too. `BoardView` waits for the face of the symbol in
+  use as it waits for its number font.
 
 ## Sound and effects
 
 - Sound is synthesised. The `AudioContext` is built lazily on the first sound and resumed on every
   call; every entry point swallows its own failure; one sound per action, the loudest event wins.
   Muting is not the same as the OFF pack, and the speaker is repainted from `applyPresentation`.
+- The sound check (a button under the Sound effects gallery) plays any pack's sound through
+  `Sfx.audition`, which ignores the chosen pack and the throttle but not mute. Keys assigned there
+  play only while its window is open. Its keyboard (C2 to C7, equal temperament) retunes the last
+  sound clicked or played by its key: every voice is scaled by one factor, so the first lands on
+  the chosen note and the rest keep their intervals. Keys and pitches are saved in the
+  presentation settings (`soundCheck`, sounds named `pack:event`), so a backup code carries them
+  and Reset presentation clears them. The pitches reach the game's own mixer (`Sfx.setPitches`,
+  from `applyPresentation`) only while "Custom pitches in play" is on, which it is not by default. Clicking the keyboard hands the computer's keys to it (A to
+  K the white keys, the row above the black, Z and X the octave); Shift pressed and released alone
+  swaps between that and the assigned keys, and Escape steps back one mode before it closes the
+  window. Its volume slider (0 to 300% of each sound's level) is saved beside them and is passed
+  to `Sfx.audition` alone, so the game's own sounds never hear it. Note names are green, apart
+  from the ladder's accent.
 - Two families of clear effect: ambient (confetti, burst, ripple, sparkle) and icon (tumble,
   cascade, pop, burn, three wipes). Icon effects take the board's glyphs (`VictorySource`),
   pre-rendered per tier into an atlas at twice the cell size, and the board stops drawing them

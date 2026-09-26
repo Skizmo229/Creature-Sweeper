@@ -16,6 +16,7 @@ import type { Progress } from '../../src/ui/progress.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import type { Settings } from '../../src/ui/settings.js';
 import { FONTS, TITLE_FONT } from '../../src/ui/typefaces.js';
+import { ladders } from '../../src/ui/ladders.js';
 
 /** The app's surface as the test drives it, private members included, the way the dev console does. */
 interface Driver {
@@ -72,9 +73,19 @@ beforeEach(() => {
 
 describe('the app', () => {
   it('boots to the ladder list with every type on it', () => {
-    expect(document.querySelectorAll('.type-card').length).toBe(24);
+    expect(document.querySelectorAll('.type-card').length).toBe(ladders.length);
     expect(text('h1')).toContain('Creature Sweeper');
     expect(document.querySelector('.mute-toggle')).not.toBeNull();
+  });
+
+  it('files the ladder list into its four categories, each in the order its ladders open', () => {
+    const columns = [...document.querySelectorAll('.type-group')].map((g) => ({
+      head: g.querySelector('.type-group-head')!.textContent,
+      names: [...g.querySelectorAll('.type-name')].map((n) => n.textContent),
+    }));
+    expect(columns.map((c) => c.head)).toEqual(['Normal', 'Shape', 'Magic', 'Special']);
+    expect(columns[1]!.names.slice(0, 3)).toEqual(['WRAPAROUND', 'WRAPPED CROSS', 'CROSS']);
+    expect(columns[2]!.names).toEqual(['ARCANE', 'WORKOUT', 'ORACLE', 'DUNGEON']);
   });
 
   it('starts a board and shows the HUD and the hint', () => {
@@ -249,7 +260,7 @@ describe('the app', () => {
     app.showSettings(() => app.buildGameScreen());
     expect(document.querySelector('.settings-screen')).not.toBeNull();
     expect(document.querySelectorAll('.settings-row').length).toBeGreaterThan(10);
-    document.querySelector<HTMLButtonElement>('.settings-screen .title-bar button')!.click();
+    document.querySelector<HTMLButtonElement>('.settings-screen .sticky-back')!.click();
     expect(document.querySelector('.screen.game')).not.toBeNull();
     expect(app.current).toBe(game);
   });
@@ -349,7 +360,7 @@ describe('Escape and the entry modes', () => {
     app.showSettings(() => app.showTypes());
     key('Escape');
     expect(document.querySelector('.settings-screen')).toBeNull();
-    expect(document.querySelectorAll('.type-card').length).toBe(24);
+    expect(document.querySelectorAll('.type-card').length).toBe(ladders.length);
   });
 
   it('sends no key to a board the player has left', () => {

@@ -1,13 +1,25 @@
-/* The bundled faces. First, because an @import anywhere else is ignored. */
+/* The bundled faces, and the symbols a creature's pips can be drawn as. First,
+   because an @import anywhere else is ignored. */
 @import './fonts.css';
+@import './pipfont/pipfont.css';
 
 :root {
-  --bg: #17170f;
+  --bg: #181a1b;
   --panel: #23231b;
   --panel-2: #2e2e24;
   --line: #3b3b2e;
-  /* The outline every board tile carries. White on purpose — see .board-card. */
-  --card-outline: #ffffff;
+  /* The edge of anything clickable: lighter than --line, which frames panels,
+     so a control reads against the near-black background. */
+  --button-line: #6b665b;
+  /* Text on a button filled with colour (primary, armed, hovered): white, by request. */
+  --button-ink: #ffffff;
+  /* A 1px dark outline round that white, drawn as eight shadows, so it reads on
+     the bright fills (white on yellow alone is about 1.4 : 1). */
+  --button-ink-outline:
+    -1px -1px 0 #17170f, 0 -1px 0 #17170f, 1px -1px 0 #17170f, -1px 0 0 #17170f, 1px 0 0 #17170f,
+    -1px 1px 0 #17170f, 0 1px 0 #17170f, 1px 1px 0 #17170f;
+  /* The edge every board tile carries, border and outline in one colour — see .board-card. */
+  --card-outline: #7b7265;
   --ink: #ece7d6;
   --muted: #948f7b;
   --tint: #d99a34;
@@ -100,7 +112,7 @@ button {
   font-size: 0.85rem;
   color: var(--ink);
   background: var(--panel-2);
-  border: 1px solid var(--line);
+  border: 1px solid var(--button-line);
   border-radius: 4px;
   padding: 8px 14px;
   cursor: pointer;
@@ -118,7 +130,8 @@ button:disabled {
 }
 button.primary {
   background: var(--tint);
-  color: #17170f;
+  color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
   border-color: var(--tint);
   font-weight: 700;
 }
@@ -132,19 +145,36 @@ button.small {
 
 /* -------------------------------------------------------------- ladder cards */
 
-.type-list {
+/* Four columns, one per category, falling to two and then one as the screen
+   narrows; each column is its ladders stacked in the order they open. */
+.type-groups {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 22px 14px;
+  align-items: start;
+}
+.type-group-head {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+}
+.type-list {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 .type-card {
   text-align: left;
   padding: 14px 16px;
   background: var(--panel);
-  /* Twice a button's edge, by request. */
-  border-width: 2px;
-  /* The ladder's colour (its palette's accent), 8px wide by request. */
-  border-left: 8px solid var(--tint);
+  /* Twice a button's edge, by request. Stated in full, because the settings
+     screen's example of this card is not a button. */
+  border: 2px solid var(--button-line);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -163,6 +193,37 @@ button.small {
    interface. `--word-em` is the name's longest word in ems (`fitNames`, in
    screens/ladders.ts), so such a name comes down just far enough to fit. A
    name with a space in it breaks there first. */
+/* The ladder's colour (its palette's accent), 8px wide by request, on the
+   edges the player chose (`menuStrip`). */
+.type-card.strip-left {
+  border-left: 8px solid var(--tint);
+}
+.type-card.strip-sides {
+  border-left: 8px solid var(--tint);
+  border-right: 8px solid var(--tint);
+}
+.type-card.strip-all {
+  border: 8px solid var(--tint);
+}
+/* A hover turns the edge the ladder's colour, so the strip darkens to stay
+   distinct from it. With no strip there is nothing to keep apart. */
+button.type-card.strip-left:hover:not(:disabled) {
+  border-left-color: var(--strip-hover);
+}
+button.type-card.strip-sides:hover:not(:disabled) {
+  border-left-color: var(--strip-hover);
+  border-right-color: var(--strip-hover);
+}
+button.type-card.strip-all:hover:not(:disabled) {
+  border-color: var(--strip-hover);
+}
+.type-card {
+  --strip-hover: color-mix(in srgb, var(--tint) 55%, black);
+}
+/* The settings screen's example of each strip: a card's width, not a gallery tile's. */
+.strip-demo {
+  width: 170px;
+}
 .type-name {
   font-size: min(1.5rem, 100cqi / var(--word-em, 0.01));
   font-weight: 700;
@@ -185,17 +246,16 @@ button.small {
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 10px;
 }
-/* Every board tile carries a white outline, 2px by request.
-   
-   It is an `outline` rather than a `border` for two reasons. The border is
-   already carrying STATE on these tiles — the tint says cleared, or Full Run,
-   or scaling — so painting it white would have cost the one thing the colour
-   was saying. And the scaling tile is a div rather than a button, so it never
-   picked up the button border at all and had been sitting there with no edge
-   on it; an outline lands on all three kinds without caring what they are.
-   
+/* Every board tile carries a 3px warm-grey edge, by request: a 1px border
+   with a 2px outline around it in the same colour, so the two read as one.
+
+   The outer part is an `outline` because the border carries STATE on these
+   tiles — the tint says cleared, or Full Run, or scaling — and widening it
+   would have made the state shout. The scaling tile is a div rather than a
+   button, so it states its border here rather than inheriting a button's.
+
    Dimming comes for free: a locked tile is already at 0.4 opacity, so its
-   outline dims with it and locked still reads as locked. The focus ring wins
+   edge dims with it and locked still reads as locked. The focus ring wins
    over this without needing to say so, because `button:focus-visible` is the
    more specific selector. */
 .board-card {
@@ -206,6 +266,7 @@ button.small {
   flex-direction: column;
   gap: 3px;
   position: relative;
+  border: 1px solid var(--card-outline);
   outline: 2px solid var(--card-outline);
 }
 /* A hover colours the whole edge. The button rule turns only the border,
@@ -477,7 +538,8 @@ button.board-card:hover:not(:disabled) {
 }
 .counter.active {
   background: var(--tint);
-  color: #17170f;
+  color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
   border-color: var(--tint);
   font-weight: 700;
 }
@@ -491,7 +553,8 @@ button.board-card:hover:not(:disabled) {
 .counter[data-tier].active {
   background: var(--tier);
   border-color: var(--tier);
-  color: #17170f;
+  color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
 }
 .counter.gilded,
 .counter.gilded.active {
@@ -536,7 +599,8 @@ button.board-card:hover:not(:disabled) {
 }
 .sweep.assist:hover:not(:disabled) {
   background: var(--tint);
-  color: #17170f;
+  color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
 }
 
 .hint {
@@ -769,12 +833,14 @@ button.board-card:hover:not(:disabled) {
 }
 .spell:hover:not(:disabled) {
   background: #7ad9ff;
-  color: #0b1418;
+  color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
   border-color: #7ad9ff;
 }
 .spell.armed {
   background: #7ad9ff;
-  color: #0b1418;
+  color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
   border-color: #7ad9ff;
   border-style: solid;
   font-weight: 700;
@@ -797,7 +863,7 @@ button.board-card:hover:not(:disabled) {
   border-color: var(--tint);
 }
 .run-card:disabled {
-  border-color: var(--line);
+  border-color: var(--card-outline);
 }
 /* "FULL RUN" where a board card puts one or two digits, so it takes a size
    that fits two words on one line instead of the digit's 1.5rem. */
@@ -839,7 +905,7 @@ button.board-card:hover:not(:disabled) {
   font-size: 0.8rem;
   line-height: 1.5;
   background: transparent;
-  border-color: var(--line);
+  border-color: var(--button-line);
 }
 .scale-arrow:hover:not(:disabled) {
   border-color: var(--tint);
@@ -887,6 +953,14 @@ button.board-card:hover:not(:disabled) {
 
 .settings-screen .title-bar {
   margin-bottom: 18px;
+}
+/* The screen is long, so its way out stays pinned to the top of the window.
+   It sits outside the header, whose height would otherwise bound the pin. */
+.settings-screen > .sticky-back {
+  position: sticky;
+  top: calc(8px + env(safe-area-inset-top, 0px));
+  z-index: 5;
+  background: var(--bg);
 }
 
 .settings-group {
@@ -945,7 +1019,7 @@ button.board-card:hover:not(:disabled) {
   font-size: 0.78rem;
   color: var(--ink);
   background: var(--panel-2);
-  border: 1px solid var(--line);
+  border: 1px solid var(--button-line);
   border-radius: 4px;
   padding: 7px 8px;
   width: 100%;
@@ -963,7 +1037,7 @@ button.board-card:hover:not(:disabled) {
 .settings-slider input[type='range'] {
   flex: 1;
   min-width: 0;
-  accent-color: var(--tint);
+  accent-color: var(--difficulty-ink, var(--tint));
 }
 .settings-value {
   font-size: 0.78rem;
@@ -1057,12 +1131,14 @@ button.board-card:hover:not(:disabled) {
   gap: 6px;
   padding: 8px;
   background: var(--panel-2);
-  border: 1px solid var(--line);
+  border: 1px solid var(--button-line);
   border-radius: 5px;
   cursor: pointer;
   /* The caption is the option's name, so it must not be clipped to the
-     thumbnail's width — many a palette's name is wider than its board. */
-  max-width: 190px;
+     thumbnail's width — many a palette's name is wider than its board. But
+     never narrower than the thumbnail, which the preview size can enlarge
+     past this (the 18px is the tile's padding and border). */
+  max-width: max(190px, calc(var(--chip-w) + 18px));
 }
 .preview-chip:hover {
   border-color: var(--tint);
@@ -1135,6 +1211,304 @@ button.board-card:hover:not(:disabled) {
   text-align: center;
 }
 
+/* The custom creature icon: a tab per set, the set as its own code chart,
+   sixteen to a row, and beside it the chosen symbol on the example board. The
+   chart is set in the pip font alone, whose faces hold every symbol it shows,
+   with no size adjust: a symbol has no x-height to match. On a narrow screen
+   the example goes above the chart. */
+.overlay-card.symbol-card {
+  max-width: 860px;
+}
+.symbol-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+button.symbol-tab.active {
+  border-color: var(--tint);
+  box-shadow: inset 0 0 0 1px var(--tint);
+  background: var(--panel);
+  color: var(--tint);
+}
+.symbol-body {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.symbol-chart {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 560px;
+  display: grid;
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+  gap: 2px;
+}
+button.symbol-cell {
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-family: 'Pip Symbols';
+  font-size-adjust: none;
+  font-size: 1.15rem;
+  line-height: 1;
+  overflow: hidden;
+  border-radius: 3px;
+}
+button.symbol-cell.chosen {
+  border-color: var(--tint);
+  box-shadow: inset 0 0 0 1px var(--tint);
+  background: var(--panel);
+  color: var(--tint);
+}
+.symbol-gap {
+  aspect-ratio: 1;
+}
+.symbol-side {
+  flex: 0 0 auto;
+  width: max(240px, var(--chip-w));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  position: sticky;
+  top: 0;
+}
+.symbol-example canvas {
+  display: block;
+  border-radius: 3px;
+  cursor: inherit;
+}
+.symbol-name {
+  font-size: 0.85rem;
+  min-height: 1.3em;
+}
+.symbol-where {
+  font-size: 0.72rem;
+  color: var(--muted);
+  min-height: 1.2em;
+}
+button.symbol-use {
+  margin-top: 4px;
+}
+@media (max-width: 680px) {
+  .symbol-body {
+    flex-direction: column-reverse;
+  }
+  .symbol-side {
+    position: static;
+    width: auto;
+  }
+  button.symbol-cell {
+    font-size: 0.9rem;
+  }
+}
+
+/* The sound check: every pack's sounds as a grid of buttons, in the picker's
+   window. A button wears the keys assigned to it; while a sound is being
+   picked for a key the grid is outlined, and the chosen one lit. */
+button.soundcheck-open {
+  align-self: flex-start;
+}
+.soundcheck-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.soundcheck-status {
+  font-size: 0.78rem;
+  color: var(--tint);
+}
+.soundcheck-volume {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  flex: 0 1 260px;
+}
+.soundcheck-volume .settings-slider {
+  flex: 1;
+}
+.soundcheck-volume .settings-value {
+  min-width: 5ch;
+}
+.soundcheck-pack {
+  margin: 14px 0 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.soundcheck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 6px;
+}
+.soundcheck.choosing .soundcheck-grid {
+  outline: 1px dashed var(--tint);
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+button.soundcheck-sound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 52px;
+  justify-content: center;
+}
+button.soundcheck-sound:active {
+  background: var(--panel);
+}
+button.soundcheck-sound.picking {
+  border-color: var(--tint);
+  box-shadow: inset 0 0 0 1px var(--tint);
+}
+.soundcheck-key {
+  font-size: 0.68rem;
+  color: var(--tint);
+  min-height: 1em;
+}
+button.soundcheck-sound.tuning {
+  background: var(--panel);
+  border-color: var(--tint);
+}
+
+/* The keyboard under the grid, held to the bottom of the window as the packs
+   scroll past, so the sound just clicked can be retuned without scrolling to
+   it. The negative offset and padding match the card's own bottom padding, so
+   nothing shows through below it. Ivory and black because it is a keyboard,
+   whatever the ladder's colours. */
+.soundcheck-pitch {
+  position: sticky;
+  bottom: -20px;
+  margin: 16px -18px -20px;
+  padding: 4px 18px 20px;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+}
+.soundcheck-pitch .soundcheck-pack {
+  margin: 0;
+}
+.soundcheck-pitch .soundcheck-tools {
+  margin: 8px 0;
+}
+.piano-scroll {
+  overflow-x: auto;
+}
+.piano {
+  --white-w: 24px;
+  --black-w: 14px;
+  position: relative;
+  display: flex;
+  width: calc(var(--whites) * var(--white-w));
+  height: 96px;
+}
+button.piano-key {
+  padding: 0;
+  border-radius: 0 0 3px 3px;
+}
+button.piano-key.white {
+  flex: 0 0 var(--white-w);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 4px;
+  background: #ebe6d6;
+  border-color: #3a3a33;
+}
+/* `--at` is how many white keys come before it, so it sits on that seam. */
+button.piano-key.black {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: calc(var(--at) * var(--white-w) - var(--black-w) / 2);
+  width: var(--black-w);
+  height: 60%;
+  background: #1b1b18;
+  border-color: #1b1b18;
+}
+/* Note names are green wherever they appear, apart from the ladder's accent
+   that the keys and states wear: dark on the ivory keys, light on the panel. */
+.piano-label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: #1d7a3a;
+  pointer-events: none;
+}
+.soundcheck-note {
+  color: #5fd37b;
+}
+/* The sound's own pitch wears a dot; the chosen one lights up. */
+button.piano-key.own::after {
+  content: '';
+  position: absolute;
+  bottom: 18px;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: var(--tint);
+}
+button.piano-key.black.own::after {
+  bottom: 6px;
+  left: 50%;
+}
+button.piano-key.white.own::after {
+  left: 50%;
+}
+button.piano-key.chosen {
+  background: var(--tint);
+  border-color: var(--tint);
+}
+button.piano-key.chosen.own::after {
+  background: #1b1b18;
+}
+/* Played from the computer's keys: the panel's edge lights, each key wears the
+   letter that plays it, a held note goes down, and the sounds above rest. */
+.soundcheck-pitch.playing {
+  border-top-color: var(--tint);
+  box-shadow: inset 0 2px 0 var(--tint);
+}
+.soundcheck.resting {
+  opacity: 0.55;
+}
+.piano-letter {
+  position: absolute;
+  left: 0;
+  right: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-align: center;
+  pointer-events: none;
+}
+button.piano-key.white .piano-letter {
+  bottom: 30px;
+  color: #3a3a33;
+}
+button.piano-key.black .piano-letter {
+  bottom: 16px;
+  color: #ebe6d6;
+}
+button.piano-key.white {
+  position: relative;
+}
+button.piano-key.chosen .piano-letter,
+button.piano-key.pressed .piano-letter {
+  color: #1b1b18;
+}
+button.piano-key.pressed {
+  background: var(--tint);
+  border-color: var(--tint);
+  filter: brightness(0.8);
+}
+.piano-scroll.idle button.piano-key:disabled {
+  opacity: 0.45;
+}
+
 /* An interface font's example: two of the HUD's readouts in the face, one
    above the other, at the size the HUD first shipped at, in a box no smaller
    than a thumbnail, so its tiles stand level with the placeholder's. It wears
@@ -1161,6 +1535,18 @@ button.board-card:hover:not(:disabled) {
   margin-top: 4px;
 }
 .zoom-demo canvas {
+  display: block;
+  border-radius: 3px;
+  cursor: inherit;
+}
+
+/* The one thumbnail that follows the preview size's slider while it moves. */
+.preview-size-demo {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 4px;
+}
+.preview-size-demo canvas {
   display: block;
   border-radius: 3px;
   cursor: inherit;
@@ -1228,8 +1614,8 @@ button.board-card:hover:not(:disabled) {
   display: grid;
   place-items: center;
   padding: 0;
-  background: rgba(28, 28, 21, 0.9);
-  border: 1px solid var(--line);
+  background: rgba(24, 26, 27, 0.9);
+  border: 1px solid var(--button-line);
   border-radius: 4px;
   color: var(--ink);
   cursor: pointer;

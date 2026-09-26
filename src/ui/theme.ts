@@ -10,7 +10,9 @@
  * same everywhere. Shape is decoration; colour is information.
  */
 
-import type { SfxPackId, VictoryId, PipShape, TypeTheme } from './looks.js';
+import type { GlyphPip, Pip, PipShape, SfxPackId, TypeTheme, VictoryId } from './looktypes.js';
+import { PIP_FAMILY, findSymbol, glyphChar, isGlyphPip } from './pipsymbols.js';
+import type { SfxEvent } from './sfx.js';
 
 /** Every creature-icon shape, in the order the picker shows them. */
 export const PIP_SHAPES: readonly PipShape[] = [
@@ -21,6 +23,10 @@ export const PIP_SHAPES: readonly PipShape[] = [
   'cross',
   'ring',
   'ringDiamond',
+  'triangle',
+  'gear',
+  'heart',
+  'star',
 ];
 
 export const PIP_NAMES: Record<PipShape, string> = {
@@ -31,13 +37,38 @@ export const PIP_NAMES: Record<PipShape, string> = {
   cross: 'Crosses',
   ring: 'Rings',
   ringDiamond: 'Hollow gems',
+  triangle: 'Pyramids',
+  gear: 'Gears',
+  heart: 'Hearts',
+  star: 'Stars',
 };
+
+/** What a pip is called: a shape's name, or a symbol's own. */
+export function pipName(pip: Pip): string {
+  return isGlyphPip(pip) ? (findSymbol(pip)?.symbol.name ?? pip) : (PIP_NAMES[pip] ?? pip);
+}
 
 export const SFX_NAMES: Record<SfxPackId, string> = {
   chime: 'Chimes — soft bells',
   blip: 'Blips — arcade square waves',
   thud: 'Thuds — low and dry',
   glass: 'Glass — bright and brittle',
+};
+
+/** Every sound event, in the order the sound check lays them out. */
+export const SFX_EVENT_NAMES: Record<SfxEvent, string> = {
+  open: 'Open',
+  cascade: 'Cascade',
+  mark: 'Mark',
+  note: 'Note',
+  sweep: 'Sweep',
+  blocked: 'Blocked',
+  kill: 'Kill',
+  battle: 'Hit',
+  levelup: 'Level-up',
+  spell: 'Spell',
+  win: 'Win',
+  lose: 'Lose',
 };
 
 export const VICTORY_NAMES: Record<VictoryId, string> = {
@@ -174,6 +205,17 @@ const DIE_FACES: Record<number, readonly number[]> = {
   9: [0, 1, 2, 3, 4, 5, 6, 7, 8],
 };
 
+/** The gear pip: its teeth, one tooth's outline as (share of the radius, share of a tooth's pitch),
+ *  and the hole. */
+const GEAR_PIP_TEETH = 6;
+const GEAR_PIP_OUTLINE: ReadonlyArray<readonly [number, number]> = [
+  [0.72, -0.32],
+  [1, -0.17],
+  [1, 0.17],
+  [0.72, 0.32],
+];
+const GEAR_PIP_HOLE = 0.34;
+
 function pipPath(
   ctx: CanvasRenderingContext2D,
   shape: PipShape,
@@ -220,6 +262,45 @@ function pipPath(
       ctx.closePath();
       break;
     }
+    case 'triangle':
+      // Wider than it is tall, as a pyramid is, so it fills the pip's box rather than a third of it.
+      ctx.moveTo(cx, cy - r * 0.9);
+      ctx.lineTo(cx + r, cy + r * 0.85);
+      ctx.lineTo(cx - r, cy + r * 0.85);
+      ctx.closePath();
+      break;
+    case 'gear': {
+      // Six teeth rather than the board's eight, which is as many as a pip a few pixels across can
+      // show, round a hole cut the other way so a plain fill leaves it empty.
+      const step = (Math.PI * 2) / GEAR_PIP_TEETH;
+      for (let k = 0; k < GEAR_PIP_TEETH; k++) {
+        for (const [radius, offset] of GEAR_PIP_OUTLINE) {
+          const angle = (k + offset) * step - Math.PI / 2;
+          ctx.lineTo(cx + radius * r * Math.cos(angle), cy + radius * r * Math.sin(angle));
+        }
+      }
+      ctx.closePath();
+      ctx.moveTo(cx + r * GEAR_PIP_HOLE, cy);
+      ctx.arc(cx, cy, r * GEAR_PIP_HOLE, 0, Math.PI * 2, true);
+      break;
+    }
+    case 'heart':
+      // Two lobes over a point, drawn from the point round to it again.
+      ctx.moveTo(cx, cy + r * 0.9);
+      ctx.bezierCurveTo(cx - r * 1.3, cy, cx - r * 0.95, cy - r * 1.2, cx, cy - r * 0.5);
+      ctx.bezierCurveTo(cx + r * 0.95, cy - r * 1.2, cx + r * 1.3, cy, cx, cy + r * 0.9);
+      ctx.closePath();
+      break;
+    case 'star':
+      // Five points, the inner corners at the regular pentagram's ratio, nudged down so it sits
+      // centred in the pip's box rather than on its own centre.
+      for (let k = 0; k < 10; k++) {
+        const angle = (k * Math.PI) / 5 - Math.PI / 2;
+        const reach = k % 2 === 0 ? r * 1.1 : r * 0.42;
+        ctx.lineTo(cx + reach * Math.cos(angle), cy + r * 0.1 + reach * Math.sin(angle));
+      }
+      ctx.closePath();
+      break;
     case 'ring':
     case 'circle':
     default:
@@ -248,29 +329,112 @@ export function drawCreature(
   // At full size the halos merged into a blob and the count stopped reading.
   const r = Math.max(1, unit * (gilded ? 1.45 : 1.9));
   const halo = Math.max(1.5, unit * 1.15);
-  const hollow = theme.pip === 'ring' || theme.pip === 'ringDiamond';
+  const centres = face.map((i) => ({
+    cx: x + unit * (3.5 + (i % 3) * 4.5),
+    cy: y + unit * (3.5 + Math.floor(i / 3) * 4.5),
+  }));
+  const pip = theme.pip;
 
   ctx.save();
   ctx.lineJoin = 'round';
-  for (const i of face) {
-    const cx = x + unit * (3.5 + (i % 3) * 4.5);
-    const cy = y + unit * (3.5 + Math.floor(i / 3) * 4.5);
-
+  if (isGlyphPip(pip)) {
+    drawSymbolPips(ctx, pip, centres, r, color, gilded ? halo : 0);
+    ctx.restore();
+    return;
+  }
+  const hollow = pip === 'ring' || pip === 'ringDiamond';
+  for (const { cx, cy } of centres) {
     // Tiers 6-9 reuse the first five hues wearing a gold halo, so the palette
     // covers nine tiers without nine barely-distinguishable colours.
     if (gilded) {
       ctx.strokeStyle = TIER_GOLD;
       ctx.lineWidth = halo;
-      pipPath(ctx, theme.pip, cx, cy, hollow ? r - unit * 0.55 : r);
+      pipPath(ctx, pip, cx, cy, hollow ? r - unit * 0.55 : r);
       ctx.stroke();
     }
 
     ctx.fillStyle = color;
     ctx.strokeStyle = color;
     ctx.lineWidth = Math.max(1, unit * 1.1);
-    pipPath(ctx, theme.pip, cx, cy, hollow ? r - ctx.lineWidth / 2 : r);
+    pipPath(ctx, pip, cx, cy, hollow ? r - ctx.lineWidth / 2 : r);
     if (hollow) ctx.stroke();
     else ctx.fill();
   }
   ctx.restore();
+}
+
+/**
+ * How far a symbol reaches, as a multiple of a drawn pip's diameter, along whichever of its sides
+ * is longer. A little over one, because few symbols fill their box the way a disc does.
+ */
+const SYMBOL_SPAN = 1.1;
+/**
+ * A gilded symbol's gold halo, as a share of a drawn pip's. Stroking a symbol strokes its holes
+ * too, and a full-width halo closed up the detail of the finer ones (the skull's eyes, a pointing
+ * finger's knuckles) at a thumbnail's cell size.
+ */
+const SYMBOL_HALO = 0.6;
+/** The size a symbol is measured at, in pixels, before being scaled to its pip. */
+const SYMBOL_MEASURE_PX = 100;
+
+/** A symbol's ink around its pen position, at `SYMBOL_MEASURE_PX`. */
+interface Ink {
+  left: number;
+  right: number;
+  ascent: number;
+  descent: number;
+}
+
+/**
+ * Measured ink per symbol. Only a symbol whose face has loaded is cached: measured before it
+ * arrives, the ink is the fallback's, and the board repaints once it lands (`BoardView`).
+ */
+const SYMBOL_INK = new Map<string, Ink>();
+
+function symbolInk(ctx: CanvasRenderingContext2D, char: string): Ink {
+  const known = SYMBOL_INK.get(char);
+  if (known) return known;
+  const font = `${SYMBOL_MEASURE_PX}px ${PIP_FAMILY}`;
+  ctx.font = font;
+  const m = ctx.measureText(char);
+  const ink = {
+    left: m.actualBoundingBoxLeft,
+    right: m.actualBoundingBoxRight,
+    ascent: m.actualBoundingBoxAscent,
+    descent: m.actualBoundingBoxDescent,
+  };
+  if (document.fonts.check(font, char)) SYMBOL_INK.set(char, ink);
+  return ink;
+}
+
+/**
+ * A symbol at each pip, its ink centred where the pip's centre is and scaled so its longer side
+ * spans the pip, whatever the symbol's own metrics. A gilded tier's gold halo is the symbol's
+ * outline stroked under it, as a drawn pip's is.
+ */
+function drawSymbolPips(
+  ctx: CanvasRenderingContext2D,
+  pip: GlyphPip,
+  centres: readonly { cx: number; cy: number }[],
+  r: number,
+  color: string,
+  halo: number,
+): void {
+  const char = glyphChar(pip);
+  const ink = symbolInk(ctx, char);
+  const span = Math.max(ink.left + ink.right, ink.ascent + ink.descent);
+  if (!(span > 0)) return;
+  const k = (2 * r * SYMBOL_SPAN) / span;
+  ctx.font = `${SYMBOL_MEASURE_PX * k}px ${PIP_FAMILY}`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = color;
+  ctx.strokeStyle = TIER_GOLD;
+  ctx.lineWidth = halo * SYMBOL_HALO;
+  for (const { cx, cy } of centres) {
+    const px = cx - ((ink.right - ink.left) * k) / 2;
+    const py = cy + ((ink.ascent - ink.descent) * k) / 2;
+    if (halo > 0) ctx.strokeText(char, px, py);
+    ctx.fillText(char, px, py);
+  }
 }

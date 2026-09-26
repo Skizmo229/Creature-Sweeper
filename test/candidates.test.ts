@@ -15,12 +15,22 @@ import { boardConfig } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
 import { hasNote, noteTiers } from '../src/engine/notes.js';
 import { mulberry32 } from '../src/engine/rng.js';
+import { NO_CANDIDATES } from '../src/engine/placement/rule.js';
+import { placementRule } from '../src/engine/placement/registry.js';
+import type { Placement } from '../src/engine/types.js';
 import type { Cell } from '../src/engine/types.js';
 import { ladders, SEEDS } from './helpers.js';
 
 /** Every ladder whose rule can narrow the pencil, on boards from both ends of
- *  its ladder: a new rule's ladder is held to this without being listed. */
-const GATED = ladders.filter((t) => (t.placement ?? 'uniform') !== 'uniform').map((t) => t.id);
+ *  its ladder: a new rule's ladder is held to this without being listed. The
+ *  rule is asked, never named: PATROL's placement is not uniform and still
+ *  offers every tier. */
+const GATED = ladders
+  .filter((t) => {
+    const rule = placementRule((t.placement ?? 'uniform') as Placement);
+    return rule.candidates !== NO_CANDIDATES || !rule.coveredCanBeEmpty;
+  })
+  .map((t) => t.id);
 const BOARDS = [1, 10];
 
 const covered = (game: Game): Cell[] => game.grid.flat().filter((c) => c.present && !c.open);

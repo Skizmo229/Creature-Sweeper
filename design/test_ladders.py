@@ -182,11 +182,17 @@ class TheContinuation(unittest.TestCase):
                 self.assertGreaterEqual(b["hp"], floor, f"{t['id']}#{b['n']}")
 
     def test_stays_inside_the_ceilings(self):
+        # A ladder may set its own box (a square one for a round outline), never a bigger board
+        # than the global one, unless its own tuned ladder already is (CARD's).
         for t in BUILT:
+            over = next(x for x in L.TYPES if x["id"] == t["id"]).get("ceiling", {})
+            last = t["boards"][-1]
+            area = max(L.CEILINGS["max_w"] * L.CEILINGS["max_h"], last["w"] * last["h"])
             for b in t["extended"]:
                 where = f"{t['id']}#{b['n']}"
-                self.assertLessEqual(b["w"], L.CEILINGS["max_w"], where)
-                self.assertLessEqual(b["h"], L.CEILINGS["max_h"], where)
+                self.assertLessEqual(b["w"], over.get("max_w", L.CEILINGS["max_w"]), where)
+                self.assertLessEqual(b["h"], over.get("max_h", L.CEILINGS["max_h"]), where)
+                self.assertLessEqual(b["w"] * b["h"], area, where)
                 self.assertLessEqual(b["tiers"], L.CEILINGS["tier"], where)
 
     def test_keeps_a_checkerboard_even(self):
@@ -195,6 +201,24 @@ class TheContinuation(unittest.TestCase):
                 continue
             for b in rows(t):
                 self.assertEqual((b["w"] * b["h"]) % 2, 0, f"{t['id']}#{b['n']}")
+
+    def test_keeps_a_pyramid_twice_as_wide_as_it_is_tall(self):
+        for t in BUILT:
+            if t.get("shape") != "pyramid":
+                continue
+            for b in rows(t):
+                self.assertEqual(b["w"], 2 * b["h"], f"{t['id']}#{b['n']}")
+                self.assertEqual(b["cells"], b["h"] * (b["h"] + 1), f"{t['id']}#{b['n']}")
+
+    def test_keeps_a_hexagon_in_an_odd_square(self):
+        for t in BUILT:
+            if t.get("shape") != "hexagon":
+                continue
+            for b in rows(t):
+                side = b["w"]
+                self.assertEqual((b["h"], side % 2), (side, 1), f"{t['id']}#{b['n']}")
+                r = (side - 1) // 2
+                self.assertEqual(b["cells"], 3 * r * (r + 1) + 1, f"{t['id']}#{b['n']}")
 
     def test_keeps_the_givens_above_the_sudoku_generators_floor(self):
         for t in BUILT:

@@ -304,6 +304,7 @@ export const PAIRS_RULE: PlacementRule = {
   validate: validatePairs,
   opening: 'auto',
   deal: dealPairs,
+  patrols: false,
   coveredCanBeEmpty: true,
   candidates: (cell, view) => pairCandidates(cell, (c) => view.neighboursOf(c)),
   guessFree: false,

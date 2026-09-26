@@ -17,7 +17,7 @@ import {
   NOTE_COLOR,
   drawCreature,
 } from '../theme.js';
-import { type TypeTheme } from '../looks.js';
+import type { TypeTheme } from '../looktypes.js';
 import type { GameFont } from '../typefaces.js';
 import { setNumberFont } from './digits.js';
 import { type Layout, contentBox } from './geometry.js';
@@ -104,6 +104,24 @@ export function drawCovered(p: Paint, cell: Cell, cx: number, cy: number): void 
   } else if (cell.notes) {
     drawNotes(p, cell, cx, cy);
   }
+}
+
+/**
+ * A PATROL creature standing on ground the player uncovered: the floor, and a "?" in the board's
+ * danger colour. Its tier is not drawn, because it has not been fought; where it walks says it.
+ */
+export function drawOccupied(p: Paint, cx: number, cy: number): void {
+  const { ctx, theme } = p;
+  const box = contentBox(p.layout, cx, cy);
+  tracePath(p, cx, cy);
+  ctx.fillStyle = theme.floor;
+  ctx.fill();
+  ctx.save();
+  ctx.fillStyle = theme.hot;
+  const { centre } = setNumberFont(ctx, p.font, box.size * 0.62);
+  ctx.textAlign = 'center';
+  ctx.fillText('?', cx, cy + centre);
+  ctx.restore();
 }
 
 /**

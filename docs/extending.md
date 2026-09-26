@@ -16,9 +16,9 @@ cell, feeds it to Sweep and draws it, as Census does, is every step.
 1. **The spell.** Its id in `SpellId` and its record (name, cost, `targeted`, blurb) in `SPELLS`,
    `src/engine/spells.ts`. The keyboard shortcut is the name's first letter (`spellKey`), so the
    name cannot start with another spell's letter or one the board uses: `S` (Sweep), `D` (assisted
-   Sweep), `F` (fit) or `N` (entry mode). `test/spells.test.ts` fails on a clash with a spell, `S`,
-   `D` or `F`, but not with `N`, which the board reads after the spell letters: a spell named with
-   an N would silently take the entry-mode key.
+   Sweep), `F` (fit), `W` (PATROL's Wait) or `N` (entry mode). `test/spells.test.ts` fails on a
+   clash with a spell, `S`, `D`, `F` or `W`, but not with `N`, which the board reads after the spell
+   letters: a spell named with an N would silently take the entry-mode key.
 2. **What it does.** Its entry in `SPELL_EFFECTS`, `src/engine/cast.ts`, which the compiler asks
    for, and the function it names: it returns the events and a `detail`, or a `blocked` reason.
    `Game.cast` already makes the checks every spell shares (offered, affordable, on the board, in
@@ -112,9 +112,11 @@ and the two test lists that pin the ladder set.
 
 1. A `[[type]]` in `design/ladder_types.toml`: id, name, tint, archetype, axis, blurb, and the
    ten-element schedules (the schema is written at the top of the file and enforced on load).
-   Regenerate `ladders.json`.
-2. An unlock: `requires`, or a slot on the counted schedule (`UNLOCK_BOARDS`, steps of five), or
-   `requires_runs`. `test/unlocks.test.ts` fails if a save can be stranded.
+   Then its place in `CATEGORIES` in `design/ladders.py`, which files it under one of the menu's
+   four columns and sets where in the column it sits. Regenerate `ladders.json`.
+2. An unlock: a place in its `CATEGORIES` column puts it on the counted schedule, which opens
+   one ladder per column every five boards (decision 0036); a ladder that combines two others
+   takes `requires` in `UNLOCKS` instead. `test/unlocks.test.ts` fails if a save can be stranded.
 3. An entry in `LOOKS` in `src/ui/looks.ts`: palette (with a pip shape of its own), face, sound
    pack and clear effect, with the reason for each. The face is any bundled one; a ladder may
    share a face with another (decision 0031), so no new font is needed. `test/fonts.test.ts`
@@ -140,7 +142,9 @@ and the two test lists that pin the ladder set.
    unknown keys, so old saves need no migration; a retired setting can simply go).
 2. A row in `src/ui/settingsscreen/` (`look.ts` for a setting that is drawn, `effects.ts` for one
    that plays itself), called from `screen.ts`, as a gallery of real boards where the setting is
-   visual, with any "game type default" option naming what it resolves to.
+   visual, with any "game type default" option naming what it resolves to. An example board is
+   drawn at `ctx.chipCell` (or `ctx.demoCell`), never at `CHIP_CELL` itself, so the preview size
+   reaches it.
 3. `BoardDisplay` in `src/ui/board/view.ts` if the renderer reads it, and `App.boardDisplay`.
 4. `test/preview.test.ts` if it has an example board.
 
@@ -163,3 +167,22 @@ technique per entry, so a new trick is an entry there first and a function secon
 4. **The plan.** Its row in the technique table of `docs/human-tuning-plan.md`, section 3.
 5. **The golden run.** `human-normal` fixes the printout of `npm run sim:human -- 3 normal`; a
    trick that changes what a NORMAL board demands re-records it, and the commit says so.
+
+## Adding creature-icon symbols, and a font to draw them
+
+The custom icon's symbols are a table, and the faces that draw them are cut from it (decision
+0035), so a symbol needs no code.
+
+1. Its entry in `src/ui/pipsymbols.json`, in the set it belongs to: its position in that font
+   (null in Dingbats), its code point, and its Unicode name in sentence case. A new set is a new
+   entry in `sets`, which becomes a tab; a set laid out other than as a Wingdings font or the
+   Dingbats block needs its chart position worked out in `settingsscreen/symbols.ts` (`position`).
+2. If none of the four sources draws it, an open-licence font that does (SIL OFL, as every
+   bundled face is): add it to the sources in `scripts/pip_symbols.py`, after the others, with
+   its output file's name in `NAMES` and its URL in the docstring.
+3. Rebuild the faces: `python scripts/pip_symbols.py` with the sources in order (fontTools and
+   brotli needed). It fails if any symbol is in none of them, and rewrites `src/ui/pipfont/`.
+4. A new source's copyright line in `public/FONT-LICENSES.txt`, and its file in `SOURCES` in
+   `test/pipsymbols.test.ts`, whose counts change with the table.
+5. Look at it drawn: a symbol is scaled by its measured ink, but a very wide or very fine one can
+   still read poorly at a thumbnail's size, and the gold halo on tiers 6 to 9 strokes its holes.

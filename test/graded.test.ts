@@ -38,6 +38,10 @@ const KINDS = [
   'congo',
   'workout',
   'blind',
+  'patrol',
+  'pyramid',
+  'petri',
+  'gear',
 ];
 
 const wrongIn = (run: GradedRun): number => run.unsound + run.trickDamage + run.rescueDamage;

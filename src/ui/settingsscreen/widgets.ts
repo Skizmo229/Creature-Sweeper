@@ -102,25 +102,23 @@ export function gallery(
 }
 
 /**
- * A window holding every option of one setting, over the settings screen.
+ * A window over the settings screen: a card with a title bar and a close button, handed back to
+ * be filled.
  *
  * It lives inside the screen's own element, so the rebuild that follows a pick, or leaving the
  * screen by any route, takes it away with everything else. Escape closes it and is caught before
- * it reaches the app, where Escape on a board in progress means something else. Its examples are
- * drawn only when it opens (decision 0025).
+ * it reaches the app, where Escape on a board in progress means something else.
  */
-function openPicker(
+export function settingsWindow(
   screen: HTMLElement,
   title: string,
-  options: Choice[],
-  current: string,
-  onPick: (value: string) => void,
-): void {
+  cardClass = '',
+): { card: HTMLElement; close: HTMLElement; dismiss: () => void } {
   const overlay = el('div', 'overlay picker');
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-label', title);
-  const card = el('div', 'overlay-card picker-card');
+  const card = el('div', `overlay-card picker-card ${cardClass}`.trim());
   const head = el('div', 'picker-head');
   const close = el('button', 'ghost small', 'Close (Esc)');
   head.append(el('h2', undefined, title), close);
@@ -148,15 +146,42 @@ function openPicker(
   });
   window.addEventListener('keydown', onKey, true);
 
+  card.append(head);
+  overlay.append(card);
+  screen.append(overlay);
+  return { card, close, dismiss };
+}
+
+/**
+ * A window holding every option of one setting. Its examples are drawn only when it opens
+ * (decision 0025). A tile that opens a window of its own closes this one first, so only one
+ * window is ever open to take Escape.
+ */
+function openPicker(
+  screen: HTMLElement,
+  title: string,
+  options: Choice[],
+  current: string,
+  onPick: (value: string) => void,
+): void {
+  const { card, close, dismiss } = settingsWindow(screen, title);
+  const tiles = options.map((c): Choice => {
+    const open = c.open;
+    if (!open) return c;
+    return {
+      ...c,
+      open: () => {
+        dismiss();
+        open();
+      },
+    };
+  });
   card.append(
-    head,
-    gallery(options, current, (v) => {
+    gallery(tiles, current, (v) => {
       dismiss();
       onPick(v);
     }),
   );
-  overlay.append(card);
-  screen.append(overlay);
   (card.querySelector<HTMLElement>('.preview-chip.active') ?? close).focus();
 }
 

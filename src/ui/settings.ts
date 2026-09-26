@@ -29,14 +29,8 @@ import {
   type SweepMode,
   snapRatio,
 } from '../engine/settings.js';
-import {
-  type PipShape,
-  type SfxPackId,
-  type TypeTheme,
-  type VictoryId,
-  lookFor,
-  themeFor,
-} from './looks.js';
+import type { Pip, SfxPackId, TypeTheme, VictoryId } from './looktypes.js';
+import { lookFor, themeFor } from './looks.js';
 import { type FontId, type GameFont, TITLE_FONT, fontFor, migrateFontChoice } from './typefaces.js';
 import { SETTINGS_KEY as KEY } from './savefile.js';
 
@@ -45,7 +39,8 @@ export const DEFAULT = 'default';
 /** "None at all" — only offered where silence is a sensible answer. */
 export const OFF = 'off';
 
-export type IconChoice = typeof DEFAULT | PipShape;
+/** A drawn shape, or a symbol from the custom-icon window, written as `U+2764`. */
+export type IconChoice = typeof DEFAULT | Pip;
 /** A game type id, whose palette is borrowed wholesale. */
 export type PaletteChoice = typeof DEFAULT | string;
 export type FontChoice = typeof DEFAULT | FontId;
@@ -83,6 +78,13 @@ export type FightRim = 'every' | 'levelups' | typeof OFF;
 const FIGHT_RIMS: readonly FightRim[] = ['every', 'levelups', OFF];
 
 /**
+ * Where a game-type card on the ladder list wears its ladder's colour: down its left edge (the
+ * default), down both vertical edges, all the way round, or nowhere.
+ */
+export type MenuStrip = 'left' | 'sides' | 'all' | typeof OFF;
+const MENU_STRIPS: readonly MenuStrip[] = ['left', 'sides', 'all', OFF];
+
+/**
  * How large the interface's text can be set, as a multiple of the browser's
  * own size. Applied as the root font size, which every size in the stylesheet
  * is written against, so the HUD, the menus and this screen all follow it and
@@ -92,10 +94,46 @@ export const MIN_TEXT_SIZE = 0.75;
 export const MAX_TEXT_SIZE = 1.75;
 const DEFAULT_TEXT_SIZE = 1;
 
+/**
+ * How large the settings screen's example boards can be drawn, as a multiple of the size each
+ * was designed at. Every example but the zoom ceiling's, which is drawn at the size it sets.
+ */
+export const MIN_PREVIEW_SIZE = 0.5;
+export const MAX_PREVIEW_SIZE = 3;
+const DEFAULT_PREVIEW_SIZE = 1;
+
 /** Cell sizes the zoom ceiling can be set to, in CSS pixels. */
 export const MIN_MAX_ZOOM = 24;
 export const MAX_MAX_ZOOM = 128;
 export const DEFAULT_MAX_ZOOM = 48;
+
+/**
+ * What the sound check keeps between sessions: the computer keys assigned to sounds and the notes
+ * sounds are tuned to. A sound is named `pack:event` (`sfxSoundId`). Plain records, so the save
+ * and its backup code stay plain JSON.
+ */
+export interface SoundCheckSettings {
+  /** A computer key, as the sound check names it, to the sound it plays. */
+  readonly keys: Readonly<Record<string, string>>;
+  /** A sound to the MIDI note it is tuned to. */
+  readonly pitches: Readonly<Record<string, number>>;
+  /**
+   * The sound check's own volume, as a multiple of each sound's level in play. It scales only
+   * what the sound check plays; the game's sounds never see it.
+   */
+  readonly volume: number;
+}
+
+/** Loud enough to hear a quiet sound clearly, short of drowning the room. */
+export const MAX_SOUND_CHECK_VOLUME = 3;
+
+/**
+ * Three times the level each pack was voiced at, as loud as the sound check goes. Past 1, the
+ * mixer's limiter holds the peaks down, so a loud setting cannot clip or blast.
+ */
+export const MAX_SFX_VOLUME = 3;
+/** The level every pack was voiced at, and what a save from before the setting reads as. */
+const DEFAULT_SFX_VOLUME = 1;
 
 export interface PresentationSettings {
   readonly icons: IconChoice;
@@ -108,6 +146,11 @@ export interface PresentationSettings {
    */
   readonly interfaceFont: FontChoice;
   readonly sfx: SfxChoice;
+  /**
+   * How loud the game's sounds are, as a multiple of each pack's own level. The sound check
+   * has a volume of its own and does not follow this one.
+   */
+  readonly sfxVolume: number;
   readonly victory: VictoryChoice;
   readonly highlight: HighlightChoice;
   /**
@@ -120,10 +163,13 @@ export interface PresentationSettings {
   readonly strikeDefeated: boolean;
   /** Which fights light the edge of the board. The shake and the level-up glow are not this. */
   readonly fightRim: FightRim;
+  readonly menuStrip: MenuStrip;
   /** Ceiling for manual zoom, in CSS pixels per cell. */
   readonly maxZoom: number;
   /** Size of the interface's text — HUD, menus, settings — as a multiple. */
   readonly textSize: number;
+  /** Size of the settings screen's example boards, as a multiple. */
+  readonly previewSize: number;
   /**
    * Silence everything, from the always-present speaker in the corner.
    *
@@ -135,6 +181,13 @@ export interface PresentationSettings {
    * and there would be nothing to restore when they turned it back on.
    */
   readonly muted: boolean;
+  readonly soundCheck: SoundCheckSettings;
+  /**
+   * Whether sounds retuned in the sound check play at their new pitch in the game as well. Off
+   * by default: the sound check is a place to experiment, and what is tried there should not
+   * follow the player onto a board until they ask it to.
+   */
+  readonly customPitches: boolean;
 }
 
 const DEFAULT_PRESENTATION: PresentationSettings = {
@@ -143,13 +196,18 @@ const DEFAULT_PRESENTATION: PresentationSettings = {
   font: DEFAULT,
   interfaceFont: DEFAULT,
   sfx: DEFAULT,
+  sfxVolume: DEFAULT_SFX_VOLUME,
   victory: DEFAULT,
   highlight: DEFAULT,
   strikeDefeated: true,
   fightRim: 'every',
+  menuStrip: 'left',
   maxZoom: DEFAULT_MAX_ZOOM,
   textSize: DEFAULT_TEXT_SIZE,
+  previewSize: DEFAULT_PREVIEW_SIZE,
   muted: false,
+  soundCheck: { keys: {}, pitches: {}, volume: 1 },
+  customPitches: false,
 };
 
 interface SettingsData {
@@ -183,6 +241,32 @@ function num(value: unknown, min: number, max: number, fallback: number): number
     : fallback;
 }
 
+/** The highest note MIDI numbers, which the sound check's pitches are written in. */
+const MAX_MIDI_NOTE = 127;
+
+/**
+ * Entries of the wrong type are dropped one at a time. An id this build does not know is kept, as
+ * `icons` keeps an unknown pip, and the sound check passes over it.
+ */
+function readSoundCheck(raw: unknown): SoundCheckSettings {
+  const s = (raw ?? {}) as Record<string, unknown>;
+  const record = (v: unknown): Record<string, unknown> =>
+    typeof v === 'object' && v !== null ? (v as Record<string, unknown>) : {};
+  const keys = Object.entries(record(s.keys)).filter(
+    (e): e is [string, string] => typeof e[1] === 'string',
+  );
+  const pitches = Object.entries(record(s.pitches)).filter(
+    (e): e is [string, number] =>
+      typeof e[1] === 'number' && Number.isInteger(e[1]) && e[1] >= 0 && e[1] <= MAX_MIDI_NOTE,
+  );
+  return {
+    keys: Object.fromEntries(keys),
+    pitches: Object.fromEntries(pitches),
+    // A save from before the volume was kept reads as the level every sound plays at.
+    volume: num(s.volume, 0, MAX_SOUND_CHECK_VOLUME, 1),
+  };
+}
+
 function readPresentation(raw: unknown): PresentationSettings {
   const p = (raw ?? {}) as Record<string, unknown>;
   const str = (k: string, fallback: string): string =>
@@ -202,18 +286,25 @@ function readPresentation(raw: unknown): PresentationSettings {
     // interface both, so it reads as that font here too (decision 0033).
     interfaceFont: migrateFontChoice(str('interfaceFont', font)) as FontChoice,
     sfx: str('sfx', DEFAULT) as SfxChoice,
+    // A save from before this setting reads as full volume, the only level the game had.
+    sfxVolume: num(p.sfxVolume, 0, MAX_SFX_VOLUME, DEFAULT_SFX_VOLUME),
     victory: str('victory', DEFAULT) as VictoryChoice,
     highlight: str('highlight', DEFAULT) as HighlightChoice,
     strikeDefeated: typeof p.strikeDefeated === 'boolean' ? p.strikeDefeated : true,
     // A save from before this setting reads as every fight, which is how the glow first shipped.
     fightRim: oneOf(p.fightRim, FIGHT_RIMS, 'every'),
+    menuStrip: oneOf(p.menuStrip, MENU_STRIPS, 'left'),
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
     // A save from before this setting has no field, and reads as the size the
     // game always had.
     textSize: num(p.textSize, MIN_TEXT_SIZE, MAX_TEXT_SIZE, DEFAULT_TEXT_SIZE),
+    // A save from before this setting reads as the size the examples were always drawn at.
+    previewSize: num(p.previewSize, MIN_PREVIEW_SIZE, MAX_PREVIEW_SIZE, DEFAULT_PREVIEW_SIZE),
     // Defaults to unmuted, so a save written before the speaker existed opens
     // with sound on — which is the state that save was actually played in.
     muted: typeof p.muted === 'boolean' ? p.muted : false,
+    soundCheck: readSoundCheck(p.soundCheck),
+    customPitches: typeof p.customPitches === 'boolean' ? p.customPitches : false,
   };
 }
 

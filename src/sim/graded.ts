@@ -76,6 +76,8 @@ export interface GradedRun {
   rescued: number;
   couldRescue: number;
   rescueDamage: number;
+  /** Times the player let the creatures walk rather than guess, where they walk (PATROL). */
+  waits: number;
   /** HP lost on a cell a trick called safe. Anything but 0 is a bug. */
   trickDamage: number;
   /** Times a trick opened, named or narrowed a cell wrongly. Anything but 0 is a bug. */
@@ -94,6 +96,9 @@ const GUESS_COST = 8;
 
 /** Rounds of narrowing at one grade before it is called dry. Candidate sets only ever shrink. */
 const NARROW_ROUNDS = 12;
+
+/** How long a stuck point is waited out where the creatures walk, in laps of the longest route. */
+const PATIENCE_LAPS = 1;
 
 export function play(game: Game, options: GradedOptions): GradedRun {
   const run: GradedRun = {
@@ -114,15 +119,35 @@ export function play(game: Game, options: GradedOptions): GradedRun {
     rescued: 0,
     couldRescue: 0,
     rescueDamage: 0,
+    waits: 0,
     trickDamage: 0,
     unsound: 0,
     unsoundBy: Object.fromEntries(TRICK_IDS.map((id) => [id, 0])) as Record<TrickId, number>,
   };
   const player = new Player(game, options, run);
   const startHp = game.hp;
-  let guard = game.config.width * game.config.height * 8;
+  // Where the creatures walk (PATROL) every action is a step, what the pencil held is stale
+  // after it, and a stuck point is waited out before it is gambled on, as the honest player
+  // does: one lap of the longest route shows the biggest creature on every cell it can stand on.
+  const patience = game.patrols ? PATIENCE_LAPS * 4 * game.config.tiers : 0;
+  let guard = game.config.width * game.config.height * 8 * (1 + patience);
+  let waited = 0;
+  let movesRead = game.moves;
   while (game.status === 'playing' && guard-- > 0) {
-    if (player.pass()) continue;
+    if (game.moves !== movesRead) {
+      player.forget();
+      movesRead = game.moves;
+    }
+    if (player.pass()) {
+      waited = 0;
+      continue;
+    }
+    if (waited < patience) {
+      game.wait();
+      waited++;
+      run.waits++;
+      continue;
+    }
     run.stuckPoints++;
     if (player.rescue()) continue;
     player.guess();
@@ -150,6 +175,11 @@ class Player {
 
   private domain(cell: Cell): number {
     return this.domains.get(cell) ?? this.all;
+  }
+
+  /** Rub out the pencil: what it held was true of the board before the creatures stepped. */
+  forget(): void {
+    this.domains.clear();
   }
 
   private view(reading: Reading): View {
@@ -181,7 +211,7 @@ class Player {
           narrowed += this.narrow(id, found);
           this.credit(id, found, moves);
         }
-        const applied = this.apply(moves);
+        const applied = this.apply(moves, game.patrols);
         if (applied > 0) {
           run.passesByGrade[grade]!++;
           run.movesByGrade[grade]! += applied;
@@ -242,6 +272,9 @@ class Player {
       this.run.fires[id]++;
       if (cell.tier > this.game.level) this.alarm(id, cell, 'opened');
     }
+    // A mark is a claim about a cell everywhere but where the creatures walk (it is a route
+    // there), so the player names nothing on such a board and keeps its names in the pencil.
+    if (!this.game.marksAreClaims) return;
     for (const [cell, tier] of found.mark) {
       if (moves.open.has(cell) || moves.mark.has(cell) || cell.open || cell.mark > 0) continue;
       moves.mark.set(cell, tier);
@@ -251,7 +284,7 @@ class Player {
   }
 
   /** Play the pass's moves. */
-  private apply(moves: Moves): number {
+  private apply(moves: Moves, oneAtATime: boolean): number {
     const { game, run } = this;
     let applied = 0;
     for (const [cell, tier] of moves.mark) {
@@ -265,6 +298,8 @@ class Player {
       if (!game.open(cell.x, cell.y).some((e) => e.type === 'blocked')) applied++;
       run.trickDamage += hp - game.hp;
       this.domains.delete(cell);
+      // Where the creatures walk the open was a move, and the reading is stale after it.
+      if (oneAtATime) break;
     }
     return applied;
   }

@@ -51,6 +51,27 @@ export const SPELL_POLICIES: Readonly<Record<SpellId, readonly Policy[]>> = {
   beacon: ['beacon'],
 };
 
+/**
+ * How long the player waits out a stuck point on a board whose creatures walk, in laps of the
+ * longest route: one lap and the biggest creature has shown every cell it can stand on.
+ */
+const PATIENCE_LAPS = 1;
+
+/**
+ * The cells to open from one reading of the board. Where the creatures walk every open is a move,
+ * and the reading is stale after it, so only the first; everywhere else, all of them.
+ */
+function oneReading(game: Game, cells: readonly Cell[]): readonly Cell[] {
+  return game.patrols ? cells.slice(0, 1) : cells;
+}
+
+/** Rub out every tier the player named: where the creatures walk, it was true one move ago. */
+function forgetNames(game: Game): void {
+  for (const row of game.grid) {
+    for (const cell of row) if (cell.mark > 0 && !cell.given) game.applyMark(cell, 0);
+  }
+}
+
 export interface Run {
   cleared: boolean;
   hpLost: number;
@@ -66,6 +87,8 @@ export interface Run {
   couldRescue: number;
   /** HP lost on cells a rescue called free. Anything but 0 is a solver bug. */
   rescueDamage: number;
+  /** Times the player let the creatures walk rather than guess, where they walk (PATROL). */
+  waits: number;
 }
 
 /**
@@ -96,13 +119,20 @@ export function honestGuess(game: Game, among?: ReadonlySet<Cell>): Cell | null 
   return bestGuess(game, allConstraints(game), among);
 }
 
-export function play(
-  game: Game,
-  policy: Policy,
-  spellId: SpellId | null,
-  options: PlayOptions = {},
-): Run {
-  const run: Run = {
+/** Open what a stronger deducer called free, counting any HP it cost: that would be its bug. */
+function takeRescue(game: Game, found: readonly Cell[], run: Run): void {
+  run.rescued++;
+  for (const cell of oneReading(game, found)) {
+    if (game.status !== 'playing' || cell.open) continue;
+    const hp = game.hp;
+    game.open(cell.x, cell.y);
+    run.rescueDamage += hp - game.hp;
+  }
+}
+
+/** A run before its first move. */
+function freshRun(): Run {
+  return {
     cleared: false,
     hpLost: 0,
     guesses: 0,
@@ -114,14 +144,33 @@ export function play(
     rescued: 0,
     couldRescue: 0,
     rescueDamage: 0,
+    waits: 0,
   };
+}
+
+export function play(
+  game: Game,
+  policy: Policy,
+  spellId: SpellId | null,
+  options: PlayOptions = {},
+): Run {
+  const run = freshRun();
   const freeMoves = (): Cell[] =>
     options.rescue ? options.rescue(game).filter((c) => !c.open && game.inReach(c)) : [];
   const startHp = game.hp;
   let castsHere = 0;
-  let guard = game.config.width * game.config.height * 4;
+  // Where the creatures walk, the player waits out stuck points, so the loop runs longer.
+  const patience = game.patrols ? PATIENCE_LAPS * 4 * game.config.tiers : 0;
+  let guard = game.config.width * game.config.height * 4 * (1 + patience);
+  let waited = 0;
+  let movesRead = game.moves;
 
   while (game.status === 'playing' && guard-- > 0) {
+    // What the player named was true of the board before the creatures took their last step.
+    if (game.moves !== movesRead) {
+      forgetNames(game);
+      movesRead = game.moves;
+    }
     // Everything free first: name what is certain, then take what is proven,
     // and only call it stuck when neither has anything left to give.
     if (nameWhatIsCertain(game)) {
@@ -139,28 +188,33 @@ export function play(
     if (workoutMove(game, policy, safe.length > 0, run)) continue;
 
     if (safe.length) {
-      for (const cell of safe) {
+      for (const cell of oneReading(game, safe)) {
         if (game.status !== 'playing' || cell.open) continue;
         game.open(cell.x, cell.y);
       }
       castsHere = 0;
+      waited = 0;
       continue;
     }
 
     if (options.rescue && !options.observe) {
       const found = freeMoves();
       if (found.length) {
-        run.rescued++;
-        for (const cell of found) {
-          if (game.status !== 'playing' || cell.open) continue;
-          const hp = game.hp;
-          game.open(cell.x, cell.y);
-          run.rescueDamage += hp - game.hp;
-        }
+        takeRescue(game, found, run);
         castsHere = 0;
         continue;
       }
     }
+
+    // Where the creatures walk, waiting is free and brings new numbers, so a player out of proofs
+    // waits before gambling, as long as `patience` allows.
+    if (waited < patience) {
+      game.wait();
+      waited++;
+      run.waits++;
+      continue;
+    }
+    waited = 0;
 
     const guess = options.guess ? options.guess(game) : bestGuess(game, constraints);
     if (!guess) break;

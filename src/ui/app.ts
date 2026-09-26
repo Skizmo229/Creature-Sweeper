@@ -130,6 +130,9 @@ export class App {
     // A percentage, so it multiplies the browser's own text size rather than replacing it.
     document.documentElement.style.fontSize = `${this.settings.presentation.textSize * 100}%`;
     this.sfx.setPack(this.settings.sfxPack(this.typeId));
+    const { customPitches, soundCheck, sfxVolume } = this.settings.presentation;
+    this.sfx.setPitches(customPitches ? soundCheck.pitches : {});
+    this.sfx.setVolume(sfxVolume);
     this.view?.setDisplay(this.settings.themeFor(this.typeId), this.boardDisplay());
     this.syncMuteButton();
   }
@@ -267,6 +270,9 @@ export class App {
         tiers: this.previewTiers(),
         onBack: back,
         onPreview: (event) => this.sfx.play(event),
+        onAudition: (pack, event, ratio, volume) => {
+          if (!this.settings.presentation.muted) this.sfx.audition(pack, event, ratio, volume);
+        },
       }),
     );
   }
@@ -408,6 +414,7 @@ export class App {
       },
       toggleNotes: () => this.actions.toggleNotesMode(),
       sweep: (useMarks) => this.actions.doSweep(useMarks),
+      wait: () => this.actions.doWait(),
       pickSpell: (id) => this.actions.pickSpell(id),
       cancelSpell: () => {
         this.mode.cancelSpell();

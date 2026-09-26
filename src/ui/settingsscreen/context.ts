@@ -9,8 +9,9 @@ import { ladders } from '../ladders.js';
 import { sampleBoard, samplePin } from '../preview.js';
 import { DEFAULT, type PresentationSettings, type Settings } from '../settings.js';
 import type { SfxEvent } from '../sfx.js';
-import { type PipShape, type LadderLook, type TypeTheme, lookFor, themeFor } from '../looks.js';
-import { CHIP_CELL, renderPreview } from './render.js';
+import type { LadderLook, Pip, SfxPackId, TypeTheme } from '../looktypes.js';
+import { lookFor, themeFor } from '../looks.js';
+import { CHIP_CELL, DEMO_CELL, renderPreview } from './render.js';
 
 export interface SettingsScreenOptions {
   settings: Settings;
@@ -24,6 +25,11 @@ export interface SettingsScreenOptions {
   onBack: () => void;
   /** Play a sound so a pack can be heard while it is being chosen. */
   onPreview: (event: SfxEvent) => void;
+  /**
+   * Play one event from a given pack, for the sound check, transposed by `ratio` and scaled by
+   * `volume`; silent while muted.
+   */
+  onAudition: (pack: SfxPackId, event: SfxEvent, ratio?: number, volume?: number) => void;
 }
 
 /** A visual patch to the presentation settings. */
@@ -34,15 +40,20 @@ export interface ScreenContext {
   readonly typeId: string;
   readonly tiers: number;
   readonly onPreview: (event: SfxEvent) => void;
+  readonly onAudition: (pack: SfxPackId, event: SfxEvent, ratio?: number, volume?: number) => void;
   /** The screen element: sections append to it, and the picker overlay lives inside it. */
   readonly host: HTMLElement;
   /** The presentation settings as saved. */
   readonly p: PresentationSettings;
   readonly ident: LadderLook;
   /** This ladder's icon as things currently stand, which a palette tile wears. */
-  readonly currentPip: PipShape;
+  readonly currentPip: Pip;
   /** This ladder's palette as things currently stand, which an icon tile wears. */
   readonly currentTheme: TypeTheme;
+  /** A thumbnail's cell size, at the preview size the player chose. */
+  readonly chipCell: number;
+  /** The clear-effect demo's cell size, at the preview size the player chose. */
+  readonly demoCell: number;
   /** The renderer's view of the current presentation, with overrides for one example. */
   display(over?: Partial<BoardDisplay>): BoardDisplay;
   /** One thumbnail of the standard example board. */
@@ -57,14 +68,20 @@ export function typeName(typeId: string): string {
   return ladders.find((t) => t.id === typeId)?.name ?? typeId.toUpperCase();
 }
 
+/** An example's cell size scaled by the preview size, in whole pixels so its lines stay crisp. */
+export function previewCell(base: number, scale: number): number {
+  return Math.round(base * scale);
+}
+
 export function makeContext(
   opts: SettingsScreenOptions,
   host: HTMLElement,
   rebuild: () => void,
 ): ScreenContext {
-  const { settings, typeId, tiers, onPreview } = opts;
+  const { settings, typeId, tiers, onPreview, onAudition } = opts;
   const p = settings.presentation;
   const currentTheme = settings.themeFor(typeId);
+  const chipCell = previewCell(CHIP_CELL, p.previewSize);
   const display = (over: Partial<BoardDisplay> = {}): BoardDisplay => ({
     maxCell: p.maxZoom,
     font: settings.boardFont(typeId),
@@ -77,11 +94,14 @@ export function makeContext(
     typeId,
     tiers,
     onPreview,
+    onAudition,
     host,
     p,
     ident: lookFor(typeId),
     currentPip: p.icons === DEFAULT ? themeFor(typeId).pip : p.icons,
     currentTheme,
+    chipCell,
+    demoCell: previewCell(DEMO_CELL, p.previewSize),
     display,
     // Held over a beaten creature, so its number shows in the palette's `hot`, with the cursor
     // highlight off: that has a gallery of its own, and on a thumbnail it buries the cells.
@@ -89,7 +109,7 @@ export function makeContext(
       (theme, over = {}) =>
       () =>
         renderPreview(sampleBoard(), theme, display({ highlight: null, ...over }), {
-          cell: CHIP_CELL,
+          cell: chipCell,
           pin: samplePin(),
         }).canvas,
     pick(patch) {
