@@ -105,6 +105,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   `BoardView.pinHover`, because a thumbnail has no cursor.
 - Settings that make the game easier than the tuned default record nothing (no clear, no unlock,
   no best time), and the screen, the ladder list and the clear overlay all say so.
+- Each gameplay slider is shaded by how far it sits from the tuned default, by request: toward
+  white as it gets easier (pure white at the easiest end), toward black as it gets harder (pure
+  black at the hardest). The readout beside it keeps the accent, since black text would vanish on
+  the dark panel.
 
 ## Fonts
 

@@ -4,6 +4,7 @@
  */
 
 import {
+  DEFAULT_GAMEPLAY,
   type SweepMode,
   easierThanDefault,
   isAtLeastAsHard,
@@ -15,6 +16,36 @@ import { ratio, row, section, slider, toggle } from './widgets.js';
 
 type RatioKey =
   'hpRatio' | 'hpRegenRatio' | 'enemyDamageRatio' | 'manaRegenRatio' | 'manaRewardRatio';
+
+const MIN_CHARGE_CLICKS = 1;
+const MAX_CHARGE_CLICKS = 50;
+
+/**
+ * Tints a gameplay slider by how far it sits from the tuned default: toward white as it gets
+ * easier, reaching pure white at the easiest end, and toward black as it gets harder, reaching
+ * pure black at the hardest. At the default it wears the accent like any other slider.
+ */
+function shadeByDifficulty(
+  control: HTMLElement,
+  tuned: number,
+  easyEnd: number,
+  hardEnd: number,
+): HTMLElement {
+  const input = control.querySelector('input')!;
+  const paint = (): void => {
+    const v = Number(input.value);
+    const easier = (v - tuned) / (easyEnd - tuned);
+    const harder = (v - tuned) / (hardEnd - tuned);
+    const [toward, share] = easier > 0 ? ['white', easier] : ['black', Math.max(0, harder)];
+    control.style.setProperty(
+      '--difficulty-ink',
+      `color-mix(in srgb, var(--tint), ${toward} ${Math.round(Math.min(1, share) * 100)}%)`,
+    );
+  };
+  input.addEventListener('input', paint);
+  paint();
+  return control;
+}
 
 export function gameplaySection(ctx: ScreenContext): void {
   const { settings } = ctx;
@@ -30,13 +61,21 @@ export function gameplaySection(ctx: ScreenContext): void {
   const { status, refreshStatus } = recordStatus(ctx);
 
   const gameplayRow = (label: string, key: RatioKey, max: number, hint: string): void => {
+    // Only creature damage is easier turned down; every other dial is easier turned up.
+    const easyEnd = key === 'enemyDamageRatio' ? 0 : max;
+    const hardEnd = max - easyEnd;
     row(
       play,
       label,
-      slider(0, max, 0.05, g()[key], ratio, (v) => {
-        settings.setGameplay({ [key]: Math.round(v * 100) / 100 });
-        refreshStatus();
-      }),
+      shadeByDifficulty(
+        slider(0, max, 0.05, g()[key], ratio, (v) => {
+          settings.setGameplay({ [key]: Math.round(v * 100) / 100 });
+          refreshStatus();
+        }),
+        DEFAULT_GAMEPLAY[key],
+        easyEnd,
+        hardEnd,
+      ),
       hint,
     );
   };
@@ -152,16 +191,21 @@ function sweepControl(ctx: ScreenContext, refreshStatus: () => void): HTMLElemen
   sweepBox.append(sweepSelect);
   chargeRow.append(el('span', 'settings-sub-name', 'Cells per sweep'));
   chargeRow.append(
-    slider(
-      1,
-      50,
-      1,
-      g().sweepChargeClicks,
-      (v) => `${Math.round(v)} cells`,
-      (v) => {
-        settings.setGameplay({ sweepChargeClicks: Math.round(v) });
-        refreshStatus();
-      },
+    shadeByDifficulty(
+      slider(
+        MIN_CHARGE_CLICKS,
+        MAX_CHARGE_CLICKS,
+        1,
+        g().sweepChargeClicks,
+        (v) => `${Math.round(v)} cells`,
+        (v) => {
+          settings.setGameplay({ sweepChargeClicks: Math.round(v) });
+          refreshStatus();
+        },
+      ),
+      DEFAULT_GAMEPLAY.sweepChargeClicks,
+      MIN_CHARGE_CLICKS,
+      MAX_CHARGE_CLICKS,
     ),
   );
   sweepBox.append(chargeRow);

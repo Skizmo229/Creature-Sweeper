@@ -1017,7 +1017,7 @@ button.board-card:hover:not(:disabled) {
 .settings-slider input[type='range'] {
   flex: 1;
   min-width: 0;
-  accent-color: var(--tint);
+  accent-color: var(--difficulty-ink, var(--tint));
 }
 .settings-value {
   font-size: 0.78rem;
