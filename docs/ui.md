@@ -107,6 +107,11 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   `src/ui/looks.ts`, read through `lookFor`).
 - Text size scales the interface (root font size, everything in rem) and not the board, applied
   on release with a HUD copy following the thumb.
+- Preview size (50% to 300%) scales every example board on the screen and in its windows, by
+  request: the thumbnails, the glow and clear-effect demos and the custom icon's example. Not the
+  zoom example, which is drawn at the size it sets. Cells are rounded to whole pixels. Like text
+  size it applies on release, holding the row under the pointer, with one thumbnail following the
+  thumb; tiles and the symbol window's side panel grow with it (`--chip-w`).
 - The cursor-highlight gallery draws on the grid of the ladder the player came from and needs
   `BoardView.pinHover`, because a thumbnail has no cursor.
 - Settings that make the game easier than the tuned default record nothing (no clear, no unlock,
@@ -127,6 +132,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   licences in `public/FONT-LICENSES.txt`, `@font-face` in `fonts.css`. `test/fonts.test.ts` checks
   all of it, and that every ladder names a bundled face, which two ladders may share (decision
   0031).
+- One more family is bundled for the creature icons, not for text: `Pip Symbols`, four faces cut
+  from open Noto fonts to the 782 symbols the custom icon offers (`src/ui/pipfont/`, their
+  `@font-face` in `pipfont/pipfont.css`, licences in the same file). `test/pipsymbols.test.ts`
+  checks them as `test/fonts.test.ts` checks the rest; see the creature-icon bullet below.
 - A face must have lining figures; Georgia's old-style figures made numbers jump. Check a
   candidate's OS/2 metrics with fontTools: Aladin and Gluten misstate cap height
   (`capHeightFix`) and Aladin its x-height (`exHeightFix`).

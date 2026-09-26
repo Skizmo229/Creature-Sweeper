@@ -14,7 +14,7 @@ import { SFX_NAMES, VICTORY_NAMES } from '../theme.js';
 import { type SfxPackId, type VictoryId } from '../looks.js';
 import { playVictory } from '../victory/play.js';
 import { type ScreenContext, typeName } from './context.js';
-import { DEMO_CELL, renderPreview } from './render.js';
+import { renderPreview } from './render.js';
 import { openSoundCheck } from './soundcheck.js';
 import { type Choice, gallery, row, slider, toggle, wideRow } from './widgets.js';
 
@@ -162,7 +162,7 @@ export function fightRimRow(ctx: ScreenContext, host: HTMLElement): void {
 export function clearEffectRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, ident, settings, typeId, tiers, currentTheme } = ctx;
   const demo = renderPreview(clearedBoard(demoSeed, tiers), currentTheme, ctx.display(), {
-    cell: DEMO_CELL,
+    cell: ctx.demoCell,
   });
   const demoBox = el('div', 'clear-demo');
   demoBox.append(demo.canvas);

@@ -1117,8 +1117,10 @@ button.board-card:hover:not(:disabled) {
   border-radius: 5px;
   cursor: pointer;
   /* The caption is the option's name, so it must not be clipped to the
-     thumbnail's width — many a palette's name is wider than its board. */
-  max-width: 190px;
+     thumbnail's width — many a palette's name is wider than its board. But
+     never narrower than the thumbnail, which the preview size can enlarge
+     past this (the 18px is the tile's padding and border). */
+  max-width: max(190px, calc(var(--chip-w) + 18px));
 }
 .preview-chip:hover {
   border-color: var(--tint);
@@ -1248,7 +1250,7 @@ button.symbol-cell.chosen {
 }
 .symbol-side {
   flex: 0 0 auto;
-  width: 240px;
+  width: max(240px, var(--chip-w));
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1515,6 +1517,18 @@ button.piano-key.pressed {
   margin-top: 4px;
 }
 .zoom-demo canvas {
+  display: block;
+  border-radius: 3px;
+  cursor: inherit;
+}
+
+/* The one thumbnail that follows the preview size's slider while it moves. */
+.preview-size-demo {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 4px;
+}
+.preview-size-demo canvas {
   display: block;
   border-radius: 3px;
   cursor: inherit;

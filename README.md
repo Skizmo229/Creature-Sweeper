@@ -96,9 +96,14 @@ spell's bracketed letter casts it (`C`ensus, `R`eveal, `E`xercise, `B`eacon, off
 first) · scroll or `+`/`-` to zoom, `F` to reset · `Esc` backs out.
 
 **Settings** are two separate things. The presentation half (creature icons, board palette, board
-font, interface font, sound pack, glow after a fight, board-clear effect, text size, cursor
-highlight, strike-through, zoom ceiling) touches no rule and can never affect a record; every
-visual option is shown as a real board, or for the interface a copy of the HUD. The gameplay half
+font, interface font, sound pack, glow after a fight, board-clear effect, text size, preview size,
+cursor highlight, strike-through, zoom ceiling) touches no rule and can never affect a record; every
+visual option is shown as a real board, or for the interface a copy of the HUD. A creature's icon is
+one of seven drawn pip shapes, or, through the icon picker's **Custom** tile, any of 782 symbols
+from Dingbats and Wingdings 1 to 3, picked from each font's own chart. Wingdings itself cannot ship,
+so the symbols are their Unicode equivalents, drawn from open Noto fonts bundled with the game and
+cut down to just these symbols (Noto Sans Symbols 2, Noto Sans Symbols, Noto Emoji and Noto Sans;
+licences in `public/FONT-LICENSES.txt`). The gameplay half
 is seven dials that do change the rules (HP, Full Run regen, creature damage, mana regen, mana per
 creature, how Sweep is gated, Time Attack). Settings that make the game harder record normally;
 anything easier than the tuned game records no clear, no unlock and no best time, and the game says

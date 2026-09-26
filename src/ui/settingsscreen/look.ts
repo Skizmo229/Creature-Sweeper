@@ -7,12 +7,20 @@
 
 import { el } from '../dom.js';
 import { ladders } from '../ladders.js';
-import { HIGHLIGHT_PIN, highlightSampleBoard, zoomSampleBoard } from '../preview.js';
+import {
+  HIGHLIGHT_PIN,
+  highlightSampleBoard,
+  sampleBoard,
+  samplePin,
+  zoomSampleBoard,
+} from '../preview.js';
 import {
   DEFAULT,
   MAX_MAX_ZOOM,
+  MAX_PREVIEW_SIZE,
   MAX_TEXT_SIZE,
   MIN_MAX_ZOOM,
+  MIN_PREVIEW_SIZE,
   MIN_TEXT_SIZE,
   OFF,
   HIGHLIGHT_NAMES,
@@ -24,8 +32,9 @@ import { PIP_NAMES, PIP_SHAPES, pipName, tierColor } from '../theme.js';
 import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
 import { SYMBOL_COUNT, isGlyphPip } from '../pipsymbols.js';
 import { FONTS, FONT_IDS, type FontId, type GameFont, LEGIBLE_FONT } from '../typefaces.js';
-import { type ScreenContext, typeName } from './context.js';
-import { CHIP_CELL, renderPreview } from './render.js';
+import { type PresentationPatch, type ScreenContext, previewCell, typeName } from './context.js';
+import { CHIP_CELL } from './render.js';
+import { renderPreview } from './render.js';
 import { openSymbolWindow } from './symbols.js';
 import { type Choice, choiceRow, gallery, slider, wideRow } from './widgets.js';
 
@@ -196,6 +205,20 @@ export function interfaceFontRow(ctx: ScreenContext, host: HTMLElement): void {
 }
 
 /**
+ * Save a setting that resizes the screen, from a slider in `control`. Rebuilding reflows
+ * everything above the row, so the row is held where the player's pointer left it rather than
+ * where the scroll offset says. `control` carries `data-setting`, so its rebuilt copy is found.
+ */
+function pickHoldingRow(ctx: ScreenContext, control: HTMLElement, patch: PresentationPatch): void {
+  const before = control.getBoundingClientRect().top;
+  ctx.pick(patch);
+  const after = document
+    .querySelector(`[data-setting="${control.dataset.setting}"]`)
+    ?.getBoundingClientRect().top;
+  if (after !== undefined) window.scrollBy(0, after - before);
+}
+
+/**
  * The whole page is the example, but not DURING a drag: resizing every line on the screen moves
  * the slider out from under the pointer. So a copy of the HUD follows the thumb, and the page
  * itself changes once, on release.
@@ -217,16 +240,7 @@ export function textSizeRow(ctx: ScreenContext, host: HTMLElement): void {
       p.textSize,
       (v) => `${Math.round(v * 100)}%`,
       showTextSize,
-      (v) => {
-        // Rebuilding reflows everything above this row, so hold the row where the player's
-        // pointer left it rather than where the scroll offset says.
-        const before = textControl.getBoundingClientRect().top;
-        ctx.pick({ textSize: v });
-        const after = document
-          .querySelector('[data-setting="textSize"]')
-          ?.getBoundingClientRect().top;
-        if (after !== undefined) window.scrollBy(0, after - before);
-      },
+      (v) => pickHoldingRow(ctx, textControl, { textSize: v }),
     ),
   );
   textControl.append(textDemo);
@@ -237,6 +251,48 @@ export function textSizeRow(ctx: ScreenContext, host: HTMLElement): void {
     'The HUD, the menus and this screen. The board is left alone — it is sized by its cells, ' +
       'which the zoom controls.',
     textControl,
+  );
+}
+
+/**
+ * Every example board on this screen is drawn again at the new size, so, like the text size, the
+ * screen changes on release; while the thumb moves, one thumbnail beside it follows. The zoom
+ * example is left alone: it is drawn at the size it sets.
+ */
+export function previewSizeRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p, currentTheme } = ctx;
+  const sample = el('div', 'preview-size-demo');
+  const drawSample = (size: number): void => {
+    sample.replaceChildren(
+      renderPreview(sampleBoard(), currentTheme, ctx.display({ highlight: null }), {
+        cell: previewCell(CHIP_CELL, size),
+        pin: samplePin(),
+      }).canvas,
+    );
+  };
+  drawSample(p.previewSize);
+
+  const control = el('div', 'settings-stack');
+  control.dataset.setting = 'previewSize';
+  control.append(
+    slider(
+      MIN_PREVIEW_SIZE,
+      MAX_PREVIEW_SIZE,
+      0.05,
+      p.previewSize,
+      (v) => `${Math.round(v * 100)}%`,
+      drawSample,
+      (v) => pickHoldingRow(ctx, control, { previewSize: v }),
+    ),
+  );
+  control.append(sample);
+
+  wideRow(
+    host,
+    'Preview size',
+    'The example boards on this screen, and in the windows it opens. The zoom example below is ' +
+      'left at the size it shows, since that size is its point.',
+    control,
   );
 }
 
@@ -275,7 +331,7 @@ export function highlightRow(ctx: ScreenContext, host: HTMLElement): void {
       highlightSampleBoard(hex ? 'hex' : 'square'),
       currentTheme,
       ctx.display({ highlight }),
-      { cell: CHIP_CELL, pin: HIGHLIGHT_PIN },
+      { cell: ctx.chipCell, pin: HIGHLIGHT_PIN },
     ).canvas;
 
   wideRow(

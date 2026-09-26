@@ -140,6 +140,27 @@ and the two test lists that pin the ladder set.
    unknown keys, so old saves need no migration; a retired setting can simply go).
 2. A row in `src/ui/settingsscreen/` (`look.ts` for a setting that is drawn, `effects.ts` for one
    that plays itself), called from `screen.ts`, as a gallery of real boards where the setting is
-   visual, with any "game type default" option naming what it resolves to.
+   visual, with any "game type default" option naming what it resolves to. An example board is
+   drawn at `ctx.chipCell` (or `ctx.demoCell`), never at `CHIP_CELL` itself, so the preview size
+   reaches it.
 3. `BoardDisplay` in `src/ui/board/view.ts` if the renderer reads it, and `App.boardDisplay`.
 4. `test/preview.test.ts` if it has an example board.
+
+## Adding creature-icon symbols, and a font to draw them
+
+The custom icon's symbols are a table, and the faces that draw them are cut from it (decision
+0035), so a symbol needs no code.
+
+1. Its entry in `src/ui/pipsymbols.json`, in the set it belongs to: its position in that font
+   (null in Dingbats), its code point, and its Unicode name in sentence case. A new set is a new
+   entry in `sets`, which becomes a tab; a set laid out other than as a Wingdings font or the
+   Dingbats block needs its chart position worked out in `settingsscreen/symbols.ts` (`position`).
+2. If none of the four sources draws it, an open-licence font that does (SIL OFL, as every
+   bundled face is): add it to the sources in `scripts/pip_symbols.py`, after the others, with
+   its output file's name in `NAMES` and its URL in the docstring.
+3. Rebuild the faces: `python scripts/pip_symbols.py` with the sources in order (fontTools and
+   brotli needed). It fails if any symbol is in none of them, and rewrites `src/ui/pipfont/`.
+4. A new source's copyright line in `public/FONT-LICENSES.txt`, and its file in `SOURCES` in
+   `test/pipsymbols.test.ts`, whose counts change with the table.
+5. Look at it drawn: a symbol is scaled by its measured ink, but a very wide or very fine one can
+   still read poorly at a thumbnail's size, and the gold halo on tiers 6 to 9 strokes its holes.

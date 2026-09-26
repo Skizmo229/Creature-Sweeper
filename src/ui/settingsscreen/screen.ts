@@ -11,7 +11,7 @@
 import { el } from '../dom.js';
 import { themeFor } from '../looks.js';
 import { sampleBoard } from '../preview.js';
-import { type SettingsScreenOptions, makeContext, typeName } from './context.js';
+import { type SettingsScreenOptions, makeContext, previewCell, typeName } from './context.js';
 import { clearEffectRow, fightRimRow, soundRow, stopSettingsDemo } from './effects.js';
 import { gameplaySection } from './gameplay.js';
 import {
@@ -20,6 +20,7 @@ import {
   iconsRow,
   interfaceFontRow,
   paletteRow,
+  previewSizeRow,
   strikeRow,
   menuStripRow,
   textSizeRow,
@@ -39,8 +40,9 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   wrap.style.setProperty('--tint', themeFor(typeId).accent);
   // A tile with no board in it is sized like one with, so a row of tiles stands level.
   const { width, height } = sampleBoard().config;
-  wrap.style.setProperty('--chip-w', `${width * CHIP_CELL}px`);
-  wrap.style.setProperty('--chip-h', `${height * CHIP_CELL}px`);
+  const cell = previewCell(CHIP_CELL, opts.settings.presentation.previewSize);
+  wrap.style.setProperty('--chip-w', `${width * cell}px`);
+  wrap.style.setProperty('--chip-h', `${height * cell}px`);
 
   const back = el('button', 'ghost sticky-back', '← Back');
   back.addEventListener('click', onBack);
@@ -80,6 +82,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   boardFontRow(ctx, look);
   interfaceFontRow(ctx, look);
   textSizeRow(ctx, look);
+  previewSizeRow(ctx, look);
   menuStripRow(ctx, look);
   highlightRow(ctx, look);
   strikeRow(ctx, look);
