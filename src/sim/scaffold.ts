@@ -13,13 +13,14 @@
  * pockets (a room cell beside a doorway that touches the void) are read, exactly as the engine
  * defines them. A thin passage that joins two rooms is named hallway whole when it is long
  * enough or holds a cut cell (`MIN_PASSAGE`), because hallways run in loops and few of their
- * cells cut anything; a chain of three alcoves leaning on such a passage could in principle
- * contradict that, and was not seen in 2,000 boards. `test/graded.test.ts` holds every cell
- * named here against the map on fixed seeds. Empty on a board without a crawl rule, or on a
- * hex or wrapped one.
+ * cells cut anything; two alcoves leaning on such a passage, the first a doorway and the second
+ * room floor, could in principle contradict that, and were not seen in 2,000 boards.
+ * `test/graded.test.ts` holds every cell named here against the map on fixed seeds. Empty on a
+ * shape without hallways (`ShapeRule.hallways`), or on a hex or wrapped board.
  */
 
 import type { Game } from '../engine/game.js';
+import { shapeRule } from '../engine/shape/registry.js';
 import type { Cell } from '../engine/types.js';
 
 const ORTHO: ReadonlyArray<readonly [number, number]> = [
@@ -43,7 +44,8 @@ const MIN_PASSAGE = 3;
 export function dungeonScaffold(game: Game): Set<Cell> {
   const out = new Set<Cell>();
   const { config, grid } = game;
-  if (config.reach <= 0 || config.topology !== 'square' || config.wrap !== 'none') return out;
+  if (!shapeRule(config.shape).hallways) return out;
+  if (config.topology !== 'square' || config.wrap !== 'none') return out;
   const { width: w, height: h } = config;
   const at = (x: number, y: number): boolean => grid[y]?.[x]?.present === true;
   const room = roomFloor(at, w, h);

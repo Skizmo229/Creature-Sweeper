@@ -22,7 +22,7 @@
 import type { Game } from '../engine/game.js';
 import type { Cell } from '../engine/types.js';
 import { damageIfSurvived } from '../engine/combat.js';
-import { hasNote } from '../engine/notes.js';
+import { hasNote, noteBit } from '../engine/notes.js';
 import { mulberry32 } from '../engine/rng.js';
 import { type Reading, everyTier, highestTier, readBoard } from './reader.js';
 import {
@@ -149,6 +149,7 @@ export function play(game: Game, options: GradedOptions): GradedRun {
       continue;
     }
     run.stuckPoints++;
+    waited = 0;
     if (player.rescue()) continue;
     player.guess();
   }
@@ -273,8 +274,18 @@ class Player {
       if (cell.tier > this.game.level) this.alarm(id, cell, 'opened');
     }
     // A mark is a claim about a cell everywhere but where the creatures walk (it is a route
-    // there), so the player names nothing on such a board and keeps its names in the pencil.
-    if (!this.game.marksAreClaims) return;
+    // there), so on such a board a name goes into the pencil instead, until the next step.
+    if (!this.game.marksAreClaims) {
+      for (const [cell, tier] of found.mark) {
+        const before = this.domain(cell);
+        const after = before & noteBit(tier);
+        if (cell.open || after === 0 || after === before) continue;
+        this.domains.set(cell, after);
+        this.run.pencils[id]++;
+        if (!hasNote(after, cell.tier)) this.alarm(id, cell, `named ${tier} in the pencil`);
+      }
+      return;
+    }
     for (const [cell, tier] of found.mark) {
       if (moves.open.has(cell) || moves.mark.has(cell) || cell.open || cell.mark > 0) continue;
       moves.mark.set(cell, tier);
@@ -321,6 +332,8 @@ class Player {
       game.open(cell.x, cell.y);
       run.rescueDamage += hp - game.hp;
       this.domains.delete(cell);
+      // Where the creatures walk the open was a move, and what the deducer said is stale.
+      if (game.patrols) break;
     }
     return true;
   }

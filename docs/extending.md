@@ -97,7 +97,9 @@ and the two test lists that pin the ladder set.
    dungeon) gets a module of its own ending with a `ShapeRule`: `seeded: true`, its parameter is
    the exact cell count, the generator must spend exactly that many, and `refuseHexAndWrap` is
    its `validate` unless it can be argued otherwise. `ladders.py` chooses the count per board.
-   `test/shape.test.ts` already holds the new shape's build to its own count.
+   `test/shape.test.ts` already holds the new shape's build to its own count. `hallways` is true
+   only for a shape that keeps one-cell passages and their doorways empty, which the graded
+   player then walks (`src/sim/scaffold.ts`).
 3. `ladders.py`: `shape_present` / `shape_cells` carry a copy of the predicate so the generator
    can apportion creatures; the test `agrees with the ladder generator on how many cells a shape
    leaves` guards the two copies.
