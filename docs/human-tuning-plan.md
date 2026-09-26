@@ -330,10 +330,10 @@ the game hides them, `unsound` 0 throughout. Stuck points, guesses, lethal guess
 | EASY | 0.0 | 100% | 0.0 | 0.0 | 0.0 | 100% | 0.0 | 0% | 0% | 0% | 12.3 | 29 | 100% | 100% |
 | NORMAL | 0.1 | 100% | 0.1 | 0.1 | 0.0 | 100% | 0.0 | 24% | 1% | 1% | 11.7 | 74 | 100% | 100% |
 | HUGE | 0.1 | 100% | 0.1 | 0.1 | 0.0 | 100% | 0.1 | 42% | 2% | 2% | 15.5 | 151 | 100% | 100% |
-| EXTREME | 3.1 | 80% | 3.1 | 3.1 | 0.6 | 80% | 2.9 | 92% | 6% | 3% | 4.8 | 200 | 8% | 8% |
+| EXTREME (retuned) | 2.3 | 90% | 2.2 | 2.2 | 0.2 | 90% | 2.3 | 92% | 6% | 4% | 5.4 | 191 | 68% | 65% |
 | HUGE x EXTREME | 3.2 | 76% | 3.0 | 3.0 | 0.6 | 79% | 3.5 | 99% | 16% | 8% | 5.9 | 401 | 57% | 63% |
 | ARCANE | 0.6 | 100% | 0.6 | 0.6 | 0.0 | 100% | 0.4 | 69% | 3% | 2% | 8.0 | 130 | 100% | 100% |
-| ORACLE | 4.0 | 59% | 3.9 | 3.9 | 1.3 | 60% | 3.2 | 98% | 9% | 4% | 4.6 | 219 | 0% | 0% |
+| ORACLE (retuned) | 2.1 | 80% | 2.0 | 2.0 | 0.5 | 82% | 2.2 | 98% | 9% | 6% | 5.5 | 224 | 30% | 35% |
 | WRAPAROUND | 0.0 | 100% | 0.0 | 0.0 | 0.0 | 100% | 0.0 | 4% | 0% | 0% | 19.3 | 49 | 100% | 100% |
 | CROSS | 0.8 | 99% | 0.7 | 0.7 | 0.0 | 100% | 0.8 | 72% | 4% | 3% | 6.0 | 105 | 98% | 98% |
 | WRAPPED CROSS | 0.5 | 100% | 0.5 | 0.5 | 0.0 | 100% | 0.5 | 63% | 1% | 0% | 6.9 | 93 | 98% | 98% |
@@ -370,10 +370,12 @@ What it says, read on the day it was recorded:
   who subtracts numbers and never misses a move is not what those ladders are hard for. What
   they cost is scanning: 12 to 19 moves on offer per pass, over 74 to 151 units of effort on
   NORMAL and HUGE, which is where attention (section 10) would show.
-- **The hard ladders are guess-decided, as the lock finding said.** EXTREME, ORACLE and
-  HUGE x EXTREME force three to four guesses a board, one of them lethal on ORACLE, and their
-  board 10 clears at 0 to 8% for EXTREME and ORACLE even at grade 4 (HUGE x EXTREME at 63%
-  since its retune). DONUT is the needle ladder: 3.5 moves on offer per pass, two guesses a
+- **The hard ladders are guess-decided, as the lock finding said.** Before their retunes
+  EXTREME and ORACLE forced three to four guesses a board, one of them lethal on ORACLE, and
+  their board 10 cleared at 0 to 8% even at grade 4 (HUGE x EXTREME at 63% since its retune).
+  The rows above are as retuned on 26 September 2026 (decisions 0041 and 0042, the lock one
+  short on the top boards): board 10 now 65% on EXTREME and, spending mana, 60% on ORACLE
+  (35% spell-less, which is what the table shows). DONUT is the needle ladder: 3.5 moves on offer per pass, two guesses a
   board, 80% of board 10.
 - **The graded player clears more than the honest player where guesses are dear.** EXTREME 80%
   against the honest player's 55%, ORACLE 60% against 48%: it holds a pencil, bounds two
