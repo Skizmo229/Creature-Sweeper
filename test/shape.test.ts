@@ -27,8 +27,14 @@ describe('the shape registry', () => {
     const type = structuredClone(ladders[0]!);
     type.shape = 'moon';
     expect(() => boardConfig([type], type.id, 1)).toThrow(
-      /unknown shape "moon" \(rect \| donut \| cross \| diamond \| pyramid \| gear \| card \| heart \| star \| cave \| dungeon\)/,
+      /unknown shape "moon" \(rect \| donut \| cross \| diamond \| pyramid \| gear \| card \| heart \| star \| hexagon \| cave \| dungeon\)/,
     );
+  });
+
+  it('refuses a hexagon on square cells or on a wrapped board', () => {
+    const hive = structuredClone(ladders.find((t) => t.shape === 'hexagon')!);
+    expect(() => boardConfig([{ ...hive, topology: 'square' }], hive.id, 1)).toThrow(/hex cells/);
+    expect(() => boardConfig([{ ...hive, wrap: 'both' }], hive.id, 1)).toThrow(/wrapping/);
   });
 
   it('refuses a seeded shape on hex or on a wrapped board', () => {

@@ -411,6 +411,32 @@ alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
 topology = "hex"
 
 [[type]]
+id = "ultra_hive"
+name = "ULTRA HIVE"
+tint = "#c98a12"
+archetype = "descending"
+axis = "Hex cells on a hexagon"
+blurb = """  HIVE's hexagons, on a board that is itself a hexagon: six straight edges to read in from, and   every number still the sum of six neighbours at most."""
+# A regular hexagon of R cells a side holds 3R(R + 1) + 1 cells in a box
+# 2R + 1 square: R from 12 to 16, 469 to 817 cells against HIVE's 480 to
+# 800.
+size = [[25, 25], [25, 25], [25, 25], [27, 27], [27, 27], [29, 29], [29, 29], [31, 31], [31, 31], [33, 33]]
+tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+# On HIVE's forced-guess curve, half a point above HIVE's schedule. Its
+# six straight edges barely move it: measured with the honest player, 150
+# seeds a board, 25 September 2026, at HIVE's own schedule it was stuck
+# 10.7 times over the ladder and cleared 92%, against HIVE's 12.2 and 93%;
+# half a point up gives 12.5 and 91%. Tops out at 35.5%, past HIVE's 35.
+density = [0.265, 0.275, 0.285, 0.295, 0.305, 0.315, 0.325, 0.335, 0.345, 0.355]
+hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
+alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
+# A square box inside the global 2,048 cells, as GEAR's is.
+ceiling = { max_w = 45, max_h = 45 }
+topology = "hex"
+shape = "hexagon"
+
+[[type]]
 id = "wraparound"
 name = "WRAPAROUND"
 tint = "#1d6a9e"

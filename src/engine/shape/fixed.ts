@@ -7,7 +7,7 @@
  * matches the ladder's guards the two copies.
  */
 
-import { predicateShape } from './rule.js';
+import { type ShapeRule, predicateShape } from './rule.js';
 
 export const RECT_SHAPE = predicateShape('rect', () => true);
 
@@ -210,3 +210,30 @@ export const STAR_SHAPE = predicateShape('star', (_param, w, h, x, y) => {
   }
   return inside;
 });
+
+/**
+ * A regular hexagon of hex cells: every cell within `R` steps of the box's centre, counted as a
+ * hex grid counts them, `R` being as large as the box allows, so a box `2R + 1` square holds
+ * `3R(R + 1) + 1` cells. The rows are odd-r offset, as `neighbours()` lays them out, so the
+ * distance is taken in axial coordinates, whole numbers throughout. It means nothing on a square
+ * grid, and a wrapped one would join its empty corners, so both are refused.
+ */
+/** An odd-r offset column as an axial one: odd rows sit half a hex right (`HEX_DIRS` in grid.ts). */
+const axialColumn = (col: number, row: number): number => col - (row - (row & 1)) / 2;
+
+export const HEXAGON_SHAPE: ShapeRule = {
+  ...predicateShape('hexagon', (_param, w, h, x, y) => {
+    const radius = Math.floor((Math.min(w, h) - 1) / 2);
+    const cx = Math.floor(w / 2);
+    const cy = Math.floor(h / 2);
+    const dq = axialColumn(x, y) - axialColumn(cx, cy);
+    const dr = y - cy;
+    return Math.max(Math.abs(dq), Math.abs(dr), Math.abs(dq + dr)) <= radius;
+  }),
+  validate: (type) => {
+    if (type.topology !== 'hex') throw new Error(`${type.typeId}: a hexagon is cut from hex cells`);
+    if (type.wrap && type.wrap !== 'none') {
+      throw new Error(`${type.typeId}: a hexagon's corners are empty, so wrapping joins nothing`);
+    }
+  },
+};

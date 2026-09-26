@@ -246,6 +246,23 @@ const LOOKS: Record<string, LadderLook> = {
     sfx: 'chime',
     victory: 'cascade',
   },
+  ultra_hive: {
+    // Darker honey, and a lavender `hot`, the flower on the comb. No spells here, so nothing writes
+    // gold; lavender is 142 from `ink` and 103 clear of the nearest tier colour (decision 0032).
+    palette: {
+      tile: '#9a6a0c',
+      tileEdge: '#6b4a08',
+      floor: '#1c1203',
+      ink: '#fbe7b5',
+      hot: '#a78bfa',
+      pip: 'hex',
+      accent: '#d49a1e',
+    },
+    // HIVE's own face and sound: the same comb, grown.
+    font: 'gluten',
+    sfx: 'blip',
+    victory: 'burst',
+  },
   hive: {
     // Honey amber for the hive, with its own pip. No spells here, so an amber `hot`
     // has no gold annotation to collide with (decision 0032).

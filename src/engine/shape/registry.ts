@@ -12,6 +12,7 @@ import {
   DONUT_SHAPE,
   GEAR_SHAPE,
   HEART_SHAPE,
+  HEXAGON_SHAPE,
   PYRAMID_SHAPE,
   RECT_SHAPE,
   STAR_SHAPE,
@@ -29,6 +30,7 @@ export const SHAPES = {
   card: CARD_SHAPE,
   heart: HEART_SHAPE,
   star: STAR_SHAPE,
+  hexagon: HEXAGON_SHAPE,
   cave: CAVE_SHAPE,
   dungeon: DUNGEON_SHAPE,
 } as const satisfies Readonly<Record<string, ShapeRule>>;

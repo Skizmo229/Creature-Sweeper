@@ -210,6 +210,16 @@ class TheContinuation(unittest.TestCase):
                 self.assertEqual(b["w"], 2 * b["h"], f"{t['id']}#{b['n']}")
                 self.assertEqual(b["cells"], b["h"] * (b["h"] + 1), f"{t['id']}#{b['n']}")
 
+    def test_keeps_a_hexagon_in_an_odd_square(self):
+        for t in BUILT:
+            if t.get("shape") != "hexagon":
+                continue
+            for b in rows(t):
+                side = b["w"]
+                self.assertEqual((b["h"], side % 2), (side, 1), f"{t['id']}#{b['n']}")
+                r = (side - 1) // 2
+                self.assertEqual(b["cells"], 3 * r * (r + 1) + 1, f"{t['id']}#{b['n']}")
+
     def test_keeps_the_givens_above_the_sudoku_generators_floor(self):
         for t in BUILT:
             if t.get("placement") != "sudoku":

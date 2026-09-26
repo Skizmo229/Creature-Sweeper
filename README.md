@@ -65,9 +65,9 @@ npm run typecheck      # twice: the second pass compiles the engine, sims and te
 npm run lint           # ESLint, failing on any warning; the size warnings are the readability bar Milestone 3 set
 npm run knip           # unused files and exports
 npm run format         # Prettier (format:check to verify)
-npm test               # 505 tests, including the invariants
+npm test               # 507 tests, including the invariants
 npm run sim:golden:check   # re-run fourteen fixed-seed simulator runs and diff against test/golden/
-npm run sim            # clear every one of the 774 boards headlessly (-- 200 for more seeds)
+npm run sim            # clear every one of the 791 boards headlessly (-- 200 for more seeds)
 npm run sim:run        # complete every type's Full Run
 npm run sim:spells -- 40 dungeon   # what each spell is worth on one ladder, board by board
 npm run sim:forced -- 30 oracle    # how many forced guesses a perfect deducer still faces
@@ -109,8 +109,8 @@ creature, how Sweep is gated, Time Attack). Settings that make the game harder r
 anything easier than the tuned game records no clear, no unlock and no best time, and the game says
 so live.
 
-**Game types.** 29 ladders of ten tuned boards, each with a scaling continuation past board 10
-(774 boards in all) and a Full Run (all ten on one HP pool).
+**Game types.** 30 ladders of ten tuned boards, each with a scaling continuation past board 10
+(791 boards in all) and a Full Run (all ten on one HP pool).
 
 ```
 start       EASY -> NORMAL
@@ -123,7 +123,7 @@ boards      Normal     Shape          Magic     Special
   35                   DONUT                    CHECKERBOARD
   40                   RAGGED CAVE              CONGA LINE
   45                   PYRAMID                  SUDOKU
-  50                   GEAR
+  50                   GEAR                     ULTRA HIVE
   55                   CARD
   60                   VALENTINES
   65                   STAR

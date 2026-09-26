@@ -20,6 +20,13 @@ cell.
 **HIVE** is a hex grid: six neighbours, so every number is lower and blank regions are commoner,
 and it runs denser (35%) to compensate.
 
+**ULTRA HIVE** is HIVE on a regular hexagon of hex cells, `R` cells a side in a box `2R + 1`
+square (the continuation keeps the side odd, since an even one adds an empty row and not a cell).
+The shape refuses square cells and wrapping. Its six straight edges barely move it: at HIVE's own
+schedule it was stuck 10.7 times over the ladder and cleared 92% against HIVE's 12.2 and 93%, and
+it ships half a density point above HIVE, on HIVE's curve (12.5 and 91%; 150 seeds, 25 September
+2026), topping out at 35.5%. Like HIVE it has no spells.
+
 **DONUT, CROSS, DIAMOND** are per-cell masks. Parameters are in cells, never in fractions of the
 board: a ring "20% of the width" thick is nine cells on a long side and four on a short one, the
 same board playing two different games. Once parameterised in cells, aspect ratio stops affecting

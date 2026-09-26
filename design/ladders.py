@@ -125,6 +125,15 @@ def _star(w, h, x, y):
     return inside
 
 
+def _hexagon(w, h, x, y):
+    # Odd-r offset rows to axial coordinates, as neighbours() lays hex cells out.
+    radius = (min(w, h) - 1) // 2
+    cx, cy = w // 2, h // 2
+    dq = x - (y - (y & 1)) // 2 - (cx - (cy - (cy & 1)) // 2)
+    dr = y - cy
+    return max(abs(dq), abs(dr), abs(dq + dr)) <= radius
+
+
 def shape_present(shape, param, w, h, x, y):
     cx, cy = (w - 1) / 2, (h - 1) / 2
     dx, dy = x + 0.5 - w / 2, y + 0.5 - h / 2
@@ -144,6 +153,8 @@ def shape_present(shape, param, w, h, x, y):
         return _heart(w, h, dx, dy)
     if shape == "star":
         return _star(w, h, x, y)
+    if shape == "hexagon":
+        return _hexagon(w, h, x, y)
     return True
 
 
@@ -455,6 +466,12 @@ def extend(t):
         if t.get("shape") == "pyramid":
             h_next = min(h_next, max_w // 2)
             w_next = 2 * h_next
+        # A hexagon R cells a side fills a box 2R + 1 square (HEXAGON_SHAPE in fixed.ts). An even
+        # side adds an empty row and column and not a cell, so the continuation keeps it odd.
+        if t.get("shape") == "hexagon":
+            side = min(w_next, h_next)
+            side -= 1 - side % 2
+            w_next = h_next = side
         row = dict(
             size=(w_next, h_next),
             tiers=T,
@@ -577,7 +594,8 @@ CATEGORIES = {
     "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave", "pyramid",
               "gear", "card", "valentines", "star"],
     "magic": ["arcane", "workout", "oracle", "dungeon"],
-    "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku"],
+    "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku",
+                "ultra_hive"],
 }
 CATEGORY = {tid: cat for cat, ids in CATEGORIES.items() for tid in ids}
 UNLOCK_BOARDS = unlock_boards()
