@@ -12,7 +12,16 @@
 import type { FontId } from './typefaces.js';
 
 export type PipShape =
-  'circle' | 'square' | 'diamond' | 'hex' | 'cross' | 'ring' | 'ringDiamond' | 'triangle' | 'gear';
+  | 'circle'
+  | 'square'
+  | 'diamond'
+  | 'hex'
+  | 'cross'
+  | 'ring'
+  | 'ringDiamond'
+  | 'triangle'
+  | 'gear'
+  | 'heart';
 
 /**
  * A symbol drawn as the pip, by its code point, written as `U+2764`: the player's own choice from
@@ -470,6 +479,23 @@ const LOOKS: Record<string, LadderLook> = {
     sfx: 'chime',
     // The creatures bounce off leaving trails: the card game everyone has watched finish.
     victory: 'cascade',
+  },
+  valentines: {
+    // Deep rose on a wine floor. `hot` is lavender: gold is out because Reveal writes givens here,
+    // and it sits 90 clear of Census's cyan and 103 of the nearest tier colour (decision 0032).
+    palette: {
+      tile: '#b0254f',
+      tileEdge: '#7d1a38',
+      floor: '#22070f',
+      ink: '#fbd3df',
+      hot: '#a78bfa',
+      pip: 'heart',
+      accent: '#e0487a',
+    },
+    // Bouncy and warm, PAIRS's face, for another ladder about couples.
+    font: 'baloo-2',
+    sfx: 'chime',
+    victory: 'confetti',
   },
   dungeon: {
     palette: {

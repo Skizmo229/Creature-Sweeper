@@ -90,6 +90,14 @@ def _card(w, h, x, y):
     return True
 
 
+HEART = dict(half_width=1.135, half_height=1.118, lift=0.118)
+
+
+def _heart(w, h, dx, dy):
+    return _heart_curve((dx / (w / 2)) * HEART["half_width"],
+                        (-dy / (h / 2)) * HEART["half_height"] + HEART["lift"])
+
+
 def shape_present(shape, param, w, h, x, y):
     cx, cy = (w - 1) / 2, (h - 1) / 2
     dx, dy = x + 0.5 - w / 2, y + 0.5 - h / 2
@@ -105,6 +113,8 @@ def shape_present(shape, param, w, h, x, y):
         return _gear(w, h, dx, dy)
     if shape == "card":
         return _card(w, h, x, y)
+    if shape == "heart":
+        return _heart(w, h, dx, dy)
     return True
 
 
@@ -536,7 +546,7 @@ def unlock_boards():
 CATEGORIES = {
     "normal": ["easy", "normal", "huge", "extreme", "huge_extreme", "blind", "huge_blind"],
     "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave", "pyramid",
-              "gear", "card"],
+              "gear", "card", "valentines"],
     "magic": ["arcane", "workout", "oracle", "dungeon"],
     "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku"],
 }

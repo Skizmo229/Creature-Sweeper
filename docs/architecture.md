@@ -16,7 +16,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
     rule.ts         ShapeRule, the contract; predicateShape; refuseHexAndWrap
     registry.ts     SHAPES, keyed by every BoardShape; shapeRule()
     fixed.ts        the per-cell predicates: rect, donut, cross, diamond, pyramid, gear,
-                  card
+                  card, heart
     cave.ts         the ragged cave generator
     floorplan.ts    the dungeon's floor plan: rooms, and one-cell hallways between them
     dungeon.ts      the dungeon map: the budget spent exactly, doorways and their pockets

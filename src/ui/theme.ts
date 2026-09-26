@@ -25,6 +25,7 @@ export const PIP_SHAPES: readonly PipShape[] = [
   'ringDiamond',
   'triangle',
   'gear',
+  'heart',
 ];
 
 export const PIP_NAMES: Record<PipShape, string> = {
@@ -37,6 +38,7 @@ export const PIP_NAMES: Record<PipShape, string> = {
   ringDiamond: 'Hollow gems',
   triangle: 'Pyramids',
   gear: 'Gears',
+  heart: 'Hearts',
 };
 
 /** What a pip is called: a shape's name, or a symbol's own. */
@@ -280,6 +282,13 @@ function pipPath(
       ctx.arc(cx, cy, r * GEAR_PIP_HOLE, 0, Math.PI * 2, true);
       break;
     }
+    case 'heart':
+      // Two lobes over a point, drawn from the point round to it again.
+      ctx.moveTo(cx, cy + r * 0.9);
+      ctx.bezierCurveTo(cx - r * 1.3, cy, cx - r * 0.95, cy - r * 1.2, cx, cy - r * 0.5);
+      ctx.bezierCurveTo(cx + r * 0.95, cy - r * 1.2, cx + r * 1.3, cy, cx, cy + r * 0.9);
+      ctx.closePath();
+      break;
     case 'ring':
     case 'circle':
     default:

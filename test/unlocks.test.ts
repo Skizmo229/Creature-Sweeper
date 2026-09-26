@@ -141,7 +141,7 @@ describe('the shape of the graph', () => {
     expect(blind.requires).toEqual([]);
     const others = ladders.filter((t) => t.id !== 'blind').map((t) => t.requires_boards);
     expect(blind.requires_boards).toBe(Math.max(...others) + 5);
-    expect(blind.requires_boards).toBe(60);
+    expect(blind.requires_boards).toBe(65);
   });
 });
 

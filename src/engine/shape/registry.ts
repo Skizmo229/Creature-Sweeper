@@ -11,6 +11,7 @@ import {
   DIAMOND_SHAPE,
   DONUT_SHAPE,
   GEAR_SHAPE,
+  HEART_SHAPE,
   PYRAMID_SHAPE,
   RECT_SHAPE,
 } from './fixed.js';
@@ -25,6 +26,7 @@ export const SHAPES = {
   pyramid: PYRAMID_SHAPE,
   gear: GEAR_SHAPE,
   card: CARD_SHAPE,
+  heart: HEART_SHAPE,
   cave: CAVE_SHAPE,
   dungeon: DUNGEON_SHAPE,
 } as const satisfies Readonly<Record<string, ShapeRule>>;

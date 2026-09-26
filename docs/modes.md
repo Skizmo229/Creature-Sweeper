@@ -76,6 +76,12 @@ ARCANE's to three (24.4 stuck and 85% against 23.9 and 82%; 60 seeds, 25 Septemb
 is three lobes and a core; without the core one cell was left stranded between the lobes, which
 the connectivity test caught.
 
+**VALENTINES** is a heart, a per-cell mask filling a square box: the classic heart curve, the
+same the card's heart suit is cut with, stretched to the box's exact extents. At ARCANE's
+schedule it came out gentler than ARCANE (17.4 stuck over the ladder, 85% cleared), and ships a
+density point above it, on ARCANE's curve (23.3 and 80% against 23.9 and 82%; 60 seeds, 25
+September 2026), topping out at 35.5%.
+
 ## DUNGEON
 
 Three kinds of cell, and the difference is the whole mode: a **room** is where creatures live; a
@@ -191,6 +197,6 @@ proof finds nothing at this density; the Sudoku rule itself is deliberately abse
 ## BLIND and HUGE x BLIND
 
 Search boards: one HP, level 0, won by uncovering every empty cell, with the creatures still
-hidden at the win. BLIND climbs 5 to 7 tiers over its ladder. It opens at 60 boards cleared,
+hidden at the win. BLIND climbs 5 to 7 tiers over its ladder. It opens at 65 boards cleared,
 one step after every other counted ladder (decision 0036), and its Full Run heal rounds down to nothing, so a run there is a
 single-mistake run.

@@ -462,6 +462,33 @@ $ src/sim/cli/boards.ts 3
  14    56x79    1380       29     29      3/3        0       5
  15    56x79    1380       29     29      3/3        0       5
 
+=== VALENTINES === ladder 1-10, scaling 11-24
+ bd     grid  creat.  opening  worst  cleared  hp lost  max lv
+  1    26x26     135       19     16      3/3        0       5
+  2    26x26     139       16     16      3/3        0       5
+  3    26x26     144       16     16      3/3        0       5
+  4    27x27     158       23     20      3/3        0       5
+  5    27x27     163       23     20      3/3        0       5
+  6    29x29     195       23     22      3/3        0       5
+  7    29x29     200       23     22      3/3        0       5
+  8    31x31     235       21     16      3/3        0       5
+  9    31x31     241       16     16      3/3        0       5
+ 10    32x32     262       18     16      3/3        0       5
+ 11    33x33     280       15     12      3/3        0       5
+ 12    34x34     297       15     12      3/3        0       5
+ 13    35x35     316       19     18      3/3        0       5
+ 14    35x35     316       19     18      3/3        0       5
+ 15    36x36     332       27     21      3/3        0       5
+ 16    37x37     353       31     16      3/3        0       5
+ 17    38x38     368       26     12      3/3        0       5
+ 18    39x39     392       25     16      3/3        0       5
+ 19    40x40     409       19     16      3/3        0       5
+ 20    41x41     433       17     15      3/3        0       5
+ 21    42x42     453       18     14      3/3        0       5
+ 22    43x43     475       21     18      3/3        0       5
+ 23    44x44     496       19     18      3/3        0       5
+ 24    45x45     519       18     15      3/3        0       5
+
 === ARCANE === ladder 1-10, scaling 11-37
  bd     grid  creat.  opening  worst  cleared  hp lost  max lv
   1    30x16     127       29     26      3/3        0       5
@@ -818,6 +845,6 @@ $ src/sim/cli/boards.ts 3
  12      9x9      72        9      9      3/3        0       8
  13      9x9      72        9      9      3/3        0       8
 
-737/737 boards cleared by every seed at full HP (3 seeds each, 2211 boards simulated).
+761/761 boards cleared by every seed at full HP (3 seeds each, 2283 boards simulated).
 
 [exit 0]

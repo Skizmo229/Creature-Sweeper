@@ -148,3 +148,17 @@ export const CARD_SHAPE = predicateShape('card', (_param, w, h, x, y) => {
     return Math.abs(pu) <= 1.2 && Math.abs(pv) <= 1.2 && suit(pu, pv);
   });
 });
+
+/**
+ * A heart: the card's heart curve stretched to fill the box, whose extents it reaches exactly
+ * (1.135 either side, from -1 at the point to 1.236 atop the lobes).
+ */
+const HEART = { halfWidth: 1.135, halfHeight: 1.118, lift: 0.118 };
+
+export const HEART_SHAPE = predicateShape('heart', (_param, w, h, x, y) => {
+  const { dx, dy } = fromCentre(w, h, x, y);
+  return inHeartCurve(
+    (dx / (w / 2)) * HEART.halfWidth,
+    (-dy / (h / 2)) * HEART.halfHeight + HEART.lift,
+  );
+});

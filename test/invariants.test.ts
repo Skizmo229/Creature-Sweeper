@@ -17,8 +17,8 @@ import { ladders, battleTypes, boardsOf, SEEDS, UNGATED_SWEEP } from './helpers.
 import { shapeRule } from '../src/engine/shape/registry.js';
 
 describe('ladder data', () => {
-  it('has twenty-seven types of ten boards', () => {
-    expect(ladders).toHaveLength(27);
+  it('has twenty-eight types of ten boards', () => {
+    expect(ladders).toHaveLength(28);
     for (const type of ladders) expect(type.boards).toHaveLength(10);
   });
 
@@ -195,6 +195,7 @@ describe('board shapes', () => {
       'dungeon',
       'gear',
       'pyramid',
+      'valentines',
       'wrapped_cross',
     ]);
   });

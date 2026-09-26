@@ -661,6 +661,33 @@ spells = ["reveal", "census"]
 start_mana = 75
 
 [[type]]
+id = "valentines"
+name = "VALENTINES"
+tint = "#c2185b"
+archetype = "descending"
+axis = "A heart"
+blurb = """  A heart-shaped board: two rounded lobes over a long taper to the point. Reveal and Census   available."""
+# Square boxes, so the heart keeps its proportions; the outline scales with
+# the box. The counts follow ARCANE's: 490 to 738 cells against 480 to 760.
+size = [[26, 26], [26, 26], [26, 26], [27, 27], [27, 27], [29, 29], [29, 29], [31, 31], [31, 31], [32, 32]]
+tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+# On ARCANE's forced-guess curve, one point above ARCANE's schedule.
+# Measured with the honest player, 60 seeds a board, 25 September 2026:
+# at ARCANE's own schedule it was stuck 17.4 times over the ladder and
+# cleared 85%, gentler than ARCANE (23.9, 82%); one point up gives 23.3
+# and 80%, board 10 4.6 stuck and 57% against ARCANE's 5.1 and 63%. Tops
+# out at 35.5%, past the 34% ceiling by as much as HIVE's 35%.
+density = [0.275, 0.284, 0.293, 0.302, 0.311, 0.32, 0.329, 0.338, 0.347, 0.355]
+hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
+alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
+# A square box inside the global 2,048 cells, as GEAR's is.
+ceiling = { max_w = 45, max_h = 45 }
+shape = "heart"
+spells = ["reveal", "census"]
+start_mana = 75
+
+[[type]]
 id = "dungeon"
 name = "DUNGEON"
 tint = "#7a5c9e"
