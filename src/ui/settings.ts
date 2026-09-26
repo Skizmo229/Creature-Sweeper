@@ -100,6 +100,14 @@ export const MIN_TEXT_SIZE = 0.75;
 export const MAX_TEXT_SIZE = 1.75;
 const DEFAULT_TEXT_SIZE = 1;
 
+/**
+ * How large the settings screen's example boards can be drawn, as a multiple of the size each
+ * was designed at. Every example but the zoom ceiling's, which is drawn at the size it sets.
+ */
+export const MIN_PREVIEW_SIZE = 0.5;
+export const MAX_PREVIEW_SIZE = 3;
+const DEFAULT_PREVIEW_SIZE = 1;
+
 /** Cell sizes the zoom ceiling can be set to, in CSS pixels. */
 export const MIN_MAX_ZOOM = 24;
 export const MAX_MAX_ZOOM = 128;
@@ -166,6 +174,8 @@ export interface PresentationSettings {
   readonly maxZoom: number;
   /** Size of the interface's text — HUD, menus, settings — as a multiple. */
   readonly textSize: number;
+  /** Size of the settings screen's example boards, as a multiple. */
+  readonly previewSize: number;
   /**
    * Silence everything, from the always-present speaker in the corner.
    *
@@ -200,6 +210,7 @@ const DEFAULT_PRESENTATION: PresentationSettings = {
   menuStrip: 'left',
   maxZoom: DEFAULT_MAX_ZOOM,
   textSize: DEFAULT_TEXT_SIZE,
+  previewSize: DEFAULT_PREVIEW_SIZE,
   muted: false,
   soundCheck: { keys: {}, pitches: {}, volume: 1 },
   customPitches: false,
@@ -293,6 +304,8 @@ function readPresentation(raw: unknown): PresentationSettings {
     // A save from before this setting has no field, and reads as the size the
     // game always had.
     textSize: num(p.textSize, MIN_TEXT_SIZE, MAX_TEXT_SIZE, DEFAULT_TEXT_SIZE),
+    // A save from before this setting reads as the size the examples were always drawn at.
+    previewSize: num(p.previewSize, MIN_PREVIEW_SIZE, MAX_PREVIEW_SIZE, DEFAULT_PREVIEW_SIZE),
     // Defaults to unmuted, so a save written before the speaker existed opens
     // with sound on — which is the state that save was actually played in.
     muted: typeof p.muted === 'boolean' ? p.muted : false,
