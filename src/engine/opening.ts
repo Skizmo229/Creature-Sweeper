@@ -2,7 +2,7 @@
  * Choosing the opening: the cells the board reveals before the player's first move.
  */
 
-import type { Cell, Topology, Wrap } from './types.js';
+import type { BoardConfig, Cell, Topology, Wrap } from './types.js';
 import { type Grid, neighbours } from './grid.js';
 
 export interface Opening {
@@ -94,7 +94,7 @@ function zeroRegions(grid: Grid, coveredOnly: boolean, topology: Topology, wrap:
 export const BASE_ROWS = 2;
 
 /** The cells of the bottom `rows` rows that exist, in reading order. */
-export function baseCells(grid: Grid, rows: number): Cell[] {
+function baseCells(grid: Grid, rows: number): Cell[] {
   return grid.slice(-rows).flatMap((row) => row.filter((cell) => cell.present));
 }
 
@@ -104,7 +104,7 @@ export function baseCells(grid: Grid, rows: number): Cell[] {
  * once density climbs past roughly 40%. Pick the safest single cell: lowest
  * number, then most empty neighbours.
  */
-export function findFallbackOpening(
+function findFallbackOpening(
   grid: Grid,
   topology: Topology = 'square',
   wrap: Wrap = 'none',
@@ -125,4 +125,96 @@ export function findFallbackOpening(
     }
   }
   return best;
+}
+
+/** What dealing an opening changes on a board. `Game` satisfies it. */
+export interface OpeningHost {
+  readonly grid: Grid;
+  readonly config: BoardConfig;
+  /** Open one cell without cascading; false if it was already open. */
+  markOpen(cell: Cell): boolean;
+  /** Uncover a cell, cascading through blanks; the cells opened. */
+  reveal(start: Cell): Array<{ x: number; y: number }>;
+  /** Write a mark, keeping the per-tier counters honest. */
+  applyMark(cell: Cell, mark: number): void;
+}
+
+/**
+ * Reveal what the board's opening rule hands the player before their first move. None of it is
+ * the player's work, so none of it pays EXP or exploration mana.
+ */
+export function dealOpening(host: OpeningHost): void {
+  switch (host.config.opening) {
+    case 'auto':
+      openLargest(host);
+      return;
+    case 'empties':
+      openEveryEmpty(host);
+      return;
+    case 'base':
+      openBase(host);
+      return;
+    case 'islands':
+      openIslands(host);
+      return;
+    case 'none':
+      return;
+  }
+}
+
+/** Reveal the largest blank area, or, on a board without one, the safest single cell. */
+function openLargest(host: OpeningHost): void {
+  const { grid, config } = host;
+  const best = findBestOpening(grid, false, config.topology, config.wrap);
+  if (best) {
+    for (const cell of best.cells) host.markOpen(cell);
+    return;
+  }
+  const fallback = findFallbackOpening(grid, config.topology, config.wrap);
+  if (fallback) host.reveal(fallback);
+}
+
+/**
+ * Open every empty cell on the board — the Sudoku opening.
+ *
+ * There are exactly nine of them, one per row, column and box, because tier
+ * 0 is one of the nine digits. They pay no EXP and no exploration mana: like
+ * the dealt opening everywhere else, they are not the player's work.
+ */
+function openEveryEmpty(host: OpeningHost): void {
+  for (const row of host.grid) {
+    for (const cell of row) {
+      if (cell.present && cell.tier === 0) host.markOpen(cell);
+    }
+  }
+}
+
+/**
+ * Open the `ISLANDS` largest blank areas, each with its fringe, as separate footholds. A board
+ * without one falls back as the single opening does.
+ */
+function openIslands(host: OpeningHost): void {
+  const { grid, config } = host;
+  const islands = findOpenings(grid, ISLANDS, config.topology, config.wrap);
+  if (!islands.length) {
+    openLargest(host);
+    return;
+  }
+  for (const island of islands) for (const cell of island.cells) host.markOpen(cell);
+}
+
+/**
+ * Deal the bottom rows face up, as Reveal deals a cell: empty ground opens and cascades, and a
+ * creature is written as a given and left alive, to be fought when the player's level allows.
+ * Nothing is killed, so every creature still pays its EXP (decision 0038).
+ */
+function openBase(host: OpeningHost): void {
+  for (const cell of baseCells(host.grid, BASE_ROWS)) {
+    if (cell.tier === 0) {
+      host.reveal(cell);
+    } else {
+      host.applyMark(cell, cell.tier);
+      cell.given = true;
+    }
+  }
 }

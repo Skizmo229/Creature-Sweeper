@@ -21,7 +21,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
     floorplan.ts    the dungeon's floor plan: rooms, and one-cell hallways between them
     dungeon.ts      the dungeon map: the budget spent exactly, doorways and their pockets
   generate.ts     dealing the creatures: shape, then placement rule, then numbers
-  opening.ts      choosing the opening
+  opening.ts      choosing the opening and dealing it (`dealOpening`)
   notes.ts        pencil marks as a bitmask
   spells.ts       the four spells, their prices, the mana economy, spellKey
   cast.ts         what each spell does, behind the SpellHost interface

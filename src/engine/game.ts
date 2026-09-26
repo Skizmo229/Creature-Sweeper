@@ -17,14 +17,7 @@ import { SPELL_EFFECTS } from './cast.js';
 import { computeSealed, withinReach } from './reach.js';
 import { safeCells as provenSafe } from './sweep.js';
 import { type Grid, inBounds, neighbours } from './grid.js';
-import {
-  BASE_ROWS,
-  ISLANDS,
-  baseCells,
-  findBestOpening,
-  findFallbackOpening,
-  findOpenings,
-} from './opening.js';
+import { dealOpening } from './opening.js';
 import { generateGrid } from './generate.js';
 import { fight, revealAllCreatures } from './fight.js';
 
@@ -148,10 +141,7 @@ export class Game {
     const rng = mulberry32(seed);
     const grid = generateGrid(config, rng);
     const game = new Game(config, seed, grid, startHp, settings);
-    if (config.opening === 'auto') game.applyOpening();
-    else if (config.opening === 'empties') game.openEveryEmpty();
-    else if (config.opening === 'base') game.openBase();
-    else if (config.opening === 'islands') game.openIslands();
+    dealOpening(game);
     return game;
   }
 
@@ -538,62 +528,6 @@ export class Game {
   }
 
   // ---------------------------------------------------------------- internals
-
-  /** Reveal the board's starting region before the player touches anything. */
-  private applyOpening(): void {
-    const best = findBestOpening(this.grid, false, this.config.topology, this.config.wrap);
-    if (best) {
-      for (const cell of best.cells) this.markOpen(cell);
-      return;
-    }
-    const fallback = findFallbackOpening(this.grid, this.config.topology, this.config.wrap);
-    if (fallback) this.reveal(fallback);
-  }
-
-  /**
-   * Open every empty cell on the board — the Sudoku opening.
-   *
-   * There are exactly nine of them, one per row, column and box, because tier
-   * 0 is one of the nine digits. They pay no EXP and no exploration mana: like
-   * the dealt opening everywhere else, they are not the player's work.
-   */
-  private openEveryEmpty(): void {
-    for (const row of this.grid) {
-      for (const cell of row) {
-        if (cell.present && cell.tier === 0) this.markOpen(cell);
-      }
-    }
-  }
-
-  /**
-   * Open the `ISLANDS` largest blank areas, each with its fringe, as separate footholds. A board
-   * without one falls back as the single opening does.
-   */
-  private openIslands(): void {
-    const islands = findOpenings(this.grid, ISLANDS, this.config.topology, this.config.wrap);
-    if (!islands.length) {
-      this.applyOpening();
-      return;
-    }
-    for (const island of islands) for (const cell of island.cells) this.markOpen(cell);
-  }
-
-  /**
-   * Deal the bottom rows face up, as Reveal deals a cell: empty ground opens and cascades, and a
-   * creature is written as a given and left alive, to be fought when the player's level allows.
-   * Nothing is killed, so every creature still pays its EXP, and like any dealt opening none of it
-   * pays exploration mana (decision 0038).
-   */
-  private openBase(): void {
-    for (const cell of baseCells(this.grid, BASE_ROWS)) {
-      if (cell.tier === 0) {
-        this.reveal(cell);
-      } else {
-        this.applyMark(cell, cell.tier);
-        cell.given = true;
-      }
-    }
-  }
 
   /** Open one cell without cascading. Engine-internal, for `cast.ts`. */
   markOpen(cell: Cell): boolean {
