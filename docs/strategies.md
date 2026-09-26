@@ -239,6 +239,27 @@ exactly this hunt: the top thresholds are met by killing every creature of a tie
 - **DONUT, CROSS, WRAPPED CROSS, DIAMOND, RAGGED CAVE.** Edges are information: a rim cell sees
   fewer cells, so work from the rim inwards. A cross's arms are corridor puzzles; stuck at the tip
   of one on WRAPPED CROSS, go round and work in from the other end.
+- **GEAR, CARD, VALENTINES, STAR.** The same rule with more rim: a gear has edges outside and
+  round its hole, a card has four holes cut where the suits sit, a heart tapers to a point, and
+  each of a star's five points narrows to a single cell that sees almost nothing. Start at
+  whichever edge the opening left you nearest and read inwards from every hole; a star's point
+  is cleared from its tip, where a number over one or two cells names them outright, and the
+  pentagon in the middle is the last and hardest ground. All four carry Reveal and Census.
+- **PYRAMID.** The bottom two rows start face up: their empty ground open and every creature
+  there shown with its tier, in gold, alive and waiting. A shown creature is a mark the board
+  wrote for you, so subtract it from every number it touches from the first click, and take it
+  as a free kill the moment your level reaches it; the base is your level-up larder. Work up
+  the steps, each row a cell narrower on either side, so every row's ends are corners.
+- **ULTRA HIVE.** HIVE's hexagons on a board that is itself a hexagon: six straight edges to
+  read in from, and every number still the sum of six neighbours at most. Play it as HIVE with
+  the rim's help.
+- **PETRI DISH.** A round dish that opens at its three largest blank areas, and you may only open
+  a cell touching ground you have uncovered, so each colony grows from its own edge. A mark you
+  make beside uncovered ground counts as ground for that purpose while it touches some: naming
+  a creature on the frontier lets you reach one cell past it, and no further, since marks never
+  chain. So the two habits that pay are naming what the last cell trick gives you, to carry the
+  colony past it, and working all three colonies in turn, because a guess in one is always a
+  frontier cell beside numbers and therefore cheap.
 - **DUNGEON.** Walk the corridors first (grade 0). Doorways are empty, and so are the room cells
   beside a doorway that touch the wall, so the first step into a room is free and the second is
   the risk. You may only open within two cells of ground you have uncovered; marking is exempt,
@@ -251,6 +272,20 @@ exactly this hunt: the top thresholds are met by killing every creature of a tie
   have found is a tile you no longer fear, and the last tiles are known before they are seen.
 - **PACKS, CONGA LINE.** The whole pack (grade 0) and the gap (grade 2); on CONGA LINE the
   bonds drawn between open members show the line, and its ends (grade 3).
+- **PATROL.** The creatures walk. A tier-t creature paces the edge of a square t cells a side,
+  one cell per action, clockwise from its top-left corner, and every open, every Sweep and every
+  Wait (`W`, free) is an action; marking and pencilling are not. The board is sparse (6.5 to
+  8.5%), so the opening uncovers most of it and most creatures walk in plain sight as a `?` on
+  ground you have already cleared. Three habits and one warning. Read the numbers again after
+  every move, because they are the sums as the board stands now, and what you proved a move ago
+  may be gone; a `?` you can see is a creature you know the tier of once it has walked one side
+  of its square, since a side is its tier long. When nothing is proven, Wait rather than guess:
+  waiting is free, the creatures move, and new numbers arrive; one lap of the largest creature,
+  four times its tier in moves, shows it on every cell it can stand on. A mark is a route, not a
+  claim: marking a tier t on a cell draws that creature's whole square from that corner and locks
+  every covered cell of it, which is how you fence off where a creature can step, and why Sweep
+  reads no marks here. The warning: a mark on the wrong corner fences the wrong cells and locks
+  ground that was safe.
 - **WORKOUT.** Exercise lends one level for one fight; a creature named at one tier past your
   level is a free kill for the price of a cast, and pays double EXP for it. The price rises with
   each cast and falls with each level.
