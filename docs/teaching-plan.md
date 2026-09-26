@@ -138,10 +138,12 @@ count of wrong ones is zero.
 Two questions about what the tutor may read:
 
 - **The player's marks.** The reader subtracts a mark as the tier it claims, because the graded
-  player writes only proven marks. A person writes guesses. The tutor therefore reads the board
-  twice: first trusting nothing but open cells, and only if that yields nothing, trusting marks,
-  with the caption saying so ("trusting your mark of 4"). This mirrors Sweep's two buttons, S and
-  D, and the catalogue's warning that the trusted wrong mark is the fatal error.
+  player writes only proven marks. A person writes guesses, and the catalogue names the trusted
+  wrong mark as the fatal error. So the tutor trusts no mark (decided 26 September 2026): the
+  reader gains an option under which a marked cell is read as covered and unknown, and the tutor
+  reads with it on. Everything the tutor says is then provable from open cells alone, and a
+  lesson may name a cell the player has already marked, rightly or wrongly; when the tier it
+  names differs from the mark, the caption says so ("you marked this 3; it is a 4").
 - **The player's pencil.** Never read as a bound, for the invariant's reason. The tutor's
   candidate sets start full on every press.
 
@@ -154,10 +156,9 @@ caption shows the lower grades first meanwhile.
 
 Sweep is free and charged; the tutor is free and counted. Each press is a hint, the clear
 screen says how many the board took ("cleared with 2 hints"), and a hinted board does not set a
-best time, the way the galleries' boards do not (`docs/ui.md`). Whether a hint should also carry
-a charge or a Sweep-like meter is the owner's call (section 8); the plan's position is that a
-player asking why is doing the thing the game wants, and the best-time rule is enough to keep
-the tutor out of the record book.
+best time, the way the galleries' boards do not (`docs/ui.md`). That is the whole cost, decided
+26 September 2026: no charge, no meter, no HP. A player asking why is doing the thing the game
+wants, and the best-time rule is enough to keep the tutor out of the record book.
 
 Hints per board, per ladder, per grade, go into the save as the runs do. That is the first
 telemetry the tuning plan asks for (`docs/human-tuning-plan.md`, open question 1): where players
@@ -189,7 +190,7 @@ Each a commit, on branch `m5-tutor`; the owner reviews and merges.
 2. The trick text table, `src/sim/tricktext.ts`: for every `TrickId` a name, the catalogue's
    sentence as a template, and the section it lives in. `test/tricktext.test.ts` holds every id
    to section 7 of `docs/strategies.md`, both ways.
-3. `src/sim/tutor.ts` and its test (4.3), including the two readings of marks.
+3. `src/sim/tutor.ts` and its test (4.3), including the reader option that reads marked cells as unknown.
 4. The board overlay: `drawLesson` in `src/ui/board/overlays.ts`; `BoardDisplay` gains
    `lesson: Lesson | null`. Verified with canvas hashes as the Milestone 3 splits were.
 5. The key, the button, the caption in place of the hint line, dismissal on click, the hint
@@ -199,9 +200,10 @@ Each a commit, on branch `m5-tutor`; the owner reviews and merges.
 
 ## 5. Part 2: the school
 
-Eight short lessons, one trick each, on boards drawn so that the trick is the only move.
+Nine short lessons, one trick each, on boards drawn so that the trick is the only move.
 Grades 0 to 2 and the guessing rules: the tricks that make a grade-1 player, who "can still
-clear a great many boards", and the two grade-2 tricks that make the hard ladders clearable.
+clear a great many boards", the two grade-2 tricks that make the hard ladders clearable, and
+the one grade-4 count that every endgame is.
 
 ### 5.1 The lessons
 
@@ -215,9 +217,11 @@ clear a great many boards", and the two grade-2 tricks that make the hard ladder
 | 6 | The 1-2-1 | subtract | 2 | The catalogue's wall: `1 4 3 3`. | Names the 3, opens the two empties, names the 1. |
 | 7 | Bounds and the pencil | bounds | 2 | A 9 over two cells. | Pencils "4 or 5" on both; learns the pencil is read by its lowest candidate. |
 | 8 | Guessing well | none | — | A forced guess that two free kills elsewhere would make unnecessary. | Takes the free kills first; reads the worst-case cost; then guesses, or need not. |
+| 9 | The last of a tier | last of tier | 4 | One 5 left on the counter, a 9 over two cells, covered ground elsewhere. | Reads the counter, places the last 5 in the pair, opens everything else at level 4. |
 
-A ninth, optional, for the endgame: **the last of a tier** (grade 4), one 5 left and a 9 over two
-cells, because the last few level-ups on every ladder are exactly that hunt.
+The ninth is in (decided 26 September 2026) because the last few level-ups on every ladder are
+exactly that hunt: the top thresholds are met by killing every creature of a tier, so the endgame
+is finding the last one, and a player who has never counted meets it on every board 10.
 
 The ladder-specific tricks (met partner, corridors, the whole pack, the sprinkles, the lone dark
 square, the partner's tier) are not school lessons. They mean nothing off their ladder, and each
@@ -261,9 +265,11 @@ taught, so that a change to the catalogue's sentence changes all three places.
 
 On a lesson board a click that no trick has proven is refused with a caption ("Nothing proves
 that cell yet; look at the 4") rather than fought, except on lesson 8, where guessing is the
-lesson. This is a rule for lesson boards alone, made in the UI (the click never reaches the
-engine), and it is what keeps a lesson from derailing into a death that teaches the wrong thing.
-Every lesson can be left at any point and restarted.
+lesson (decided 26 September 2026). This is a rule for lesson boards alone, made in the UI (the
+click never reaches the engine), and it is what keeps a lesson from derailing into a death that
+teaches the wrong thing. The refusal is itself a lesson: a refused click is a cell the player has
+not proven, and the caption points at the number that would. Every lesson can be left at any
+point and restarted.
 
 `test/school.test.ts` plays every lesson with the graded player at the lesson's grade and checks
 that it makes the expected move at each step with no guess, and that the grade below does not.
@@ -347,24 +353,29 @@ Each step is a branch, one commit per move, `npm run check` before hand-over, go
 byte-identical throughout (nothing here is meant to alter behaviour), and the owner merges.
 Decisions go to `docs/decisions/`; bugs found go to GitHub Issues, drafted for approval.
 
-## 8. Decisions for the owner
+## 8. Decisions
 
-1. **Hints and the record book.** The plan says a hinted board sets no best time and carries no
-   other cost. The alternatives are a charge like Sweep's, or nothing at all.
-2. **Trusting marks.** Two readings, open cells first and marks second, with the caption saying
-   which (4.3). The alternative is one reading that trusts marks, as D does.
-3. **Refusing unproven clicks in the school** (5.3). The alternative is to let a lesson be lost
-   and restarted.
-4. **The stuck case** (4.5): the worst case and the levels-away figure are facts about the rules;
+Decided by the owner on 26 September 2026:
+
+1. **Hints and the record book.** A hinted board sets no best time and carries no other cost: no
+   charge, no meter, no HP (4.4).
+2. **Trusting marks.** The tutor trusts none. It reads marked cells as covered and unknown, and
+   says when a lesson names a cell differently from its mark (4.3).
+3. **Refusing unproven clicks in the school.** Refused, with a caption pointing at the number
+   that would prove the cell; lesson 8 excepted (5.3).
+4. **The ninth lesson** (the last of a tier, grade 4) is in (5.1).
+
+Still open:
+
+5. **The stuck case** (4.5): the worst case and the levels-away figure are facts about the rules;
    naming a cell to guess would be advice about odds, and the plan does not. Confirm.
-5. **The key.** `H` is free. `?` is the other candidate.
-6. **The guide's words** duplicated and tested, or the catalogue's trick sections generated from
+6. **The key.** `H` is free. `?` is the other candidate.
+7. **The guide's words** duplicated and tested, or the catalogue's trick sections generated from
    the table (6.1).
-7. **A post-mortem.** The death screen could say "the move you missed": the tutor's pass on the
+8. **A post-mortem.** The death screen could say "the move you missed": the tutor's pass on the
    board as it stood before the fatal click. It needs the pre-click state kept, which is one
    snapshot; it is cheap once Part 1 exists and is not in this plan's scope until the owner wants
    it.
-8. **The ninth lesson** (the last of a tier, grade 4). In or out.
 
 ## 9. Definition of done
 
@@ -383,4 +394,6 @@ Decisions go to `docs/decisions/`; bugs found go to GitHub Issues, drafted for a
 
 ## 10. Status
 
-Drafted 26 September 2026. Nothing built. Awaiting the owner's answers to section 8.
+Drafted 26 September 2026, and the owner decided the four questions that shape the build the
+same day (section 8, items 1 to 4). Nothing built. The first step is Part 1's provenance commit
+on branch `m5-tutor`; the four questions still open in section 8 do not block it.
