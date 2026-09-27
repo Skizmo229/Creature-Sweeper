@@ -13,6 +13,7 @@ import { DEFAULT_MAX_ZOOM, type HighlightStyle } from '../settings.js';
 import type { TypeTheme } from '../looktypes.js';
 import { PIP_FAMILY, glyphChar, isGlyphPip } from '../pipsymbols.js';
 import { MARK_COLOR } from '../theme.js';
+import { DEFAULT_TIERS, type TierPalette } from '../tiercolors.js';
 import { FONTS, type GameFont } from '../typefaces.js';
 import type { VictorySource, VictorySprite } from '../victory/play.js';
 import {
@@ -61,6 +62,8 @@ export interface BoardDisplay {
   highlightColor: string;
   /** Whether a defeated creature keeps its struck-through corner. */
   strikeDefeated: boolean;
+  /** The colour a creature of each tier is drawn in, and the halo of tiers 6 to 9. */
+  tierColors: TierPalette;
 }
 
 const DEFAULT_DISPLAY: BoardDisplay = {
@@ -69,6 +72,7 @@ const DEFAULT_DISPLAY: BoardDisplay = {
   highlight: 'neighbours',
   highlightColor: MARK_COLOR,
   strikeDefeated: true,
+  tierColors: DEFAULT_TIERS,
 };
 
 /**
@@ -429,6 +433,7 @@ export class BoardView implements InputHost {
       layout: this.layout,
       game,
       theme,
+      tierColors: this.display.tierColors,
       font: this.display.font,
       strikeDefeated: this.display.strikeDefeated,
       hovered: this.hoveredCellValue,

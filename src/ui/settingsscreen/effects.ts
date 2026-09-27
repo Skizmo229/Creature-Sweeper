@@ -190,7 +190,13 @@ export function clearEffectRow(ctx: ScreenContext, host: HTMLElement): void {
     stopSettingsDemo();
     const effect = settings.victoryEffect(typeId);
     if (!effect) return;
-    stopDemo = playVictory(demoBox, effect, currentTheme, demo.view.victorySource());
+    stopDemo = playVictory(
+      demoBox,
+      effect,
+      currentTheme,
+      ctx.display().tierColors,
+      demo.view.victorySource(),
+    );
   };
 
   /**

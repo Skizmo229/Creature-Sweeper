@@ -73,8 +73,8 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - Palette and icon are separate settings; the menus keep the ladder's own accent whatever the
   board wears.
 - The HUD says words (`Level`, `Next Level`, `TIME 12 LEFT`), no zero padding. The level number
-  and the LV buttons wear the tier's creature colour (`tierColor`), with a gold stroke or border
-  for tiers 6 to 9. Readouts are 1.9rem (1.7 on a phone), by request, so the HUD takes two rows on
+  and the LV buttons wear the tier's creature colour (`tierColor`), with the halo, gold unless the
+  player's own colours say otherwise, as a stroke or border for tiers 6 to 9. Readouts are 1.9rem (1.7 on a phone), by request, so the HUD takes two rows on
   a laptop.
 - The rules card leads with the sum rule and its proof (a number can exceed 8). Only EASY explains
   a death (`TEACHING_TYPE`); the loss note says "took your last N HP".
@@ -166,6 +166,15 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   zoom example, which is drawn at the size it sets. Cells are rounded to whole pixels. Like text
   size it applies on release, holding the row under the pointer, with one thumbnail following the
   thumb; tiles and the symbol window's side panel grow with it (`--chip-w`).
+- The creature colours' gallery draws one beaten creature of every tier, 1 to 5 over 6 to 9
+  (`tierSampleBoard`), as dimmed and struck as they are in play: the game's own five hues, the
+  presets chosen by measurement (decision 0053), and a Custom tile, lit while the player's own
+  colours are in force and keeping them while a preset is. Its window has a swatch for each tier
+  and one, a ring, for the halo; the mixer of the highlight colour's window mixes whichever is
+  chosen, a row of buttons starts again from any preset or the player's own, and the example
+  redraws as they move. Only "Use these colours" saves. The colours are global, so no ladder's
+  default names them; they reach the board, the level number, the LV buttons, the tutor's named
+  cell and the clear effects' glyphs and confetti.
 - The cursor-highlight gallery draws on the grid of the ladder the player came from and needs
   `BoardView.pinHover`, because a thumbnail has no cursor. So does the highlight colour's, in the
   player's shape of highlight (the default's while it is off): the game type's green, four presets

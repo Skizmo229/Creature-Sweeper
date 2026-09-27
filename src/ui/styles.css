@@ -1641,6 +1641,52 @@ input.color-hex {
 button.color-use {
   align-self: flex-start;
 }
+/* The custom creature colours: a row of buttons to start again from a preset,
+   a swatch for each tier and one for the halo (`--swatch`, set as it is
+   mixed), the one being mixed lit, and the mixer under them. The halo's swatch
+   is a ring, as the halo is. */
+.tier-starts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.tier-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+button.tier-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 5px 6px;
+  font-size: 0.72rem;
+}
+button.tier-swatch[aria-pressed='true'] {
+  border-color: var(--tint);
+  box-shadow: inset 0 0 0 1px var(--tint);
+}
+.tier-swatch-color {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--swatch);
+  border: 1px solid var(--line);
+}
+.tier-swatch.halo .tier-swatch-color {
+  background: transparent;
+  box-shadow: inset 0 0 0 4px var(--swatch);
+}
+.tier-editing {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
 @media (max-width: 680px) {
   .color-body {
     flex-direction: column;

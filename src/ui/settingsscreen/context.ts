@@ -88,6 +88,7 @@ export function makeContext(
     highlight: settings.highlightStyle(typeId),
     highlightColor: settings.highlightColor(typeId),
     strikeDefeated: p.strikeDefeated,
+    tierColors: settings.tierColors(typeId),
     ...over,
   });
   return {

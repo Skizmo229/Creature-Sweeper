@@ -7,12 +7,13 @@
  *
  * The split: pip SHAPE carries type identity (each ladder has its own), pip
  * COLOUR carries tier identity and is global, so a tier-4 creature looks the
- * same everywhere. Shape is decoration; colour is information.
+ * same everywhere (`tiercolors.ts`). Shape is decoration; colour is information.
  */
 
 import type { GlyphPip, Pip, PipShape, SfxPackId, TypeTheme, VictoryId } from './looktypes.js';
 import { PIP_FAMILY, findSymbol, glyphChar, isGlyphPip } from './pipsymbols.js';
 import type { SfxEvent } from './sfx.js';
+import { type TierPalette, tierColor, tierGilded } from './tiercolors.js';
 
 /** Every creature-icon shape, in the order the picker shows them. */
 export const PIP_SHAPES: readonly PipShape[] = [
@@ -177,33 +178,6 @@ export const BOX_RULE = 'rgba(8, 4, 12, 0.92)';
  *  too, which is what carries it on a light tile — see `drawNotes`. */
 export const NOTE_COLOR = 'rgba(53, 224, 106, 0.72)';
 
-/**
- * Creature tier colours — five hues, reused for tiers 6-9 with a gold halo.
- *
- * Deliberately NOT a warm threat ramp: yellow/orange/red cluster so tightly
- * that adjacent tiers were indistinguishable (yellow against lime measured
- * ΔE 2.5 under protanopia), which is what made the glyphs hard to read. Since
- * the pip *count* already encodes magnitude, colour's job here is identity, so
- * the hues are spread instead of ramped.
- *
- * Validated against a near-black floor: the only soft spot is yellow against
- * green under protanopia (ΔE 6.4), and the pip count disambiguates that pair
- * completely on its own.
- */
-export const TIER_COLORS = ['#54c8ff', '#5fd97a', '#ffd447', '#ff8f3a', '#ff5fc4'] as const;
-
-/** Tiers past the fifth repeat the five hues wearing this. */
-export const TIER_GOLD = '#ffcc33';
-
-export function tierColor(tier: number): string {
-  return TIER_COLORS[(Math.max(1, tier) - 1) % TIER_COLORS.length]!;
-}
-
-/** True for tiers 6+, which wear their hue with a gold halo. */
-export function tierGilded(tier: number): boolean {
-  return tier > TIER_COLORS.length;
-}
-
 /** Which of the nine grid positions are lit, per die face. */
 const DIE_FACES: Record<number, readonly number[]> = {
   1: [4],
@@ -322,7 +296,7 @@ function pipPath(
 }
 
 /**
- * Draw a creature glyph filling a `size`-pixel cell at (x, y).
+ * Draw a creature glyph filling a `size`-pixel cell at (x, y), in its tier's colour.
  * The 3x3 pip grid sits on a 16-unit cell, scaled to size.
  */
 export function drawCreature(
@@ -332,9 +306,10 @@ export function drawCreature(
   size: number,
   tier: number,
   theme: TypeTheme,
+  tierColors: TierPalette,
 ): void {
   const face = DIE_FACES[Math.min(9, Math.max(1, tier))] ?? DIE_FACES[1]!;
-  const color = tierColor(tier);
+  const color = tierColor(tierColors, tier);
   const gilded = tierGilded(tier);
   const unit = size / 16;
   // Gilded pips shrink so their halo fits in the 4.5-unit gap between pips.
@@ -350,16 +325,15 @@ export function drawCreature(
   ctx.save();
   ctx.lineJoin = 'round';
   if (isGlyphPip(pip)) {
-    drawSymbolPips(ctx, pip, centres, r, color, gilded ? halo : 0);
+    drawSymbolPips(ctx, pip, centres, r, color, tierColors.halo, gilded ? halo : 0);
     ctx.restore();
     return;
   }
   const hollow = pip === 'ring' || pip === 'ringDiamond';
   for (const { cx, cy } of centres) {
-    // Tiers 6-9 reuse the first five hues wearing a gold halo, so the palette
-    // covers nine tiers without nine barely-distinguishable colours.
+    // Tiers 6-9 wear the halo, under the pip so its colour stays whole.
     if (gilded) {
-      ctx.strokeStyle = TIER_GOLD;
+      ctx.strokeStyle = tierColors.halo;
       ctx.lineWidth = halo;
       pipPath(ctx, pip, cx, cy, hollow ? r - unit * 0.55 : r);
       ctx.stroke();
@@ -381,7 +355,7 @@ export function drawCreature(
  */
 const SYMBOL_SPAN = 1.1;
 /**
- * A gilded symbol's gold halo, as a share of a drawn pip's. Stroking a symbol strokes its holes
+ * A gilded symbol's halo, as a share of a drawn pip's. Stroking a symbol strokes its holes
  * too, and a full-width halo closed up the detail of the finer ones (the skull's eyes, a pointing
  * finger's knuckles) at a thumbnail's cell size.
  */
@@ -421,8 +395,8 @@ function symbolInk(ctx: CanvasRenderingContext2D, char: string): Ink {
 
 /**
  * A symbol at each pip, its ink centred where the pip's centre is and scaled so its longer side
- * spans the pip, whatever the symbol's own metrics. A gilded tier's gold halo is the symbol's
- * outline stroked under it, as a drawn pip's is.
+ * spans the pip, whatever the symbol's own metrics. A gilded tier's halo is the symbol's outline
+ * stroked under it in `haloColor`, as a drawn pip's is; `halo` is its width, 0 for none.
  */
 function drawSymbolPips(
   ctx: CanvasRenderingContext2D,
@@ -430,6 +404,7 @@ function drawSymbolPips(
   centres: readonly { cx: number; cy: number }[],
   r: number,
   color: string,
+  haloColor: string,
   halo: number,
 ): void {
   const char = glyphChar(pip);
@@ -441,7 +416,7 @@ function drawSymbolPips(
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = color;
-  ctx.strokeStyle = TIER_GOLD;
+  ctx.strokeStyle = haloColor;
   ctx.lineWidth = halo * SYMBOL_HALO;
   for (const { cx, cy } of centres) {
     const px = cx - ((ink.right - ink.left) * k) / 2;

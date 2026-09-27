@@ -25,6 +25,7 @@ import {
   strikeRow,
   menuStripRow,
   textSizeRow,
+  tierColorsRow,
   zoomRow,
 } from './look.js';
 import { CHIP_CELL } from './render.js';
@@ -79,6 +80,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
       'Every example below is a real board drawn by the game’s own renderer.',
   );
   iconsRow(ctx, look);
+  tierColorsRow(ctx, look);
   paletteRow(ctx, look);
   boardFontRow(ctx, look);
   interfaceFontRow(ctx, look);

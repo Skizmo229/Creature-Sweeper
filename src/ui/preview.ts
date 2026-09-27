@@ -259,6 +259,19 @@ export function highlightSampleLands(cell: Cell): boolean {
   return cell.open || cell.x <= HIGHLIGHT_PIN.x;
 }
 
+/**
+ * The creature colours' example: one beaten creature of every tier, 1 to 5 in a row over 6 to 9,
+ * so the game's own palette shows each hue over the tier that wears it again with the halo. The
+ * last cell is left covered, because a drawing with nothing alive is a board already won.
+ */
+export function tierSampleBoard(): Game {
+  return once('tiers', () =>
+    Game.fromLayout(['1 2 3 4 5', '6 7 8 9 1'], ['k1 k2 k3 k4 k5', 'k6 k7 k8 k9 ?'], {
+      typeId: 'preview',
+    }),
+  );
+}
+
 /** The hex highlight example — HIVE's. */
 export function hexSampleBoard(): Game {
   return highlightSampleBoard('hex');

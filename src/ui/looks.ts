@@ -4,7 +4,7 @@
  * ladder to its record (`test/fonts.test.ts`).
  *
  * The split the palettes keep: pip SHAPE carries ladder identity, pip COLOUR carries tier identity
- * and is global (`TIER_COLORS` in `theme.ts`), so a tier-4 creature looks the same everywhere.
+ * and is global (`tiercolors.ts`), so a tier-4 creature looks the same everywhere.
  * Every face and effect here was checked on its own palette at a 16px cell before it was chosen;
  * two ladders may share a face (decision 0031).
  */

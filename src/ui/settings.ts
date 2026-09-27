@@ -3,10 +3,11 @@
  *
  * Two halves that behave very differently:
  *
- * **Presentation** — icons, palette, the board's font and the interface's,
- * sound, the clear effect, the glow after a fight, the cursor highlight and its
- * colour, the struck-out creatures, the zoom ceiling. None of it touches a
- * rule, so none of it can affect whether a clear is recorded.
+ * **Presentation** — icons and their tiers' colours, palette, the board's font
+ * and the interface's, sound, the clear effect, the glow after a fight, the
+ * cursor highlight and its colour, the struck-out creatures, the zoom ceiling.
+ * None of it touches a rule, so none of it can affect whether a clear is
+ * recorded.
  *
  * **Gameplay** — the dials in `engine/settings.ts`. Those change the rules, so
  * they decide whether a board counts. See `isAtLeastAsHard`: a player who
@@ -32,6 +33,13 @@ import {
 import type { Pip, SfxPackId, TypeTheme, VictoryId } from './looktypes.js';
 import { lookFor, themeFor } from './looks.js';
 import { MARK_COLOR } from './theme.js';
+import {
+  DEFAULT_TIERS,
+  TIER_COUNT,
+  TIER_PRESETS,
+  type TierPalette,
+  type TierPresetId,
+} from './tiercolors.js';
 import { type FontId, type GameFont, TITLE_FONT, fontFor, migrateFontChoice } from './typefaces.js';
 import { SETTINGS_KEY as KEY } from './savefile.js';
 
@@ -97,6 +105,11 @@ export function readHexColor(text: unknown): string | null {
   if (!digits) return null;
   return `#${digits.length === 3 ? [...digits].map((d) => d + d).join('') : digits}`;
 }
+
+/** The player's own tier colours, mixed in the custom window and kept in `customTierColors`. */
+export const CUSTOM_TIERS = 'custom';
+/** The colours a creature's tiers are drawn in: the game's own, a preset, or the player's own. */
+export type TierColorChoice = typeof DEFAULT | TierPresetId | typeof CUSTOM_TIERS;
 
 /**
  * Which fights light the edge of the board. 'every' is green for a fight that cost nothing, blue
@@ -167,6 +180,13 @@ const DEFAULT_SFX_VOLUME = 1;
 
 export interface PresentationSettings {
   readonly icons: IconChoice;
+  /** The colour of each creature tier, wherever a tier is drawn: the board, the HUD, the LV buttons. */
+  readonly tierColors: TierColorChoice;
+  /**
+   * The tier colours the player mixed, or null for none yet. Kept while a preset is chosen, so the
+   * Custom tile still holds them to go back to.
+   */
+  readonly customTierColors: TierPalette | null;
   readonly palette: PaletteChoice;
   /** The face of the board's numbers and marks. */
   readonly font: FontChoice;
@@ -234,6 +254,8 @@ export interface PresentationSettings {
 
 const DEFAULT_PRESENTATION: PresentationSettings = {
   icons: DEFAULT,
+  tierColors: DEFAULT,
+  customTierColors: null,
   palette: DEFAULT,
   font: DEFAULT,
   interfaceFont: DEFAULT,
@@ -311,6 +333,17 @@ function readSoundCheck(raw: unknown): SoundCheckSettings {
   };
 }
 
+/** A palette of the player's own, or null unless every tier and the halo is a colour. */
+function readTierPalette(raw: unknown): TierPalette | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const { colors, halo } = raw as Record<string, unknown>;
+  if (!Array.isArray(colors) || colors.length !== TIER_COUNT) return null;
+  const read = colors.map(readHexColor);
+  const ring = readHexColor(halo);
+  if (!ring || read.some((c) => c === null)) return null;
+  return { colors: read as string[], halo: ring };
+}
+
 function readPresentation(raw: unknown): PresentationSettings {
   const p = (raw ?? {}) as Record<string, unknown>;
   const str = (k: string, fallback: string): string =>
@@ -319,11 +352,18 @@ function readPresentation(raw: unknown): PresentationSettings {
   // build does not know is kept, like `icons`, and resolves to the baseline
   // face until a build that knows it reads the save.
   const font = migrateFontChoice(str('font', DEFAULT)) as FontChoice;
+  const customTierColors = readTierPalette(p.customTierColors);
+  const tierColors = str('tierColors', DEFAULT) as TierColorChoice;
   return {
     // Not validated against the shape list on purpose: an unknown pip falls
     // through `drawCreature`'s own default, and rejecting it here would lose a
     // setting written by a newer build.
     icons: str('icons', DEFAULT) as IconChoice,
+    // A save from before this setting reads as the game's own colours, and so does one choosing
+    // its own colours without a whole palette of them. A preset this build does not know is kept,
+    // as `icons` keeps an unknown pip, and resolves to the game's own.
+    tierColors: tierColors === CUSTOM_TIERS && !customTierColors ? DEFAULT : tierColors,
+    customTierColors,
     palette: str('palette', DEFAULT),
     font,
     // A save from before this setting had one font for the board and the
@@ -517,6 +557,14 @@ export class Settings {
     // adjacency ring. `lookFor(typeId)` is where a per-type answer would
     // go if one ever earns its place.
     return 'neighbours';
+  }
+
+  /** The colour of each creature tier, and the halo of tiers 6 to 9. */
+  tierColors(_typeId: string): TierPalette {
+    const { tierColors, customTierColors } = this.data.presentation;
+    // No ladder has colours of its own for its tiers: a tier looks the same on every board.
+    if (tierColors === CUSTOM_TIERS) return customTierColors ?? DEFAULT_TIERS;
+    return TIER_PRESETS.find((t) => t.id === tierColors)?.palette ?? DEFAULT_TIERS;
   }
 
   /** The colour the cursor lights a cell in when a click there would land. */

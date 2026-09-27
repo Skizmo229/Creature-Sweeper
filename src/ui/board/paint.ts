@@ -18,6 +18,7 @@ import {
   drawCreature,
 } from '../theme.js';
 import type { TypeTheme } from '../looktypes.js';
+import type { TierPalette } from '../tiercolors.js';
 import type { GameFont } from '../typefaces.js';
 import { setNumberFont } from './digits.js';
 import { type Layout, contentBox } from './geometry.js';
@@ -28,6 +29,8 @@ export interface Paint {
   readonly layout: Layout;
   readonly game: Game;
   readonly theme: TypeTheme;
+  /** The colour of each tier, and the halo of tiers 6 to 9. */
+  readonly tierColors: TierPalette;
   readonly font: GameFont;
   /** Whether a defeated creature keeps its struck-through corner. */
   readonly strikeDefeated: boolean;
@@ -39,6 +42,12 @@ export interface Paint {
 
 /** How far inside its true bounds a tile's outline runs, so neighbours read as separate. */
 export const TILE_INSET = 1;
+
+/**
+ * How opaque a beaten creature's glyph is drawn. Dimmed rather than washed out with a floor
+ * overlay, which left defeated creatures almost invisible.
+ */
+export const BEATEN_ALPHA = 0.55;
 
 /** Trace a cell's outline, by default the tile's own (`TILE_INSET`). */
 export function tracePath(p: Paint, cx: number, cy: number, inset = TILE_INSET): void {
@@ -207,10 +216,8 @@ export function drawOpen(p: Paint, cell: Cell, cx: number, cy: number): void {
   if (cell.tier > 0 && !hoverNumber) {
     if (p.creaturesHidden) return;
     ctx.save();
-    // Dim the glyph itself rather than washing it out with a floor overlay, which left defeated
-    // creatures almost invisible.
-    if (!cell.alive) ctx.globalAlpha = 0.55;
-    drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme);
+    if (!cell.alive) ctx.globalAlpha = BEATEN_ALPHA;
+    drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme, p.tierColors);
     ctx.restore();
     // A struck-through corner reads as "dealt with" at a glance. Optional, because at small
     // cell sizes the stroke crosses the pips.

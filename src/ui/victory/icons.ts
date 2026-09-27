@@ -3,7 +3,7 @@
  * effect (`VictorySource`).
  */
 
-import { tierColor } from '../theme.js';
+import { tierColor } from '../tiercolors.js';
 import type { VictoryId } from '../looktypes.js';
 import { type Mover, type Painter, type Stage, type VictorySprite, blit } from './stage.js';
 
@@ -175,7 +175,7 @@ function pop(stage: Stage): Painter {
       blit(ctx, stage.atlas, m, { scale: 1.62 + u, alpha: 1 - u });
       ctx.save();
       ctx.globalAlpha *= 1 - u;
-      ctx.strokeStyle = tierColor(m.sprite.tier);
+      ctx.strokeStyle = tierColor(stage.tierColors, m.sprite.tier);
       ctx.lineWidth = Math.max(1.5, m.sprite.size * 0.12 * (1 - u));
       ctx.beginPath();
       ctx.arc(m.x, m.y, m.sprite.size * (0.45 + u * 0.95), 0, Math.PI * 2);
