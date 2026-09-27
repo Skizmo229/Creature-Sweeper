@@ -198,8 +198,8 @@ describe('the app', () => {
     expect(document.querySelector('.hint')!.classList.contains('tutoring')).toBe(true);
     // The lesson is the same code the instrument runs, so what it points at is sound.
     const lesson = (
-      app as unknown as { tutor: { shown(): { open: { tier: number }[] } } }
-    ).tutor.shown();
+      app as unknown as { teaching: { tutor: { shown(): { open: { tier: number }[] } } } }
+    ).teaching.tutor.shown();
     for (const cell of lesson.open) expect(cell.tier).toBeLessThanOrEqual(game.level);
     // A second press moves on; any move on the board dismisses the lesson.
     key('h');
@@ -235,8 +235,9 @@ describe('the app', () => {
     app.play('normal', 1, 7);
     key('h');
     expect(document.querySelector('.hint .hint-more')).not.toBeNull();
-    const trick = (app as unknown as { tutor: { shown(): { trick: TrickId } } }).tutor.shown()
-      .trick;
+    const { tutor } = (app as unknown as { teaching: { tutor: { shown(): { trick: TrickId } } } })
+      .teaching;
+    const trick = tutor.shown().trick;
     key('g');
     expect(text('.guide-here h4')).toContain(TRICK_TEXT[trick].name);
     key('Escape');

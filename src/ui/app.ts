@@ -21,23 +21,18 @@ import { flashStage } from './game/flash.js';
 import { buildBoardOutcome, buildRunOutcome } from './game/outcome.js';
 import { type GameScreenElements, buildGameScreen } from './game/screen.js';
 import { soundFor } from './game/sound.js';
-import { Tutor } from './game/tutor.js';
 import { ladders } from './ladders.js';
 import { buildMuteButton, syncMuteButton } from './mute.js';
 import type { AskOptions } from './overlays/ask.js';
 import { Modal } from './overlays/modal.js';
 import { Progress } from './progress.js';
 import { buildBoardList } from './screens/boards.js';
-import { type GuideTarget, buildGuide } from './screens/guide.js';
-import { GUESSING_WELL } from './guide/entries.js';
 import { buildLadderList } from './screens/ladders.js';
 import { Settings } from './settings.js';
 import { buildSettingsScreen } from './settingsscreen/screen.js';
 import { Sfx } from './sfx.js';
+import { Teaching } from './teaching.js';
 import { playVictory } from './victory/play.js';
-
-/** The field guide's diagrams' cell size before the preview-size setting scales it, in CSS pixels. */
-const GUIDE_CELL = 40;
 
 export class App {
   private readonly root: HTMLElement;
@@ -69,14 +64,15 @@ export class App {
     refresh: () => this.refresh(),
     leaveGame: () => this.leaveGame(),
     explain: () => this.explainBoard(),
-    guide: () => this.guideFromBoard(),
+    guide: () => this.teaching.guideFromBoard(),
   });
   private readonly clock = new BoardClock();
-  private readonly tutor = new Tutor();
   /** Where the settings screen goes back to while it is showing; Escape takes the same route. */
   private settingsBack: (() => void) | null = null;
   /** The modal overlay over the screen: a question, the how-to, the save backup, the guide. */
   private readonly modal: Modal;
+  /** The tutor, the rules card and the field guide. */
+  private readonly teaching: Teaching;
   /** Stops a running board-clear effect; a screen rebuild must call it. */
   private stopVictory: (() => void) | null = null;
   /** The blow that ended a lost board, kept for the overlay. */
@@ -102,13 +98,18 @@ export class App {
     this.startFullRun(typeId, seed ?? randomSeed());
   }
   sync(): void {
-    this.tutor.dismiss();
+    this.teaching.tutor.dismiss();
     this.refresh();
   }
 
   constructor(root: HTMLElement) {
     this.root = root;
     this.modal = new Modal(root);
+    this.teaching = new Teaching({
+      settings: this.settings,
+      modal: this.modal,
+      typeId: () => this.typeId,
+    });
     window.addEventListener('keydown', (e) => this.onKey(e));
     window.addEventListener('resize', () => this.view?.fit());
     // A settings change has to reach the board the player came from, not just the next one.
@@ -190,8 +191,8 @@ export class App {
         settings: this.settings,
         recordsCount: this.recordsCount,
         pickType: (id) => this.showBoards(id),
-        howTo: () => this.showHowTo(),
-        guide: () => this.showGuide(),
+        howTo: () => this.teaching.howTo(),
+        guide: () => this.teaching.guide(),
         openSettings: () => this.showSettings(() => this.showTypes()),
         backup: () => this.modal.saveBackup(),
         resetProgress: () =>
@@ -216,7 +217,7 @@ export class App {
     // so a reload cannot reopen it.
     if (!this.progress.seenHowTo) {
       this.progress.markHowToSeen();
-      this.showHowTo();
+      this.teaching.howTo();
     }
   }
 
@@ -230,7 +231,7 @@ export class App {
       buildBoardList(typeId, {
         progress: this.progress,
         back: () => this.showTypes(),
-        guide: () => this.showGuide(undefined, typeId),
+        guide: () => this.teaching.guide(undefined, typeId),
         startBoard: (id, n) => this.startBoard(id, n),
         startRun: (id) => this.startFullRun(id),
       }),
@@ -273,36 +274,6 @@ export class App {
     this.modal.ask(opts);
   }
 
-  /** The rules card, which offers the field guide. */
-  private showHowTo(): void {
-    this.modal.howTo(() => this.showGuide());
-  }
-
-  /**
-   * The field guide over whatever is on screen, open at `target` if one is given and led by how to
-   * play `ladderId` if one is, its diagrams in the look of the ladder the player is on or last
-   * looked at.
-   */
-  private showGuide(target?: GuideTarget, ladderId?: string): void {
-    const { overlay, focus, show } = buildGuide({
-      ladders,
-      ladder: ladders.find((t) => t.id === ladderId),
-      theme: this.settings.themeFor(this.typeId),
-      display: boardDisplayFor(this.settings, this.typeId),
-      cell: Math.round(GUIDE_CELL * this.settings.presentation.previewSize),
-      close: () => this.modal.close(),
-    });
-    if (this.modal.show(overlay, focus)) show(target);
-  }
-
-  /** The guide from a board: at the trick the tutor is showing, or at guessing well at a guess. */
-  private guideFromBoard(): void {
-    const topic = this.tutor.topic();
-    const at =
-      topic === 'guess' ? { section: GUESSING_WELL } : topic ? { trick: topic } : undefined;
-    this.showGuide(at, this.typeId);
-  }
-
   // ------------------------------------------------------------ the board
 
   private startBoard(typeId: string, board: number, seed = randomSeed()): void {
@@ -335,7 +306,7 @@ export class App {
     this.run = FullRun.start(ladders, typeId, seed, { settings: this.settings.gameplay });
     this.boardIndex = this.run.boardIndex;
     this.resetBoardState();
-    this.tutor.resetRun();
+    this.teaching.tutor.resetRun();
 
     // `FullRun.start` has already built board 1 and dealt its opening.
     this.clock.begin();
@@ -365,7 +336,7 @@ export class App {
   private resetBoardState(): void {
     this.mode.reset();
     this.fatalBattle = null;
-    this.tutor.resetBoard();
+    this.teaching.tutor.resetBoard();
   }
 
   private buildGameScreen(): void {
@@ -393,7 +364,7 @@ export class App {
       wait: () => this.actions.doWait(),
       explain: () => this.explainBoard(),
       tutor: this.settings.presentation.tutor,
-      guide: () => this.guideFromBoard(),
+      guide: () => this.teaching.guideFromBoard(),
       pickSpell: (id) => this.actions.pickSpell(id),
       cancelSpell: () => {
         this.mode.cancelSpell();
@@ -458,7 +429,7 @@ export class App {
 
   private apply(events: GameEvent[]): void {
     const game = this.game!;
-    this.tutor.dismiss();
+    this.teaching.tutor.dismiss();
 
     if (this.els) flashStage(this.els.stage, events, this.settings.presentation.fightRim);
     if (this.sfx.enabled) {
@@ -490,9 +461,9 @@ export class App {
       boardIndex: this.boardIndex,
       mode: this.mode,
       hovered: this.view?.hoveredCell ?? null,
-      tutor: this.tutor.text(),
+      tutor: this.teaching.tutor.text(),
     });
-    this.view?.setLesson(this.tutor.shown());
+    this.view?.setLesson(this.teaching.tutor.shown());
     this.view?.render();
     this.updateClock();
   }
@@ -501,7 +472,9 @@ export class App {
 
   /** The tutor's press: a hint, pointed at the board and said in the hint line. It opens nothing. */
   private explainBoard(): void {
-    if (this.game && this.els?.whyBtn) this.tutor.press(this.game, this.view?.hoveredCell ?? null);
+    if (this.game && this.els?.whyBtn) {
+      this.teaching.tutor.press(this.game, this.view?.hoveredCell ?? null);
+    }
     this.refresh();
   }
 
@@ -550,7 +523,7 @@ export class App {
       const result = this.progress.recordClear(ladders, this.typeId, this.boardIndex, {
         perfect,
         seconds,
-        hinted: this.tutor.hints > 0,
+        hinted: this.teaching.tutor.hints > 0,
       });
       unlocked = result.unlockedBoard;
     }
@@ -570,7 +543,7 @@ export class App {
       seconds,
       fatal: this.fatalBattle,
       recorded,
-      hints: this.tutor.hints,
+      hints: this.teaching.tutor.hints,
       unlocked,
       ladderLength: type.boards.length,
       lastBoard: maxBoard(ladders, this.typeId),
@@ -603,7 +576,7 @@ export class App {
           reachedBoard: this.boardIndex,
           hp: game.hp,
           seconds: this.clock.frozenSeconds!,
-          hinted: this.tutor.runHints > 0,
+          hinted: this.teaching.tutor.runHints > 0,
         });
       }
     }

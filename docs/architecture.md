@@ -49,6 +49,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   config.ts       reads ladders.json rows into BoardConfig; has each placement rule check its row
 src/ui/         the prototype
   app.ts          the router: screens, the cross-screen state, the keyboard, the actions
+  teaching.ts     the tutor on the board, the rules card and the field guide, for app.ts
   dress.ts        the page in the presentation settings: the faces, the text size, the board's slice
   dom.ts          el(), the one DOM helper
   mute.ts         the always-present speaker
