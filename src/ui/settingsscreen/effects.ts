@@ -16,7 +16,7 @@ import { playVictory } from '../victory/play.js';
 import { type ScreenContext, typeName } from './context.js';
 import { renderPreview } from './render.js';
 import { openSoundCheck } from './soundcheck.js';
-import { type Choice, gallery, row, slider, toggle, wideRow } from './widgets.js';
+import { type Choice, gallery, row, showSliderValue, slider, toggle, wideRow } from './widgets.js';
 
 /**
  * The board-clear demo currently running, if any. Module-level because a screen rebuild throws
@@ -72,22 +72,30 @@ export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
       'assigned to sounds there.',
     stack,
   );
+  const percent = (v: number): string => `${Math.round(v * 100)}%`;
+  const volume = slider(
+    0,
+    MAX_SFX_VOLUME,
+    0.05,
+    p.sfxVolume,
+    percent,
+    (v) => settings.setPresentation({ sfxVolume: v }),
+    // Heard on release rather than a sound per step of the drag.
+    () => ctx.onPreview('levelup'),
+  );
+  // The speaker's own slider sets the same volume, and can while this screen is open.
+  const unhook = settings.onChange(() => {
+    if (volume.isConnected) showSliderValue(volume, settings.presentation.sfxVolume, percent);
+    else unhook();
+  });
   row(
     host,
     'Sound effects volume',
-    slider(
-      0,
-      MAX_SFX_VOLUME,
-      0.05,
-      p.sfxVolume,
-      (v) => `${Math.round(v * 100)}%`,
-      (v) => settings.setPresentation({ sfxVolume: v }),
-      // Heard on release rather than a sound per step of the drag.
-      () => ctx.onPreview('levelup'),
-    ),
+    volume,
     'How loud every sound in play is, up to three times its usual level. Past 100% the loudest ' +
       'sounds are held back so nothing blasts; the quiet ones grow. Letting go of the slider ' +
-      'plays a sound at the new level. The sound check keeps a volume of its own.',
+      'plays a sound at the new level. Pointing at the speaker in the corner shows this slider ' +
+      'there too. The sound check keeps a volume of its own.',
   );
   // Updates only the store, like the sound gallery: nothing on the screen is drawn in terms of it.
   row(

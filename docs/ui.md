@@ -233,7 +233,12 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 
 - Sound is synthesised. The `AudioContext` is built lazily on the first sound and resumed on every
   call; every entry point swallows its own failure; one sound per action, the loudest event wins.
-  Muting is not the same as the OFF pack, and the speaker is repainted from `applyPresentation`.
+  Muting is not the same as the OFF pack, and the speaker repaints itself on every settings change.
+- The speaker carries the Sound effects volume (the same setting, not a second one), hidden, by
+  request, until the speaker is hovered or reached by Tab, and held open while its thumb is held.
+  It drops beneath the speaker, because beside it the pointer would cross it on the way to the
+  HUD's Settings and Back. Moving it unmutes: reaching for the volume is reaching to hear it. The
+  settings screen's own slider follows it while that screen is open.
 - The sound check (a button under the Sound effects gallery) plays any pack's sound through
   `Sfx.audition`, which ignores the chosen pack and the throttle but not mute. Keys assigned there
   play only while its window is open. Its keyboard (C2 to C7, equal temperament) retunes the last

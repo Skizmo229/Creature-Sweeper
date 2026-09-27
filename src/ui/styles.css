@@ -1945,11 +1945,13 @@ button.piano-key.pressed {
  * that lacks the glyph — the settings gear already shipped that bug once. A
  * path has no font dependency.
  */
-.mute-toggle {
+.speaker {
   position: fixed;
   top: max(10px, env(safe-area-inset-top, 0px));
   right: max(10px, env(safe-area-inset-right, 0px));
   z-index: 60;
+}
+.mute-toggle {
   width: 34px;
   height: 34px;
   display: grid;
@@ -1990,6 +1992,73 @@ button.piano-key.pressed {
 }
 .mute-toggle.is-muted .mute-slash {
   stroke: var(--danger);
+}
+
+/*
+ * The volume, hidden until the speaker is hovered or reached by keyboard, and
+ * held open while its thumb is held. Dropped beneath the speaker rather than
+ * beside it, where it would cover the HUD's Settings and Back while the pointer
+ * crossed it. It stays a moment after the pointer leaves, so a hand that slips
+ * off does not lose it. `:focus-visible` rather than `:focus-within`, or
+ * clicking the speaker would leave it open until something else took focus.
+ */
+.volume-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px 8px;
+  background: rgba(24, 26, 27, 0.9);
+  border: 1px solid var(--button-line);
+  border-radius: 4px;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 150ms ease 300ms,
+    visibility 0s linear 450ms;
+}
+.speaker:hover .volume-pop,
+.speaker:has(:focus-visible) .volume-pop,
+.speaker:has(:active) .volume-pop {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 150ms ease,
+    visibility 0s;
+}
+/* A bridge over the gap under the speaker, so crossing it keeps the corner hovered. */
+.volume-pop::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 8px;
+}
+/* Upright, loudest at the top. */
+.volume-pop input[type='range'] {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 20px;
+  height: 110px;
+  margin: 0;
+  accent-color: var(--tint);
+}
+.volume-readout {
+  font-size: 0.7rem;
+  color: var(--tint);
+}
+/* Muted, the volume is kept but greyed; moving it turns the sound back on. */
+.mute-toggle.is-muted + .volume-pop input[type='range'] {
+  opacity: 0.5;
+}
+.mute-toggle.is-muted + .volume-pop .volume-readout {
+  color: var(--muted);
 }
 
 /*
