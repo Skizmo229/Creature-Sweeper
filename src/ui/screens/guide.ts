@@ -2,7 +2,9 @@
  * The field guide (docs/teaching-plan.md, section 6): the catalogue of tricks in the game, for
  * reading. An overlay that scrolls inside itself, one section per grade, with the words from
  * `guide/entries.ts` and every diagram drawn as a real board by the real renderer, the tutor's
- * own lesson laid over it. The overlay rules in docs/ui.md apply: fixed, modal, closed by Escape.
+ * own lesson laid over it. Opened for a ladder, it leads with how to play that one
+ * (`guide/ladders.ts`) and marks the tricks that belong to it. The overlay rules in docs/ui.md
+ * apply: fixed, modal, closed by Escape.
  */
 
 import type { LadderType } from '../../engine/config.js';
@@ -22,6 +24,7 @@ import {
   type GuideEntry,
   laddersFor,
 } from '../guide/entries.js';
+import { notesFor } from '../guide/ladders.js';
 
 /** Where the guide opens: at a trick's entry, or at the top of a section, by its title. */
 export type GuideTarget = { trick: TrickId } | { section: string };
@@ -32,6 +35,8 @@ export interface GuideOptions {
   display: BoardDisplay;
   /** The diagrams' cell size, in CSS pixels. */
   cell: number;
+  /** The ladder whose own notes lead the guide, when it was opened for one. */
+  ladder?: LadderType | undefined;
   close(): void;
 }
 
@@ -51,8 +56,11 @@ export function buildGuide(o: GuideOptions): {
   const body = el('div', 'guide-body');
   card.append(head, body);
 
+  const own = el('section', 'guide-section');
+  if (o.ladder) body.append(own);
   const contents = el('nav', 'guide-contents');
   const places = new Map<string, HTMLElement>();
+  const mine: Array<readonly [string, HTMLElement]> = [];
   body.append(contents);
   for (const words of GUIDE_INTRO) body.append(el('p', 'guide-intro', words));
 
@@ -67,10 +75,15 @@ export function buildGuide(o: GuideOptions): {
     for (const entry of section.entries) {
       const article = drawEntry(entry, section.grade, o);
       if (entry.trick) places.set(`trick:${entry.trick}`, article);
+      if (o.ladder && entry.on && laddersFor(entry, [o.ladder]).length) {
+        article.classList.add('guide-own');
+        mine.push([entry.heading ?? '', article]);
+      }
       part.append(article);
     }
     body.append(part);
   }
+  if (o.ladder) drawLadder(own, o.ladder, mine);
   overlay.append(card);
 
   const show = (target?: GuideTarget): void => {
@@ -85,6 +98,33 @@ export function buildGuide(o: GuideOptions): {
     place.scrollIntoView?.({ block: 'start' });
   };
   return { overlay, focus: close, show };
+}
+
+/**
+ * How to play one ladder: the catalogue's notes on it, or its own blurb where the catalogue has
+ * none, and a way to each trick that belongs to it alone, which are marked where they stand.
+ */
+function drawLadder(
+  part: HTMLElement,
+  ladder: LadderType,
+  tricks: ReadonlyArray<readonly [string, HTMLElement]>,
+): void {
+  part.append(el('h3', undefined, `How to play ${ladder.name}`));
+  const notes = notesFor(ladder);
+  for (const note of notes) {
+    part.append(el('h4', undefined, note.heading));
+    part.append(el('p', undefined, note.body));
+  }
+  if (!notes.length) part.append(el('p', undefined, ladder.blurb));
+  if (!tricks.length) return;
+  part.append(el('p', 'guide-on', 'Its own tricks, marked in its colour below:'));
+  const row = el('nav', 'guide-contents');
+  for (const [name, article] of tricks) {
+    const jump = el('button', 'ghost', name);
+    jump.addEventListener('click', () => article.scrollIntoView?.({ block: 'start' }));
+    row.append(jump);
+  }
+  part.append(row);
 }
 
 /** One entry: its heading, where it applies, and its blocks. */

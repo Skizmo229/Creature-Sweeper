@@ -93,6 +93,9 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   danger colour. It opens from the rules card, the ladder list, and on a board from `G` or the
   "more [G]" at the end of what the tutor says, at the entry for the trick it is showing (at a
   guess, Guessing well), marked in violet down its left. Escape closes it and leaves the lesson.
+  A ladder's board list has "How to play" it, which opens the guide led by the catalogue's note on
+  that ladder (section 7, `src/ui/guide/ladders.ts`; its blurb where the catalogue has none) and
+  its own tricks marked in its colour; `G` on a board leads with the board's ladder the same way.
 
 ## Settings screen
 

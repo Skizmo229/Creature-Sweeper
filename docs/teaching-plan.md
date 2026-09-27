@@ -404,5 +404,17 @@ Drafted 26 September 2026, and the owner decided the four questions that shape t
 same day (section 8, items 1 to 4). Part 1, the tutor, was built the same day on branch
 `m5-tutor`, all seven steps of 4.6, with two things found on the way recorded in 4.3 (a mark the
 press has proven is believed) and 4.5 (the advice at a guess is pointed at the cell it weighed).
-The key is `H` (section 8, item 6, taken). Parts 2 and 3 are not started; `Game.fromLayout` is
-their first commit.
+The key is `H` (section 8, item 6, taken).
+
+On 27 September 2026, stacked on `m5-tutor` because nothing had merged yet: branch `m5-layout`
+holds `Game.fromLayout` with its invariants case (5.2) and the catalogue's diagrams as tests (5.6,
+step 2). The constructor takes a placement rule, checked by the rule's own fault finder, but not
+yet a shape: a dungeon's hallways cannot be checked from a drawing. Building the diagrams found
+six of the seven impossible as drawn and one taught by a cheaper trick than its heading's; they
+were redrawn, and a diagram is now a patch of a board whose unseen rest sets the level and the
+counters (decision 0049). Branch `m5-guide`, on top of it, holds Part 3 whole (6.3, steps 1 to
+3): the entries and their test, the screen and its ways in (the rules card, the ladder list, `G`
+and "more" from the tutor), and each ladder's "How to play" from section 7, where HUGE and HUGE x
+EXTREME, which the catalogue has no note for, show their blurb. Section 8's item 7 is built as
+its default (the words copied, and tested word for word) and is still open. Part 2's school,
+steps 3 to 5 of 5.6, is next.

@@ -20,6 +20,7 @@ import {
   type GuideEntry,
   laddersFor,
 } from '../src/ui/guide/entries.js';
+import { LADDER_NOTES, namedIn, notesFor } from '../src/ui/guide/ladders.js';
 import { ladders } from './helpers.js';
 
 const catalogue = readFileSync('docs/strategies.md', 'utf8');
@@ -124,5 +125,42 @@ describe('the field guide', () => {
         DAMAGE_TABLE.levels.map((level) => damageIfSurvived(level, tier)),
       );
     }
+  });
+});
+
+describe("the field guide's ladder notes", () => {
+  const section = sections.get("The ladders' own tricks")!;
+  const bullets = section
+    .split('\n- **')
+    .slice(1)
+    .map((b) => {
+      const [, heading, body] = /^(.+?)\.\*\* ([\s\S]*)$/.exec(b.trim())!;
+      return { heading: heading!, body: plain(body!).trim() };
+    });
+
+  it("are section 7's, in its order, word for word", () => {
+    expect(LADDER_NOTES.map((n) => n.heading)).toEqual(bullets.map((b) => b.heading));
+    LADDER_NOTES.forEach((n, i) => expect(n.body, n.heading).toBe(bullets[i]!.body));
+  });
+
+  it('name real ladders, and ask the data for the ones they only describe', () => {
+    const names = new Set(ladders.map((t) => t.name));
+    for (const note of LADDER_NOTES) {
+      const described = namedIn(note.heading).filter((n) => !names.has(n));
+      expect(!!note.also, `${note.heading}: ${described.join(', ')}`).toBe(described.length > 0);
+    }
+    // "The shapes with magic" are the cut-out shapes the README says carry ARCANE's loadout.
+    const readme = plain(readFileSync('README.md', 'utf8'));
+    const cut = /The cut-out shapes \(([^)]*)\) carry ARCANE's loadout/.exec(readme)![1]!;
+    const magic = LADDER_NOTES.find((n) => n.also)!;
+    expect(new Set(ladders.filter((t) => magic.also!(t)).map((t) => t.name))).toEqual(
+      new Set(cut.split(/,\s*/)),
+    );
+  });
+
+  it('reach every ladder but the two that differ from NORMAL only in schedule', () => {
+    // HUGE and HUGE x EXTREME have no note of their own; the guide shows their blurb instead.
+    const without = ladders.filter((t) => notesFor(t).length === 0).map((t) => t.name);
+    expect(without).toEqual(['HUGE', 'HUGE x EXTREME']);
   });
 });

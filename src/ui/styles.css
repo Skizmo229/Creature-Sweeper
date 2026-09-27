@@ -875,6 +875,15 @@ button.board-card:hover:not(:disabled) {
 .guide-entry.guide-here {
   border-left-color: #d29cff;
 }
+/* A trick that belongs to the ladder the guide was opened for, in that ladder's colour. */
+.guide-entry.guide-own {
+  border-left-color: var(--tint);
+}
+.guide-section h4 {
+  margin: 0 0 6px;
+  font-size: 0.86rem;
+  color: var(--ink);
+}
 .guide-entry h4 {
   margin: 0 0 6px;
   font-size: 0.86rem;

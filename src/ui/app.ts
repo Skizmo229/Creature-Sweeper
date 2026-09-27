@@ -230,6 +230,7 @@ export class App {
       buildBoardList(typeId, {
         progress: this.progress,
         back: () => this.showTypes(),
+        guide: () => this.showGuide(undefined, typeId),
         startBoard: (id, n) => this.startBoard(id, n),
         startRun: (id) => this.startFullRun(id),
       }),
@@ -278,12 +279,14 @@ export class App {
   }
 
   /**
-   * The field guide over whatever is on screen, open at `target` if one is given, its diagrams in
-   * the look of the ladder the player is on or last looked at.
+   * The field guide over whatever is on screen, open at `target` if one is given and led by how to
+   * play `ladderId` if one is, its diagrams in the look of the ladder the player is on or last
+   * looked at.
    */
-  private showGuide(target?: GuideTarget): void {
+  private showGuide(target?: GuideTarget, ladderId?: string): void {
     const { overlay, focus, show } = buildGuide({
       ladders,
+      ladder: ladders.find((t) => t.id === ladderId),
       theme: this.settings.themeFor(this.typeId),
       display: boardDisplayFor(this.settings, this.typeId),
       cell: Math.round(GUIDE_CELL * this.settings.presentation.previewSize),
@@ -295,8 +298,9 @@ export class App {
   /** The guide from a board: at the trick the tutor is showing, or at guessing well at a guess. */
   private guideFromBoard(): void {
     const topic = this.tutor.topic();
-    if (topic === 'guess') this.showGuide({ section: GUESSING_WELL });
-    else this.showGuide(topic ? { trick: topic } : undefined);
+    const at =
+      topic === 'guess' ? { section: GUESSING_WELL } : topic ? { trick: topic } : undefined;
+    this.showGuide(at, this.typeId);
   }
 
   // ------------------------------------------------------------ the board

@@ -245,6 +245,20 @@ describe('the app', () => {
     expect(app.current!.status).toBe('playing');
   });
 
+  it("opens the guide for a ladder from its boards, led by the catalogue's note on it", () => {
+    app.progress.setUnlockAll(true);
+    (app as unknown as { showBoards(id: string): void }).showBoards('pairs');
+    [...document.querySelectorAll<HTMLButtonElement>('.title-bar button')]
+      .find((b) => b.textContent === 'How to play PAIRS')!
+      .click();
+    const lead = document.querySelector('.guide-body > .guide-section')!;
+    expect(lead.querySelector('h3')!.textContent).toBe('How to play PAIRS');
+    expect(lead.textContent).toContain('Met partner (grade 0)');
+    const own = [...document.querySelectorAll('.guide-own h4')].map((h) => h.textContent);
+    expect(own.join(' ')).toContain('Met partner');
+    expect(own.join(' ')).toContain("The partner's tier");
+  });
+
   it('with the tutor switched off there is no button, H does nothing, and the best time records', () => {
     app.settings.setPresentation({ tutor: false });
     app.play('normal', 1, 7);

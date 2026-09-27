@@ -13,6 +13,8 @@ import { themeFor } from '../looks.js';
 export interface BoardListActions {
   progress: Progress;
   back(): void;
+  /** The field guide, led by how to play this ladder. */
+  guide(): void;
   startBoard(typeId: string, board: number): void;
   startRun(typeId: string): void;
 }
@@ -31,6 +33,9 @@ export function buildBoardList(typeId: string, a: BoardListActions): HTMLElement
   head.append(back);
   head.append(el('h1', undefined, type.name));
   head.append(el('p', 'sub', type.blurb));
+  const how = el('button', 'ghost', `How to play ${type.name}`);
+  how.addEventListener('click', a.guide);
+  head.append(how);
   wrap.append(head);
 
   const grid = el('div', 'board-grid');
