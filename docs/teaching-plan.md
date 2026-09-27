@@ -220,7 +220,7 @@ the one grade-4 count that every endgame is.
 | 3 | Subtract what you see | residual ring | 1 | A 5 beside a beaten 3, three covered cells. | Hovers the beaten creature, subtracts, opens the three. |
 | 4 | The last cell | last cell | 1 | A 4 with one covered neighbour. | Marks it 4; learns that a mark above the level locks the cell; comes back at level 4. |
 | 5 | The counters | counters | 1 | A 5 over two cells with no 5s left. | Reads the counter, concludes 4 + 1 or 3 + 2, opens at level 4. |
-| 6 | The 1-2-1 | subtract | 2 | The catalogue's wall: `1 4 3 3`. | Names the 3, opens the two empties, names the 1. |
+| 6 | The 1-2-1 | subtract | 2 | The catalogue's wall: `2 5 3 3`, at level 1. | Names the 3, opens the two empties, names the 2. |
 | 7 | Bounds and the pencil | bounds | 2 | A 9 over two cells. | Pencils "4 or 5" on both; learns the pencil is read by its lowest candidate. |
 | 8 | Guessing well | none | — | A forced guess that two free kills elsewhere would make unnecessary. | Takes the free kills first; reads the worst-case cost; then guesses, or need not. |
 | 9 | The last of a tier | last of tier | 4 | One 5 left on the counter, a 9 over two cells, covered ground elsewhere. | Reads the counter, places the last 5 in the pair, opens everything else at level 4. |
