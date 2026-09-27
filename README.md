@@ -26,7 +26,7 @@ Node 22 (`.nvmrc`); Python 3 only for the ladder generator.
 | `docs/refactoring-plan.md` | Milestone 3, the readability refactor (complete): what was measured and what changed |
 | `docs/strategies.md` | how a person clears a board: the tricks, graded, for players and for the graded player |
 | `docs/human-tuning-plan.md` | Milestone 4, tuning for the human player: the instrument, the measurements, the retune |
-| `docs/teaching-plan.md` | Milestone 5, proposed: teaching the tricks in the game with a tutor, a school and a field guide |
+| `docs/teaching-plan.md` | Milestone 5, built on branches for review: teaching the tricks in the game with a tutor, a school and a field guide |
 | `CONTRIBUTING.md` | setup, the check, and the rules for a change |
 | design reference | <https://claude.ai/artifact/8w8aAaG6MJ3LCnSbokJUXi> (built from `design/page.template.html`) |
 
@@ -68,7 +68,7 @@ npm run typecheck      # twice: the second pass compiles the engine, sims and te
 npm run lint           # ESLint, failing on any warning; the size warnings are the readability bar Milestone 3 set
 npm run knip           # unused files and exports
 npm run format         # Prettier (format:check to verify)
-npm test               # 550 tests, including the invariants
+npm test               # 591 tests, including the invariants
 npm run sim:golden:check   # re-run sixteen fixed-seed simulator runs and diff against test/golden/
 npm run sim            # clear every one of the 884 boards headlessly (-- 200 for more seeds)
 npm run sim:run        # complete every type's Full Run
