@@ -385,6 +385,10 @@ open tiers, the Census bound, the lone dark square and the colour caps, the pair
 pack ring, and the conga proofs, at the press of a key, so on a ladder with Sweep those are free
 effort for a player; it does not subtract numbers from each other, name a last cell, or count.
 
+Every diagram on this page is a board. `src/sim/diagrams.ts` holds what is under each, and
+`test/strategies.test.ts` builds it with `Game.fromLayout` and holds the tutor to answering there
+with the trick the diagram sits under, at that trick's grade, on the cells the board says.
+
 | Trick | Technique id | Grade |
 | --- | --- | --- |
 | the raw ring | `raw-ring` | 0 |
