@@ -4,8 +4,8 @@ How a person clears a Creature Sweeper board, written for two readers. A player 
 in the order they are worth learning; the graded player in `src/sim/graded.ts` (the instrument
 Milestone 4 measures difficulty with, `docs/human-tuning-plan.md`) is built from exactly these
 tricks, one technique per entry, so a developer can read the same page as its specification.
-Section 7 maps each trick to its technique id. Every claim here is a fact about the rules, not
-advice about odds; the odds are in section 6.
+Section 10 maps each trick to its technique id. Every claim here is a fact about the rules, not
+advice about odds; the odds are in section 8.
 
 The grades are how much has to be held in the head at once. Grade 0 is a glance at one cell.
 Grade 1 is one number and a little arithmetic. Grade 2 is two numbers together. Grade 3 is a
