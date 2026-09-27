@@ -68,7 +68,7 @@ npm run typecheck      # twice: the second pass compiles the engine, sims and te
 npm run lint           # ESLint, failing on any warning; the size warnings are the readability bar Milestone 3 set
 npm run knip           # unused files and exports
 npm run format         # Prettier (format:check to verify)
-npm test               # 625 tests, including the invariants
+npm test               # 639 tests, including the invariants
 npm run sim:golden:check   # re-run sixteen fixed-seed simulator runs and diff against test/golden/
 npm run sim            # clear every one of the 884 boards headlessly (-- 200 for more seeds)
 npm run sim:run        # complete every type's Full Run
