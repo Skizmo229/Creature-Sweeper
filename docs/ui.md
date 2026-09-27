@@ -201,6 +201,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - The browser's own stylesheet resets the face and the adjust on a button or a select. A rule that
   gives a control back its face (`font-family: inherit`) gives back the adjust too, or its labels
   grow and shrink with the face; `test/fonts.test.ts` holds that.
+- A field sized to what it holds is sized in `ch` for its text alone (`box-sizing: content-box`),
+  because `ch` follows the face and its padding and spin buttons do not. The custom colour
+  window's numbers, `7ch` with both counted in, clipped "255" in the five narrowest faces;
+  `test/ui/highlightcolor.test.ts` holds the fix.
 - No glyph in the chrome can be assumed: the settings button is a word, the mute speaker is inline
   SVG. Only Latin-1 and general punctuation are safe.
 - A creature's pips can be a symbol rather than a shape (`icons: 'U+2764'`). Wingdings is

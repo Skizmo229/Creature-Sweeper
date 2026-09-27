@@ -1571,12 +1571,20 @@ input.color-hex {
   border-radius: 4px;
   padding: 5px 6px;
 }
+/* Each wide enough for what it holds, in the face's own figures (`ch`, which the
+   size adjust scales with them): three digits, or a hex colour typed in capitals,
+   3.3 and 10.4ch in Gluten, the widest (measured 27 Sep 2026). The padding and a
+   number's spin buttons are pixels in every face, so they are left out of `ch`:
+   counted in, they clipped "255" in five narrow faces, DUNGEON's among them. */
 input.color-number {
-  flex: 0 0 7ch;
-  width: 7ch;
+  --spin-buttons: 18px; /* Chrome's measured 14 to 16px */
+  box-sizing: content-box;
+  flex: 0 0 auto;
+  width: calc(3.5ch + var(--spin-buttons));
 }
 input.color-hex {
-  width: 10ch;
+  box-sizing: content-box;
+  width: 11ch;
 }
 .color-legend {
   display: grid;

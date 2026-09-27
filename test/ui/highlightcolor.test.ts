@@ -7,6 +7,7 @@
  */
 
 import './setup.js';
+import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../src/ui/app.js';
 import { type BoardDisplay, BoardView } from '../../src/ui/board/view.js';
@@ -312,6 +313,28 @@ describe('the custom colour window', () => {
     set(hexField(card), '#FFFFFF');
     card.querySelector<HTMLButtonElement>('button.color-use')!.click();
     expect(lit(colorRow())).toEqual(['White']);
+  });
+
+  it('sizes its fields by what they hold, with the padding and spin buttons left out of `ch`', () => {
+    // The widest each field shows, in `ch` of its face: three digits, and a hex colour typed in
+    // capitals, in Gluten, the widest of the bundled faces (measured in Chrome, 27 Sep 2026).
+    // Counting the padding and the spin buttons in `ch` too clipped "255" in the narrow faces.
+    const NUMBER_CH = 3.3;
+    const HEX_CH = 10.4;
+    const rules = [
+      ...readFileSync('src/ui/styles.css', 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .matchAll(/([^{}]+){([^}]*)}/g),
+    ];
+    const body = (selector: string): string =>
+      rules.find(([, s]) => s!.trim() === selector)?.[2] ?? '';
+    const number = body('input.color-number');
+    const hex = body('input.color-hex');
+    for (const rule of [number, hex]) expect(rule).toMatch(/box-sizing:\s*content-box/);
+    const numberCh = /width:\s*calc\(([\d.]+)ch \+ var\(--spin-buttons\)\)/.exec(number);
+    expect(Number(numberCh?.[1])).toBeGreaterThanOrEqual(NUMBER_CH);
+    expect(number).toMatch(/--spin-buttons:\s*\d+px/);
+    expect(Number(/width:\s*([\d.]+)ch/.exec(hex)?.[1])).toBeGreaterThanOrEqual(HEX_CH);
   });
 
   it('closes on Escape without saving', () => {
