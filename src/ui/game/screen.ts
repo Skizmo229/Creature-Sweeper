@@ -22,6 +22,8 @@ export interface GameScreenActions {
   sweep(useMarks: boolean): void;
   /** PATROL's Wait: the creatures take a step and nothing else happens. */
   wait(): void;
+  /** The tutor: point at the next provable move, and why. */
+  explain(): void;
   pickSpell(id: SpellId): void;
   cancelSpell(): void;
 }
@@ -39,6 +41,8 @@ export interface GameScreenElements {
   sweepMarkBtn: HTMLButtonElement | null;
   /** PATROL's Wait, which also shows how many moves the board has seen. */
   waitBtn: HTMLButtonElement | null;
+  /** The tutor's button; null where the setting has switched the tutor off. */
+  whyBtn: HTMLButtonElement | null;
   spellBtns: HTMLButtonElement[];
   hint: HTMLParagraphElement;
 }
@@ -49,6 +53,7 @@ export function buildGameScreen(
   boardIndex: number,
   run: FullRun | null,
   a: GameScreenActions,
+  tutor = true,
 ): GameScreenElements {
   const type = ladders.find((t) => t.id === typeId)!;
   const wrap = el('div', 'screen game');
@@ -64,7 +69,7 @@ export function buildGameScreen(
   stage.append(canvas);
   wrap.append(stage);
 
-  const { palette, ...controls } = buildPalette(game, a);
+  const { palette, ...controls } = buildPalette(game, a, tutor);
   wrap.append(palette);
   const { row, spellBtns } = buildSpellRow(game, a);
   if (row) wrap.append(row);
@@ -135,9 +140,10 @@ function boardLabel(
 function buildPalette(
   game: Game,
   a: GameScreenActions,
+  tutor: boolean,
 ): Pick<
   GameScreenElements,
-  'counters' | 'emptyNoteBtn' | 'notesBtn' | 'sweepSafeBtn' | 'sweepMarkBtn' | 'waitBtn'
+  'counters' | 'emptyNoteBtn' | 'notesBtn' | 'sweepSafeBtn' | 'sweepMarkBtn' | 'waitBtn' | 'whyBtn'
 > & { palette: HTMLElement } {
   const palette = el('div', 'palette');
   const counters: HTMLButtonElement[] = [];
@@ -193,7 +199,18 @@ function buildPalette(
     waitBtn.addEventListener('click', a.wait);
     palette.append(waitBtn);
   }
-  return { palette, counters, emptyNoteBtn, notesBtn, sweepSafeBtn, sweepMarkBtn, waitBtn };
+  // The tutor is the opposite of Sweep: it opens nothing and says why a cell could be. On every
+  // ladder, EASY included, where there is no Sweep to lean on (docs/teaching-plan.md).
+  let whyBtn: HTMLButtonElement | null = null;
+  if (tutor) {
+    whyBtn = el('button', 'sweep why', 'Why? [H]');
+    whyBtn.title =
+      'Point at the next move that can be proven, and say why. Opens nothing; a board with a ' +
+      'hint on it sets no best time.';
+    whyBtn.addEventListener('click', a.explain);
+    palette.append(whyBtn);
+  }
+  return { palette, counters, emptyNoteBtn, notesBtn, sweepSafeBtn, sweepMarkBtn, waitBtn, whyBtn };
 }
 
 /** The spell row, on a ladder that offers any: one button per spell, and Cancel. */

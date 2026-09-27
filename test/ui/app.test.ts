@@ -185,6 +185,31 @@ describe('the app', () => {
     expect(app.mode.notesMode).toBe(true);
   });
 
+  it('H asks the tutor, which speaks in the hint line, points at the board, and costs the best time', () => {
+    app.play('normal', 1, 7);
+    const game = app.current!;
+    expect(text('.sweep.why')).toBe('Why? [H]');
+    key('h');
+    expect(text('.hint')).toMatch(/^Grade \d · /);
+    expect(document.querySelector('.hint')!.classList.contains('tutoring')).toBe(true);
+    // The lesson is the same code the instrument runs, so what it points at is sound.
+    const lesson = (
+      app as unknown as { tutor: { shown(): { open: { tier: number }[] } } }
+    ).tutor.shown();
+    for (const cell of lesson.open) expect(cell.tier).toBeLessThanOrEqual(game.level);
+    // A second press moves on; any move on the board dismisses the lesson.
+    key('h');
+    const safe = game.safeCells({ useMarks: false })[0]!;
+    app.actions.onCellPrimary(safe.x, safe.y);
+    expect(text('.hint')).toMatch(/^Click to open/);
+    // The clear counts and unlocks, and sets no best time.
+    autoplayTierOrder(game);
+    app.finish();
+    expect(text('.overlay')).toContain('Cleared with 2 hints');
+    expect(app.progress.boardRecord('normal', 1).cleared).toBe(true);
+    expect(app.progress.boardRecord('normal', 1).bestTime).toBeNull();
+  });
+
   it('a cleared board shows the clear overlay, records it, and offers the next board', () => {
     app.play('normal', 1, 7);
     const game = app.current!;

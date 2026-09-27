@@ -167,18 +167,26 @@ export class Progress {
    *  board of a run was already cleared, or the run would not have opened. */
   recordRun(
     typeId: string,
-    opts: { completed: boolean; reachedBoard: number; hp: number; seconds: number },
+    opts: {
+      completed: boolean;
+      reachedBoard: number;
+      hp: number;
+      seconds: number;
+      hinted?: boolean;
+    },
   ): void {
     const prev = this.runRecord(typeId);
     this.data.runs[typeId] = {
       cleared: prev.cleared || opts.completed,
       bestBoard: Math.max(prev.bestBoard, opts.reachedBoard),
       bestHp: opts.completed ? Math.max(prev.bestHp ?? 0, opts.hp) : prev.bestHp,
-      bestTime: opts.completed
-        ? prev.bestTime === null
-          ? opts.seconds
-          : Math.min(prev.bestTime, opts.seconds)
-        : prev.bestTime,
+      // A run the tutor helped with is cleared and counts, but races nothing.
+      bestTime:
+        opts.completed && !opts.hinted
+          ? prev.bestTime === null
+            ? opts.seconds
+            : Math.min(prev.bestTime, opts.seconds)
+          : prev.bestTime,
       attempts: prev.attempts + 1,
     };
     this.save();
@@ -255,12 +263,16 @@ export class Progress {
     return board <= this.typeRecord(typeId).highestBoard;
   }
 
-  /** Record a clear and advance the ladder. Returns the newly unlocked board. */
+  /**
+   * Record a clear and advance the ladder. Returns the newly unlocked board. A board the tutor
+   * helped with (`hinted`) is cleared, unlocks the next and may be perfect, but sets no best time:
+   * the one cost of asking why (docs/teaching-plan.md, 4.4).
+   */
   recordClear(
     ladders: Ladders,
     typeId: string,
     board: number,
-    opts: { perfect: boolean; seconds: number },
+    opts: { perfect: boolean; seconds: number; hinted?: boolean },
   ): { unlockedBoard: number | null; clearedType: boolean } {
     const type = ladders.find((t) => t.id === typeId);
     const lastBoard = type?.boards.length ?? 10;
@@ -270,7 +282,11 @@ export class Progress {
     this.data.boards[key] = {
       cleared: true,
       perfect: prev.perfect || opts.perfect,
-      bestTime: prev.bestTime === null ? opts.seconds : Math.min(prev.bestTime, opts.seconds),
+      bestTime: opts.hinted
+        ? prev.bestTime
+        : prev.bestTime === null
+          ? opts.seconds
+          : Math.min(prev.bestTime, opts.seconds),
     };
 
     const rec = this.typeRecord(typeId);

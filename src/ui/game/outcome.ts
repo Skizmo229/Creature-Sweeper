@@ -43,6 +43,8 @@ export interface BoardOutcome {
   fatal: { tier: number; damage: number } | null;
   /** Whether the result was written down. */
   recorded: boolean;
+  /** Times the tutor was asked on this board. A hinted clear sets no best time. */
+  hints: number;
   /** The board a clear unlocked, if any. */
   unlocked: number | null;
   /** How many boards the tuned ladder has, and the last board including the continuation. */
@@ -102,6 +104,17 @@ export function buildBoardOutcome(o: BoardOutcome): HTMLElement {
   // Said here rather than only in Settings, because this is the moment the absence of a new best
   // time would otherwise look like a bug.
   if (won && !o.recorded) card.append(modifiedNote(o.gameplay));
+  // Said here for the same reason: this is where the missing best time would look like a bug.
+  if (won && o.recorded && o.hints > 0) {
+    card.append(
+      el(
+        'p',
+        'overlay-note',
+        `Cleared with ${o.hints} hint${o.hints === 1 ? '' : 's'} — the clear counts, ` +
+          'and sets no best time.',
+      ),
+    );
+  }
   if (o.unlocked !== null) {
     card.append(el('p', 'overlay-note', `Board ${o.unlocked} unlocked.`));
   } else if (won && o.boardIndex >= o.ladderLength) {

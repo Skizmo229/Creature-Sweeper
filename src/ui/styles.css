@@ -608,6 +608,23 @@ button.board-card:hover:not(:disabled) {
   font-size: 0.72rem;
   color: var(--muted);
 }
+/* The tutor speaks in the ink, not the hint's grey: it is what the player just asked for. */
+.hint.tutoring {
+  color: var(--ink);
+  font-size: 0.8rem;
+}
+/* The tutor's button wears its own violet (TUTOR_COLOR in theme.ts), the colour its pointing
+   finger draws in on the board, so the button and what it does on the board read as one thing. */
+.sweep.why {
+  margin-left: 0;
+  color: #d29cff;
+  border-color: #d29cff;
+}
+.sweep.why:hover:not(:disabled) {
+  background: #d29cff;
+  color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
+}
 
 /* ------------------------------------------------------------------- overlay */
 

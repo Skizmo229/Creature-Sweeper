@@ -20,6 +20,8 @@ export interface BoardActionsHost {
   apply(events: GameEvent[]): void;
   refresh(): void;
   leaveGame(): void;
+  /** The tutor: point at the next provable move, or the next lesson if one is already showing. */
+  explain(): void;
 }
 
 export class BoardActions {
@@ -124,6 +126,11 @@ export class BoardActions {
     if (key === 'w' && game.patrols) {
       e.preventDefault();
       this.doWait();
+      return;
+    }
+    if (key === 'h') {
+      e.preventDefault();
+      this.h.explain();
       return;
     }
     if (e.key === '+' || e.key === '=') {

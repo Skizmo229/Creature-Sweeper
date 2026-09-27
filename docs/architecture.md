@@ -48,6 +48,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   config.ts       reads ladders.json rows into BoardConfig; has each placement rule check its row
 src/ui/         the prototype
   app.ts          the router: screens, the cross-screen state, the keyboard, the actions
+  dress.ts        the page in the presentation settings: the faces, the text size, the board's slice
   dom.ts          el(), the one DOM helper
   mute.ts         the always-present speaker
   ladders.ts      the ladder data, bundled into the build (src/data.ts is Node's loader)
@@ -56,7 +57,8 @@ src/ui/         the prototype
   game/           the game screen: screen.ts (furniture), hud.ts (filling it in), mode.ts
                   (what a click will do: tier, pencil, spell), actions.ts (what the player's
                   clicks and keys do), hint.ts, sound.ts, flash.ts (the shake, the rim and the
-                  level-up glow), clock.ts, outcome.ts (the clear, loss and run overlays)
+                  level-up glow), clock.ts, outcome.ts (the clear, loss and run overlays), tutor.ts
+                  (the tutor's face: the lesson showing, the hint line's words, the hints asked)
   board/          the canvas: view.ts (state, fit, zoom, render order), geometry.ts,
                   digits.ts, paint.ts (cell painters), overlays.ts (silhouette, seams, bonds,
                   highlight), input.ts (pointer, wheel, pinch)

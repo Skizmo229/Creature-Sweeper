@@ -11,7 +11,8 @@ import { randomSeed } from '../engine/rng.js';
 import { FullRun } from '../engine/run.js';
 import { isAtLeastAsHard } from '../engine/settings.js';
 import type { GameEvent } from '../engine/types.js';
-import { BoardView, type BoardDisplay } from './board/view.js';
+import { BoardView } from './board/view.js';
+import { boardDisplayFor, dressDocument, wearInterfaceFont } from './dress.js';
 import { BoardClock } from './game/clock.js';
 import { gatePalette, syncClock, syncGameScreen } from './game/hud.js';
 import { EntryMode } from './game/mode.js';
@@ -20,6 +21,7 @@ import { flashStage } from './game/flash.js';
 import { buildBoardOutcome, buildRunOutcome } from './game/outcome.js';
 import { type GameScreenElements, buildGameScreen } from './game/screen.js';
 import { soundFor } from './game/sound.js';
+import { Tutor } from './game/tutor.js';
 import { ladders } from './ladders.js';
 import { buildMuteButton, syncMuteButton } from './mute.js';
 import { type AskOptions, buildAsk } from './overlays/ask.js';
@@ -62,8 +64,10 @@ export class App {
     apply: (events) => this.apply(events),
     refresh: () => this.refresh(),
     leaveGame: () => this.leaveGame(),
+    explain: () => this.explainBoard(),
   });
   private readonly clock = new BoardClock();
+  private readonly tutor = new Tutor();
   /** Where the settings screen goes back to while it is showing; Escape takes the same route. */
   private settingsBack: (() => void) | null = null;
   /** The open modal overlay (a question, the how-to, the save backup), if any. */
@@ -92,8 +96,9 @@ export class App {
   runFull(typeId: string, seed?: number): void {
     this.startFullRun(typeId, seed ?? randomSeed());
   }
-  /** Repaint after the game was driven from outside. */
+  /** Repaint after the game was driven from outside, which is a move the tutor did not see. */
   sync(): void {
+    this.tutor.dismiss();
     this.refresh();
   }
 
@@ -105,7 +110,7 @@ export class App {
     this.settings.onChange(() => this.applyPresentation());
     this.muteBtn = buildMuteButton(() => {
       this.settings.setPresentation({ muted: !this.settings.presentation.muted });
-      this.syncMuteButton();
+      if (this.muteBtn) syncMuteButton(this.muteBtn, this.settings.presentation.muted);
     });
     this.applyPresentation();
     this.showTypes();
@@ -113,46 +118,21 @@ export class App {
 
   // ----------------------------------------------------------- presentation
 
-  private syncMuteButton(): void {
-    if (this.muteBtn) syncMuteButton(this.muteBtn, this.settings.presentation.muted);
-  }
-
   /**
-   * Push the presentation settings at everything already on screen. The interface's font is a CSS
-   * variable so the menus follow it; the board is re-themed directly because nothing cascades into
-   * a canvas. The speaker is repainted from here too, because "Reset presentation" clears `muted`.
+   * Push the presentation settings at everything already on screen (`dress.ts`). The speaker is
+   * repainted from here too, because "Reset presentation" clears `muted`.
    */
   private applyPresentation(): void {
-    this.wearFont();
-    const title = this.settings.titleFont();
-    document.documentElement.style.setProperty('--title-font', title.stack);
-    document.documentElement.style.setProperty('--title-ex-fix', String(title.exHeightFix ?? 1));
-    // A percentage, so it multiplies the browser's own text size rather than replacing it.
-    document.documentElement.style.fontSize = `${this.settings.presentation.textSize * 100}%`;
+    dressDocument(this.settings, this.typeId);
     this.sfx.setPack(this.settings.sfxPack(this.typeId));
     const { customPitches, soundCheck, sfxVolume } = this.settings.presentation;
     this.sfx.setPitches(customPitches ? soundCheck.pitches : {});
     this.sfx.setVolume(sfxVolume);
-    this.view?.setDisplay(this.settings.themeFor(this.typeId), this.boardDisplay());
-    this.syncMuteButton();
-  }
-
-  /** Dress the interface in its face on the current ladder, with its x-height correction. */
-  private wearFont(): void {
-    const face = this.settings.interfaceFont(this.typeId);
-    document.documentElement.style.setProperty('--font', face.stack);
-    document.documentElement.style.setProperty('--ex-fix', String(face.exHeightFix ?? 1));
-  }
-
-  /** The renderer's slice of the presentation settings. */
-  private boardDisplay(): BoardDisplay {
-    const p = this.settings.presentation;
-    return {
-      maxCell: p.maxZoom,
-      font: this.settings.boardFont(this.typeId),
-      highlight: this.settings.highlightStyle(this.typeId),
-      strikeDefeated: p.strikeDefeated,
-    };
+    this.view?.setDisplay(
+      this.settings.themeFor(this.typeId),
+      boardDisplayFor(this.settings, this.typeId),
+    );
+    if (this.muteBtn) syncMuteButton(this.muteBtn, this.settings.presentation.muted);
   }
 
   /**
@@ -361,6 +341,7 @@ export class App {
     this.run = FullRun.start(ladders, typeId, seed, { settings: this.settings.gameplay });
     this.boardIndex = this.run.boardIndex;
     this.resetBoardState();
+    this.tutor.resetRun();
 
     // `FullRun.start` has already built board 1 and dealt its opening.
     this.clock.begin();
@@ -390,12 +371,13 @@ export class App {
   private resetBoardState(): void {
     this.mode.reset();
     this.fatalBattle = null;
+    this.tutor.resetBoard();
   }
 
   private buildGameScreen(): void {
     const game = this.game!;
     this.sfx.setPack(this.settings.sfxPack(this.typeId));
-    this.wearFont();
+    wearInterfaceFont(this.settings, this.typeId);
     this.clearScreen();
 
     const els = buildGameScreen(game, this.typeId, this.boardIndex, this.run, {
@@ -415,6 +397,7 @@ export class App {
       toggleNotes: () => this.actions.toggleNotesMode(),
       sweep: (useMarks) => this.actions.doSweep(useMarks),
       wait: () => this.actions.doWait(),
+      explain: () => this.explainBoard(),
       pickSpell: (id) => this.actions.pickSpell(id),
       cancelSpell: () => {
         this.mode.cancelSpell();
@@ -431,7 +414,11 @@ export class App {
       onHover: () => this.gatePalette(),
       lands: (cell) => this.actions.clickLands(cell),
     });
-    this.view.setGame(game, this.settings.themeFor(this.typeId), this.boardDisplay());
+    this.view.setGame(
+      game,
+      this.settings.themeFor(this.typeId),
+      boardDisplayFor(this.settings, this.typeId),
+    );
     this.refresh();
   }
 
@@ -475,6 +462,7 @@ export class App {
 
   private apply(events: GameEvent[]): void {
     const game = this.game!;
+    this.tutor.dismiss();
 
     if (this.els) flashStage(this.els.stage, events, this.settings.presentation.fightRim);
     if (this.sfx.enabled) {
@@ -506,9 +494,19 @@ export class App {
       boardIndex: this.boardIndex,
       mode: this.mode,
       hovered: this.view?.hoveredCell ?? null,
+      tutor: this.tutor.text(),
     });
+    this.view?.setLesson(this.tutor.shown());
     this.view?.render();
     this.updateClock();
+  }
+
+  // ------------------------------------------------------------------ tutor
+
+  /** The tutor's press: a hint, pointed at the board and said in the hint line. It opens nothing. */
+  private explainBoard(): void {
+    if (this.game && this.els?.whyBtn) this.tutor.press(this.game, this.view?.hoveredCell ?? null);
+    this.refresh();
   }
 
   // ------------------------------------------------------------------ clock
@@ -556,6 +554,7 @@ export class App {
       const result = this.progress.recordClear(ladders, this.typeId, this.boardIndex, {
         perfect,
         seconds,
+        hinted: this.tutor.hints > 0,
       });
       unlocked = result.unlockedBoard;
     }
@@ -575,6 +574,7 @@ export class App {
       seconds,
       fatal: this.fatalBattle,
       recorded,
+      hints: this.tutor.hints,
       unlocked,
       ladderLength: type.boards.length,
       lastBoard: maxBoard(ladders, this.typeId),
@@ -607,6 +607,7 @@ export class App {
           reachedBoard: this.boardIndex,
           hp: game.hp,
           seconds: this.clock.frozenSeconds!,
+          hinted: this.tutor.runHints > 0,
         });
       }
     }

@@ -50,6 +50,8 @@ export interface HudState {
   boardIndex: number;
   mode: EntryMode;
   hovered: Cell | null;
+  /** What the tutor is saying, in place of the hint line, while a lesson is showing. */
+  tutor: string | null;
 }
 
 /** Everything on the screen that reads the game, brought up to date. */
@@ -93,7 +95,11 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
   els.emptyNoteBtn.hidden = !mode.notesMode || !canPencilEmpty(game);
   els.emptyNoteBtn.classList.toggle('active', mode.notesMode && mode.markMode === 0);
   gatePalette(els, game, mode, s.hovered);
-  els.hint.textContent = hintText(game, mode);
+  // The tutor speaks where the hint does, and in the ink rather than the hint's grey: it is the
+  // thing the player just asked for.
+  els.hint.textContent = s.tutor ?? hintText(game, mode);
+  els.hint.classList.toggle('tutoring', s.tutor !== null);
+  if (els.whyBtn) els.whyBtn.disabled = game.status !== 'playing';
 
   if (els.hud.mp) {
     els.hud.mp.textContent = `MP ${game.mana}`;

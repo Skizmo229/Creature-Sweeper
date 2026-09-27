@@ -300,9 +300,9 @@ const CAPTIONS: Readonly<Record<TrickId, Captioner>> = {
     const show = n === r ? '' : ` and ${n - r} on show`;
     const then =
       r <= v.level
-        ? 'a free kill at your level.'
+        ? 'A free kill at your level.'
         : `Mark it and come back at level ${r}; the mark locks the cell until then.`;
-    return `The ${n} has one covered neighbour left${show}, so that cell is a ${r}: ${then}`;
+    return `The ${n} has one covered neighbour left${show}, so that cell is a ${r}. ${then}`;
   },
   'census-ring': (t, v) => {
     const a = first(t);

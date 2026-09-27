@@ -389,6 +389,14 @@ export function drawLesson(p: Paint, lesson: Lesson): void {
     tracePath(p, cx, cy, 2);
     ctx.stroke();
   }
+  // A beaten creature's number shows only while hovered, and a proof that read one has to be
+  // checkable without the cursor leaving the lesson, so the number is written on it for now.
+  for (const c of lesson.why.constraints) {
+    if (c.cell.tier > 0) {
+      const { cx, cy } = centreOf(layout, c.cell.x, c.cell.y);
+      writeOnCell(p, cx, cy, String(c.cell.num), TUTOR_COLOR, 0.5);
+    }
+  }
 
   ctx.lineWidth = 2;
   for (const cell of lesson.open) {
