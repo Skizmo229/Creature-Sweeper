@@ -70,9 +70,10 @@ src/ui/         the prototype
                   highlight), input.ts (pointer, wheel, pinch)
   settings.ts     the presentation settings and the store
   settingsscreen/  the settings form: context, widgets, render, look, effects, gameplay, screen;
-                  symbols.ts is the custom creature icon's window of symbols, customcolor.ts the
-                  custom highlight colour's window of red, green and blue, sorts.ts the orders
-                  the palette and font windows offer
+                  symbols.ts is the custom creature icon's window of symbols, colormixer.ts the
+                  sliders that mix a colour from red, green and blue, customcolor.ts the custom
+                  highlight colour's window of them, sorts.ts the orders the palette and font
+                  windows offer
   preview.ts      the settings screen's example boards (no rendering, so tests can build them)
   looks.ts        one record per ladder: palette, face, sound pack, clear effect (DOM-free)
   looktypes.ts    what a look is made of: the pip shapes, the palette, sound packs, clear effects
