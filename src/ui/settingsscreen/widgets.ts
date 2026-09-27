@@ -54,6 +54,24 @@ export function wideRow(
   host.append(line);
 }
 
+/** An option's tile: its example and its name, lit when it is the option in force. */
+function optionTile(c: Choice, current: string): HTMLButtonElement {
+  const chip = el('button', 'preview-chip');
+  const active = c.value === current;
+  chip.classList.toggle('active', active);
+  chip.setAttribute('aria-pressed', String(active));
+  if (c.example) chip.append(c.example());
+  const caption = el('span', 'chip-label', c.label);
+  if (c.labelFont) {
+    caption.style.fontFamily = c.labelFont.stack;
+    // Set even when it is 1, or the caption inherits the page's own fix.
+    caption.style.setProperty('--ex-fix', String(c.labelFont.exHeightFix ?? 1));
+  }
+  chip.append(caption);
+  if (c.open) chip.setAttribute('aria-haspopup', 'dialog');
+  return chip;
+}
+
 /**
  * A row of option tiles, each showing what it does.
  *
@@ -69,19 +87,7 @@ export function gallery(
 ): HTMLElement {
   const box = el('div', 'settings-gallery');
   for (const c of choices) {
-    const chip = el('button', 'preview-chip');
-    const active = c.value === current;
-    chip.classList.toggle('active', active);
-    chip.setAttribute('aria-pressed', String(active));
-    if (c.example) chip.append(c.example());
-    const caption = el('span', 'chip-label', c.label);
-    if (c.labelFont) {
-      caption.style.fontFamily = c.labelFont.stack;
-      // Set even when it is 1, or the caption inherits the page's own fix.
-      caption.style.setProperty('--ex-fix', String(c.labelFont.exHeightFix ?? 1));
-    }
-    chip.append(caption);
-    if (c.open) chip.setAttribute('aria-haspopup', 'dialog');
+    const chip = optionTile(c, current);
     chip.addEventListener('click', () => {
       if (c.open) {
         c.open();
@@ -152,37 +158,17 @@ export function settingsWindow(
   return { card, close, dismiss };
 }
 
-/**
- * A window holding every option of one setting. Its examples are drawn only when it opens
- * (decision 0025). A tile that opens a window of its own closes this one first, so only one
- * window is ever open to take Escape.
- */
-function openPicker(
-  screen: HTMLElement,
-  title: string,
-  options: Choice[],
-  current: string,
-  onPick: (value: string) => void,
-): void {
-  const { card, close, dismiss } = settingsWindow(screen, title);
-  const tiles = options.map((c): Choice => {
-    const open = c.open;
-    if (!open) return c;
-    return {
-      ...c,
-      open: () => {
-        dismiss();
-        open();
-      },
-    };
-  });
-  card.append(
-    gallery(tiles, current, (v) => {
-      dismiss();
-      onPick(v);
-    }),
-  );
-  (card.querySelector<HTMLElement>('.preview-chip.active') ?? close).focus();
+/** A run of a picker's options, shown under its heading if it has one. */
+export interface SortGroup {
+  heading?: string;
+  values: readonly string[];
+}
+
+/** One order a picker can show its options in: every option's value exactly once, in runs. */
+export interface PickerSort {
+  /** Its button, after "Sort by". */
+  label: string;
+  groups: readonly SortGroup[];
 }
 
 export interface ChoiceRowSpec {
@@ -194,7 +180,72 @@ export interface ChoiceRowSpec {
   /** The game type default, already naming what it resolves to. */
   fallback: Choice;
   options: Choice[];
+  /** The orders the window offers, the first by default; without any, the options' own. */
+  sorts?: readonly PickerSort[];
   onPick: (value: string) => void;
+}
+
+/** The order each window last showed, by its title, so it reopens the way the player left it. */
+const lastSort = new Map<string, string>();
+
+/** "Sort by" and a button for each order, the one showing lit; a press lays the tiles out again. */
+function sortBar(
+  title: string,
+  sorts: readonly PickerSort[],
+  lay: (groups: readonly SortGroup[]) => void,
+): HTMLElement {
+  const bar = el('div', 'picker-sorts');
+  bar.setAttribute('role', 'group');
+  bar.setAttribute('aria-label', 'Sort by');
+  const name = el('span', 'picker-sorts-name', 'Sort by');
+  name.setAttribute('aria-hidden', 'true');
+  const buttons = sorts.map((s) => el('button', 'picker-sort', s.label));
+  const show = (sort: PickerSort): void => {
+    lastSort.set(title, sort.label);
+    sorts.forEach((s, i) => {
+      buttons[i]!.classList.toggle('active', s === sort);
+      buttons[i]!.setAttribute('aria-pressed', String(s === sort));
+    });
+    lay(sort.groups);
+  };
+  sorts.forEach((s, i) => buttons[i]!.addEventListener('click', () => show(s)));
+  bar.append(name, ...buttons);
+  show(sorts.find((s) => s.label === lastSort.get(title)) ?? sorts[0]!);
+  return bar;
+}
+
+/**
+ * A window holding every option of one setting. Its examples are drawn only when it opens
+ * (decision 0025), and a sort moves the tiles already drawn rather than drawing them again. A
+ * tile that opens a window of its own closes this one first, so only one window is ever open to
+ * take Escape.
+ */
+function openPicker(screen: HTMLElement, spec: ChoiceRowSpec): void {
+  const { card, close, dismiss } = settingsWindow(screen, spec.title);
+  const tiles = new Map<string, HTMLElement>();
+  for (const c of spec.options) {
+    const tile = optionTile(c, spec.current);
+    tile.addEventListener('click', () => {
+      dismiss();
+      if (c.open) c.open();
+      else spec.onPick(c.value);
+    });
+    tiles.set(c.value, tile);
+  }
+  const body = el('div', 'picker-body');
+  const lay = (groups: readonly SortGroup[]): void => {
+    body.replaceChildren(
+      ...groups.flatMap((g) => {
+        const box = el('div', 'settings-gallery');
+        box.append(...g.values.map((v) => tiles.get(v)!));
+        return g.heading ? [el('h3', 'picker-group-head', g.heading), box] : [box];
+      }),
+    );
+  };
+  if (spec.sorts?.length) card.append(sortBar(spec.title, spec.sorts, lay));
+  else lay([{ values: spec.options.map((c) => c.value) }]);
+  card.append(body);
+  (card.querySelector<HTMLElement>('.preview-chip.active') ?? close).focus();
 }
 
 /**
@@ -215,7 +266,7 @@ export function choiceRow(screen: HTMLElement, host: HTMLElement, spec: ChoiceRo
     label: chosen ? `User choice — ${chosen.label}` : 'User choice — pick one',
     example: chosen?.example ?? placeholder,
     ...(chosen?.labelFont ? { labelFont: chosen.labelFont } : {}),
-    open: () => openPicker(screen, spec.title, spec.options, spec.current, spec.onPick),
+    open: () => openPicker(screen, spec),
   };
   wideRow(host, spec.label, spec.hint, gallery([spec.fallback, user], spec.current, spec.onPick));
 }

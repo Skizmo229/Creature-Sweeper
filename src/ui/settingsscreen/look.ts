@@ -40,6 +40,7 @@ import { type PresentationPatch, type ScreenContext, previewCell, typeName } fro
 import { openColorWindow } from './customcolor.js';
 import { CHIP_CELL } from './render.js';
 import { renderPreview } from './render.js';
+import { paletteSorts } from './sorts.js';
 import { openSymbolWindow } from './symbols.js';
 import { type Choice, choiceRow, gallery, slider, wideRow } from './widgets.js';
 
@@ -102,6 +103,7 @@ export function paletteRow(ctx: ScreenContext, host: HTMLElement): void {
       label: typeName(id),
       example: ctx.chipBoard({ ...themeFor(id), pip: currentPip }),
     })),
+    sorts: paletteSorts(),
     onPick: (v) => ctx.pick({ palette: v }),
   });
 }

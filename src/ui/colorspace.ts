@@ -32,6 +32,17 @@ function lab(color: string): Lab {
 }
 
 /**
+ * A `#rrggbb` colour as a person would describe it, from CIELAB: its lightness, 0 to 100; its
+ * chroma, how far from grey, 0 for a grey; and its hue, the angle round the colour wheel in
+ * degrees, from red through yellow, green and blue.
+ */
+export function lch(color: string): { lightness: number; chroma: number; hue: number } {
+  const [lightness, a, b] = lab(color);
+  const hue = (Math.atan2(b, a) * 180) / Math.PI;
+  return { lightness, chroma: Math.hypot(a, b), hue: hue < 0 ? hue + 360 : hue };
+}
+
+/**
  * How different two `#rrggbb` colours look: their distance apart in CIELAB (CIE76 ΔE). About 2 is
  * the least a person notices side by side.
  */

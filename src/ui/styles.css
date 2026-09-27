@@ -1374,6 +1374,34 @@ button.board-card:hover:not(:disabled) {
   font-size: 1.1rem;
   letter-spacing: 0.04em;
 }
+/* A long picker's orders: "Sort by" and a button for each, the one showing lit
+   as a symbol window's tab is. An order in groups heads each as the ladder
+   list heads its columns. */
+.picker-sorts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.picker-sorts-name {
+  margin-right: 4px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.picker-group-head {
+  margin: 18px 0 6px;
+  padding-bottom: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.picker-group-head:first-child {
+  margin-top: 0;
+}
 /* What the "User choice" tile shows before anything is chosen: a box the size
    of a thumbnail, so the two tiles stand level. `--chip-w` and `--chip-h` are
    the example board's size, set by the settings screen. */
@@ -1404,7 +1432,8 @@ button.board-card:hover:not(:disabled) {
   gap: 6px;
   margin-bottom: 12px;
 }
-button.symbol-tab.active {
+button.symbol-tab.active,
+button.picker-sort.active {
   border-color: var(--tint);
   box-shadow: inset 0 0 0 1px var(--tint);
   background: var(--panel);
