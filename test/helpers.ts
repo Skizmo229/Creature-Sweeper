@@ -7,8 +7,9 @@ import { loadLadders } from '../src/data.js';
 import { boardConfig, findType } from '../src/engine/config.js';
 import { DEFAULT_GAMEPLAY } from '../src/engine/settings.js';
 import type { Game } from '../src/engine/game.js';
+import { mulberry32 } from '../src/engine/rng.js';
 import { computeNumbers } from '../src/engine/grid.js';
-import type { BoardConfig } from '../src/engine/types.js';
+import type { BoardConfig, Cell } from '../src/engine/types.js';
 
 /** The tuned ladder data, exactly as shipped. */
 export const ladders = loadLadders();
@@ -82,6 +83,47 @@ export function paint(game: Game, rows: readonly string[]): void {
   game.remaining.fill(0);
   for (const r of game.grid) {
     for (const c of r) if (c.tier > 0) game.remaining[c.tier - 1]!++;
+  }
+}
+
+/**
+ * A board as it stands, drawn in the catalogue's notation for `Game.fromLayout`: `truth` is what
+ * is there, `shown` what the player sees. The inverse of `fromLayout` on a board in play.
+ */
+export function drawingOf(game: Game): { truth: string[]; shown: string[] } {
+  const draw = (see: (c: Cell) => string): string[] =>
+    game.grid.map((row) => row.map((c) => (c.present ? see(c) : '#')).join(' '));
+  return {
+    truth: draw((c) => (c.tier === 0 ? '.' : `${c.tier}`)),
+    shown: draw((c) => {
+      if (!c.open) return c.mark > 0 ? `m${c.mark}` : '?';
+      if (c.tier > 0) return `k${c.tier}`;
+      return c.num === 0 ? '.' : `${c.num}`;
+    }),
+  };
+}
+
+/**
+ * Play a board part-way, as a careful player would: free kills lowest tier first, some empty
+ * ground, and two marks: the first right where it lands on a creature, the second wrong. For a
+ * test that wants a board in play.
+ */
+export function playPartWay(game: Game, seed: number): void {
+  const rng = mulberry32(seed);
+  const moves = 3 + Math.floor(rng() * 12);
+  for (let i = 0; i < moves && game.status === 'playing'; i++) {
+    const covered = game.grid.flat().filter((c) => c.present && !c.open && game.inReach(c));
+    const kill = covered
+      .filter((c) => c.tier > 0 && c.tier <= game.level)
+      .sort((a, b) => a.tier - b.tier)[0];
+    const ground = covered.filter((c) => c.tier === 0);
+    const pick = rng() < 0.5 && kill ? kill : ground[Math.floor(rng() * ground.length)];
+    if (pick && pick.mark === 0) game.open(pick.x, pick.y);
+  }
+  const covered = game.grid.flat().filter((c) => c.present && !c.open);
+  for (let i = 0; i < 2 && covered.length; i++) {
+    const c = covered[Math.floor(rng() * covered.length)]!;
+    game.setMark(c.x, c.y, i === 0 ? Math.max(1, c.tier) : (c.tier % game.config.tiers) + 1);
   }
 }
 

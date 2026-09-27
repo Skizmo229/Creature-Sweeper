@@ -22,6 +22,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
     dungeon.ts      the dungeon map: the budget spent exactly, doorways and their pockets
   generate.ts     dealing the creatures: shape, then placement rule, then numbers
   opening.ts      choosing the opening and dealing it (`dealOpening`)
+  layout.ts       boards from drawings in the catalogue's notation (`Game.fromLayout`)
   notes.ts        pencil marks as a bitmask
   spells.ts       the four spells, their prices, the mana economy, spellKey
   cast.ts         what each spell does, behind the SpellHost interface
@@ -158,6 +159,13 @@ ladder recorded. CI regenerates the JSON and fails on any difference.
 
 Connectivity is asserted, not assumed: the opening reveals one region, so a fragmented board
 would leave the rest unreachable.
+
+`Game.fromLayout(truth, shown, options)` is the other way in, for the school's lessons, the field
+guide's diagrams and the tests: a board drawn in the catalogue's notation (`docs/strategies.md`),
+what is there and what the player sees. Nothing is dealt and no opening is chosen; the config is
+counted off the drawing with every threshold at `C_k` exactly, and `layout.ts` refuses a drawing
+the game could not be showing, such as a number its neighbours do not add up to or an open 0
+beside a covered cell.
 
 ## How a click flows
 

@@ -16,9 +16,11 @@ killing literally every creature at or below that tier. **Lock depth** is how ma
 thresholds are such full-tier-clear gates, and it is the main difficulty dial of a ladder.
 
 - **Where it lives:** `design/ladders.py` computes the thresholds; `cumulativeExp` in
-  `src/engine/config.ts` is the engine's reading of `C_k`.
+  `src/engine/config.ts` is the engine's reading of `C_k`, and a board built from a drawing
+  (`src/engine/layout.ts`) takes every threshold from it.
 - **What protects it:** `ladder data > locks exactly the top lock thresholds to C_k` and
-  `keeps every threshold at or below C_k` in `test/invariants.test.ts`.
+  `keeps every threshold at or below C_k` in `test/invariants.test.ts`, and for drawn boards
+  `boards from drawings > lock every threshold to C_k, and clear at full HP to the top level`.
 - **What breaks it:** any change to a board's creature quantities that does not go through
   `ladders.py`, or a placement rule that cannot land its quota exactly (a cave or a PAIRS board a
   few cells short would not throw; it would sit one kill under its top gate on that seed only).

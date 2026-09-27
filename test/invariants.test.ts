@@ -13,7 +13,15 @@ import { Game } from '../src/engine/game.js';
 import { autoplaySearch, autoplayTierOrder } from '../src/sim/autoplay.js';
 import { clearableWithoutGuessing } from '../src/engine/placement/sudoku.js';
 import { hiddenCap, shadeOf } from '../src/engine/placement/checker.js';
-import { ladders, battleTypes, boardsOf, SEEDS, UNGATED_SWEEP } from './helpers.js';
+import {
+  ladders,
+  battleTypes,
+  boardsOf,
+  drawingOf,
+  playPartWay,
+  SEEDS,
+  UNGATED_SWEEP,
+} from './helpers.js';
 import { shapeRule } from '../src/engine/shape/registry.js';
 import { placementRule } from '../src/engine/placement/registry.js';
 
@@ -95,6 +103,50 @@ describe('the zero-damage guarantee', () => {
       const game = Game.create(cfg, 0xc0ffee);
       const result = autoplayTierOrder(game);
       expect(result.finalLevel, `${type.id}#10 should top out at ${board.tiers}`).toBe(board.tiers);
+    }
+  });
+});
+
+describe('boards from drawings', () => {
+  /** Hand drawings the way the school draws them, and boards in play drawn back. */
+  function drawings(): Game[] {
+    const games = [
+      Game.fromLayout(['. . . .', '. . 4 .', '1 . . .'], ['. 4 ? ?', '1 5 ? ?', '? ? ? ?'], {
+        tiers: 5,
+      }),
+      Game.fromLayout(
+        ['1 2 . .', '. . . .', '3 . . 1', '2 . . .'],
+        ['k1 ? ? ?', '? ? ? ?', '? ? ? ?', 'm3 ? ? m1'],
+      ),
+      Game.fromLayout(['2 . .', '. . .', '. . 3'], ['? 2 ?', '? ? ?', '? ? ?'], { tiers: 5 }),
+      Game.fromLayout(['1 . 2', '. . .', '. . 3'], ['k1 3 ?', '1 6 ?', '? ? ?']),
+    ];
+    for (const id of ['normal', 'extreme', 'donut', 'checker', 'pairs']) {
+      for (const seed of SEEDS) {
+        const game = Game.create(boardConfig(ladders, id, 6), seed);
+        playPartWay(game, seed);
+        if (game.status !== 'playing') continue;
+        const { truth, shown } = drawingOf(game);
+        const { tiers, placement } = game.config;
+        games.push(Game.fromLayout(truth, shown, { startLevel: game.level, tiers, placement }));
+      }
+    }
+    return games;
+  }
+
+  // Facts 1 to 3 hold by construction (`src/engine/layout.ts`); this says so rather than trusts it.
+  it('lock every threshold to C_k, and clear at full HP to the top level', () => {
+    const games = drawings();
+    expect(games.length).toBeGreaterThan(15);
+    for (const game of games) {
+      const { quantity, tiers, exp } = game.config;
+      expect(exp).toEqual(cumulativeExp(quantity).slice(0, tiers - 1));
+      // A mark above the level locks its cell, and a drawn mark may be wrong: rub them out.
+      for (const c of game.grid.flat()) if (c.mark > 0) game.setMark(c.x, c.y, 0);
+      const result = autoplayTierOrder(game);
+      expect(result.cleared, JSON.stringify(result.stuck)).toBe(true);
+      expect(result.hpLost).toBe(0);
+      expect(result.finalLevel).toBe(tiers);
     }
   });
 });
