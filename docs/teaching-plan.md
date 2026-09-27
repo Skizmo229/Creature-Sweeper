@@ -143,14 +143,20 @@ Two questions about what the tutor may read:
   reader gains an option under which a marked cell is read as covered and unknown, and the tutor
   reads with it on. Everything the tutor says is then provable from open cells alone, and a
   lesson may name a cell the player has already marked, rightly or wrongly; when the tier it
-  names differs from the mark, the caption says so ("you marked this 3; it is a 4").
+  names differs from the mark, the caption says so ("you marked this 3; it is a 4"). A mark the
+  press has itself proven is believed from then on within that press, so the numbers beside it
+  are read with it subtracted, as the player reads them, and nothing is taught about it: found
+  while building, a tutor that believed nothing re-taught the player's own correct marks on
+  every press and never got past them.
 - **The player's pencil.** Never read as a bound, for the invariant's reason. The tutor's
   candidate sets start full on every press.
 
 Cost: the instrument runs forty seeds of ten boards in seconds, so one pass on one board is
 milliseconds at grades 0 to 2. Grades 3 and 4 are heavier on HUGE. The budget is one frame at
 the first press; if a measurement puts a grade over it, that grade runs in a worker, and the
-caption shows the lower grades first meanwhile.
+caption shows the lower grades first meanwhile. Measured 26 September 2026 on the built tutor:
+a press averages 1 to 3 ms and peaks at 13 ms on HUGE x EXTREME's board 10, so it runs on the
+main thread and no worker is needed.
 
 ### 4.4 What a hint costs, and what it records
 

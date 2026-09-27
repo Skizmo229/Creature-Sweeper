@@ -66,8 +66,19 @@ function numberVisible(game: Game, cell: Cell, peek: boolean): boolean {
   return !cell.alive && placementRule(game.config.placement).display.hoverShowsNumber;
 }
 
+export interface ReadOptions {
+  /**
+   * Whether a mark is believed. The graded player writes only proven marks and believes them
+   * (the default); a person writes guesses, so the tutor believes none (docs/teaching-plan.md),
+   * and a marked cell is then read as covered and unknown, its mark subtracted from nothing.
+   */
+  trustMarks?: boolean;
+  /** Marks believed although `trustMarks` is false: the ones the caller has proven itself. */
+  trusted?: ReadonlySet<Cell>;
+}
+
 /** Read the board. `peek` reads a beaten creature's number even where the game hides it. */
-export function readBoard(game: Game, peek: boolean): Reading {
+export function readBoard(game: Game, peek: boolean, options: ReadOptions = {}): Reading {
   const constraints: Constraint[] = [];
   const touching = new Map<Cell, Constraint[]>();
   const unknown: Cell[] = [];
@@ -75,15 +86,23 @@ export function readBoard(game: Game, peek: boolean): Reading {
 
   // Where the creatures walk a mark is a route, not a claim about a cell (PATROL), so nothing
   // marked is subtracted there; the graded player writes no marks on such a board anyway.
-  const claims = game.marksAreClaims;
+  const trustAll = options.trustMarks ?? true;
+  const believed = (cell: Cell): boolean =>
+    cell.mark > 0 && game.marksAreClaims && (trustAll || (options.trusted?.has(cell) ?? false));
+  // On a search board the counters already subtract every mark as a flag (`Game.counterFor`);
+  // a mark read as unknown here has to be added back, or the tier would be counted gone.
+  const flags = new Array<number>(game.config.tiers + 1).fill(0);
   // Where the board draws every creature where it stands (SPRINKLE DONUT), a person counts the
   // creatures under a number as a Census would, so the count is read off what is drawn.
   const shown = placementRule(game.config.placement).display.showsCreatures;
   for (const cell of game.grid.flat()) {
     if (!cell.present) continue;
     if (!cell.open) {
-      if (claims && cell.mark > 0) marked.set(cell, cell.mark);
-      else unknown.push(cell);
+      if (believed(cell)) marked.set(cell, cell.mark);
+      else {
+        unknown.push(cell);
+        if (cell.mark > 0 && game.config.search) flags[cell.mark]!++;
+      }
       continue;
     }
     if (!numberVisible(game, cell, peek)) continue;
@@ -94,7 +113,7 @@ export function readBoard(game: Game, peek: boolean): Reading {
       if (n.open) {
         residual -= n.tier;
         if (n.tier > 0) counted++;
-      } else if (claims && n.mark > 0) {
+      } else if (believed(n)) {
         residual -= n.mark;
         counted++;
       } else covered.push(n);
@@ -118,7 +137,7 @@ export function readBoard(game: Game, peek: boolean): Reading {
   const markedOf = new Array<number>(game.config.tiers + 1).fill(0);
   if (!game.config.search) for (const t of marked.values()) markedOf[t] = (markedOf[t] ?? 0) + 1;
   for (let t = 1; t <= game.config.tiers; t++) {
-    const left = Math.max(0, game.counterFor(t) - markedOf[t]!);
+    const left = Math.max(0, game.counterFor(t) + flags[t]! - markedOf[t]!);
     if (left <= 0) continue;
     hidingMask |= noteBit(t);
     top = t;

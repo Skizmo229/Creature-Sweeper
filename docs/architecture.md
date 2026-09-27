@@ -87,6 +87,7 @@ src/sim/        headless measurement, all driving the real engine (see docs/tuni
   reader.ts       what the graded player can see, and the sum arithmetic its tricks share
   tricks.ts       the tricks: one technique per entry of docs/strategies.md, at its grade
   tricktext.ts    what each trick is called and what it says, for the tutor, the school and the guide
+  tutor.ts        the tutor: the next provable move on the board as it stands, and why
   scaffold.ts     a dungeon's corridors, doorways and pockets, read off the silhouette
   cli/            one command-line entry per measurement, run on import
 src/data.ts     Node-only loader for ladders.json; CS_LADDERS points it at a candidate file
