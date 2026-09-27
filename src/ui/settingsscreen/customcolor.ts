@@ -3,9 +3,9 @@
  * same three numbers to type, the colour in hex, and the highlight's example board drawn in the
  * colour as any of them moves. "Use this colour" saves it, as Enter does from a typed field.
  *
- * Red is the one colour the highlight already means something in: it lights a click that would
- * do nothing. So the window shows the two side by side, and says so when the colour mixed comes
- * close enough to the red to be mistaken for it (decision 0050).
+ * Red is the one colour the highlight already means something in: it crosses out a click that
+ * would do nothing (decision 0051). So the window shows the two side by side, and says so when the
+ * colour mixed comes close enough to the red to be mistaken for it (decision 0050).
  */
 
 import { el } from '../dom.js';
@@ -130,8 +130,8 @@ export function openColorWindow(screen: HTMLElement, spec: ColorWindowSpec): voi
   const warn = el(
     'p',
     'color-warn',
-    'This is close to the red of a click that would do nothing, so the two may be hard to tell ' +
-      'apart on the board.',
+    'This is close to the red of a click that would do nothing. The board still crosses that out, ' +
+      'but the two colours may be hard to tell apart.',
   );
   const use = el('button', 'primary color-use', 'Use this colour');
   use.type = 'submit';
@@ -150,8 +150,8 @@ export function openColorWindow(screen: HTMLElement, spec: ColorWindowSpec): voi
     el(
       'p',
       'settings-blurb',
-      'Mix any colour from red, green and blue, or type it in hex. Red itself is taken: it lights ' +
-        'a click that would do nothing.',
+      'Mix any colour from red, green and blue, or type it in hex. Red itself is taken: it crosses ' +
+        'out a click that would do nothing, as on the right of the example.',
     ),
     body,
   );

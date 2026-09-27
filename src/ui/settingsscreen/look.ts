@@ -12,6 +12,7 @@ import { ladders } from '../ladders.js';
 import {
   HIGHLIGHT_PIN,
   highlightSampleBoard,
+  highlightSampleLands,
   sampleBoard,
   samplePin,
   zoomSampleBoard,
@@ -329,6 +330,7 @@ export function menuStripRow(ctx: ScreenContext, host: HTMLElement): void {
 /**
  * The cursor highlight's example: its board held lit, drawn with the presentation as it stands but
  * for `over`, on the grid of the ladder the player came from: hex on HIVE, square boxes elsewhere.
+ * The covered cells right of the lit one are out of reach, so the example shows a refusal too.
  */
 function highlightChip(ctx: ScreenContext, over: Partial<BoardDisplay>): () => HTMLElement {
   const hex = ladders.find((t) => t.id === ctx.typeId)?.topology === 'hex';
@@ -337,7 +339,7 @@ function highlightChip(ctx: ScreenContext, over: Partial<BoardDisplay>): () => H
       highlightSampleBoard(hex ? 'hex' : 'square'),
       ctx.currentTheme,
       ctx.display(over),
-      { cell: ctx.chipCell, pin: HIGHLIGHT_PIN },
+      { cell: ctx.chipCell, pin: HIGHLIGHT_PIN, lands: highlightSampleLands },
     ).canvas;
 }
 
@@ -345,17 +347,20 @@ export function highlightRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, typeId } = ctx;
   const hex = ladders.find((t) => t.id === typeId)?.topology === 'hex';
   const chip = (highlight: HighlightStyle | null) => highlightChip(ctx, { highlight });
+  const refusal =
+    ' Where a click would do nothing, past the edge of your reach, a cell is crossed out instead ' +
+    'of boxed, as on the right of these examples.';
 
   wideRow(
     host,
     '3×3 cursor highlight',
-    hex
+    (hex
       ? 'What the cell under the cursor lights up, on this ladder’s hexagons. The default follows ' +
-          'real adjacency, so it lights the six cells around it, where the flat block is always ' +
-          'the same eight.'
+        'real adjacency, so it lights the six cells around it, where the flat block is always ' +
+        'the same eight.'
       : 'What the cell under the cursor lights up. On square cells the default and the flat block ' +
-          'light the same eight; they part on a hex board, where the default lights six, and across ' +
-          'a wrapped edge, which only the default jumps.',
+        'light the same eight; they part on a hex board, where the default lights six, and across ' +
+        'a wrapped edge, which only the default jumps.') + refusal,
     gallery(
       [
         {
@@ -407,9 +412,10 @@ export function highlightColorRow(ctx: ScreenContext, host: HTMLElement): void {
   wideRow(
     host,
     'Cursor highlight colour',
-    'The colour a cell under the cursor is lit in when a click there would land. Red is kept for ' +
-      'a click that would do nothing, whatever this is; with red–green colour blindness the ' +
-      'default green is the hardest colour to tell from it, and magenta the easiest.' +
+    'The colour a cell under the cursor is boxed in when a click there would land. A cell where ' +
+      'a click would do nothing is crossed out in red whatever this is, as on the right of these ' +
+      'examples; with red–green colour blindness the default green is the hardest colour to tell ' +
+      'from that red, and magenta the easiest, though the cross reads without either.' +
       (style ? '' : ' The highlight is off above, so none of this shows until it is back on.'),
     gallery(
       [

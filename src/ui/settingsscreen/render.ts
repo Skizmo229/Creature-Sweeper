@@ -6,6 +6,7 @@
  */
 
 import type { Game } from '../../engine/game.js';
+import type { Cell } from '../../engine/types.js';
 import { BoardView, type BoardDisplay } from '../board/view.js';
 import type { TypeTheme } from '../looktypes.js';
 
@@ -19,6 +20,8 @@ export interface PreviewOptions {
   cell: number;
   /** A cell to hold highlighted, for the cursor-highlight examples. */
   pin?: { x: number; y: number };
+  /** Whether a click on a cell would land, for the cursor-highlight examples; else the crawl's. */
+  lands?: (cell: Cell) => boolean;
 }
 
 /**
@@ -47,6 +50,7 @@ export function renderPreview(
       onHover: () => {
         /* nor hovered */
       },
+      ...(opts.lands ? { lands: opts.lands } : {}),
     },
     { interactive: false, fixedCell: opts.cell },
   );

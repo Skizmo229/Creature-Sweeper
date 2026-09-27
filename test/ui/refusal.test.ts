@@ -2,8 +2,8 @@
 /**
  * The cursor on a cell a click would not land on: crossed out, where a cell it would land on is
  * boxed, so the refusal reads without its red. Corner to corner of the tile on both grids and at
- * the smallest cell a board is drawn at, over a dark outline, never dashed like a wrap seam
- * (decision 0051).
+ * the smallest cell a board is drawn at, over a dark outline, never dashed like a wrap seam, and
+ * shown beside the boxes on the settings screen's highlight examples (decision 0051).
  */
 
 import './setup.js';
@@ -16,14 +16,15 @@ import { TILE_INSET } from '../../src/ui/board/paint.js';
 import { type BoardDisplay, BoardView } from '../../src/ui/board/view.js';
 import { hexPoints, hexRadius } from '../../src/ui/hexgeom.js';
 import { themeFor } from '../../src/ui/looks.js';
-import { HIGHLIGHT_PIN, highlightSampleBoard } from '../../src/ui/preview.js';
-import type { HighlightStyle } from '../../src/ui/settings.js';
+import { HIGHLIGHT_PIN, highlightSampleBoard, highlightSampleLands } from '../../src/ui/preview.js';
+import { HIGHLIGHT_COLORS, type HighlightStyle } from '../../src/ui/settings.js';
+import { renderPreview } from '../../src/ui/settingsscreen/render.js';
 import { MARK_COLOR, MARK_OUTLINE, OUT_OF_REACH_COLOR } from '../../src/ui/theme.js';
 import { FONTS } from '../../src/ui/typefaces.js';
 
 type Point = readonly [number, number];
 
-/** One `stroke()`: the state it was drawn in, and its path as the points each sub-path runs through. */
+/** One `stroke()`: the state it was drawn in, and its path as the points each sub-path passes. */
 interface Stroke {
   style: string;
   width: number;
@@ -264,9 +265,52 @@ describe('a cell a click would not land on', () => {
 
 interface Driver {
   play(typeId: string, board: number, seed?: number): void;
+  showSettings(back: () => void): void;
+  showTypes(): void;
   readonly current: Game | null;
   readonly view: { readonly display: BoardDisplay; pinHover(x: number, y: number): void } | null;
 }
+
+describe('the highlight examples on the settings screen', () => {
+  for (const topology of ['square', 'hex'] as const) {
+    it(`cross out the covered cells right of the lit one and box the rest, on ${topology}`, () => {
+      const game = highlightSampleBoard(topology);
+      const pinned = game.cellAt(HIGHLIGHT_PIN.x, HIGHLIGHT_PIN.y)!;
+      const around = game.neighboursOf(pinned);
+      const refused = around.filter((n) => !highlightSampleLands(n));
+      // The lit cell lands, so it still shows the player's colour; some of its ring does not.
+      expect(highlightSampleLands(pinned)).toBe(true);
+      expect(refused.length).toBeGreaterThan(0);
+      expect(refused.every((n) => !n.open && n.x > pinned.x)).toBe(true);
+
+      recording.strokes.length = 0;
+      renderPreview(game, themeFor('normal'), display('neighbours'), {
+        cell: 26,
+        pin: HIGHLIGHT_PIN,
+        lands: highlightSampleLands,
+      });
+      const inRed = recording.strokes.filter((s) => s.style === OUT_OF_REACH_COLOR);
+      const inColor = recording.strokes.filter((s) => s.style === MARK_COLOR);
+      expect(inRed).toHaveLength(refused.length);
+      for (const s of inRed) expect(asCross(s)).not.toBeNull();
+      expect(inColor).toHaveLength(around.length + 1 - refused.length);
+    });
+  }
+
+  it('are what the highlight and colour galleries draw', () => {
+    const app = new App(document.getElementById('app')!) as unknown as Driver;
+    recording.strokes.length = 0;
+    app.showSettings(() => app.showTypes());
+    const inRed = recording.strokes.filter((s) => s.style === OUT_OF_REACH_COLOR);
+    // At least the game type's green and every preset in the colour row, each crossing out the
+    // covered cells right of its lit one.
+    const perTile = highlightSampleBoard('square')
+      .neighboursOf(highlightSampleBoard('square').cellAt(HIGHLIGHT_PIN.x, HIGHLIGHT_PIN.y)!)
+      .filter((n) => !highlightSampleLands(n)).length;
+    expect(inRed.length).toBeGreaterThanOrEqual(perTile * (HIGHLIGHT_COLORS.length + 1));
+    for (const s of inRed) expect(asCross(s)).not.toBeNull();
+  });
+});
 
 describe('the edge of reach on a board in play', () => {
   it('boxes every cell a click would land on and crosses out every other, on DUNGEON', () => {

@@ -165,7 +165,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   track showing the colours its slider reaches from where the others stand, with a number to type
   beside each and the hex; the example redraws in place as they move, and only "Use this colour"
   (or Enter in a field) saves and rebuilds. The colour is shown beside the red of a click that
-  would do nothing, with a warning within `NEAR_REFUSAL` of it.
+  would do nothing, with a warning within `NEAR_REFUSAL` of it. Both galleries, and the window's
+  example, show a refusal as well: the covered cells right of the lit one are out of reach
+  (`highlightSampleLands`), so where the highlight lights a ring they are crossed out beside the
+  boxes (decision 0051).
 - Settings that make the game easier than the tuned default record nothing (no clear, no unlock,
   no best time), and the screen, the ladder list and the clear overlay all say so.
 - Each gameplay slider is shaded by how far it sits from the tuned default, by request: toward
