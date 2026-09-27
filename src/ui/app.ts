@@ -24,11 +24,10 @@ import { soundFor } from './game/sound.js';
 import { Tutor } from './game/tutor.js';
 import { ladders } from './ladders.js';
 import { buildMuteButton, syncMuteButton } from './mute.js';
-import { type AskOptions, buildAsk } from './overlays/ask.js';
+import type { AskOptions } from './overlays/ask.js';
+import { Modal } from './overlays/modal.js';
 import { Progress } from './progress.js';
-import { buildSaveBackup } from './screens/backup.js';
 import { buildBoardList } from './screens/boards.js';
-import { buildHowTo } from './screens/howto.js';
 import { buildLadderList } from './screens/ladders.js';
 import { Settings } from './settings.js';
 import { buildSettingsScreen } from './settingsscreen/screen.js';
@@ -70,8 +69,8 @@ export class App {
   private readonly tutor = new Tutor();
   /** Where the settings screen goes back to while it is showing; Escape takes the same route. */
   private settingsBack: (() => void) | null = null;
-  /** The open modal overlay (a question, the how-to, the save backup), if any. */
-  private askOverlay: HTMLElement | null = null;
+  /** The modal overlay over the screen: a question, the how-to, the save backup. */
+  private readonly modal: Modal;
   /** Stops a running board-clear effect; a screen rebuild must call it. */
   private stopVictory: (() => void) | null = null;
   /** The blow that ended a lost board, kept for the overlay. */
@@ -103,6 +102,7 @@ export class App {
 
   constructor(root: HTMLElement) {
     this.root = root;
+    this.modal = new Modal(root);
     window.addEventListener('keydown', (e) => this.onKey(e));
     window.addEventListener('resize', () => this.view?.fit());
     // A settings change has to reach the board the player came from, not just the next one.
@@ -152,7 +152,7 @@ export class App {
   private clearScreen(): void {
     this.clock.stop();
     this.endVictory();
-    this.closeAsk();
+    this.modal.close();
     this.root.replaceChildren();
     this.view = null;
     this.els = null;
@@ -165,13 +165,7 @@ export class App {
    * the settings screen or after the player has left it, and on the settings screen Escape is Back.
    */
   private onKey(e: KeyboardEvent): void {
-    if (this.askOverlay) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        this.closeAsk();
-      }
-      return;
-    }
+    if (this.modal.onKey(e)) return;
     if (this.els) {
       this.actions.onKey(e);
       return;
@@ -190,9 +184,9 @@ export class App {
         settings: this.settings,
         recordsCount: this.recordsCount,
         pickType: (id) => this.showBoards(id),
-        howTo: () => this.showHowTo(),
+        howTo: () => this.modal.howTo(),
         openSettings: () => this.showSettings(() => this.showTypes()),
-        backup: () => this.showSaveBackup(),
+        backup: () => this.modal.saveBackup(),
         resetProgress: () =>
           this.ask({
             title: 'ERASE PROGRESS?',
@@ -215,7 +209,7 @@ export class App {
     // so a reload cannot reopen it.
     if (!this.progress.seenHowTo) {
       this.progress.markHowToSeen();
-      this.showHowTo();
+      this.modal.howTo();
     }
   }
 
@@ -266,46 +260,9 @@ export class App {
     return boardRow(ladders, this.typeId, this.boardIndex)?.tiers ?? 5;
   }
 
-  // --------------------------------------------------------------- overlays
-
-  /** Show a modal over the current screen; every rebuild closes it (decision 0017). */
-  private openModal(overlay: HTMLElement, focus?: HTMLElement): boolean {
-    this.closeAsk();
-    const screen = this.root.querySelector('.screen');
-    if (!screen) return false;
-    screen.append(overlay);
-    this.askOverlay = overlay;
-    focus?.focus();
-    return true;
-  }
-
-  private closeAsk(): void {
-    this.askOverlay?.remove();
-    this.askOverlay = null;
-  }
-
   /** Ask before doing something irreversible, in the page rather than in a browser dialog. */
   private ask(opts: AskOptions): void {
-    const { overlay, focus } = buildAsk(opts, () => this.closeAsk());
-    if (!this.openModal(overlay, focus)) opts.onConfirm();
-  }
-
-  private showHowTo(onClose?: () => void): void {
-    const { overlay, focus } = buildHowTo(() => {
-      this.closeAsk();
-      onClose?.();
-    });
-    if (!this.openModal(overlay, focus)) onClose?.();
-  }
-
-  private showSaveBackup(draft = '', error = ''): void {
-    this.openModal(
-      buildSaveBackup(draft, error, {
-        ask: (opts) => this.ask(opts),
-        close: () => this.closeAsk(),
-        reopen: (d, e) => this.showSaveBackup(d, e),
-      }),
-    );
+    this.modal.ask(opts);
   }
 
   // ------------------------------------------------------------ the board

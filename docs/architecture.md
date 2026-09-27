@@ -54,7 +54,8 @@ src/ui/         the prototype
   mute.ts         the always-present speaker
   ladders.ts      the ladder data, bundled into the build (src/data.ts is Node's loader)
   screens/        one builder per screen: ladders, boards, howto, backup
-  overlays/       ask.ts: the in-page yes/no question (never window.confirm)
+  overlays/       ask.ts: the in-page yes/no question (never window.confirm); modal.ts: the one
+                  modal overlay up at a time, and the ones the menus open
   guide/          the field guide: entries.ts, its words (the catalogue's) and its diagrams
   game/           the game screen: screen.ts (furniture), hud.ts (filling it in), mode.ts
                   (what a click will do: tier, pencil, spell), actions.ts (what the player's

@@ -116,11 +116,18 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
   wrap.append(groups);
   fitNames(groups);
 
+  wrap.append(buildTools(a));
+
+  return wrap;
+}
+
+/** The tools under the list: unlock everything, the rules, settings, the save backup, the reset. */
+function buildTools(a: LadderListActions): HTMLElement {
   const tools = el('div', 'tools');
   const unlockAll = el('label', 'toggle');
   const box = el('input');
   box.type = 'checkbox';
-  box.checked = progress.unlockAll;
+  box.checked = a.progress.unlockAll;
   box.addEventListener('change', () => a.setUnlockAll(box.checked));
   unlockAll.append(box, el('span', undefined, 'Unlock everything'));
   tools.append(unlockAll);
@@ -140,9 +147,7 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
   const reset = el('button', 'ghost', 'Reset progress');
   reset.addEventListener('click', a.resetProgress);
   tools.append(reset);
-  wrap.append(tools);
-
-  return wrap;
+  return tools;
 }
 
 /**
