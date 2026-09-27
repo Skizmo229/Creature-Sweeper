@@ -28,6 +28,8 @@ describe('a board from a drawing', () => {
     expect(at(2, 1).alive).toBe(true);
     expect(game.grid.flat().filter((c) => c.open)).toHaveLength(4);
     expect(game.counterFor(4)).toBe(1);
+    expect(game.hasSweep).toBe(true);
+    expect(Game.fromLayout(TRUTH, SHOWN, { sweep: false }).hasSweep).toBe(false);
   });
 
   it('counts a beaten creature as killed and paid, and a mark as written', () => {

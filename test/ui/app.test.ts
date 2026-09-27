@@ -39,13 +39,15 @@ interface Driver {
   };
   showSettings(back: () => void): void;
   showTypes(): void;
-  ask(opts: {
-    title: string;
-    body: string;
-    confirmLabel: string;
-    cancelLabel: string;
-    onConfirm(): void;
-  }): void;
+  readonly modal: {
+    ask(opts: {
+      title: string;
+      body: string;
+      confirmLabel: string;
+      cancelLabel: string;
+      onConfirm(): void;
+    }): void;
+  };
   buildGameScreen(): void;
   readonly mode: { pendingSpell: string | null; notesMode: boolean; markMode: number };
 }
@@ -244,6 +246,35 @@ describe('the app', () => {
     expect(document.querySelector('.guide-card')).toBeNull();
     expect(document.querySelector('.hint')!.classList.contains('tutoring')).toBe(true);
     expect(app.current!.status).toBe('playing');
+  });
+
+  it('takes a school lesson: its words, a refused click, Next, and the card at its end', () => {
+    const click = (label: string): void =>
+      [...document.querySelectorAll<HTMLButtonElement>('button')]
+        .find((b) => b.textContent === label)!
+        .click();
+    // The rules card offers the lessons.
+    click('Take the lessons');
+    expect(text('h1')).toBe('School');
+    expect(document.querySelectorAll('.board-card')).toHaveLength(9);
+    document.querySelectorAll<HTMLButtonElement>('.board-card')[2]!.click();
+    expect(text('.board-label')).toContain('Subtract what you can see');
+    expect(document.querySelector('.sweep:not(.why)')).toBeNull();
+    // A cell nothing proves is refused, and the engine never sees the click.
+    app.actions.onCellPrimary(3, 0);
+    expect(text('.hint .refused')).toMatch(/^Nothing proves that cell yet; look at the 5/);
+    expect(app.current!.cellAt(3, 0)!.open).toBe(false);
+    key('Enter');
+    expect(text('.hint')).toMatch(/^Each 5 sees the beaten 3/);
+    app.actions.onCellPrimary(0, 0);
+    app.actions.onCellPrimary(1, 0);
+    key('Enter');
+    expect(text('.overlay h2')).toBe('LESSON TAKEN');
+    expect(app.progress.lessonDone('subtract')).toBe(true);
+    // Nothing a lesson does is a ladder's record.
+    expect(app.progress.boardsCleared()).toBe(0);
+    click('School');
+    expect(text('.board-card.done')).toContain('Subtract what you can see');
   });
 
   it("opens the guide for a ladder from its boards, led by the catalogue's note on it", () => {
@@ -459,7 +490,7 @@ describe('Escape and the entry modes', () => {
   });
 
   it('still lets Escape answer a question off the board', () => {
-    app.ask({
+    app.modal.ask({
       title: 'SURE?',
       body: 'A question on the ladder list.',
       confirmLabel: 'Yes',

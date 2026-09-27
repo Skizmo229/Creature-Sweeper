@@ -45,6 +45,8 @@ export interface LayoutOptions extends GameOptions {
   placement?: Placement;
   /** The config's `typeId`, for a caller that files the board somewhere. */
   typeId?: string;
+  /** False for a board that offers no Sweep, as EASY does: a lesson, where it would do the work. */
+  sweep?: boolean;
 }
 
 /** A drawing read: the board with every creature in place and nothing open, and what to show. */
@@ -236,6 +238,7 @@ export function readLayout(
     reach: 0,
     spells: [],
     startMana: 0,
+    ...(options.sweep === false ? { sweep: false } : {}),
   };
   const fault = placementRule(placement).fault(grid, config);
   if (fault) throw new Error(`the drawing breaks the ${placement} placement: ${fault}`);

@@ -24,6 +24,7 @@ function saveWith(clearedTypes: string[], extraBoards: Array<[string, number]> =
     scaling: {},
     unlockAll: false,
     seenHowTo: true,
+    lessons: [],
   };
   for (const id of clearedTypes) {
     const type = ladders.find((t) => t.id === id)!;

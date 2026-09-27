@@ -23,7 +23,6 @@ import { type GameScreenElements, buildGameScreen } from './game/screen.js';
 import { soundFor } from './game/sound.js';
 import { ladders } from './ladders.js';
 import { buildMuteButton, syncMuteButton } from './mute.js';
-import type { AskOptions } from './overlays/ask.js';
 import { Modal } from './overlays/modal.js';
 import { Progress } from './progress.js';
 import { buildBoardList } from './screens/boards.js';
@@ -65,6 +64,8 @@ export class App {
     leaveGame: () => this.leaveGame(),
     explain: () => this.explainBoard(),
     guide: () => this.teaching.guideFromBoard(),
+    refuse: (x, y) => this.teaching.refuse(this.game?.cellAt(x, y) ?? null),
+    next: () => this.teaching.next(),
   });
   private readonly clock = new BoardClock();
   /** Where the settings screen goes back to while it is showing; Escape takes the same route. */
@@ -107,8 +108,16 @@ export class App {
     this.modal = new Modal(root);
     this.teaching = new Teaching({
       settings: this.settings,
+      progress: this.progress,
       modal: this.modal,
       typeId: () => this.typeId,
+      show: (screen) => {
+        this.clearScreen();
+        this.root.append(screen);
+      },
+      play: (game) => this.startLesson(game),
+      refresh: () => this.refresh(),
+      ladders: () => this.showTypes(),
     });
     window.addEventListener('keydown', (e) => this.onKey(e));
     window.addEventListener('resize', () => this.view?.fit());
@@ -193,18 +202,13 @@ export class App {
         pickType: (id) => this.showBoards(id),
         howTo: () => this.teaching.howTo(),
         guide: () => this.teaching.guide(),
+        school: () => this.teaching.school(),
         openSettings: () => this.showSettings(() => this.showTypes()),
         backup: () => this.modal.saveBackup(),
         resetProgress: () =>
-          this.ask({
-            title: 'ERASE PROGRESS?',
-            body: 'Every unlock, clear time and full run on this device. This cannot be undone.',
-            confirmLabel: 'Erase everything',
-            cancelLabel: 'Cancel',
-            onConfirm: () => {
-              this.progress.reset();
-              this.showTypes();
-            },
+          this.modal.eraseProgress(() => {
+            this.progress.reset();
+            this.showTypes();
           }),
         setUnlockAll: (on) => {
           this.progress.setUnlockAll(on);
@@ -269,15 +273,11 @@ export class App {
     return boardRow(ladders, this.typeId, this.boardIndex)?.tiers ?? 5;
   }
 
-  /** Ask before doing something irreversible, in the page rather than in a browser dialog. */
-  private ask(opts: AskOptions): void {
-    this.modal.ask(opts);
-  }
-
   // ------------------------------------------------------------ the board
 
   private startBoard(typeId: string, board: number, seed = randomSeed()): void {
     this.run = null;
+    this.teaching.leaveLesson();
     this.typeId = typeId;
     this.boardIndex = board;
     this.seed = seed;
@@ -301,6 +301,7 @@ export class App {
    * is the run's; it starts on board 1's opening, as a single board's does.
    */
   private startFullRun(typeId: string, seed = randomSeed()): void {
+    this.teaching.leaveLesson();
     this.typeId = typeId;
     this.seed = seed;
     this.run = FullRun.start(ladders, typeId, seed, { settings: this.settings.gameplay });
@@ -332,6 +333,16 @@ export class App {
     this.startClock();
   }
 
+  /** A school lesson's board, which `teaching` has begun: no records, and no best time. */
+  private startLesson(game: Game): void {
+    this.run = null;
+    this.resetBoardState();
+    this.game = game;
+    this.clock.begin();
+    this.buildGameScreen();
+    this.startClock();
+  }
+
   /** Per-board input state. Never touches the clock; a run outlives a board. */
   private resetBoardState(): void {
     this.mode.reset();
@@ -345,32 +356,41 @@ export class App {
     wearInterfaceFont(this.settings, this.typeId);
     this.clearScreen();
 
-    const els = buildGameScreen(game, this.typeId, this.boardIndex, this.run, {
-      // Returns to this same board: the screen is rebuilt from `game`, which is untouched. The
-      // clock keeps running, as it does whenever the player walks away from a board.
-      openSettings: () =>
-        this.showSettings(() => {
-          this.buildGameScreen();
-          this.startClock();
-        }),
-      leave: () => this.leaveGame(),
-      pickTier: (tier) => this.actions.pickTier(tier),
-      pencilEmpty: () => {
-        this.mode.notesMode = true;
-        this.actions.pickTier(0);
+    const lesson = this.teaching.lessonTitle();
+    const els = buildGameScreen(
+      game,
+      this.typeId,
+      this.boardIndex,
+      this.run,
+      {
+        // Returns to this same board: the screen is rebuilt from `game`, which is untouched. The
+        // clock keeps running, as it does whenever the player walks away from a board.
+        openSettings: () =>
+          this.showSettings(() => {
+            this.buildGameScreen();
+            this.startClock();
+          }),
+        leave: () => this.leaveGame(),
+        pickTier: (tier) => this.actions.pickTier(tier),
+        pencilEmpty: () => {
+          this.mode.notesMode = true;
+          this.actions.pickTier(0);
+        },
+        toggleNotes: () => this.actions.toggleNotesMode(),
+        sweep: (useMarks) => this.actions.doSweep(useMarks),
+        wait: () => this.actions.doWait(),
+        explain: () => this.explainBoard(),
+        tutor: this.settings.presentation.tutor,
+        guide: () => this.teaching.guideFromBoard(),
+        next: () => this.teaching.next(),
+        pickSpell: (id) => this.actions.pickSpell(id),
+        cancelSpell: () => {
+          this.mode.cancelSpell();
+          this.refresh();
+        },
       },
-      toggleNotes: () => this.actions.toggleNotesMode(),
-      sweep: (useMarks) => this.actions.doSweep(useMarks),
-      wait: () => this.actions.doWait(),
-      explain: () => this.explainBoard(),
-      tutor: this.settings.presentation.tutor,
-      guide: () => this.teaching.guideFromBoard(),
-      pickSpell: (id) => this.actions.pickSpell(id),
-      cancelSpell: () => {
-        this.mode.cancelSpell();
-        this.refresh();
-      },
-    });
+      lesson,
+    );
     this.els = els;
     this.root.append(els.root);
 
@@ -396,9 +416,10 @@ export class App {
    * is replayable at will and needs no guard.
    */
   private leaveGame(): void {
+    if (this.teaching.lesson) return this.teaching.school();
     if (this.run && this.run.status === 'playing') {
       const run = this.run;
-      this.ask({
+      this.modal.ask({
         title: 'ABANDON RUN?',
         body:
           `${this.typeName()} full run, board ${this.boardIndex} of ${run.boardCount}, ` +
@@ -448,8 +469,10 @@ export class App {
       }
     }
 
+    this.teaching.moved();
     this.refresh();
-    if (game.status !== 'playing') this.finish();
+    if (this.teaching.lesson) this.teaching.ended();
+    else if (game.status !== 'playing') this.finish();
   }
 
   private refresh(): void {
@@ -462,8 +485,9 @@ export class App {
       mode: this.mode,
       hovered: this.view?.hoveredCell ?? null,
       tutor: this.teaching.tutor.text(),
+      lesson: this.teaching.lessonLine(),
     });
-    this.view?.setLesson(this.teaching.tutor.shown());
+    this.view?.setLesson(this.teaching.pointer());
     this.view?.render();
     this.updateClock();
   }

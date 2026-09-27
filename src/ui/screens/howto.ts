@@ -10,6 +10,7 @@ import { el } from '../dom.js';
 export function buildHowTo(
   onDone: () => void,
   onGuide: () => void,
+  onSchool: () => void,
 ): { overlay: HTMLElement; focus: HTMLElement } {
   const overlay = el('div', 'overlay win');
   const card = el('div', 'overlay-card howto');
@@ -61,10 +62,13 @@ export function buildHowTo(
   const row = el('div', 'overlay-actions');
   const go = el('button', 'primary', 'Got it');
   go.addEventListener('click', onDone);
-  // Everything past these three rules is in the guide, which the card offers and does not require.
+  // Everything past these three rules is in the lessons and the guide, which the card offers and
+  // does not require.
+  const school = el('button', 'ghost', 'Take the lessons');
+  school.addEventListener('click', onSchool);
   const guide = el('button', 'ghost', 'Field guide');
   guide.addEventListener('click', onGuide);
-  row.append(go, guide);
+  row.append(go, school, guide);
   card.append(row);
   overlay.append(card);
   return { overlay, focus: go };

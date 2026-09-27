@@ -22,6 +22,8 @@ export interface LadderListActions {
   howTo(): void;
   /** The field guide: the catalogue of tricks. */
   guide(): void;
+  /** The school: nine lessons, one trick each. */
+  school(): void;
   openSettings(): void;
   backup(): void;
   /** Asks first; the list is rebuilt on confirmation. */
@@ -137,6 +139,10 @@ function buildTools(a: LadderListActions): HTMLElement {
   const howto = el('button', 'ghost', 'How to play');
   howto.addEventListener('click', a.howTo);
   tools.append(howto);
+
+  const school = el('button', 'ghost', 'School');
+  school.addEventListener('click', a.school);
+  tools.append(school);
 
   const guide = el('button', 'ghost', 'Field guide');
   guide.addEventListener('click', a.guide);

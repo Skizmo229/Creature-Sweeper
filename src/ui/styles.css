@@ -932,6 +932,21 @@ button.board-card:hover:not(:disabled) {
   font-weight: 700;
   color: var(--danger);
 }
+/* A school lesson speaks where the hint does, in the ink and a size up, as the tutor does; a
+   refused click says why in the danger colour, ahead of the step, until the next move. */
+.hint.teaching {
+  color: var(--ink);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+.hint .refused {
+  color: var(--danger);
+}
+.hint .lesson-next {
+  margin-left: 6px;
+  vertical-align: baseline;
+}
+
 /* The tutor's way into the guide, at the end of what it says. */
 .hint-more {
   margin-left: 4px;

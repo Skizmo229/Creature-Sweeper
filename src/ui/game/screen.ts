@@ -27,6 +27,8 @@ export interface GameScreenActions {
   readonly tutor: boolean;
   /** The field guide, at what the tutor is saying. */
   guide(): void;
+  /** On a lesson board: go on to the next step. */
+  next(): void;
   pickSpell(id: SpellId): void;
   cancelSpell(): void;
 }
@@ -50,14 +52,18 @@ export interface GameScreenElements {
   hint: HTMLParagraphElement;
   /** Shown at the end of the hint line while the tutor speaks: the guide's entry for it. */
   more: HTMLButtonElement;
+  /** Shown at the end of a lesson's line when its step waits to be told to go on. */
+  next: HTMLButtonElement;
 }
 
+/** `lesson` is a school lesson's title, shown in place of the board's label. */
 export function buildGameScreen(
   game: Game,
   typeId: string,
   boardIndex: number,
   run: FullRun | null,
   a: GameScreenActions,
+  lesson: string | null = null,
 ): GameScreenElements {
   const type = ladders.find((t) => t.id === typeId)!;
   const wrap = el('div', 'screen game');
@@ -66,7 +72,10 @@ export function buildGameScreen(
   wrap.style.setProperty('--tint', themeFor(typeId).accent);
 
   const { hudEl, hud } = buildHud(game, run, a);
-  wrap.append(hudEl, boardLabel(type.name, game, boardIndex, run));
+  wrap.append(
+    hudEl,
+    lesson ? el('div', 'board-label', lesson) : boardLabel(type.name, game, boardIndex, run),
+  );
 
   const stage = el('div', 'stage');
   const canvas = el('canvas');
@@ -83,8 +92,10 @@ export function buildGameScreen(
   const more = el('button', 'hint-more', 'more [G]');
   more.title = 'Open the field guide at this trick.';
   more.addEventListener('click', a.guide);
+  const next = el('button', 'primary small lesson-next', 'Next [Enter]');
+  next.addEventListener('click', a.next);
 
-  return { root: wrap, stage, canvas, hud, ...controls, spellBtns, hint, more };
+  return { root: wrap, stage, canvas, hud, ...controls, spellBtns, hint, more, next };
 }
 
 /** The HUD: the readouts `hud.ts` fills in, and the Settings and Back buttons. */

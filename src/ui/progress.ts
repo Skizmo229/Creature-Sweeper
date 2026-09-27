@@ -70,6 +70,8 @@ export interface SaveData {
    * smaller cost than never showing it to a new one.
    */
   seenHowTo: boolean;
+  /** The school's lessons finished, by id. Absent in saves written before the school. */
+  lessons: string[];
 }
 
 function emptySave(): SaveData {
@@ -81,6 +83,7 @@ function emptySave(): SaveData {
     scaling: {},
     unlockAll: false,
     seenHowTo: false,
+    lessons: [],
   };
 }
 
@@ -131,6 +134,17 @@ export class Progress {
 
   markHowToSeen(): void {
     this.data.seenHowTo = true;
+    this.save();
+  }
+
+  /** Whether a school lesson has been taken to its end. Nothing waits on it (principle 7). */
+  lessonDone(id: string): boolean {
+    return this.data.lessons.includes(id);
+  }
+
+  markLessonDone(id: string): void {
+    if (this.lessonDone(id)) return;
+    this.data.lessons.push(id);
     this.save();
   }
 

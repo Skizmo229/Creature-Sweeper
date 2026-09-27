@@ -33,6 +33,8 @@ export class LessonRun {
       startLevel: lesson.level,
       tiers: TIERS,
       typeId: 'school',
+      // Sweep would do the lesson's work for the player, as it would EASY's.
+      sweep: false,
     });
     this.settle();
   }

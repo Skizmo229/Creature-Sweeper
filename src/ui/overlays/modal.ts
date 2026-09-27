@@ -47,12 +47,27 @@ export class Modal {
     if (!this.show(overlay, focus)) opts.onConfirm();
   }
 
-  /** The rules card; `onGuide` is its way to the field guide. */
-  howTo(onGuide: () => void, onClose?: () => void): void {
-    const { overlay, focus } = buildHowTo(() => {
-      this.close();
-      onClose?.();
-    }, onGuide);
+  /** The ladder list's reset: every record on this device, asked about first. */
+  eraseProgress(onErase: () => void): void {
+    this.ask({
+      title: 'ERASE PROGRESS?',
+      body: 'Every unlock, clear time and full run on this device. This cannot be undone.',
+      confirmLabel: 'Erase everything',
+      cancelLabel: 'Cancel',
+      onConfirm: onErase,
+    });
+  }
+
+  /** The rules card, with its ways to the field guide and the school. */
+  howTo(onGuide: () => void, onSchool: () => void, onClose?: () => void): void {
+    const { overlay, focus } = buildHowTo(
+      () => {
+        this.close();
+        onClose?.();
+      },
+      onGuide,
+      onSchool,
+    );
     if (!this.show(overlay, focus)) onClose?.();
   }
 

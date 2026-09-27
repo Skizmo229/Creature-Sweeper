@@ -7,10 +7,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 
 - Every screen begins with `root.replaceChildren()`. Anything that must survive navigation, such
   as the mute speaker, lives on `document.body` instead. Every screen change calls `endVictory()`
-  and `closeAsk()`, or a frame loop or a modal keeps running against detached nodes.
-- Confirmations go through `App.ask()`, an in-page overlay, never `window.confirm`: a suppressed
-  dialog returns false instantly and the button silently dies. While a question is up, Escape
-  answers it and every other key is swallowed.
+  and closes the modal, or a frame loop or a modal keeps running against detached nodes.
+- Confirmations go through `Modal.ask` (`src/ui/overlays/modal.ts`), an in-page overlay, never
+  `window.confirm`: a suppressed dialog returns false instantly and the button silently dies.
+  While a question is up, Escape answers it and every other key is swallowed.
 - A board's keys reach it only while it is on screen (`App.onKey` checks the game screen is
   built), never under the settings screen or after the player has left it (issue #6). On the
   settings screen Escape is Back, to wherever it was opened from; a picker open over it takes the
@@ -96,6 +96,15 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   A ladder's board list has "How to play" it, which opens the guide led by the catalogue's note on
   that ladder (section 7, `src/ui/guide/ladders.ts`; its blurb where the catalogue has none) and
   its own tricks marked in its colour; `G` on a board leads with the board's ladder the same way.
+- The school (`src/ui/screens/school.ts`, the lessons in `src/ui/school/`; docs/teaching-plan.md,
+  Part 2) is offered from the ladder list and the rules card ("Take the lessons") and required by
+  nothing. A lesson is played on the game screen, labelled with its title and without Sweep: its
+  step speaks in the hint line, in the ink, the tutor's violet points at the step's proof, and
+  Next (or Enter) moves on where the step waits to be told. A click nothing has proven is refused
+  before the engine sees it, the reason in the danger colour ahead of the step (a cell proven above
+  the level says what the fight would cost), except in lesson 8, where guessing is the lesson. `H`
+  and `G` work as on any board. A lesson's end is written down (the save's `lessons`) and offers
+  the next; nothing a lesson does touches a ladder's record.
 
 ## Settings screen
 
