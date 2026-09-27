@@ -12,8 +12,8 @@ import { mulberry32 } from '../src/engine/rng.js';
 import { readBoard } from '../src/sim/reader.js';
 import { TRICKS, TRICK_IDS, type TrickId } from '../src/sim/tricks.js';
 import { TRICK_TEXT } from '../src/sim/tricktext.js';
-import { type Lesson, explain } from '../src/sim/tutor.js';
-import { ladders } from './helpers.js';
+import { type Lesson, explain, provable } from '../src/sim/tutor.js';
+import { ladders, playPartWay } from './helpers.js';
 
 /** Every kind of board the tricks read differently, as `test/graded.test.ts` lists them. */
 const KINDS = [
@@ -204,6 +204,30 @@ describe('the tutor', () => {
       }
     }
     expect(advised).toBeGreaterThan(3);
+  });
+
+  it('proves only what is true, at least what a press teaches, and more at a dearer grade', () => {
+    let proved = 0;
+    for (const id of KINDS) {
+      for (const board of [3, 8]) {
+        const seed = 0xace + board;
+        const game = Game.create(boardConfig(ladders, id, board), seed);
+        playPartWay(game, seed);
+        if (game.status !== 'playing') continue;
+        const at = `${id} #${board}`;
+        const all = provable(game);
+        for (const c of all.open) expect(c.tier, `${at} opens`).toBeLessThanOrEqual(game.level);
+        for (const [c, t] of all.mark) expect(c.tier, `${at} names`).toBe(t);
+        for (const l of explain(game).lessons) {
+          for (const c of l.open) expect(all.open.has(c), `${at} ${l.trick}`).toBe(true);
+          for (const [c] of l.mark) expect(all.mark.has(c) || all.open.has(c), at).toBe(true);
+        }
+        const cheaper = provable(game, 1);
+        for (const c of cheaper.open) expect(all.open.has(c), `${at} grade 1`).toBe(true);
+        proved += all.open.size + all.mark.size;
+      }
+    }
+    expect(proved).toBeGreaterThan(200);
   });
 
   it('says nothing on a finished board, and names every trick it teaches', () => {

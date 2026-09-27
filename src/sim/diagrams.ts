@@ -12,9 +12,8 @@
  */
 
 import { Game } from '../engine/game.js';
-import type { Cell } from '../engine/types.js';
-import { type Grade, TRICKS, type TrickId } from './tricks.js';
-import { type Lesson, explain } from './tutor.js';
+import type { Grade, TrickId } from './tricks.js';
+import { type Lesson, explain, merge } from './tutor.js';
 
 /** The catalogue's boards have five tiers. */
 const TIERS = 5;
@@ -151,34 +150,6 @@ export interface DiagramPress {
 export function pressDiagram(d: Diagram): DiagramPress {
   const game = diagramGame(d);
   const press = explain(game);
-  const first = (l: Lesson): number =>
-    Math.min(Infinity, ...l.why.constraints.map((c) => c.cell.y * game.config.width + c.cell.x));
-  const proofs = [...press.lessons, ...press.steps]
-    .filter((l) => l.trick === d.trick)
-    .sort((a, b) => first(a) - first(b));
-  if (!proofs.length) return { game, grade: press.grade, lesson: null };
-  const open = new Set<Cell>();
-  const mark = new Map<Cell, number>();
-  const narrow = new Map<Cell, number>();
-  for (const l of proofs) {
-    for (const c of l.open) open.add(c);
-    for (const [c, tier] of l.mark) mark.set(c, tier);
-    for (const [c, mask] of l.narrow) narrow.set(c, mask);
-  }
-  for (const c of [...open, ...mark.keys()]) narrow.delete(c);
-  const once = <T>(xs: readonly T[]): T[] => [...new Set(xs)];
-  const lesson: Lesson = {
-    trick: d.trick,
-    grade: TRICKS[d.trick].grade,
-    why: {
-      constraints: once(proofs.flatMap((l) => l.why.constraints)),
-      cells: once(proofs.flatMap((l) => l.why.cells)),
-    },
-    open: [...open],
-    mark: [...mark],
-    narrow: [...narrow],
-    struck: proofs.reduce((m, l) => m | l.struck, 0),
-    caption: once(proofs.map((l) => l.caption)).join(' '),
-  };
-  return { game, grade: press.grade, lesson };
+  const proofs = [...press.lessons, ...press.steps].filter((l) => l.trick === d.trick);
+  return { game, grade: press.grade, lesson: merge(proofs, game.config.width) };
 }

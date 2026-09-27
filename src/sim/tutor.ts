@@ -118,46 +118,20 @@ export function explain(game: Game, options: TutorOptions = {}): Explanation {
   let grade: Grade | null = null;
   if (game.status !== 'playing') return { grade, lessons: [], steps, advice: null };
   const peek = options.peek ?? false;
-  const all = everyTier(game.config.tiers);
-  const domains = new Map<Cell, number>();
-  const domain = (cell: Cell): number => domains.get(cell) ?? all;
-  const scaffold = dungeonScaffold(game);
-  const proven = new Set<Cell>();
+  const pencil = new Pencil(game);
 
   for (let restart = 0; restart < MOST_RESTARTS; restart++) {
     let narrowedAny = false;
     for (const g of GRADES) {
-      const reading = readBoard(game, peek, { trustMarks: false, trusted: proven });
-      const view: View = { game, reading, level: game.level, peek, domain, scaffold };
+      const view = pencil.view(peek);
       const concluding: Lesson[] = [];
       let narrowed = 0;
       for (const id of TRICK_IDS) {
         if (TRICKS[id].grade !== g) continue;
         const found = noMoves();
         TRICKS[id].apply(view, found);
-        const before = new Map<Cell, number>();
-        for (const [cell, mask] of found.narrow) {
-          const was = domain(cell);
-          const now = was & mask;
-          if (now === was || now === 0) continue;
-          before.set(cell, was);
-          domains.set(cell, now);
-          narrowed++;
-        }
-        // A name goes into the pencil too, and a name that agrees with the player's own mark
-        // makes that mark believed from here on: proven, not trusted.
-        for (const [cell, tier] of found.mark) {
-          const was = domain(cell);
-          const now = was & noteBit(tier);
-          if (now !== 0 && now !== was) {
-            domains.set(cell, now);
-            narrowed++;
-          }
-          if (cell.mark === tier && !proven.has(cell)) {
-            proven.add(cell);
-            narrowed++;
-          }
-        }
+        const { before, changed } = pencil.absorb(found);
+        narrowed += changed;
         for (const lesson of gather(id, found, view, before)) {
           (lesson.open.length || lesson.mark.length ? concluding : steps).push(lesson);
         }
@@ -173,8 +147,159 @@ export function explain(game: Game, options: TutorOptions = {}): Explanation {
     }
     if (!narrowedAny) break;
   }
-  const reading = readBoard(game, peek, { trustMarks: false, trusted: proven });
-  return { grade, lessons: [], steps, advice: advise(game, reading) };
+  return { grade, lessons: [], steps, advice: advise(game, pencil.view(peek).reading) };
+}
+
+/** What the tricks up to some grade prove on the board as it stands, without a move being made. */
+export interface Provable {
+  /** Covered cells safe to open at the current level. */
+  readonly open: ReadonlySet<Cell>;
+  /** Covered cells named exactly, above the level. */
+  readonly mark: ReadonlyMap<Cell, number>;
+  /** Covered cells neither safe nor named whose candidates were narrowed, and what to. */
+  readonly narrow: ReadonlyMap<Cell, number>;
+  /** Every proof made on the way, as the tutor would teach it, in the order it was made. */
+  readonly proofs: readonly Lesson[];
+}
+
+/**
+ * Everything the tricks up to `most` can prove on the board as it stands, pencil work and all, as
+ * `explain` reads it (trusting no mark it has not proven) but carrying on past the first grade that
+ * concludes: what a player of that grade could open or name here without a guess and without
+ * opening anything first. The school refuses a click on any cell not in `open`
+ * (docs/teaching-plan.md, section 5.3) and holds its lessons to it. It never acts.
+ */
+export function provable(game: Game, most: Grade = 4): Provable {
+  const open = new Set<Cell>();
+  const mark = new Map<Cell, number>();
+  const narrow = new Map<Cell, number>();
+  const proofs: Lesson[] = [];
+  if (game.status !== 'playing') return { open, mark, narrow, proofs };
+  const pencil = new Pencil(game);
+  const safe = tiersUpTo(game.level);
+  for (let restart = 0; restart < MOST_RESTARTS; restart++) {
+    let changed = 0;
+    for (const g of GRADES) {
+      if (g > most) break;
+      const view = pencil.view(false);
+      for (const id of TRICK_IDS) {
+        if (TRICKS[id].grade !== g) continue;
+        const found = noMoves();
+        TRICKS[id].apply(view, found);
+        const { before, changed: moved } = pencil.absorb(found);
+        changed += moved;
+        for (const cell of before.keys()) narrow.set(cell, pencil.domain(cell));
+        proofs.push(...gather(id, found, view, before));
+        for (const [cell, tier] of found.mark) if (!cell.open) mark.set(cell, tier);
+        for (const cell of found.open) {
+          if (cell.open || !game.inReach(cell) || open.has(cell)) continue;
+          open.add(cell);
+          mark.delete(cell);
+          pencil.narrow(cell, safe);
+          changed++;
+        }
+      }
+      // The cheapest grade that moved anything is followed by a fresh look from grade 0.
+      if (changed) break;
+    }
+    if (!changed) break;
+  }
+  for (const cell of [...open, ...mark.keys()]) narrow.delete(cell);
+  return { open, mark, narrow, proofs };
+}
+
+/**
+ * Proofs of one trick as one lesson, for pointing at them together: every number and cell they
+ * read, what a cell was narrowed to last unless one of them concluded it, and each caption once,
+ * in the reading order of the first number each read. Null for no proofs.
+ */
+export function merge(proofs: readonly Lesson[], width: number): Lesson | null {
+  const first = (l: Lesson): number =>
+    Math.min(Infinity, ...l.why.constraints.map((c) => c.cell.y * width + c.cell.x));
+  const sorted = [...proofs].sort((a, b) => first(a) - first(b));
+  const head = sorted[0];
+  if (!head) return null;
+  const open = new Set<Cell>();
+  const mark = new Map<Cell, number>();
+  const narrow = new Map<Cell, number>();
+  for (const l of sorted) {
+    for (const c of l.open) open.add(c);
+    for (const [c, tier] of l.mark) mark.set(c, tier);
+    for (const [c, mask] of l.narrow) narrow.set(c, mask);
+  }
+  for (const c of [...open, ...mark.keys()]) narrow.delete(c);
+  const once = <T>(xs: readonly T[]): T[] => [...new Set(xs)];
+  return {
+    trick: head.trick,
+    grade: head.grade,
+    why: {
+      constraints: once(sorted.flatMap((l) => l.why.constraints)),
+      cells: once(sorted.flatMap((l) => l.why.cells)),
+    },
+    open: [...open],
+    mark: [...mark],
+    narrow: [...narrow],
+    struck: sorted.reduce((m, l) => m | l.struck, 0),
+    caption: once(sorted.map((l) => l.caption)).join(' '),
+  };
+}
+
+/**
+ * A press's pencil: a candidate set for every covered cell, full to start with and only ever
+ * narrowed, and the player's marks the press has proven, which are believed from then on.
+ */
+class Pencil {
+  private readonly domains = new Map<Cell, number>();
+  private readonly proven = new Set<Cell>();
+  private readonly all: number;
+  private readonly scaffold: ReadonlySet<Cell>;
+
+  constructor(private readonly game: Game) {
+    this.all = everyTier(game.config.tiers);
+    this.scaffold = dungeonScaffold(game);
+  }
+
+  readonly domain = (cell: Cell): number => this.domains.get(cell) ?? this.all;
+
+  /** The board as the press sees it now: every mark unknown but those it has proven. */
+  view(peek: boolean): View {
+    const reading = readBoard(this.game, peek, { trustMarks: false, trusted: this.proven });
+    const { game, domain, scaffold } = this;
+    return { game, reading, level: game.level, peek, domain, scaffold };
+  }
+
+  /** Narrow a cell to `mask`; what it held before, or null when that changed nothing. */
+  narrow(cell: Cell, mask: number): number | null {
+    const was = this.domain(cell);
+    const now = was & mask;
+    if (now === was || now === 0) return null;
+    this.domains.set(cell, now);
+    return was;
+  }
+
+  /**
+   * Take in what a trick found: its narrowings, and its names, which go into the pencil too. A
+   * name that agrees with the player's own mark makes that mark believed from here on: proven,
+   * not trusted. Returns what each narrowed cell held before, and how much changed.
+   */
+  absorb(found: Moves): { before: Map<Cell, number>; changed: number } {
+    const before = new Map<Cell, number>();
+    let changed = 0;
+    for (const [cell, mask] of found.narrow) {
+      const was = this.narrow(cell, mask);
+      if (was === null) continue;
+      before.set(cell, was);
+      changed++;
+    }
+    for (const [cell, tier] of found.mark) {
+      if (this.narrow(cell, noteBit(tier)) !== null) changed++;
+      if (cell.mark === tier && !this.proven.has(cell)) {
+        this.proven.add(cell);
+        changed++;
+      }
+    }
+    return { before, changed };
+  }
 }
 
 /** The catalogue's rules of guessing well, applied to this board: the worst case, and the levels. */
