@@ -58,6 +58,7 @@ src/ui/         the prototype
                   modal overlay up at a time, and the ones the menus open
   guide/          the field guide's words, the catalogue's: entries.ts (the tricks, the diagrams,
                   guessing), ladders.ts (each ladder's note)
+  school/         the school: lessons.ts (the nine lessons, as data), run.ts (one being taken)
   game/           the game screen: screen.ts (furniture), hud.ts (filling it in), mode.ts
                   (what a click will do: tier, pencil, spell), actions.ts (what the player's
                   clicks and keys do), hint.ts, sound.ts, flash.ts (the shake, the rim and the
