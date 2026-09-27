@@ -90,8 +90,13 @@ function emptySave(): SaveData {
   };
 }
 
+/** Every board key of a ladder begins with this. */
+function ladderPrefix(typeId: string): string {
+  return `${typeId}#`;
+}
+
 function boardKey(typeId: string, board: number): string {
-  return `${typeId}#${board}`;
+  return `${ladderPrefix(typeId)}${board}`;
 }
 
 export class Progress {
@@ -255,16 +260,17 @@ export class Progress {
   }
 
   /**
-   * Distinct boards cleared, anywhere in the game.
+   * Distinct boards cleared, anywhere in the game or on the one ladder named.
    *
    * Every board counts once, including the scaling boards past 10 — they are
    * boards you cleared, and a player who would rather go deep on one ladder
    * than wide across several should get there too.
    */
-  boardsCleared(): number {
+  boardsCleared(typeId?: string): number {
+    const prefix = typeId === undefined ? '' : ladderPrefix(typeId);
     let n = 0;
     for (const key of Object.keys(this.data.boards)) {
-      if (this.data.boards[key]?.cleared) n++;
+      if (key.startsWith(prefix) && this.data.boards[key]?.cleared) n++;
     }
     return n;
   }

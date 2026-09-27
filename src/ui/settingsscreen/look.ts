@@ -313,7 +313,7 @@ export function menuStripRow(ctx: ScreenContext, host: HTMLElement): void {
   const card = (strip: MenuStrip) => (): HTMLElement => {
     const demo = el('div', `type-card strip-${strip} strip-demo`);
     demo.append(el('span', 'type-name', typeName(typeId)));
-    demo.append(el('span', 'type-meta', 'Board 1'));
+    demo.append(el('span', 'type-meta', '0 boards cleared'));
     return demo;
   };
   wideRow(
