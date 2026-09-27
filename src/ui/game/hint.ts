@@ -65,7 +65,7 @@ export function hintText(game: Game | null, mode: EntryMode): string {
       : 'ground you have uncovered';
     const crawl = game.sealedIn()
       ? `Walled in — reach lifted until you can move again, so anywhere is open`
-      : `Click to open, within ${game.config.reach} of ${ground} (red cursor means out of reach)`;
+      : `Click to open, within ${game.config.reach} of ${ground} (the cursor crosses out what is out of reach)`;
     return `${crawl}${shown} · right-click or a LV button to mark · ${sweep} · ${spell}`;
   }
   return (

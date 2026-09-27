@@ -25,10 +25,14 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   selected", because tier 0 is a real pencil choice. An armed tier and an armed spell are mutually
   exclusive; each arming clears the other.
 - The cursor says whether *this* click would land (`BoardActions.clickLands`): reach while opening
-  or casting, only annotation's own refusals while a tier is armed. A click that lands is lit in
-  the player's highlight colour (the mark green by default), one that would not in red, which no
-  setting changes (decision 0050). The palette strikes through tiers the pencil refuses for the
-  hovered cell.
+  or casting, only annotation's own refusals while a tier is armed. A cell a click would land on
+  is boxed in the player's highlight colour (the mark green by default); one it would not is
+  crossed out instead, corner to corner of its tile, in red over the dark outline a mark wears, so
+  the refusal reads by its shape where the red does not: under red–green colour blindness, on a
+  tile as bright as the red, or for a player who picked a red highlight (decision 0051). No
+  setting changes the red (decision 0050). It is never dashed, because on the board a dash is a
+  wrap seam or the tutor's narrowed cell. The palette strikes through tiers the pencil refuses for
+  the hovered cell.
 - Two fingers pinch-zoom, and no lift in a touch that ever had two fingers down opens a cell. Only
   `pointerType === 'touch'` is tracked. The arithmetic is in `pinch.ts`.
 - The board refits whenever its stage changes size (`ResizeObserver`), keeping a zoom the player

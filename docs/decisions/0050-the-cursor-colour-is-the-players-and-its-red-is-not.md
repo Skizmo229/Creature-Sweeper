@@ -1,6 +1,7 @@
 # 0050. The cursor's colour is the player's, and the red of a click that would do nothing is not
 
-2026-09-27. Status: adopted.
+2026-09-27. Status: adopted. The refusal is crossed out as well as red since 0051, so a player who
+chooses a red gives up only its colour, and the drawing the consequences below ask for is made.
 
 ## Context
 The cursor highlight was always drawn in the mark green where a click would land and in
