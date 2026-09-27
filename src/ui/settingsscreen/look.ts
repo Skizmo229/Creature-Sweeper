@@ -40,7 +40,7 @@ import { type PresentationPatch, type ScreenContext, previewCell, typeName } fro
 import { openColorWindow } from './customcolor.js';
 import { CHIP_CELL } from './render.js';
 import { renderPreview } from './render.js';
-import { paletteSorts } from './sorts.js';
+import { fontSorts, paletteSorts } from './sorts.js';
 import { openSymbolWindow } from './symbols.js';
 import { type Choice, choiceRow, gallery, slider, wideRow } from './widgets.js';
 
@@ -143,6 +143,7 @@ export function boardFontRow(ctx: ScreenContext, host: HTMLElement): void {
       example: ctx.chipBoard(currentTheme, { font: FONTS[id] }),
       labelFont: FONTS[id],
     })),
+    sorts: fontSorts(),
     onPick: (v) => ctx.pick({ font: v as FontId | typeof DEFAULT }),
   });
 }
@@ -209,6 +210,7 @@ export function interfaceFontRow(ctx: ScreenContext, host: HTMLElement): void {
       example: hudInFace(FONTS[id]),
       labelFont: FONTS[id],
     })),
+    sorts: fontSorts(),
     onPick: (v) => ctx.pick({ interfaceFont: v as FontId | typeof DEFAULT }),
   });
 }

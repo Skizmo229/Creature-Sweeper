@@ -95,8 +95,9 @@ const SERIF = 'Georgia, serif';
 const MONO = 'ui-monospace, monospace';
 
 /**
- * In picker order: the legible one first, where a player looking for it will
- * find it, then the ladders' own in the order the ladders read.
+ * The legible one first, then the ladders' own. The font windows sort them for
+ * themselves, and their ladder order leads with the legible one too, where a
+ * player looking for it will find it.
  */
 export const FONTS: Record<FontId, GameFont> = {
   // Designed by the Braille Institute for readers with low vision, with every
@@ -152,6 +153,54 @@ export const FONTS: Record<FontId, GameFont> = {
 };
 
 export const FONT_IDS = Object.keys(FONTS) as FontId[];
+
+/** What kind of face each is, for the font windows' Style order. */
+export type FontKind =
+  'sans' | 'rounded' | 'squared' | 'condensed' | 'serif' | 'mono' | 'decorative';
+
+/** Each kind's heading, in the order the Style order shows them. */
+export const FONT_KIND_NAMES: Record<FontKind, string> = {
+  sans: 'Sans serif',
+  rounded: 'Rounded',
+  squared: 'Squared',
+  condensed: 'Condensed',
+  serif: 'Serif',
+  mono: 'Monospaced',
+  decorative: 'Decorative',
+};
+
+/**
+ * Every face filed by eye, as a type specimen would file it: a judgement, not a
+ * measurement (decision 0052). A slab serif is a serif; a face whose shapes are
+ * its point, a stencil or a blackletter or a marquee, is decorative.
+ */
+export const FONT_KINDS: Record<FontId, FontKind> = {
+  atkinson: 'sans',
+  fredoka: 'rounded',
+  'jetbrains-mono': 'mono',
+  'barlow-condensed': 'condensed',
+  'chakra-petch': 'squared',
+  anton: 'condensed',
+  aladin: 'decorative',
+  cinzel: 'serif',
+  comfortaa: 'rounded',
+  overpass: 'sans',
+  'exo-2': 'squared',
+  gluten: 'decorative',
+  'abril-fatface': 'serif',
+  'baloo-2': 'rounded',
+  'alfa-slab-one': 'serif',
+  'black-ops-one': 'decorative',
+  'russo-one': 'squared',
+  sniglet: 'rounded',
+  'libre-baskerville': 'serif',
+  bungee: 'decorative',
+  rubik: 'sans',
+  'pirata-one': 'decorative',
+  'libre-franklin': 'sans',
+  'space-mono': 'mono',
+  'big-shoulders': 'condensed',
+};
 
 /**
  * The face the game's own name is set in on the ladder list, chosen by the

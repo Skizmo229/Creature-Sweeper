@@ -6,7 +6,8 @@
 The owner asked for sorting options in the windows with many options: the board palette (33
 tiles) and the board and interface fonts (25 each). The palette window showed its tiles in the
 order the `LOOKS` table happens to be written, which is not the ladder list's (SPRINKLE DONUT sat
-between PATROL and HIVE), and nothing but a ladder's name said which one a tile was.
+between PATROL and HIVE), and the font windows the legible face and then the ladders' faces in
+the order they were added. Nine faces are worn by two ladders each (decision 0031).
 
 A colour order needs a colour to sort by and a way round the wheel. Measured 27 Sep 2026 on the
 33 palettes:
@@ -22,16 +23,35 @@ A colour order needs a colour to sort by and a way round the wheel. Measured 27 
   wheel: VALENTINES's rose, CARD's red, the oranges, browns and sands, EASY's yellow, PATROL's
   olive, the greens, the teals, the blues, the violets, and DIAMOND's purple last.
 
+A face has no one number that says how it looks, as a tile has its hue. What a player looking
+for a face asks for is a kind: something plainer, rounder, narrower, or with serifs. So the kinds
+are a judgement by eye, as a type specimen files faces, and live as data beside the faces.
+
 ## Decision
-The palette window has a row of sort buttons under its title: Ladder (the default), under the
-ladder list's four column heads and in its order; Name; and Colour, by the covered tile's CIELAB
-hue from 0°, with tiles below chroma 10 (`GREY_CHROMA`) after every colour, lightest first. A
-sort moves the tiles already drawn. Each window reopens in the order it last showed, for the
-session, as the symbol window reopens on its set; the order is not saved. The icon window, twelve
-tiles that fit a row or two, has no sorts.
+The palette and font windows have a row of sort buttons under the title, the first the default:
+
+- Ladder: under the ladder list's four column heads and in its order. A face is filed once, under
+  the first ladder in the list that wears it, and its tile names every ladder that wears it
+  (Cinzel, under Shape: "Cinzel — PYRAMID, ORACLE"). Filing it under both would put two tiles of
+  one option in the window, both lit when it is chosen. Atkinson Hyperlegible Next, worn by no
+  ladder, leads under "Easiest to read".
+- Name: A to Z.
+- For a palette, Colour: by the covered tile's CIELAB hue from 0°, with tiles below chroma 10
+  (`GREY_CHROMA`) after every colour, lightest first.
+- For a face, Style: under seven kinds (`FONT_KINDS`), A to Z within each: sans serif (Atkinson,
+  Libre Franklin, Overpass, Rubik), rounded (Baloo 2, Comfortaa, Fredoka, Sniglet), squared
+  (Chakra Petch, Exo 2, Russo One), condensed (Anton, Barlow Condensed, Big Shoulders Display),
+  serif (Abril Fatface, Alfa Slab One, Cinzel, Libre Baskerville), monospaced (JetBrains Mono,
+  Space Mono) and decorative (Aladin, Black Ops One, Bungee, Gluten, Pirata One).
+
+A sort moves the tiles already drawn. Each window reopens in the order it last showed, for the
+session, as the symbol window reopens on its set; the order is not saved, and the two font
+windows remember theirs apart. The icon window, twelve tiles that fit a row or two, has no sorts.
 
 ## Consequences
-A new ladder's palette sorts itself into every order; a new category needs a heading in
-`CATEGORY_NAMES`, which the ladder list needs anyway. If a tile's chroma is ever moved to near 10,
-it may fall on either side of the greys; measure it. `test/ui/pickers.test.ts` holds the orders
-to showing every option exactly once, and pins where the greys go.
+A new ladder's palette sorts itself into every order; a new face must be given a kind, or it does
+not typecheck. A new category needs a heading in `CATEGORY_NAMES`, which the ladder list needs
+anyway. If a tile's chroma is ever moved to near 10, it may fall on either side of the greys;
+measure it. The kinds are the owner's to move: a face is one line of `FONT_KINDS`.
+`test/ui/pickers.test.ts` holds every order to showing every option exactly once, and pins where
+the greys go and which faces are sans serif.

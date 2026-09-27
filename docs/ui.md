@@ -130,11 +130,15 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   ten digits, so a change to the generator moves it rather than breaking it.
 - Icons, palette and the two fonts show two tiles, Default and User choice; the full gallery opens
   in a picker inside the settings element, which catches Escape in the capture phase.
-- The palette window can be sorted, by a row of buttons under its title (decision 0052): by
-  ladder, the default, under the ladder list's own column heads and in its order; by name; or by
-  colour, round the wheel by the covered tile's hue, with the greys last and lightest first. A
-  sort moves the tiles already drawn. The window reopens in the order it last showed, as the
-  symbol window reopens on its set; the icon window, with twelve tiles, has no sorts.
+- The palette and font windows can be sorted, by a row of buttons under the title (decision
+  0052): by ladder, the default, under the ladder list's own column heads and in its order; by
+  name; and then by how the option looks. A palette sorts by colour, round the wheel by the
+  covered tile's hue, with the greys last and lightest first. A face sorts by style, under its
+  kind (`FONT_KINDS`), and by ladder is filed once, under the first ladder in the list that wears
+  it, after Atkinson Hyperlegible Next, which leads under "Easiest to read"; its tile names every
+  ladder that wears it. A sort moves the tiles already drawn. Each window reopens in the order it
+  last showed, as the symbol window reopens on its set; the icon window, with twelve tiles, has
+  no sorts.
 - The icon picker's last tile, Custom, opens a window of symbols in place of the picker: all of
   Dingbats and Wingdings 1 to 3, a tab per set, each laid out as its font's code chart, sixteen to a
   row, with gaps where the font has nothing, so a symbol is where anyone who knows the font expects
@@ -196,6 +200,9 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   from open Noto fonts to the 782 symbols the custom icon offers (`src/ui/pipfont/`, their
   `@font-face` in `pipfont/pipfont.css`, licences in the same file). `test/pipsymbols.test.ts`
   checks them as `test/fonts.test.ts` checks the rest; see the creature-icon bullet below.
+- Every face is filed under a kind in `FONT_KINDS` (`src/ui/typefaces.ts`), for the font windows'
+  Style order: sans serif, rounded, squared, condensed, serif (slabs included), monospaced or
+  decorative. It is a judgement by eye, and a new face cannot typecheck without one.
 - A face must have lining figures; Georgia's old-style figures made numbers jump. Check a
   candidate's OS/2 metrics with fontTools: Aladin and Gluten misstate cap height
   (`capHeightFix`) and Aladin its x-height (`exHeightFix`).

@@ -10,8 +10,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../src/ui/app.js';
 import { LOOK_IDS } from '../../src/ui/looks.js';
 import type { Settings } from '../../src/ui/settings.js';
-import { paletteSorts } from '../../src/ui/settingsscreen/sorts.js';
+import { fontSorts, paletteSorts } from '../../src/ui/settingsscreen/sorts.js';
 import type { PickerSort } from '../../src/ui/settingsscreen/widgets.js';
+import { FONTS, FONT_IDS, FONT_KIND_NAMES } from '../../src/ui/typefaces.js';
 
 interface Driver {
   showSettings(back: () => void): void;
@@ -121,6 +122,62 @@ describe('the palette window', () => {
     expect(captions(window_)[0]).toBe('ARCANE');
     expect(window_.querySelector('.preview-chip.active')?.textContent).toBe('STAR');
     expect(document.activeElement?.textContent).toBe('STAR');
+  });
+});
+
+describe('the font windows', () => {
+  // First for the font windows: each reopens in the order it last showed, which outlives a test.
+  it('open by ladder, each face under the first ladder in the list that wears it', () => {
+    const window_ = openWindow('Board font');
+    expect(pressed(window_)).toBe('Ladder');
+    expect(headings(window_)).toEqual(['Easiest to read', 'Normal', 'Shape', 'Magic', 'Special']);
+    expect(captions(window_).slice(0, 2)).toEqual([
+      `${FONTS.atkinson.name} — easiest to read`,
+      'Fredoka — EASY',
+    ]);
+    const magic = fontSorts()[0]!.groups.find((g) => g.heading === 'Magic')!;
+    // ORACLE's Cinzel is filed under PYRAMID, in Shape; WORKOUT's Black Ops One is its own.
+    expect(magic.values).toEqual(['aladin', 'black-ops-one', 'pirata-one']);
+  });
+
+  it('offer orders that each show every face exactly once', () => {
+    const sorts = fontSorts();
+    expect(sorts.map((s) => s.label)).toEqual(['Ladder', 'Name', 'Style']);
+    for (const sort of sorts) {
+      expect([...everyValue(sort)].sort(), sort.label).toEqual([...FONT_IDS].sort());
+    }
+  });
+
+  it('sort by style, under each kind of face, A to Z within it', () => {
+    const window_ = openWindow('Board font');
+    sortBy(window_, 'Style');
+    expect(headings(window_)).toEqual(Object.values(FONT_KIND_NAMES));
+    const style = fontSorts()[2]!;
+    expect(style.groups[0]).toEqual({
+      heading: 'Sans serif',
+      values: ['atkinson', 'libre-franklin', 'overpass', 'rubik'],
+    });
+    expect(style.groups.find((g) => g.heading === 'Monospaced')!.values).toEqual([
+      'jetbrains-mono',
+      'space-mono',
+    ]);
+  });
+
+  it('remember their orders apart', () => {
+    sortBy(openWindow('Board font'), 'Style');
+    expect(pressed(openWindow('Interface font'))).toBe('Ladder');
+    expect(pressed(openWindow('Board font'))).toBe('Style');
+  });
+
+  it('pick the face a tile shows, in any order', () => {
+    const window_ = openWindow('Interface font');
+    sortBy(window_, 'Name');
+    expect(captions(window_)[0]).toBe('Abril Fatface — DIAMOND');
+    [...window_.querySelectorAll<HTMLButtonElement>('.preview-chip')]
+      .find((b) => b.querySelector('.chip-label')?.textContent === 'Anton — HUGE x EXTREME')!
+      .click();
+    expect(app.settings.presentation.interfaceFont).toBe('anton');
+    expect(app.settings.presentation.font).toBe('default');
   });
 });
 
