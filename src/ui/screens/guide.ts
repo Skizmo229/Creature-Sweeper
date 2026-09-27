@@ -23,6 +23,7 @@ import {
   GUIDE_INTRO,
   type GuideEntry,
   laddersFor,
+  ownEntries,
 } from '../guide/entries.js';
 import { notesFor } from '../guide/ladders.js';
 
@@ -75,7 +76,7 @@ export function buildGuide(o: GuideOptions): {
     for (const entry of section.entries) {
       const article = drawEntry(entry, section.grade, o);
       if (entry.trick) places.set(`trick:${entry.trick}`, article);
-      if (o.ladder && entry.on && laddersFor(entry, [o.ladder]).length) {
+      if (o.ladder && ownEntries(o.ladder).includes(entry)) {
         article.classList.add('guide-own');
         mine.push([entry.heading ?? '', article]);
       }
@@ -211,4 +212,35 @@ function within(lesson: Lesson, width: number): Lesson {
     mark: lesson.mark.filter(([c]) => inside(c)),
     narrow: lesson.narrow.filter(([c]) => inside(c)),
   };
+}
+
+/**
+ * A ladder's card, the first time it is opened (docs/teaching-plan.md, section 5.5): the
+ * catalogue's note on it and the tricks its rules add, each in the catalogue's words, and a way
+ * into the guide led by the same. The hint line's sentence about the ladder's rule is the reminder
+ * after it.
+ */
+export function buildLadderCard(
+  ladder: LadderType,
+  guide: () => void,
+  close: () => void,
+): { overlay: HTMLElement; focus: HTMLElement } {
+  const overlay = el('div', 'overlay win');
+  const card = el('div', 'overlay-card howto');
+  card.append(el('h2', undefined, `HOW TO PLAY ${ladder.name}`));
+  for (const note of notesFor(ladder)) card.append(el('p', 'overlay-note', note.body));
+  for (const entry of ownEntries(ladder)) {
+    card.append(el('p', 'howto-rule', entry.heading ?? ''));
+    const words = entry.body.find((b): b is string => typeof b === 'string');
+    if (words) card.append(el('p', 'overlay-note', words));
+  }
+  const row = el('div', 'overlay-actions');
+  const go = el('button', 'primary', 'Got it');
+  go.addEventListener('click', close);
+  const more = el('button', 'ghost', 'Field guide');
+  more.addEventListener('click', guide);
+  row.append(go, more);
+  card.append(row);
+  overlay.append(card);
+  return { overlay, focus: go };
 }

@@ -72,6 +72,8 @@ export interface SaveData {
   seenHowTo: boolean;
   /** The school's lessons finished, by id. Absent in saves written before the school. */
   lessons: string[];
+  /** Ladders whose first-visit card has been shown, by id. Absent in saves before the cards. */
+  ladderCards: string[];
 }
 
 function emptySave(): SaveData {
@@ -84,6 +86,7 @@ function emptySave(): SaveData {
     unlockAll: false,
     seenHowTo: false,
     lessons: [],
+    ladderCards: [],
   };
 }
 
@@ -145,6 +148,17 @@ export class Progress {
   markLessonDone(id: string): void {
     if (this.lessonDone(id)) return;
     this.data.lessons.push(id);
+    this.save();
+  }
+
+  /** Whether a ladder's first-visit card has been shown, which it is once. */
+  ladderCardSeen(typeId: string): boolean {
+    return this.data.ladderCards.includes(typeId);
+  }
+
+  markLadderCardSeen(typeId: string): void {
+    if (this.ladderCardSeen(typeId)) return;
+    this.data.ladderCards.push(typeId);
     this.save();
   }
 

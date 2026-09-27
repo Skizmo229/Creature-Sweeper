@@ -63,6 +63,15 @@ export function laddersFor(entry: GuideEntry, ladders: readonly LadderType[]): L
   return on ? ladders.filter((t) => on(rulesOf(t))) : [...ladders];
 }
 
+/**
+ * The entries that belong to one ladder alone among the guide's: the tricks its placement rule or
+ * shape adds, asked of the rules. A ladder with any gets a card the first time it is opened
+ * (docs/teaching-plan.md, section 5.5).
+ */
+export function ownEntries(type: LadderType): GuideEntry[] {
+  return GUIDE.flatMap((s) => s.entries).filter((e) => e.on?.(rulesOf(type)));
+}
+
 /** The `n`th of a trick's diagrams, in the catalogue's order. */
 function drawing(trick: TrickId, n = 0): { diagram: Diagram } {
   const diagram = DIAGRAMS.filter((d) => d.trick === trick)[n];

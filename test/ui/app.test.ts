@@ -277,6 +277,20 @@ describe('the app', () => {
     expect(text('.board-card.done')).toContain('Subtract what you can see');
   });
 
+  it('shows a ladder whose rules add a trick its card the first time it is opened, and once', () => {
+    app.progress.setUnlockAll(true);
+    const boards = (id: string): void =>
+      (app as unknown as { showBoards(id: string): void }).showBoards(id);
+    boards('normal');
+    expect(document.querySelector('.overlay')).toBeNull();
+    boards('pairs');
+    expect(text('.overlay h2')).toBe('HOW TO PLAY PAIRS');
+    expect(text('.overlay')).toContain('Met partner');
+    key('Escape');
+    boards('pairs');
+    expect(document.querySelector('.overlay')).toBeNull();
+  });
+
   it("opens the guide for a ladder from its boards, led by the catalogue's note on it", () => {
     app.progress.setUnlockAll(true);
     (app as unknown as { showBoards(id: string): void }).showBoards('pairs');

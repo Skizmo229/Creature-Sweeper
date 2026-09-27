@@ -240,6 +240,7 @@ export class App {
         startRun: (id) => this.startFullRun(id),
       }),
     );
+    this.teaching.opened(typeId);
   }
 
   /**

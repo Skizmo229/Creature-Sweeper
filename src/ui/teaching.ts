@@ -9,11 +9,11 @@ import type { Cell } from '../engine/types.js';
 import type { Lesson } from '../sim/tutor.js';
 import { boardDisplayFor } from './dress.js';
 import { Tutor } from './game/tutor.js';
-import { GUESSING_WELL } from './guide/entries.js';
+import { GUESSING_WELL, ownEntries } from './guide/entries.js';
 import { ladders } from './ladders.js';
 import type { Modal } from './overlays/modal.js';
 import type { Progress } from './progress.js';
-import { type GuideTarget, buildGuide } from './screens/guide.js';
+import { type GuideTarget, buildGuide, buildLadderCard } from './screens/guide.js';
 import { buildLessonDone, buildSchoolList } from './screens/school.js';
 import { LESSONS } from './school/lessons.js';
 import { LessonRun } from './school/run.js';
@@ -62,6 +62,23 @@ export class Teaching {
       () => this.guide(),
       () => this.school(),
     );
+  }
+
+  /**
+   * A ladder opened: the first time, if its rules add a trick of its own, its card says how to play
+   * it. Shown once, and never required.
+   */
+  opened(typeId: string): void {
+    const { progress, modal } = this.host;
+    const ladder = ladders.find((t) => t.id === typeId);
+    if (!ladder || progress.ladderCardSeen(typeId) || !ownEntries(ladder).length) return;
+    progress.markLadderCardSeen(typeId);
+    const { overlay, focus } = buildLadderCard(
+      ladder,
+      () => this.guide(undefined, typeId),
+      () => modal.close(),
+    );
+    modal.show(overlay, focus);
   }
 
   /** The school: its nine lessons, and whether each has been taken. */

@@ -216,8 +216,8 @@ the one grade-4 count that every endgame is.
 | # | Lesson | Trick | Grade | The board | What the player does |
 | --- | --- | --- | --- | --- | --- |
 | 1 | A number is a sum | the raw ring | 0 | A 2 at level 2 over five covered cells; one of them is two 1s. | Opens all five; sees a 2 that was two 1s, and one that was a 2. |
-| 2 | Your level is a shield | the free kill, the counters | 0, 1 | Two 1s marked at level 1, a 3 beside them. | Kills the 1s for free, reaches level 2, reads the LV counters, sees the 3 stay locked. |
-| 3 | Subtract what you see | residual ring | 1 | A 5 beside a beaten 3, three covered cells. | Hovers the beaten creature, subtracts, opens the three. |
+| 2 | Your level is a shield | the free kill, the counters | 0 | Two 1s marked at level 1, a 3 marked beside them. | Kills the 1s for free, reaches level 2, reads the LV counters, sees the 3 stay locked. |
+| 3 | Subtract what you see | residual ring | 1 | Two 5s beside a beaten 3, two covered cells. | Hovers the beaten creature, subtracts, opens the two. |
 | 4 | The last cell | last cell | 1 | A 4 with one covered neighbour. | Marks it 4; learns that a mark above the level locks the cell; comes back at level 4. |
 | 5 | The counters | counters | 1 | A 5 over two cells with no 5s left. | Reads the counter, concludes 4 + 1 or 3 + 2, opens at level 4. |
 | 6 | The 1-2-1 | subtract | 2 | The catalogue's wall: `2 5 3 3`, at level 1. | Names the 3, opens the two empties, names the 2. |
@@ -416,5 +416,20 @@ counters (decision 0049). Branch `m5-guide`, on top of it, holds Part 3 whole (6
 3): the entries and their test, the screen and its ways in (the rules card, the ladder list, `G`
 and "more" from the tutor), and each ladder's "How to play" from section 7, where HUGE and HUGE x
 EXTREME, which the catalogue has no note for, show their blurb. Section 8's item 7 is built as
-its default (the words copied, and tested word for word) and is still open. Part 2's school,
-steps 3 to 5 of 5.6, is next.
+its default (the words copied, and tested word for word) and is still open.
+
+Branch `m5-school`, on top of that, holds the rest of Part 2 (5.6, steps 3 to 5). The tutor gained
+`provable`, everything a grade proves without a move, which the school refuses clicks by and is
+tested against. The nine lessons are data in `src/ui/school/lessons.ts`, taken by a headless
+runner and by `test/school.test.ts` at each lesson's grade, with the grade below failing its key
+move; two moved from the table above (lesson 2 is grade 0 alone, its free kills being the raw
+ring's; lesson 3 is over two cells, as the catalogue's corner is, since a beaten creature beside
+three would show on hover a number the raw ring takes first). The school is on screen from the
+ladder list and the rules card, its lessons played on the game screen without Sweep, and the save
+records the lessons taken. A ladder whose rules add a trick of its own shows a card the first time
+it is opened, asked of the guide's ladder-only entries: PAIRS, DOMINOES, PACKS, CONGA LINE,
+CHECKERBOARD, DUNGEON and SPRINKLE DONUT. The cards use the catalogue's words only and draw no
+diagram, since the catalogue has none for those tricks yet; PATROL's walk and PYRAMID's face-up
+base, which 5.5 names, are not tricks in the catalogue's sections 2 to 6, so they get no card until
+the owner says what should decide one. Every step is committed with `npm run check` passing and
+the golden outputs byte-identical. What is left is section 9's play-testing by two people.

@@ -19,6 +19,7 @@ import {
   GUIDE_INTRO,
   type GuideEntry,
   laddersFor,
+  ownEntries,
 } from '../src/ui/guide/entries.js';
 import { LADDER_NOTES, namedIn, notesFor } from '../src/ui/guide/ladders.js';
 import { ladders } from './helpers.js';
@@ -111,6 +112,22 @@ describe('the field guide', () => {
       expect(new Set(mine), entry.heading).toEqual(new Set(listed));
     }
     expect(named).toBeGreaterThanOrEqual(10);
+  });
+
+  it('gives a first-visit card to exactly the ladders a trick of the catalogue is named for', () => {
+    // Every ladder the catalogue names in brackets after a trick's lead, in sections 2 to 6.
+    const tricks = [...sections.entries()]
+      .filter(([title]) => GUIDE.some((s) => s.title === title && s.grade !== undefined))
+      .map(([, text]) => text)
+      .join('\n');
+    const named = new Set(
+      [...tricks.matchAll(/\*\*[^*]+\*\* \(([^)]*)\)/g)].flatMap((m) =>
+        m[1]!.split(/,\s*/).filter((n) => ladders.some((t) => t.name === n)),
+      ),
+    );
+    const carded = ladders.filter((t) => ownEntries(t).length > 0).map((t) => t.name);
+    expect(new Set(carded)).toEqual(named);
+    expect(carded.length).toBeGreaterThanOrEqual(7);
   });
 
   it("shows the damage table the catalogue shows, which is the engine's", () => {

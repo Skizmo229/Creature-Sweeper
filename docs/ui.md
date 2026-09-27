@@ -105,6 +105,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   the level says what the fight would cost), except in lesson 8, where guessing is the lesson. `H`
   and `G` work as on any board. A lesson's end is written down (the save's `lessons`) and offers
   the next; nothing a lesson does touches a ladder's record.
+- A ladder whose rules add a trick of its own (the guide's ladder-only entries, asked of the rules)
+  shows a card in the rules card's style the first time its boards are opened: the catalogue's
+  note on it and those tricks, in the catalogue's words, with a way into the guide. Once only (the
+  save's `ladderCards`), and never required.
 
 ## Settings screen
 
