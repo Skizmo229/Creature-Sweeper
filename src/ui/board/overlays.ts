@@ -18,8 +18,8 @@ import {
   MARK_OUTLINE,
   OUT_OF_REACH_COLOR,
   TUTOR_COLOR,
-  tierColor,
 } from '../theme.js';
+import { tierColor } from '../tiercolors.js';
 import { setNumberFont } from './digits.js';
 import {
   GHOST_CELLS,
@@ -453,10 +453,10 @@ export function drawLesson(p: Paint, lesson: Lesson): void {
 
   for (const [cell, tier] of lesson.mark) {
     const { cx, cy } = centreOf(layout, cell.x, cell.y);
-    ctx.strokeStyle = tierColor(tier);
+    ctx.strokeStyle = tierColor(p.tierColors, tier);
     tracePath(p, cx, cy, 2);
     ctx.stroke();
-    writeOnCell(p, cx, cy, String(tier), tierColor(tier), 0.58);
+    writeOnCell(p, cx, cy, String(tier), tierColor(p.tierColors, tier), 0.58);
   }
 
   ctx.setLineDash([4, 3]);

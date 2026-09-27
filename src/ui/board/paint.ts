@@ -18,6 +18,7 @@ import {
   drawCreature,
 } from '../theme.js';
 import type { TypeTheme } from '../looktypes.js';
+import type { TierPalette } from '../tiercolors.js';
 import type { GameFont } from '../typefaces.js';
 import { setNumberFont } from './digits.js';
 import { type Layout, contentBox } from './geometry.js';
@@ -28,6 +29,8 @@ export interface Paint {
   readonly layout: Layout;
   readonly game: Game;
   readonly theme: TypeTheme;
+  /** The colour of each tier, and the halo of tiers 6 to 9. */
+  readonly tierColors: TierPalette;
   readonly font: GameFont;
   /** Whether a defeated creature keeps its struck-through corner. */
   readonly strikeDefeated: boolean;
@@ -210,7 +213,7 @@ export function drawOpen(p: Paint, cell: Cell, cx: number, cy: number): void {
     // Dim the glyph itself rather than washing it out with a floor overlay, which left defeated
     // creatures almost invisible.
     if (!cell.alive) ctx.globalAlpha = 0.55;
-    drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme);
+    drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme, p.tierColors);
     ctx.restore();
     // A struck-through corner reads as "dealt with" at a glance. Optional, because at small
     // cell sizes the stroke crosses the pips.

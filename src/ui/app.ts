@@ -377,6 +377,7 @@ export class App {
         wait: () => this.actions.doWait(),
         explain: () => this.explainBoard(),
         tutor: this.settings.presentation.tutor,
+        tierColors: boardDisplayFor(this.settings, this.typeId).tierColors,
         guide: () => this.teaching.guideFromBoard(),
         next: () => this.teaching.next(),
         pickSpell: (id) => this.actions.pickSpell(id),
@@ -482,6 +483,7 @@ export class App {
       hovered: this.view?.hoveredCell ?? null,
       tutor: this.teaching.tutor.text(),
       lesson: this.teaching.lessonLine(),
+      tierColors: boardDisplayFor(this.settings, this.typeId).tierColors,
     });
     this.view?.setLesson(this.teaching.pointer());
     this.view?.render();
@@ -638,6 +640,7 @@ export class App {
       stage,
       effect,
       this.settings.themeFor(this.typeId),
+      boardDisplayFor(this.settings, this.typeId).tierColors,
       this.view?.victorySource(),
     );
   }

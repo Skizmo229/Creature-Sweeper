@@ -9,7 +9,7 @@ import type { FullRun } from '../../engine/run.js';
 import { SPELLS, type SpellId, spellKey } from '../../engine/spells.js';
 import { el } from '../dom.js';
 import { ladders } from '../ladders.js';
-import { TIER_GOLD, tierColor, tierGilded } from '../theme.js';
+import { type TierPalette, tierColor, tierGilded } from '../tiercolors.js';
 import { themeFor } from '../looks.js';
 
 export interface GameScreenActions {
@@ -25,6 +25,8 @@ export interface GameScreenActions {
   /** The tutor: point at the next provable move, and why; and whether it is offered at all. */
   explain(): void;
   readonly tutor: boolean;
+  /** The colour of each tier, which its LV button wears. */
+  readonly tierColors: TierPalette;
   /** The field guide, at what the tutor is saying. */
   guide(): void;
   /** On a lesson board: go on to the next step. */
@@ -169,11 +171,11 @@ function buildPalette(
     const btn = el('button', 'counter');
     btn.dataset.tier = String(tier);
     // Its tier's creature colour, as the HUD's level number wears it; tiers past five get the
-    // gold their pips are ringed with, as the border.
-    btn.style.setProperty('--tier', tierColor(tier));
+    // halo their pips are ringed with, as the border.
+    btn.style.setProperty('--tier', tierColor(a.tierColors, tier));
     if (tierGilded(tier)) {
       btn.classList.add('gilded');
-      btn.style.setProperty('--halo', TIER_GOLD);
+      btn.style.setProperty('--halo', a.tierColors.halo);
     }
     btn.addEventListener('click', () => a.pickTier(tier));
     counters.push(btn);

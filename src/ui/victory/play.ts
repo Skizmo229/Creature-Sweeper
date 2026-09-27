@@ -26,7 +26,7 @@
  * Every effect is finite and removes itself. There is no idle loop.
  */
 
-import { TIER_COLORS } from '../theme.js';
+import type { TierPalette } from '../tiercolors.js';
 import type { TypeTheme, VictoryId } from '../looktypes.js';
 import { ambientPainter } from './ambient.js';
 import { iconPainter } from './icons.js';
@@ -79,6 +79,7 @@ export function playVictory(
   host: HTMLElement,
   effect: VictoryId,
   theme: TypeTheme,
+  tierColors: TierPalette,
   source?: VictorySource,
 ): () => void {
   const layer = makeLayer(host);
@@ -89,9 +90,9 @@ export function playVictory(
   }
   const { canvas, ctx, rect, w, h } = layer;
 
-  // The tier palette plus the type's own accent: bright against every floor
-  // colour in the game, because that is exactly what it was validated for.
-  const colors = [...TIER_COLORS, theme.hot, theme.accent];
+  // Each tier's colour once, plus the type's own hot and accent: the colours
+  // the board is drawn in, so the effect belongs to it.
+  const colors = [...new Set(tierColors.colors), theme.hot, theme.accent];
 
   const { chosen, sprites } = borrow(effect, rect, source);
   let borrowed = sprites.length ? source! : null;
@@ -101,9 +102,10 @@ export function playVictory(
     w,
     h,
     theme,
+    tierColors,
     colors,
     sprites,
-    atlas: sprites.length ? buildAtlas(theme, sprites) : new Map(),
+    atlas: sprites.length ? buildAtlas(theme, tierColors, sprites) : new Map(),
     seconds: duration / 1000,
   };
   const painter = ICON_EFFECTS.has(chosen)

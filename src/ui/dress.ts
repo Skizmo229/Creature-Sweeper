@@ -7,6 +7,7 @@
 
 import type { BoardDisplay } from './board/view.js';
 import type { Settings } from './settings.js';
+import { DEFAULT_TIERS } from './tiercolors.js';
 
 /** The interface's face on this ladder, with its x-height correction. */
 export function wearInterfaceFont(settings: Settings, typeId: string): void {
@@ -34,5 +35,6 @@ export function boardDisplayFor(settings: Settings, typeId: string): BoardDispla
     highlight: settings.highlightStyle(typeId),
     highlightColor: settings.highlightColor(typeId),
     strikeDefeated: p.strikeDefeated,
+    tierColors: DEFAULT_TIERS,
   };
 }

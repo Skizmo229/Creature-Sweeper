@@ -11,7 +11,7 @@ import type { FullRun } from '../../engine/run.js';
 import { type SpellId, spellLabel } from '../../engine/spells.js';
 import type { Cell } from '../../engine/types.js';
 import { el } from '../dom.js';
-import { TIER_GOLD, tierColor, tierGilded } from '../theme.js';
+import { type TierPalette, tierColor, tierGilded } from '../tiercolors.js';
 import { hintText } from './hint.js';
 import type { EntryMode } from './mode.js';
 import type { GameScreenElements } from './screen.js';
@@ -55,6 +55,8 @@ export interface HudState {
   tutor: string | null;
   /** On a lesson board, what the lesson says there instead of the hint. */
   lesson: LessonLine | null;
+  /** The colour of each tier, which the level number wears. */
+  tierColors: TierPalette;
 }
 
 /** Everything on the screen that reads the game, brought up to date. */
@@ -63,12 +65,12 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
 
   els.hud.hp!.textContent = `HP ${game.hp}`;
   // The level number wears its tier's creature colour, the one encoding of a tier the whole game
-  // shares; tiers past five carry the gold halo their pips do, or Level 6 reads as Level 1.
+  // shares; tiers past five carry the halo their pips do, or Level 6 reads as Level 1.
   const levelNum = el('span', 'hud-level-num', String(game.level));
-  levelNum.style.color = tierColor(game.level);
+  levelNum.style.color = tierColor(s.tierColors, game.level);
   if (tierGilded(game.level)) {
     levelNum.classList.add('gilded');
-    levelNum.style.setProperty('--halo', TIER_GOLD);
+    levelNum.style.setProperty('--halo', s.tierColors.halo);
   }
   els.hud.lv!.replaceChildren('Level ', levelNum);
   // A standing Exercise is a level carried into the next fight, shown on the level until spent.

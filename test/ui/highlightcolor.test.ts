@@ -20,6 +20,7 @@ import { NEAR_REFUSAL } from '../../src/ui/settingsscreen/customcolor.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
 import { FONTS } from '../../src/ui/typefaces.js';
 import { MARK_COLOR, OUT_OF_REACH_COLOR } from '../../src/ui/theme.js';
+import { DEFAULT_TIERS } from '../../src/ui/tiercolors.js';
 
 interface Driver {
   play(typeId: string, board: number, seed?: number): void;
@@ -109,6 +110,7 @@ describe('the board', () => {
     highlight: 'neighbours',
     highlightColor,
     strikeDefeated: true,
+    tierColors: DEFAULT_TIERS,
   });
   // The example's lit cell is interior on the square grid: itself and its eight neighbours.
   const RING = 9;

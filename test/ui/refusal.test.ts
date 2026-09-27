@@ -20,6 +20,7 @@ import { HIGHLIGHT_PIN, highlightSampleBoard, highlightSampleLands } from '../..
 import { HIGHLIGHT_COLORS, type HighlightStyle } from '../../src/ui/settings.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
 import { MARK_COLOR, MARK_OUTLINE, OUT_OF_REACH_COLOR } from '../../src/ui/theme.js';
+import { DEFAULT_TIERS } from '../../src/ui/tiercolors.js';
 import { FONTS } from '../../src/ui/typefaces.js';
 
 type Point = readonly [number, number];
@@ -116,6 +117,7 @@ const display = (highlight: HighlightStyle | null, highlightColor = MARK_COLOR):
   highlight,
   highlightColor,
   strikeDefeated: true,
+  tierColors: DEFAULT_TIERS,
 });
 
 /** A board drawn with `cell` held under the cursor, and the strokes the rendering made. */

@@ -32,7 +32,8 @@ import {
   type IconChoice,
   type MenuStrip,
 } from '../settings.js';
-import { MARK_COLOR, PIP_NAMES, PIP_SHAPES, pipName, tierColor } from '../theme.js';
+import { MARK_COLOR, PIP_NAMES, PIP_SHAPES, pipName } from '../theme.js';
+import { DEFAULT_TIERS, tierColor } from '../tiercolors.js';
 import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
 import { SYMBOL_COUNT, isGlyphPip } from '../pipsymbols.js';
 import { FONTS, FONT_IDS, type FontId, type GameFont, LEGIBLE_FONT } from '../typefaces.js';
@@ -167,7 +168,7 @@ function hudCopy(cls: string, count: number = HUD_READOUTS.length): HTMLElement 
     if (key === 'lv') {
       // Level 1, in tier 1's colour, as the real readout draws it.
       const level = el('span', 'hud-level-num', '1');
-      level.style.color = tierColor(1);
+      level.style.color = tierColor(DEFAULT_TIERS, 1);
       readout.append(level);
     }
     copy.append(readout);

@@ -5,6 +5,7 @@
 
 import { drawCreature } from '../theme.js';
 import type { TypeTheme } from '../looktypes.js';
+import type { TierPalette } from '../tiercolors.js';
 
 /** One creature glyph, as the board is currently drawing it. */
 export interface VictorySprite {
@@ -47,6 +48,7 @@ export interface Stage {
   w: number;
   h: number;
   theme: TypeTheme;
+  tierColors: TierPalette;
   colors: string[];
   sprites: VictorySprite[];
   atlas: Atlas;
@@ -76,7 +78,11 @@ export interface Painter {
  * before bursting it, and an upscaled bitmap would go soft exactly at the
  * moment the player is looking at it.
  */
-export function buildAtlas(theme: TypeTheme, sprites: VictorySprite[]): Atlas {
+export function buildAtlas(
+  theme: TypeTheme,
+  tierColors: TierPalette,
+  sprites: VictorySprite[],
+): Atlas {
   const atlas: Atlas = new Map();
   const base = Math.max(8, Math.round(sprites[0]?.size ?? 16));
   const px = base * 2;
@@ -86,7 +92,7 @@ export function buildAtlas(theme: TypeTheme, sprites: VictorySprite[]): Atlas {
     glyph.height = px;
     const gtx = glyph.getContext('2d');
     if (!gtx) continue;
-    drawCreature(gtx, 0, 0, px, tier, theme);
+    drawCreature(gtx, 0, 0, px, tier, theme, tierColors);
     atlas.set(tier, glyph);
   }
   return atlas;
