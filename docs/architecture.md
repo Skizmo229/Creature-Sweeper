@@ -55,6 +55,7 @@ src/ui/         the prototype
   ladders.ts      the ladder data, bundled into the build (src/data.ts is Node's loader)
   screens/        one builder per screen: ladders, boards, howto, backup
   overlays/       ask.ts: the in-page yes/no question (never window.confirm)
+  guide/          the field guide: entries.ts, its words (the catalogue's) and its diagrams
   game/           the game screen: screen.ts (furniture), hud.ts (filling it in), mode.ts
                   (what a click will do: tier, pencil, spell), actions.ts (what the player's
                   clicks and keys do), hint.ts, sound.ts, flash.ts (the shake, the rim and the
@@ -111,8 +112,9 @@ docs/           this folder
 ## Four rules the layout enforces
 
 **The engine is headless and must stay that way.** Over every import in `src/`, `src/engine`
-imports nothing outside itself; `src/sim` never imports `src/ui`; `src/ui` never imports
-`src/sim`. `npm run typecheck` runs `tsc` twice on purpose: the second pass uses
+imports nothing outside itself; `src/sim` never imports `src/ui`; and `src/ui` imports from
+`src/sim` only what teaches (the tutor and the reading it rests on, the trick text, the
+catalogue's diagrams), never an instrument. `npm run typecheck` runs `tsc` twice on purpose: the second pass uses
 `tsconfig.engine.json`, which compiles the engine, the sims and the tests with **no DOM library at
 all**, so a stray `window` is a build error rather than something discovered when it fails to run
 in Node. Anything a test needs to import therefore has to be DOM-free too, which is why

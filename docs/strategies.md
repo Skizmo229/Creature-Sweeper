@@ -30,7 +30,7 @@ and concludes the board lied.
 **Your level is a shield, and it is the only one.** A creature at or below your level dies in one
 blow and costs nothing. Above it the cost is a staircase, `tier x (ceil(tier / level) - 1)`: one
 tier over your level costs exactly that tier, two over is a cliff. At full HP on the common
-10-HP ladders, the first table row is death.
+10-HP ladders, a cost of 10 or more is death.
 
 | tier at level | 1 | 2 | 3 | 4 | 5 |
 | --- | --- | --- | --- | --- | --- |
@@ -214,8 +214,8 @@ level 2:
 Suppose the cell left of the middle is a 3. Then the top-left 3 is made and its other two cells
 are empty, so the top-right 3 must be made by the cell right of the middle, and the bottom 3 would
 see 6. So it is not a 3, nor by the same steps is the cell right of the middle, and at level 2
-both are free. Two numbers along is about as far as anyone follows it at the board, and further
-than the honest player ever did.
+both are free. Two numbers along is about as far as anyone follows it at the board (and further
+than the honest player, `src/sim/honest.ts`, ever went).
 
 **A line's ends** (CONGA LINE). Each pack is a straight or bent line of one of every tier, led by
 the 6, and no member is orthogonally beside any but its neighbours in the line. So a line only
