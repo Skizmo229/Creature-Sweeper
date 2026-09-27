@@ -4,7 +4,8 @@
  * round every pip.
  *
  * Global, not per ladder: pip SHAPE carries ladder identity, pip COLOUR carries tier identity, so
- * a tier 4 looks the same on every board (`theme.ts`). DOM-free, so the tests can measure them.
+ * a tier 4 looks the same on every board (`theme.ts`). The player can choose one of the presets
+ * below or mix their own for each tier (decision 0053). DOM-free, so the tests can measure them.
  */
 
 /** A colour for each tier, and the halo the top tiers wear. */
@@ -16,7 +17,7 @@ export interface TierPalette {
 }
 
 /** The game's ceiling: a creature's pips are a die face, and there are nine. */
-const TIER_COUNT = 9;
+export const TIER_COUNT = 9;
 
 /** The first tier drawn with the halo. */
 const FIRST_GILDED_TIER = 6;
@@ -32,19 +33,69 @@ const FIRST_GILDED_TIER = 6;
  *
  * Validated against a near-black floor: the only soft spot is yellow against
  * green under protanopia (ΔE 6.4), and the pip count disambiguates that pair
- * completely on its own.
+ * completely on its own. Decision 0053 measures it again, by the method of 0050.
  */
-const HUES = ['#54c8ff', '#5fd97a', '#ffd447', '#ff8f3a', '#ff5fc4'] as const;
+const HUES = ['#54c8ff', '#5fd97a', '#ffd447', '#ff8f3a', '#ff5fc4'];
 
-/** The halo tiers past the fifth wear. */
+/** The halo tiers past the fifth wear, in every preset: the game's mark of a high tier. */
 const TIER_GOLD = '#ffcc33';
 
-export const DEFAULT_TIERS: TierPalette = {
-  // Tiers 6-9 reuse the first four hues, so the palette covers nine tiers without nine
-  // barely-distinguishable colours.
-  colors: [...HUES, ...HUES.slice(0, TIER_COUNT - HUES.length)],
-  halo: TIER_GOLD,
-};
+/**
+ * Five colours for tiers 1 to 5, and the first four again for 6 to 9 under the gold halo, so the
+ * palette covers nine tiers without nine barely-distinguishable colours.
+ */
+function fiveAndHalo(five: readonly string[]): TierPalette {
+  return { colors: [...five, ...five.slice(0, TIER_COUNT - five.length)], halo: TIER_GOLD };
+}
+
+export const DEFAULT_TIERS: TierPalette = fiveAndHalo(HUES);
+
+export type TierPresetId = 'distinct' | 'nine' | 'plain';
+
+/** A palette offered besides the game's own, by name. */
+export interface TierPreset {
+  readonly id: TierPresetId;
+  readonly name: string;
+  /** What it is for, after its name on its tile. */
+  readonly blurb: string;
+  readonly palette: TierPalette;
+}
+
+/**
+ * Five colours searched for, from sRGB in steps of 15, to stay furthest apart under normal
+ * vision and under protanopia, deuteranopia and tritanopia at once, each no harder to see on any
+ * ladder's floor than the game's own (decision 0053). Tiers 1 to 5 of both presets that follow.
+ */
+const DISTINCT = ['#87a5b4', '#00ffa5', '#ffff00', '#e1871e', '#d278ff'];
+
+/**
+ * The presets, chosen by measurement (decision 0053). Under every colour vision measured, Distinct
+ * keeps tiers further apart than the game's own colours do (tiers the halo already parts aside);
+ * Nine colours adds four more, so no two tiers share a colour and the halo is not needed to tell a
+ * 6 from a 1; Plain leaves the telling to the pips' count alone.
+ */
+export const TIER_PRESETS: readonly TierPreset[] = [
+  {
+    id: 'distinct',
+    name: 'Distinct',
+    blurb: 'apart under any colour vision',
+    palette: fiveAndHalo(DISTINCT),
+  },
+  {
+    id: 'nine',
+    name: 'Nine colours',
+    blurb: 'one for every tier',
+    // Each of 6 to 9 a cousin of the tier five below it, as the game's own palette has them:
+    // periwinkle for slate, cyan for mint, pale lime for yellow, rose for orange.
+    palette: { colors: [...DISTINCT, '#8796ff', '#00ffff', '#e1ffa5', '#ff6996'], halo: TIER_GOLD },
+  },
+  {
+    id: 'plain',
+    name: 'Plain',
+    blurb: 'white, told apart by count',
+    palette: fiveAndHalo(new Array<string>(5).fill('#ffffff')),
+  },
+];
 
 export function tierColor(palette: TierPalette, tier: number): string {
   return palette.colors[Math.min(TIER_COUNT, Math.max(1, tier)) - 1]!;

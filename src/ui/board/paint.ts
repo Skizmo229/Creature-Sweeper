@@ -43,6 +43,12 @@ export interface Paint {
 /** How far inside its true bounds a tile's outline runs, so neighbours read as separate. */
 export const TILE_INSET = 1;
 
+/**
+ * How opaque a beaten creature's glyph is drawn. Dimmed rather than washed out with a floor
+ * overlay, which left defeated creatures almost invisible.
+ */
+export const BEATEN_ALPHA = 0.55;
+
 /** Trace a cell's outline, by default the tile's own (`TILE_INSET`). */
 export function tracePath(p: Paint, cx: number, cy: number, inset = TILE_INSET): void {
   const { ctx, layout } = p;
@@ -210,9 +216,7 @@ export function drawOpen(p: Paint, cell: Cell, cx: number, cy: number): void {
   if (cell.tier > 0 && !hoverNumber) {
     if (p.creaturesHidden) return;
     ctx.save();
-    // Dim the glyph itself rather than washing it out with a floor overlay, which left defeated
-    // creatures almost invisible.
-    if (!cell.alive) ctx.globalAlpha = 0.55;
+    if (!cell.alive) ctx.globalAlpha = BEATEN_ALPHA;
     drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme, p.tierColors);
     ctx.restore();
     // A struck-through corner reads as "dealt with" at a glance. Optional, because at small

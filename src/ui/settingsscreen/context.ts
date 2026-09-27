@@ -11,7 +11,6 @@ import { DEFAULT, type PresentationSettings, type Settings } from '../settings.j
 import type { SfxEvent } from '../sfx.js';
 import type { LadderLook, Pip, SfxPackId, TypeTheme } from '../looktypes.js';
 import { lookFor, themeFor } from '../looks.js';
-import { DEFAULT_TIERS } from '../tiercolors.js';
 import { CHIP_CELL, DEMO_CELL, renderPreview } from './render.js';
 
 export interface SettingsScreenOptions {
@@ -89,7 +88,7 @@ export function makeContext(
     highlight: settings.highlightStyle(typeId),
     highlightColor: settings.highlightColor(typeId),
     strikeDefeated: p.strikeDefeated,
-    tierColors: DEFAULT_TIERS,
+    tierColors: settings.tierColors(typeId),
     ...over,
   });
   return {

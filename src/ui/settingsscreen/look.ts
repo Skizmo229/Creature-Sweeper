@@ -1,8 +1,9 @@
 /**
  * The Presentation section's drawn settings: creature icons (the window of symbols behind the
- * custom tile is in `symbols.ts`), board palette, the board's font and the interface's, text
- * size, the game types' palette strip, the cursor highlight and its colour (the custom colour's
- * window is in `customcolor.ts`), the strike-through and the zoom ceiling. Every example is a
+ * custom tile is in `symbols.ts`) and colours (the custom colours' window is in `customtiers.ts`),
+ * board palette, the board's font and the interface's, text size, the game types' palette strip,
+ * the cursor highlight and its colour (the custom colour's window is in `customcolor.ts`), the
+ * strike-through and the zoom ceiling. Every example is a
  * real board, or for the interface a copy of the HUD (decision 0025).
  */
 
@@ -15,9 +16,11 @@ import {
   highlightSampleLands,
   sampleBoard,
   samplePin,
+  tierSampleBoard,
   zoomSampleBoard,
 } from '../preview.js';
 import {
+  CUSTOM_TIERS,
   DEFAULT,
   MAX_MAX_ZOOM,
   MAX_PREVIEW_SIZE,
@@ -31,14 +34,16 @@ import {
   type HighlightStyle,
   type IconChoice,
   type MenuStrip,
+  type TierColorChoice,
 } from '../settings.js';
 import { MARK_COLOR, PIP_NAMES, PIP_SHAPES, pipName } from '../theme.js';
-import { DEFAULT_TIERS, tierColor } from '../tiercolors.js';
+import { DEFAULT_TIERS, TIER_PRESETS, type TierPalette, tierColor } from '../tiercolors.js';
 import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
 import { SYMBOL_COUNT, isGlyphPip } from '../pipsymbols.js';
 import { FONTS, FONT_IDS, type FontId, type GameFont, LEGIBLE_FONT } from '../typefaces.js';
 import { type PresentationPatch, type ScreenContext, previewCell, typeName } from './context.js';
 import { openColorWindow } from './customcolor.js';
+import { openTierWindow } from './customtiers.js';
 import { CHIP_CELL } from './render.js';
 import { renderPreview } from './render.js';
 import { fontSorts, paletteSorts } from './sorts.js';
@@ -63,9 +68,9 @@ export function iconsRow(ctx: ScreenContext, host: HTMLElement): void {
   choiceRow(ctx.host, host, {
     label: 'Creature icons',
     hint:
-      'The shape of a creature’s pips, or any symbol from Dingbats and Wingdings. Pip colour ' +
-      'stays global — a tier 4 is the same colour everywhere — and a creature is only ever ' +
-      'visible once you have beaten it, which is why the examples show defeated ones.',
+      'The shape of a creature’s pips, or any symbol from Dingbats and Wingdings. Their colour ' +
+      'is the next setting, and the same on every ladder. A creature is only ever visible ' +
+      'once you have beaten it, which is why the examples show defeated ones.',
     title: 'Choose creature icons',
     current: p.icons,
     fallback: {
@@ -83,6 +88,73 @@ export function iconsRow(ctx: ScreenContext, host: HTMLElement): void {
     ],
     onPick: pick,
   });
+}
+
+/** The creature colours' example: one beaten creature of every tier, drawn in `tierColors`. */
+function tierChip(ctx: ScreenContext, tierColors: TierPalette): HTMLElement {
+  return renderPreview(
+    tierSampleBoard(),
+    ctx.currentTheme,
+    ctx.display({ highlight: null, tierColors }),
+    { cell: ctx.chipCell },
+  ).canvas;
+}
+
+/** What the Custom tile shows before any colours are mixed: a box the size of the example. */
+function tierPlaceholder(ctx: ScreenContext): HTMLElement {
+  const box = el('div', 'picker-placeholder', 'Any colour for any tier');
+  box.style.height = `${tierSampleBoard().config.height * ctx.chipCell}px`;
+  return box;
+}
+
+/**
+ * The creatures' colours: the game's own, the presets, and a palette of the player's own from the
+ * window behind the Custom tile, which keeps it while a preset is chosen and opens on it.
+ */
+export function tierColorsRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p, settings, typeId } = ctx;
+  const chip = (tierColors: TierPalette) => (): HTMLElement => tierChip(ctx, tierColors);
+  const own = p.customTierColors;
+  const starts = [
+    { name: 'Default', palette: DEFAULT_TIERS },
+    ...TIER_PRESETS.map((t) => ({ name: t.name, palette: t.palette })),
+    ...(own ? [{ name: 'Your own', palette: own }] : []),
+  ];
+  // Lit when the player's own colours are in force; clicking it opens the window either way.
+  const custom: Choice = {
+    value: own ? CUSTOM_TIERS : '',
+    label: own ? 'Custom — your own' : 'Custom — any colours',
+    example: own ? chip(own) : () => tierPlaceholder(ctx),
+    open: () =>
+      openTierWindow(ctx.host, {
+        current: own ?? settings.tierColors(typeId),
+        starts,
+        example: (tierColors) => tierChip(ctx, tierColors),
+        onUse: (palette) => ctx.pick({ tierColors: CUSTOM_TIERS, customTierColors: palette }),
+      }),
+  };
+
+  wideRow(
+    host,
+    'Creature colours',
+    'The colour of each tier, on every ladder: its creatures, the level number and the LV ' +
+      'buttons. The pips’ count always says the tier; colour says it at a glance. Tiers 6 to 9 ' +
+      'wear a halo round their colour as well. Distinct stays apart with red–green or blue–yellow ' +
+      'colour blindness, and for everyone else is further apart than the default.',
+    gallery(
+      [
+        { value: DEFAULT, label: 'Default — five hues, then haloed', example: chip(DEFAULT_TIERS) },
+        ...TIER_PRESETS.map((t): Choice => ({
+          value: t.id,
+          label: `${t.name} — ${t.blurb}`,
+          example: chip(t.palette),
+        })),
+        custom,
+      ],
+      p.tierColors,
+      (v) => ctx.pick({ tierColors: v as TierColorChoice }),
+    ),
+  );
 }
 
 export function paletteRow(ctx: ScreenContext, host: HTMLElement): void {
@@ -161,14 +233,18 @@ const HUD_READOUTS = [
  * A copy of the HUD's first `count` readouts, as an example. The real HUD's own classes, so each
  * readout reserves the width it does in play.
  */
-function hudCopy(cls: string, count: number = HUD_READOUTS.length): HTMLElement {
+function hudCopy(
+  cls: string,
+  tierColors: TierPalette,
+  count: number = HUD_READOUTS.length,
+): HTMLElement {
   const copy = el('div', `hud ${cls}`);
   for (const [key, text] of HUD_READOUTS.slice(0, count)) {
     const readout = el('span', `hud-item hud-${key}`, text);
     if (key === 'lv') {
       // Level 1, in tier 1's colour, as the real readout draws it.
       const level = el('span', 'hud-level-num', '1');
-      level.style.color = tierColor(DEFAULT_TIERS, 1);
+      level.style.color = tierColor(tierColors, 1);
       readout.append(level);
     }
     copy.append(readout);
@@ -180,9 +256,9 @@ function hudCopy(cls: string, count: number = HUD_READOUTS.length): HTMLElement 
  * An interface font's example: the HUD's first two readouts, set in the face. It declares its own
  * size correction, as anything wearing a face other than the page's must (see body in styles.css).
  */
-function hudInFace(face: GameFont): () => HTMLElement {
+function hudInFace(face: GameFont, tierColors: TierPalette): () => HTMLElement {
   return () => {
-    const copy = hudCopy('font-demo', 2);
+    const copy = hudCopy('font-demo', tierColors, 2);
     copy.style.fontFamily = face.stack;
     copy.style.setProperty('--ex-fix', String(face.exHeightFix ?? 1));
     return copy;
@@ -202,13 +278,13 @@ export function interfaceFontRow(ctx: ScreenContext, host: HTMLElement): void {
     fallback: {
       value: DEFAULT,
       label: `Default — ${FONTS[ident.font].name}`,
-      example: hudInFace(FONTS[ident.font]),
+      example: hudInFace(FONTS[ident.font], ctx.display().tierColors),
       labelFont: FONTS[ident.font],
     },
     options: FONT_IDS.map((id): Choice => ({
       value: id,
       label: [FONTS[id].name, fontOwner(id)].filter(Boolean).join(' — '),
-      example: hudInFace(FONTS[id]),
+      example: hudInFace(FONTS[id], ctx.display().tierColors),
       labelFont: FONTS[id],
     })),
     sorts: fontSorts(),
@@ -237,7 +313,7 @@ function pickHoldingRow(ctx: ScreenContext, control: HTMLElement, patch: Present
  */
 export function textSizeRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p } = ctx;
-  const textDemo = hudCopy('text-size-demo');
+  const textDemo = hudCopy('text-size-demo', ctx.display().tierColors);
   const showTextSize = (size: number): void => {
     // Relative to what the page is already set at, which is what rem means.
     textDemo.style.setProperty('--demo-scale', String(size / p.textSize));

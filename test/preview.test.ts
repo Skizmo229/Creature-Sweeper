@@ -24,6 +24,7 @@ import {
   highlightSampleBoard,
   sampleBoard,
   samplePin,
+  tierSampleBoard,
   zoomSampleBoard,
 } from '../src/ui/preview.js';
 import type { Game } from '../src/engine/game.js';
@@ -210,5 +211,16 @@ describe('the gallery examples', () => {
     const board = zoomSampleBoard();
     expect(creatures(board)).toHaveLength(1);
     expect(board.grid.flat().every((c) => c.open)).toBe(true);
+  });
+
+  it('shows a beaten creature of every tier on the creature colours example, 1 to 5 over 6 to 9', () => {
+    // Beaten, because a creature's glyph shows only once it is; and in rows, so the game's own
+    // palette shows each hue over the tier that wears it again with the halo.
+    const board = tierSampleBoard();
+    const beaten = creatures(board).filter((c) => c.open);
+    expect(beaten.map((c) => c.tier)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    for (const c of beaten) expect([c.x, c.y]).toEqual([(c.tier - 1) % 5, c.tier > 5 ? 1 : 0]);
+    expect(board.status).toBe('playing');
+    expect(board).toBe(tierSampleBoard());
   });
 });
