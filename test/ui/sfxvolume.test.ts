@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 /**
  * The sound effects volume is saved, reaches every sound the game plays, and leaves the sound
- * check's own volume alone. A save from before the setting reads as full volume.
+ * check's own volume alone. A save from before the setting reads as full volume. The speaker in
+ * the corner carries the same slider, and the two never disagree.
  */
 
 import './setup.js';
@@ -54,6 +55,47 @@ describe('the sound effects volume', () => {
     expect(setting.querySelector('.settings-value')!.textContent).toBe('235%');
     expect(heard).toEqual([['levelup', 2.35]]);
     expect(Settings.load().presentation.soundCheck.volume).toBe(1);
+  });
+
+  it('is under the speaker too, where moving it turns a muted game back on', () => {
+    const range = document.querySelector<HTMLInputElement>('.speaker .volume-pop input')!;
+    const readout = document.querySelector('.speaker .volume-readout')!;
+    expect(range.value).toBe('1');
+    expect(readout.textContent).toBe('100%');
+
+    document.querySelector<HTMLButtonElement>('.mute-toggle')!.click();
+    expect(Settings.load().presentation.muted).toBe(true);
+    const heard = listen();
+    range.value = '0.4';
+    range.dispatchEvent(new Event('input'));
+    expect(heard).toEqual([]);
+    range.dispatchEvent(new Event('change'));
+
+    const saved = Settings.load().presentation;
+    expect(saved.sfxVolume).toBe(0.4);
+    expect(saved.muted).toBe(false);
+    expect(readout.textContent).toBe('40%');
+    expect(document.querySelector('.mute-toggle')!.classList.contains('is-muted')).toBe(false);
+    expect(heard).toEqual([['levelup', 0.4]]);
+  });
+
+  it('keeps the speaker and the settings screen showing the same volume', () => {
+    app.showSettings(() => app.showTypes());
+    const setting = [...document.querySelectorAll('.settings-row')].find((r) =>
+      r.textContent?.startsWith('Sound effects volume'),
+    )!;
+    const screen = setting.querySelector<HTMLInputElement>('input[type=range]')!;
+    const corner = document.querySelector<HTMLInputElement>('.speaker .volume-pop input')!;
+
+    corner.value = '1.5';
+    corner.dispatchEvent(new Event('input'));
+    expect(screen.value).toBe('1.5');
+    expect(setting.querySelector('.settings-value')!.textContent).toBe('150%');
+
+    screen.value = '0.75';
+    screen.dispatchEvent(new Event('input'));
+    expect(corner.value).toBe('0.75');
+    expect(document.querySelector('.speaker .volume-readout')!.textContent).toBe('75%');
   });
 
   it('reads a save without it as full volume, and clamps one out of range', () => {

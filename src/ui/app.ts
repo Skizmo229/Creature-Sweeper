@@ -22,7 +22,7 @@ import { buildBoardOutcome, buildRunOutcome } from './game/outcome.js';
 import { type GameScreenElements, buildGameScreen } from './game/screen.js';
 import { soundFor } from './game/sound.js';
 import { ladders } from './ladders.js';
-import { buildMuteButton, syncMuteButton } from './mute.js';
+import { buildSpeaker } from './mute.js';
 import { Modal } from './overlays/modal.js';
 import { Progress } from './progress.js';
 import { buildBoardList } from './screens/boards.js';
@@ -78,7 +78,6 @@ export class App {
   private stopVictory: (() => void) | null = null;
   /** The blow that ended a lost board, kept for the overlay. */
   private fatalBattle: { tier: number; damage: number } | null = null;
-  private muteBtn: HTMLElement | null = null;
 
   // ------------------------------------------------------------ dev handles
 
@@ -123,10 +122,7 @@ export class App {
     window.addEventListener('resize', () => this.view?.fit());
     // A settings change has to reach the board the player came from, not just the next one.
     this.settings.onChange(() => this.applyPresentation());
-    this.muteBtn = buildMuteButton(() => {
-      this.settings.setPresentation({ muted: !this.settings.presentation.muted });
-      if (this.muteBtn) syncMuteButton(this.muteBtn, this.settings.presentation.muted);
-    });
+    buildSpeaker(this.settings, () => this.sfx.play('levelup'));
     this.applyPresentation();
     this.showTypes();
   }
@@ -134,8 +130,8 @@ export class App {
   // ----------------------------------------------------------- presentation
 
   /**
-   * Push the presentation settings at everything already on screen (`dress.ts`). The speaker is
-   * repainted from here too, because "Reset presentation" clears `muted`.
+   * Push the presentation settings at everything already on screen (`dress.ts`). The speaker
+   * repaints itself (`mute.ts`).
    */
   private applyPresentation(): void {
     dressDocument(this.settings, this.typeId);
@@ -147,7 +143,6 @@ export class App {
       this.settings.themeFor(this.typeId),
       boardDisplayFor(this.settings, this.typeId),
     );
-    if (this.muteBtn) syncMuteButton(this.muteBtn, this.settings.presentation.muted);
   }
 
   /**

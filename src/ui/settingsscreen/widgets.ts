@@ -304,6 +304,16 @@ export function slider(
   return box;
 }
 
+/** Move a `slider` to a value set somewhere else, without calling its handlers. */
+export function showSliderValue(
+  box: HTMLElement,
+  value: number,
+  format: (v: number) => string,
+): void {
+  box.querySelector('input')!.value = String(value);
+  box.querySelector('.settings-value')!.textContent = format(value);
+}
+
 export function toggle(current: boolean, onSet: (v: boolean) => void): HTMLElement {
   const label = el('label', 'toggle');
   const box = el('input');
