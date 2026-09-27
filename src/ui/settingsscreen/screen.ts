@@ -16,6 +16,7 @@ import { clearEffectRow, fightRimRow, soundRow, stopSettingsDemo } from './effec
 import { gameplaySection } from './gameplay.js';
 import {
   boardFontRow,
+  highlightColorRow,
   highlightRow,
   iconsRow,
   interfaceFontRow,
@@ -85,6 +86,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   previewSizeRow(ctx, look);
   menuStripRow(ctx, look);
   highlightRow(ctx, look);
+  highlightColorRow(ctx, look);
   strikeRow(ctx, look);
   zoomRow(ctx, look);
   soundRow(ctx, look);

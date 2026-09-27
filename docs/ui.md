@@ -25,8 +25,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   selected", because tier 0 is a real pencil choice. An armed tier and an armed spell are mutually
   exclusive; each arming clears the other.
 - The cursor says whether *this* click would land (`BoardActions.clickLands`): reach while opening
-  or casting, only annotation's own refusals while a tier is armed. The palette strikes through
-  tiers the pencil refuses for the hovered cell.
+  or casting, only annotation's own refusals while a tier is armed. A click that lands is lit in
+  the player's highlight colour (the mark green by default), one that would not in red, which no
+  setting changes (decision 0050). The palette strikes through tiers the pencil refuses for the
+  hovered cell.
 - Two fingers pinch-zoom, and no lift in a touch that ever had two fingers down opens a cell. Only
   `pointerType === 'touch'` is tracked. The arithmetic is in `pinch.ts`.
 - The board refits whenever its stage changes size (`ResizeObserver`), keeping a zoom the player
@@ -152,7 +154,14 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   size it applies on release, holding the row under the pointer, with one thumbnail following the
   thumb; tiles and the symbol window's side panel grow with it (`--chip-w`).
 - The cursor-highlight gallery draws on the grid of the ladder the player came from and needs
-  `BoardView.pinHover`, because a thumbnail has no cursor.
+  `BoardView.pinHover`, because a thumbnail has no cursor. So does the highlight colour's, in the
+  player's shape of highlight (the default's while it is off): the game type's green, four presets
+  chosen by measurement (decision 0050), and a Custom tile, lit while a colour of the player's own
+  is in force. Its window mixes any colour from a slider for each of red, green and blue, each
+  track showing the colours its slider reaches from where the others stand, with a number to type
+  beside each and the hex; the example redraws in place as they move, and only "Use this colour"
+  (or Enter in a field) saves and rebuilds. The colour is shown beside the red of a click that
+  would do nothing, with a warning within `NEAR_REFUSAL` of it.
 - Settings that make the game easier than the tuned default record nothing (no clear, no unlock,
   no best time), and the screen, the ladder list and the clear overlay all say so.
 - Each gameplay slider is shaded by how far it sits from the tuned default, by request: toward

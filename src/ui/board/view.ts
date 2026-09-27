@@ -12,6 +12,7 @@ import type { Lesson } from '../../sim/tutor.js';
 import { DEFAULT_MAX_ZOOM, type HighlightStyle } from '../settings.js';
 import type { TypeTheme } from '../looktypes.js';
 import { PIP_FAMILY, glyphChar, isGlyphPip } from '../pipsymbols.js';
+import { MARK_COLOR } from '../theme.js';
 import { FONTS, type GameFont } from '../typefaces.js';
 import type { VictorySource, VictorySprite } from '../victory/play.js';
 import {
@@ -56,6 +57,8 @@ export interface BoardDisplay {
   font: GameFont;
   /** How the cursor lights the board, or null for not at all. */
   highlight: HighlightStyle | null;
+  /** The colour it lights a cell in when a click there would land; where one would not, red. */
+  highlightColor: string;
   /** Whether a defeated creature keeps its struck-through corner. */
   strikeDefeated: boolean;
 }
@@ -64,6 +67,7 @@ const DEFAULT_DISPLAY: BoardDisplay = {
   maxCell: DEFAULT_MAX_ZOOM,
   font: FONTS['jetbrains-mono'],
   highlight: 'neighbours',
+  highlightColor: MARK_COLOR,
   strikeDefeated: true,
 };
 
@@ -467,7 +471,7 @@ export class BoardView implements InputHost {
     if (hovered && game.status === 'playing' && this.display.highlight) {
       const lands = (cell: Cell): boolean =>
         this.cb.lands ? this.cb.lands(cell) : game.inReach(cell);
-      drawHighlight(p, hovered, this.display.highlight, lands);
+      drawHighlight(p, hovered, this.display.highlight, this.display.highlightColor, lands);
     }
   }
 

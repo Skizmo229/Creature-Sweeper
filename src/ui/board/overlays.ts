@@ -314,13 +314,15 @@ export function drawSeams(p: Paint): void {
  * Light the cell under the cursor, and depending on the style its surroundings too.
  * 'neighbours' asks the engine what is genuinely adjacent (six on hex, across a seam on a wrapped
  * board); 'block' is the literal 3x3 of grid coordinates and deliberately does not fold wrapped
- * edges in. Colour says whether the click would land: each cell is asked for itself, so hovering
- * the edge of your reach shows the boundary rather than just which side the centre is on.
+ * edges in. Colour says whether the click would land, in the player's `color` where it would and
+ * red where it would not: each cell is asked for itself, so hovering the edge of your reach shows
+ * the boundary rather than just which side the centre is on.
  */
 export function drawHighlight(
   p: Paint,
   hovered: Cell,
   style: HighlightStyle,
+  color: string,
   lands: (cell: Cell) => boolean,
 ): void {
   const { ctx, game, layout } = p;
@@ -344,7 +346,7 @@ export function drawHighlight(
     }
     for (const n of around) {
       const c = centreOf(layout, n.x, n.y);
-      ctx.strokeStyle = lands(n) ? MARK_COLOR : OUT_OF_REACH_COLOR;
+      ctx.strokeStyle = lands(n) ? color : OUT_OF_REACH_COLOR;
       tracePath(p, c.cx, c.cy, 3);
       ctx.stroke();
     }
@@ -352,7 +354,7 @@ export function drawHighlight(
 
   ctx.globalAlpha = 1;
   const { cx, cy } = centreOf(layout, hovered.x, hovered.y);
-  ctx.strokeStyle = lands(hovered) ? MARK_COLOR : OUT_OF_REACH_COLOR;
+  ctx.strokeStyle = lands(hovered) ? color : OUT_OF_REACH_COLOR;
   tracePath(p, cx, cy, 2);
   ctx.stroke();
   ctx.restore();
