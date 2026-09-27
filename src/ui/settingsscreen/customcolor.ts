@@ -8,18 +8,13 @@
  * colour mixed comes close enough to the red to be mistaken for it (decision 0050).
  */
 
+import { CHANNEL_MAX, type Rgb, colorDifference, hexOf, rgbOf } from '../colorspace.js';
 import { el } from '../dom.js';
 import { readHexColor } from '../settings.js';
 import { OUT_OF_REACH_COLOR } from '../theme.js';
 import { settingsWindow } from './widgets.js';
 
-/** A colour as its red, green and blue, each from 0 to `CHANNEL_MAX`. */
-type Rgb = [number, number, number];
-/** A colour in CIELAB: its lightness, then its green to red and blue to yellow axes. */
-type Lab = [number, number, number];
-
 const CHANNEL_NAMES = ['Red', 'Green', 'Blue'] as const;
-const CHANNEL_MAX = 255;
 
 /**
  * How close a colour can come to the red of a click that would do nothing before the window says
@@ -27,36 +22,6 @@ const CHANNEL_MAX = 255;
  * light red 37 and a red-orange 35, where orange is 46 and hot pink 45; every preset is 81 or more.
  */
 export const NEAR_REFUSAL = 40;
-
-function rgbOf(color: string): Rgb {
-  return [1, 3, 5].map((at) => parseInt(color.slice(at, at + 2), 16)) as Rgb;
-}
-
-function hexOf(rgb: Rgb): string {
-  return `#${rgb.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
-}
-
-/** A `#rrggbb` colour in CIELAB, from sRGB under the D65 white, as the CIE defines it. */
-function lab(color: string): Lab {
-  const [r, g, b] = rgbOf(color).map((v) => {
-    const s = v / CHANNEL_MAX;
-    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  }) as Rgb;
-  const f = (t: number): number => (t > 216 / 24389 ? Math.cbrt(t) : ((24389 / 27) * t + 16) / 116);
-  const x = f((0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047);
-  const y = f(0.2126 * r + 0.7152 * g + 0.0722 * b);
-  const z = f((0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883);
-  return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
-}
-
-/**
- * How different two `#rrggbb` colours look: their distance apart in CIELAB (CIE76 ΔE). About 2 is
- * the least a person notices side by side.
- */
-export function colorDifference(a: string, b: string): number {
-  const [p, q] = [lab(a), lab(b)];
-  return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
-}
 
 /** A labelled line of the window: a slider and its number, or the hex field. */
 function line(name: string, ...controls: HTMLElement[]): HTMLElement {

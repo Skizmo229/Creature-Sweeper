@@ -76,6 +76,7 @@ src/ui/         the prototype
   looks.ts        one record per ladder: palette, face, sound pack, clear effect (DOM-free)
   looktypes.ts    what a look is made of: the pip shapes, the palette, sound packs, clear effects
   theme.ts        the global colours, the picker's names, creature glyphs
+  colorspace.ts   a colour's numbers: red, green and blue, and CIELAB for how different two look
   pipsymbols.ts   the symbols a pip can be drawn as: Dingbats and Wingdings 1 to 3, from
                   pipsymbols.json, drawn in the faces in pipfont/ (DOM-free)
   typefaces.ts    the bundled faces
