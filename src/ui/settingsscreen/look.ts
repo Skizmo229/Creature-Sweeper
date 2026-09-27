@@ -107,13 +107,15 @@ export function paletteRow(ctx: ScreenContext, host: HTMLElement): void {
 }
 
 /**
- * Each tile names the ladder the face belongs to, the first in ladder order if several wear it;
- * "Pirata One" alone says nothing about why.
+ * Each tile names every ladder that wears the face, in the order the ladder list reads (two may
+ * share one, decision 0031); "Pirata One" alone says nothing about why.
  */
 function fontOwner(id: FontId): string {
   if (id === LEGIBLE_FONT) return 'easiest to read';
-  const owner = LOOK_IDS.find((t) => lookFor(t).font === id);
-  return owner ? typeName(owner) : '';
+  return ladders
+    .filter((t) => lookFor(t.id).font === id)
+    .map((t) => t.name)
+    .join(', ');
 }
 
 export function boardFontRow(ctx: ScreenContext, host: HTMLElement): void {
