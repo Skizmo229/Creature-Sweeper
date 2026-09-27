@@ -72,6 +72,17 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   a laptop.
 - The rules card leads with the sum rule and its proof (a number can exceed 8). Only EASY explains
   a death (`TEACHING_TYPE`); the loss note says "took your last N HP".
+- The tutor (`H`, the "Why? [H]" button beside Sweep; `src/ui/game/tutor.ts` is its face,
+  `src/sim/tutor.ts` its reading; docs/teaching-plan.md) speaks in the hint line, in the ink
+  rather than the hint's grey, and points on the board in violet (`TUTOR_COLOR`), which no other
+  annotation uses: the numbers a proof read are ringed, the covered cells they see lit faintly, a
+  safe cell washed in the mark green, a named cell ringed in its tier's colour with the tier
+  written on it, a narrowed cell ringed dashed with its candidates (or "≤n" for a ceiling). A
+  beaten creature a proof read has its number written on it, since hover is the only other way to
+  see it. It opens nothing and trusts no mark. Each press shows the next lesson; any move on the
+  board dismisses it; the dev handle's `sync` dismisses it too. Every press is a hint: the clear
+  card says how many, and a hinted board sets no best time (decision 0048). The button is a
+  presentation setting (Gameplay section, "Tutor"), because it changes no rule and no record.
 
 ## Settings screen
 

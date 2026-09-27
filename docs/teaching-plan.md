@@ -401,5 +401,8 @@ Still open:
 ## 10. Status
 
 Drafted 26 September 2026, and the owner decided the four questions that shape the build the
-same day (section 8, items 1 to 4). Nothing built. The first step is Part 1's provenance commit
-on branch `m5-tutor`; the four questions still open in section 8 do not block it.
+same day (section 8, items 1 to 4). Part 1, the tutor, was built the same day on branch
+`m5-tutor`, all seven steps of 4.6, with two things found on the way recorded in 4.3 (a mark the
+press has proven is believed) and 4.5 (the advice at a guess is pointed at the cell it weighed).
+The key is `H` (section 8, item 6, taken). Parts 2 and 3 are not started; `Game.fromLayout` is
+their first commit.

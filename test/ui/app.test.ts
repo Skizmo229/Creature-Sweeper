@@ -210,6 +210,18 @@ describe('the app', () => {
     expect(app.progress.boardRecord('normal', 1).bestTime).toBeNull();
   });
 
+  it('with the tutor switched off there is no button, H does nothing, and the best time records', () => {
+    app.settings.setPresentation({ tutor: false });
+    app.play('normal', 1, 7);
+    expect(document.querySelector('.sweep.why')).toBeNull();
+    key('h');
+    expect(text('.hint')).toMatch(/^Click to open/);
+    autoplayTierOrder(app.current!);
+    app.finish();
+    expect(text('.overlay')).not.toContain('hint');
+    expect(app.progress.boardRecord('normal', 1).bestTime).not.toBeNull();
+  });
+
   it('a cleared board shows the clear overlay, records it, and offers the next board', () => {
     app.play('normal', 1, 7);
     const game = app.current!;

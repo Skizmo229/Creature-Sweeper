@@ -96,7 +96,6 @@ export class App {
   runFull(typeId: string, seed?: number): void {
     this.startFullRun(typeId, seed ?? randomSeed());
   }
-  /** Repaint after the game was driven from outside, which is a move the tutor did not see. */
   sync(): void {
     this.tutor.dismiss();
     this.refresh();
@@ -398,6 +397,7 @@ export class App {
       sweep: (useMarks) => this.actions.doSweep(useMarks),
       wait: () => this.actions.doWait(),
       explain: () => this.explainBoard(),
+      tutor: this.settings.presentation.tutor,
       pickSpell: (id) => this.actions.pickSpell(id),
       cancelSpell: () => {
         this.mode.cancelSpell();

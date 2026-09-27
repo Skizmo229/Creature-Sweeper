@@ -22,8 +22,9 @@ export interface GameScreenActions {
   sweep(useMarks: boolean): void;
   /** PATROL's Wait: the creatures take a step and nothing else happens. */
   wait(): void;
-  /** The tutor: point at the next provable move, and why. */
+  /** The tutor: point at the next provable move, and why; and whether it is offered at all. */
   explain(): void;
+  readonly tutor: boolean;
   pickSpell(id: SpellId): void;
   cancelSpell(): void;
 }
@@ -53,7 +54,6 @@ export function buildGameScreen(
   boardIndex: number,
   run: FullRun | null,
   a: GameScreenActions,
-  tutor = true,
 ): GameScreenElements {
   const type = ladders.find((t) => t.id === typeId)!;
   const wrap = el('div', 'screen game');
@@ -69,7 +69,7 @@ export function buildGameScreen(
   stage.append(canvas);
   wrap.append(stage);
 
-  const { palette, ...controls } = buildPalette(game, a, tutor);
+  const { palette, ...controls } = buildPalette(game, a, a.tutor);
   wrap.append(palette);
   const { row, spellBtns } = buildSpellRow(game, a);
   if (row) wrap.append(row);
