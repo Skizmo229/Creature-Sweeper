@@ -8,6 +8,7 @@
 
 import type { Game } from '../../engine/game.js';
 import type { Cell } from '../../engine/types.js';
+import type { Lesson } from '../../sim/tutor.js';
 import { DEFAULT_MAX_ZOOM, type HighlightStyle } from '../settings.js';
 import type { TypeTheme } from '../looktypes.js';
 import { PIP_FAMILY, glyphChar, isGlyphPip } from '../pipsymbols.js';
@@ -29,6 +30,7 @@ import {
   drawBoxRules,
   drawGhostBand,
   drawHighlight,
+  drawLesson,
   drawSeams,
   drawSilhouette,
   drawSprinkles,
@@ -123,6 +125,9 @@ export class BoardView implements InputHost {
   private canPanValue = false;
   private readonly options: BoardViewOptions;
 
+  /** The tutor's lesson pointed at on the board, if one is showing (docs/teaching-plan.md). */
+  private lesson: Lesson | null = null;
+
   /**
    * The faces this view has asked the browser for and is waiting on, so a repaint is requested
    * once per face rather than once per frame drawn before it arrives: the board's font, and the
@@ -170,6 +175,13 @@ export class BoardView implements InputHost {
     this.display = display;
     this.cellPxValue = Math.min(this.cellPx, Math.max(this.fittedCell, display.maxCell));
     this.clampOrigin();
+    this.render();
+  }
+
+  /** Point at a lesson, or at nothing. The lesson is drawn over everything but the cursor. */
+  setLesson(lesson: Lesson | null): void {
+    if (this.lesson === lesson) return;
+    this.lesson = lesson;
     this.render();
   }
 
@@ -448,6 +460,8 @@ export class BoardView implements InputHost {
     drawBoxRules(p);
     drawBonds(p);
     drawSeams(p);
+
+    if (this.lesson && game.status === 'playing') drawLesson(p, this.lesson);
 
     const hovered = this.hoveredCellValue;
     if (hovered && game.status === 'playing' && this.display.highlight) {

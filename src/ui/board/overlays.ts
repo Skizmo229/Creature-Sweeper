@@ -7,15 +7,27 @@
 
 import { placementRule } from '../../engine/placement/registry.js';
 import type { Cell } from '../../engine/types.js';
+import type { Lesson } from '../../sim/tutor.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
 import type { HighlightStyle } from '../settings.js';
-import { BOARD_OUTLINE, BOND_COLOR, BOX_RULE, MARK_COLOR, OUT_OF_REACH_COLOR } from '../theme.js';
+import {
+  BOARD_OUTLINE,
+  BOND_COLOR,
+  BOX_RULE,
+  MARK_COLOR,
+  MARK_OUTLINE,
+  OUT_OF_REACH_COLOR,
+  TUTOR_COLOR,
+  tierColor,
+} from '../theme.js';
+import { setNumberFont } from './digits.js';
 import {
   GHOST_CELLS,
   HEX_EDGE_DIRS,
   SQUARE_EDGE_DIRS,
   boardSize,
   centreOf,
+  contentBox,
   squareCorners,
 } from './geometry.js';
 import { type Paint, drawCovered, drawOpen, tracePath } from './paint.js';
@@ -343,5 +355,87 @@ export function drawHighlight(
   ctx.strokeStyle = lands(hovered) ? MARK_COLOR : OUT_OF_REACH_COLOR;
   tracePath(p, cx, cy, 2);
   ctx.stroke();
+  ctx.restore();
+}
+
+/**
+ * Point at a lesson (docs/teaching-plan.md, Part 1): the numbers and cells its proof read, ringed
+ * in the tutor's colour with the covered cells each number sees lit faintly around it; what it
+ * concludes, washed in the mark green where it is safe to open, ringed in the tier's colour with
+ * the tier written on it where it is named, and ringed dashed with the candidates where it is
+ * only narrowed. Nothing here is a mark: the player still writes every one.
+ */
+export function drawLesson(p: Paint, lesson: Lesson): void {
+  const { ctx, layout } = p;
+  ctx.save();
+  ctx.lineWidth = 2;
+
+  // The rings each number sees, faint, so the shape of the proof is visible before its parts.
+  ctx.globalAlpha = 0.35;
+  ctx.strokeStyle = TUTOR_COLOR;
+  for (const c of lesson.why.constraints) {
+    for (const n of c.unknown) {
+      const { cx, cy } = centreOf(layout, n.x, n.y);
+      tracePath(p, cx, cy, 3);
+      ctx.stroke();
+    }
+  }
+
+  ctx.globalAlpha = 1;
+  for (const cell of [...lesson.why.constraints.map((c) => c.cell), ...lesson.why.cells]) {
+    const { cx, cy } = centreOf(layout, cell.x, cell.y);
+    ctx.strokeStyle = TUTOR_COLOR;
+    ctx.lineWidth = 3;
+    tracePath(p, cx, cy, 2);
+    ctx.stroke();
+  }
+
+  ctx.lineWidth = 2;
+  for (const cell of lesson.open) {
+    const { cx, cy } = centreOf(layout, cell.x, cell.y);
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = MARK_COLOR;
+    tracePath(p, cx, cy, 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = MARK_COLOR;
+    ctx.stroke();
+  }
+
+  for (const [cell, tier] of lesson.mark) {
+    const { cx, cy } = centreOf(layout, cell.x, cell.y);
+    ctx.strokeStyle = tierColor(tier);
+    tracePath(p, cx, cy, 2);
+    ctx.stroke();
+    writeOnCell(p, cx, cy, String(tier), tierColor(tier), 0.58);
+  }
+
+  ctx.setLineDash([4, 3]);
+  for (const [cell, mask] of lesson.narrow) {
+    const { cx, cy } = centreOf(layout, cell.x, cell.y);
+    ctx.strokeStyle = TUTOR_COLOR;
+    tracePath(p, cx, cy, 2);
+    ctx.stroke();
+    const tiers: string[] = [];
+    for (let t = 0; t < 31; t++) if (mask & (1 << t)) tiers.push(String(t));
+    writeOnCell(p, cx, cy, tiers.join(''), TUTOR_COLOR, tiers.length > 2 ? 0.3 : 0.42);
+  }
+  ctx.restore();
+}
+
+/** Text centred on a cell, outlined as a mark is so it survives any tile. */
+function writeOnCell(p: Paint, cx: number, cy: number, text: string, color: string, scale: number) {
+  const { ctx } = p;
+  const box = contentBox(p.layout, cx, cy);
+  ctx.save();
+  ctx.setLineDash([]);
+  const { centre } = setNumberFont(ctx, p.font, box.size * scale);
+  ctx.textAlign = 'center';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = Math.max(2, box.size * 0.16);
+  ctx.strokeStyle = MARK_OUTLINE;
+  ctx.strokeText(text, cx, cy + centre);
+  ctx.fillStyle = color;
+  ctx.fillText(text, cx, cy + centre);
   ctx.restore();
 }

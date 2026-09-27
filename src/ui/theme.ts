@@ -94,6 +94,16 @@ export const MARK_OUTLINE = 'rgba(8, 8, 4, 0.8)';
 export const CENSUS_COLOR = '#7ad9ff';
 
 /**
+ * The tutor's pointing finger: the numbers a proof read and the rings they see.
+ *
+ * Violet, which no other annotation uses: green is a claim, blue a Census, gold a given, red a
+ * refusal, and the tutor is none of those. What the proof concludes is drawn in the colours the
+ * player already reads, a safe cell in the mark green and a named cell in its tier's colour, so
+ * the lesson says "this is what you would write" in the ink you would write it in.
+ */
+export const TUTOR_COLOR = '#d29cff';
+
+/**
  * The line where the board meets the background.
  *
  * The board's silhouette and nothing else — not a grid. Cells keep their own
