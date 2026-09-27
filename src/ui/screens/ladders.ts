@@ -107,13 +107,17 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
         needs.push(`${cleared} / ${type.requires_boards} boards cleared`);
       }
       meta.textContent = `Locked — ${needs.join(' · ')}`;
-    } else if (rec.cleared) {
-      const run = progress.runRecord(type.id);
-      meta.textContent =
-        `Cleared · board ${rec.highestBoard} of ${type.boards.length}` +
-        (run.cleared ? ' · ★ full run' : ' · full run open');
     } else {
-      meta.textContent = `Board ${rec.highestBoard} of ${type.boards.length}`;
+      // Counted, scaling boards included, rather than the board you are on: the card is a record.
+      const n = progress.boardsCleared(type.id);
+      const boards = `${n} board${n === 1 ? '' : 's'}`;
+      if (rec.cleared) {
+        const run = progress.runRecord(type.id);
+        meta.textContent =
+          `Cleared · ${boards}` + (run.cleared ? ' · ★ full run' : ' · full run open');
+      } else {
+        meta.textContent = `${boards} cleared`;
+      }
     }
     card.append(meta);
     card.append(el('span', 'type-axis', type.axis));

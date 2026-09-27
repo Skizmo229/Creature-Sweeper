@@ -228,6 +228,13 @@ describe('the gates as the game applies them', () => {
     expect(progress.boardsCleared()).toBe(12);
   });
 
+  it('counts one ladder alone, never a ladder whose id begins with its own', () => {
+    const progress = saveWith(['huge_extreme'], [...firstBoards('huge', 3), ['huge', 11]]);
+    expect(progress.boardsCleared('huge')).toBe(4);
+    expect(progress.boardsCleared('huge_extreme')).toBe(10);
+    expect(progress.boardsCleared('extreme')).toBe(0);
+  });
+
   it('holds a counted type shut one board short, and opens it on the next', () => {
     expect(gate('cross')).toBe(25);
 
