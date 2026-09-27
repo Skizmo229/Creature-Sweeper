@@ -393,6 +393,25 @@ const LOOKS: Record<string, LadderLook> = {
     sfx: 'thud',
     victory: 'wipeRadial',
   },
+  seer: {
+    // Night indigo, for the search board that carries a spellbook. `hot` is a hot pink: 157
+    // from the pale `ink`, 134 clear of GIVEN_COLOR's gold (Reveal writes givens here) and 207
+    // of Census's cyan; 6.5:1 on the floor (decision 0032). The ring pip is BLIND's, since a
+    // SEER board is a BLIND board with mana.
+    palette: {
+      tile: '#3d4a8a',
+      tileEdge: '#28315e',
+      floor: '#0c0f22',
+      ink: '#dcdcf0',
+      hot: '#ff5aa0',
+      pip: 'ring',
+      accent: '#5b7bd5',
+    },
+    // A crystal-ball reading: soft and rounded, where BLIND's readout is an instrument.
+    font: 'comfortaa',
+    sfx: 'glass',
+    victory: 'wipeRadial',
+  },
   huge_blind: {
     palette: {
       tile: '#7a8288',

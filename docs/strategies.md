@@ -334,6 +334,11 @@ exactly this hunt: the top thresholds are met by killing every creature of a tie
   cell, and every creature is death. Only the tricks that prove a cell *empty* apply: the
   remainder of 0, subtraction to 0, and the counting tricks. Marks are flags and the counters
   subtract them.
+- **SEER.** BLIND with Reveal, Census and Beacon, and denser for it. Nothing is killed, so
+  exploring is the only mana: one Reveal in hand at the start, about one more earned over board 1
+  and two over board 10. Every guess is death, so the spend rule is absolute: never gamble with a
+  Reveal affordable. Reveal on the cell you would otherwise open blind; Census on a large number
+  over few cells; Beacon when the frontier has closed and blank ground is left somewhere.
 
 ## 8. Guessing well
 

@@ -2200,6 +2200,106 @@
   "nozero": 0
  },
  {
+  "type": "seer",
+  "board": 1,
+  "density": 19.4,
+  "median": 50,
+  "p05": 32,
+  "worst": 24,
+  "pct": 10.4,
+  "nozero": 0
+ },
+ {
+  "type": "seer",
+  "board": 2,
+  "density": 19.6,
+  "median": 49,
+  "p05": 32,
+  "worst": 24,
+  "pct": 10.2,
+  "nozero": 0
+ },
+ {
+  "type": "seer",
+  "board": 3,
+  "density": 19.8,
+  "median": 49,
+  "p05": 30,
+  "worst": 23,
+  "pct": 10.2,
+  "nozero": 0
+ },
+ {
+  "type": "seer",
+  "board": 4,
+  "density": 20.1,
+  "median": 54,
+  "p05": 35,
+  "worst": 22,
+  "pct": 8.8,
+  "nozero": 0
+ },
+ {
+  "type": "seer",
+  "board": 5,
+  "density": 20.3,
+  "median": 54,
+  "p05": 35,
+  "worst": 21,
+  "pct": 8.8,
+  "nozero": 0
+ },
+ {
+  "type": "seer",
+  "board": 6,
+  "density": 20.4,
+  "median": 53,
+  "p05": 34,
+  "worst": 21,
+  "pct": 8.7,
+  "nozero": 0
+ },
+ {
+  "type": "seer",
+  "board": 7,
+  "density": 20.7,
+  "median": 56,
+  "p05": 34,
+  "worst": 28,
+  "pct": 7.4,
+  "nozero": 0
+ },
+ {
+  "type": "seer",
+  "board": 8,
+  "density": 21.1,
+  "median": 53,
+  "p05": 33,
+  "worst": 24,
+  "pct": 7,
+  "nozero": 0
+ },
+ {
+  "type": "seer",
+  "board": 9,
+  "density": 21.2,
+  "median": 56,
+  "p05": 36,
+  "worst": 26,
+  "pct": 6.1,
+  "nozero": 0
+ },
+ {
+  "type": "seer",
+  "board": 10,
+  "density": 21.4,
+  "median": 55,
+  "p05": 35,
+  "worst": 26,
+  "pct": 6,
+  "nozero": 0
+ },
+ {
   "type": "hive",
   "board": 1,
   "density": 26,

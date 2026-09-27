@@ -464,6 +464,7 @@ describe('the magic ladders', () => {
       'gear',
       'oracle',
       'pyramid',
+      'seer',
       'star',
       'valentines',
       'workout',
@@ -493,7 +494,8 @@ describe('the magic ladders', () => {
    *
    * The measured floors are in `docs/tuning.md`.
    *
-   * The pool is the whole one: kills, exploration and the starting hand.
+   * The pool is the whole one: kills, exploration and the starting hand. On a search board
+   * nothing is ever killed, so kills pay nothing there and exploration is the whole income.
    */
   it('can use its loadout: the cheap spells freely, the dear ones at all', () => {
     for (const type of magicTypes) {
@@ -508,7 +510,7 @@ describe('the magic ladders', () => {
 
       for (const board of type.boards) {
         const pool =
-          totalMana(board.quantity) +
+          (type.search ? 0 : totalMana(board.quantity)) +
           (type.start_mana ?? 0) +
           Math.floor(board.empty / MANA_PER_EMPTY_CELLS);
 

@@ -91,7 +91,7 @@ describe('the app', () => {
     }));
     expect(columns.map((c) => c.head)).toEqual(['Normal', 'Shape', 'Magic', 'Special']);
     expect(columns[1]!.names.slice(0, 3)).toEqual(['WRAPAROUND', 'WRAPPED CROSS', 'CROSS']);
-    expect(columns[2]!.names).toEqual(['ARCANE', 'WORKOUT', 'ORACLE', 'DUNGEON']);
+    expect(columns[2]!.names).toEqual(['ARCANE', 'WORKOUT', 'ORACLE', 'DUNGEON', 'SEER']);
   });
 
   it('starts a board and shows the HUD and the hint', () => {

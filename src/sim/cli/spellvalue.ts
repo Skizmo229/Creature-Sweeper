@@ -162,7 +162,9 @@ function main(): void {
     return;
   }
   const ladders = loadLadders();
-  const magic = ladders.filter((t) => (t.spells ?? []).length > 0 && !t.search);
+  // A search ladder with spells (SEER) is measured like the rest: the honest player plays at
+  // level 0 there, where only "nothing left to hide" opens a cell, and one HP is the whole stake.
+  const magic = ladders.filter((t) => (t.spells ?? []).length > 0);
 
   console.log(
     `An honest player, ${seeds} seeds x every board of every magic ladder.\n` +

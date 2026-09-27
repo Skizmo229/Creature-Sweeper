@@ -60,7 +60,7 @@ zero-region), Exercise (150, lends a level to the next fight). `src/engine/spell
 prices Exercise by its own rule (`WorkoutRule`).
 
 **Search board.** A board won by uncovering every empty cell rather than by killing every
-creature (BLIND, HUGE x BLIND). No level economy.
+creature (BLIND, HUGE x BLIND, SEER). No level economy; on SEER, exploration is the only mana.
 
 **Patrol / move / route.** On PATROL every creature walks a square route, one cell per **move**
 (an open, a Sweep or a Wait), clockwise from its top-left corner; routes never share a cell. A
