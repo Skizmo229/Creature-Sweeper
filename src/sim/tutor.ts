@@ -456,11 +456,13 @@ const CAPTIONS: Readonly<Record<TrickId, Captioner>> = {
   },
   'last-of-tier': (t, v) => {
     const tier = highestTier(t.struck);
-    const rings = plural(t.why.constraints.length, 'ring');
-    return (
-      `The last ${plural(v.reading.hiding[tier] ?? 1, `tier ${tier}`)} must be inside ${rings} ` +
-      `that cannot be made without one, so no other cell holds a ${tier}.`
-    );
+    const left = v.reading.hiding[tier] ?? 1;
+    const last = left === 1 ? `The last tier ${tier}` : `The last ${left} tier ${tier}s`;
+    const rings =
+      t.why.constraints.length === 1
+        ? `around ${the(first(t))}, which cannot be made without one`
+        : `around ${t.why.constraints.length} numbers that cannot be made without one`;
+    return `${last} must be ${rings}, so no other cell holds a ${tier}.`;
   },
 };
 

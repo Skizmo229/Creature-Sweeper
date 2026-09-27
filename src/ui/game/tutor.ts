@@ -8,6 +8,7 @@
 import type { Game } from '../../engine/game.js';
 import type { Cell } from '../../engine/types.js';
 import { TRICK_TEXT } from '../../sim/tricktext.js';
+import type { TrickId } from '../../sim/tricks.js';
 import { tiersUpTo } from '../../sim/reader.js';
 import { type Advice, type Explanation, type Lesson, explain } from '../../sim/tutor.js';
 
@@ -74,6 +75,16 @@ export class Tutor {
       caption: advice.text,
     };
     return this.advicePointer;
+  }
+
+  /**
+   * What the tutor is showing, as a place in the field guide: the trick of the lesson showing, or
+   * `guess` when the board is at a guess; null when it is showing nothing.
+   */
+  topic(): TrickId | 'guess' | null {
+    if (!this.last) return null;
+    const lesson = this.shown();
+    return !lesson || lesson === this.advicePointer ? 'guess' : lesson.trick;
   }
 
   /** The lesson to point at on the board, or null. */

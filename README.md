@@ -95,7 +95,8 @@ In dev, `window.cs` exposes the running app (`cs.play('normal', 3)`, `cs.current
 **Controls:** click to open · hover a beaten creature to see the number under it (not on PAIRS or
 DOMINOES) · right-click or a LV button to mark · number keys act on the cell under the cursor,
 marking or pencilling according to the Entry mode · `N` switches that mode · `Shift`+digit does
-the other one for that keystroke · `S` sweeps what is proven safe · `D` also trusts your marks · a
+the other one for that keystroke · `S` sweeps what is proven safe · `D` also trusts your marks ·
+`H` asks the tutor for the next provable move and why · `G` opens the field guide there · a
 spell's bracketed letter casts it (`C`ensus, `R`eveal, `B`eacon, `E`xercise, offered cheapest
 first) · `W` waits a move on PATROL · scroll or `+`/`-` to zoom, `F` to reset · `Esc` backs out.
 

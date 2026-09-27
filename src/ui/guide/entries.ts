@@ -92,6 +92,9 @@ export const GUIDE_INTRO: readonly string[] = [
 /** The damage table's tiers and levels, as the catalogue's section 1 lays it out. */
 export const DAMAGE_TABLE = { tiers: [2, 3, 4, 5, 6], levels: [1, 2, 3, 4, 5] } as const;
 
+/** The section the tutor sends a player to at a guess. */
+export const GUESSING_WELL = 'Guessing well';
+
 export const GUIDE: readonly GuideSection[] = [
   {
     title: 'Three things to know before the first click',
@@ -418,7 +421,7 @@ export const GUIDE: readonly GuideSection[] = [
     ],
   },
   {
-    title: 'Guessing well',
+    title: GUESSING_WELL,
     intro: [
       "You will be forced to guess, and the hard ladders' top boards force it on everyone. What " +
         'separates players is what the guess costs.',

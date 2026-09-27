@@ -20,6 +20,8 @@ export interface LadderListActions {
   recordsCount: boolean;
   pickType(typeId: string): void;
   howTo(): void;
+  /** The field guide: the catalogue of tricks. */
+  guide(): void;
   openSettings(): void;
   backup(): void;
   /** Asks first; the list is rebuilt on confirmation. */
@@ -135,6 +137,10 @@ function buildTools(a: LadderListActions): HTMLElement {
   const howto = el('button', 'ghost', 'How to play');
   howto.addEventListener('click', a.howTo);
   tools.append(howto);
+
+  const guide = el('button', 'ghost', 'Field guide');
+  guide.addEventListener('click', a.guide);
+  tools.append(guide);
 
   const settingsBtn = el('button', 'ghost', 'Settings');
   settingsBtn.addEventListener('click', a.openSettings);

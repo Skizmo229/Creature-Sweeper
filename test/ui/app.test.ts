@@ -17,6 +17,10 @@ import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import type { Settings } from '../../src/ui/settings.js';
 import { FONTS, TITLE_FONT } from '../../src/ui/typefaces.js';
 import { ladders } from '../../src/ui/ladders.js';
+import { GUIDE } from '../../src/ui/guide/entries.js';
+import { DIAGRAMS } from '../../src/sim/diagrams.js';
+import type { TrickId } from '../../src/sim/tricks.js';
+import { TRICK_TEXT } from '../../src/sim/tricktext.js';
 
 /** The app's surface as the test drives it, private members included, the way the dev console does. */
 interface Driver {
@@ -208,6 +212,37 @@ describe('the app', () => {
     expect(text('.overlay')).toContain('Cleared with 2 hints');
     expect(app.progress.boardRecord('normal', 1).cleared).toBe(true);
     expect(app.progress.boardRecord('normal', 1).bestTime).toBeNull();
+  });
+
+  it('opens the field guide from the rules card, the ladder list and, at the lesson, a board', () => {
+    const click = (label: string): void =>
+      [...document.querySelectorAll<HTMLButtonElement>('button')]
+        .find((b) => b.textContent === label)!
+        .click();
+    // A first visit opens the rules card, which offers the guide.
+    expect(document.querySelector('.overlay-card.howto')).not.toBeNull();
+    click('Field guide');
+    expect(document.querySelector('.overlay-card.howto')).toBeNull();
+    expect(document.querySelectorAll('.guide-section').length).toBe(GUIDE.length);
+    expect(document.querySelectorAll('.guide-figure canvas').length).toBe(DIAGRAMS.length);
+    key('Escape');
+    expect(document.querySelector('.guide-card')).toBeNull();
+    click('Field guide');
+    expect(document.querySelector('.guide-card')).not.toBeNull();
+    key('Escape');
+
+    // On a board, G opens it at the trick the tutor is showing, and closing it leaves the lesson.
+    app.play('normal', 1, 7);
+    key('h');
+    expect(document.querySelector('.hint .hint-more')).not.toBeNull();
+    const trick = (app as unknown as { tutor: { shown(): { trick: TrickId } } }).tutor.shown()
+      .trick;
+    key('g');
+    expect(text('.guide-here h4')).toContain(TRICK_TEXT[trick].name);
+    key('Escape');
+    expect(document.querySelector('.guide-card')).toBeNull();
+    expect(document.querySelector('.hint')!.classList.contains('tutoring')).toBe(true);
+    expect(app.current!.status).toBe('playing');
   });
 
   it('with the tutor switched off there is no button, H does nothing, and the best time records', () => {

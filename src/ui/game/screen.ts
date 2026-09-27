@@ -25,6 +25,8 @@ export interface GameScreenActions {
   /** The tutor: point at the next provable move, and why; and whether it is offered at all. */
   explain(): void;
   readonly tutor: boolean;
+  /** The field guide, at what the tutor is saying. */
+  guide(): void;
   pickSpell(id: SpellId): void;
   cancelSpell(): void;
 }
@@ -46,6 +48,8 @@ export interface GameScreenElements {
   whyBtn: HTMLButtonElement | null;
   spellBtns: HTMLButtonElement[];
   hint: HTMLParagraphElement;
+  /** Shown at the end of the hint line while the tutor speaks: the guide's entry for it. */
+  more: HTMLButtonElement;
 }
 
 export function buildGameScreen(
@@ -76,8 +80,11 @@ export function buildGameScreen(
 
   const hint = el('p', 'hint');
   wrap.append(hint);
+  const more = el('button', 'hint-more', 'more [G]');
+  more.title = 'Open the field guide at this trick.';
+  more.addEventListener('click', a.guide);
 
-  return { root: wrap, stage, canvas, hud, ...controls, spellBtns, hint };
+  return { root: wrap, stage, canvas, hud, ...controls, spellBtns, hint, more };
 }
 
 /** The HUD: the readouts `hud.ts` fills in, and the Settings and Back buttons. */

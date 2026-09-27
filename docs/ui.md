@@ -83,6 +83,16 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   board dismisses it; the dev handle's `sync` dismisses it too. Every press is a hint: the clear
   card says how many, and a hinted board sets no best time (decision 0048). The button is a
   presentation setting (Gameplay section, "Tutor"), because it changes no rule and no record.
+- The field guide (`src/ui/screens/guide.ts`, its words in `src/ui/guide/entries.ts`;
+  docs/teaching-plan.md, Part 3) is the catalogue in the game, for reading: an overlay that scrolls
+  inside itself with its head and Close pinned, a section per catalogue section and a row of jumps
+  to them. Its words are the catalogue's, held to it by `test/guide.test.ts`. Each diagram is the
+  catalogue's board drawn by a non-interactive `BoardView` in the look of the ladder the player is
+  on, with the tutor's own lesson for it laid over and what the tutor says there beneath, in the
+  tutor's violet; the damage table is the engine's formula, the costs that kill from 10 HP in the
+  danger colour. It opens from the rules card, the ladder list, and on a board from `G` or the
+  "more [G]" at the end of what the tutor says, at the entry for the trick it is showing (at a
+  guess, Guessing well), marked in violet down its left. Escape closes it and leaves the lesson.
 
 ## Settings screen
 

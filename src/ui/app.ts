@@ -28,11 +28,16 @@ import type { AskOptions } from './overlays/ask.js';
 import { Modal } from './overlays/modal.js';
 import { Progress } from './progress.js';
 import { buildBoardList } from './screens/boards.js';
+import { type GuideTarget, buildGuide } from './screens/guide.js';
+import { GUESSING_WELL } from './guide/entries.js';
 import { buildLadderList } from './screens/ladders.js';
 import { Settings } from './settings.js';
 import { buildSettingsScreen } from './settingsscreen/screen.js';
 import { Sfx } from './sfx.js';
 import { playVictory } from './victory/play.js';
+
+/** The field guide's diagrams' cell size before the preview-size setting scales it, in CSS pixels. */
+const GUIDE_CELL = 40;
 
 export class App {
   private readonly root: HTMLElement;
@@ -64,12 +69,13 @@ export class App {
     refresh: () => this.refresh(),
     leaveGame: () => this.leaveGame(),
     explain: () => this.explainBoard(),
+    guide: () => this.guideFromBoard(),
   });
   private readonly clock = new BoardClock();
   private readonly tutor = new Tutor();
   /** Where the settings screen goes back to while it is showing; Escape takes the same route. */
   private settingsBack: (() => void) | null = null;
-  /** The modal overlay over the screen: a question, the how-to, the save backup. */
+  /** The modal overlay over the screen: a question, the how-to, the save backup, the guide. */
   private readonly modal: Modal;
   /** Stops a running board-clear effect; a screen rebuild must call it. */
   private stopVictory: (() => void) | null = null;
@@ -184,7 +190,8 @@ export class App {
         settings: this.settings,
         recordsCount: this.recordsCount,
         pickType: (id) => this.showBoards(id),
-        howTo: () => this.modal.howTo(),
+        howTo: () => this.showHowTo(),
+        guide: () => this.showGuide(),
         openSettings: () => this.showSettings(() => this.showTypes()),
         backup: () => this.modal.saveBackup(),
         resetProgress: () =>
@@ -209,7 +216,7 @@ export class App {
     // so a reload cannot reopen it.
     if (!this.progress.seenHowTo) {
       this.progress.markHowToSeen();
-      this.modal.howTo();
+      this.showHowTo();
     }
   }
 
@@ -263,6 +270,33 @@ export class App {
   /** Ask before doing something irreversible, in the page rather than in a browser dialog. */
   private ask(opts: AskOptions): void {
     this.modal.ask(opts);
+  }
+
+  /** The rules card, which offers the field guide. */
+  private showHowTo(): void {
+    this.modal.howTo(() => this.showGuide());
+  }
+
+  /**
+   * The field guide over whatever is on screen, open at `target` if one is given, its diagrams in
+   * the look of the ladder the player is on or last looked at.
+   */
+  private showGuide(target?: GuideTarget): void {
+    const { overlay, focus, show } = buildGuide({
+      ladders,
+      theme: this.settings.themeFor(this.typeId),
+      display: boardDisplayFor(this.settings, this.typeId),
+      cell: Math.round(GUIDE_CELL * this.settings.presentation.previewSize),
+      close: () => this.modal.close(),
+    });
+    if (this.modal.show(overlay, focus)) show(target);
+  }
+
+  /** The guide from a board: at the trick the tutor is showing, or at guessing well at a guess. */
+  private guideFromBoard(): void {
+    const topic = this.tutor.topic();
+    if (topic === 'guess') this.showGuide({ section: GUESSING_WELL });
+    else this.showGuide(topic ? { trick: topic } : undefined);
   }
 
   // ------------------------------------------------------------ the board
@@ -355,6 +389,7 @@ export class App {
       wait: () => this.actions.doWait(),
       explain: () => this.explainBoard(),
       tutor: this.settings.presentation.tutor,
+      guide: () => this.guideFromBoard(),
       pickSpell: (id) => this.actions.pickSpell(id),
       cancelSpell: () => {
         this.mode.cancelSpell();

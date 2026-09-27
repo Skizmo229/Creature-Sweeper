@@ -1,7 +1,8 @@
 /**
- * The one modal overlay a screen carries at a time: a question, the rules card, the save backup.
- * Shown over the current screen, and closed by every rebuild (decision 0017). While one is up it
- * holds the keyboard: Escape closes it and every other key is swallowed (docs/ui.md).
+ * The one modal overlay a screen carries at a time: a question, the rules card, the save backup,
+ * the field guide. Shown over the current screen, and closed by every rebuild (decision 0017).
+ * While one is up it holds the keyboard: Escape closes it and every other key is swallowed
+ * (docs/ui.md).
  */
 
 import { buildSaveBackup } from '../screens/backup.js';
@@ -46,11 +47,12 @@ export class Modal {
     if (!this.show(overlay, focus)) opts.onConfirm();
   }
 
-  howTo(onClose?: () => void): void {
+  /** The rules card; `onGuide` is its way to the field guide. */
+  howTo(onGuide: () => void, onClose?: () => void): void {
     const { overlay, focus } = buildHowTo(() => {
       this.close();
       onClose?.();
-    });
+    }, onGuide);
     if (!this.show(overlay, focus)) onClose?.();
   }
 

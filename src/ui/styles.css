@@ -797,6 +797,144 @@ button.board-card:hover:not(:disabled) {
   color: var(--tint);
 }
 
+/*
+ * The field guide: the catalogue's prose, ranged left like the rules card, in a card wide enough
+ * for its tables and scrolling inside itself so the screen underneath keeps its place. Its head
+ * stays at the top of the card as it scrolls, so Close is always in reach, and a jump lands its
+ * target below the head. Above the corner speaker, as the picker is. The tutor's violet
+ * (TUTOR_COLOR in theme.ts) marks what the tutor says under a diagram and the entry the tutor sent
+ * the player to.
+ */
+.overlay.guide {
+  z-index: 70;
+  align-items: flex-start;
+}
+.overlay-card.guide-card {
+  max-width: 720px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  text-align: left;
+  padding: 0;
+}
+.guide-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 22px 10px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.guide-body {
+  padding: 12px 22px 24px;
+}
+.guide-head h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.guide-contents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 14px;
+}
+.guide-contents button {
+  font-size: 0.7rem;
+  padding: 3px 8px;
+}
+.guide-card p,
+.guide-card li {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.guide-card ul {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+.guide-section,
+.guide-entry {
+  scroll-margin-top: 60px;
+}
+.guide-section h3 {
+  margin: 22px 0 10px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+  font-size: 1rem;
+  color: var(--tint);
+}
+.guide-entry {
+  margin: 0 0 16px;
+  padding-left: 10px;
+  border-left: 3px solid transparent;
+}
+.guide-entry.guide-here {
+  border-left-color: #d29cff;
+}
+.guide-entry h4 {
+  margin: 0 0 6px;
+  font-size: 0.86rem;
+  color: var(--ink);
+}
+.guide-grade {
+  margin-left: 8px;
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+.guide-card p.guide-on {
+  margin-bottom: 6px;
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--muted);
+}
+.guide-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 4px 0 12px;
+}
+.guide-figure figcaption {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: #d29cff;
+}
+.guide-table {
+  margin: 4px 0 12px;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+.guide-table th,
+.guide-table td {
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  text-align: center;
+}
+.guide-table th {
+  font-weight: 400;
+  color: var(--muted);
+}
+.guide-table td.lethal {
+  font-weight: 700;
+  color: var(--danger);
+}
+/* The tutor's way into the guide, at the end of what it says. */
+.hint-more {
+  margin-left: 4px;
+  padding: 0 6px;
+  font-size: 0.72rem;
+  color: #d29cff;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
 /* --------------------------------------------------------------------- tools */
 
 .tools {

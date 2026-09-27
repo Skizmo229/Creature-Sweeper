@@ -10,10 +10,9 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { Game } from '../src/engine/game.js';
 import type { Cell } from '../src/engine/types.js';
-import { type Diagram, DIAGRAMS, diagramGame } from '../src/sim/diagrams.js';
+import { type Diagram, DIAGRAMS, diagramGame, pressDiagram } from '../src/sim/diagrams.js';
 import { TRICKS, TRICK_IDS, type TrickId } from '../src/sim/tricks.js';
 import { TRICK_TEXT } from '../src/sim/tricktext.js';
-import { explain } from '../src/sim/tutor.js';
 
 /** One fenced diagram in the catalogue: the trick it sits under, its cells, and its counters. */
 interface Drawn {
@@ -68,16 +67,12 @@ function candidates(mask: number): string {
 
 /** What the diagram's trick concluded on each cell in one press of the tutor, in `taught` tokens. */
 function taught(d: Diagram): { game: Game; grade: number | null; at: Map<Cell, string> } {
-  const game = diagramGame(d);
-  const press = explain(game);
+  const { game, grade, lesson } = pressDiagram(d);
   const at = new Map<Cell, string>();
-  for (const l of [...press.steps, ...press.lessons]) {
-    if (l.trick !== d.trick) continue;
-    for (const [c, mask] of l.narrow) if (!at.has(c)) at.set(c, candidates(mask));
-    for (const [c, tier] of l.mark) at.set(c, `${tier}`);
-    for (const c of l.open) at.set(c, 'o');
-  }
-  return { game, grade: press.grade, at };
+  for (const [c, mask] of lesson?.narrow ?? []) at.set(c, candidates(mask));
+  for (const [c, tier] of lesson?.mark ?? []) at.set(c, `${tier}`);
+  for (const c of lesson?.open ?? []) at.set(c, 'o');
+  return { game, grade, at };
 }
 
 describe("the catalogue's diagrams", () => {

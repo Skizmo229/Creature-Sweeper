@@ -99,6 +99,7 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
   // thing the player just asked for.
   els.hint.textContent = s.tutor ?? hintText(game, mode);
   els.hint.classList.toggle('tutoring', s.tutor !== null);
+  if (s.tutor !== null) els.hint.append(' ', els.more);
   if (els.whyBtn) els.whyBtn.disabled = game.status !== 'playing';
 
   if (els.hud.mp) {

@@ -12,7 +12,9 @@
  */
 
 import { Game } from '../engine/game.js';
-import type { TrickId } from './tricks.js';
+import type { Cell } from '../engine/types.js';
+import { type Grade, TRICKS, type TrickId } from './tricks.js';
+import { type Lesson, explain } from './tutor.js';
 
 /** The catalogue's boards have five tiers. */
 const TIERS = 5;
@@ -121,4 +123,62 @@ export function diagramGame(d: Diagram): Game {
     }
   }
   return Game.fromLayout(truth, shown, { startLevel: d.level, tiers: TIERS });
+}
+
+/**
+ * The patch alone, as the catalogue draws it: for drawing, not for reading. Its cells stand where
+ * the diagram board's do, so a lesson read from `diagramGame` draws on it in place; its level and
+ * counters are the patch's own, so nothing should be worked out from it.
+ */
+export function diagramPicture(d: Diagram): Game {
+  return Game.fromLayout(d.truth, d.shown, { tiers: TIERS });
+}
+
+/** One press of the tutor on a diagram's board, and what the diagram's trick taught in it. */
+export interface DiagramPress {
+  readonly game: Game;
+  /** The press's grade, which is the trick's when the diagram is right. */
+  readonly grade: Grade | null;
+  /**
+   * Every proof of the diagram's trick in the press, pencil work included, as one lesson: what a
+   * cell was narrowed to last, unless the trick also concluded it, and each proof's caption in the
+   * reading order of the numbers it read. Null when the trick taught nothing there.
+   */
+  readonly lesson: Lesson | null;
+}
+
+/** Press the tutor on a diagram's board, and gather what its trick taught. */
+export function pressDiagram(d: Diagram): DiagramPress {
+  const game = diagramGame(d);
+  const press = explain(game);
+  const first = (l: Lesson): number =>
+    Math.min(Infinity, ...l.why.constraints.map((c) => c.cell.y * game.config.width + c.cell.x));
+  const proofs = [...press.lessons, ...press.steps]
+    .filter((l) => l.trick === d.trick)
+    .sort((a, b) => first(a) - first(b));
+  if (!proofs.length) return { game, grade: press.grade, lesson: null };
+  const open = new Set<Cell>();
+  const mark = new Map<Cell, number>();
+  const narrow = new Map<Cell, number>();
+  for (const l of proofs) {
+    for (const c of l.open) open.add(c);
+    for (const [c, tier] of l.mark) mark.set(c, tier);
+    for (const [c, mask] of l.narrow) narrow.set(c, mask);
+  }
+  for (const c of [...open, ...mark.keys()]) narrow.delete(c);
+  const once = <T>(xs: readonly T[]): T[] => [...new Set(xs)];
+  const lesson: Lesson = {
+    trick: d.trick,
+    grade: TRICKS[d.trick].grade,
+    why: {
+      constraints: once(proofs.flatMap((l) => l.why.constraints)),
+      cells: once(proofs.flatMap((l) => l.why.cells)),
+    },
+    open: [...open],
+    mark: [...mark],
+    narrow: [...narrow],
+    struck: proofs.reduce((m, l) => m | l.struck, 0),
+    caption: once(proofs.map((l) => l.caption)).join(' '),
+  };
+  return { game, grade: press.grade, lesson };
 }

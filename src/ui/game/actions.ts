@@ -22,6 +22,8 @@ export interface BoardActionsHost {
   leaveGame(): void;
   /** The tutor: point at the next provable move, or the next lesson if one is already showing. */
   explain(): void;
+  /** The field guide, at what the tutor is showing, if anything. */
+  guide(): void;
 }
 
 export class BoardActions {
@@ -131,6 +133,11 @@ export class BoardActions {
     if (key === 'h') {
       e.preventDefault();
       this.h.explain();
+      return;
+    }
+    if (key === 'g') {
+      e.preventDefault();
+      this.h.guide();
       return;
     }
     if (e.key === '+' || e.key === '=') {
