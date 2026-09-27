@@ -600,5 +600,5 @@ export function themeFor(typeId: string): TypeTheme {
   return lookFor(typeId).palette;
 }
 
-/** Every ladder with a look, which is also every palette the player can pick, in ladder order. */
+/** Every ladder with a look: every palette the player can pick. The palette window sorts them. */
 export const LOOK_IDS: readonly string[] = Object.keys(LOOKS);

@@ -71,14 +71,16 @@ src/ui/         the prototype
   settings.ts     the presentation settings and the store
   settingsscreen/  the settings form: context, widgets, render, look, effects, gameplay, screen;
                   symbols.ts is the custom creature icon's window of symbols, customcolor.ts the
-                  custom highlight colour's window of red, green and blue
+                  custom highlight colour's window of red, green and blue, sorts.ts the orders
+                  the palette and font windows offer
   preview.ts      the settings screen's example boards (no rendering, so tests can build them)
   looks.ts        one record per ladder: palette, face, sound pack, clear effect (DOM-free)
   looktypes.ts    what a look is made of: the pip shapes, the palette, sound packs, clear effects
   theme.ts        the global colours, the picker's names, creature glyphs
+  colorspace.ts   a colour's numbers: red, green and blue, and CIELAB for how different two look
   pipsymbols.ts   the symbols a pip can be drawn as: Dingbats and Wingdings 1 to 3, from
                   pipsymbols.json, drawn in the faces in pipfont/ (DOM-free)
-  typefaces.ts    the bundled faces
+  typefaces.ts    the bundled faces, and the kind of face each is
   progress.ts     the save: clears, best times, unlocks
   savefile.ts     the CS1: backup code
   sfx.ts          synthesised sound packs

@@ -567,6 +567,23 @@ describe('the board font and the interface font', () => {
     expect(rootVar('--font')).toBe(FONTS.atkinson.stack);
   });
 
+  it('name every ladder that wears them, in the order the ladder list reads', () => {
+    const here = app;
+    here.showSettings(() => here.showTypes());
+    const row = [...document.querySelectorAll('.settings-row')].find(
+      (r) => r.querySelector('.settings-name')?.textContent === 'Board font',
+    )!;
+    row.querySelectorAll<HTMLButtonElement>('.preview-chip')[1]!.click();
+    const captions = [...document.querySelectorAll('.picker .chip-label')].map(
+      (c) => c.textContent,
+    );
+    // PYRAMID is in the list's Shape column, ahead of ORACLE's Magic; BLIND is in Normal.
+    expect(captions).toContain('Cinzel — PYRAMID, ORACLE');
+    expect(captions).toContain('Space Mono — BLIND, PETRI DISH');
+    expect(captions).toContain('Anton — HUGE x EXTREME');
+    expect(captions).toContain(`${FONTS.atkinson.name} — easiest to read`);
+  });
+
   it('read a save from before the interface had its own as one face for both', () => {
     const load = (presentation: object): Driver => {
       localStorage.setItem(

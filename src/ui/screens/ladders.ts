@@ -31,8 +31,11 @@ export interface LadderListActions {
   setUnlockAll(on: boolean): void;
 }
 
-/** Each column's heading. Normal is the original game's seven modes; the rest say what a ladder is about. */
-const CATEGORY_NAMES: Record<LadderCategory, string> = {
+/**
+ * Each column's heading, and the palette and font windows' when they sort by ladder. Normal is
+ * the original game's seven modes; the rest say what a ladder is about.
+ */
+export const CATEGORY_NAMES: Record<LadderCategory, string> = {
   normal: 'Normal',
   shape: 'Shape',
   magic: 'Magic',

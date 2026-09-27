@@ -40,6 +40,7 @@ import { type PresentationPatch, type ScreenContext, previewCell, typeName } fro
 import { openColorWindow } from './customcolor.js';
 import { CHIP_CELL } from './render.js';
 import { renderPreview } from './render.js';
+import { fontSorts, paletteSorts } from './sorts.js';
 import { openSymbolWindow } from './symbols.js';
 import { type Choice, choiceRow, gallery, slider, wideRow } from './widgets.js';
 
@@ -102,18 +103,21 @@ export function paletteRow(ctx: ScreenContext, host: HTMLElement): void {
       label: typeName(id),
       example: ctx.chipBoard({ ...themeFor(id), pip: currentPip }),
     })),
+    sorts: paletteSorts(),
     onPick: (v) => ctx.pick({ palette: v }),
   });
 }
 
 /**
- * Each tile names the ladder the face belongs to, the first in ladder order if several wear it;
- * "Pirata One" alone says nothing about why.
+ * Each tile names every ladder that wears the face, in the order the ladder list reads (two may
+ * share one, decision 0031); "Pirata One" alone says nothing about why.
  */
 function fontOwner(id: FontId): string {
   if (id === LEGIBLE_FONT) return 'easiest to read';
-  const owner = LOOK_IDS.find((t) => lookFor(t).font === id);
-  return owner ? typeName(owner) : '';
+  return ladders
+    .filter((t) => lookFor(t.id).font === id)
+    .map((t) => t.name)
+    .join(', ');
 }
 
 export function boardFontRow(ctx: ScreenContext, host: HTMLElement): void {
@@ -139,6 +143,7 @@ export function boardFontRow(ctx: ScreenContext, host: HTMLElement): void {
       example: ctx.chipBoard(currentTheme, { font: FONTS[id] }),
       labelFont: FONTS[id],
     })),
+    sorts: fontSorts(),
     onPick: (v) => ctx.pick({ font: v as FontId | typeof DEFAULT }),
   });
 }
@@ -205,6 +210,7 @@ export function interfaceFontRow(ctx: ScreenContext, host: HTMLElement): void {
       example: hudInFace(FONTS[id]),
       labelFont: FONTS[id],
     })),
+    sorts: fontSorts(),
     onPick: (v) => ctx.pick({ interfaceFont: v as FontId | typeof DEFAULT }),
   });
 }
