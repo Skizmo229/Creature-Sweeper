@@ -25,8 +25,14 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   selected", because tier 0 is a real pencil choice. An armed tier and an armed spell are mutually
   exclusive; each arming clears the other.
 - The cursor says whether *this* click would land (`BoardActions.clickLands`): reach while opening
-  or casting, only annotation's own refusals while a tier is armed. The palette strikes through
-  tiers the pencil refuses for the hovered cell.
+  or casting, only annotation's own refusals while a tier is armed. A cell a click would land on
+  is boxed in the player's highlight colour (the mark green by default); one it would not is
+  crossed out instead, corner to corner of its tile, in red over the dark outline a mark wears, so
+  the refusal reads by its shape where the red does not: under red–green colour blindness, on a
+  tile as bright as the red, or for a player who picked a red highlight (decision 0051). No
+  setting changes the red (decision 0050). It is never dashed, because on the board a dash is a
+  wrap seam or the tutor's narrowed cell. The palette strikes through tiers the pencil refuses for
+  the hovered cell.
 - Two fingers pinch-zoom, and no lift in a touch that ever had two fingers down opens a cell. Only
   `pointerType === 'touch'` is tracked. The arithmetic is in `pinch.ts`.
 - The board refits whenever its stage changes size (`ResizeObserver`), keeping a zoom the player
@@ -152,7 +158,17 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   size it applies on release, holding the row under the pointer, with one thumbnail following the
   thumb; tiles and the symbol window's side panel grow with it (`--chip-w`).
 - The cursor-highlight gallery draws on the grid of the ladder the player came from and needs
-  `BoardView.pinHover`, because a thumbnail has no cursor.
+  `BoardView.pinHover`, because a thumbnail has no cursor. So does the highlight colour's, in the
+  player's shape of highlight (the default's while it is off): the game type's green, four presets
+  chosen by measurement (decision 0050), and a Custom tile, lit while a colour of the player's own
+  is in force. Its window mixes any colour from a slider for each of red, green and blue, each
+  track showing the colours its slider reaches from where the others stand, with a number to type
+  beside each and the hex; the example redraws in place as they move, and only "Use this colour"
+  (or Enter in a field) saves and rebuilds. The colour is shown beside the red of a click that
+  would do nothing, with a warning within `NEAR_REFUSAL` of it. Both galleries, and the window's
+  example, show a refusal as well: the covered cells right of the lit one are out of reach
+  (`highlightSampleLands`), so where the highlight lights a ring they are crossed out beside the
+  boxes (decision 0051).
 - Settings that make the game easier than the tuned default record nothing (no clear, no unlock,
   no best time), and the screen, the ladder list and the clear overlay all say so.
 - Each gameplay slider is shaded by how far it sits from the tuned default, by request: toward
@@ -185,6 +201,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - The browser's own stylesheet resets the face and the adjust on a button or a select. A rule that
   gives a control back its face (`font-family: inherit`) gives back the adjust too, or its labels
   grow and shrink with the face; `test/fonts.test.ts` holds that.
+- A field sized to what it holds is sized in `ch` for its text alone (`box-sizing: content-box`),
+  because `ch` follows the face and its padding and spin buttons do not. The custom colour
+  window's numbers, `7ch` with both counted in, clipped "255" in the five narrowest faces;
+  `test/ui/highlightcolor.test.ts` holds the fix.
 - No glyph in the chrome can be assumed: the settings button is a word, the mute speaker is inline
   SVG. Only Latin-1 and general punctuation are safe.
 - A creature's pips can be a symbol rather than a shape (`icons: 'U+2764'`). Wingdings is

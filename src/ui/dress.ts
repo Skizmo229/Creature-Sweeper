@@ -32,6 +32,7 @@ export function boardDisplayFor(settings: Settings, typeId: string): BoardDispla
     maxCell: p.maxZoom,
     font: settings.boardFont(typeId),
     highlight: settings.highlightStyle(typeId),
+    highlightColor: settings.highlightColor(typeId),
     strikeDefeated: p.strikeDefeated,
   };
 }

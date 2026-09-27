@@ -4,9 +4,9 @@
  * Two halves that behave very differently:
  *
  * **Presentation** — icons, palette, the board's font and the interface's,
- * sound, the clear effect, the glow after a fight, the cursor highlight, the
- * struck-out creatures, the zoom ceiling. None of it touches a rule, so none
- * of it can affect whether a clear is recorded.
+ * sound, the clear effect, the glow after a fight, the cursor highlight and its
+ * colour, the struck-out creatures, the zoom ceiling. None of it touches a
+ * rule, so none of it can affect whether a clear is recorded.
  *
  * **Gameplay** — the dials in `engine/settings.ts`. Those change the rules, so
  * they decide whether a board counts. See `isAtLeastAsHard`: a player who
@@ -31,6 +31,7 @@ import {
 } from '../engine/settings.js';
 import type { Pip, SfxPackId, TypeTheme, VictoryId } from './looktypes.js';
 import { lookFor, themeFor } from './looks.js';
+import { MARK_COLOR } from './theme.js';
 import { type FontId, type GameFont, TITLE_FONT, fontFor, migrateFontChoice } from './typefaces.js';
 import { SETTINGS_KEY as KEY } from './savefile.js';
 
@@ -67,6 +68,35 @@ export const HIGHLIGHT_NAMES: Record<HighlightStyle, string> = {
   cell: 'Just the cell under the cursor',
   block: 'Flat 3×3 block, whatever the board shape',
 };
+
+/** A colour as `#rrggbb` in lower case, or the game type's own, the mark green. */
+export type HighlightColorChoice = typeof DEFAULT | string;
+
+/**
+ * The colours the cursor highlight is offered in besides the game type's green, which every ladder
+ * defaults to; the Custom tile makes any other. Chosen by measurement against every palette and
+ * against the red a click that would do nothing is lit in (decision 0050): white stands out on the
+ * most tiles and yellow next, and with red–green colour blindness, where the green is the hardest
+ * of them to tell from the red, magenta is the easiest, cyan holds for the commoner kind and
+ * yellow for the other.
+ */
+export const HIGHLIGHT_COLORS: readonly { readonly name: string; readonly color: string }[] = [
+  { name: 'White', color: '#ffffff' },
+  { name: 'Yellow', color: '#ffeb3b' },
+  { name: 'Cyan', color: '#2ee6ff' },
+  { name: 'Magenta', color: '#ff4dff' },
+];
+
+/**
+ * A colour written in hex, `#2ee6ff` or the short `#2ef`, with or without its '#' and in either
+ * case, as the setting keeps it: `#rrggbb` in lower case. Null for anything else.
+ */
+export function readHexColor(text: unknown): string | null {
+  if (typeof text !== 'string') return null;
+  const digits = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(text.trim())?.[1]?.toLowerCase();
+  if (!digits) return null;
+  return `#${digits.length === 3 ? [...digits].map((d) => d + d).join('') : digits}`;
+}
 
 /**
  * Which fights light the edge of the board. 'every' is green for a fight that cost nothing, blue
@@ -154,6 +184,11 @@ export interface PresentationSettings {
   readonly victory: VictoryChoice;
   readonly highlight: HighlightChoice;
   /**
+   * The colour the cursor lights a cell in when a click there would land. A click that would do
+   * nothing is lit red whatever this is, because red is what says so (decision 0050).
+   */
+  readonly highlightColor: HighlightColorChoice;
+  /**
    * Whether a defeated creature keeps its struck-through corner.
    *
    * The stroke is how "dealt with" reads at a glance, so turning it off leaves
@@ -206,6 +241,7 @@ const DEFAULT_PRESENTATION: PresentationSettings = {
   sfxVolume: DEFAULT_SFX_VOLUME,
   victory: DEFAULT,
   highlight: DEFAULT,
+  highlightColor: DEFAULT,
   strikeDefeated: true,
   fightRim: 'every',
   menuStrip: 'left',
@@ -298,6 +334,9 @@ function readPresentation(raw: unknown): PresentationSettings {
     sfxVolume: num(p.sfxVolume, 0, MAX_SFX_VOLUME, DEFAULT_SFX_VOLUME),
     victory: str('victory', DEFAULT) as VictoryChoice,
     highlight: str('highlight', DEFAULT) as HighlightChoice,
+    // A save from before this setting, or one holding anything but a colour, reads as the green
+    // the highlight was always drawn in.
+    highlightColor: readHexColor(p.highlightColor) ?? DEFAULT,
     strikeDefeated: typeof p.strikeDefeated === 'boolean' ? p.strikeDefeated : true,
     // A save from before this setting reads as every fight, which is how the glow first shipped.
     fightRim: oneOf(p.fightRim, FIGHT_RIMS, 'every'),
@@ -478,5 +517,12 @@ export class Settings {
     // adjacency ring. `lookFor(typeId)` is where a per-type answer would
     // go if one ever earns its place.
     return 'neighbours';
+  }
+
+  /** The colour the cursor lights a cell in when a click there would land. */
+  highlightColor(_typeId: string): string {
+    const choice = this.data.presentation.highlightColor;
+    // No ladder overrides this either, so every type's default is the green of a mark.
+    return choice === DEFAULT ? MARK_COLOR : choice;
   }
 }

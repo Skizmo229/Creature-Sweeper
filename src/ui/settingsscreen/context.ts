@@ -86,6 +86,7 @@ export function makeContext(
     maxCell: p.maxZoom,
     font: settings.boardFont(typeId),
     highlight: settings.highlightStyle(typeId),
+    highlightColor: settings.highlightColor(typeId),
     strikeDefeated: p.strikeDefeated,
     ...over,
   });

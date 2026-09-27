@@ -1,15 +1,18 @@
 /**
  * The Presentation section's drawn settings: creature icons (the window of symbols behind the
  * custom tile is in `symbols.ts`), board palette, the board's font and the interface's, text
- * size, the game types' palette strip, the cursor highlight, the strike-through and the zoom
- * ceiling. Every example is a real board, or for the interface a copy of the HUD (decision 0025).
+ * size, the game types' palette strip, the cursor highlight and its colour (the custom colour's
+ * window is in `customcolor.ts`), the strike-through and the zoom ceiling. Every example is a
+ * real board, or for the interface a copy of the HUD (decision 0025).
  */
 
+import type { BoardDisplay } from '../board/view.js';
 import { el } from '../dom.js';
 import { ladders } from '../ladders.js';
 import {
   HIGHLIGHT_PIN,
   highlightSampleBoard,
+  highlightSampleLands,
   sampleBoard,
   samplePin,
   zoomSampleBoard,
@@ -23,16 +26,18 @@ import {
   MIN_PREVIEW_SIZE,
   MIN_TEXT_SIZE,
   OFF,
+  HIGHLIGHT_COLORS,
   HIGHLIGHT_NAMES,
   type HighlightStyle,
   type IconChoice,
   type MenuStrip,
 } from '../settings.js';
-import { PIP_NAMES, PIP_SHAPES, pipName, tierColor } from '../theme.js';
+import { MARK_COLOR, PIP_NAMES, PIP_SHAPES, pipName, tierColor } from '../theme.js';
 import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
 import { SYMBOL_COUNT, isGlyphPip } from '../pipsymbols.js';
 import { FONTS, FONT_IDS, type FontId, type GameFont, LEGIBLE_FONT } from '../typefaces.js';
 import { type PresentationPatch, type ScreenContext, previewCell, typeName } from './context.js';
+import { openColorWindow } from './customcolor.js';
 import { CHIP_CELL } from './render.js';
 import { renderPreview } from './render.js';
 import { openSymbolWindow } from './symbols.js';
@@ -322,44 +327,108 @@ export function menuStripRow(ctx: ScreenContext, host: HTMLElement): void {
   );
 }
 
-/** Drawn on the grid of the ladder the player came from: hex on HIVE, square boxes elsewhere. */
-export function highlightRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, typeId, currentTheme } = ctx;
-  const hex = ladders.find((t) => t.id === typeId)?.topology === 'hex';
-  const highlightChip = (highlight: HighlightStyle | null) => () =>
+/**
+ * The cursor highlight's example: its board held lit, drawn with the presentation as it stands but
+ * for `over`, on the grid of the ladder the player came from: hex on HIVE, square boxes elsewhere.
+ * The covered cells right of the lit one are out of reach, so the example shows a refusal too.
+ */
+function highlightChip(ctx: ScreenContext, over: Partial<BoardDisplay>): () => HTMLElement {
+  const hex = ladders.find((t) => t.id === ctx.typeId)?.topology === 'hex';
+  return () =>
     renderPreview(
       highlightSampleBoard(hex ? 'hex' : 'square'),
-      currentTheme,
-      ctx.display({ highlight }),
-      { cell: ctx.chipCell, pin: HIGHLIGHT_PIN },
+      ctx.currentTheme,
+      ctx.display(over),
+      { cell: ctx.chipCell, pin: HIGHLIGHT_PIN, lands: highlightSampleLands },
     ).canvas;
+}
+
+export function highlightRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p, typeId } = ctx;
+  const hex = ladders.find((t) => t.id === typeId)?.topology === 'hex';
+  const chip = (highlight: HighlightStyle | null) => highlightChip(ctx, { highlight });
+  const refusal =
+    ' Where a click would do nothing, past the edge of your reach, a cell is crossed out instead ' +
+    'of boxed, as on the right of these examples.';
 
   wideRow(
     host,
     '3×3 cursor highlight',
-    hex
+    (hex
       ? 'What the cell under the cursor lights up, on this ladder’s hexagons. The default follows ' +
-          'real adjacency, so it lights the six cells around it, where the flat block is always ' +
-          'the same eight.'
+        'real adjacency, so it lights the six cells around it, where the flat block is always ' +
+        'the same eight.'
       : 'What the cell under the cursor lights up. On square cells the default and the flat block ' +
-          'light the same eight; they part on a hex board, where the default lights six, and across ' +
-          'a wrapped edge, which only the default jumps.',
+        'light the same eight; they part on a hex board, where the default lights six, and across ' +
+        'a wrapped edge, which only the default jumps.') + refusal,
     gallery(
       [
         {
           value: DEFAULT,
           label: 'Game type default — true neighbours',
-          example: highlightChip('neighbours'),
+          example: chip('neighbours'),
         },
         ...(Object.keys(HIGHLIGHT_NAMES) as HighlightStyle[]).map((id): Choice => ({
           value: id,
           label: HIGHLIGHT_NAMES[id],
-          example: highlightChip(id),
+          example: chip(id),
         })),
-        { value: OFF, label: 'Off — no highlight', example: highlightChip(null) },
+        { value: OFF, label: 'Off — no highlight', example: chip(null) },
       ],
       p.highlight,
       (v) => ctx.pick({ highlight: v as HighlightStyle | typeof DEFAULT | typeof OFF }),
+    ),
+  );
+}
+
+/**
+ * The highlight's colour: the game type's green, the presets, and any colour at all from the
+ * window behind the Custom tile. Each is drawn in the player's own shape of highlight, or while it
+ * is off in the default's, so a colour can be chosen before the highlight is turned back on.
+ */
+export function highlightColorRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p, settings, typeId } = ctx;
+  const style = settings.highlightStyle(typeId);
+  const chip = (color: string): (() => HTMLElement) =>
+    highlightChip(ctx, { highlight: style ?? 'neighbours', highlightColor: color });
+  const pick = (color: string): void => ctx.pick({ highlightColor: color });
+  const preset = HIGHLIGHT_COLORS.some((c) => c.color === p.highlightColor);
+  const own = p.highlightColor === DEFAULT || preset ? null : p.highlightColor;
+  // Lit when a colour of the player's own is in force; clicking it opens the window either way.
+  const custom: Choice = {
+    value: own ?? '',
+    label: own ? `Custom — ${own}` : 'Custom — any colour',
+    example: own
+      ? chip(own)
+      : () => el('div', 'picker-placeholder', 'Any colour, mixed from red, green and blue'),
+    open: () =>
+      openColorWindow(ctx.host, {
+        current: settings.highlightColor(typeId),
+        example: (color) => chip(color)(),
+        onUse: pick,
+      }),
+  };
+
+  wideRow(
+    host,
+    'Cursor highlight colour',
+    'The colour a cell under the cursor is boxed in when a click there would land. A cell where ' +
+      'a click would do nothing is crossed out in red whatever this is, as on the right of these ' +
+      'examples; with red–green colour blindness the default green is the hardest colour to tell ' +
+      'from that red, and magenta the easiest, though the cross reads without either.' +
+      (style ? '' : ' The highlight is off above, so none of this shows until it is back on.'),
+    gallery(
+      [
+        { value: DEFAULT, label: 'Game type default — green', example: chip(MARK_COLOR) },
+        ...HIGHLIGHT_COLORS.map((c): Choice => ({
+          value: c.color,
+          label: c.name,
+          example: chip(c.color),
+        })),
+        custom,
+      ],
+      p.highlightColor,
+      pick,
     ),
   );
 }

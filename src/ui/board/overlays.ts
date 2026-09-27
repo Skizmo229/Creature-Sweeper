@@ -30,7 +30,7 @@ import {
   contentBox,
   squareCorners,
 } from './geometry.js';
-import { type Paint, drawCovered, drawOpen, tracePath } from './paint.js';
+import { type Paint, TILE_INSET, drawCovered, drawOpen, tracePath } from './paint.js';
 
 /**
  * Repeat the board's far edge just beyond each joined edge, dimmed, so a wrapped board reads as
@@ -311,21 +311,70 @@ export function drawSeams(p: Paint): void {
 }
 
 /**
+ * How far a line at 45 degrees from a hexagon's centre runs before it meets a side, per unit of
+ * the hexagon's radius: the apothem, cos 30°, over the cosine of the 15° between the line and that
+ * side's normal.
+ */
+const HEX_DIAGONAL_REACH = Math.cos(Math.PI / 6) / Math.cos(Math.PI / 12);
+
+/** The cursor highlight's line, in CSS pixels. */
+const HIGHLIGHT_WIDTH = 2;
+/** The dark outline under a cross, each side of its line, in CSS pixels. */
+const CROSS_OUTLINE = 1;
+
+/**
+ * Cross a cell out: two diagonals from corner to corner of its tile, stopping on the tile's own
+ * outline (on a hex, where a 45-degree line meets its sides), in the red over the dark outline a
+ * mark wears. The outline is there because the red alone is under 2:1 against the covered tile of
+ * 22 of the 33 palettes (measured 27 Sep 2026); on it, the red is over 3.8:1 on every one.
+ */
+function crossOut(p: Paint, cx: number, cy: number): void {
+  const { ctx, layout } = p;
+  const reach = layout.hex
+    ? ((hexRadius(layout.cellPx) - TILE_INSET) * HEX_DIAGONAL_REACH) / Math.SQRT2
+    : layout.cellPx / 2 - TILE_INSET;
+  ctx.beginPath();
+  ctx.moveTo(cx - reach, cy - reach);
+  ctx.lineTo(cx + reach, cy + reach);
+  ctx.moveTo(cx + reach, cy - reach);
+  ctx.lineTo(cx - reach, cy + reach);
+  ctx.strokeStyle = MARK_OUTLINE;
+  ctx.lineWidth = HIGHLIGHT_WIDTH + 2 * CROSS_OUTLINE;
+  ctx.stroke();
+  ctx.strokeStyle = OUT_OF_REACH_COLOR;
+  ctx.lineWidth = HIGHLIGHT_WIDTH;
+  ctx.stroke();
+}
+
+/**
  * Light the cell under the cursor, and depending on the style its surroundings too.
  * 'neighbours' asks the engine what is genuinely adjacent (six on hex, across a seam on a wrapped
  * board); 'block' is the literal 3x3 of grid coordinates and deliberately does not fold wrapped
- * edges in. Colour says whether the click would land: each cell is asked for itself, so hovering
- * the edge of your reach shows the boundary rather than just which side the centre is on.
+ * edges in. Each cell is asked for itself whether a click there would land, so hovering the edge
+ * of your reach shows the boundary rather than just which side the centre is on. One that would
+ * is boxed in the player's `color`; one that would not is crossed out in red instead, so the
+ * refusal reads by its shape as well as its colour (decision 0051).
  */
 export function drawHighlight(
   p: Paint,
   hovered: Cell,
   style: HighlightStyle,
+  color: string,
   lands: (cell: Cell) => boolean,
 ): void {
   const { ctx, game, layout } = p;
+  const light = (cell: Cell, inset: number): void => {
+    const { cx, cy } = centreOf(layout, cell.x, cell.y);
+    if (!lands(cell)) {
+      crossOut(p, cx, cy);
+      return;
+    }
+    ctx.strokeStyle = color;
+    tracePath(p, cx, cy, inset);
+    ctx.stroke();
+  };
   ctx.save();
-  ctx.lineWidth = 2;
+  ctx.lineWidth = HIGHLIGHT_WIDTH;
 
   if (style !== 'cell') {
     ctx.globalAlpha = 0.4;
@@ -342,19 +391,11 @@ export function drawHighlight(
         }
       }
     }
-    for (const n of around) {
-      const c = centreOf(layout, n.x, n.y);
-      ctx.strokeStyle = lands(n) ? MARK_COLOR : OUT_OF_REACH_COLOR;
-      tracePath(p, c.cx, c.cy, 3);
-      ctx.stroke();
-    }
+    for (const n of around) light(n, 3);
   }
 
   ctx.globalAlpha = 1;
-  const { cx, cy } = centreOf(layout, hovered.x, hovered.y);
-  ctx.strokeStyle = lands(hovered) ? MARK_COLOR : OUT_OF_REACH_COLOR;
-  tracePath(p, cx, cy, 2);
-  ctx.stroke();
+  light(hovered, 2);
   ctx.restore();
 }
 

@@ -250,6 +250,15 @@ export function highlightSampleBoard(topology: 'square' | 'hex'): Game {
 /** The cell the highlight examples hold lit: interior on both grids. */
 export const HIGHLIGHT_PIN = { x: 2, y: 1 } as const;
 
+/**
+ * Whether a click on the highlight examples would land: everywhere but the covered cells to the
+ * right of the lit one, so every example shows the cursor crossing out cells past the edge of
+ * reach as well as boxing the rest (decision 0051). Open ground is always in reach.
+ */
+export function highlightSampleLands(cell: Cell): boolean {
+  return cell.open || cell.x <= HIGHLIGHT_PIN.x;
+}
+
 /** The hex highlight example — HIVE's. */
 export function hexSampleBoard(): Game {
   return highlightSampleBoard('hex');

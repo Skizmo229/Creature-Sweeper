@@ -37,8 +37,11 @@ export interface Paint {
   readonly creaturesHidden: boolean;
 }
 
-/** Trace a cell's outline, inset slightly so neighbours read as separate. */
-export function tracePath(p: Paint, cx: number, cy: number, inset = 1): void {
+/** How far inside its true bounds a tile's outline runs, so neighbours read as separate. */
+export const TILE_INSET = 1;
+
+/** Trace a cell's outline, by default the tile's own (`TILE_INSET`). */
+export function tracePath(p: Paint, cx: number, cy: number, inset = TILE_INSET): void {
   const { ctx, layout } = p;
   ctx.beginPath();
   if (!layout.hex) {
