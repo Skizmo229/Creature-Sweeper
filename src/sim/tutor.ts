@@ -19,8 +19,16 @@
 
 import type { Game } from '../engine/game.js';
 import type { Cell } from '../engine/types.js';
+import { damageIfSurvived, expForTier } from '../engine/combat.js';
 import { noteBit } from '../engine/notes.js';
-import { type Constraint, everyTier, highestTier, readBoard, tiersUpTo } from './reader.js';
+import {
+  type Constraint,
+  type Reading,
+  everyTier,
+  highestTier,
+  readBoard,
+  tiersUpTo,
+} from './reader.js';
 import { dungeonScaffold } from './scaffold.js';
 import {
   GRADES,
@@ -71,6 +79,23 @@ export interface Explanation {
   readonly lessons: readonly Lesson[];
   /** The pencil work done first, narrowing candidates, in the order it was done. */
   readonly steps: readonly Lesson[];
+  /** What to weigh at a guess, when nothing concludes a cell; null while something does. */
+  readonly advice: Advice | null;
+}
+
+/**
+ * The board at a guess, said in the catalogue's terms (docs/strategies.md, section 8): the cell
+ * whose worst case is lowest, what that worst case is and costs, and how far the next level is
+ * against the free kills still on the board. Facts about the rules; it names no cell to guess.
+ */
+export interface Advice {
+  /** The covered cell with the lowest ceiling among those a number touches; null when none is. */
+  readonly cell: Cell | null;
+  /** The numbers that cap it. */
+  readonly constraints: readonly Constraint[];
+  /** The most the cell can hold. */
+  readonly ceiling: number;
+  readonly text: string;
 }
 
 /**
@@ -91,7 +116,7 @@ const MOST_RESTARTS = 1000;
 export function explain(game: Game, options: TutorOptions = {}): Explanation {
   const steps: Lesson[] = [];
   let grade: Grade | null = null;
-  if (game.status !== 'playing') return { grade, lessons: [], steps };
+  if (game.status !== 'playing') return { grade, lessons: [], steps, advice: null };
   const peek = options.peek ?? false;
   const all = everyTier(game.config.tiers);
   const domains = new Map<Cell, number>();
@@ -138,7 +163,9 @@ export function explain(game: Game, options: TutorOptions = {}): Explanation {
         }
       }
       if (concluding.length || narrowed) grade = Math.max(grade ?? 0, g) as Grade;
-      if (concluding.length) return { grade, lessons: nearest(concluding, options.near), steps };
+      if (concluding.length) {
+        return { grade, lessons: nearest(concluding, options.near), steps, advice: null };
+      }
       if (narrowed) {
         narrowedAny = true;
         break;
@@ -146,7 +173,66 @@ export function explain(game: Game, options: TutorOptions = {}): Explanation {
     }
     if (!narrowedAny) break;
   }
-  return { grade, lessons: [], steps };
+  const reading = readBoard(game, peek, { trustMarks: false, trusted: proven });
+  return { grade, lessons: [], steps, advice: advise(game, reading) };
+}
+
+/** The catalogue's rules of guessing well, applied to this board: the worst case, and the levels. */
+function advise(game: Game, reading: Reading): Advice {
+  const { level, hp } = game;
+  let cell: Cell | null = null;
+  let ceiling = Infinity;
+  let constraints: readonly Constraint[] = [];
+  for (const [c, touching] of reading.touching) {
+    if (c.mark > 0 || !game.inReach(c)) continue;
+    const cap = Math.min(reading.top, ...touching.map((k) => k.residual));
+    // The lowest ceiling, and among equals the cell more numbers see, which says more when opened.
+    if (cap < ceiling || (cap === ceiling && touching.length > constraints.length)) {
+      cell = c;
+      ceiling = cap;
+      constraints = touching;
+    }
+  }
+  const toNext = game.progression.toNext();
+  let free = 0;
+  for (let t = 1; t <= Math.min(level, game.config.tiers); t++) {
+    free += game.counterFor(t) * expForTier(t);
+  }
+  const levels =
+    level >= game.config.tiers
+      ? ''
+      : free >= toNext
+        ? ` Level ${level + 1} is ${toNext} EXP away and the free kills on the board pay ${free}: ` +
+          'level up first.'
+        : ` Level ${level + 1} is ${toNext} EXP away; the free kills on the board pay ${free}.`;
+  if (!cell) {
+    const average = reading.unknown.length ? reading.totalHiding / reading.unknown.length : 0;
+    return {
+      cell,
+      constraints,
+      ceiling,
+      text:
+        'Nothing more can be proven, and no number touches a covered cell. A cell is worth the ' +
+        `board's average: ${reading.totalHiding} tier over ${reading.unknown.length} cells, ` +
+        `${average.toFixed(1)} each.${levels}`,
+    };
+  }
+  const cost = damageIfSurvived(level, ceiling);
+  const worst =
+    level <= 0
+      ? `a tier ${ceiling}, and on this board every creature ends it`
+      : cost <= 0
+        ? `a tier ${ceiling}, free at your level`
+        : `a tier ${ceiling}, costing ${cost} of your ${hp} HP` +
+          (cost >= hp ? ', which would kill you' : '');
+  return {
+    cell,
+    constraints,
+    ceiling,
+    text:
+      'Nothing more can be proven. The lowest worst case among the cells a number touches is ' +
+      `${worst}.${levels}`,
+  };
 }
 
 /** A trick's moves as lessons: one per distinct proof, with everything that proof concluded. */

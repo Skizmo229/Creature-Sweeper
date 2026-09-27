@@ -8,18 +8,20 @@
 import type { Game } from '../../engine/game.js';
 import type { Cell } from '../../engine/types.js';
 import { TRICK_TEXT } from '../../sim/tricktext.js';
-import { type Explanation, type Lesson, explain } from '../../sim/tutor.js';
+import { tiersUpTo } from '../../sim/reader.js';
+import { type Advice, type Explanation, type Lesson, explain } from '../../sim/tutor.js';
 
 export class Tutor {
   /** The last press: what it found, and which lesson is showing. Null once the board has moved. */
   private last: { explanation: Explanation; index: number } | null = null;
+  private advicePointer: Lesson | null = null;
   /** Times the tutor was asked on this board, and over this run. A hinted clear sets no best time. */
   hints = 0;
   runHints = 0;
 
   /** A new board: the lesson and the board's count go; the run's count stays. */
   resetBoard(): void {
-    this.last = null;
+    this.dismiss();
     this.hints = 0;
   }
 
@@ -30,6 +32,7 @@ export class Tutor {
   /** Any action on the board dismisses the lesson: the board it was read from is gone. */
   dismiss(): void {
     this.last = null;
+    this.advicePointer = null;
   }
 
   /**
@@ -40,16 +43,37 @@ export class Tutor {
   press(game: Game, near: Cell | null): void {
     if (game.status !== 'playing') return;
     if (this.last && this.lessons().length > 1) this.last.index++;
-    else this.last = { explanation: explain(game, { near }), index: 0 };
+    else {
+      this.advicePointer = null;
+      this.last = { explanation: explain(game, { near }), index: 0 };
+    }
     this.hints++;
     this.runHints++;
   }
 
-  /** Every lesson of the last press, the ones that conclude a cell before the pencil work. */
+  /**
+   * Every lesson of the last press: the ones that conclude a cell, the pencil work, and last,
+   * when nothing concluded, the advice at a guess pointed at the cell it weighed.
+   */
   private lessons(): readonly Lesson[] {
     if (!this.last) return [];
-    const { lessons, steps } = this.last.explanation;
-    return [...lessons, ...steps];
+    const { lessons, steps, advice } = this.last.explanation;
+    return [...lessons, ...steps, ...(advice?.cell ? [this.pointer(advice)] : [])];
+  }
+
+  /** The advice as something the board can point at: its cell, ringed dashed, with its ceiling. */
+  private pointer(advice: Advice): Lesson {
+    this.advicePointer ??= {
+      trick: 'bounds',
+      grade: 2,
+      why: { constraints: advice.constraints, cells: [] },
+      open: [],
+      mark: [],
+      narrow: [[advice.cell!, tiersUpTo(advice.ceiling)]],
+      struck: 0,
+      caption: advice.text,
+    };
+    return this.advicePointer;
   }
 
   /** The lesson to point at on the board, or null. */
@@ -63,13 +87,10 @@ export class Tutor {
   text(): string | null {
     if (!this.last) return null;
     const lesson = this.shown();
-    if (!lesson) {
-      // The board is at a guess. The catalogue's first rule of guessing well.
-      return (
-        'Nothing more can be proven from what is open. Check the counters, take every free ' +
-        'kill first, and if you must guess, know the worst case.'
-      );
-    }
+    const { advice } = this.last.explanation;
+    // The board is at a guess: the catalogue's rules of guessing well, applied to it.
+    if (!lesson) return advice?.text ?? 'Nothing more can be proven from what is open.';
+    if (lesson === this.advicePointer) return `At a guess. ${lesson.caption}`;
     const all = this.lessons();
     const pencil = lesson.open.length + lesson.mark.length === 0 ? ' (pencil work)' : '';
     const which =

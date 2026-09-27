@@ -171,6 +171,41 @@ describe('the tutor', () => {
     expect(d).toBe(0);
   });
 
+  it('at a guess, names a worst case that is never below the truth, and counts the levels', () => {
+    let advised = 0;
+    for (const seed of [0xf00d, 0xf00d + 1, 0xf00d + 2, 0xf00d + 3]) {
+      const game = Game.create(boardConfig(ladders, 'extreme', 10), seed);
+      const rng = mulberry32(seed);
+      for (let press = 0; press < 120 && game.status === 'playing'; press++) {
+        const { lessons, advice } = explain(game);
+        if (lessons.length) {
+          expect(advice).toBeNull();
+          for (const l of lessons) take(game, l);
+          continue;
+        }
+        expect(advice).not.toBeNull();
+        expect(advice!.text.endsWith('.')).toBe(true);
+        expect(advice!.text).toMatch(/Level \d is \d+ EXP away|free kills/);
+        if (advice!.cell) {
+          advised++;
+          // The ceiling is a fact about the numbers, so the truth is at or under it.
+          expect(advice!.cell.tier).toBeLessThanOrEqual(advice!.ceiling);
+          expect(advice!.cell.open).toBe(false);
+          expect(advice!.constraints.length).toBeGreaterThan(0);
+          expect(advice!.text).toContain(`a tier ${advice!.ceiling}`);
+        }
+        const safe = game.grid
+          .flat()
+          .filter((c) => c.present && !c.open && c.tier <= game.level && game.inReach(c));
+        if (!safe.length) break;
+        const pick = safe[Math.floor(rng() * safe.length)]!;
+        if (pick.mark > 0) game.setMark(pick.x, pick.y, 0);
+        game.open(pick.x, pick.y);
+      }
+    }
+    expect(advised).toBeGreaterThan(3);
+  });
+
   it('says nothing on a finished board, and names every trick it teaches', () => {
     const game = Game.create(boardConfig(ladders, 'normal', 1), 1);
     // Fight everything: the omniscient order, so the board ends cleared.
@@ -180,7 +215,7 @@ describe('the tutor', () => {
       }
     }
     expect(game.status).not.toBe('playing');
-    expect(explain(game)).toEqual({ grade: null, lessons: [], steps: [] });
+    expect(explain(game)).toEqual({ grade: null, lessons: [], steps: [], advice: null });
     for (const t of TRICK_IDS) expect(TRICK_TEXT[t].name.length).toBeGreaterThan(0);
   });
 });

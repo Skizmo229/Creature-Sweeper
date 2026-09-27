@@ -426,7 +426,10 @@ export function drawLesson(p: Paint, lesson: Lesson): void {
     ctx.stroke();
     const tiers: string[] = [];
     for (let t = 0; t < 31; t++) if (mask & (1 << t)) tiers.push(String(t));
-    writeOnCell(p, cx, cy, tiers.join(''), TUTOR_COLOR, tiers.length > 2 ? 0.3 : 0.42);
+    // Candidates running from empty up to a ceiling are the ceiling, which is what a bound says.
+    const capped = (mask & (mask + 1)) === 0 && tiers.length > 2;
+    const label = capped ? `\u2264${tiers.length - 1}` : tiers.join('');
+    writeOnCell(p, cx, cy, label, TUTOR_COLOR, label.length > 2 ? 0.3 : 0.42);
   }
   ctx.restore();
 }
