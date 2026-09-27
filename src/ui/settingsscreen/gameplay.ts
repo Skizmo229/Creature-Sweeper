@@ -132,6 +132,17 @@ export function gameplaySection(ctx: ScreenContext): void {
       'A board with no best time has nothing to race, and plays normally.',
   );
 
+  // Beside the dials because it is about play, though it is a presentation setting: it changes
+  // no rule and no record, and so never enters the line below.
+  row(
+    play,
+    'Tutor',
+    toggle(settings.presentation.tutor, (v) => settings.setPresentation({ tutor: v })),
+    'Offers "Why? [H]" on every board: press it and the board points at the next move that can ' +
+      'be proven, and says why. It opens nothing. A board with a hint on it is cleared and ' +
+      'unlocks the next, but sets no best time.',
+  );
+
   refreshStatus();
   play.append(status);
 }

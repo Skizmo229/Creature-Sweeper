@@ -17,6 +17,10 @@ import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import type { Settings } from '../../src/ui/settings.js';
 import { FONTS, TITLE_FONT } from '../../src/ui/typefaces.js';
 import { ladders } from '../../src/ui/ladders.js';
+import { GUIDE } from '../../src/ui/guide/entries.js';
+import { DIAGRAMS } from '../../src/sim/diagrams.js';
+import type { TrickId } from '../../src/sim/tricks.js';
+import { TRICK_TEXT } from '../../src/sim/tricktext.js';
 
 /** The app's surface as the test drives it, private members included, the way the dev console does. */
 interface Driver {
@@ -35,13 +39,15 @@ interface Driver {
   };
   showSettings(back: () => void): void;
   showTypes(): void;
-  ask(opts: {
-    title: string;
-    body: string;
-    confirmLabel: string;
-    cancelLabel: string;
-    onConfirm(): void;
-  }): void;
+  readonly modal: {
+    ask(opts: {
+      title: string;
+      body: string;
+      confirmLabel: string;
+      cancelLabel: string;
+      onConfirm(): void;
+    }): void;
+  };
   buildGameScreen(): void;
   readonly mode: { pendingSpell: string | null; notesMode: boolean; markMode: number };
 }
@@ -183,6 +189,132 @@ describe('the app', () => {
     key('n');
     expect(app.mode.pendingSpell).toBeNull();
     expect(app.mode.notesMode).toBe(true);
+  });
+
+  it('H asks the tutor, which speaks in the hint line, points at the board, and costs the best time', () => {
+    app.play('normal', 1, 7);
+    const game = app.current!;
+    expect(text('.sweep.why')).toBe('Why? [H]');
+    key('h');
+    expect(text('.hint')).toMatch(/^Grade \d · /);
+    expect(document.querySelector('.hint')!.classList.contains('tutoring')).toBe(true);
+    // The lesson is the same code the instrument runs, so what it points at is sound.
+    const lesson = (
+      app as unknown as { teaching: { tutor: { shown(): { open: { tier: number }[] } } } }
+    ).teaching.tutor.shown();
+    for (const cell of lesson.open) expect(cell.tier).toBeLessThanOrEqual(game.level);
+    // A second press moves on; any move on the board dismisses the lesson.
+    key('h');
+    const safe = game.safeCells({ useMarks: false })[0]!;
+    app.actions.onCellPrimary(safe.x, safe.y);
+    expect(text('.hint')).toMatch(/^Click to open/);
+    // The clear counts and unlocks, and sets no best time.
+    autoplayTierOrder(game);
+    app.finish();
+    expect(text('.overlay')).toContain('Cleared with 2 hints');
+    expect(app.progress.boardRecord('normal', 1).cleared).toBe(true);
+    expect(app.progress.boardRecord('normal', 1).bestTime).toBeNull();
+  });
+
+  it('opens the field guide from the rules card, the ladder list and, at the lesson, a board', () => {
+    const click = (label: string): void =>
+      [...document.querySelectorAll<HTMLButtonElement>('button')]
+        .find((b) => b.textContent === label)!
+        .click();
+    // A first visit opens the rules card, which offers the guide.
+    expect(document.querySelector('.overlay-card.howto')).not.toBeNull();
+    click('Field guide');
+    expect(document.querySelector('.overlay-card.howto')).toBeNull();
+    expect(document.querySelectorAll('.guide-section').length).toBe(GUIDE.length);
+    expect(document.querySelectorAll('.guide-figure canvas').length).toBe(DIAGRAMS.length);
+    key('Escape');
+    expect(document.querySelector('.guide-card')).toBeNull();
+    click('Field guide');
+    expect(document.querySelector('.guide-card')).not.toBeNull();
+    key('Escape');
+
+    // On a board, G opens it at the trick the tutor is showing, and closing it leaves the lesson.
+    app.play('normal', 1, 7);
+    key('h');
+    expect(document.querySelector('.hint .hint-more')).not.toBeNull();
+    const { tutor } = (app as unknown as { teaching: { tutor: { shown(): { trick: TrickId } } } })
+      .teaching;
+    const trick = tutor.shown().trick;
+    key('g');
+    expect(text('.guide-here h4')).toContain(TRICK_TEXT[trick].name);
+    key('Escape');
+    expect(document.querySelector('.guide-card')).toBeNull();
+    expect(document.querySelector('.hint')!.classList.contains('tutoring')).toBe(true);
+    expect(app.current!.status).toBe('playing');
+  });
+
+  it('takes a school lesson: its words, a refused click, Next, and the card at its end', () => {
+    const click = (label: string): void =>
+      [...document.querySelectorAll<HTMLButtonElement>('button')]
+        .find((b) => b.textContent === label)!
+        .click();
+    // The rules card offers the lessons.
+    click('Take the lessons');
+    expect(text('h1')).toBe('School');
+    expect(document.querySelectorAll('.board-card')).toHaveLength(9);
+    document.querySelectorAll<HTMLButtonElement>('.board-card')[2]!.click();
+    expect(text('.board-label')).toContain('Subtract what you can see');
+    expect(document.querySelector('.sweep:not(.why)')).toBeNull();
+    // A cell nothing proves is refused, and the engine never sees the click.
+    app.actions.onCellPrimary(3, 0);
+    expect(text('.hint .refused')).toMatch(/^Nothing proves that cell yet; look at the 5/);
+    expect(app.current!.cellAt(3, 0)!.open).toBe(false);
+    key('Enter');
+    expect(text('.hint')).toMatch(/^Each 5 sees the beaten 3/);
+    app.actions.onCellPrimary(0, 0);
+    app.actions.onCellPrimary(1, 0);
+    key('Enter');
+    expect(text('.overlay h2')).toBe('LESSON TAKEN');
+    expect(app.progress.lessonDone('subtract')).toBe(true);
+    // Nothing a lesson does is a ladder's record.
+    expect(app.progress.boardsCleared()).toBe(0);
+    click('School');
+    expect(text('.board-card.done')).toContain('Subtract what you can see');
+  });
+
+  it('shows a ladder whose rules add a trick its card the first time it is opened, and once', () => {
+    app.progress.setUnlockAll(true);
+    const boards = (id: string): void =>
+      (app as unknown as { showBoards(id: string): void }).showBoards(id);
+    boards('normal');
+    expect(document.querySelector('.overlay')).toBeNull();
+    boards('pairs');
+    expect(text('.overlay h2')).toBe('HOW TO PLAY PAIRS');
+    expect(text('.overlay')).toContain('Met partner');
+    key('Escape');
+    boards('pairs');
+    expect(document.querySelector('.overlay')).toBeNull();
+  });
+
+  it("opens the guide for a ladder from its boards, led by the catalogue's note on it", () => {
+    app.progress.setUnlockAll(true);
+    (app as unknown as { showBoards(id: string): void }).showBoards('pairs');
+    [...document.querySelectorAll<HTMLButtonElement>('.title-bar button')]
+      .find((b) => b.textContent === 'How to play PAIRS')!
+      .click();
+    const lead = document.querySelector('.guide-body > .guide-section')!;
+    expect(lead.querySelector('h3')!.textContent).toBe('How to play PAIRS');
+    expect(lead.textContent).toContain('Met partner (grade 0)');
+    const own = [...document.querySelectorAll('.guide-own h4')].map((h) => h.textContent);
+    expect(own.join(' ')).toContain('Met partner');
+    expect(own.join(' ')).toContain("The partner's tier");
+  });
+
+  it('with the tutor switched off there is no button, H does nothing, and the best time records', () => {
+    app.settings.setPresentation({ tutor: false });
+    app.play('normal', 1, 7);
+    expect(document.querySelector('.sweep.why')).toBeNull();
+    key('h');
+    expect(text('.hint')).toMatch(/^Click to open/);
+    autoplayTierOrder(app.current!);
+    app.finish();
+    expect(text('.overlay')).not.toContain('hint');
+    expect(app.progress.boardRecord('normal', 1).bestTime).not.toBeNull();
   });
 
   it('a cleared board shows the clear overlay, records it, and offers the next board', () => {
@@ -372,7 +504,7 @@ describe('Escape and the entry modes', () => {
   });
 
   it('still lets Escape answer a question off the board', () => {
-    app.ask({
+    app.modal.ask({
       title: 'SURE?',
       body: 'A question on the ladder list.',
       confirmLabel: 'Yes',

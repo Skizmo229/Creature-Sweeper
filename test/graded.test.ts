@@ -7,6 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import { boardConfig } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
+import type { Cell } from '../src/engine/types.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import { shapeRule } from '../src/engine/shape/registry.js';
 import { placementRule } from '../src/engine/placement/registry.js';
@@ -206,6 +207,71 @@ describe('the graded player', () => {
       }
     }
     expect(rescued).toBeGreaterThan(0);
+  });
+
+  it('says why it concluded every cell, from things the player can see', () => {
+    // A teacher points at the proof (docs/teaching-plan.md), so every conclusion carries one, and
+    // it names only visible numbers and visible cells. The tricks whose proof is the board's own
+    // rule (a corridor, a sprinkle, the counters, the bonds of a line) may name nothing.
+    const RULE_ALONE: ReadonlySet<TrickId> = new Set([
+      'corridor',
+      'sprinkles',
+      'counters',
+      'line-reach',
+    ]);
+    const faults: string[] = [];
+    let concluded = 0;
+    for (const id of KINDS) {
+      for (const board of [2, 6, 10]) {
+        const cfg = boardConfig(ladders, id, board);
+        const game = Game.create(cfg, 0xbeef + board);
+        const scaffold = dungeonScaffold(game);
+        // Play the proven moves of each pass so the later passes read a board in the middle of
+        // a game, not just its opening.
+        for (let pass = 0; pass < 30 && game.status === 'playing'; pass++) {
+          const reading = readBoard(game, false);
+          const known = new Set(reading.constraints);
+          const view: View = {
+            game,
+            reading,
+            level: game.level,
+            peek: false,
+            domain: () => everyTier(cfg.tiers),
+            scaffold,
+          };
+          const toOpen = new Set<Cell>();
+          const toMark = new Map<Cell, number>();
+          for (const t of TRICK_IDS) {
+            const moves = noMoves();
+            TRICKS[t].apply(view, moves);
+            const cells = new Set([...moves.open, ...moves.mark.keys(), ...moves.narrow.keys()]);
+            for (const cell of cells) {
+              concluded++;
+              const why = moves.because.get(cell);
+              const at = `${id} #${board} ${t} (${cell.x},${cell.y})`;
+              if (!why) {
+                faults.push(`${at}: no reason`);
+                continue;
+              }
+              if (!RULE_ALONE.has(t) && why.constraints.length + why.cells.length === 0) {
+                faults.push(`${at}: an empty reason`);
+              }
+              for (const c of why.constraints)
+                if (!known.has(c)) faults.push(`${at}: an unread number`);
+              for (const c of why.cells)
+                if (!c.open && c.mark === 0) faults.push(`${at}: a hidden cell`);
+            }
+            for (const cell of moves.open) toOpen.add(cell);
+            for (const [cell, tier] of moves.mark) toMark.set(cell, tier);
+          }
+          if (!toOpen.size && !toMark.size) break;
+          if (game.marksAreClaims) for (const [c, tier] of toMark) game.setMark(c.x, c.y, tier);
+          for (const c of toOpen) if (game.status === 'playing' && !c.open) game.open(c.x, c.y);
+        }
+      }
+    }
+    expect(faults.slice(0, 20)).toEqual([]);
+    expect(concluded).toBeGreaterThan(1000);
   });
 
   it("opens what a line's ends prove empty, once the board shows a line", () => {

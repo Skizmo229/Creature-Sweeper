@@ -20,6 +20,10 @@ export interface LadderListActions {
   recordsCount: boolean;
   pickType(typeId: string): void;
   howTo(): void;
+  /** The field guide: the catalogue of tricks. */
+  guide(): void;
+  /** The school: nine lessons, one trick each. */
+  school(): void;
   openSettings(): void;
   backup(): void;
   /** Asks first; the list is rebuilt on confirmation. */
@@ -116,11 +120,18 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
   wrap.append(groups);
   fitNames(groups);
 
+  wrap.append(buildTools(a));
+
+  return wrap;
+}
+
+/** The tools under the list: unlock everything, the rules, settings, the save backup, the reset. */
+function buildTools(a: LadderListActions): HTMLElement {
   const tools = el('div', 'tools');
   const unlockAll = el('label', 'toggle');
   const box = el('input');
   box.type = 'checkbox';
-  box.checked = progress.unlockAll;
+  box.checked = a.progress.unlockAll;
   box.addEventListener('change', () => a.setUnlockAll(box.checked));
   unlockAll.append(box, el('span', undefined, 'Unlock everything'));
   tools.append(unlockAll);
@@ -128,6 +139,14 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
   const howto = el('button', 'ghost', 'How to play');
   howto.addEventListener('click', a.howTo);
   tools.append(howto);
+
+  const school = el('button', 'ghost', 'School');
+  school.addEventListener('click', a.school);
+  tools.append(school);
+
+  const guide = el('button', 'ghost', 'Field guide');
+  guide.addEventListener('click', a.guide);
+  tools.append(guide);
 
   const settingsBtn = el('button', 'ghost', 'Settings');
   settingsBtn.addEventListener('click', a.openSettings);
@@ -140,9 +159,7 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
   const reset = el('button', 'ghost', 'Reset progress');
   reset.addEventListener('click', a.resetProgress);
   tools.append(reset);
-  wrap.append(tools);
-
-  return wrap;
+  return tools;
 }
 
 /**

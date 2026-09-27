@@ -22,6 +22,13 @@ export interface GameScreenActions {
   sweep(useMarks: boolean): void;
   /** PATROL's Wait: the creatures take a step and nothing else happens. */
   wait(): void;
+  /** The tutor: point at the next provable move, and why; and whether it is offered at all. */
+  explain(): void;
+  readonly tutor: boolean;
+  /** The field guide, at what the tutor is saying. */
+  guide(): void;
+  /** On a lesson board: go on to the next step. */
+  next(): void;
   pickSpell(id: SpellId): void;
   cancelSpell(): void;
 }
@@ -39,16 +46,24 @@ export interface GameScreenElements {
   sweepMarkBtn: HTMLButtonElement | null;
   /** PATROL's Wait, which also shows how many moves the board has seen. */
   waitBtn: HTMLButtonElement | null;
+  /** The tutor's button; null where the setting has switched the tutor off. */
+  whyBtn: HTMLButtonElement | null;
   spellBtns: HTMLButtonElement[];
   hint: HTMLParagraphElement;
+  /** Shown at the end of the hint line while the tutor speaks: the guide's entry for it. */
+  more: HTMLButtonElement;
+  /** Shown at the end of a lesson's line when its step waits to be told to go on. */
+  next: HTMLButtonElement;
 }
 
+/** `lesson` is a school lesson's title, shown in place of the board's label. */
 export function buildGameScreen(
   game: Game,
   typeId: string,
   boardIndex: number,
   run: FullRun | null,
   a: GameScreenActions,
+  lesson: string | null = null,
 ): GameScreenElements {
   const type = ladders.find((t) => t.id === typeId)!;
   const wrap = el('div', 'screen game');
@@ -57,22 +72,30 @@ export function buildGameScreen(
   wrap.style.setProperty('--tint', themeFor(typeId).accent);
 
   const { hudEl, hud } = buildHud(game, run, a);
-  wrap.append(hudEl, boardLabel(type.name, game, boardIndex, run));
+  wrap.append(
+    hudEl,
+    lesson ? el('div', 'board-label', lesson) : boardLabel(type.name, game, boardIndex, run),
+  );
 
   const stage = el('div', 'stage');
   const canvas = el('canvas');
   stage.append(canvas);
   wrap.append(stage);
 
-  const { palette, ...controls } = buildPalette(game, a);
+  const { palette, ...controls } = buildPalette(game, a, a.tutor);
   wrap.append(palette);
   const { row, spellBtns } = buildSpellRow(game, a);
   if (row) wrap.append(row);
 
   const hint = el('p', 'hint');
   wrap.append(hint);
+  const more = el('button', 'hint-more', 'more [G]');
+  more.title = 'Open the field guide at this trick.';
+  more.addEventListener('click', a.guide);
+  const next = el('button', 'primary small lesson-next', 'Next [Enter]');
+  next.addEventListener('click', a.next);
 
-  return { root: wrap, stage, canvas, hud, ...controls, spellBtns, hint };
+  return { root: wrap, stage, canvas, hud, ...controls, spellBtns, hint, more, next };
 }
 
 /** The HUD: the readouts `hud.ts` fills in, and the Settings and Back buttons. */
@@ -135,9 +158,10 @@ function boardLabel(
 function buildPalette(
   game: Game,
   a: GameScreenActions,
+  tutor: boolean,
 ): Pick<
   GameScreenElements,
-  'counters' | 'emptyNoteBtn' | 'notesBtn' | 'sweepSafeBtn' | 'sweepMarkBtn' | 'waitBtn'
+  'counters' | 'emptyNoteBtn' | 'notesBtn' | 'sweepSafeBtn' | 'sweepMarkBtn' | 'waitBtn' | 'whyBtn'
 > & { palette: HTMLElement } {
   const palette = el('div', 'palette');
   const counters: HTMLButtonElement[] = [];
@@ -193,7 +217,18 @@ function buildPalette(
     waitBtn.addEventListener('click', a.wait);
     palette.append(waitBtn);
   }
-  return { palette, counters, emptyNoteBtn, notesBtn, sweepSafeBtn, sweepMarkBtn, waitBtn };
+  // The tutor is the opposite of Sweep: it opens nothing and says why a cell could be. On every
+  // ladder, EASY included, where there is no Sweep to lean on (docs/teaching-plan.md).
+  let whyBtn: HTMLButtonElement | null = null;
+  if (tutor) {
+    whyBtn = el('button', 'sweep why', 'Why? [H]');
+    whyBtn.title =
+      'Point at the next move that can be proven, and say why. Opens nothing; a board with a ' +
+      'hint on it sets no best time.';
+    whyBtn.addEventListener('click', a.explain);
+    palette.append(whyBtn);
+  }
+  return { palette, counters, emptyNoteBtn, notesBtn, sweepSafeBtn, sweepMarkBtn, waitBtn, whyBtn };
 }
 
 /** The spell row, on a ladder that offers any: one button per spell, and Cancel. */

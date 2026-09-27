@@ -188,6 +188,13 @@ export interface PresentationSettings {
    * follow the player onto a board until they ask it to.
    */
   readonly customPitches: boolean;
+  /**
+   * Whether the tutor is offered on a board: the "Why? [H]" button and the key
+   * (docs/teaching-plan.md). A presentation setting and not a gameplay dial, because it changes
+   * nothing about the rules or the records: a hinted board sets no best time whether the button
+   * is there or not, and a board without it is simply played without asking.
+   */
+  readonly tutor: boolean;
 }
 
 const DEFAULT_PRESENTATION: PresentationSettings = {
@@ -208,6 +215,7 @@ const DEFAULT_PRESENTATION: PresentationSettings = {
   muted: false,
   soundCheck: { keys: {}, pitches: {}, volume: 1 },
   customPitches: false,
+  tutor: true,
 };
 
 interface SettingsData {
@@ -305,6 +313,8 @@ function readPresentation(raw: unknown): PresentationSettings {
     muted: typeof p.muted === 'boolean' ? p.muted : false,
     soundCheck: readSoundCheck(p.soundCheck),
     customPitches: typeof p.customPitches === 'boolean' ? p.customPitches : false,
+    // A save from before the tutor existed reads as offering it, as a new player's does.
+    tutor: typeof p.tutor === 'boolean' ? p.tutor : true,
   };
 }
 

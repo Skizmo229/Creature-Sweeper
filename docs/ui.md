@@ -7,10 +7,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 
 - Every screen begins with `root.replaceChildren()`. Anything that must survive navigation, such
   as the mute speaker, lives on `document.body` instead. Every screen change calls `endVictory()`
-  and `closeAsk()`, or a frame loop or a modal keeps running against detached nodes.
-- Confirmations go through `App.ask()`, an in-page overlay, never `window.confirm`: a suppressed
-  dialog returns false instantly and the button silently dies. While a question is up, Escape
-  answers it and every other key is swallowed.
+  and closes the modal, or a frame loop or a modal keeps running against detached nodes.
+- Confirmations go through `Modal.ask` (`src/ui/overlays/modal.ts`), an in-page overlay, never
+  `window.confirm`: a suppressed dialog returns false instantly and the button silently dies.
+  While a question is up, Escape answers it and every other key is swallowed.
 - A board's keys reach it only while it is on screen (`App.onKey` checks the game screen is
   built), never under the settings screen or after the player has left it (issue #6). On the
   settings screen Escape is Back, to wherever it was opened from; a picker open over it takes the
@@ -72,6 +72,43 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   a laptop.
 - The rules card leads with the sum rule and its proof (a number can exceed 8). Only EASY explains
   a death (`TEACHING_TYPE`); the loss note says "took your last N HP".
+- The tutor (`H`, the "Why? [H]" button beside Sweep; `src/ui/game/tutor.ts` is its face,
+  `src/sim/tutor.ts` its reading; docs/teaching-plan.md) speaks in the hint line, in the ink
+  rather than the hint's grey, and points on the board in violet (`TUTOR_COLOR`), which no other
+  annotation uses: the numbers a proof read are ringed, the covered cells they see lit faintly, a
+  safe cell washed in the mark green, a named cell ringed in its tier's colour with the tier
+  written on it, a narrowed cell ringed dashed with its candidates (or "≤n" for a ceiling). A
+  beaten creature a proof read has its number written on it, since hover is the only other way to
+  see it. It opens nothing and trusts no mark. Each press shows the next lesson; any move on the
+  board dismisses it; the dev handle's `sync` dismisses it too. Every press is a hint: the clear
+  card says how many, and a hinted board sets no best time (decision 0048). The button is a
+  presentation setting (Gameplay section, "Tutor"), because it changes no rule and no record.
+- The field guide (`src/ui/screens/guide.ts`, its words in `src/ui/guide/entries.ts`;
+  docs/teaching-plan.md, Part 3) is the catalogue in the game, for reading: an overlay that scrolls
+  inside itself with its head and Close pinned, a section per catalogue section and a row of jumps
+  to them. Its words are the catalogue's, held to it by `test/guide.test.ts`. Each diagram is the
+  catalogue's board drawn by a non-interactive `BoardView` in the look of the ladder the player is
+  on, with the tutor's own lesson for it laid over and what the tutor says there beneath, in the
+  tutor's violet; the damage table is the engine's formula, the costs that kill from 10 HP in the
+  danger colour. It opens from the rules card, the ladder list, and on a board from `G` or the
+  "more [G]" at the end of what the tutor says, at the entry for the trick it is showing (at a
+  guess, Guessing well), marked in violet down its left. Escape closes it and leaves the lesson.
+  A ladder's board list has "How to play" it, which opens the guide led by the catalogue's note on
+  that ladder (section 7, `src/ui/guide/ladders.ts`; its blurb where the catalogue has none) and
+  its own tricks marked in its colour; `G` on a board leads with the board's ladder the same way.
+- The school (`src/ui/screens/school.ts`, the lessons in `src/ui/school/`; docs/teaching-plan.md,
+  Part 2) is offered from the ladder list and the rules card ("Take the lessons") and required by
+  nothing. A lesson is played on the game screen, labelled with its title and without Sweep: its
+  step speaks in the hint line, in the ink, the tutor's violet points at the step's proof, and
+  Next (or Enter) moves on where the step waits to be told. A click nothing has proven is refused
+  before the engine sees it, the reason in the danger colour ahead of the step (a cell proven above
+  the level says what the fight would cost), except in lesson 8, where guessing is the lesson. `H`
+  and `G` work as on any board. A lesson's end is written down (the save's `lessons`) and offers
+  the next; nothing a lesson does touches a ladder's record.
+- A ladder whose rules add a trick of its own (the guide's ladder-only entries, asked of the rules)
+  shows a card in the rules card's style the first time its boards are opened: the catalogue's
+  note on it and those tricks, in the catalogue's words, with a way into the guide. Once only (the
+  save's `ladderCards`), and never required.
 
 ## Settings screen
 

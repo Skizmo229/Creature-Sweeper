@@ -4,8 +4,8 @@ How a person clears a Creature Sweeper board, written for two readers. A player 
 in the order they are worth learning; the graded player in `src/sim/graded.ts` (the instrument
 Milestone 4 measures difficulty with, `docs/human-tuning-plan.md`) is built from exactly these
 tricks, one technique per entry, so a developer can read the same page as its specification.
-Section 7 maps each trick to its technique id. Every claim here is a fact about the rules, not
-advice about odds; the odds are in section 6.
+Section 10 maps each trick to its technique id. Every claim here is a fact about the rules, not
+advice about odds; the odds are in section 8.
 
 The grades are how much has to be held in the head at once. Grade 0 is a glance at one cell.
 Grade 1 is one number and a little arithmetic. Grade 2 is two numbers together. Grade 3 is a
@@ -13,9 +13,12 @@ supposition followed a step or two. Grade 4 is counting the whole board. A grade
 never learns more can still clear a great many boards; the rest is what makes the hard ladders
 clearable at all.
 
-Diagrams: `?` is a covered cell, a digit is an open cell showing its number, `.` is an open cell
-showing 0, `k3` is a beaten creature of tier 3 (its glyph is visible), `m4` is a mark of 4. All
-examples are on five-tier boards unless they say otherwise.
+Diagrams: `?` is a covered cell, a number is an open cell showing it, `.` is an open cell showing
+0, `k3` is a beaten creature of tier 3 (its glyph is visible), `m4` is a mark of 4. Each is a
+patch of a five-tier board, drawn as the game would show it: nothing beyond the patch touches its
+numbers, and the rest of the board holds a creature of every tier, and enough weak ones to be at
+the level the text gives, unless the text says otherwise or a counter is shown (`LV 5 x01`: one
+tier 5 left).
 
 ## 1. Three things to know before the first click
 
@@ -27,7 +30,7 @@ and concludes the board lied.
 **Your level is a shield, and it is the only one.** A creature at or below your level dies in one
 blow and costs nothing. Above it the cost is a staircase, `tier x (ceil(tier / level) - 1)`: one
 tier over your level costs exactly that tier, two over is a cliff. At full HP on the common
-10-HP ladders, the first table row is death.
+10-HP ladders, a cost of 10 or more is death.
 
 | tier at level | 1 | 2 | 3 | 4 | 5 |
 | --- | --- | --- | --- | --- | --- |
@@ -55,8 +58,8 @@ them is more. At level 2:
 
 ```
   ?  ?  ?
-  ?  2  .
-  ?  .  .
+  ?  2  1
+  ?  1  .
 ```
 
 All five covered cells are free to open. Nothing needs adding up; you are only comparing the
@@ -91,12 +94,12 @@ rule: at or below your level, the covered cells are all free; 0, they are all em
 level 2:
 
 ```
-  ?  ?  ?
- k3  5  .
-  .  .  .
+  ?  ?
+  5  5
+ k3  3
 ```
 
-The 5 sees a beaten tier 3, so 2 is hidden over three cells, and all three are free. Hovering
+Each 5 sees a beaten tier 3, so 2 is hidden over the two covered cells, and both are free. Hovering
 a beaten creature shows its own number, which you subtract the same way, except on PAIRS and
 DOMINOES, where it is not shown.
 
@@ -104,14 +107,15 @@ DOMINOES, where it is not shown.
 whatever is still hidden, exactly.
 
 ```
-  .  .  .
+  .  4  4
   .  4  ?
-  .  .  .
+  .  4  4
 ```
 
-That cell is a tier 4. Mark it 4 and come back at level 4; until then a mark above your level
-locks the cell so a slip cannot open it. This is the workhorse, and it compounds: every cell
-named is a tier subtracted from every other number it touches, which names the next.
+That cell is a tier 4, and every number around it says so. Mark it 4 and come back at level 4; until
+then a mark above your level locks the cell so a slip cannot open it. This is the workhorse, and it
+compounds: every cell named is a tier subtracted from every other number it touches, which names the
+next.
 
 **The counters.** The LV buttons show how many creatures of each tier are still alive. A tier
 whose counter reads 0 is gone, so no number hides one: a 5 over two cells with no 5s left is a
@@ -141,15 +145,16 @@ This is Minesweeper's 1-2-1 with the numbers free to vary. Along a wall:
 
 ```
   ?  ?  ?  ?
-  1  4  3  3
+  2  5  3  3
   .  .  .  .
 ```
 
-The 1 sees the first two covered cells, the 4 sees the first three, so the third is a 3. The
-first 3 sees the second, third and fourth cells, so the second and fourth are empty, and the
-first is the 1. The pattern to remember is `x, x+z, z` over a wall: beneath it lies `x, empty,
-z`, whatever x and z are. Four in a row, `a, a+b, a+b, b`, put empty ground under both ends and
-`a, b` under the middle pair.
+At level 1, the 2 sees the first two covered cells and the 5 the first three, so the third is a 3.
+The last 3 sees the third and fourth, and the first 3 sees those and the second, so the second is
+empty. That leaves the first for the 2, and the fourth empty. The pattern to remember is `x, x+z, z`
+over a wall: beneath it lies `x, empty, z`, whatever x and z are; when x is at or below your level,
+the raw ring has given you the first two cells already. Four in a row, `a, a+b, a+b, b`, put empty
+ground under both ends and `a, b` under the middle pair.
 
 **Overlap.** Two numbers that share some covered cells but not all: the cells each sees alone
 are bounded by the other. If a 3 and a 7 share two cells, those two hold at most 3, so the 7's
@@ -167,9 +172,21 @@ lowest candidate, so "4 or 5" locks a cell until level 4 and can never expose yo
 
 ```
   ?  ?
-  9  .
+  9  9
   .  .
 ```
+
+The counters sharpen it, because a tier with none left is no candidate. With only 2s and 5s left,
+a 9 over three cells:
+
+```
+  9  ?
+  ?  ?
+```
+
+None of the three can be empty, since two of them make 4, 7 or 10 from 2s and 5s, never 9; so all
+three are creatures, and the only way to make 9 is 2 + 2 + 5. You know what is there and not
+where, which at level 2 is two free kills and one that costs 10.
 
 **Colour caps** (CHECKERBOARD). A light square hides at most the largest even amount at or
 below what is hidden; a dark square under an odd amount may hide all of it, and under an even
@@ -183,24 +200,22 @@ A pack missing exactly one tier with exactly one covered cell touching it has na
 
 ## 5. Grade 3: what if
 
-**Suppose, then follow it.** When the candidates have gaps, from the counters, the colours or a
-rule, a number can be impossible to make in some ways, and each impossible way rules a cell out.
-Only 2s and 5s left on the board, and a 9 over three cells:
+**Suppose, then follow it.** When no number settles a cell on its own, suppose it holds a tier and
+follow what that forces from one number to the next; a supposition that ends at a number that
+cannot be made is false, and that tier is struck off the cell. Three 3s around one creature, at
+level 2:
 
 ```
+  3  ?  3
   ?  ?  ?
-  .  9  .
-  .  .  .
+  ?  3  ?
 ```
 
-Could one of them be empty? Then the other two would make 9 from 2s and 5s: 4, 7 or 10, never 9.
-So all three are creatures, and the only way to make 9 is 2 + 2 + 5. You know what is there
-and not where, which at level 2 is two free kills and one that costs 10.
-
-The same move reaches further when you follow it a step: suppose this cell is a 3; then that 3
-next door is satisfied and its other cells are empty; then the 7 beyond them needs a 7 in its
-last covered cell, which no five-tier board holds; so this cell is not a 3. Two numbers along is
-about as far as anyone follows it at the board, and further than the honest player ever did.
+Suppose the cell left of the middle is a 3. Then the top-left 3 is made and its other two cells
+are empty, so the top-right 3 must be made by the cell right of the middle, and the bottom 3 would
+see 6. So it is not a 3, nor by the same steps is the cell right of the middle, and at level 2
+both are free. Two numbers along is about as far as anyone follows it at the board (and further
+than the honest player, `src/sim/honest.ts`, ever went).
 
 **A line's ends** (CONGA LINE). Each pack is a straight or bent line of one of every tier, led by
 the 6, and no member is orthogonally beside any but its neighbours in the line. So a line only
@@ -222,7 +237,7 @@ cells:
 
 ```
   ?  ?
-  9  .        LV 5 x01
+  9  9        LV 5 x01
 ```
 
 The 9 is a 4 and a 5, so the last 5 is one of those two, and every other covered cell on the
@@ -370,6 +385,10 @@ gives it. The engine's Sweep (`src/engine/sweep.ts`) performs the raw ring, the 
 open tiers, the Census bound, the lone dark square and the colour caps, the pairing ring and the
 pack ring, and the conga proofs, at the press of a key, so on a ladder with Sweep those are free
 effort for a player; it does not subtract numbers from each other, name a last cell, or count.
+
+Every diagram on this page is a board. `src/sim/diagrams.ts` holds what is under each, and
+`test/strategies.test.ts` builds it with `Game.fromLayout` and holds the tutor to answering there
+with the trick the diagram sits under, at that trick's grade, on the cells the board says.
 
 | Trick | Technique id | Grade |
 | --- | --- | --- |

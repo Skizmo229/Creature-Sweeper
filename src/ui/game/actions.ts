@@ -20,6 +20,14 @@ export interface BoardActionsHost {
   apply(events: GameEvent[]): void;
   refresh(): void;
   leaveGame(): void;
+  /** The tutor: point at the next provable move, or the next lesson if one is already showing. */
+  explain(): void;
+  /** The field guide, at what the tutor is showing, if anything. */
+  guide(): void;
+  /** Whether opening this cell is refused (a lesson board's rule), said to the player if so. */
+  refuse(x: number, y: number): boolean;
+  /** On a lesson board: go on to the next step. */
+  next(): void;
 }
 
 export class BoardActions {
@@ -42,6 +50,7 @@ export class BoardActions {
     }
     // In pencil mode a click annotates or does nothing; it never opens (decision 0008).
     if (this.h.mode.notesMode) return;
+    if (this.h.refuse(x, y)) return;
     this.h.apply(game.open(x, y));
   }
 
@@ -124,6 +133,21 @@ export class BoardActions {
     if (key === 'w' && game.patrols) {
       e.preventDefault();
       this.doWait();
+      return;
+    }
+    if (key === 'h') {
+      e.preventDefault();
+      this.h.explain();
+      return;
+    }
+    if (key === 'g') {
+      e.preventDefault();
+      this.h.guide();
+      return;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      this.h.next();
       return;
     }
     if (e.key === '+' || e.key === '=') {

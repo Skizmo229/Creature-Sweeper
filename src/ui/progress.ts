@@ -70,6 +70,10 @@ export interface SaveData {
    * smaller cost than never showing it to a new one.
    */
   seenHowTo: boolean;
+  /** The school's lessons finished, by id. Absent in saves written before the school. */
+  lessons: string[];
+  /** Ladders whose first-visit card has been shown, by id. Absent in saves before the cards. */
+  ladderCards: string[];
 }
 
 function emptySave(): SaveData {
@@ -81,6 +85,8 @@ function emptySave(): SaveData {
     scaling: {},
     unlockAll: false,
     seenHowTo: false,
+    lessons: [],
+    ladderCards: [],
   };
 }
 
@@ -134,6 +140,28 @@ export class Progress {
     this.save();
   }
 
+  /** Whether a school lesson has been taken to its end. Nothing waits on it (principle 7). */
+  lessonDone(id: string): boolean {
+    return this.data.lessons.includes(id);
+  }
+
+  markLessonDone(id: string): void {
+    if (this.lessonDone(id)) return;
+    this.data.lessons.push(id);
+    this.save();
+  }
+
+  /** Whether a ladder's first-visit card has been shown, which it is once. */
+  ladderCardSeen(typeId: string): boolean {
+    return this.data.ladderCards.includes(typeId);
+  }
+
+  markLadderCardSeen(typeId: string): void {
+    if (this.ladderCardSeen(typeId)) return;
+    this.data.ladderCards.push(typeId);
+    this.save();
+  }
+
   typeRecord(typeId: string): TypeRecord {
     return this.data.types[typeId] ?? { highestBoard: 1, cleared: false };
   }
@@ -167,18 +195,26 @@ export class Progress {
    *  board of a run was already cleared, or the run would not have opened. */
   recordRun(
     typeId: string,
-    opts: { completed: boolean; reachedBoard: number; hp: number; seconds: number },
+    opts: {
+      completed: boolean;
+      reachedBoard: number;
+      hp: number;
+      seconds: number;
+      hinted?: boolean;
+    },
   ): void {
     const prev = this.runRecord(typeId);
     this.data.runs[typeId] = {
       cleared: prev.cleared || opts.completed,
       bestBoard: Math.max(prev.bestBoard, opts.reachedBoard),
       bestHp: opts.completed ? Math.max(prev.bestHp ?? 0, opts.hp) : prev.bestHp,
-      bestTime: opts.completed
-        ? prev.bestTime === null
-          ? opts.seconds
-          : Math.min(prev.bestTime, opts.seconds)
-        : prev.bestTime,
+      // A run the tutor helped with is cleared and counts, but races nothing.
+      bestTime:
+        opts.completed && !opts.hinted
+          ? prev.bestTime === null
+            ? opts.seconds
+            : Math.min(prev.bestTime, opts.seconds)
+          : prev.bestTime,
       attempts: prev.attempts + 1,
     };
     this.save();
@@ -255,12 +291,16 @@ export class Progress {
     return board <= this.typeRecord(typeId).highestBoard;
   }
 
-  /** Record a clear and advance the ladder. Returns the newly unlocked board. */
+  /**
+   * Record a clear and advance the ladder. Returns the newly unlocked board. A board the tutor
+   * helped with (`hinted`) is cleared, unlocks the next and may be perfect, but sets no best time:
+   * the one cost of asking why (docs/teaching-plan.md, 4.4).
+   */
   recordClear(
     ladders: Ladders,
     typeId: string,
     board: number,
-    opts: { perfect: boolean; seconds: number },
+    opts: { perfect: boolean; seconds: number; hinted?: boolean },
   ): { unlockedBoard: number | null; clearedType: boolean } {
     const type = ladders.find((t) => t.id === typeId);
     const lastBoard = type?.boards.length ?? 10;
@@ -270,7 +310,11 @@ export class Progress {
     this.data.boards[key] = {
       cleared: true,
       perfect: prev.perfect || opts.perfect,
-      bestTime: prev.bestTime === null ? opts.seconds : Math.min(prev.bestTime, opts.seconds),
+      bestTime: opts.hinted
+        ? prev.bestTime
+        : prev.bestTime === null
+          ? opts.seconds
+          : Math.min(prev.bestTime, opts.seconds),
     };
 
     const rec = this.typeRecord(typeId);

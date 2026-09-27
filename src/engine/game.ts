@@ -18,6 +18,7 @@ import { computeSealed, withinReach } from './reach.js';
 import { safeCells as provenSafe } from './sweep.js';
 import { type Grid, inBounds, neighbours } from './grid.js';
 import { dealOpening } from './opening.js';
+import { type LayoutOptions, readLayout, showDrawing } from './layout.js';
 import { Patrol } from './patrol.js';
 import { generateGrid } from './generate.js';
 import { fight, revealAllCells, revealAllCreatures } from './fight.js';
@@ -34,6 +35,21 @@ export interface GameOptions {
    * the board `ladders.py` tuned.
    */
   settings?: GameplaySettings;
+}
+
+/** The HP a board is entered with: `options.startHp`, checked, or the full pool after the HP dial. */
+function enteringHp(config: BoardConfig, settings: GameplaySettings, options: GameOptions): number {
+  // The ceiling is the dialled one, not the schedule's: entering at the
+  // board's own hp with the dial at 0.5 would start you at double the pool.
+  const maxHp = effectiveHp(config.hp, settings);
+  const startHp = options.startHp ?? maxHp;
+  if (!Number.isInteger(startHp) || startHp < 1 || startHp > maxHp) {
+    throw new Error(
+      `startHp is ${startHp}; it must be a whole number in 1..${maxHp} ` +
+        `(a board entered at 0 HP is a run that already ended)`,
+    );
+  }
+  return startHp;
 }
 
 export class Game {
@@ -133,20 +149,30 @@ export class Game {
    */
   static create(config: BoardConfig, seed: number, options: GameOptions = {}): Game {
     const settings = options.settings ?? DEFAULT_GAMEPLAY;
-    // The ceiling is the dialled one, not the schedule's: entering at the
-    // board's own hp with the dial at 0.5 would start you at double the pool.
-    const maxHp = effectiveHp(config.hp, settings);
-    const startHp = options.startHp ?? maxHp;
-    if (!Number.isInteger(startHp) || startHp < 1 || startHp > maxHp) {
-      throw new Error(
-        `startHp is ${startHp}; it must be a whole number in 1..${maxHp} ` +
-          `(a board entered at 0 HP is a run that already ended)`,
-      );
-    }
     const rng = mulberry32(seed);
     const grid = generateGrid(config, rng);
-    const game = new Game(config, seed, grid, startHp, settings);
+    const game = new Game(config, seed, grid, enteringHp(config, settings, options), settings);
     dealOpening(game);
+    return game;
+  }
+
+  /**
+   * Build a board from a drawing in the catalogue's notation: `truth` is what is there and
+   * `shown` what the player sees, one string per row (`readLayout` in `layout.ts` says the
+   * notation and what it refuses). The config is derived from the drawing so that the four facts
+   * hold by construction, and nothing is dealt: the opening is the drawing. For the school's
+   * lessons, the field guide's diagrams and the tests (docs/teaching-plan.md, section 5.2).
+   */
+  static fromLayout(
+    truth: readonly string[],
+    shown: readonly string[],
+    options: LayoutOptions = {},
+  ): Game {
+    const drawing = readLayout(truth, shown, options);
+    const settings = options.settings ?? DEFAULT_GAMEPLAY;
+    const hp = enteringHp(drawing.config, settings, options);
+    const game = new Game(drawing.config, 0, drawing.grid, hp, settings);
+    showDrawing(game, drawing);
     return game;
   }
 

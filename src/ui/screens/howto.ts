@@ -7,7 +7,11 @@
 
 import { el } from '../dom.js';
 
-export function buildHowTo(onDone: () => void): { overlay: HTMLElement; focus: HTMLElement } {
+export function buildHowTo(
+  onDone: () => void,
+  onGuide: () => void,
+  onSchool: () => void,
+): { overlay: HTMLElement; focus: HTMLElement } {
   const overlay = el('div', 'overlay win');
   const card = el('div', 'overlay-card howto');
   card.append(el('h2', undefined, 'HOW TO PLAY'));
@@ -58,7 +62,13 @@ export function buildHowTo(onDone: () => void): { overlay: HTMLElement; focus: H
   const row = el('div', 'overlay-actions');
   const go = el('button', 'primary', 'Got it');
   go.addEventListener('click', onDone);
-  row.append(go);
+  // Everything past these three rules is in the lessons and the guide, which the card offers and
+  // does not require.
+  const school = el('button', 'ghost', 'Take the lessons');
+  school.addEventListener('click', onSchool);
+  const guide = el('button', 'ghost', 'Field guide');
+  guide.addEventListener('click', onGuide);
+  row.append(go, school, guide);
   card.append(row);
   overlay.append(card);
   return { overlay, focus: go };

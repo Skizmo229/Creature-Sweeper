@@ -14,8 +14,10 @@ Then as needed: `docs/modes.md` (each ladder's rule and proof), `docs/tuning.md`
 and the open questions), `docs/ui.md` (presentation rules), `docs/extending.md` (checklists),
 `docs/decisions/` (why things are the way they are), `docs/glossary.md`, `CONTRIBUTING.md`, and
 `docs/refactoring-plan.md` (Milestone 3, the readability refactor, complete on 24 September 2026),
-`docs/strategies.md` (how a person plays: the tricks, graded) and `docs/human-tuning-plan.md`
-(Milestone 4, tuning for the human player, in progress).
+`docs/strategies.md` (how a person plays: the tricks, graded), `docs/human-tuning-plan.md`
+(Milestone 4, tuning for the human player, in progress) and `docs/teaching-plan.md` (Milestone 5,
+teaching the tricks in the game: built on stacked branches, awaiting review; its section 10 says
+where).
 
 ## Rules for a session
 

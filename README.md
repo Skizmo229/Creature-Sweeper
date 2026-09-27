@@ -26,6 +26,7 @@ Node 22 (`.nvmrc`); Python 3 only for the ladder generator.
 | `docs/refactoring-plan.md` | Milestone 3, the readability refactor (complete): what was measured and what changed |
 | `docs/strategies.md` | how a person clears a board: the tricks, graded, for players and for the graded player |
 | `docs/human-tuning-plan.md` | Milestone 4, tuning for the human player: the instrument, the measurements, the retune |
+| `docs/teaching-plan.md` | Milestone 5, built on branches for review: teaching the tricks in the game with a tutor, a school and a field guide |
 | `CONTRIBUTING.md` | setup, the check, and the rules for a change |
 | design reference | <https://claude.ai/artifact/8w8aAaG6MJ3LCnSbokJUXi> (built from `design/page.template.html`) |
 
@@ -67,7 +68,7 @@ npm run typecheck      # twice: the second pass compiles the engine, sims and te
 npm run lint           # ESLint, failing on any warning; the size warnings are the readability bar Milestone 3 set
 npm run knip           # unused files and exports
 npm run format         # Prettier (format:check to verify)
-npm test               # 550 tests, including the invariants
+npm test               # 591 tests, including the invariants
 npm run sim:golden:check   # re-run sixteen fixed-seed simulator runs and diff against test/golden/
 npm run sim            # clear every one of the 884 boards headlessly (-- 200 for more seeds)
 npm run sim:run        # complete every type's Full Run
@@ -94,7 +95,8 @@ In dev, `window.cs` exposes the running app (`cs.play('normal', 3)`, `cs.current
 **Controls:** click to open · hover a beaten creature to see the number under it (not on PAIRS or
 DOMINOES) · right-click or a LV button to mark · number keys act on the cell under the cursor,
 marking or pencilling according to the Entry mode · `N` switches that mode · `Shift`+digit does
-the other one for that keystroke · `S` sweeps what is proven safe · `D` also trusts your marks · a
+the other one for that keystroke · `S` sweeps what is proven safe · `D` also trusts your marks ·
+`H` asks the tutor for the next provable move and why · `G` opens the field guide there · a
 spell's bracketed letter casts it (`C`ensus, `R`eveal, `B`eacon, `E`xercise, offered cheapest
 first) · `W` waits a move on PATROL · scroll or `+`/`-` to zoom, `F` to reset · `Esc` backs out.
 

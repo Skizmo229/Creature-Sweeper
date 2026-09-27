@@ -11,7 +11,8 @@ import { randomSeed } from '../engine/rng.js';
 import { FullRun } from '../engine/run.js';
 import { isAtLeastAsHard } from '../engine/settings.js';
 import type { GameEvent } from '../engine/types.js';
-import { BoardView, type BoardDisplay } from './board/view.js';
+import { BoardView } from './board/view.js';
+import { boardDisplayFor, dressDocument, wearInterfaceFont } from './dress.js';
 import { BoardClock } from './game/clock.js';
 import { gatePalette, syncClock, syncGameScreen } from './game/hud.js';
 import { EntryMode } from './game/mode.js';
@@ -22,15 +23,14 @@ import { type GameScreenElements, buildGameScreen } from './game/screen.js';
 import { soundFor } from './game/sound.js';
 import { ladders } from './ladders.js';
 import { buildMuteButton, syncMuteButton } from './mute.js';
-import { type AskOptions, buildAsk } from './overlays/ask.js';
+import { Modal } from './overlays/modal.js';
 import { Progress } from './progress.js';
-import { buildSaveBackup } from './screens/backup.js';
 import { buildBoardList } from './screens/boards.js';
-import { buildHowTo } from './screens/howto.js';
 import { buildLadderList } from './screens/ladders.js';
 import { Settings } from './settings.js';
 import { buildSettingsScreen } from './settingsscreen/screen.js';
 import { Sfx } from './sfx.js';
+import { Teaching } from './teaching.js';
 import { playVictory } from './victory/play.js';
 
 export class App {
@@ -62,12 +62,18 @@ export class App {
     apply: (events) => this.apply(events),
     refresh: () => this.refresh(),
     leaveGame: () => this.leaveGame(),
+    explain: () => this.explainBoard(),
+    guide: () => this.teaching.guideFromBoard(),
+    refuse: (x, y) => this.teaching.refuse(this.game?.cellAt(x, y) ?? null),
+    next: () => this.teaching.next(),
   });
   private readonly clock = new BoardClock();
   /** Where the settings screen goes back to while it is showing; Escape takes the same route. */
   private settingsBack: (() => void) | null = null;
-  /** The open modal overlay (a question, the how-to, the save backup), if any. */
-  private askOverlay: HTMLElement | null = null;
+  /** The modal overlay over the screen: a question, the how-to, the save backup, the guide. */
+  private readonly modal: Modal;
+  /** The tutor, the rules card and the field guide. */
+  private readonly teaching: Teaching;
   /** Stops a running board-clear effect; a screen rebuild must call it. */
   private stopVictory: (() => void) | null = null;
   /** The blow that ended a lost board, kept for the overlay. */
@@ -92,20 +98,34 @@ export class App {
   runFull(typeId: string, seed?: number): void {
     this.startFullRun(typeId, seed ?? randomSeed());
   }
-  /** Repaint after the game was driven from outside. */
   sync(): void {
+    this.teaching.tutor.dismiss();
     this.refresh();
   }
 
   constructor(root: HTMLElement) {
     this.root = root;
+    this.modal = new Modal(root);
+    this.teaching = new Teaching({
+      settings: this.settings,
+      progress: this.progress,
+      modal: this.modal,
+      typeId: () => this.typeId,
+      show: (screen) => {
+        this.clearScreen();
+        this.root.append(screen);
+      },
+      play: (game) => this.startLesson(game),
+      refresh: () => this.refresh(),
+      ladders: () => this.showTypes(),
+    });
     window.addEventListener('keydown', (e) => this.onKey(e));
     window.addEventListener('resize', () => this.view?.fit());
     // A settings change has to reach the board the player came from, not just the next one.
     this.settings.onChange(() => this.applyPresentation());
     this.muteBtn = buildMuteButton(() => {
       this.settings.setPresentation({ muted: !this.settings.presentation.muted });
-      this.syncMuteButton();
+      if (this.muteBtn) syncMuteButton(this.muteBtn, this.settings.presentation.muted);
     });
     this.applyPresentation();
     this.showTypes();
@@ -113,46 +133,21 @@ export class App {
 
   // ----------------------------------------------------------- presentation
 
-  private syncMuteButton(): void {
-    if (this.muteBtn) syncMuteButton(this.muteBtn, this.settings.presentation.muted);
-  }
-
   /**
-   * Push the presentation settings at everything already on screen. The interface's font is a CSS
-   * variable so the menus follow it; the board is re-themed directly because nothing cascades into
-   * a canvas. The speaker is repainted from here too, because "Reset presentation" clears `muted`.
+   * Push the presentation settings at everything already on screen (`dress.ts`). The speaker is
+   * repainted from here too, because "Reset presentation" clears `muted`.
    */
   private applyPresentation(): void {
-    this.wearFont();
-    const title = this.settings.titleFont();
-    document.documentElement.style.setProperty('--title-font', title.stack);
-    document.documentElement.style.setProperty('--title-ex-fix', String(title.exHeightFix ?? 1));
-    // A percentage, so it multiplies the browser's own text size rather than replacing it.
-    document.documentElement.style.fontSize = `${this.settings.presentation.textSize * 100}%`;
+    dressDocument(this.settings, this.typeId);
     this.sfx.setPack(this.settings.sfxPack(this.typeId));
     const { customPitches, soundCheck, sfxVolume } = this.settings.presentation;
     this.sfx.setPitches(customPitches ? soundCheck.pitches : {});
     this.sfx.setVolume(sfxVolume);
-    this.view?.setDisplay(this.settings.themeFor(this.typeId), this.boardDisplay());
-    this.syncMuteButton();
-  }
-
-  /** Dress the interface in its face on the current ladder, with its x-height correction. */
-  private wearFont(): void {
-    const face = this.settings.interfaceFont(this.typeId);
-    document.documentElement.style.setProperty('--font', face.stack);
-    document.documentElement.style.setProperty('--ex-fix', String(face.exHeightFix ?? 1));
-  }
-
-  /** The renderer's slice of the presentation settings. */
-  private boardDisplay(): BoardDisplay {
-    const p = this.settings.presentation;
-    return {
-      maxCell: p.maxZoom,
-      font: this.settings.boardFont(this.typeId),
-      highlight: this.settings.highlightStyle(this.typeId),
-      strikeDefeated: p.strikeDefeated,
-    };
+    this.view?.setDisplay(
+      this.settings.themeFor(this.typeId),
+      boardDisplayFor(this.settings, this.typeId),
+    );
+    if (this.muteBtn) syncMuteButton(this.muteBtn, this.settings.presentation.muted);
   }
 
   /**
@@ -173,7 +168,7 @@ export class App {
   private clearScreen(): void {
     this.clock.stop();
     this.endVictory();
-    this.closeAsk();
+    this.modal.close();
     this.root.replaceChildren();
     this.view = null;
     this.els = null;
@@ -186,13 +181,7 @@ export class App {
    * the settings screen or after the player has left it, and on the settings screen Escape is Back.
    */
   private onKey(e: KeyboardEvent): void {
-    if (this.askOverlay) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        this.closeAsk();
-      }
-      return;
-    }
+    if (this.modal.onKey(e)) return;
     if (this.els) {
       this.actions.onKey(e);
       return;
@@ -211,19 +200,15 @@ export class App {
         settings: this.settings,
         recordsCount: this.recordsCount,
         pickType: (id) => this.showBoards(id),
-        howTo: () => this.showHowTo(),
+        howTo: () => this.teaching.howTo(),
+        guide: () => this.teaching.guide(),
+        school: () => this.teaching.school(),
         openSettings: () => this.showSettings(() => this.showTypes()),
-        backup: () => this.showSaveBackup(),
+        backup: () => this.modal.saveBackup(),
         resetProgress: () =>
-          this.ask({
-            title: 'ERASE PROGRESS?',
-            body: 'Every unlock, clear time and full run on this device. This cannot be undone.',
-            confirmLabel: 'Erase everything',
-            cancelLabel: 'Cancel',
-            onConfirm: () => {
-              this.progress.reset();
-              this.showTypes();
-            },
+          this.modal.eraseProgress(() => {
+            this.progress.reset();
+            this.showTypes();
           }),
         setUnlockAll: (on) => {
           this.progress.setUnlockAll(on);
@@ -236,7 +221,7 @@ export class App {
     // so a reload cannot reopen it.
     if (!this.progress.seenHowTo) {
       this.progress.markHowToSeen();
-      this.showHowTo();
+      this.teaching.howTo();
     }
   }
 
@@ -250,10 +235,12 @@ export class App {
       buildBoardList(typeId, {
         progress: this.progress,
         back: () => this.showTypes(),
+        guide: () => this.teaching.guide(undefined, typeId),
         startBoard: (id, n) => this.startBoard(id, n),
         startRun: (id) => this.startFullRun(id),
       }),
     );
+    this.teaching.opened(typeId);
   }
 
   /**
@@ -287,52 +274,11 @@ export class App {
     return boardRow(ladders, this.typeId, this.boardIndex)?.tiers ?? 5;
   }
 
-  // --------------------------------------------------------------- overlays
-
-  /** Show a modal over the current screen; every rebuild closes it (decision 0017). */
-  private openModal(overlay: HTMLElement, focus?: HTMLElement): boolean {
-    this.closeAsk();
-    const screen = this.root.querySelector('.screen');
-    if (!screen) return false;
-    screen.append(overlay);
-    this.askOverlay = overlay;
-    focus?.focus();
-    return true;
-  }
-
-  private closeAsk(): void {
-    this.askOverlay?.remove();
-    this.askOverlay = null;
-  }
-
-  /** Ask before doing something irreversible, in the page rather than in a browser dialog. */
-  private ask(opts: AskOptions): void {
-    const { overlay, focus } = buildAsk(opts, () => this.closeAsk());
-    if (!this.openModal(overlay, focus)) opts.onConfirm();
-  }
-
-  private showHowTo(onClose?: () => void): void {
-    const { overlay, focus } = buildHowTo(() => {
-      this.closeAsk();
-      onClose?.();
-    });
-    if (!this.openModal(overlay, focus)) onClose?.();
-  }
-
-  private showSaveBackup(draft = '', error = ''): void {
-    this.openModal(
-      buildSaveBackup(draft, error, {
-        ask: (opts) => this.ask(opts),
-        close: () => this.closeAsk(),
-        reopen: (d, e) => this.showSaveBackup(d, e),
-      }),
-    );
-  }
-
   // ------------------------------------------------------------ the board
 
   private startBoard(typeId: string, board: number, seed = randomSeed()): void {
     this.run = null;
+    this.teaching.leaveLesson();
     this.typeId = typeId;
     this.boardIndex = board;
     this.seed = seed;
@@ -356,11 +302,13 @@ export class App {
    * is the run's; it starts on board 1's opening, as a single board's does.
    */
   private startFullRun(typeId: string, seed = randomSeed()): void {
+    this.teaching.leaveLesson();
     this.typeId = typeId;
     this.seed = seed;
     this.run = FullRun.start(ladders, typeId, seed, { settings: this.settings.gameplay });
     this.boardIndex = this.run.boardIndex;
     this.resetBoardState();
+    this.teaching.tutor.resetRun();
 
     // `FullRun.start` has already built board 1 and dealt its opening.
     this.clock.begin();
@@ -386,41 +334,64 @@ export class App {
     this.startClock();
   }
 
+  /** A school lesson's board, which `teaching` has begun: no records, and no best time. */
+  private startLesson(game: Game): void {
+    this.run = null;
+    this.resetBoardState();
+    this.game = game;
+    this.clock.begin();
+    this.buildGameScreen();
+    this.startClock();
+  }
+
   /** Per-board input state. Never touches the clock; a run outlives a board. */
   private resetBoardState(): void {
     this.mode.reset();
     this.fatalBattle = null;
+    this.teaching.tutor.resetBoard();
   }
 
   private buildGameScreen(): void {
     const game = this.game!;
     this.sfx.setPack(this.settings.sfxPack(this.typeId));
-    this.wearFont();
+    wearInterfaceFont(this.settings, this.typeId);
     this.clearScreen();
 
-    const els = buildGameScreen(game, this.typeId, this.boardIndex, this.run, {
-      // Returns to this same board: the screen is rebuilt from `game`, which is untouched. The
-      // clock keeps running, as it does whenever the player walks away from a board.
-      openSettings: () =>
-        this.showSettings(() => {
-          this.buildGameScreen();
-          this.startClock();
-        }),
-      leave: () => this.leaveGame(),
-      pickTier: (tier) => this.actions.pickTier(tier),
-      pencilEmpty: () => {
-        this.mode.notesMode = true;
-        this.actions.pickTier(0);
+    const lesson = this.teaching.lessonTitle();
+    const els = buildGameScreen(
+      game,
+      this.typeId,
+      this.boardIndex,
+      this.run,
+      {
+        // Returns to this same board: the screen is rebuilt from `game`, which is untouched. The
+        // clock keeps running, as it does whenever the player walks away from a board.
+        openSettings: () =>
+          this.showSettings(() => {
+            this.buildGameScreen();
+            this.startClock();
+          }),
+        leave: () => this.leaveGame(),
+        pickTier: (tier) => this.actions.pickTier(tier),
+        pencilEmpty: () => {
+          this.mode.notesMode = true;
+          this.actions.pickTier(0);
+        },
+        toggleNotes: () => this.actions.toggleNotesMode(),
+        sweep: (useMarks) => this.actions.doSweep(useMarks),
+        wait: () => this.actions.doWait(),
+        explain: () => this.explainBoard(),
+        tutor: this.settings.presentation.tutor,
+        guide: () => this.teaching.guideFromBoard(),
+        next: () => this.teaching.next(),
+        pickSpell: (id) => this.actions.pickSpell(id),
+        cancelSpell: () => {
+          this.mode.cancelSpell();
+          this.refresh();
+        },
       },
-      toggleNotes: () => this.actions.toggleNotesMode(),
-      sweep: (useMarks) => this.actions.doSweep(useMarks),
-      wait: () => this.actions.doWait(),
-      pickSpell: (id) => this.actions.pickSpell(id),
-      cancelSpell: () => {
-        this.mode.cancelSpell();
-        this.refresh();
-      },
-    });
+      lesson,
+    );
     this.els = els;
     this.root.append(els.root);
 
@@ -431,7 +402,11 @@ export class App {
       onHover: () => this.gatePalette(),
       lands: (cell) => this.actions.clickLands(cell),
     });
-    this.view.setGame(game, this.settings.themeFor(this.typeId), this.boardDisplay());
+    this.view.setGame(
+      game,
+      this.settings.themeFor(this.typeId),
+      boardDisplayFor(this.settings, this.typeId),
+    );
     this.refresh();
   }
 
@@ -442,9 +417,10 @@ export class App {
    * is replayable at will and needs no guard.
    */
   private leaveGame(): void {
+    if (this.teaching.lesson) return this.teaching.school();
     if (this.run && this.run.status === 'playing') {
       const run = this.run;
-      this.ask({
+      this.modal.ask({
         title: 'ABANDON RUN?',
         body:
           `${this.typeName()} full run, board ${this.boardIndex} of ${run.boardCount}, ` +
@@ -475,6 +451,7 @@ export class App {
 
   private apply(events: GameEvent[]): void {
     const game = this.game!;
+    this.teaching.tutor.dismiss();
 
     if (this.els) flashStage(this.els.stage, events, this.settings.presentation.fightRim);
     if (this.sfx.enabled) {
@@ -493,8 +470,10 @@ export class App {
       }
     }
 
+    this.teaching.moved();
     this.refresh();
-    if (game.status !== 'playing') this.finish();
+    if (this.teaching.lesson) this.teaching.ended();
+    else if (game.status !== 'playing') this.finish();
   }
 
   private refresh(): void {
@@ -506,9 +485,22 @@ export class App {
       boardIndex: this.boardIndex,
       mode: this.mode,
       hovered: this.view?.hoveredCell ?? null,
+      tutor: this.teaching.tutor.text(),
+      lesson: this.teaching.lessonLine(),
     });
+    this.view?.setLesson(this.teaching.pointer());
     this.view?.render();
     this.updateClock();
+  }
+
+  // ------------------------------------------------------------------ tutor
+
+  /** The tutor's press: a hint, pointed at the board and said in the hint line. It opens nothing. */
+  private explainBoard(): void {
+    if (this.game && this.els?.whyBtn) {
+      this.teaching.tutor.press(this.game, this.view?.hoveredCell ?? null);
+    }
+    this.refresh();
   }
 
   // ------------------------------------------------------------------ clock
@@ -556,6 +548,7 @@ export class App {
       const result = this.progress.recordClear(ladders, this.typeId, this.boardIndex, {
         perfect,
         seconds,
+        hinted: this.teaching.tutor.hints > 0,
       });
       unlocked = result.unlockedBoard;
     }
@@ -575,6 +568,7 @@ export class App {
       seconds,
       fatal: this.fatalBattle,
       recorded,
+      hints: this.teaching.tutor.hints,
       unlocked,
       ladderLength: type.boards.length,
       lastBoard: maxBoard(ladders, this.typeId),
@@ -607,6 +601,7 @@ export class App {
           reachedBoard: this.boardIndex,
           hp: game.hp,
           seconds: this.clock.frozenSeconds!,
+          hinted: this.teaching.tutor.runHints > 0,
         });
       }
     }

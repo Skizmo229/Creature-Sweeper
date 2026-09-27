@@ -22,6 +22,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
     dungeon.ts      the dungeon map: the budget spent exactly, doorways and their pockets
   generate.ts     dealing the creatures: shape, then placement rule, then numbers
   opening.ts      choosing the opening and dealing it (`dealOpening`)
+  layout.ts       boards from drawings in the catalogue's notation (`Game.fromLayout`)
   notes.ts        pencil marks as a bitmask
   spells.ts       the four spells, their prices, the mana economy, spellKey
   cast.ts         what each spell does, behind the SpellHost interface
@@ -48,15 +49,22 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   config.ts       reads ladders.json rows into BoardConfig; has each placement rule check its row
 src/ui/         the prototype
   app.ts          the router: screens, the cross-screen state, the keyboard, the actions
+  teaching.ts     the tutor, the rules card, the field guide and the school's lessons, for app.ts
+  dress.ts        the page in the presentation settings: the faces, the text size, the board's slice
   dom.ts          el(), the one DOM helper
   mute.ts         the always-present speaker
   ladders.ts      the ladder data, bundled into the build (src/data.ts is Node's loader)
-  screens/        one builder per screen: ladders, boards, howto, backup
-  overlays/       ask.ts: the in-page yes/no question (never window.confirm)
+  screens/        one builder per screen: ladders, boards, howto, backup, guide, school
+  overlays/       ask.ts: the in-page yes/no question (never window.confirm); modal.ts: the one
+                  modal overlay up at a time, and the ones the menus open
+  guide/          the field guide's words, the catalogue's: entries.ts (the tricks, the diagrams,
+                  guessing), ladders.ts (each ladder's note)
+  school/         the school: lessons.ts (the nine lessons, as data), run.ts (one being taken)
   game/           the game screen: screen.ts (furniture), hud.ts (filling it in), mode.ts
                   (what a click will do: tier, pencil, spell), actions.ts (what the player's
                   clicks and keys do), hint.ts, sound.ts, flash.ts (the shake, the rim and the
-                  level-up glow), clock.ts, outcome.ts (the clear, loss and run overlays)
+                  level-up glow), clock.ts, outcome.ts (the clear, loss and run overlays), tutor.ts
+                  (the tutor's face: the lesson showing, the hint line's words, the hints asked)
   board/          the canvas: view.ts (state, fit, zoom, render order), geometry.ts,
                   digits.ts, paint.ts (cell painters), overlays.ts (silhouette, seams, bonds,
                   highlight), input.ts (pointer, wheel, pinch)
@@ -86,6 +94,9 @@ src/sim/        headless measurement, all driving the real engine (see docs/tuni
                   what each board demanded (Milestone 4, docs/human-tuning-plan.md)
   reader.ts       what the graded player can see, and the sum arithmetic its tricks share
   tricks.ts       the tricks: one technique per entry of docs/strategies.md, at its grade
+  tricktext.ts    what each trick is called and what it says, for the tutor, the school and the guide
+  tutor.ts        the tutor: the next provable move on the board as it stands, and why
+  diagrams.ts     the catalogue's diagrams as boards, for its test and the field guide
   scaffold.ts     a dungeon's corridors, doorways and pockets, read off the silhouette
   cli/            one command-line entry per measurement, run on import
 src/data.ts     Node-only loader for ladders.json; CS_LADDERS points it at a candidate file
@@ -105,8 +116,9 @@ docs/           this folder
 ## Four rules the layout enforces
 
 **The engine is headless and must stay that way.** Over every import in `src/`, `src/engine`
-imports nothing outside itself; `src/sim` never imports `src/ui`; `src/ui` never imports
-`src/sim`. `npm run typecheck` runs `tsc` twice on purpose: the second pass uses
+imports nothing outside itself; `src/sim` never imports `src/ui`; and `src/ui` imports from
+`src/sim` only what teaches (the tutor and the reading it rests on, the trick text, the
+catalogue's diagrams), never an instrument. `npm run typecheck` runs `tsc` twice on purpose: the second pass uses
 `tsconfig.engine.json`, which compiles the engine, the sims and the tests with **no DOM library at
 all**, so a stray `window` is a build error rather than something discovered when it fails to run
 in Node. Anything a test needs to import therefore has to be DOM-free too, which is why
@@ -154,6 +166,13 @@ ladder recorded. CI regenerates the JSON and fails on any difference.
 
 Connectivity is asserted, not assumed: the opening reveals one region, so a fragmented board
 would leave the rest unreachable.
+
+`Game.fromLayout(truth, shown, options)` is the other way in, for the school's lessons, the field
+guide's diagrams and the tests: a board drawn in the catalogue's notation (`docs/strategies.md`),
+what is there and what the player sees. Nothing is dealt and no opening is chosen; the config is
+counted off the drawing with every threshold at `C_k` exactly, and `layout.ts` refuses a drawing
+the game could not be showing, such as a number its neighbours do not add up to or an open 0
+beside a covered cell.
 
 ## How a click flows
 
