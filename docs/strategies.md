@@ -112,9 +112,10 @@ whatever is still hidden, exactly.
   .  4  4
 ```
 
-That cell is a tier 4, and every number around it says so. Mark it 4 and come back at level 4; until then a mark above your level
-locks the cell so a slip cannot open it. This is the workhorse, and it compounds: every cell
-named is a tier subtracted from every other number it touches, which names the next.
+That cell is a tier 4, and every number around it says so. Mark it 4 and come back at level 4; until
+then a mark above your level locks the cell so a slip cannot open it. This is the workhorse, and it
+compounds: every cell named is a tier subtracted from every other number it touches, which names the
+next.
 
 **The counters.** The LV buttons show how many creatures of each tier are still alive. A tier
 whose counter reads 0 is gone, so no number hides one: a 5 over two cells with no 5s left is a
@@ -150,10 +151,10 @@ This is Minesweeper's 1-2-1 with the numbers free to vary. Along a wall:
 
 At level 1, the 2 sees the first two covered cells and the 5 the first three, so the third is a 3.
 The last 3 sees the third and fourth, and the first 3 sees those and the second, so the second is
-empty. That leaves the first for the 2, and the fourth empty. The pattern to remember is `x, x+z,
-z` over a wall: beneath it lies `x, empty, z`, whatever x and z are; when x is at or below your
-level, the raw ring has given you the first two cells already. Four in a row, `a, a+b, a+b, b`, put empty ground under both ends and
-`a, b` under the middle pair.
+empty. That leaves the first for the 2, and the fourth empty. The pattern to remember is `x, x+z, z`
+over a wall: beneath it lies `x, empty, z`, whatever x and z are; when x is at or below your level,
+the raw ring has given you the first two cells already. Four in a row, `a, a+b, a+b, b`, put empty
+ground under both ends and `a, b` under the middle pair.
 
 **Overlap.** Two numbers that share some covered cells but not all: the cells each sees alone
 are bounded by the other. If a 3 and a 7 share two cells, those two hold at most 3, so the 7's
