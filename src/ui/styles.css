@@ -1271,6 +1271,12 @@ button.board-card:hover:not(:disabled) {
   min-width: 8ch;
   text-align: right;
 }
+/* A row of preset buttons, one bundle of settings each. */
+.settings-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 /* The sound check's row of boxes, one per sound, saying whether a game plays it. */
 .soundcheck-played {
   display: flex;

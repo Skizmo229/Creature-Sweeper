@@ -18,6 +18,7 @@ import {
 import { el } from '../dom.js';
 import { MAX_TUTOR_GRADE, MIN_TUTOR_GRADE, type TutorStyle } from '../presentation.js';
 import type { ScreenContext } from './context.js';
+import { gameplayPresetsRow } from './presets.js';
 import { gallery, ratio, row, section, slider, toggle } from './widgets.js';
 
 type RatioKey =
@@ -78,6 +79,7 @@ export function gameplaySection(ctx: ScreenContext): void {
   const { status, refreshStatus } = recordStatus(ctx);
   const play: Play = { ctx, host, refreshStatus };
 
+  gameplayPresetsRow(ctx, host);
   dialRows(play);
   row(
     host,

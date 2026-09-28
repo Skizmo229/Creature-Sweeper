@@ -24,11 +24,14 @@ import {
 } from '../presentation.js';
 import { type PresentationPatch, type ScreenContext, previewCell, typeName } from './context.js';
 import { hudCopy } from './look.js';
+import { fullscreenRow, lowVisionRow } from './presets.js';
 import { CHIP_CELL, renderPreview } from './render.js';
 import { gallery, row, section, slider, toggle, wideRow } from './widgets.js';
 
 export function interfaceSection(ctx: ScreenContext): void {
   const host = section(ctx.host, 'Interface', 'The page around the board, on every ladder.');
+  lowVisionRow(ctx, host);
+  fullscreenRow(ctx, host);
   textSizeRow(ctx, host);
   previewSizeRow(ctx, host);
   menuStripRow(ctx, host);
