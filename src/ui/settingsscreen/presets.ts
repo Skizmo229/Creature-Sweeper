@@ -116,10 +116,13 @@ export function fullscreenRow(ctx: ScreenContext, host: HTMLElement): void {
   };
   document.addEventListener('fullscreenchange', onChange);
   paint();
+  // In the presets' box, so the button is its own width rather than the column's.
+  const box = el('div', 'settings-presets');
+  box.append(button);
   row(
     host,
     'Fullscreen',
-    button,
+    box,
     offered
       ? 'The whole screen, until Escape or the button. A browser allows it from a click only, so ' +
           'it is not kept between visits.'
