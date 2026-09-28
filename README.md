@@ -179,6 +179,8 @@ in the design reference; expression is protected, and none of it has been taken.
 
 ## Licence
 
+Copyright © 2026 Skizmo229 and contributors.
+
 **Code** (everything under `src/` but the fonts below, `test/`, `scripts/` and `design/*.py`, plus
 the build and config files) is licensed under the **GNU General Public License, version 3 or (at
 your option) any later version** (`GPL-3.0-or-later`). See [`LICENSE`](LICENSE).
