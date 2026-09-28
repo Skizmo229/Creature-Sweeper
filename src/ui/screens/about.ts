@@ -39,7 +39,7 @@ export function buildAbout(onClose: () => void): { overlay: HTMLElement; focus: 
   say(
     'A remix of ',
     link(ORIGINAL_URL, 'mamono sweeper'),
-    ' by Hojamaka Games, who did not make or endorse it. Do play their games.',
+    ' by Hojamaka Games. They did not make or endorse Creature Sweeper, but do play their games.',
   );
   say('Copyright © 2026 Skizmo229 and contributors.');
   say(

@@ -42,7 +42,8 @@ describe('the About card', () => {
     expect(text).toContain('you may share and change it');
     expect(text).toContain('version 3 or later');
     expect(text).toContain('no warranty');
-    expect(text).toContain('Hojamaka Games, who did not make or endorse it');
+    // Names the game Hojamaka Games had no part in, which "it" after "mamono sweeper" did not.
+    expect(text).toContain('They did not make or endorse Creature Sweeper');
   });
 
   it('links to the source, the licence, the original and the font notices, each in a new tab', () => {
