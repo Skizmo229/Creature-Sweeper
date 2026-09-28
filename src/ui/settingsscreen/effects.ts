@@ -67,9 +67,7 @@ export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
   wideRow(
     host,
     'Sound effects',
-    'Synthesised rather than sampled — a pack is a table of tones, not a folder of files. ' +
-      'Picking one plays it. Sound check plays any sound from any pack, and keys can be ' +
-      'assigned to sounds there.',
+    'Picking a pack plays it. Sound check plays any sound from any pack and assigns keys.',
     stack,
   );
   const percent = (v: number): string => `${Math.round(v * 100)}%`;
@@ -92,18 +90,16 @@ export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
     host,
     'Sound effects volume',
     volume,
-    'How loud every sound in play is, up to three times its usual level. Past 100% the loudest ' +
-      'sounds are held back so nothing blasts; the quiet ones grow. Letting go of the slider ' +
-      'plays a sound at the new level. Pointing at the speaker in the corner shows this slider ' +
-      'there too. The sound check keeps a volume of its own.',
+    'How loud every sound in play is, up to three times usual; past 100% the loudest are held ' +
+      'back. The speaker in the corner shows this slider too. The sound check has its own volume.',
   );
   // Updates only the store, like the sound gallery: nothing on the screen is drawn in terms of it.
   row(
     host,
     'Custom pitches in play',
     toggle(p.customPitches, (v) => settings.setPresentation({ customPitches: v })),
-    'Sounds you have retuned in the sound check play at their new pitch during games too. Off, ' +
-      'every sound plays at its own pitch, and the sound check keeps your tuning for later.',
+    'Sounds retuned in the sound check play at their new pitch in games too. Off, they play at ' +
+      'their own pitch and the tuning is kept.',
   );
 }
 
@@ -141,9 +137,9 @@ export function fightRimRow(ctx: ScreenContext, host: HTMLElement): void {
   stack.append(
     gallery(
       [
-        { value: 'every', label: 'Every fight — green, or blue for a level-up, or red for a hit' },
-        { value: 'levelups', label: 'Level-ups and damage — blue and red only' },
-        { value: OFF, label: 'Off — no glow' },
+        { value: 'every', label: 'Every fight: green, blue for a level-up, red for a hit' },
+        { value: 'levelups', label: 'Level-ups and damage only' },
+        { value: OFF, label: 'Off' },
       ],
       p.fightRim,
       (v) => settings.setPresentation({ fightRim: v as FightRim }),
@@ -155,9 +151,8 @@ export function fightRimRow(ctx: ScreenContext, host: HTMLElement): void {
   wideRow(
     host,
     'Glow after a fight',
-    'The edge of the board lights up when a fight ends: green when it cost you nothing, blue when ' +
-      'it levelled you up, red when it cost HP, and red over blue when it did both. The buttons ' +
-      'under the example play each kind of fight with the option chosen.',
+    'The board’s edge lights up after a fight: green for free, blue for a level-up, red for HP ' +
+      'lost, red over blue for both. The buttons play each kind.',
     stack,
   );
 }
@@ -243,11 +238,8 @@ export function clearEffectRow(ctx: ScreenContext, host: HTMLElement): void {
   wideRow(
     host,
     'Board clear effect',
-    'Picking one plays it below, over a board that is genuinely finished — every creature on it ' +
-      'has been beaten — so you are seeing it over exactly what it runs over in play. The last ' +
-      `seven take the board’s own creatures rather than drawing over the top of them, and the ` +
-      `example carries one of each of the ${tiers} creature tiers ${typeName(typeId)} uses. ` +
-      'Picking replays on the same board so the effects can be compared; Test deals a new one.',
+    `Picking one plays it over a finished board with one of each of the ${tiers} tiers ` +
+      `${typeName(typeId)} uses. Picking again replays on the same board; Test deals a new one.`,
     demoWrap,
   );
 }

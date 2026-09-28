@@ -76,8 +76,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   const look = section(
     wrap,
     'Presentation',
-    'None of this touches a rule, so none of it affects whether a board counts. ' +
-      'Every example below is a real board drawn by the game’s own renderer.',
+    'None of this touches a rule or a record. Every example is a real board drawn by the game.',
   );
   iconsRow(ctx, look);
   tierColorsRow(ctx, look);

@@ -68,9 +68,8 @@ export function iconsRow(ctx: ScreenContext, host: HTMLElement): void {
   choiceRow(ctx.host, host, {
     label: 'Creature icons',
     hint:
-      'The shape of a creature’s pips, or any symbol from Dingbats and Wingdings. Their colour ' +
-      'is the next setting, and the same on every ladder. A creature is only ever visible ' +
-      'once you have beaten it, which is why the examples show defeated ones.',
+      'The shape of a creature’s pips, or any Dingbats or Wingdings symbol. Colour is the next ' +
+      'setting. The examples show beaten creatures, the only kind you see.',
     title: 'Choose creature icons',
     current: p.icons,
     fallback: {
@@ -137,10 +136,8 @@ export function tierColorsRow(ctx: ScreenContext, host: HTMLElement): void {
   wideRow(
     host,
     'Creature colours',
-    'The colour of each tier, on every ladder: its creatures, the level number and the LV ' +
-      'buttons. The pips’ count always says the tier; colour says it at a glance. Tiers 6 to 9 ' +
-      'wear a halo round their colour as well. Distinct stays apart with red–green or blue–yellow ' +
-      'colour blindness, and for everyone else is further apart than the default.',
+    'The colour of each tier: its creatures, the level number and the LV buttons. Tiers 6 to 9 ' +
+      'also wear a halo. Distinct stays apart under red–green or blue–yellow colour blindness.',
     gallery(
       [
         { value: DEFAULT, label: 'Default — five hues, then haloed', example: chip(DEFAULT_TIERS) },
@@ -161,9 +158,7 @@ export function paletteRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, typeId, currentPip } = ctx;
   choiceRow(ctx.host, host, {
     label: 'Board palette',
-    hint:
-      'Borrow another ladder’s colours for the board. The menus keep this ladder’s own ' +
-      'accent, so the game stays navigable however far the board is repainted.',
+    hint: 'Borrow another ladder’s colours for the board. The menus keep this ladder’s own accent.',
     title: 'Choose a board palette',
     current: p.palette,
     fallback: {
@@ -198,10 +193,8 @@ export function boardFontRow(ctx: ScreenContext, host: HTMLElement): void {
   choiceRow(ctx.host, host, {
     label: 'Board font',
     hint:
-      'The numbers and marks on the board; the interface font, below, sets the HUD and the ' +
-      'menus. Every ladder has a face of its own; ' +
-      `${FONTS[LEGIBLE_FONT].name} belongs to none of them — it was designed for readers with ` +
-      'low vision, and keeps every digit easy to tell apart.',
+      'The numbers and marks on the board. Every ladder has a face of its own; ' +
+      `${FONTS[LEGIBLE_FONT].name} was designed for low vision and keeps every digit distinct.`,
     title: 'Choose a board font',
     current: p.font,
     fallback: {
@@ -270,9 +263,7 @@ export function interfaceFontRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, ident } = ctx;
   choiceRow(ctx.host, host, {
     label: 'Interface font',
-    hint:
-      'The HUD, the menus and this screen: everything but the board, which the board font ' +
-      'above sets. The game’s title keeps a face of its own unless you choose one here.',
+    hint: 'The HUD, the menus and this screen. The title keeps its own face unless you choose one here.',
     title: 'Choose an interface font',
     current: p.interfaceFont,
     fallback: {
@@ -336,8 +327,7 @@ export function textSizeRow(ctx: ScreenContext, host: HTMLElement): void {
   wideRow(
     host,
     'Text size',
-    'The HUD, the menus and this screen. The board is left alone — it is sized by its cells, ' +
-      'which the zoom controls.',
+    'The HUD, the menus and this screen. The board is sized by zoom instead.',
     textControl,
   );
 }
@@ -378,8 +368,7 @@ export function previewSizeRow(ctx: ScreenContext, host: HTMLElement): void {
   wideRow(
     host,
     'Preview size',
-    'The example boards on this screen, and in the windows it opens. The zoom example below is ' +
-      'left at the size it shows, since that size is its point.',
+    'The example boards on this screen and in its windows. The zoom example keeps its own size.',
     control,
   );
 }
@@ -430,20 +419,16 @@ export function highlightRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, typeId } = ctx;
   const hex = ladders.find((t) => t.id === typeId)?.topology === 'hex';
   const chip = (highlight: HighlightStyle | null) => highlightChip(ctx, { highlight });
-  const refusal =
-    ' Where a click would do nothing, past the edge of your reach, a cell is crossed out instead ' +
-    'of boxed, as on the right of these examples.';
+  const refusal = ' A click that would do nothing is crossed out instead, as on the right.';
 
   wideRow(
     host,
     '3×3 cursor highlight',
     (hex
-      ? 'What the cell under the cursor lights up, on this ladder’s hexagons. The default follows ' +
-        'real adjacency, so it lights the six cells around it, where the flat block is always ' +
-        'the same eight.'
-      : 'What the cell under the cursor lights up. On square cells the default and the flat block ' +
-        'light the same eight; they part on a hex board, where the default lights six, and across ' +
-        'a wrapped edge, which only the default jumps.') + refusal,
+      ? 'What the cursor lights up on this ladder’s hexagons: the default lights the six real ' +
+        'neighbours, the flat block always the same eight.'
+      : 'What the cursor lights up. On squares both light the same eight; they differ on hexagons ' +
+        'and across a wrapped edge, which only the default follows.') + refusal,
     gallery(
       [
         {
@@ -495,11 +480,10 @@ export function highlightColorRow(ctx: ScreenContext, host: HTMLElement): void {
   wideRow(
     host,
     'Cursor highlight colour',
-    'The colour a cell under the cursor is boxed in when a click there would land. A cell where ' +
-      'a click would do nothing is crossed out in red whatever this is, as on the right of these ' +
-      'examples; with red–green colour blindness the default green is the hardest colour to tell ' +
-      'from that red, and magenta the easiest, though the cross reads without either.' +
-      (style ? '' : ' The highlight is off above, so none of this shows until it is back on.'),
+    'The box round the cell under the cursor when a click would land. A click that would do ' +
+      'nothing is crossed out in red whatever this is; under red–green colour blindness magenta ' +
+      'is the easiest to tell from that red.' +
+      (style ? '' : ' The highlight is off above, so none of this shows until it is on.'),
     gallery(
       [
         { value: DEFAULT, label: 'Game type default — green', example: chip(MARK_COLOR) },
@@ -521,9 +505,8 @@ export function strikeRow(ctx: ScreenContext, host: HTMLElement): void {
   wideRow(
     host,
     'Strike out defeated creatures',
-    'The diagonal line across a creature you have beaten. With it off, the dimmed glyph carries ' +
-      '“dealt with” on its own — which reads more cleanly at small cell sizes, where the stroke ' +
-      'crosses the pips.',
+    'The diagonal line across a beaten creature. Off, the dimmed glyph alone says so, which reads ' +
+      'better at small cell sizes.',
     gallery(
       [
         {
@@ -578,9 +561,8 @@ export function zoomRow(ctx: ScreenContext, host: HTMLElement): void {
   wideRow(
     host,
     'Maximum zoom in',
-    'How far scroll and +/- can magnify a board, shown here at actual size. Zooming out is ' +
-      'limited by what fits on screen, never by this — a board too big for the stage always shrinks ' +
-      'past it.',
+    'How far scroll and +/- can magnify a board, shown at actual size. Zooming out is limited ' +
+      'only by what fits on screen.',
     zoomControl,
   );
 }
