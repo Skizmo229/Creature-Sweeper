@@ -11,10 +11,11 @@ dist/
 # Local, machine-specific harness settings.
 .claude/settings.local.json
 
-# OS and editor cruft.
+# OS and editor cruft. A Windows shortcut records the machine it was made on.
 .DS_Store
 Thumbs.db
 *.swp
+*.lnk
 
 # Screenshots of the ORIGINAL game and the Paint.NET file they were exported
 # from. Third-party expression: hojamaka's, not ours, and so not covered by
