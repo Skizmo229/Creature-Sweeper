@@ -26,7 +26,7 @@ Node 22 (`.nvmrc`); Python 3 only for the ladder generator.
 | `docs/refactoring-plan.md` | Milestone 3, the readability refactor (complete): what was measured and what changed |
 | `docs/strategies.md` | how a person clears a board: the tricks, graded, for players and for the graded player |
 | `docs/human-tuning-plan.md` | Milestone 4, tuning for the human player: the instrument, the measurements, the retune |
-| `docs/teaching-plan.md` | Milestone 5, built on branches for review: teaching the tricks in the game with a tutor, a school and a field guide |
+| `docs/teaching-plan.md` | Milestone 5, teaching the tricks in the game with a tutor, a school and a field guide: built, play-testing left |
 | `CONTRIBUTING.md` | setup, the check, and the rules for a change |
 | design reference | <https://claude.ai/artifact/8w8aAaG6MJ3LCnSbokJUXi> (built from `design/page.template.html`) |
 

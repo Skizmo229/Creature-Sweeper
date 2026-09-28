@@ -8,9 +8,10 @@ move on the board the player is stuck on, a **school** of short lessons that tea
 at a time on boards drawn for the purpose, and a **field guide** that holds the catalogue itself
 where a player can read it.
 
-Drafted 26 September 2026, proposed as **Milestone 5**. Not yet adopted; nothing here has been
-built. It depends on Milestone 4's instrument, the graded player, and on nothing else that is
-still open there: the tricks are written and tested, and the retune can go on beside this.
+Drafted 26 September 2026 as **Milestone 5**, built on 26 and 27 September and merged to `main`
+on 27 September 2026 (section 10); what is left is section 9's play-testing. It depends on
+Milestone 4's instrument, the graded player, and on nothing else that is still open there: the
+tricks are written and tested, and the retune can go on beside this.
 
 ## 1. The problem
 
@@ -171,6 +172,10 @@ telemetry the tuning plan asks for (`docs/human-tuning-plan.md`, open question 1
 ask for help, and at what grade, is where the boards are hard for them, board by board, and it
 comes for free from a feature the player wants anyway. The dev handle exposes it (`cs.hints`).
 Nothing leaves the machine; the game is offline freeware.
+
+As built: a hinted clear sets no best time and, until a best time exists, keeps the fewest hints
+any clear has taken (decision 0065, amending 0048); the play statistics count hints per board
+(decision 0060). Neither splits the count by grade, and there is no `cs.hints` handle.
 
 ### 4.5 The stuck case
 
@@ -371,11 +376,11 @@ Decided by the owner on 26 September 2026:
    that would prove the cell; lesson 8 excepted (5.3).
 4. **The ninth lesson** (the last of a tier, grade 4) is in (5.1).
 
-Still open:
+Open when the plan was drafted; items 6 and 7 have been decided since:
 
 5. **The stuck case** (4.5): the worst case and the levels-away figure are facts about the rules;
    naming a cell to guess would be advice about odds, and the plan does not. Confirm.
-6. **The key.** `H` is free. `?` is the other candidate.
+6. **The key.** Decided in the build: `H` (section 10). `?` was the other candidate.
 7. **The guide's words.** Decided 27 September 2026: the game's own, shorter than the catalogue's,
    with the catalogue's sections, headings, tricks and ladder lists held by the tests (decision
    0059). The owner finds the game wordy; the catalogue is the instrument's spec and keeps its
@@ -418,7 +423,8 @@ counters (decision 0049). Branch `m5-guide`, on top of it, holds Part 3 whole (6
 3): the entries and their test, the screen and its ways in (the rules card, the ladder list, `G`
 and "more" from the tutor), and each ladder's "How to play" from section 7, where HUGE and HUGE x
 EXTREME, which the catalogue has no note for, show their blurb. Section 8's item 7 is built as
-its default (the words copied, and tested word for word) and is still open.
+its default (the words copied, and tested word for word); it was decided the next day for the
+game's own shorter words (decision 0059).
 
 Branch `m5-school`, on top of that, holds the rest of Part 2 (5.6, steps 3 to 5). The tutor gained
 `provable`, everything a grade proves without a move, which the school refuses clicks by and is
@@ -434,4 +440,7 @@ CHECKERBOARD, DUNGEON and SPRINKLE DONUT. The cards use the catalogue's words on
 diagram, since the catalogue has none for those tricks yet; PATROL's walk and PYRAMID's face-up
 base, which 5.5 names, are not tricks in the catalogue's sections 2 to 6, so they get no card until
 the owner says what should decide one. Every step is committed with `npm run check` passing and
-the golden outputs byte-identical. What is left is section 9's play-testing by two people.
+the golden outputs byte-identical.
+
+The four branches were merged to `main` on 27 September 2026 (646b45c), after the owner played
+every lesson. What is left is section 9's play-testing by two people.

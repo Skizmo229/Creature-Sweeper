@@ -16,8 +16,8 @@ and the open questions), `docs/ui.md` (presentation rules), `docs/extending.md` 
 `docs/refactoring-plan.md` (Milestone 3, the readability refactor, complete on 24 September 2026),
 `docs/strategies.md` (how a person plays: the tricks, graded), `docs/human-tuning-plan.md`
 (Milestone 4, tuning for the human player, in progress) and `docs/teaching-plan.md` (Milestone 5,
-teaching the tricks in the game: built on stacked branches, awaiting review; its section 10 says
-where).
+teaching the tricks in the game: built and merged on 27 September 2026, play-testing left; its
+section 10 is the status).
 
 ## Rules for a session
 
