@@ -590,6 +590,7 @@ export class App {
       lesson: this.teaching.lessonLine(),
       tierColors: this.settings.tierColors(this.typeId),
       beatenNumbers: this.settings.presentation.beatenNumbers,
+      hintLine: this.settings.presentation.hintLine,
     });
     this.view?.setLesson(this.teaching.pointer());
     this.view?.render();

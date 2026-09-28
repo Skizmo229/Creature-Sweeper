@@ -215,6 +215,12 @@ export interface PresentationSettings {
   readonly menuStrip: MenuStrip;
   /** How the HUD's clock reads, or whether it shows at all (`ClockStyle`). */
   readonly clock: ClockStyle;
+  /**
+   * Whether the line under the board says what a click does right now. Off, the line is kept for
+   * the tutor and a lesson, which speak there, and hidden otherwise: once the controls are known
+   * it is the busiest line on the screen.
+   */
+  readonly hintLine: boolean;
   /** Ceiling for manual zoom, in CSS pixels per cell. */
   readonly maxZoom: number;
   /** Size of the interface's text — HUD, menus, settings — as a multiple. */
@@ -272,6 +278,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   motion: 'full',
   menuStrip: 'left',
   clock: 'seconds',
+  hintLine: true,
   maxZoom: DEFAULT_MAX_ZOOM,
   textSize: DEFAULT_TEXT_SIZE,
   previewSize: DEFAULT_PREVIEW_SIZE,
@@ -378,6 +385,7 @@ export function readPresentation(raw: unknown): PresentationSettings {
     menuStrip: oneOf(p.menuStrip, MENU_STRIPS, 'left'),
     // A save from before this setting reads as seconds, which the clock always counted in.
     clock: oneOf(p.clock, CLOCK_STYLES, 'seconds'),
+    hintLine: typeof p.hintLine === 'boolean' ? p.hintLine : true,
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
     // A save from before this setting has no field, and reads as the size the
     // game always had.

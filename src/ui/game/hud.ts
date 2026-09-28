@@ -70,6 +70,8 @@ export interface HudState {
   tierColors: TierPalette;
   /** Whether every beaten creature shows its number: what the Beaten toggle says. */
   beatenNumbers: boolean;
+  /** Whether the hint line says what a click does; the tutor and a lesson speak there anyway. */
+  hintLine: boolean;
 }
 
 /** Everything on the screen that reads the game, brought up to date. */
@@ -117,6 +119,7 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
   // The tutor speaks where the hint does, and in the ink rather than the hint's grey: it is the
   // thing the player just asked for.
   els.hint.textContent = s.tutor ?? s.lesson?.say ?? hintText(game, mode);
+  els.hint.hidden = !s.hintLine && s.tutor === null && s.lesson === null;
   els.hint.classList.toggle('tutoring', s.tutor !== null);
   els.hint.classList.toggle('teaching', s.tutor === null && s.lesson !== null);
   if (s.tutor !== null) els.hint.append(' ', els.more);

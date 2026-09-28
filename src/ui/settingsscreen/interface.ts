@@ -21,7 +21,7 @@ import {
 import { type PresentationPatch, type ScreenContext, previewCell, typeName } from './context.js';
 import { hudCopy } from './look.js';
 import { CHIP_CELL, renderPreview } from './render.js';
-import { gallery, section, slider, wideRow } from './widgets.js';
+import { gallery, row, section, slider, toggle, wideRow } from './widgets.js';
 
 export function interfaceSection(ctx: ScreenContext): void {
   const host = section(ctx.host, 'Interface', 'The page around the board, on every ladder.');
@@ -29,6 +29,13 @@ export function interfaceSection(ctx: ScreenContext): void {
   previewSizeRow(ctx, host);
   menuStripRow(ctx, host);
   clockRow(ctx, host);
+  row(
+    host,
+    'Hint line',
+    toggle(ctx.p.hintLine, (v) => ctx.settings.setPresentation({ hintLine: v })),
+    'The line under the board saying what a click does now and which keys do what. The tutor ' +
+      'and the lessons speak there whatever this says.',
+  );
 }
 
 /** A copy of the HUD's clock readout, as a sample of a style. */
