@@ -39,6 +39,9 @@ section 10 is the status).
 - **Work on a branch, one commit per move; the owner reviews and merges.** Never push. Refactor
   commits change no behaviour and fix no bugs. Bugs found go to GitHub Issues, drafted for the
   owner's approval before posting.
+- **Releases are numbered** (decision 0068): the version lives in `package.json` alone; a release
+  commit raises it and adds its `CHANGELOG.md` entry (CONTRIBUTING, "Releases"). Milestones are
+  plans, not versions.
 - **Comments say what; a paragraph says why; history goes to `docs/decisions/`.** No commented-out
   code. Numbers in comments are named constants or dated measurements. (`CONTRIBUTING.md`.)
 - **Anything that classifies ladders by a property** (placement, shape, spells) has bitten three

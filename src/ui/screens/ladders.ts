@@ -13,6 +13,7 @@ import { pausedGames } from '../paused.js';
 import type { Progress } from '../progress.js';
 import type { Settings } from '../settings.js';
 import { themeFor } from '../looks.js';
+import { VERSION } from '../version.js';
 
 export interface LadderListActions {
   progress: Progress;
@@ -52,7 +53,7 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
 
   const head = el('header', 'title-bar');
   head.append(el('h1', 'game-title', 'Creature Sweeper'));
-  head.append(el('p', 'sub', 'Prototype — Milestone 3'));
+  head.append(el('p', 'sub', `Version ${VERSION}`));
   // Boards cleared is a currency, so it is shown whether or not anything is waiting on it.
   head.append(el('p', 'sub boards-cleared', `${cleared} board${cleared === 1 ? '' : 's'} cleared`));
   // A player who left a dial easier than default a week ago should not have to open Settings

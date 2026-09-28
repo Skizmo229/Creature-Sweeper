@@ -42,6 +42,7 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   its next frame.
 - The ladder list is four columns, one per category (Normal, Shape, Magic, Special), each in the
   order its ladders open; they fall to two and then one as the screen narrows (decision 0036).
+  Under the title it says the game's version, read from `package.json` (decision 0068).
 - The ladder list's names are 1.5rem, by request, and never wider than their card. Each records its
   longest word in ems once its face has arrived (`fitNames`), and the stylesheet caps its size by
   the card's width, so CHECKERBOARD comes down a little at laptop width, and any long word at a
