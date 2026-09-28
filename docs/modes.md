@@ -214,7 +214,8 @@ Every creature has exactly one creature neighbour, which forces the occupied cel
 that may not touch. A creature's number **is** its partner's tier. `ringIsFree` in `pairs.ts` is
 both Sweep proofs in one: if the partner is within your level, or already open, every other
 covered neighbour is empty ground. Neither can run away, because a freed ring holds one partner
-and blank ground. `pairCandidates` gives the pencil: empty ground or exactly the partner's tier.
+and blank ground. `pairCandidates` gives the pencil empty ground beside a pair that has met, and nothing beside a
+lone creature, whose number the board hides (decision 0061).
 DOMINOES takes every one of those hooks from the pairing rule by reference (decision 0029); a
 domino board that read any of them differently would lose the deduction silently.
 

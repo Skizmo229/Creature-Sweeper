@@ -31,11 +31,11 @@ person they are wrong in both directions, and the errors do not cancel:
 - **They do not count.** The honest player never reads the per-tier counters the HUD shows, which
   is the endgame technique people fall back on ("one tier 5 left and it has to be there"). The
   solver counts perfectly, which no person does.
-- **They read what a person cannot see.** Both instruments, Sweep's partner proof and the pencil
-  read a beaten creature's number on PAIRS and DOMINOES, where it is not drawn (decision 0012), so
-  those two ladders play harder than their tuning says; the placement-rule ladders as a whole
-  were tuned against a reader of their rules weaker than a strong person, so they play easier
-  (`docs/tuning.md`, open question 4).
+- **They read what a person cannot see.** Both instruments and Sweep's partner proof read a
+  beaten creature's number on PAIRS and DOMINOES, where it is not drawn (decision 0012; the pencil
+  stopped reading it in 0061), so those two ladders play harder than their tuning says; the
+  placement-rule ladders as a whole were tuned against a reader of their rules weaker than a
+  strong person, so they play easier (`docs/tuning.md`, open question 4).
 - **They guess without fear.** `bestGuess` minimises the worst case one step ahead and never
   looks at HP, at whether the worst case kills, at what the guess would reveal, or at whether
   two more free kills would make the cell free.
@@ -115,7 +115,7 @@ as a bound; `docs/invariants.md`). The ids are the catalogue's.
 | 1 | `last-cell` | a number with one covered neighbour left has named it | all |
 | 1 | `counters` | a tier whose counter reads 0 is gone; when every tier left is at or under your level, everything is free | all |
 | 1 | `lone-dark` | the one covered dark square under an even remainder is empty | checkerboard |
-| 1 | `partner-number` | a beaten creature's number is its partner's tier: what the pencil offers beside a lone creature | pairs, dominoes, only when the number is visible |
+| 1 | `partner-number` | a beaten creature's number is its partner's tier: read beside a lone creature | pairs, dominoes, only when the number is visible |
 | 2 | `subtract` | one number's covered cells inside another's: the difference is a number of its own (the 1-2-1 family) | all |
 | 2 | `overlap` | two numbers that share cells: the cells one sees alone are bounded by the other | all |
 | 2 | `bounds` | what one number allows each of its cells (a 9 over two cells is 4 and 5) | all |
@@ -505,6 +505,6 @@ What it says, read on the day it was recorded:
 6. **SUDOKU** needs its own catalogue (singles, hidden singles) and is not measured.
 7. **Two things the map found that are not this milestone's.** The honest player's pair
    subtraction pairs numbers by coordinates and so never subtracts across a wrapped seam, which
-   makes it weaker on WRAPAROUND and WRAPPED CROSS than elsewhere; and the pencil palette's
-   strike-through beside a beaten creature on PAIRS and DOMINOES shows the partner's tier that
-   decision 0012 hid from hover. Both are drafted as issues for the owner.
+   makes it weaker on WRAPAROUND and WRAPPED CROSS than elsewhere (issue #9); and the pencil
+   palette's strike-through beside a beaten creature on PAIRS and DOMINOES showed the partner's
+   tier that decision 0012 hid from hover, fixed by decision 0061 (issue #10).
