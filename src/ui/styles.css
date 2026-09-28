@@ -720,6 +720,14 @@ button.board-card:hover:not(:disabled) {
 .overlay.held > .overlay-card {
   animation: overlay-arrive 200ms ease-out var(--hold) both;
 }
+/* Held until a click instead: clear, the card out of sight, and no timer; the click lets it in. */
+.overlay.held-click {
+  background-color: transparent;
+}
+.overlay.held-click > .overlay-card {
+  opacity: 0;
+  visibility: hidden;
+}
 @keyframes overlay-dim {
   from {
     background-color: transparent;

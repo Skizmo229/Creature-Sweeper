@@ -156,6 +156,23 @@ export function beatenParts(look: BeatenLook): { dim: boolean; strike: boolean }
 export type FightRim = 'every' | 'levelups' | 'hits' | typeof OFF;
 const FIGHT_RIMS: readonly FightRim[] = ['every', 'levelups', 'hits', OFF];
 
+/** When the board-clear effect plays: on every clear, or only a board's first, the one to watch. */
+export type VictoryWhen = 'every' | 'first';
+const VICTORY_WHENS: readonly VictoryWhen[] = ['every', 'first'];
+
+/**
+ * What holds the clear card back on a board's first clear with an effect to watch: the effect,
+ * two and a half seconds by request (docs/ui.md); a click anywhere, so the cleared board can be
+ * looked at for as long as the player likes; or nothing, the card at once.
+ */
+export type CardHold = 'effect' | 'click' | 'none';
+const CARD_HOLDS: readonly CardHold[] = ['effect', 'click', 'none'];
+
+/** How fast the board-clear effect runs, as a multiple of its own pace. */
+export const MIN_EFFECT_SPEED = 0.5;
+export const MAX_EFFECT_SPEED = 2;
+export const DEFAULT_EFFECT_SPEED = 1;
+
 /**
  * What the stage does of its own accord after a fight: the shake when a fight cost HP and the
  * glow inside the stage on a level-up, both of them, the glow alone, or neither. The rim is the
@@ -285,6 +302,10 @@ export interface PresentationSettings {
    */
   readonly sfxVolume: number;
   readonly victory: VictoryChoice;
+  /** When the clear effect plays (`VictoryWhen`), what holds the card (`CardHold`), and its pace. */
+  readonly victoryWhen: VictoryWhen;
+  readonly cardHold: CardHold;
+  readonly effectSpeed: number;
   readonly highlight: HighlightChoice;
   /**
    * The colour the cursor lights a cell in when a click there would land. A click that would do
@@ -402,6 +423,9 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   sfx: DEFAULT,
   sfxVolume: DEFAULT_SFX_VOLUME,
   victory: DEFAULT,
+  victoryWhen: 'every',
+  cardHold: 'effect',
+  effectSpeed: DEFAULT_EFFECT_SPEED,
   highlight: DEFAULT,
   highlightColor: DEFAULT,
   highlightWidth: DEFAULT_HIGHLIGHT_WIDTH,
@@ -516,6 +540,11 @@ export function readPresentation(raw: unknown): PresentationSettings {
     // A save from before this setting reads as full volume, the only level the game had.
     sfxVolume: num(p.sfxVolume, 0, MAX_SFX_VOLUME, DEFAULT_SFX_VOLUME),
     victory: str('victory', DEFAULT) as VictoryChoice,
+    // A save from before these reads as the effect on every clear, the card held while it plays
+    // on a first clear, at its own pace: how the effect always played.
+    victoryWhen: oneOf(p.victoryWhen, VICTORY_WHENS, 'every'),
+    cardHold: oneOf(p.cardHold, CARD_HOLDS, 'effect'),
+    effectSpeed: num(p.effectSpeed, MIN_EFFECT_SPEED, MAX_EFFECT_SPEED, DEFAULT_EFFECT_SPEED),
     highlight: str('highlight', DEFAULT) as HighlightChoice,
     // A save from before this setting, or one holding anything but a colour, reads as the green
     // the highlight was always drawn in.

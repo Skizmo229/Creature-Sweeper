@@ -9,14 +9,24 @@ import type { GameEvent } from '../../engine/types.js';
 import { el } from '../dom.js';
 import { flashStage } from '../game/flash.js';
 import { PREVIEW_SEED, clearedBoard } from '../preview.js';
-import { DEFAULT, type FightRim, type Motion, OFF } from '../presentation.js';
+import {
+  type CardHold,
+  DEFAULT,
+  DEFAULT_EFFECT_SPEED,
+  type FightRim,
+  MAX_EFFECT_SPEED,
+  MIN_EFFECT_SPEED,
+  type Motion,
+  OFF,
+  type VictoryWhen,
+} from '../presentation.js';
 import { SFX_NAMES, VICTORY_NAMES } from '../theme.js';
 import type { SfxPackId, VictoryId } from '../looktypes.js';
 import { playVictory } from '../victory/play.js';
 import { type ScreenContext, typeName } from './context.js';
 import { renderPreview } from './render.js';
 import { openSoundCheck } from './soundcheck.js';
-import { type Choice, gallery, wideRow } from './widgets.js';
+import { type Choice, gallery, ratio, slider, wideRow } from './widgets.js';
 
 /**
  * The board-clear demo currently running, if any. Module-level because a screen rebuild throws
@@ -150,6 +160,59 @@ export function motionRow(ctx: ScreenContext, host: HTMLElement): void {
 }
 
 /**
+ * When the effect plays, what holds the clear card back, and the effect's pace, in rows above the
+ * effect itself; the pace replays the demo, so it is heard as well as read.
+ */
+function clearEffectOptions(ctx: ScreenContext, host: HTMLElement, replay: () => void): void {
+  const { p, settings } = ctx;
+  wideRow(
+    host,
+    'Play the clear effect',
+    'On every clear, or only the first time a board is cleared.',
+    gallery(
+      [
+        { value: 'every', label: 'On every clear' },
+        { value: 'first', label: 'On a board’s first clear only' },
+      ],
+      p.victoryWhen,
+      (v) => settings.setPresentation({ victoryWhen: v as VictoryWhen }),
+      true,
+    ),
+  );
+  wideRow(
+    host,
+    'Clear card',
+    'What holds the card back on a board’s first clear, so the effect plays over the board: the ' +
+      'effect’s own length, a click anywhere, or nothing.',
+    gallery(
+      [
+        { value: 'effect', label: 'After the effect' },
+        { value: 'click', label: 'Until I click' },
+        { value: 'none', label: 'At once' },
+      ],
+      p.cardHold,
+      (v) => settings.setPresentation({ cardHold: v as CardHold }),
+      true,
+    ),
+  );
+  wideRow(
+    host,
+    'Clear effect speed',
+    'How fast the effect runs. Picking a speed replays it below.',
+    slider(
+      MIN_EFFECT_SPEED,
+      MAX_EFFECT_SPEED,
+      0.05,
+      p.effectSpeed,
+      ratio,
+      (v) => settings.setPresentation({ effectSpeed: Math.round(v * 100) / 100 }),
+      replay,
+      DEFAULT_EFFECT_SPEED,
+    ),
+  );
+}
+
+/**
  * The demo board is kept rather than rebuilt per play, because half these effects animate its
  * creatures and need to borrow the glyphs off the view that is drawing them. It carries one of
  * every tier the real board uses and none above.
@@ -182,6 +245,7 @@ export function clearEffectRow(ctx: ScreenContext, host: HTMLElement): void {
       effect,
       { ...settings.victoryLook(typeId), theme: currentTheme },
       demo.view.victorySource(),
+      settings.presentation.effectSpeed,
     );
   };
 
@@ -226,6 +290,7 @@ export function clearEffectRow(ctx: ScreenContext, host: HTMLElement): void {
     testBtn,
   );
 
+  clearEffectOptions(ctx, host, runDemo);
   wideRow(
     host,
     'Board clear effect',

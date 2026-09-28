@@ -71,8 +71,14 @@ const DURATION: Record<VictoryId, number> = {
   wipeRadial: 2000,
 };
 
+/** How long an effect runs at a speed, in milliseconds: its own length divided by the speed. */
+export function effectDuration(effect: VictoryId, speed: number): number {
+  return DURATION[effect] / speed;
+}
+
 /**
- * Run an effect over `host`, and return a function that stops it early.
+ * Run an effect over `host` at `speed`, a multiple of its own pace, and return a function that
+ * stops it early.
  *
  * The stop function matters twice over. A player who clicks "Next board" half
  * a second in gets the screen rebuilt under the animation, and an effect still
@@ -85,6 +91,7 @@ export function playVictory(
   effect: VictoryId,
   look: VictoryLook,
   source?: VictorySource,
+  speed = 1,
 ): () => void {
   const { theme, tierColors } = look;
   const layer = makeLayer(host);
@@ -102,7 +109,7 @@ export function playVictory(
   const { chosen, sprites } = borrow(effect, rect, source);
   let borrowed = sprites.length ? source! : null;
 
-  const duration = DURATION[chosen];
+  const duration = effectDuration(chosen, speed);
   const stage: Stage = {
     w,
     h,
@@ -125,8 +132,9 @@ export function playVictory(
   const frame = (now: number) => {
     const t = (now - start) / duration;
     // Clamped, because a backgrounded tab resumes with a delta of seconds and
-    // an unclamped step would teleport everything through the floor.
-    const dt = Math.min(1 / 20, Math.max(0, (now - last) / 1000));
+    // an unclamped step would teleport everything through the floor. The speed scales the step
+    // too, so a physics effect falls faster rather than being cut short.
+    const dt = Math.min(1 / 20, Math.max(0, (now - last) / 1000)) * speed;
     last = now;
     if (stopped || t >= 1) {
       finish();

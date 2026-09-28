@@ -8,6 +8,7 @@ import type { Game } from '../../engine/game.js';
 import type { FullRun } from '../../engine/run.js';
 import { type GameplaySettings, easierThanDefault } from '../../engine/settings.js';
 import { el } from '../dom.js';
+import type { CardHold } from '../presentation.js';
 
 /**
  * The ladder that teaches, and so the only one that explains a death. A claim about the ladder's
@@ -43,8 +44,11 @@ export interface BoardOutcome {
   seed: number;
   won: boolean;
   perfect: boolean;
-  /** Keep the card back while the clear effect plays (`.overlay.held`): a first clear, effect on. */
-  held: boolean;
+  /**
+   * What keeps the card back on a first clear with an effect to watch: the effect's length
+   * (`.overlay.held`), a click (`.overlay.held-click`), or nothing.
+   */
+  hold: CardHold;
   timeExpired: boolean;
   seconds: number;
   /** The blow that ended a lost board, if a fight did. */
@@ -67,8 +71,14 @@ export interface BoardOutcome {
 
 export function buildBoardOutcome(o: BoardOutcome): HTMLElement {
   const { game, won } = o;
-  // A held card waits while the clear effect plays over the board (styles.css).
-  const overlay = el('div', `overlay ${won ? 'win' : 'lose'}${o.held ? ' held' : ''}`);
+  // A held card waits while the clear effect plays over the board, or until a click (styles.css).
+  const held = o.hold === 'effect' ? ' held' : o.hold === 'click' ? ' held-click' : '';
+  const overlay = el('div', `overlay ${won ? 'win' : 'lose'}${held}`);
+  if (o.hold === 'click') {
+    overlay.addEventListener('click', () => overlay.classList.remove('held-click'), {
+      once: true,
+    });
+  }
   const card = el('div', 'overlay-card');
   card.append(
     el(
