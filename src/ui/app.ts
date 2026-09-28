@@ -146,8 +146,10 @@ export class App {
   }
 
   /**
-   * Whether a clear on these settings goes in the record books. Presentation never counts
-   * against it; only the gameplay dials do, and only in one direction (decision 0014).
+   * Whether a clear on the current settings would go in the record books, which the ladder list
+   * says. Presentation never counts against it; only the gameplay dials do, and only in one
+   * direction (decision 0014). A board that has ended is judged by its own dials instead, the ones
+   * it was dealt with, because the settings can be changed while it is being played.
    */
   private get recordsCount(): boolean {
     return isAtLeastAsHard(this.settings.gameplay);
@@ -536,7 +538,7 @@ export class App {
     const won = game.status === 'won';
     const perfect = won && game.hp === game.maxHp;
     const type = ladders.find((t) => t.id === this.typeId)!;
-    const recorded = this.recordsCount;
+    const recorded = isAtLeastAsHard(game.settings);
     // Read before the clear is written down, after which every clear would look like a repeat.
     const firstClear = won && !this.progress.boardRecord(this.typeId, this.boardIndex).cleared;
     let unlocked: number | null = null;
@@ -569,7 +571,7 @@ export class App {
       unlocked,
       ladderLength: type.boards.length,
       lastBoard: maxBoard(ladders, this.typeId),
-      gameplay: this.settings.gameplay,
+      gameplay: game.settings,
       onNext: () => {
         const to = this.boardIndex + 1;
         if (to > type.boards.length) this.progress.setScalingBoard(this.typeId, to);
@@ -589,10 +591,11 @@ export class App {
     const game = this.game!;
     const type = ladders.find((t) => t.id === this.typeId)!;
     const midRun = game.status === 'won' && !run.isLastBoard;
+    const recorded = isAtLeastAsHard(game.settings);
 
     if (!midRun) {
       this.clock.freeze();
-      if (this.recordsCount) {
+      if (recorded) {
         this.progress.recordRun(this.typeId, {
           completed: run.status === 'won',
           reachedBoard: this.boardIndex,
@@ -610,8 +613,8 @@ export class App {
       typeName: type.name,
       boardIndex: this.boardIndex,
       seconds: this.clock.elapsedSeconds(),
-      recorded: this.recordsCount,
-      gameplay: this.settings.gameplay,
+      recorded,
+      gameplay: game.settings,
       onContinue: () => this.advanceRun(),
       onNewRun: () => this.startFullRun(this.typeId),
       onSameRun: () => this.startFullRun(this.typeId, run.seed),

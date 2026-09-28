@@ -332,6 +332,16 @@ describe('the app', () => {
     expect(app.progress.boardRecord('normal', 1).perfect).toBe(true);
   });
 
+  it('judges a clear by the dials the board was dealt with, not the ones set since', () => {
+    app.settings.setGameplay({ hpRatio: 2 });
+    app.play('normal', 1, 7);
+    app.settings.resetGameplay();
+    autoplayTierOrder(app.current!);
+    app.finish();
+    expect(app.progress.boardRecord('normal', 1).cleared).toBe(false);
+    expect(text('.overlay')).toContain('HP');
+  });
+
   it("holds the card back on a board's first clear with an effect to watch, and on nothing else", () => {
     const held = (): boolean => document.querySelector('.overlay')!.classList.contains('held');
     const clear = (): void => {
