@@ -81,6 +81,12 @@ export class BoardActions {
     this.h.refresh();
   }
 
+  /** The spell row's Cancel: disarm a spell picked but not yet cast. */
+  cancelSpell(): void {
+    this.h.mode.cancelSpell();
+    this.h.refresh();
+  }
+
   cycleMark(x: number, y: number): void {
     const game = this.h.game();
     if (!game || game.status !== 'playing') return;

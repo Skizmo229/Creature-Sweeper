@@ -490,10 +490,7 @@ export class App {
         guide: () => this.teaching.guideFromBoard(),
         next: () => this.teaching.next(),
         pickSpell: (id) => this.actions.pickSpell(id),
-        cancelSpell: () => {
-          this.mode.cancelSpell();
-          this.refresh();
-        },
+        cancelSpell: () => this.actions.cancelSpell(),
       },
       lesson,
     );
