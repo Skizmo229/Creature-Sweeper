@@ -607,7 +607,8 @@ export class App {
   /** The tutor's press: a hint, pointed at the board and said in the hint line. It opens nothing. */
   private explainBoard(): void {
     if (this.game && this.els?.whyBtn) {
-      this.teaching.tutor.press(this.game, this.view?.hoveredCell ?? null);
+      const near = this.view?.hoveredCell ?? null;
+      this.teaching.tutor.press(this.game, near, this.settings.presentation);
       this.keeper.save();
     }
     this.refresh();

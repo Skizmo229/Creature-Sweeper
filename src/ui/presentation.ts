@@ -156,6 +156,18 @@ export function beatenParts(look: BeatenLook): { dim: boolean; strike: boolean }
 export type FightRim = 'every' | 'levelups' | 'hits' | typeof OFF;
 const FIGHT_RIMS: readonly FightRim[] = ['every', 'levelups', 'hits', OFF];
 
+/**
+ * How much the tutor says: the whole lesson, the numbers it read, the cells it concludes and
+ * why; or only where to look, the numbers ringed and nothing concluded, a nudge that leaves the
+ * conclusion to the player. Either press is a hint.
+ */
+export type TutorStyle = 'full' | 'where';
+const TUTOR_STYLES: readonly TutorStyle[] = ['full', 'where'];
+
+/** The tutor's grades, 0 to 4, as `docs/strategies.md` grades the tricks; 4 tries everything. */
+export const MIN_TUTOR_GRADE = 0;
+export const MAX_TUTOR_GRADE = 4;
+
 /** When the board-clear effect plays: on every clear, or only a board's first, the one to watch. */
 export type VictoryWhen = 'every' | 'first';
 const VICTORY_WHENS: readonly VictoryWhen[] = ['every', 'first'];
@@ -403,6 +415,9 @@ export interface PresentationSettings {
    * is there or not, and a board without it is simply played without asking.
    */
   readonly tutor: boolean;
+  /** How much the tutor says (`TutorStyle`), and the dearest grade it tries, 0 to 4. */
+  readonly tutorStyle: TutorStyle;
+  readonly tutorGrade: number;
   /**
    * Whether every beaten creature shows the number under it, as the hovered one always does: the
    * game screen's "Beaten" toggle and `U` (decision 0067). Kept, like `muted`, because a player
@@ -457,6 +472,8 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   silenced: [],
   customPitches: false,
   tutor: true,
+  tutorStyle: 'full',
+  tutorGrade: MAX_TUTOR_GRADE,
   beatenNumbers: false,
   chord: false,
 };
@@ -598,6 +615,9 @@ export function readPresentation(raw: unknown): PresentationSettings {
     customPitches: typeof p.customPitches === 'boolean' ? p.customPitches : false,
     // A save from before the tutor existed reads as offering it, as a new player's does.
     tutor: typeof p.tutor === 'boolean' ? p.tutor : true,
+    // A save from before these reads as the whole lesson at every grade, as the tutor always was.
+    tutorStyle: oneOf(p.tutorStyle, TUTOR_STYLES, 'full'),
+    tutorGrade: Math.round(num(p.tutorGrade, MIN_TUTOR_GRADE, MAX_TUTOR_GRADE, MAX_TUTOR_GRADE)),
     // A save from before the toggle reads as off: beaten creatures drawn as the game drew them.
     beatenNumbers: typeof p.beatenNumbers === 'boolean' ? p.beatenNumbers : false,
     chord: typeof p.chord === 'boolean' ? p.chord : false,

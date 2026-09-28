@@ -16,8 +16,9 @@ import {
   isDefaultGameplay,
 } from '../../engine/settings.js';
 import { el } from '../dom.js';
+import { MAX_TUTOR_GRADE, MIN_TUTOR_GRADE, type TutorStyle } from '../presentation.js';
 import type { ScreenContext } from './context.js';
-import { ratio, row, section, slider, toggle } from './widgets.js';
+import { gallery, ratio, row, section, slider, toggle } from './widgets.js';
 
 type RatioKey =
   | 'hpRatio'
@@ -341,7 +342,10 @@ function timeRows({ ctx, host, refreshStatus }: Play): void {
   );
 }
 
-/** The tutor, beside the dials because it is about play, though it is a presentation setting. */
+/**
+ * The tutor, beside the dials because it is about play, though it is a presentation setting:
+ * whether it is offered, how much it says, and the dearest grade it tries.
+ */
 function tutorRows(ctx: ScreenContext, host: HTMLElement): void {
   const { settings, p } = ctx;
   // It changes no rule and no record, and so never enters the status line.
@@ -351,5 +355,35 @@ function tutorRows(ctx: ScreenContext, host: HTMLElement): void {
     toggle(p.tutor, (v) => settings.setPresentation({ tutor: v })),
     'Offers "[H]int" on every board: it points at the next provable move and says why, and ' +
       'opens nothing. A hinted board clears and unlocks as usual but sets no best time.',
+  );
+  row(
+    host,
+    'Hint style',
+    gallery(
+      [
+        { value: 'full', label: 'The lesson: the numbers it read, the cells it proves, and why' },
+        { value: 'where', label: 'Where to look: the numbers ringed, nothing concluded' },
+      ],
+      p.tutorStyle,
+      (v) => settings.setPresentation({ tutorStyle: v as TutorStyle }),
+      true,
+    ),
+    'How much a hint says. Either counts as a hint.',
+  );
+  row(
+    host,
+    'Tutor grade',
+    slider(
+      MIN_TUTOR_GRADE,
+      MAX_TUTOR_GRADE,
+      1,
+      p.tutorGrade,
+      (v) => (v >= MAX_TUTOR_GRADE ? `Grade ${MAX_TUTOR_GRADE}, everything` : `Grade ${v}`),
+      (v) => settings.setPresentation({ tutorGrade: Math.round(v) }),
+      undefined,
+      MAX_TUTOR_GRADE,
+    ),
+    'The dearest trick the tutor will use, as the field guide grades them: 0 a glance, 4 ' +
+      'counting the board. Capped, it says when nothing cheaper proves a move.',
   );
 }
