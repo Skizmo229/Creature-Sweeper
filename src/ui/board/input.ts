@@ -111,31 +111,7 @@ export class BoardInput {
       }
     });
 
-    c.addEventListener('pointermove', (e) => {
-      if (this.touches.has(e.pointerId)) {
-        this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-        if (this.pinch && this.touches.size >= 2) {
-          this.movePinch();
-          return;
-        }
-        if (this.gesture) return;
-        // A finger that has wandered off where it came down is not holding a cell.
-        if (this.press && Math.hypot(e.clientX - this.press.x, e.clientY - this.press.y) > 6) {
-          this.cancelPress();
-        }
-      }
-      if (this.dragging) {
-        const dx = e.clientX - this.dragStart.x;
-        const dy = e.clientY - this.dragStart.y;
-        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
-          this.dragMoved = true;
-          host.panTo(this.dragStart.ox + dx, this.dragStart.oy + dy);
-        }
-        return;
-      }
-      const cell = host.cellAtClient(e.clientX, e.clientY);
-      if (cell !== host.hovered) host.hover(cell);
-    });
+    c.addEventListener('pointermove', (e) => this.onPointerMove(e));
 
     const endDrag = (e: PointerEvent) => {
       if (e.button === 2) return; // right-click was handled on pointerdown
@@ -167,6 +143,34 @@ export class BoardInput {
     });
 
     c.addEventListener('pointerleave', () => host.leave());
+  }
+
+  /** The pointer moved: a pinch, a hold that wandered, a drag, or the cursor over a cell. */
+  private onPointerMove(e: PointerEvent): void {
+    const { host } = this;
+    if (this.touches.has(e.pointerId)) {
+      this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (this.pinch && this.touches.size >= 2) {
+        this.movePinch();
+        return;
+      }
+      if (this.gesture) return;
+      // A finger that has wandered off where it came down is not holding a cell.
+      if (this.press && Math.hypot(e.clientX - this.press.x, e.clientY - this.press.y) > 6) {
+        this.cancelPress();
+      }
+    }
+    if (this.dragging) {
+      const dx = e.clientX - this.dragStart.x;
+      const dy = e.clientY - this.dragStart.y;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+        this.dragMoved = true;
+        host.panTo(this.dragStart.ox + dx, this.dragStart.oy + dy);
+      }
+      return;
+    }
+    const cell = host.cellAtClient(e.clientX, e.clientY);
+    if (cell !== host.hovered) host.hover(cell);
   }
 
   /**
