@@ -67,6 +67,7 @@ export class App {
     move: (move) => this.recorder.move(move),
     apply: (events) => this.apply(events),
     refresh: () => this.refresh(),
+    addSeconds: (seconds) => this.clock.addSeconds(seconds),
     leaveGame: () => this.leaveGame(),
     pause: () => this.pause(),
     explain: () => this.explainBoard(),

@@ -221,8 +221,8 @@ export function play(
       }
     }
 
-    // Where the creatures walk, waiting is free and brings new numbers, so a player out of proofs
-    // waits before gambling, as long as `patience` allows.
+    // Where the creatures walk, waiting risks nothing and brings new numbers, so a player out of
+    // proofs waits before gambling, as long as `patience` allows.
     if (waited < patience) {
       game.wait();
       waited++;

@@ -49,7 +49,7 @@ export function hintText(game: Game | null, mode: EntryMode): string {
   // in the rule has lifted, and saying so is the difference between an escape hatch and a bug.
   if (game?.patrols) {
     return (
-      `Every click or wait moves each creature a step (W waits) · a ? is a creature on ` +
+      `Every click or wait moves each creature a step (W waits: +1 second) · a ? is a creature on ` +
       `ground you uncovered · right-click or a LV button marks a creature's route from its ` +
       `top-left corner · ${sweep} · ${spell}`
     );

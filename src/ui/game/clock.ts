@@ -41,6 +41,16 @@ export class BoardClock {
     this.frozenSeconds = null;
   }
 
+  /**
+   * Put time on a running clock, as PATROL's Wait does (decision 0064). It moves the start back
+   * rather than keeping a separate tally, so a paused game, a Full Run and Time Attack's countdown
+   * all see it with nothing else taught. A clock not started or already stopped is left alone.
+   */
+  addSeconds(seconds: number): void {
+    if (this.startedAt === null || this.frozenSeconds !== null) return;
+    this.startedAt -= seconds * 1000;
+  }
+
   /** The time on the clock exactly, for keeping a paused game. */
   elapsedMs(): number {
     if (this.frozenSeconds !== null) return this.frozenSeconds * 1000;

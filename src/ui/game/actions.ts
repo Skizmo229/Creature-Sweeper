@@ -12,6 +12,9 @@ import type { BoardView } from '../board/view.js';
 import type { Sfx } from '../sfx.js';
 import type { EntryMode } from './mode.js';
 
+/** What PATROL's Wait costs on the clock: a move bought with time rather than a risk (0064). */
+const WAIT_SECONDS = 1;
+
 /** What the actions read and call on `App`. Functions, so each read sees the board as it is now. */
 export interface BoardActionsHost {
   game(): Game | null;
@@ -22,6 +25,8 @@ export interface BoardActionsHost {
   move(move: Move): GameEvent[];
   apply(events: GameEvent[]): void;
   refresh(): void;
+  /** Put time on the board's clock. */
+  addSeconds(seconds: number): void;
   leaveGame(): void;
   /** Pause the game: it waits on the board list, its clock stopped. */
   pause(): void;
@@ -119,6 +124,9 @@ export class BoardActions {
   doWait(): void {
     const game = this.h.game();
     if (!game || game.status !== 'playing' || !game.patrols) return;
+    // Charged before the move, which the engine never refuses here, so the game kept after it
+    // (the keeper writes the clock down on every move) already holds the second.
+    this.h.addSeconds(WAIT_SECONDS);
     this.h.apply(this.h.move({ kind: 'wait' }));
   }
 
