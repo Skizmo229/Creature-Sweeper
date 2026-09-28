@@ -172,6 +172,8 @@ export class BoardEnding {
       boardIndex,
       seconds: clock.elapsedSeconds(),
       recorded,
+      hints: tutor.hints,
+      runHints: tutor.runHints,
       gameplay: game.settings,
       onContinue: () => this.h.advanceRun(),
       onNewRun: () => this.h.startFullRun(typeId),
