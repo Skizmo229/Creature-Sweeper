@@ -321,6 +321,12 @@ export interface PresentationSettings {
   readonly hintLine: boolean;
   /** Ceiling for manual zoom, in CSS pixels per cell. */
   readonly maxZoom: number;
+  /**
+   * Whether every board opens at the zoom ceiling, panning when it does not fit, rather than
+   * shrunk to fit the stage: a board of one fixed cell size, as Minesweeper players expect. F
+   * fits it as ever.
+   */
+  readonly startAtCeiling: boolean;
   /** Size of the interface's text — HUD, menus, settings — as a multiple. */
   readonly textSize: number;
   /** Size of the settings screen's example boards, as a multiple. */
@@ -392,6 +398,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   backPauses: false,
   hintLine: true,
   maxZoom: DEFAULT_MAX_ZOOM,
+  startAtCeiling: false,
   textSize: DEFAULT_TEXT_SIZE,
   previewSize: DEFAULT_PREVIEW_SIZE,
   muted: false,
@@ -512,6 +519,7 @@ export function readPresentation(raw: unknown): PresentationSettings {
     backPauses: typeof p.backPauses === 'boolean' ? p.backPauses : false,
     hintLine: typeof p.hintLine === 'boolean' ? p.hintLine : true,
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
+    startAtCeiling: typeof p.startAtCeiling === 'boolean' ? p.startAtCeiling : false,
     // A save from before this setting has no field, and reads as the size the
     // game always had.
     textSize: num(p.textSize, MIN_TEXT_SIZE, MAX_TEXT_SIZE, DEFAULT_TEXT_SIZE),

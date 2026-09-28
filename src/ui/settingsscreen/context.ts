@@ -85,6 +85,7 @@ export function makeContext(
   const chipCell = previewCell(CHIP_CELL, p.previewSize);
   const display = (over: Partial<BoardDisplay> = {}): BoardDisplay => ({
     maxCell: p.maxZoom,
+    startAtCeiling: p.startAtCeiling,
     font: settings.boardFont(typeId),
     glyph: p.glyph,
     highlight: settings.highlightStyle(typeId),

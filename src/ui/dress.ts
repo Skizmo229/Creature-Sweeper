@@ -30,6 +30,7 @@ export function boardDisplayFor(settings: Settings, typeId: string): BoardDispla
   const p = settings.presentation;
   return {
     maxCell: p.maxZoom,
+    startAtCeiling: p.startAtCeiling,
     font: settings.boardFont(typeId),
     glyph: p.glyph,
     highlight: settings.highlightStyle(typeId),

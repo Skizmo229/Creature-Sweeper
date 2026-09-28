@@ -61,6 +61,8 @@ import {
 export interface BoardDisplay {
   /** Ceiling for manual zoom, in CSS pixels per cell. */
   maxCell: number;
+  /** Whether a board opens at the ceiling, panning when it does not fit, rather than fitted. */
+  startAtCeiling: boolean;
   /** The face for every number, mark and pencil note on the board, and a creature's digit. */
   font: GameFont;
   /** What a creature is drawn as: its pips, its tier as a digit, or both. */
@@ -88,6 +90,7 @@ export interface BoardDisplay {
 /** The renderer's own defaults, which the game's own settings resolve to; the tests start here. */
 export const DEFAULT_DISPLAY: BoardDisplay = {
   maxCell: DEFAULT_MAX_ZOOM,
+  startAtCeiling: false,
   font: FONTS['jetbrains-mono'],
   glyph: 'pips',
   highlight: 'neighbours',
@@ -196,7 +199,7 @@ export class BoardView implements InputHost {
     this.game = game;
     this.theme = theme;
     this.display = display;
-    this.fit();
+    this.fit(false, true);
   }
 
   /**
@@ -247,8 +250,10 @@ export class BoardView implements InputHost {
    * Largest whole-pixel cell the stage can hold, then centre the board. `keepZoom` is for a
    * refit the player did not ask for, the stage having changed size under them: a zoom they
    * chose is kept, clamped to the new stage, rather than thrown away because the HUD re-wrapped.
+   * `opening` is a board just set, which starts at the ceiling when the player has asked for
+   * that; F and a resize fit it, as ever.
    */
-  fit(keepZoom = false): void {
+  fit(keepZoom = false, opening = false): void {
     const game = this.game;
     if (!game) return;
 
@@ -286,12 +291,12 @@ export class BoardView implements InputHost {
     // the way down to MIN_CELL, so the setting can never leave a board unreachable.
     const zoomed = keepZoom && this.cellPx > this.fittedCell;
     this.fittedCellValue = Math.max(MIN_CELL, Math.min(this.display.maxCell, fitted));
+    const ceiling = Math.max(this.fittedCell, this.display.maxCell);
     this.cellPxValue = zoomed
-      ? Math.max(
-          this.fittedCell,
-          Math.min(this.cellPx, Math.max(this.fittedCell, this.display.maxCell)),
-        )
-      : this.fittedCell;
+      ? Math.max(this.fittedCell, Math.min(this.cellPx, ceiling))
+      : opening && this.display.startAtCeiling && !fixed
+        ? ceiling
+        : this.fittedCell;
 
     this.resizeCanvas(availW, availH);
     this.clampOrigin();

@@ -24,7 +24,7 @@ import {
 import type { ScreenContext } from './context.js';
 import { type TakenColor, openColorWindow } from './customcolor.js';
 import { renderPreview } from './render.js';
-import { type Choice, gallery, slider, wideRow } from './widgets.js';
+import { type Choice, gallery, row, slider, toggle, wideRow } from './widgets.js';
 
 /** The colours the board already means something by, which a mark must stay clear of. */
 const TAKEN: readonly TakenColor[] = [
@@ -127,6 +127,18 @@ export function digitSizeRow(ctx: ScreenContext, host: HTMLElement): void {
     'Digit size',
     'The numbers, marks and pencil notes on the board. The interface’s text has its own size.',
     control,
+  );
+}
+
+/** Whether a board opens at the zoom ceiling rather than fitted to the stage. */
+export function startAtCeilingRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p, settings } = ctx;
+  row(
+    host,
+    'Start boards at the maximum zoom',
+    toggle(p.startAtCeiling, (v) => settings.setPresentation({ startAtCeiling: v })),
+    'Every board opens at the zoom ceiling above, panning when it does not fit, instead of ' +
+      'shrunk to fit the screen. F fits it.',
   );
 }
 
