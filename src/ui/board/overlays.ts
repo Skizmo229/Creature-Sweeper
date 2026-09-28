@@ -317,6 +317,31 @@ export function drawSeams(p: Paint): void {
   ctx.restore();
 }
 
+/** The wash over a cell out of reach: dark, so it reads on any tile and under any annotation. */
+export const REACH_SHADE = 'rgba(0, 0, 0, 0.45)';
+
+/**
+ * Darken every covered cell the crawl rule keeps out of reach (DUNGEON, PETRI DISH) when the
+ * player has asked: the rule made visible, where the cursor shows it one cell at a time. It reads
+ * nothing but the geometry the rule reads, so it exposes nothing; a sealed-in board is entirely in
+ * reach and draws no shade.
+ */
+export function drawReach(p: Paint): void {
+  const { ctx, game, layout } = p;
+  if (!p.reachShading || game.config.reach <= 0 || game.status !== 'playing') return;
+  ctx.save();
+  ctx.fillStyle = REACH_SHADE;
+  for (const row of game.grid) {
+    for (const cell of row) {
+      if (!cell.present || cell.open || game.inReach(cell)) continue;
+      const { cx, cy } = centreOf(layout, cell.x, cell.y);
+      tracePath(p, cx, cy);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
 /**
  * How far a line at 45 degrees from a hexagon's centre runs before it meets a side, per unit of
  * the hexagon's radius: the apothem, cos 30°, over the cosine of the 15° between the line and that

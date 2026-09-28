@@ -242,6 +242,12 @@ export interface PresentationSettings {
   readonly beatenLook: BeatenLook;
   /** Size of the board's numbers, marks and pencil notes, as a multiple. */
   readonly digitSize: number;
+  /**
+   * Whether the cells the crawl rule keeps out of reach are shaded (DUNGEON, PETRI DISH). The
+   * rule made visible where the cursor shows it one cell at a time; it reads nothing but the
+   * geometry the rule itself reads.
+   */
+  readonly reachShading: boolean;
   /** Which fights light the edge of the board. The shake and the level-up glow are not this. */
   readonly fightRim: FightRim;
   /** The stage's own shake and glow after a fight (`Motion`); the rim above is separate. */
@@ -310,6 +316,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   highlightColor: DEFAULT,
   beatenLook: 'dimStrike',
   digitSize: DEFAULT_DIGIT_SIZE,
+  reachShading: false,
   fightRim: 'every',
   motion: 'full',
   menuStrip: 'left',
@@ -421,6 +428,7 @@ export function readPresentation(raw: unknown): PresentationSettings {
     beatenLook: oneOf(p.beatenLook, BEATEN_LOOKS, p.strikeDefeated === false ? 'dim' : 'dimStrike'),
     // A save from before this setting reads as the size the board's digits were always drawn at.
     digitSize: num(p.digitSize, MIN_DIGIT_SIZE, MAX_DIGIT_SIZE, DEFAULT_DIGIT_SIZE),
+    reachShading: typeof p.reachShading === 'boolean' ? p.reachShading : false,
     // A save from before this setting reads as every fight, which is how the glow first shipped.
     fightRim: oneOf(p.fightRim, FIGHT_RIMS, 'every'),
     // A save from before this setting reads as both, which the stage always did.

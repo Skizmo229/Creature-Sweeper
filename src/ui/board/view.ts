@@ -38,6 +38,7 @@ import {
   drawGhostBand,
   drawHighlight,
   drawLesson,
+  drawReach,
   drawSeams,
   drawSilhouette,
   drawSprinkles,
@@ -72,6 +73,8 @@ export interface BoardDisplay {
   beatenLook: BeatenLook;
   /** How large the numbers, marks and pencil notes are drawn, as a multiple of their own size. */
   digitScale: number;
+  /** Whether the cells the crawl rule keeps out of reach are shaded. */
+  reachShading: boolean;
   /** Whether every beaten creature shows the number under it, not only the hovered one. */
   beatenNumbers: boolean;
   /** The colour a creature of each tier is drawn in, and the halo of tiers 6 to 9. */
@@ -87,6 +90,7 @@ export const DEFAULT_DISPLAY: BoardDisplay = {
   highlightColor: MARK_COLOR,
   beatenLook: 'dimStrike',
   digitScale: 1,
+  reachShading: false,
   beatenNumbers: false,
   tierColors: DEFAULT_TIERS,
 };
@@ -454,6 +458,7 @@ export class BoardView implements InputHost {
       glyph: this.display.glyph,
       beatenLook: this.display.beatenLook,
       digitScale: this.display.digitScale,
+      reachShading: this.display.reachShading,
       hovered: this.hoveredCellValue,
       beatenNumbers: this.display.beatenNumbers,
       creaturesHidden: this.creaturesHidden,
@@ -483,6 +488,7 @@ export class BoardView implements InputHost {
       }
     }
 
+    drawReach(p);
     // After the cells, so the board's edge is a clean line rather than something each rim cell
     // paints half of its own bevel over.
     drawSilhouette(p);

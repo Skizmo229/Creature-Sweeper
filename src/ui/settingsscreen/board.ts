@@ -4,7 +4,7 @@
  */
 
 import { el } from '../dom.js';
-import { sampleBoard, samplePin } from '../preview.js';
+import { reachSampleBoard, sampleBoard, samplePin } from '../preview.js';
 import {
   type CreatureGlyph,
   DEFAULT_DIGIT_SIZE,
@@ -55,6 +55,34 @@ export function digitSizeRow(ctx: ScreenContext, host: HTMLElement): void {
     'Digit size',
     'The numbers, marks and pencil notes on the board. The interface’s text has its own size.',
     control,
+  );
+}
+
+/** Shading the cells out of reach, or not, each on a board with a crawl rule opened at one end. */
+export function reachShadingRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p, currentTheme } = ctx;
+  const chip = (reachShading: boolean) => (): HTMLElement =>
+    renderPreview(
+      reachSampleBoard(),
+      currentTheme,
+      ctx.display({ highlight: null, reachShading }),
+      {
+        cell: ctx.chipCell,
+      },
+    ).canvas;
+  wideRow(
+    host,
+    'Reach shading',
+    'On DUNGEON and PETRI DISH a cell opens only within reach of ground you have uncovered. ' +
+      'Shaded, the cells out of reach are darkened; the cursor crosses one out either way.',
+    gallery(
+      [
+        { value: 'on', label: 'Shaded', example: chip(true) },
+        { value: 'off', label: 'Not shaded', example: chip(false) },
+      ],
+      p.reachShading ? 'on' : 'off',
+      (v) => ctx.pick({ reachShading: v === 'on' }),
+    ),
   );
 }
 

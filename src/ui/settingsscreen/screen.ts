@@ -13,7 +13,7 @@ import { themeFor } from '../looks.js';
 import { sampleBoard } from '../preview.js';
 import { type SettingsScreenOptions, makeContext, previewCell, typeName } from './context.js';
 import { clearEffectRow, fightRimRow, motionRow, soundRow, stopSettingsDemo } from './effects.js';
-import { digitSizeRow, glyphRow } from './board.js';
+import { digitSizeRow, glyphRow, reachShadingRow } from './board.js';
 import { gameplaySection } from './gameplay.js';
 import { interfaceSection } from './interface.js';
 import {
@@ -88,6 +88,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   highlightRow(ctx, look);
   highlightColorRow(ctx, look);
   beatenLookRow(ctx, look);
+  reachShadingRow(ctx, look);
   zoomRow(ctx, look);
   soundRow(ctx, look);
   fightRimRow(ctx, look);

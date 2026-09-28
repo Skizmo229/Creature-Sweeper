@@ -40,6 +40,8 @@ export interface Paint {
   readonly beatenLook: BeatenLook;
   /** How large the numbers, marks and pencil notes are drawn, as a multiple of their own size. */
   readonly digitScale: number;
+  /** Whether the cells the crawl rule keeps out of reach are shaded. */
+  readonly reachShading: boolean;
   /** The cell under the cursor (or pinned), if any. */
   readonly hovered: Cell | null;
   /** Whether every beaten creature shows its number, as the hovered one does (decision 0067). */
