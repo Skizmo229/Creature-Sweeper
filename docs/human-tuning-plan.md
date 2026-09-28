@@ -504,7 +504,8 @@ What it says, read on the day it was recorded:
    proves them together in `emptied`; splitting them is a later refinement.
 6. **SUDOKU** needs its own catalogue (singles, hidden singles) and is not measured.
 7. **Two things the map found that are not this milestone's.** The honest player's pair
-   subtraction pairs numbers by coordinates and so never subtracts across a wrapped seam, which
-   makes it weaker on WRAPAROUND and WRAPPED CROSS than elsewhere (issue #9); and the pencil
+   subtraction paired numbers by coordinates and so never subtracted across a wrapped seam, which
+   made it weaker on WRAPAROUND and WRAPPED CROSS than elsewhere (issue #9, fixed 28 September
+   2026: WRAPAROUND measured the same, WRAPPED CROSS moved by 0.1 stuck points); and the pencil
    palette's strike-through beside a beaten creature on PAIRS and DOMINOES showed the partner's
    tier that decision 0012 hid from hover, fixed by decision 0061 (issue #10).

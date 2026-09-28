@@ -112,7 +112,10 @@ ladder, each spell against playing spell-less on the ladders that offer it:
   24 September 2026 the floors are 7.5 and 1.5, both set by DUNGEON board 1.
 - "Share of the pool spent" is the wrong measure of scarcity; the right one is what it would cost
   to buy out every moment a deductive player is cornered, as a share of the pool: 40 to 86% on the
-  late boards, 2 to 30% on the early ones.
+  late boards, 2 to 30% on the early ones. `test/spells.test.ts` holds every board 10 above 30%
+  from the honest player's forced guesses there, spell-less, 40 seeds, measured 28 September 2026:
+  ARCANE 5.0, ORACLE 7.4, DIAMOND 3.7, DONUT 6.9, CROSS 4.2, RAGGED CAVE 5.5, DUNGEON 4.7.
+  DIAMOND (1.5 when first measured) no longer needs the exemption it had.
 
 ## Open questions, in order of weight
 
