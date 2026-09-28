@@ -190,6 +190,7 @@ export class App {
     const { customPitches, soundCheck, sfxVolume } = this.settings.presentation;
     this.sfx.setPitches(customPitches ? soundCheck.pitches : {});
     this.sfx.setVolume(sfxVolume);
+    this.sfx.setSilenced(this.settings.presentation.silenced);
     this.view?.setDisplay(
       this.settings.themeFor(this.typeId),
       boardDisplayFor(this.settings, this.typeId),
@@ -565,7 +566,7 @@ export class App {
 
     if (this.els) flashStage(this.els.stage, events, this.settings.presentation);
     if (this.sfx.enabled) {
-      const sound = soundFor(events);
+      const sound = soundFor(events, (e) => this.sfx.plays(e));
       if (sound) this.sfx.play(sound);
     }
 

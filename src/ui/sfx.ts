@@ -20,22 +20,9 @@
  * that takes a click handler down with it.
  */
 
-import type { SfxPackId } from './looktypes.js';
+import type { SfxEvent, SfxPackId } from './looktypes.js';
 
-/** Everything the game can make a noise about. */
-export type SfxEvent =
-  | 'open'
-  | 'cascade'
-  | 'mark'
-  | 'note'
-  | 'battle'
-  | 'kill'
-  | 'levelup'
-  | 'spell'
-  | 'sweep'
-  | 'blocked'
-  | 'win'
-  | 'lose';
+export type { SfxEvent } from './looktypes.js';
 
 interface Voice {
   wave: OscillatorType;
@@ -212,6 +199,8 @@ export class Sfx {
   private pitches: Readonly<Record<string, number>> = {};
   /** The game's volume, scaling every sound `play` makes; `audition` is given its own. */
   private volume = 1;
+  /** Events the player has silenced; `play` passes over them and `audition` does not. */
+  private silenced: ReadonlySet<SfxEvent> = new Set();
   private readonly lastAt = new Map<SfxEvent, number>();
   /** Set once anything throws, so a broken audio stack is not retried on
    *  every click for the rest of the session. */
@@ -232,8 +221,18 @@ export class Sfx {
     this.volume = volume;
   }
 
+  /** Pass over these events in play; the sound check still auditions them. */
+  setSilenced(events: Iterable<SfxEvent>): void {
+    this.silenced = new Set(events);
+  }
+
   get enabled(): boolean {
     return this.pack !== null && !this.dead;
+  }
+
+  /** Whether `play` would make a sound of this event: the mixer is on and the event is not silenced. */
+  plays(event: SfxEvent): boolean {
+    return this.enabled && !this.silenced.has(event);
   }
 
   /**
@@ -243,7 +242,7 @@ export class Sfx {
    * garnish, and a caller should not have to think about it.
    */
   play(event: SfxEvent): void {
-    if (!this.enabled) return;
+    if (!this.plays(event)) return;
     const now = Date.now();
     const last = this.lastAt.get(event) ?? 0;
     if (now - last < THROTTLE_MS) return;

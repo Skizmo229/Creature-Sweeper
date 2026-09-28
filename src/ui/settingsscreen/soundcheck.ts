@@ -12,7 +12,7 @@
  */
 
 import { el } from '../dom.js';
-import type { SfxPackId } from '../looktypes.js';
+import { SFX_EVENTS, type SfxPackId } from '../looktypes.js';
 import { DEFAULT_PRESENTATION, MAX_SOUND_CHECK_VOLUME } from '../presentation.js';
 import type { Settings } from '../settings.js';
 import { type SfxEvent, sfxPitch, sfxRatio, sfxSoundId } from '../sfx.js';
@@ -154,6 +154,28 @@ interface SoundButton {
   sound: Sound;
   btn: HTMLButtonElement;
   badge: HTMLElement;
+}
+
+/**
+ * A box per event saying whether the game plays it (`silenced` in the settings): the one place a
+ * single sound is silenced, as the Which sounds row says. Auditioning is unaffected.
+ */
+function playedRow(settings: Settings): HTMLElement {
+  const line = el('div', 'soundcheck-played');
+  line.append(el('span', 'soundcheck-status', 'Played in a game'));
+  for (const event of SFX_EVENTS) {
+    const label = el('label', 'toggle');
+    const box = el('input');
+    box.type = 'checkbox';
+    box.checked = !settings.presentation.silenced.includes(event);
+    box.addEventListener('change', () => {
+      const silenced = settings.presentation.silenced.filter((e) => e !== event);
+      settings.setPresentation({ silenced: box.checked ? silenced : [...silenced, event] });
+    });
+    label.append(box, el('span', undefined, SFX_EVENT_NAMES[event]));
+    line.append(label);
+  }
+  return line;
 }
 
 /** Every pack under its name, a button per event. */
@@ -372,7 +394,7 @@ class SoundCheck {
     window.addEventListener('keydown', this.onKey, true);
     window.addEventListener('keyup', this.onKeyUp, true);
 
-    card.append(tools, this.grid, this.pitch.element);
+    card.append(tools, playedRow(ctx.settings), this.grid, this.pitch.element);
     overlay.append(card);
     ctx.host.append(overlay);
     // After it is in the page, so the keyboard has a width to scroll within.

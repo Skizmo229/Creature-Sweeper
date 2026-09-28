@@ -1263,6 +1263,15 @@ button.board-card:hover:not(:disabled) {
   min-width: 8ch;
   text-align: right;
 }
+/* The sound check's row of boxes, one per sound, saying whether a game plays it. */
+.soundcheck-played {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 0 0 12px;
+  font-size: 0.75rem;
+}
 /* The clock row's samples: a readout in the HUD's own clothes, at a size a tile can hold. */
 .hud.clock-demo {
   font-size: 1.1rem;

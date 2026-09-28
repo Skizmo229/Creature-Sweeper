@@ -14,7 +14,13 @@
  */
 
 import { snapRatio } from '../engine/settings.js';
-import type { Pip, SfxPackId, VictoryId } from './looktypes.js';
+import {
+  type Pip,
+  SFX_EVENTS,
+  type SfxEvent,
+  type SfxPackId,
+  type VictoryId,
+} from './looktypes.js';
 import { TIER_COUNT, type TierPalette, type TierPresetId } from './tiercolors.js';
 import { type FontId, migrateFontChoice } from './typefaces.js';
 
@@ -303,6 +309,13 @@ export interface PresentationSettings {
   readonly muted: boolean;
   readonly soundCheck: SoundCheckSettings;
   /**
+   * The sounds the game does not play, by event. On a big board the click of every cell opened is
+   * most of what is heard, and a player may want only the fights and the results; the sound check
+   * still auditions a silenced sound. An action whose loudest sound is silenced makes its next
+   * loudest instead (`game/sound.ts`).
+   */
+  readonly silenced: readonly SfxEvent[];
+  /**
    * Whether sounds retuned in the sound check play at their new pitch in the game as well. Off
    * by default: the sound check is a place to experiment, and what is tried there should not
    * follow the player onto a board until they ask it to.
@@ -351,6 +364,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   previewSize: DEFAULT_PREVIEW_SIZE,
   muted: false,
   soundCheck: { keys: {}, pitches: {}, volume: 1 },
+  silenced: [],
   customPitches: false,
   tutor: true,
   beatenNumbers: false,
@@ -472,6 +486,11 @@ export function readPresentation(raw: unknown): PresentationSettings {
     // with sound on — which is the state that save was actually played in.
     muted: typeof p.muted === 'boolean' ? p.muted : false,
     soundCheck: readSoundCheck(p.soundCheck),
+    // Events this build does not know are dropped: the list is read by name, and a save from
+    // before it, or one holding anything else, silences nothing.
+    silenced: Array.isArray(p.silenced)
+      ? SFX_EVENTS.filter((e) => (p.silenced as unknown[]).includes(e))
+      : [],
     customPitches: typeof p.customPitches === 'boolean' ? p.customPitches : false,
     // A save from before the tutor existed reads as offering it, as a new player's does.
     tutor: typeof p.tutor === 'boolean' ? p.tutor : true,
