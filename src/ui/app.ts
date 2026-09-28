@@ -67,6 +67,7 @@ export class App {
     move: (move) => this.recorder.move(move),
     apply: (events) => this.apply(events),
     refresh: () => this.refresh(),
+    addSeconds: (seconds) => this.clock.addSeconds(seconds),
     leaveGame: () => this.leaveGame(),
     pause: () => this.pause(),
     explain: () => this.explainBoard(),
@@ -479,10 +480,7 @@ export class App {
         leave: () => this.leaveGame(),
         pause: () => this.pause(),
         pickTier: (tier) => this.actions.pickTier(tier),
-        pencilEmpty: () => {
-          this.mode.notesMode = true;
-          this.actions.pickTier(0);
-        },
+        pencilEmpty: () => this.actions.pencilEmpty(),
         toggleNotes: () => this.actions.toggleNotesMode(),
         sweep: (useMarks) => this.actions.doSweep(useMarks),
         wait: () => this.actions.doWait(),

@@ -68,7 +68,7 @@ prices Exercise by its own rule (`WorkoutRule`).
 creature (BLIND, HUGE x BLIND, SEER). No level economy; on SEER, exploration is the only mana.
 
 **Patrol / move / route.** On PATROL every creature walks a square route, one cell per **move**
-(an open, a Sweep or a Wait), clockwise from its top-left corner; routes never share a cell. A
+(an open or a Wait), clockwise from its top-left corner; routes never share a cell. A
 creature standing on uncovered ground covers it and shows as a ?; a mark there draws a route.
 `src/engine/patrol.ts`, `Game.wait`, `Game.moves`.
 

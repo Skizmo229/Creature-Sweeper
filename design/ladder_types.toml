@@ -486,8 +486,8 @@ archetype = "descending"
 axis = "The creatures walk"
 blurb = """\
   Every creature walks a square beat, one cell per move, clockwise from its top-left corner: a \
-  tier 3 walks three cells a side. Every click, sweep or wait is a move. A creature on uncovered \
-  ground shows as a ?; a mark draws its whole route."""
+  tier 3 walks three cells a side. Every click or wait is a move, and a wait costs a second. \
+  A creature on uncovered ground shows as a ?; a mark draws its whole route."""
 # NORMAL's boards, tiers, HP and gates. Not NORMAL's density: every
 # creature holds its route for good, 4 cells a tier, and no two routes
 # share a cell, so NORMAL's 21-27% would need more route than the board
@@ -503,6 +503,10 @@ lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
 alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
 placement = "patrol"
 ceiling = { density_cap = 0.085 }
+# No Sweep here. Keeping up with numbers that change every move is the
+# ladder, and a button that reads them for you plays it instead
+# (decision 0063).
+sweep = false
 
 [[type]]
 id = "wraparound"

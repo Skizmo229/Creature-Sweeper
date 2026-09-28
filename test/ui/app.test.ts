@@ -12,6 +12,7 @@ import type { GameEvent } from '../../src/engine/types.js';
 import { autoplayTierOrder } from '../../src/sim/autoplay.js';
 import { App } from '../../src/ui/app.js';
 import type { BoardDisplay } from '../../src/ui/board/view.js';
+import type { BoardClock } from '../../src/ui/game/clock.js';
 import type { Progress } from '../../src/ui/progress.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import type { Settings } from '../../src/ui/settings.js';
@@ -30,6 +31,7 @@ interface Driver {
   readonly progress: Progress;
   readonly settings: Settings;
   readonly view: { readonly display: BoardDisplay } | null;
+  readonly clock: BoardClock;
   finish(): void;
   apply(events: GameEvent[]): void;
   readonly actions: {
@@ -111,6 +113,23 @@ describe('the app', () => {
     app.actions.onCellPrimary(safe.x, safe.y);
     expect(game.grid.flat().filter((c) => c.open).length).toBeGreaterThan(before);
     expect(game.hp).toBe(game.maxHp);
+  });
+
+  it('waits on PATROL with W, a move that puts a second on the clock, and offers no Sweep', () => {
+    app.play('patrol', 1, 7);
+    const game = app.current!;
+    const before = app.clock.elapsedMs();
+    key('w');
+    expect(game.moves).toBe(1);
+    const cost = app.clock.elapsedMs() - before;
+    expect(cost).toBeGreaterThanOrEqual(1000);
+    expect(cost).toBeLessThan(2000);
+    expect(text('.game')).toContain('[W]ait');
+    expect(document.querySelector('button.sweep:not(.wait):not(.why)')).toBeNull();
+    expect(text('.hint')).toContain('no Sweep on this ladder');
+    // S is a sweep the ladder does not offer, so it is no move.
+    key('s');
+    expect(game.moves).toBe(1);
   });
 
   it('lights the stage rim after a fight: green when clean, blue on a level-up, red on a hit', () => {

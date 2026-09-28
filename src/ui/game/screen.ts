@@ -224,7 +224,7 @@ function buildPalette(
   let waitBtn: HTMLButtonElement | null = null;
   if (game.patrols) {
     waitBtn = el('button', 'sweep wait', '[W]ait');
-    waitBtn.title = 'The creatures take a step. Costs nothing.';
+    waitBtn.title = 'The creatures take a step. Costs a second.';
     waitBtn.addEventListener('click', a.wait);
     palette.append(waitBtn);
   }

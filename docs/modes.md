@@ -163,11 +163,13 @@ clears 99.9%: HP, not density, is the lever if it should be deadlier. No spells.
 
 The creatures walk. A tier-t creature walks the edge of a square t cells a side, one cell per
 action, clockwise from the square's top-left corner, where every creature starts: t cells right, t
-down, t left, t up, home after 4t moves. Every open (a cascade and a fight count once), every
-Sweep and every **Wait** (`W`, free) is a move; a mark or a note is not. The routes never share a
-cell, so two creatures never meet and a beaten creature lies where nobody else walks, still
-counted in the numbers as it is everywhere. The numbers are the sums round each cell as the board
-stands this move, worked out again after every step (`src/engine/patrol.ts`).
+down, t left, t up, home after 4t moves. Every open (a cascade and a fight count once) and every
+**Wait** (`W`, a second on the clock) is a move; a mark or a note is not. There is no Sweep:
+keeping up with numbers that change every move is the ladder, and a button that reads them would
+play it for you (decision 0063). The routes never share a cell, so two creatures never meet and a
+beaten creature lies where nobody else walks, still counted in the numbers as it is everywhere.
+The numbers are the sums round each cell as the board stands this move, worked out again after
+every step (`src/engine/patrol.ts`).
 
 A creature that walks onto ground you have uncovered covers the cell again while it stands there
 (`occupied`), drawn as a **?**: every rule and proof reads it as unknown, and clicking it fights
@@ -175,8 +177,8 @@ it. When it walks on, the cell is uncovered ground again, with anything written 
 A **mark is a route**: a mark of tier t draws a tier-t creature's whole route with the marked
 cell as its top-left corner, on every covered cell of it, so the mark guard covers everywhere that
 creature can step; the same mark again takes it off, and where routes cross a cell shows the
-higher. Because a route is not a claim about where a creature stands, Sweep reads no marks here,
-and the "Sweep + marks" button is not offered. Notes are ordinary.
+higher. A route is not a claim about where a creature stands, so nothing that proves a cell safe
+reads marks here (`Game.marksAreClaims`). Notes are ordinary.
 
 The price is density. Every creature holds its route for good, four cells a tier, and NORMAL's tier
 mix averages about nine route cells a creature, so NORMAL's 21 to 27% would need more route than
