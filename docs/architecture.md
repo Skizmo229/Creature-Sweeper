@@ -64,7 +64,8 @@ src/ui/         the prototype
   game/           the game screen: screen.ts (furniture), hud.ts (filling it in), mode.ts
                   (what a click will do: tier, pencil, spell), actions.ts (what the player's
                   clicks and keys do), hint.ts, sound.ts, flash.ts (the shake, the rim and the
-                  level-up glow), clock.ts, outcome.ts (the clear, loss and run overlays), tutor.ts
+                  level-up glow), clock.ts, ending.ts (how a board ends: the record, the overlay, the clear effect), outcome.ts
+                  (the clear, loss and run overlays), tutor.ts
                   (the tutor's face: the lesson showing, the hint line's words, the hints asked)
   board/          the canvas: view.ts (state, fit, zoom, render order), geometry.ts,
                   digits.ts, paint.ts (cell painters), overlays.ts (silhouette, seams, bonds,

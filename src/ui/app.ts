@@ -5,7 +5,7 @@
  * every rule.
  */
 
-import { boardConfig, boardRow, maxBoard } from '../engine/config.js';
+import { boardConfig, boardRow } from '../engine/config.js';
 import { Game } from '../engine/game.js';
 import { randomSeed } from '../engine/rng.js';
 import { FullRun } from '../engine/run.js';
@@ -14,11 +14,11 @@ import type { GameEvent } from '../engine/types.js';
 import { BoardView } from './board/view.js';
 import { boardDisplayFor, dressDocument, wearInterfaceFont } from './dress.js';
 import { BoardClock } from './game/clock.js';
+import { BoardEnding } from './game/ending.js';
 import { gatePalette, syncClock, syncGameScreen } from './game/hud.js';
 import { EntryMode } from './game/mode.js';
 import { BoardActions } from './game/actions.js';
 import { flashStage } from './game/flash.js';
-import { buildBoardOutcome, buildRunOutcome } from './game/outcome.js';
 import { type GameScreenElements, buildGameScreen } from './game/screen.js';
 import { soundFor } from './game/sound.js';
 import { ladders } from './ladders.js';
@@ -31,7 +31,6 @@ import { Settings } from './settings.js';
 import { buildSettingsScreen } from './settingsscreen/screen.js';
 import { Sfx } from './sfx.js';
 import { Teaching } from './teaching.js';
-import { playVictory } from './victory/play.js';
 
 export class App {
   private readonly root: HTMLElement;
@@ -74,10 +73,8 @@ export class App {
   private readonly modal: Modal;
   /** The tutor, the rules card and the field guide. */
   private readonly teaching: Teaching;
-  /** Stops a running board-clear effect; a screen rebuild must call it. */
-  private stopVictory: (() => void) | null = null;
-  /** The blow that ended a lost board, kept for the overlay. */
-  private fatalBattle: { tier: number; damage: number } | null = null;
+  /** How a board ends: the record, the overlay and the clear effect (game/ending.ts). */
+  private readonly ending: BoardEnding;
 
   // ------------------------------------------------------------ dev handles
 
@@ -117,6 +114,29 @@ export class App {
       play: (game) => this.startLesson(game),
       refresh: () => this.refresh(),
       ladders: () => this.showTypes(),
+    });
+    this.ending = new BoardEnding({
+      root,
+      progress: this.progress,
+      settings: this.settings,
+      sfx: this.sfx,
+      clock: this.clock,
+      tutor: this.teaching.tutor,
+      game: () => this.game!,
+      run: () => this.run,
+      typeId: () => this.typeId,
+      boardIndex: () => this.boardIndex,
+      seed: () => this.seed,
+      view: () => this.view,
+      stage: () => this.els?.stage ?? null,
+      startBoard: (typeId, board, seed) => this.startBoard(typeId, board, seed),
+      startFullRun: (typeId, seed) => this.startFullRun(typeId, seed),
+      advanceRun: () => this.advanceRun(),
+      leaveGame: () => this.leaveGame(),
+      showBoards: (typeId) => {
+        this.run = null;
+        this.showBoards(typeId);
+      },
     });
     window.addEventListener('keydown', (e) => this.onKey(e));
     window.addEventListener('resize', () => this.view?.fit());
@@ -164,7 +184,7 @@ export class App {
   /** Every screen begins here: nothing from the last one may survive. */
   private clearScreen(): void {
     this.clock.stop();
-    this.endVictory();
+    this.ending.endVictory();
     this.modal.close();
     this.root.replaceChildren();
     this.view = null;
@@ -344,7 +364,7 @@ export class App {
   /** Per-board input state. Never touches the clock; a run outlives a board. */
   private resetBoardState(): void {
     this.mode.reset();
-    this.fatalBattle = null;
+    this.ending.resetBoard();
     this.teaching.tutor.resetBoard();
   }
 
@@ -457,16 +477,7 @@ export class App {
       if (sound) this.sfx.play(sound);
     }
 
-    // Keep the blow that ended it, before the events go out of scope. The last costly fight in
-    // the batch is the fatal one: a click resolves at most one fight, and a sweep stops the
-    // moment HP runs out.
-    if (game.status === 'lost') {
-      const fights = events.filter((ev) => ev.type === 'battle' && ev.damage > 0);
-      const last = fights[fights.length - 1];
-      if (last && last.type === 'battle') {
-        this.fatalBattle = { tier: last.tier, damage: last.damage };
-      }
-    }
+    this.ending.noteFatal(game, events);
 
     this.teaching.moved();
     this.refresh();
@@ -519,132 +530,10 @@ export class App {
     this.clock.start(() => this.updateClock());
   }
 
-  /** Cancel a board-clear effect still in flight; a screen rebuild must call this. */
-  private endVictory(): void {
-    this.stopVictory?.();
-    this.stopVictory = null;
-  }
-
   // ----------------------------------------------------------------- result
 
+  /** The board on screen has been won or lost (game/ending.ts). */
   private finish(): void {
-    if (this.run) {
-      this.finishRunBoard();
-      return;
-    }
-    const game = this.game!;
-    this.clock.freeze();
-    const seconds = this.clock.frozenSeconds!;
-    const won = game.status === 'won';
-    const perfect = won && game.hp === game.maxHp;
-    const type = ladders.find((t) => t.id === this.typeId)!;
-    const recorded = isAtLeastAsHard(game.settings);
-    // Read before the clear is written down, after which every clear would look like a repeat.
-    const firstClear = won && !this.progress.boardRecord(this.typeId, this.boardIndex).cleared;
-    let unlocked: number | null = null;
-    // A board cleared on settings easier than the tuned ones is not written down at all.
-    if (won && recorded) {
-      const result = this.progress.recordClear(ladders, this.typeId, this.boardIndex, {
-        perfect,
-        seconds,
-        hinted: this.teaching.tutor.hints > 0,
-      });
-      unlocked = result.unlockedBoard;
-    }
-    this.sfx.play(won ? 'win' : 'lose');
-
-    const overlay = buildBoardOutcome({
-      game,
-      typeId: this.typeId,
-      typeName: type.name,
-      boardIndex: this.boardIndex,
-      seed: this.seed,
-      won,
-      perfect,
-      // The wait is for watching the clear effect, so with the effect off there is none.
-      held: firstClear && this.settings.victoryEffect(this.typeId) !== null,
-      timeExpired: this.clock.timeExpired,
-      seconds,
-      fatal: this.fatalBattle,
-      recorded,
-      hints: this.teaching.tutor.hints,
-      unlocked,
-      ladderLength: type.boards.length,
-      lastBoard: maxBoard(ladders, this.typeId),
-      gameplay: game.settings,
-      onNext: () => {
-        const to = this.boardIndex + 1;
-        if (to > type.boards.length) this.progress.setScalingBoard(this.typeId, to);
-        this.startBoard(this.typeId, to);
-      },
-      onReplay: () => this.startBoard(this.typeId, this.boardIndex),
-      onSame: () => this.startBoard(this.typeId, this.boardIndex, this.seed),
-      onList: () => this.showBoards(this.typeId),
-    });
-    this.root.querySelector('.screen')?.append(overlay);
-    this.view?.render();
-    if (won) this.celebrate();
-  }
-
-  private finishRunBoard(): void {
-    const run = this.run!;
-    const game = this.game!;
-    const type = ladders.find((t) => t.id === this.typeId)!;
-    const midRun = game.status === 'won' && !run.isLastBoard;
-    const recorded = isAtLeastAsHard(game.settings);
-
-    if (!midRun) {
-      this.clock.freeze();
-      if (recorded) {
-        this.progress.recordRun(this.typeId, {
-          completed: run.status === 'won',
-          reachedBoard: this.boardIndex,
-          hp: game.hp,
-          seconds: this.clock.frozenSeconds!,
-          hinted: this.teaching.tutor.runHints > 0,
-        });
-      }
-    }
-    this.sfx.play(game.status === 'lost' ? 'lose' : 'win');
-
-    const overlay = buildRunOutcome({
-      game,
-      run,
-      typeName: type.name,
-      boardIndex: this.boardIndex,
-      seconds: this.clock.elapsedSeconds(),
-      recorded,
-      gameplay: game.settings,
-      onContinue: () => this.advanceRun(),
-      onNewRun: () => this.startFullRun(this.typeId),
-      onSameRun: () => this.startFullRun(this.typeId, run.seed),
-      onAbandon: () => this.leaveGame(),
-      onList: () => {
-        this.run = null;
-        this.showBoards(this.typeId);
-      },
-    });
-    this.root.querySelector('.screen')?.append(overlay);
-    this.view?.render();
-    if (game.status === 'won') this.celebrate();
-  }
-
-  /**
-   * Fire the board-clear effect over the stage, not the overlay: the effect belongs to the board
-   * that was just cleared. Drawn on its own layer so the board's renderer stays turn-based.
-   */
-  private celebrate(): void {
-    const effect = this.settings.victoryEffect(this.typeId);
-    if (!effect) return;
-    const stage = this.els?.stage;
-    if (!stage) return;
-    this.endVictory();
-    this.stopVictory = playVictory(
-      stage,
-      effect,
-      this.settings.themeFor(this.typeId),
-      this.settings.tierColors(this.typeId),
-      this.view?.victorySource(),
-    );
+    this.ending.finish();
   }
 }
