@@ -136,6 +136,17 @@ export class BoardActions {
     this.h.apply(this.h.move({ kind: 'wait' }));
   }
 
+  /** Zoom in or out a step, or fit the board to the stage; false for any other key. */
+  private zoomKey(e: KeyboardEvent, key: string): boolean {
+    const view = this.h.view();
+    if (e.key === '+' || e.key === '=') view?.nudgeZoom(2);
+    else if (e.key === '-' || e.key === '_') view?.nudgeZoom(-2);
+    else if (key === 'f') view?.fit();
+    else return false;
+    e.preventDefault();
+    return true;
+  }
+
   /** A key pressed while the board is on screen; `App` sends nothing else here. */
   onKey(e: KeyboardEvent): void {
     const game = this.h.game();
@@ -184,21 +195,7 @@ export class BoardActions {
       this.h.next();
       return;
     }
-    if (e.key === '+' || e.key === '=') {
-      e.preventDefault();
-      this.h.view()?.nudgeZoom(2);
-      return;
-    }
-    if (e.key === '-' || e.key === '_') {
-      e.preventDefault();
-      this.h.view()?.nudgeZoom(-2);
-      return;
-    }
-    if (key === 'f') {
-      e.preventDefault();
-      this.h.view()?.fit();
-      return;
-    }
+    if (this.zoomKey(e, key)) return;
     // A spell's own letter casts it, checked after the board's own keys so a spell can never
     // shadow Sweep or zoom.
     const spell = game.spells.find((id) => spellKey(id) === key);
