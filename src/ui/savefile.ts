@@ -38,14 +38,14 @@ interface Envelope {
   settings: unknown;
 }
 
-function toBase64(text: string): string {
+export function toBase64(text: string): string {
   const bytes = new TextEncoder().encode(text);
   let bin = '';
   for (const b of bytes) bin += String.fromCharCode(b);
   return btoa(bin);
 }
 
-function fromBase64(code: string): string {
+export function fromBase64(code: string): string {
   const bin = atob(code);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);

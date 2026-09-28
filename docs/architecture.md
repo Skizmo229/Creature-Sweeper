@@ -65,6 +65,7 @@ src/ui/         the prototype
                   (what a click will do: tier, pencil, spell), actions.ts (what the player's
                   clicks and keys do), hint.ts, sound.ts, flash.ts (the shake, the rim and the
                   level-up glow), clock.ts, keeper.ts (the board kept as a paused game, move by move, and taken up again),
+                  recorder.ts (what the board is costing, tallied move by move: opens, guesses, HP),
                   ending.ts (how a board ends: the record, the overlay, the clear effect), outcome.ts
                   (the clear, loss and run overlays), tutor.ts
                   (the tutor's face: the lesson showing, the hint line's words, the hints asked)
@@ -72,6 +73,8 @@ src/ui/         the prototype
                   digits.ts, paint.ts (cell painters), overlays.ts (silhouette, seams, bonds,
                   highlight), input.ts (pointer, wheel, pinch)
   settings.ts     the presentation settings and the store
+  telemetry.ts    the play statistics: what each board cost, their code, and their reading (DOM-free)
+  telemetrystore.ts  the play statistics in storage, their own key, never in the save code
   settingsscreen/  the settings form: context, widgets, render, look, effects, gameplay, screen;
                   symbols.ts is the custom creature icon's window of symbols, colormixer.ts the
                   sliders that mix a colour from red, green and blue, customcolor.ts the custom

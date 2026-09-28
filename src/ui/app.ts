@@ -19,6 +19,7 @@ import { BoardKeeper, takeUp } from './game/keeper.js';
 import { gatePalette, syncClock, syncGameScreen } from './game/hud.js';
 import { EntryMode } from './game/mode.js';
 import { BoardActions } from './game/actions.js';
+import { BoardRecorder } from './game/recorder.js';
 import { flashStage } from './game/flash.js';
 import { type GameScreenElements, buildGameScreen } from './game/screen.js';
 import { soundFor } from './game/sound.js';
@@ -33,12 +34,15 @@ import { Settings } from './settings.js';
 import { buildSettingsScreen } from './settingsscreen/screen.js';
 import { Sfx } from './sfx.js';
 import { Teaching } from './teaching.js';
+import { TelemetryStore } from './telemetrystore.js';
 
 export class App {
   private readonly root: HTMLElement;
   private readonly progress = Progress.load();
   readonly settings = Settings.load();
   private readonly sfx = new Sfx();
+  /** What each board cost the player, on this device (docs/human-tuning-plan.md, 4.8). */
+  private readonly telemetry = TelemetryStore.load();
 
   private game: Game | null = null;
   private view: BoardView | null = null;
@@ -60,7 +64,7 @@ export class App {
     view: () => this.view,
     mode: this.mode,
     sfx: this.sfx,
-    move: (move) => this.keeper.move(move),
+    move: (move) => this.recorder.move(move),
     apply: (events) => this.apply(events),
     refresh: () => this.refresh(),
     leaveGame: () => this.leaveGame(),
@@ -73,6 +77,8 @@ export class App {
   private readonly clock = new BoardClock();
   /** The board on screen kept as a paused game, move by move (decision 0057). */
   private readonly keeper: BoardKeeper;
+  /** What the board on screen is costing, tallied move by move (game/recorder.ts). */
+  private readonly recorder: BoardRecorder;
   /** Where the settings screen goes back to while it is showing; Escape takes the same route. */
   private settingsBack: (() => void) | null = null;
   /** The modal overlay over the screen: a question, the how-to, the save backup, the guide. */
@@ -148,6 +154,15 @@ export class App {
       boardIndex: () => this.boardIndex,
       clock: this.clock,
       tutor: this.teaching.tutor,
+    });
+    this.recorder = new BoardRecorder({
+      game: () => this.game,
+      typeId: () => this.typeId,
+      boardIndex: () => this.boardIndex,
+      clock: this.clock,
+      tutor: this.teaching.tutor,
+      telemetry: this.telemetry,
+      play: (move) => this.keeper.move(move),
     });
     window.addEventListener('keydown', (e) => this.onKey(e));
     // The clock is kept with the game, so it is written down as the page goes away.
@@ -240,6 +255,7 @@ export class App {
           this.modal.eraseProgress(() => {
             this.progress.reset();
             pausedGames.clearAll();
+            this.telemetry.reset();
             this.showTypes();
           }),
         setUnlockAll: (on) => {
@@ -325,6 +341,7 @@ export class App {
     // first click has been made and the clock is already the player's problem.
     this.game = Game.create(cfg, seed, { settings: this.settings.gameplay });
     this.keeper.begin();
+    this.recorder.begin();
     this.clock.begin();
     this.clock.arm(
       this.progress.boardRecord(typeId, board).bestTime,
@@ -353,6 +370,7 @@ export class App {
     // `FullRun.start` has already built board 1 and dealt its opening.
     this.clock.begin();
     this.game = this.run.game;
+    this.recorder.begin();
     // A run races the run's own best, not board 1's.
     this.clock.arm(this.progress.runRecord(typeId).bestTime, this.settings.gameplay.timeAttack);
     this.buildGameScreen();
@@ -371,6 +389,7 @@ export class App {
     this.game = run.game;
     this.resetBoardState();
     this.keeper.nextBoard();
+    this.recorder.begin();
     this.buildGameScreen();
     this.startClock();
   }
@@ -419,6 +438,7 @@ export class App {
     this.clock.timeExpired = false;
     this.keeper.begin(moves);
     this.keeper.save();
+    this.recorder.begin();
     if (run?.boardWon) {
       this.advanceRun();
     } else {
@@ -529,6 +549,7 @@ export class App {
               seconds: this.clock.elapsedSeconds(),
             });
           }
+          this.recorder.end('abandoned');
           this.keeper.end();
           this.showBoards(this.typeId);
         },
@@ -616,6 +637,7 @@ export class App {
 
   /** The board on screen has been won or lost (game/ending.ts). */
   private finish(): void {
+    this.recorder.end(this.game!.status === 'won' ? 'cleared' : 'lost');
     // A game that is over is not kept; a run waiting on Continue still is.
     if (this.run?.status !== 'playing') this.keeper.end();
     this.ending.finish();

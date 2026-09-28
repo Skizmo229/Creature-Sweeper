@@ -296,13 +296,15 @@ technique id is. Three routes into the game, in the order they are worth doing:
 3. **Lesson boards**, later: tiny boards built to need one trick, each doubling as the fixture
    that proves the graded player needs exactly that technique to clear it.
 
-Telemetry: nothing is recorded today beyond clears, best times and Full Run attempts
-(`src/ui/progress.ts`). A separate store (its own key and version, never inside the `CS1:` code,
+Telemetry, built 27 September 2026 as the play statistics (`src/ui/telemetry.ts`, the store in
+`telemetrystore.ts`, the tally in `game/recorder.ts`, decision 0060): a separate store (its own key and version, never inside the `CS1:` code,
 which is in the wild) recording per board: attempts, HP lost, cells opened by hand, cells opened
 outside `safeCells({ useMarks: false })` at that moment (the honest definition of a guess a
 player made), sweeps, casts, deaths and the tier that dealt them, elapsed time, and the dials
-the board was played under. Local only, exported on request as a code the owner can paste. This
-is what calibrates the technique costs and the retune targets once the game has been played.
+the board was played under (tuned and modified dials kept apart). Local only, exported on request
+as a code the owner can paste and `npm run telemetry` prints as a table, one row a board, beside
+which `sim:human`'s row for the same board says whether a person plays like the graded player.
+This is what calibrates the technique costs and the retune targets once the game has been played.
 
 ## 9. The steps, and where they stand
 
@@ -315,7 +317,7 @@ is what calibrates the technique costs and the retune targets once the game has 
 | 4.5 | Decide the target per ladder with the owner | decided 26 September 2026, as proposed in section 7 |
 | 4.6 | Retune, one commit per ladder, decision record each | EXTREME and ORACLE done 26 September 2026; HUGE x EXTREME measured on target and left as is; BLIND and HUGE x BLIND done 26 September 2026; the plain ladders measured and left as they are, since only the lock reaches the target (9.1); the shapes and the placement ladders measured 27 September 2026 and left for the same reason (9.1, decision 0058). Every ladder has now been measured against its target |
 | 4.7 | Per-ladder tips and the tricks page | open |
-| 4.8 | Telemetry store and export | open |
+| 4.8 | Telemetry store and export | done 27 September 2026 (decision 0060): the play statistics, kept per board on the device, exported from the backup screen as a `CST1:` code and read by `npm run telemetry` |
 | 4.9 | Spending policies and attention in the graded player | spells and attention done 26 September 2026; deferral open |
 | 4.10 | Re-measure against telemetry; revise the costs | after release |
 

@@ -24,6 +24,7 @@
     "sim:forced": "tsx src/sim/cli/forced.ts",
     "sim:lethal": "tsx src/sim/cli/lethal.ts",
     "sim:human": "tsx src/sim/cli/human.ts",
+    "telemetry": "tsx src/sim/cli/telemetry.ts",
     "sim:golden": "node scripts/golden.mjs",
     "sim:golden:check": "node scripts/golden.mjs --check",
     "format": "prettier --write .",
