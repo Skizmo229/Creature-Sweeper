@@ -111,6 +111,12 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   the level says what the fight would cost), except in lesson 8, where guessing is the lesson. `H`
   and `G` work as on any board. A lesson's end is written down (the save's `lessons`) and offers
   the next; nothing a lesson does touches a ladder's record.
+- Pausing (decision 0057): a Pause button in the HUD and `P`; not on a school lesson. Back (and
+  Escape) asks Pause, Abandon or Keep playing on a game with a move in it, or any run; a board
+  with no move made is left without a question. A tile with a game paused on it is dashed in the
+  ladder's colour and its badge says `Paused · HP h/m` (a run adds its board); the scaling tile's
+  button says Resume. The ladder list's card counts the ladder's paused games. A game an update
+  has changed is refused with CANNOT RESUME, which offers to start the board again.
 - A ladder whose rules add a trick of its own (the guide's ladder-only entries, asked of the rules)
   shows a card in the rules card's style the first time its boards are opened: the catalogue's
   note on it and those tricks, in the catalogue's words, with a way into the guide. Once only (the

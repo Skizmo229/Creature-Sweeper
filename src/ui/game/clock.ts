@@ -32,10 +32,24 @@ export class BoardClock {
     this.timeLimit = timeAttack && best !== null && best > 0 ? best : null;
   }
 
-  elapsedSeconds(): number {
-    if (this.frozenSeconds !== null) return this.frozenSeconds;
+  /**
+   * A paused game taken up again: the clock carries on from where it stood, to the millisecond,
+   * so pausing never rounds a second off a best time.
+   */
+  resumeAt(elapsedMs: number): void {
+    this.startedAt = performance.now() - elapsedMs;
+    this.frozenSeconds = null;
+  }
+
+  /** The time on the clock exactly, for keeping a paused game. */
+  elapsedMs(): number {
+    if (this.frozenSeconds !== null) return this.frozenSeconds * 1000;
     if (this.startedAt === null) return 0;
-    return Math.min(9999, Math.floor((performance.now() - this.startedAt) / 1000));
+    return performance.now() - this.startedAt;
+  }
+
+  elapsedSeconds(): number {
+    return Math.min(9999, Math.floor(this.elapsedMs() / 1000));
   }
 
   /**

@@ -117,6 +117,41 @@ export class FullRun {
   }
 
   /**
+   * Take a paused run up again (decision 0057): the boards already cleared, as their legs, and the
+   * next board dealt fresh from its seed with the HP the last leg carried out. The cleared boards
+   * need no replaying, because a leg is everything a later board inherits from them. Throws on
+   * legs this run could not have produced.
+   */
+  static resume(
+    ladders: Ladders,
+    typeId: string,
+    seed: number,
+    legs: readonly FullRunLeg[],
+    options: FullRunOptions = {},
+  ): FullRun {
+    const run = new FullRun(ladders, typeId, seed, options);
+    legs.forEach((leg, i) => {
+      const healed = Math.min(run.healPerBoard, run.maxHp - leg.hpAtClear);
+      const fits =
+        leg.board === i + 1 &&
+        leg.board < run.boardCount &&
+        Number.isInteger(leg.hpAtClear) &&
+        leg.hpAtClear >= 1 &&
+        leg.hpAtClear <= run.maxHp &&
+        leg.healed === healed &&
+        leg.hpAfter === leg.hpAtClear + healed;
+      if (!fits) throw new Error(`leg ${i + 1} of a ${typeId} run is not one it could have had`);
+      run.legs.push({ ...leg });
+    });
+    const last = legs[legs.length - 1];
+    if (last) {
+      run.boardIndex = last.board + 1;
+      run.game = run.buildBoard(run.boardIndex, last.hpAfter);
+    }
+    return run;
+  }
+
+  /**
    * The seed for a board of this run.
    *
    * Derived rather than stored so the whole run is a pure function of one

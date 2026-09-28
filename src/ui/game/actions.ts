@@ -5,6 +5,7 @@
  */
 
 import type { Game } from '../../engine/game.js';
+import type { Move } from '../../engine/replay.js';
 import { SPELLS, type SpellId, spellKey } from '../../engine/spells.js';
 import type { Cell, GameEvent } from '../../engine/types.js';
 import type { BoardView } from '../board/view.js';
@@ -17,9 +18,13 @@ export interface BoardActionsHost {
   view(): BoardView | null;
   readonly mode: EntryMode;
   readonly sfx: Sfx;
+  /** Make a move on the board on screen: the one door every action of the player's goes through. */
+  move(move: Move): GameEvent[];
   apply(events: GameEvent[]): void;
   refresh(): void;
   leaveGame(): void;
+  /** Pause the game: it waits on the board list, its clock stopped. */
+  pause(): void;
   /** The tutor: point at the next provable move, or the next lesson if one is already showing. */
   explain(): void;
   /** The field guide, at what the tutor is showing, if anything. */
@@ -40,18 +45,22 @@ export class BoardActions {
     if (this.h.mode.pendingSpell) {
       const id = this.h.mode.pendingSpell;
       this.h.mode.cancelSpell();
-      this.h.apply(game.cast(id, x, y));
+      this.h.apply(this.h.move({ kind: 'cast', id, x, y }));
       return;
     }
     if (this.h.mode.markMode >= 0) {
       const tier = this.h.mode.markMode;
-      this.h.apply(this.h.mode.notesMode ? game.toggleNote(x, y, tier) : game.setMark(x, y, tier));
+      this.h.apply(
+        this.h.move(
+          this.h.mode.notesMode ? { kind: 'note', x, y, tier } : { kind: 'mark', x, y, mark: tier },
+        ),
+      );
       return;
     }
     // In pencil mode a click annotates or does nothing; it never opens (decision 0008).
     if (this.h.mode.notesMode) return;
     if (this.h.refuse(x, y)) return;
-    this.h.apply(game.open(x, y));
+    this.h.apply(this.h.move({ kind: 'open', x, y }));
   }
 
   /** Untargeted spells fire at once; targeted ones arm and wait for a cell. */
@@ -60,7 +69,7 @@ export class BoardActions {
     if (!game || game.status !== 'playing' || !game.canCast(id)) return;
     if (!SPELLS[id].targeted) {
       this.h.mode.cancelSpell();
-      this.h.apply(game.cast(id));
+      this.h.apply(this.h.move({ kind: 'cast', id }));
       return;
     }
     this.h.mode.armSpell(id);
@@ -73,7 +82,7 @@ export class BoardActions {
     const cell = game.cellAt(x, y);
     if (!cell || cell.open) return;
     const next = cell.mark >= game.config.tiers ? 0 : cell.mark + 1;
-    this.h.apply(game.setMark(x, y, next === 0 ? cell.mark : next));
+    this.h.apply(this.h.move({ kind: 'mark', x, y, mark: next === 0 ? cell.mark : next }));
   }
 
   pickTier(tier: number): void {
@@ -95,7 +104,7 @@ export class BoardActions {
       this.h.sfx.play('blocked');
       return;
     }
-    const events = game.sweep({ useMarks });
+    const events = this.h.move({ kind: 'sweep', useMarks });
     if (events.length > 0) this.h.sfx.play('sweep');
     this.h.apply(events);
   }
@@ -104,7 +113,7 @@ export class BoardActions {
   doWait(): void {
     const game = this.h.game();
     if (!game || game.status !== 'playing' || !game.patrols) return;
-    this.h.apply(game.wait());
+    this.h.apply(this.h.move({ kind: 'wait' }));
   }
 
   /** A key pressed while the board is on screen; `App` sends nothing else here. */
@@ -133,6 +142,11 @@ export class BoardActions {
     if (key === 'w' && game.patrols) {
       e.preventDefault();
       this.doWait();
+      return;
+    }
+    if (key === 'p') {
+      e.preventDefault();
+      this.h.pause();
       return;
     }
     if (key === 'h') {
@@ -192,8 +206,9 @@ export class BoardActions {
         // The Entry mode decides, exactly as it does for a click, and Shift inverts it for this
         // one keystroke.
         const pencil = this.h.mode.notesMode !== e.shiftKey;
+        const { x, y } = cell;
         this.h.apply(
-          pencil ? game.toggleNote(cell.x, cell.y, tier) : game.setMark(cell.x, cell.y, tier),
+          this.h.move(pencil ? { kind: 'note', x, y, tier } : { kind: 'mark', x, y, mark: tier }),
         );
       } else {
         if (e.shiftKey) this.h.mode.notesMode = true;

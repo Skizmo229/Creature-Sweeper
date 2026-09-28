@@ -13,6 +13,8 @@ export interface AskOptions {
   confirmLabel: string;
   cancelLabel: string;
   onConfirm: () => void;
+  /** A third answer between the two, such as abandoning where the question is whether to pause. */
+  alternate?: { label: string; onChoose: () => void };
 }
 
 /** Build the question. `close` removes it; the caller appends it and focuses `focus`. */
@@ -33,7 +35,17 @@ export function buildAsk(
   });
   const no = el('button', 'ghost', opts.cancelLabel);
   no.addEventListener('click', close);
-  row.append(yes, no);
+  row.append(yes);
+  if (opts.alternate) {
+    const { label, onChoose } = opts.alternate;
+    const other = el('button', 'ghost', label);
+    other.addEventListener('click', () => {
+      close();
+      onChoose();
+    });
+    row.append(other);
+  }
+  row.append(no);
   card.append(row);
   overlay.append(card);
   // Cancel is the safe answer, so it is what Enter and a stray click land on; confirming an

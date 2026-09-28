@@ -45,6 +45,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   fight.ts        a fight: Exercise's borrowed level, the damage, the kill's EXP, won or lost
   game.ts         the state machine: open, mark, note, sweep, cast, forfeit
   run.ts          Full Run: ten boards, one HP pool
+  replay.ts       a board as the moves made on it: replaying them, and a board's fingerprint
   settings.ts     the gameplay dials, their defaults and directions
   config.ts       reads ladders.json rows into BoardConfig; has each placement rule check its row
 src/ui/         the prototype
@@ -63,7 +64,9 @@ src/ui/         the prototype
   game/           the game screen: screen.ts (furniture), hud.ts (filling it in), mode.ts
                   (what a click will do: tier, pencil, spell), actions.ts (what the player's
                   clicks and keys do), hint.ts, sound.ts, flash.ts (the shake, the rim and the
-                  level-up glow), clock.ts, outcome.ts (the clear, loss and run overlays), tutor.ts
+                  level-up glow), clock.ts, keeper.ts (the board kept as a paused game, move by move, and taken up again),
+                  ending.ts (how a board ends: the record, the overlay, the clear effect), outcome.ts
+                  (the clear, loss and run overlays), tutor.ts
                   (the tutor's face: the lesson showing, the hint line's words, the hints asked)
   board/          the canvas: view.ts (state, fit, zoom, render order), geometry.ts,
                   digits.ts, paint.ts (cell painters), overlays.ts (silhouette, seams, bonds,
@@ -88,6 +91,7 @@ src/ui/         the prototype
   typefaces.ts    the bundled faces, and the kind of face each is
   progress.ts     the save: clears, best times, unlocks
   savefile.ts     the CS1: backup code
+  paused.ts       the paused games: one per board, one run per ladder, each its own storage key
   sfx.ts          synthesised sound packs
   victory/        the board-clear effects: play.ts runs one, stage.ts is what they share,
                   ambient.ts paints over the board, icons.ts animates its creatures

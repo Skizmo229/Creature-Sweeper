@@ -131,6 +131,11 @@ average step. Unlocked by clearing board 10.
 **Full Run.** All ten boards of a type back to back on one HP pool with a half-pool heal between
 boards; level, EXP and mana reset each board. `src/engine/run.ts`.
 
+**Paused game.** A board, or a Full Run, left to come back to: its seed, its dials and the moves
+made on it, replayed on resuming (`src/engine/replay.ts`, `src/ui/paused.ts`). Kept after every
+move and deleted when the game ends, so never a checkpoint. One per board, one run per ladder.
+Decision 0057.
+
 **Category.** The menu column a ladder is filed under: Normal (the original game's seven modes),
 Shape, Magic or Special. `CATEGORIES` in `design/ladders.py`, `category` in the data.
 
