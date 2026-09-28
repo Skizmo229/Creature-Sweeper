@@ -19,6 +19,6 @@ take the hint count rather than a flag.
 ## Consequences
 The best time is still the tutor's only cost: a hint count is shown only where there is no time
 to lose, and the first clear without hints replaces it. The field is optional and absent in older
-saves, which read as never cleared with hints. The clear card's line is unchanged, since a hinted
-clear still sets no best time. Nothing reaches the engine or the simulators; the golden outputs
+saves, which read as never cleared with hints. The clear card's line is cut to "Cleared with 2
+hints.": the tile now says what the clear left behind. Nothing reaches the engine or the simulators; the golden outputs
 are byte-identical.
