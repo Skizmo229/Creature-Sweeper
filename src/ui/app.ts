@@ -163,7 +163,12 @@ export class App {
       boardIndex: () => this.boardIndex,
       clock: this.clock,
       tutor: this.teaching.tutor,
-      telemetry: this.telemetry,
+      // Written down only while the player keeps statistics; the store itself stays.
+      telemetry: {
+        record: (...attempt) => {
+          if (this.settings.presentation.keepStats) this.telemetry.record(...attempt);
+        },
+      },
       play: (move) => this.keeper.move(move),
     });
     window.addEventListener('keydown', (e) => this.onKey(e));

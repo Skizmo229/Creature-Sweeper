@@ -314,6 +314,12 @@ export interface PresentationSettings {
    */
   readonly backPauses: boolean;
   /**
+   * Whether the play statistics are kept (decision 0060): what each board cost, on this device,
+   * for the backup screen's code. Off, nothing more is written down, and what was kept stays
+   * until Reset progress clears it.
+   */
+  readonly keepStats: boolean;
+  /**
    * Whether the line under the board says what a click does right now. Off, the line is kept for
    * the tutor and a lesson, which speak there, and hidden otherwise: once the controls are known
    * it is the busiest line on the screen.
@@ -396,6 +402,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   rightClick: 'cycleUp',
   longPress: DEFAULT_LONG_PRESS,
   backPauses: false,
+  keepStats: true,
   hintLine: true,
   maxZoom: DEFAULT_MAX_ZOOM,
   startAtCeiling: false,
@@ -517,6 +524,7 @@ export function readPresentation(raw: unknown): PresentationSettings {
     rightClick: oneOf(p.rightClick, RIGHT_CLICKS, 'cycleUp'),
     longPress: Math.round(num(p.longPress, MIN_LONG_PRESS, MAX_LONG_PRESS, DEFAULT_LONG_PRESS)),
     backPauses: typeof p.backPauses === 'boolean' ? p.backPauses : false,
+    keepStats: typeof p.keepStats === 'boolean' ? p.keepStats : true,
     hintLine: typeof p.hintLine === 'boolean' ? p.hintLine : true,
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
     startAtCeiling: typeof p.startAtCeiling === 'boolean' ? p.startAtCeiling : false,

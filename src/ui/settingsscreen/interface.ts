@@ -59,6 +59,13 @@ export function interfaceSection(ctx: ScreenContext): void {
   );
   row(
     host,
+    'Keep play statistics',
+    toggle(ctx.p.keepStats, (v) => ctx.settings.setPresentation({ keepStats: v })),
+    'What each board cost you, kept on this device for the code on the backup screen. Off, ' +
+      'nothing more is written down; what was kept stays until Reset progress.',
+  );
+  row(
+    host,
     'Hint line',
     toggle(ctx.p.hintLine, (v) => ctx.settings.setPresentation({ hintLine: v })),
     'The line under the board saying what a click does now and which keys do what. The tutor ' +
