@@ -95,17 +95,25 @@ function constraintsOf(game: Game): Constraint[] {
  * nowhere to go but the one number it was cast on, and calling a spell weak
  * because the harness cannot use it would be measuring the harness.
  *
- * Only cells within two steps of each other can share covered neighbours, so
- * that is as far as the pairing looks.
+ * A number can only sit inside another that shares its covered cells, so the
+ * pairing asks the cells rather than the coordinates: on a wrapped board two
+ * numbers either side of the seam share cells too (issue #9).
  */
 function subtractPairs(constraints: Constraint[]): Constraint[] {
   const derived: Constraint[] = [];
+  const over = new Map<Cell, Constraint[]>();
+  for (const c of constraints) {
+    for (const cell of c.unknown) {
+      const list = over.get(cell);
+      if (list) list.push(c);
+      else over.set(cell, [c]);
+    }
+  }
 
   for (const a of constraints) {
     if (a.unknown.length > 6) continue;
-    for (const b of constraints) {
+    for (const b of over.get(a.unknown[0]!)!) {
       if (a === b) continue;
-      if (Math.abs(a.cell.x - b.cell.x) > 2 || Math.abs(a.cell.y - b.cell.y) > 2) continue;
       if (a.unknown.length >= b.unknown.length) continue;
       if (!a.unknown.every((c) => b.unknown.includes(c))) continue;
 
@@ -503,9 +511,9 @@ export function augurTarget(game: Game, constraints: Constraint[], guess: Cell):
  * upper bound on what perfect aiming could be worth, so a weak result cannot be blamed on the aim.
  */
 export function augurOracle(game: Game, guess: Cell): Cell | null {
+  const near = twoSteps(game, guess);
   for (const cell of game.grid.flat()) {
-    if (!cell.present || !cell.open || cell.augur !== null) continue;
-    if (Math.abs(cell.x - guess.x) > 2 || Math.abs(cell.y - guess.y) > 2) continue;
+    if (!cell.present || !cell.open || cell.augur !== null || !near.has(cell)) continue;
     const ns = game.neighboursOf(cell);
     if (!ns.some((n) => !n.open && n.mark === 0)) continue;
 
@@ -518,6 +526,19 @@ export function augurOracle(game: Game, guess: Cell): Cell | null {
 }
 
 /**
+ * The cells whose rings can touch this one's: its neighbours and theirs, walked through
+ * `neighboursOf` so a wrapped seam or a hex grid is near where the board says it is.
+ */
+function twoSteps(game: Game, cell: Cell): Set<Cell> {
+  const near = new Set<Cell>([cell]);
+  for (const n of game.neighboursOf(cell)) {
+    near.add(n);
+    for (const m of game.neighboursOf(n)) near.add(m);
+  }
+  return near;
+}
+
+/**
  * Where a Census would actually pay — decided by looking.
  *
  * This is a cheat, and deliberately so. It tries the count in every open cell
@@ -527,9 +548,9 @@ export function augurOracle(game: Game, guess: Cell): Cell | null {
  * result cannot be blamed on the harness aiming badly.
  */
 export function censusOracle(game: Game, guess: Cell): Cell | null {
+  const near = twoSteps(game, guess);
   for (const cell of game.grid.flat()) {
-    if (!cell.present || !cell.open || cell.census !== null) continue;
-    if (Math.abs(cell.x - guess.x) > 2 || Math.abs(cell.y - guess.y) > 2) continue;
+    if (!cell.present || !cell.open || cell.census !== null || !near.has(cell)) continue;
     const ns = game.neighboursOf(cell);
     if (!ns.some((n) => !n.open && n.mark === 0)) continue;
 
