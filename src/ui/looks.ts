@@ -412,6 +412,26 @@ const LOOKS: Record<string, LadderLook> = {
     sfx: 'glass',
     victory: 'wipeRadial',
   },
+  augur: {
+    // Old parchment and bronze: a reading, not a fight. `hot` is a deep teal, 198 from the warm
+    // `ink`, 222 clear of GIVEN_COLOR's gold (the loadout writes no givens, but a palette is a
+    // player setting worn on ladders that do), 107 clear of Census's cyan and 219 of the Augur
+    // cream; 8.2:1 on the floor, and a mark on a covered tile 3.4:1, in NORMAL's range
+    // (decision 0032).
+    palette: {
+      tile: '#7a5f33',
+      tileEdge: '#52401f',
+      floor: '#1e1710',
+      ink: '#f1e4c6',
+      hot: '#2ec4b6',
+      pip: 'triangle',
+      accent: '#c9a227',
+    },
+    // A temple inscription, as ORACLE wears: the other reader of signs.
+    font: 'cinzel',
+    sfx: 'glass',
+    victory: 'ripple',
+  },
   huge_blind: {
     palette: {
       tile: '#7a8288',

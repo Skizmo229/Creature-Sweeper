@@ -16,6 +16,8 @@ import type { Cell } from '../engine/types.js';
 import {
   type Constraint,
   allConstraints,
+  augurOracle,
+  augurTarget,
   bestGuess,
   censusOracle,
   censusTarget,
@@ -34,7 +36,16 @@ import {
  * event the fight itself emits, which says exactly what it spared.
  */
 export type Policy =
-  'none' | 'reveal' | 'census' | 'census-best' | 'exercise' | 'beacon' | 'workout' | 'gym';
+  | 'none'
+  | 'reveal'
+  | 'census'
+  | 'census-best'
+  | 'exercise'
+  | 'beacon'
+  | 'augur'
+  | 'augur-best'
+  | 'workout'
+  | 'gym';
 
 /**
  * The policies that measure each spell, keyed by every spell, so a new one cannot be added without
@@ -49,6 +60,10 @@ export const SPELL_POLICIES: Readonly<Record<SpellId, readonly Policy[]>> = {
   exercise: ['exercise'],
   // Cast at a stuck point, like Reveal and Census, while there is an untouched blank region left.
   beacon: ['beacon'],
+  // `augur` is aimed at the number over the guess whose ring it could free and whose residual is
+  // spread thinnest (`augurTarget`); `augur-best` where it demonstrably frees something, as
+  // `census-best` is for Census.
+  augur: ['augur', 'augur-best'],
 };
 
 /**
@@ -329,9 +344,13 @@ function spendAtStuckPoint(
       ? null
       : spellId === 'reveal'
         ? guess
-        : policy === 'census-best'
-          ? censusOracle(game, guess)
-          : censusTarget(game, constraints, guess);
+        : spellId === 'augur'
+          ? policy === 'augur-best'
+            ? augurOracle(game, guess)
+            : augurTarget(game, constraints, guess)
+          : policy === 'census-best'
+            ? censusOracle(game, guess)
+            : censusTarget(game, constraints, guess);
     if (target || untargeted) {
       const before = game.mana;
       const events = target ? game.cast(spellId, target.x, target.y) : game.cast(spellId);

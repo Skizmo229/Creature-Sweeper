@@ -1,6 +1,6 @@
 /**
  * Painting one cell: the covered tile with its mark or pencil notes, the open floor with its
- * number or creature, and the Census badge. Everything a pass needs is in the `Paint` it is
+ * number or creature, and the Census and Augur badges. Everything a pass needs is in the `Paint` it is
  * handed, so no painter reaches into the view.
  */
 
@@ -10,6 +10,7 @@ import { placementRule } from '../../engine/placement/registry.js';
 import type { Cell } from '../../engine/types.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
 import {
+  AUGUR_COLOR,
   CENSUS_COLOR,
   GIVEN_COLOR,
   MARK_COLOR,
@@ -255,27 +256,45 @@ export function drawOpen(p: Paint, cell: Cell, cx: number, cy: number): void {
  * keeps it off the edge.
  */
 export function drawCensus(p: Paint, cell: Cell, cx: number, cy: number): void {
+  drawCornerBadge(p, cx, cy, String(cell.census), CENSUS_COLOR, 'left');
+}
+
+/**
+ * Augur sits in the top-right corner, the mirror of Census, so the two answers a cell can carry
+ * never overlap and each is told by its corner as much as by its colour.
+ */
+export function drawAugur(p: Paint, cell: Cell, cx: number, cy: number): void {
+  drawCornerBadge(p, cx, cy, String(cell.augur), AUGUR_COLOR, 'right');
+}
+
+/** A small digit on a dark triangle in a top corner of the cell's content box. */
+function drawCornerBadge(
+  p: Paint,
+  cx: number,
+  cy: number,
+  text: string,
+  color: string,
+  side: 'left' | 'right',
+): void {
   const { ctx } = p;
   const box = contentBox(p.layout, cx, cy);
   const size = box.size;
-  const x = box.x;
   const y = box.y;
   const r = Math.max(5, size * 0.3);
+  // The corner the triangle grows from, and the direction it grows in.
+  const x = side === 'left' ? box.x : box.x + size;
+  const dir = side === 'left' ? 1 : -1;
   ctx.save();
   ctx.fillStyle = 'rgba(6, 12, 18, 0.85)';
   ctx.beginPath();
   ctx.moveTo(x, y);
-  ctx.lineTo(x + r * 2, y);
+  ctx.lineTo(x + dir * r * 2, y);
   ctx.lineTo(x, y + r * 2);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = CENSUS_COLOR;
+  ctx.fillStyle = color;
   const { ascent } = setNumberFont(ctx, p.font, size * 0.32);
-  ctx.textAlign = 'left';
-  ctx.fillText(
-    String(cell.census),
-    x + Math.max(1, size * 0.04),
-    y + Math.max(0, size * 0.02) + ascent,
-  );
+  ctx.textAlign = side;
+  ctx.fillText(text, x + dir * Math.max(1, size * 0.04), y + Math.max(0, size * 0.02) + ascent);
   ctx.restore();
 }

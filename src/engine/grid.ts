@@ -68,6 +68,7 @@ export function makeCell(x: number, y: number): Cell {
     given: false,
     notes: 0,
     census: null,
+    augur: null,
   };
 }
 

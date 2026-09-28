@@ -20,7 +20,7 @@ function magicConfig(over: Partial<BoardConfig> = {}): BoardConfig {
     tiers: 5,
     quantity: [2, 1, 1, 1, 1],
     exp: [4, 20, 60, 200],
-    spells: ['reveal', 'census', 'exercise', 'beacon'],
+    spells: ['reveal', 'census', 'exercise', 'beacon', 'augur'],
     // Comfortably above the dearest spell, so a test that means to check a
     // rule is never really checking the mana counter.
     startMana: 300,
@@ -288,6 +288,58 @@ describe('Census', () => {
   });
 });
 
+describe('Augur', () => {
+  it('names the strongest tier where the number sums them', () => {
+    const game = Game.create(magicConfig(), 7);
+    // Three creatures adjacent to (2,2): tier 1, 1 and 4.
+    paint(game, ['........', '.1.1....', '........', '.4......', ...EMPTY8.slice(4)]);
+    const mid = game.grid[2]![2]!;
+    expect(mid.num).toBe(6);
+    const events = game.cast('augur', 2, 2);
+    expect(mid.augur).toBe(4);
+    expect(events.some((e) => e.type === 'spell' && e.detail === 'strongest 4')).toBe(true);
+  });
+
+  it('counts an open creature too, since it is among the neighbours', () => {
+    const game = Game.create(magicConfig({ hp: 20 }), 7);
+    paint(game, ['........', '.4.1....', ...EMPTY8.slice(2)]);
+    game.progression.level = 4;
+    game.open(1, 1);
+    game.cast('augur', 2, 2);
+    expect(game.grid[2]![2]!.augur).toBe(4);
+  });
+
+  it('answers 0 where nothing is around, and says so', () => {
+    const game = Game.create(magicConfig(), 7);
+    paint(game, EMPTY8);
+    const events = game.cast('augur', 3, 3);
+    expect(game.grid[3]![3]!.augur).toBe(0);
+    expect(events.some((e) => e.type === 'spell' && e.detail === 'no creatures')).toBe(true);
+  });
+
+  it('feeds strict Sweep: at or below the level the whole ring is free', () => {
+    const game = Game.create(magicConfig({ hp: 20 }), 7);
+    // (2,2) sees 2 + 2 = 4, out of reach at level 2 by the sum; the strongest is 2.
+    paint(game, ['........', '.2.2....', ...EMPTY8.slice(2)]);
+    game.progression.level = 2;
+    game.open(2, 2);
+    expect(game.grid[2]![2]!.num).toBe(4);
+    expect(game.safeCells()).toHaveLength(0);
+    game.cast('augur', 2, 2);
+    expect(game.safeCells().map((c) => `${c.x},${c.y}`)).toContain('1,1');
+    expect(game.safeCells().map((c) => `${c.x},${c.y}`)).toContain('3,1');
+  });
+
+  it('refuses to charge twice for the same cell', () => {
+    const game = Game.create(magicConfig(), 7);
+    paint(game, EMPTY8);
+    game.cast('augur', 3, 3);
+    const mana = game.mana;
+    expect(game.cast('augur', 3, 3)[0]).toMatchObject({ type: 'blocked', reason: 'no-effect' });
+    expect(game.mana).toBe(mana);
+  });
+});
+
 describe('Exercise', () => {
   /**
    * Damage is `E * (ceil(E/L) - 1)`, so a level is worth a whole step of that
@@ -399,8 +451,9 @@ describe('spell shortcuts', () => {
   const RESERVED = ['s', 'd', 'f', 'w'];
 
   it('gives every spell the letter its name starts with', () => {
-    expect(SPELL_ORDER.map((id) => spellKey(id))).toEqual(['c', 'r', 'b', 'e']);
+    expect(SPELL_ORDER.map((id) => spellKey(id))).toEqual(['a', 'c', 'r', 'b', 'e']);
     expect(SPELL_ORDER.map((id) => spellLabel(id))).toEqual([
+      '[A]ugur',
       '[C]ensus',
       '[R]eveal',
       '[B]eacon',
@@ -455,6 +508,7 @@ describe('the magic ladders', () => {
     // not where the menu happens to list them.
     expect(magicTypes.map((t) => t.id).sort()).toEqual([
       'arcane',
+      'augur',
       'card',
       'cave',
       'cross',

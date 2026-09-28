@@ -199,6 +199,15 @@ export const LADDER_NOTES: readonly LadderNote[] = [
       'number over few cells; Beacon when the frontier has closed and blank ground is left ' +
       'somewhere.',
   },
+  {
+    heading: 'AUGUR',
+    body:
+      "ARCANE's boards with Census and Augur only: no spell will open a cell for you, so every " +
+      'guess is still yours. Augur where a number is spread over many cells and could be all at ' +
+      'or below your level, which frees the ring; Census where a large number sits over few. ' +
+      'Sum, count and strongest together pin most rings, and the pencil loses every tier above ' +
+      'the strongest.',
+  },
 ];
 
 /** The ladder names a heading lists: "ARCANE, ORACLE, and the shapes with magic" lists two. */

@@ -10,6 +10,7 @@ sprinkles           0    0.0    0.0    0.0      0.0
 residual-ring       1  352.7  264.3  268.3      0.0
 last-cell           1  147.0  115.0  114.0      0.0
 census-ring         1    0.0    0.0    0.0      0.0
+augur-cap           1    0.0    0.0    0.0      0.0
 counters            1    0.0    1.3    0.0     30.0
 lone-dark           1    0.0    0.0    0.0      0.0
 partner-number      1    0.0    0.0    0.0      0.0

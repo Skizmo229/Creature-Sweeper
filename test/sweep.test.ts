@@ -96,6 +96,23 @@ describe('Census', () => {
   });
 });
 
+describe('Augur', () => {
+  it('frees the ring once the strongest is at or below the level', () => {
+    // 3 hidden between two creatures: at level 2 the sum proves nothing, but if the strongest
+    // of them is a 2, nothing there can hurt.
+    const game = drawn(['1..', '._.', '..2']);
+    expect(swept(view(game, 2))).toEqual([]);
+    game.grid[1]![1]!.augur = 2;
+    expect(swept(view(game, 2))).toEqual(ringOf(game, 1, 1));
+  });
+
+  it('frees nothing while the strongest is above the level', () => {
+    const game = drawn(['1..', '._.', '..3']);
+    game.grid[1]![1]!.augur = 3;
+    expect(swept(view(game, 2))).toEqual([]);
+  });
+});
+
 describe('marks, when Sweep is asked to trust them', () => {
   const marked = (mark: number): Game => {
     const game = drawn(['2..', '._.', '..1']);

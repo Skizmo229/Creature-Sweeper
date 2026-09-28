@@ -937,6 +937,22 @@ spells = ["reveal", "census", "beacon"]
 start_mana = 75
 
 [[type]]
+id = "augur"
+name = "AUGUR"
+tint = "#c9a227"
+archetype = "descending"
+axis = "Magic that tells, never shows"
+blurb = """  ARCANE's boards with two spells that only answer questions: Census counts the creatures behind   a number and Augur names the strongest of them. Sum, count and strongest pin the layout; no   spell will ever open a cell for you."""
+size = [[30, 16], [30, 16], [30, 16], [32, 17], [32, 17], [34, 18], [34, 18], [36, 19], [36, 19], [38, 20]]
+tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+density = [0.265, 0.274, 0.283, 0.292, 0.301, 0.31, 0.319, 0.328, 0.337, 0.345]
+hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
+alpha0 = [0.32, 0.311, 0.302, 0.293, 0.284, 0.276, 0.267, 0.258, 0.249, 0.24]
+spells = ["census", "augur"]
+start_mana = 75
+
+[[type]]
 id = "blind"
 name = "BLIND"
 tint = "#8a8a8a"

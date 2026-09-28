@@ -24,7 +24,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   opening.ts      choosing the opening and dealing it (`dealOpening`)
   layout.ts       boards from drawings in the catalogue's notation (`Game.fromLayout`)
   notes.ts        pencil marks as a bitmask
-  spells.ts       the four spells, their prices, the mana economy, spellKey
+  spells.ts       the five spells, their prices, the mana economy, spellKey
   cast.ts         what each spell does, behind the SpellHost interface
   sweep.ts        Sweep's proof: safeCells and its named proofs; the Sudoku harvest
   reach.ts        the crawl rule: withinReach and computeSealed

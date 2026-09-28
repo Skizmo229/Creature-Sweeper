@@ -14,9 +14,10 @@
  * amount of certainty through either one.
  *
  * The deduction here is deliberately the game's own — the bound Sweep proves,
- * plus exact tiers from Reveal's marks, plus the Census count, which Sweep
- * reads as well (`provenByCensus` in `engine/sweep.ts`). A spell whose answer
- * the game cannot act on is worth less than the same answer in a form it can.
+ * plus exact tiers from Reveal's marks, plus the Census count and the Augur
+ * ceiling, which Sweep reads as well (`provenByCensus` and `provenByAugur` in
+ * `engine/sweep.ts`). A spell whose answer the game cannot act on is worth
+ * less than the same answer in a form it can.
  *
  *   npx tsx src/sim/cli/spellvalue.ts [seeds]          every magic ladder
  *   npx tsx src/sim/cli/spellvalue.ts [seeds] arcane   one ladder, board by board
@@ -169,7 +170,7 @@ function main(): void {
   console.log(
     `An honest player, ${seeds} seeds x every board of every magic ladder.\n` +
       "Deduction is Sweep's own bound plus exact tiers from Reveal, plus the " +
-      'Census count.\n',
+      'Census count and the Augur ceiling.\n',
   );
   console.log(
     'ladder        policy       cleared   hp lost   guesses  stuck  casts  useful  ' +

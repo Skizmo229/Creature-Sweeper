@@ -40,6 +40,7 @@ const KINDS = [
   'workout',
   'blind',
   'seer',
+  'augur',
   'patrol',
   'pyramid',
   'petri',
@@ -121,8 +122,10 @@ describe('the graded player', () => {
     }
     const silent = TRICK_IDS.filter((t) => fires[t] + pencils[t] === 0);
     // The line's ends, which the cheaper reads nearly always pre-empt, has a direct test below;
-    // so has the Census bound, which fires here on SPRINKLE DONUT, where the board shows the count.
-    expect(silent).toEqual(['line-reach']);
+    // so has the Census bound, which fires here on SPRINKLE DONUT, where the board shows the count,
+    // and so has the Augur ceiling, whose answer sat at or below the level in 1 of 67 casts aimed
+    // where it could (decision 0055).
+    expect(silent.sort()).toEqual(['augur-cap', 'line-reach']);
     const concluded = TRICK_IDS.filter((t) => fires[t] > 0);
     expect(concluded).toEqual(expect.arrayContaining(['subtract', 'overlap', 'bounds', 'what-if']));
     expect(concluded).toEqual(expect.arrayContaining(['accounted', 'last-of-tier', 'corridor']));
@@ -361,5 +364,64 @@ describe('the graded player', () => {
       }
     }
     expect(asked).toBeGreaterThan(0);
+  });
+
+  it('reads an Augur ceiling as Sweep does, freeing the ring or narrowing the pencil', () => {
+    // Cast where the strongest sits at or below the level and the remainder alone does not prove
+    // the ring, and the trick opens it all; cast where the strongest is above the level but below
+    // the remainder, and the trick rules out every tier past it. The test may read tiers to
+    // choose the cell; the trick reads only the answer.
+    const cfg = boardConfig(ladders, 'augur', 3);
+    let freed = 0;
+    let narrowed = 0;
+    for (const seed of [0x5eed, 0x5eed + 1, 0x5eed + 2, 0x5eed + 3]) {
+      const game = Game.create(cfg, seed);
+      const rng = mulberry32(seed);
+      while (game.status === 'playing' && (freed === 0 || narrowed === 0)) {
+        const level = game.level;
+        for (const cell of game.grid.flat()) {
+          if (!cell.present || !cell.open || cell.augur !== null) continue;
+          const ring = game.neighboursOf(cell);
+          const covered = ring.filter((n) => !n.open && n.mark === 0);
+          if (covered.length < 2) continue;
+          const hidden = cell.num - ring.filter((n) => n.open).reduce((a, n) => a + n.tier, 0);
+          const strongest = Math.max(0, ...ring.map((n) => n.tier));
+          if (hidden <= level || strongest >= hidden) continue;
+          const frees = strongest <= level;
+          if ((frees && freed > 0) || (!frees && narrowed > 0)) continue;
+          expect(game.cast('augur', cell.x, cell.y).some((b) => b.type === 'blocked')).toBe(false);
+          const view: View = {
+            game,
+            reading: readBoard(game, false),
+            level,
+            peek: false,
+            domain: () => everyTier(cfg.tiers),
+            scaffold: new Set(),
+          };
+          const moves = noMoves();
+          TRICKS['augur-cap'].apply(view, moves);
+          for (const n of covered) {
+            if (frees) {
+              expect(moves.open.has(n), `(${n.x},${n.y})`).toBe(true);
+              expect(n.tier).toBeLessThanOrEqual(level);
+            } else {
+              expect(moves.narrow.get(n), `(${n.x},${n.y})`).toBe(
+                everyTier(cfg.tiers) & ((1 << (strongest + 1)) - 1),
+              );
+              expect(n.tier).toBeLessThanOrEqual(strongest);
+            }
+          }
+          if (frees) freed++;
+          else narrowed++;
+          break;
+        }
+        const free = game.grid.flat().filter((c) => c.present && !c.open && c.tier <= game.level);
+        if (!free.length) break;
+        const pick = free[Math.floor(rng() * free.length)]!;
+        game.open(pick.x, pick.y);
+      }
+    }
+    expect(freed).toBeGreaterThan(0);
+    expect(narrowed).toBeGreaterThan(0);
   });
 });

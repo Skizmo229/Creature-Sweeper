@@ -35,6 +35,7 @@ export const SPELL_EFFECTS: Record<
   census: (host, target) => censusSpell(host, target!),
   exercise: (host) => exerciseSpell(host),
   beacon: (host) => beaconSpell(host),
+  augur: (host, target) => augurSpell(host, target!),
 };
 
 /**
@@ -70,6 +71,17 @@ function censusSpell(host: SpellHost, cell: Cell): SpellOutcome {
   if (cell.census !== null) return { blocked: 'no-effect' };
   cell.census = host.neighboursOf(cell).filter((n) => n.tier > 0).length;
   return { events: [], detail: `${cell.census} adjacent` };
+}
+
+/**
+ * Augur: the strongest tier among the cell's neighbours, open ones included. Every hidden creature
+ * there is at or below it, which is what Sweep reads (`provenByAugur`); with Census's count and the
+ * number's sum it often pins the layout. It says nothing about WHERE, so it exposes no cell.
+ */
+function augurSpell(host: SpellHost, cell: Cell): SpellOutcome {
+  if (cell.augur !== null) return { blocked: 'no-effect' };
+  cell.augur = Math.max(0, ...host.neighboursOf(cell).map((n) => n.tier));
+  return { events: [], detail: cell.augur ? `strongest ${cell.augur}` : 'no creatures' };
 }
 
 /** Exercise: the next fight is fought a level higher. One charge at a time. */

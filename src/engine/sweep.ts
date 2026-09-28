@@ -50,6 +50,7 @@ export function safeCells(game: SweepView, options: SweepOptions = {}): Cell[] {
       const proven =
         provenBySum(facts, level) ||
         provenByCensus(cell, facts, level) ||
+        provenByAugur(cell, level) ||
         (ringFree !== null && ringFree(cell, ring));
       const claimedSafe = useMarks && claimedByMarks(facts, level);
       // The rule's per-neighbour proofs: a cap on what one cell can hide, and cells proven empty.
@@ -126,6 +127,14 @@ function provenByCensus(cell: Cell, facts: RingFacts, level: number): boolean {
   if (cell.census === null) return false;
   const hiddenCreatures = cell.census - facts.openCreatures;
   return hiddenCreatures > 0 && facts.hidden - (hiddenCreatures - 1) <= level;
+}
+
+/**
+ * Proven by the strongest. An Augur names the highest tier among the neighbours, so no hidden
+ * creature there is above it: at or below your level, the whole ring is free. A fact, like Census.
+ */
+function provenByAugur(cell: Cell, level: number): boolean {
+  return cell.augur !== null && cell.augur <= level;
 }
 
 /**

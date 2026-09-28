@@ -642,7 +642,7 @@ CATEGORIES = {
     "normal": ["easy", "normal", "huge", "extreme", "huge_extreme", "blind", "huge_blind"],
     "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave", "pyramid",
               "gear", "card", "valentines", "star"],
-    "magic": ["arcane", "workout", "oracle", "dungeon", "seer"],
+    "magic": ["arcane", "workout", "oracle", "dungeon", "seer", "augur"],
     "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku",
                 "ultra_hive", "petri", "patrol", "sprinkle_donut"],
 }

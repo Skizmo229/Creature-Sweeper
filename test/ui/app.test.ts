@@ -91,7 +91,7 @@ describe('the app', () => {
     }));
     expect(columns.map((c) => c.head)).toEqual(['Normal', 'Shape', 'Magic', 'Special']);
     expect(columns[1]!.names.slice(0, 3)).toEqual(['WRAPAROUND', 'WRAPPED CROSS', 'CROSS']);
-    expect(columns[2]!.names).toEqual(['ARCANE', 'WORKOUT', 'ORACLE', 'DUNGEON', 'SEER']);
+    expect(columns[2]!.names).toEqual(['ARCANE', 'WORKOUT', 'ORACLE', 'DUNGEON', 'SEER', 'AUGUR']);
   });
 
   it('starts a board and shows the HUD and the hint', () => {
@@ -577,8 +577,8 @@ describe('the board font and the interface font', () => {
     const captions = [...document.querySelectorAll('.picker .chip-label')].map(
       (c) => c.textContent,
     );
-    // PYRAMID is in the list's Shape column, ahead of ORACLE's Magic; BLIND is in Normal.
-    expect(captions).toContain('Cinzel — PYRAMID, ORACLE');
+    // PYRAMID is in the list's Shape column, ahead of ORACLE's and AUGUR's Magic; BLIND is in Normal.
+    expect(captions).toContain('Cinzel — PYRAMID, ORACLE, AUGUR');
     expect(captions).toContain('Space Mono — BLIND, PETRI DISH');
     expect(captions).toContain('Anton — HUGE x EXTREME');
     expect(captions).toContain(`${FONTS.atkinson.name} — easiest to read`);

@@ -22,10 +22,11 @@ export type Block =
   | { readonly list: readonly string[] }
   | { readonly table: 'damage' };
 
-/** What an entry's ladders are asked of. */
+/** What an entry's ladders are asked of: the rules, and the spells the ladder offers. */
 export interface LadderRules {
   readonly placement: PlacementRule;
   readonly shape: ShapeRule;
+  readonly spells: readonly string[];
 }
 
 export interface GuideEntry {
@@ -54,7 +55,11 @@ function rulesOf(type: LadderType): LadderRules {
   if (!isPlacement(placement) || !isShape(shape)) {
     throw new Error(`${type.id}: no rule for "${placement}" or "${shape}"`);
   }
-  return { placement: placementRule(placement), shape: shapeRule(shape) };
+  return {
+    placement: placementRule(placement),
+    shape: shapeRule(shape),
+    spells: type.spells ?? [],
+  };
 }
 
 /** The ladders an entry belongs to, in the menu's order; every ladder for a general entry. */
@@ -88,6 +93,8 @@ const shown = (r: LadderRules): boolean => r.placement.display.showsCreatures;
 const colours = (r: LadderRules): boolean =>
   r.placement.pools.forTier(1) !== r.placement.pools.forTier(2);
 const hallways = (r: LadderRules): boolean => r.shape.hallways;
+/** A ladder whose loadout has Augur: asked of the data, never of a name (CLAUDE.md). */
+const augur = (r: LadderRules): boolean => r.spells.includes('augur');
 
 /** What the guide says before its first section: the catalogue's account of the grades. */
 export const GUIDE_INTRO: readonly string[] = [
@@ -283,6 +290,18 @@ export const GUIDE: readonly GuideSection[] = [
             'creatures share it, as a Census would. Each is worth at least 1, so the biggest can ' +
             'be no more than the remainder less one for every other: a 3 over three sprinkles is ' +
             'three tier 1s, and a 5 over three is nothing above a 3.',
+        ],
+      },
+      {
+        heading: 'The strongest one',
+        trick: 'augur-cap',
+        on: augur,
+        body: [
+          'An Augur names the strongest creature around a number, so nothing hidden there is ' +
+            'above it: at or below your level the whole ring is free, and above it no cell can ' +
+            'be more. Sum, count and strongest together pin most rings: a 7 over three cells ' +
+            'with a strongest of 3 is 3, 3 and 1, or 3, 2 and 2. Aim it where a number is spread ' +
+            'over many cells, since that is where the strongest is likeliest to be small.',
         ],
       },
     ],

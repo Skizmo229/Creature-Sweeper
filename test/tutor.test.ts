@@ -37,6 +37,7 @@ const KINDS = [
   'workout',
   'blind',
   'seer',
+  'augur',
   'patrol',
   'pyramid',
   'petri',
