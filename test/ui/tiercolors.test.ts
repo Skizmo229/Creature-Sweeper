@@ -293,6 +293,7 @@ describe('what is drawn in them', () => {
       highlight: null,
       highlightColor: '#ffffff',
       strikeDefeated: false,
+      beatenNumbers: false,
       tierColors: MARKED,
     };
     renderPreview(tierSampleBoard(), themeFor('normal'), display, { cell: 26 });

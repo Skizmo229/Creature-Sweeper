@@ -117,6 +117,7 @@ const display = (highlight: HighlightStyle | null, highlightColor = MARK_COLOR):
   highlight,
   highlightColor,
   strikeDefeated: true,
+  beatenNumbers: false,
   tierColors: DEFAULT_TIERS,
 });
 

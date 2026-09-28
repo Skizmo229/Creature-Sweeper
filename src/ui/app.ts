@@ -64,6 +64,7 @@ export class App {
     view: () => this.view,
     mode: this.mode,
     sfx: this.sfx,
+    settings: this.settings,
     move: (move) => this.recorder.move(move),
     apply: (events) => this.apply(events),
     refresh: () => this.refresh(),
@@ -482,6 +483,7 @@ export class App {
         pickTier: (tier) => this.actions.pickTier(tier),
         pencilEmpty: () => this.actions.pencilEmpty(),
         toggleNotes: () => this.actions.toggleNotesMode(),
+        toggleBeatenNumbers: () => this.actions.toggleBeatenNumbers(),
         sweep: (useMarks) => this.actions.doSweep(useMarks),
         wait: () => this.actions.doWait(),
         explain: () => this.explainBoard(),
@@ -490,10 +492,7 @@ export class App {
         guide: () => this.teaching.guideFromBoard(),
         next: () => this.teaching.next(),
         pickSpell: (id) => this.actions.pickSpell(id),
-        cancelSpell: () => {
-          this.mode.cancelSpell();
-          this.refresh();
-        },
+        cancelSpell: () => this.actions.cancelSpell(),
       },
       lesson,
     );
@@ -598,6 +597,7 @@ export class App {
       tutor: this.teaching.tutor.text(),
       lesson: this.teaching.lessonLine(),
       tierColors: this.settings.tierColors(this.typeId),
+      beatenNumbers: this.settings.presentation.beatenNumbers,
     });
     this.view?.setLesson(this.teaching.pointer());
     this.view?.render();

@@ -63,6 +63,8 @@ export interface BoardDisplay {
   highlightColor: string;
   /** Whether a defeated creature keeps its struck-through corner. */
   strikeDefeated: boolean;
+  /** Whether every beaten creature shows the number under it, not only the hovered one. */
+  beatenNumbers: boolean;
   /** The colour a creature of each tier is drawn in, and the halo of tiers 6 to 9. */
   tierColors: TierPalette;
 }
@@ -73,6 +75,7 @@ const DEFAULT_DISPLAY: BoardDisplay = {
   highlight: 'neighbours',
   highlightColor: MARK_COLOR,
   strikeDefeated: true,
+  beatenNumbers: false,
   tierColors: DEFAULT_TIERS,
 };
 
@@ -438,6 +441,7 @@ export class BoardView implements InputHost {
       font: this.display.font,
       strikeDefeated: this.display.strikeDefeated,
       hovered: this.hoveredCellValue,
+      beatenNumbers: this.display.beatenNumbers,
       creaturesHidden: this.creaturesHidden,
     };
 

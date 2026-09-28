@@ -105,7 +105,8 @@ export class Teaching {
       ladders,
       ladder: ladders.find((t) => t.id === ladderId),
       theme: settings.themeFor(typeId),
-      display: boardDisplayFor(settings, typeId),
+      // A diagram's beaten creatures are part of what it teaches, so they stay creatures.
+      display: { ...boardDisplayFor(settings, typeId), beatenNumbers: false },
       cell: Math.round(GUIDE_CELL * settings.presentation.previewSize),
       close: () => modal.close(),
     });

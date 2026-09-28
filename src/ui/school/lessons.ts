@@ -166,7 +166,9 @@ export const LESSONS: readonly SchoolLesson[] = [
     shown: ['? ? # ? ?', '5 5 # ? ?', 'k3 3 # ? ?'],
     steps: [
       {
-        say: `${rule('residual-ring')} Hover a beaten creature to see its own number.`,
+        say:
+          `${rule('residual-ring')} Hover a beaten creature to see its own number, or press U ` +
+          'to see them all.',
         point: 'residual-ring',
         wait: { next: true },
       },

@@ -17,9 +17,9 @@ cell, feeds it to Sweep and draws it, as Census does, is every step.
    `src/engine/spells.ts`. The keyboard shortcut is the name's first letter (`spellKey`), so the
    name cannot start with another spell's letter or one the board uses: `S` (Sweep), `D` (assisted
    Sweep), `F` (fit), `W` (PATROL's Wait), `P` (pause), `H` (the tutor's hint), `G` (the field
-   guide) or `N` (entry mode). `test/spells.test.ts` fails on a clash with a spell or any of these
-   but `N`, which the board reads after the spell letters: a spell named with an N would silently
-   take the entry-mode key.
+   guide), `U` (the Beaten toggle) or `N` (entry mode). `test/spells.test.ts` fails on a clash with
+   a spell or any of these but `N`, which the board reads after the spell letters: a spell named
+   with an N would silently take the entry-mode key.
 2. **What it does.** Its entry in `SPELL_EFFECTS`, `src/engine/cast.ts`, which the compiler asks
    for, and the function it names: it returns the events and a `detail`, or a `blocked` reason.
    `Game.cast` already makes the checks every spell shares (offered, affordable, on the board, in

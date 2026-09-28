@@ -34,6 +34,7 @@ export function boardDisplayFor(settings: Settings, typeId: string): BoardDispla
     highlight: settings.highlightStyle(typeId),
     highlightColor: settings.highlightColor(typeId),
     strikeDefeated: p.strikeDefeated,
+    beatenNumbers: p.beatenNumbers,
     tierColors: settings.tierColors(typeId),
   };
 }

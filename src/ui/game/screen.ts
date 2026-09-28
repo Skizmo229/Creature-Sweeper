@@ -7,6 +7,7 @@
 import type { Game } from '../../engine/game.js';
 import type { FullRun } from '../../engine/run.js';
 import { SPELLS, type SpellId, spellKey } from '../../engine/spells.js';
+import { offersBeatenNumbers } from '../board/paint.js';
 import { el } from '../dom.js';
 import { ladders } from '../ladders.js';
 import { type TierPalette, tierColor, tierGilded } from '../tiercolors.js';
@@ -22,6 +23,8 @@ export interface GameScreenActions {
   /** The tier-0 pencil: switches to pencil mode and arms tier 0. */
   pencilEmpty(): void;
   toggleNotes(): void;
+  /** Show the number under every beaten creature, or their creatures again (decision 0067). */
+  toggleBeatenNumbers(): void;
   sweep(useMarks: boolean): void;
   /** PATROL's Wait: the creatures take a step and nothing else happens. */
   wait(): void;
@@ -47,6 +50,8 @@ export interface GameScreenElements {
   counters: HTMLButtonElement[];
   emptyNoteBtn: HTMLButtonElement;
   notesBtn: HTMLButtonElement;
+  /** The Beaten toggle; null on a board with no beaten creature's number to show. */
+  numbersBtn: HTMLButtonElement | null;
   sweepSafeBtn: HTMLButtonElement | null;
   sweepMarkBtn: HTMLButtonElement | null;
   /** PATROL's Wait, which also shows how many moves the board has seen. */
@@ -174,7 +179,14 @@ function buildPalette(
   tutor: boolean,
 ): Pick<
   GameScreenElements,
-  'counters' | 'emptyNoteBtn' | 'notesBtn' | 'sweepSafeBtn' | 'sweepMarkBtn' | 'waitBtn' | 'whyBtn'
+  | 'counters'
+  | 'emptyNoteBtn'
+  | 'notesBtn'
+  | 'numbersBtn'
+  | 'sweepSafeBtn'
+  | 'sweepMarkBtn'
+  | 'waitBtn'
+  | 'whyBtn'
 > & { palette: HTMLElement } {
   const palette = el('div', 'palette');
   const counters: HTMLButtonElement[] = [];
@@ -203,6 +215,15 @@ function buildPalette(
   const notesBtn = el('button', 'ghost small', 'Entry: Mark');
   notesBtn.addEventListener('click', a.toggleNotes);
   palette.append(notesBtn);
+
+  // What hover shows one cell at a time, for the whole board; on a touch screen, the only way to
+  // see it. Labelled with what beaten creatures show now, as Entry is (decision 0008).
+  let numbersBtn: HTMLButtonElement | null = null;
+  if (offersBeatenNumbers(game)) {
+    numbersBtn = el('button', 'ghost small', 'Beaten: Creature');
+    numbersBtn.addEventListener('click', a.toggleBeatenNumbers);
+    palette.append(numbersBtn);
+  }
 
   // A ladder without Sweep gets no buttons for it, rather than two dark ones.
   let sweepSafeBtn: HTMLButtonElement | null = null;
@@ -239,7 +260,17 @@ function buildPalette(
     whyBtn.addEventListener('click', a.explain);
     palette.append(whyBtn);
   }
-  return { palette, counters, emptyNoteBtn, notesBtn, sweepSafeBtn, sweepMarkBtn, waitBtn, whyBtn };
+  return {
+    palette,
+    counters,
+    emptyNoteBtn,
+    notesBtn,
+    numbersBtn,
+    sweepSafeBtn,
+    sweepMarkBtn,
+    waitBtn,
+    whyBtn,
+  };
 }
 
 /** The spell row, on a ladder that offers any: one button per spell, and Cancel. */

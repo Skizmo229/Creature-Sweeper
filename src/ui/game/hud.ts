@@ -45,6 +45,16 @@ export function gatePalette(
   els.emptyNoteBtn.classList.toggle('ruled-out', !hasNote(mask, 0));
 }
 
+/** The Beaten toggle, labelled with what beaten creatures show now, as Entry is (decision 0067). */
+function syncBeatenToggle(btn: HTMLButtonElement, on: boolean): void {
+  btn.textContent = on ? 'Beaten: Number' : 'Beaten: Creature';
+  btn.title = on
+    ? 'Every beaten creature shows the number under it. U shows the creatures again.'
+    : 'Beaten creatures show the creature; hover one for its number. U shows every number.';
+  btn.classList.toggle('active', on);
+  btn.setAttribute('aria-pressed', String(on));
+}
+
 export interface HudState {
   game: Game;
   run: FullRun | null;
@@ -57,6 +67,8 @@ export interface HudState {
   lesson: LessonLine | null;
   /** The colour of each tier, which the level number wears. */
   tierColors: TierPalette;
+  /** Whether every beaten creature shows its number: what the Beaten toggle says. */
+  beatenNumbers: boolean;
 }
 
 /** Everything on the screen that reads the game, brought up to date. */
@@ -95,6 +107,7 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
     ? 'Clicks pencil the selected tier as a candidate. N switches to marks.'
     : 'Clicks mark the selected tier. N switches to the pencil.';
   els.notesBtn.classList.toggle('active', mode.notesMode);
+  if (els.numbersBtn) syncBeatenToggle(els.numbersBtn, s.beatenNumbers);
   // The tier-0 pencil only exists while pencilling, and only on a board that can still be
   // hiding empty ground.
   els.emptyNoteBtn.hidden = !mode.notesMode || !canPencilEmpty(game);

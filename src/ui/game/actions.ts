@@ -8,7 +8,9 @@ import type { Game } from '../../engine/game.js';
 import type { Move } from '../../engine/replay.js';
 import { SPELLS, type SpellId, spellKey } from '../../engine/spells.js';
 import type { Cell, GameEvent } from '../../engine/types.js';
+import { offersBeatenNumbers } from '../board/paint.js';
 import type { BoardView } from '../board/view.js';
+import type { Settings } from '../settings.js';
 import type { Sfx } from '../sfx.js';
 import type { EntryMode } from './mode.js';
 
@@ -21,6 +23,8 @@ export interface BoardActionsHost {
   view(): BoardView | null;
   readonly mode: EntryMode;
   readonly sfx: Sfx;
+  /** Where the Beaten toggle is kept, as the speaker keeps the mute. */
+  readonly settings: Settings;
   /** Make a move on the board on screen: the one door every action of the player's goes through. */
   move(move: Move): GameEvent[];
   apply(events: GameEvent[]): void;
@@ -81,6 +85,12 @@ export class BoardActions {
     this.h.refresh();
   }
 
+  /** The spell row's Cancel: disarm a spell picked but not yet cast. */
+  cancelSpell(): void {
+    this.h.mode.cancelSpell();
+    this.h.refresh();
+  }
+
   cycleMark(x: number, y: number): void {
     const game = this.h.game();
     if (!game || game.status !== 'playing') return;
@@ -103,6 +113,17 @@ export class BoardActions {
 
   toggleNotesMode(): void {
     this.h.mode.toggleNotes();
+    this.h.refresh();
+  }
+
+  /**
+   * The Beaten toggle: every beaten creature shows its number, or its creature again (decision
+   * 0067). A way of looking and not a move, so it is kept in the settings, not the game.
+   */
+  toggleBeatenNumbers(): void {
+    const game = this.h.game();
+    if (!game || !offersBeatenNumbers(game)) return;
+    this.h.settings.setPresentation({ beatenNumbers: !this.h.settings.presentation.beatenNumbers });
     this.h.refresh();
   }
 
@@ -130,6 +151,17 @@ export class BoardActions {
     this.h.apply(this.h.move({ kind: 'wait' }));
   }
 
+  /** Zoom in or out a step, or fit the board to the stage; false for any other key. */
+  private zoomKey(e: KeyboardEvent, key: string): boolean {
+    const view = this.h.view();
+    if (e.key === '+' || e.key === '=') view?.nudgeZoom(2);
+    else if (e.key === '-' || e.key === '_') view?.nudgeZoom(-2);
+    else if (key === 'f') view?.fit();
+    else return false;
+    e.preventDefault();
+    return true;
+  }
+
   /** A key pressed while the board is on screen; `App` sends nothing else here. */
   onKey(e: KeyboardEvent): void {
     const game = this.h.game();
@@ -138,6 +170,13 @@ export class BoardActions {
     if (e.key === 'Escape') {
       if (this.h.mode.escape()) this.h.refresh();
       else this.h.leaveGame();
+      return;
+    }
+    // Looking, not a move, so it works on a board that has ended; left to the browser with a
+    // modifier held, where Ctrl+U and Cmd+U mean something of their own.
+    if (e.key.toLowerCase() === 'u' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      this.toggleBeatenNumbers();
       return;
     }
     if (game.status !== 'playing') return;
@@ -178,21 +217,7 @@ export class BoardActions {
       this.h.next();
       return;
     }
-    if (e.key === '+' || e.key === '=') {
-      e.preventDefault();
-      this.h.view()?.nudgeZoom(2);
-      return;
-    }
-    if (e.key === '-' || e.key === '_') {
-      e.preventDefault();
-      this.h.view()?.nudgeZoom(-2);
-      return;
-    }
-    if (key === 'f') {
-      e.preventDefault();
-      this.h.view()?.fit();
-      return;
-    }
+    if (this.zoomKey(e, key)) return;
     // A spell's own letter casts it, checked after the board's own keys so a spell can never
     // shadow Sweep or zoom.
     const spell = game.spells.find((id) => spellKey(id) === key);
