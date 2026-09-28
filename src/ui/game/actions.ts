@@ -90,6 +90,12 @@ export class BoardActions {
     this.h.refresh();
   }
 
+  /** The palette's empty-set button: pencil mode, armed with the empty set. */
+  pencilEmpty(): void {
+    this.h.mode.notesMode = true;
+    this.pickTier(0);
+  }
+
   toggleNotesMode(): void {
     this.h.mode.toggleNotes();
     this.h.refresh();

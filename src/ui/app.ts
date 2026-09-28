@@ -479,10 +479,7 @@ export class App {
         leave: () => this.leaveGame(),
         pause: () => this.pause(),
         pickTier: (tier) => this.actions.pickTier(tier),
-        pencilEmpty: () => {
-          this.mode.notesMode = true;
-          this.actions.pickTier(0);
-        },
+        pencilEmpty: () => this.actions.pencilEmpty(),
         toggleNotes: () => this.actions.toggleNotesMode(),
         sweep: (useMarks) => this.actions.doSweep(useMarks),
         wait: () => this.actions.doWait(),
