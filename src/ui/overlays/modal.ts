@@ -5,6 +5,7 @@
  * (docs/ui.md).
  */
 
+import type { FullRun } from '../../engine/run.js';
 import { buildAbout } from '../screens/about.js';
 import { buildSaveBackup } from '../screens/backup.js';
 import { buildHowTo } from '../screens/howto.js';
@@ -46,6 +47,43 @@ export class Modal {
   ask(opts: AskOptions): void {
     const { overlay, focus } = buildAsk(opts, () => this.close());
     if (!this.show(overlay, focus)) opts.onConfirm();
+  }
+
+  /**
+   * Leaving a board, or a run, with something in it: pause it, abandon it, or keep playing.
+   * `run` is the run's standing, for the question's body; null on a single board.
+   */
+  leaveGame(opts: {
+    boardIndex: number;
+    typeName: string;
+    run: Pick<FullRun, 'boardCount' | 'hp' | 'maxHp'> | null;
+    onPause: () => void;
+    onAbandon: () => void;
+  }): void {
+    const { run, boardIndex } = opts;
+    this.ask({
+      title: run ? 'LEAVE RUN?' : `LEAVE BOARD ${boardIndex}?`,
+      body:
+        (run
+          ? `${opts.typeName} full run, board ${boardIndex} of ${run.boardCount}, ` +
+            `HP ${run.hp}/${run.maxHp}. `
+          : '') + 'Pause it to carry on later from exactly here, or abandon it.',
+      confirmLabel: run ? 'Pause run' : 'Pause',
+      cancelLabel: 'Keep playing',
+      onConfirm: opts.onPause,
+      alternate: { label: run ? 'Abandon run' : 'Abandon', onChoose: opts.onAbandon },
+    });
+  }
+
+  /** A paused game an update has changed cannot be taken up (decision 0057); offer a fresh one. */
+  cannotResume(onStartAgain: () => void): void {
+    this.ask({
+      title: 'CANNOT RESUME',
+      body: 'An update has changed this game since it was paused, so it cannot be taken up.',
+      confirmLabel: 'Start again',
+      cancelLabel: 'Back',
+      onConfirm: onStartAgain,
+    });
   }
 
   /** The ladder list's reset: every record on this device, asked about first. */

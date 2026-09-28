@@ -417,14 +417,9 @@ export class App {
     const taken = takeUp(slot);
     if (taken === null) return false;
     if (taken === 'changed') {
-      this.modal.ask({
-        title: 'CANNOT RESUME',
-        body: 'An update has changed this game since it was paused, so it cannot be taken up.',
-        confirmLabel: 'Start again',
-        cancelLabel: 'Back',
-        onConfirm: () =>
-          'run' in slot ? this.startFullRun(slot.typeId) : this.startBoard(slot.typeId, slot.board),
-      });
+      this.modal.cannotResume(() =>
+        'run' in slot ? this.startFullRun(slot.typeId) : this.startBoard(slot.typeId, slot.board),
+      );
       return true;
     }
     const { game, run, moves, paused } = taken;
@@ -526,34 +521,30 @@ export class App {
     const run = this.run;
     const playing = run ? run.status === 'playing' : this.game?.status === 'playing';
     if (!playing || !(run || this.keeper.holding)) return this.showBoards(this.typeId);
-    this.modal.ask({
-      title: run ? 'LEAVE RUN?' : `LEAVE BOARD ${this.boardIndex}?`,
-      body:
-        (run
-          ? `${this.typeName()} full run, board ${this.boardIndex} of ${run.boardCount}, ` +
-            `HP ${run.hp}/${run.maxHp}. `
-          : '') + 'Pause it to carry on later from exactly here, or abandon it.',
-      confirmLabel: run ? 'Pause run' : 'Pause',
-      cancelLabel: 'Keep playing',
-      onConfirm: () => this.pause(),
-      alternate: {
-        label: run ? 'Abandon run' : 'Abandon',
-        onChoose: () => {
-          // An abandoned run is neither won nor lost, but it did reach a board.
-          if (run) {
-            this.progress.recordRun(this.typeId, {
-              completed: false,
-              reachedBoard: this.boardIndex,
-              hp: run.hp,
-              seconds: this.clock.elapsedSeconds(),
-            });
-          }
-          this.recorder.end('abandoned');
-          this.keeper.end();
-          this.showBoards(this.typeId);
-        },
-      },
+    this.modal.leaveGame({
+      boardIndex: this.boardIndex,
+      typeName: this.typeName(),
+      run,
+      onPause: () => this.pause(),
+      onAbandon: () => this.abandon(),
     });
+  }
+
+  /** Abandon the board, or the run, on screen: its slot emptied, a run written down as an attempt. */
+  private abandon(): void {
+    const run = this.run;
+    // An abandoned run is neither won nor lost, but it did reach a board.
+    if (run) {
+      this.progress.recordRun(this.typeId, {
+        completed: false,
+        reachedBoard: this.boardIndex,
+        hp: run.hp,
+        seconds: this.clock.elapsedSeconds(),
+      });
+    }
+    this.recorder.end('abandoned');
+    this.keeper.end();
+    this.showBoards(this.typeId);
   }
 
   /** Pause: the game is already kept, so this writes the clock down and leaves it. */
