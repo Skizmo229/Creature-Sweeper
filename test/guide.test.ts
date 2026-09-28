@@ -1,10 +1,10 @@
 /**
- * The field guide's words (`src/ui/guide/entries.ts`) held to the catalogue (`docs/strategies.md`),
- * which they copy: every paragraph and list item is the catalogue's word for word, less its
- * markup and its references to the repository; every section is one of its sections and every
- * heading one of its bold leads there; every trick has one entry, in the section of its grade;
- * every diagram is drawn once, in the entry of its trick; every entry for some ladders belongs to
- * exactly the ladders the catalogue names for it; and the damage table is the engine's.
+ * The field guide's shape (`src/ui/guide/entries.ts`) held to the catalogue (`docs/strategies.md`):
+ * every section is one of its sections and every heading one of its bold leads there; every
+ * trick has one entry, in the section of its grade; every diagram is drawn once, in the entry of
+ * its trick; every entry for some ladders belongs to exactly the ladders the catalogue names for
+ * it; and the damage table is the engine's. The words are the game's own (decision 0059), so
+ * they are held only to being there and being sentences.
  */
 
 import { readFileSync } from 'node:fs';
@@ -49,18 +49,18 @@ const diagramsIn = (entry: GuideEntry): Diagram[] =>
   entry.body.flatMap((b: Block) => (typeof b === 'object' && 'diagram' in b ? [b.diagram] : []));
 
 describe('the field guide', () => {
-  it('quotes the catalogue word for word, and nothing else', () => {
-    const text = plain(catalogue);
-    const quoted: string[] = [...GUIDE_INTRO];
-    for (const section of GUIDE) quoted.push(...(section.intro ?? []));
+  it('says something in every entry, in whole sentences', () => {
+    const said: string[] = [...GUIDE_INTRO];
+    for (const section of GUIDE) said.push(...(section.intro ?? []));
     for (const { entry } of everyEntry()) {
-      for (const block of entry.body) {
-        if (typeof block === 'string') quoted.push(block);
-        else if ('list' in block) quoted.push(...block.list);
-      }
+      const words = entry.body.flatMap((block) =>
+        typeof block === 'string' ? [block] : 'list' in block ? block.list : [],
+      );
+      expect(words.length, entry.heading ?? 'the list').toBeGreaterThan(0);
+      said.push(...words);
     }
-    expect(quoted.length).toBeGreaterThan(40);
-    for (const words of quoted) expect(text, words).toContain(words);
+    expect(said.length).toBeGreaterThan(40);
+    for (const words of said) expect(words, words).toMatch(/[.:]$/);
   });
 
   it("has the catalogue's sections, and its bold leads for headings", () => {
@@ -150,14 +150,11 @@ describe("the field guide's ladder notes", () => {
   const bullets = section
     .split('\n- **')
     .slice(1)
-    .map((b) => {
-      const [, heading, body] = /^(.+?)\.\*\* ([\s\S]*)$/.exec(b.trim())!;
-      return { heading: heading!, body: plain(body!).trim() };
-    });
+    .map((b) => ({ heading: /^(.+?)\.\*\* /.exec(b.trim())![1]! }));
 
-  it("are section 7's, in its order, word for word", () => {
+  it("are section 7's, under its headings and in its order", () => {
     expect(LADDER_NOTES.map((n) => n.heading)).toEqual(bullets.map((b) => b.heading));
-    LADDER_NOTES.forEach((n, i) => expect(n.body, n.heading).toBe(bullets[i]!.body));
+    for (const n of LADDER_NOTES) expect(n.body, n.heading).toMatch(/\.$/);
   });
 
   it('name real ladders, and ask the data for the ones they only describe', () => {

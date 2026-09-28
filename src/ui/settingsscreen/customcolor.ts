@@ -53,8 +53,7 @@ export function openColorWindow(screen: HTMLElement, spec: ColorWindowSpec): voi
   const warn = el(
     'p',
     'color-warn',
-    'This is close to the red of a click that would do nothing. The board still crosses that out, ' +
-      'but the two colours may be hard to tell apart.',
+    'Close to the red that crosses out a click that would do nothing.',
   );
   const example = el('div', 'color-example');
   const mixer = colorMixer((color) => {
@@ -72,8 +71,8 @@ export function openColorWindow(screen: HTMLElement, spec: ColorWindowSpec): voi
     el(
       'p',
       'settings-blurb',
-      'Mix any colour from red, green and blue, or type it in hex. Red itself is taken: it crosses ' +
-        'out a click that would do nothing, as on the right of the example.',
+      'Mix a colour from red, green and blue, or type it in hex. Red is taken: it crosses out a ' +
+        'click that would do nothing.',
     ),
     body,
   );

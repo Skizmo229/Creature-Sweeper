@@ -168,12 +168,9 @@ function fullRunCard(typeId: string, a: BoardListActions): HTMLElement {
   if (rec.bestHp === pool) card.classList.add('perfect');
 
   card.title = unlocked
-    ? `All ${last} boards back to back on one pool of ${pool} HP. ` +
-      (heal > 0
-        ? `Heal +${heal} — half the pool — after each board you clear. `
-        : `A pool of ${pool} heals back nothing: one mistake ends the run. `) +
-      'Level, EXP and mana reset on every board; only HP carries. ' +
-      'Dying at any point ends the whole run.'
+    ? `All ${last} boards on one pool of ${pool} HP. ` +
+      (heal > 0 ? `+${heal} HP after each clear. ` : 'No healing. ') +
+      'Level, EXP and mana reset each board; only HP carries. Death ends the run.'
     : `Clear board ${last} to unlock the full run.`;
 
   card.append(el('span', 'board-n run-n', 'FULL RUN'));

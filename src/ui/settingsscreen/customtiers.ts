@@ -98,8 +98,8 @@ export function openTierWindow(screen: HTMLElement, spec: TierWindowSpec): void 
     el(
       'p',
       'settings-blurb',
-      'Choose a tier, then mix its colour from red, green and blue or type it in hex. Tiers 6 to ' +
-        '9 wear the halo round their colour as well, and it has a swatch of its own.',
+      'Choose a tier, then mix its colour or type it in hex. The halo on tiers 6 to 9 has a ' +
+        'swatch of its own.',
     ),
     body,
   );

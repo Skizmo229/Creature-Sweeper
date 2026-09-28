@@ -52,8 +52,7 @@ export function gameplaySection(ctx: ScreenContext): void {
   const play = section(
     ctx.host,
     'Gameplay',
-    'These change the rules. Settings that make the game HARDER record normally; ' +
-      'any setting easier than the tuned game means a clear is not written down at all.',
+    'These change the rules. Harder than tuned records normally; easier, and nothing records.',
   );
 
   const g = () => settings.gameplay;
@@ -80,36 +79,31 @@ export function gameplaySection(ctx: ScreenContext): void {
     );
   };
 
-  gameplayRow(
-    'Player HP',
-    'hpRatio',
-    3,
-    'Scales the board’s HP pool. Never below 1 — a board entered at 0 HP is not a board.',
-  );
+  gameplayRow('Player HP', 'hpRatio', 3, 'Scales the board’s HP pool, never below 1.');
   gameplayRow(
     'Full run HP regen',
     'hpRegenRatio',
     1,
-    'Fraction of the pool healed after each cleared board of a Full Run, rounded down. ' +
-      'Nothing heals inside a board: HP is a guess budget, not a combat resource. Default ×0.50.',
+    'Share of the pool healed after each Full Run board, rounded down. Nothing heals inside a ' +
+      'board. Default ×0.50.',
   );
   gameplayRow(
     'Creature damage',
     'enemyDamageRatio',
     3,
-    'Scales what a creature’s retaliation costs. A fight at or below your level is free at any setting.',
+    'Scales what a creature’s retaliation costs. A fight at or below your level stays free.',
   );
   gameplayRow(
     'Mana regen',
     'manaRegenRatio',
     3,
-    'Scales the exploration trickle — mana earned per empty cell you uncover yourself. ×0 switches it off.',
+    'Scales the mana earned per empty cell you uncover. ×0 switches it off.',
   );
   gameplayRow(
     'Mana per creature',
     'manaRewardRatio',
     3,
-    'Scales the mana a defeated creature pays. Its EXP is never scaled — the level gates are exact totals.',
+    'Scales the mana a defeated creature pays. EXP is never scaled.',
   );
 
   const sweepBox = sweepControl(ctx, refreshStatus);
@@ -117,8 +111,7 @@ export function gameplaySection(ctx: ScreenContext): void {
     play,
     'Sweep',
     sweepBox,
-    'Charged mode banks one charge per cell you open by hand. Cells a sweep opens never charge it, ' +
-      'or a sweep would pay for the next one.',
+    'Charged mode banks one charge per cell you open by hand; cells a sweep opens do not count.',
   );
 
   row(
@@ -128,8 +121,8 @@ export function gameplaySection(ctx: ScreenContext): void {
       settings.setGameplay({ timeAttack: v });
       refreshStatus();
     }),
-    'Replaying a board you have a best time on counts DOWN from it, and reaching zero loses the board. ' +
-      'A board with no best time has nothing to race, and plays normally.',
+    'Replaying a board with a best time counts down from it, and zero loses the board. Without ' +
+      'a best time it plays normally.',
   );
 
   // Beside the dials because it is about play, though it is a presentation setting: it changes
@@ -138,9 +131,8 @@ export function gameplaySection(ctx: ScreenContext): void {
     play,
     'Tutor',
     toggle(settings.presentation.tutor, (v) => settings.setPresentation({ tutor: v })),
-    'Offers "Why? [H]" on every board: press it and the board points at the next move that can ' +
-      'be proven, and says why. It opens nothing. A board with a hint on it is cleared and ' +
-      'unlocks the next, but sets no best time.',
+    'Offers "Why? [H]" on every board: it points at the next provable move and says why, and ' +
+      'opens nothing. A hinted board clears and unlocks as usual but sets no best time.',
   );
 
   refreshStatus();
@@ -161,13 +153,12 @@ function recordStatus(ctx: ScreenContext): {
       status.textContent = 'Tuned game — everything records.';
       status.className = 'settings-status ok';
     } else if (isAtLeastAsHard(s)) {
-      status.textContent = 'Harder than tuned — clears, unlocks and best times all record.';
+      status.textContent = 'Harder than tuned: everything records.';
       status.className = 'settings-status ok';
     } else {
       status.textContent =
         `Nothing will record: ${easier.join(', ')} ` +
-        `${easier.length === 1 ? 'is' : 'are'} easier than the tuned game. ` +
-        'No clear, no unlock, no best time.';
+        `${easier.length === 1 ? 'is' : 'are'} easier than the tuned game.`;
       status.className = 'settings-status warn';
     }
   };

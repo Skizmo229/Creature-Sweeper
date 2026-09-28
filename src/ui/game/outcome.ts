@@ -22,8 +22,8 @@ function modifiedNote(gameplay: GameplaySettings): HTMLElement {
   return el(
     'p',
     'overlay-note modified',
-    `Not recorded — ${easier.join(', ')} ${easier.length === 1 ? 'is' : 'are'} ` +
-      'set easier than the tuned game. Harder settings record normally.',
+    `Not recorded: ${easier.join(', ')} ${easier.length === 1 ? 'is' : 'are'} ` +
+      'set easier than the tuned game.',
   );
 }
 
@@ -95,9 +95,8 @@ export function buildBoardOutcome(o: BoardOutcome): HTMLElement {
       el(
         'p',
         'overlay-note',
-        `A tier ${tier} creature at LV ${game.level} took your last ${damage} HP. ` +
-          `At LV ${tier} it would have cost nothing — ` +
-          'every board can be cleared without taking a single point of damage.',
+        `A tier ${tier} at LV ${game.level} took your last ${damage} HP. ` +
+          `At LV ${tier} it would have cost nothing.`,
       ),
     );
   }
@@ -196,9 +195,7 @@ export function buildRunOutcome(o: RunOutcome): HTMLElement {
             : `Already at full HP, so the +${run.healPerBoard} heal is wasted.`,
       ),
     );
-    card.append(
-      el('p', 'overlay-note', 'Level, EXP and mana all reset on the next board. Only HP carries.'),
-    );
+    card.append(el('p', 'overlay-note', 'Level, EXP and mana reset next board. Only HP carries.'));
   } else if (won) {
     const perfect = game.hp === run.maxHp;
     card.append(el('h2', undefined, perfect ? 'PERFECT FULL RUN' : 'FULL RUN COMPLETE'));
@@ -232,7 +229,7 @@ export function buildRunOutcome(o: RunOutcome): HTMLElement {
         'p',
         'overlay-note',
         `${run.legs.length} board${run.legs.length === 1 ? '' : 's'} cleared. ` +
-          'The run starts again from board 1.',
+          'Starts again from board 1.',
       ),
     );
   }

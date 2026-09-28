@@ -92,8 +92,8 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
   }
   els.notesBtn.textContent = mode.notesMode ? 'Entry: Pencil' : 'Entry: Mark';
   els.notesBtn.title = mode.notesMode
-    ? 'Clicking a cell pencils the selected tier as a candidate. Press N for marks.'
-    : 'Clicking a cell claims the selected tier. Press N to pencil candidates instead.';
+    ? 'Clicks pencil the selected tier as a candidate. N switches to marks.'
+    : 'Clicks mark the selected tier. N switches to the pencil.';
   els.notesBtn.classList.toggle('active', mode.notesMode);
   // The tier-0 pencil only exists while pencilling, and only on a board that can still be
   // hiding empty ground.
@@ -142,11 +142,11 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
     els.sweepSafeBtn.disabled = gated || safeCount === 0;
     els.sweepSafeBtn.title =
       sweepMode === 'off'
-        ? 'Sweep is switched off in Settings — every cell is opened by hand.'
+        ? 'Sweep is off in Settings.'
         : sweepMode === 'charge'
-          ? `Opening cells by hand charges Sweep. ${game.chargeNeeded} per use; ` +
-            `${game.charge} banked. Cells a sweep opens do not charge it.`
-          : 'Open only what is proven safe at your level. Can never cost HP.';
+          ? `Cells opened by hand charge Sweep: ${game.chargeNeeded} per use, ` +
+            `${game.charge} banked.`
+          : 'Opens what is proven safe. Never costs HP.';
   }
   // The move count is what a player times a creature's walk by: every creature was on its route's
   // corner at move 0 and walks one cell a move.

@@ -2,9 +2,9 @@
  * The school's lessons (docs/teaching-plan.md, section 5): nine short lessons, one trick each, on
  * boards drawn so that the trick is the move. A lesson is a board and a list of steps, and a step
  * says something, points with the tutor, and waits for one thing. Data, DOM-free: where a trick is
- * taught the words are the trick text's, so a change to the catalogue's sentence reaches the school
- * too. `run.ts` takes one lesson; `test/school.test.ts` takes all nine with the tricks at each
- * lesson's grade, and holds the grade below to failing where the lesson's trick is needed.
+ * taught the words are the trick text's, so a change to that sentence reaches the school too.
+ * `run.ts` takes one lesson; `test/school.test.ts` takes all nine with the tricks at each lesson's
+ * grade, and holds the grade below to failing where the lesson's trick is needed.
  *
  * Where a board needs weak creatures kept out of the lesson (every threshold is `C_k`, so the level
  * is at least the weakest tier alive), they stand in a covered block beyond a column of holes: the
@@ -69,9 +69,7 @@ export const LESSONS: readonly SchoolLesson[] = [
     shown: ['? ? ? ? ? ?', '? 2 ? ? 2 ?', '? ? ? ? ? ?'],
     steps: [
       {
-        say:
-          'A number is the sum of the tiers around it, not a count. Each 2 here might be one ' +
-          'tier 2, or two tier 1s, and you are never told which.',
+        say: 'A number is the sum of the tiers around it. Each 2 here might be one tier 2 or two 1s.',
         point: 'raw-ring',
         wait: { next: true },
       },
@@ -93,7 +91,7 @@ export const LESSONS: readonly SchoolLesson[] = [
         },
       },
       {
-        say: 'Two tier 1s made that 2. Now open all eight around the right 2.',
+        say: 'Two tier 1s made that 2. Now the eight around the right 2.',
         point: 'raw-ring',
         wait: {
           open: [
@@ -109,9 +107,7 @@ export const LESSONS: readonly SchoolLesson[] = [
         },
       },
       {
-        say:
-          'One tier 2 made this one. A 4 might be one tier 4, two 2s, a 3 and a 1, or four 1s, ' +
-          'and a 9 fits behind a cell with only eight neighbours.',
+        say: 'One tier 2 made this one. A 9 fits behind a cell with only eight neighbours.',
         wait: { next: true },
       },
     ],
@@ -127,9 +123,8 @@ export const LESSONS: readonly SchoolLesson[] = [
     steps: [
       {
         say:
-          'Your level is a shield, and it is the only one: a creature at or below your level dies ' +
-          'in one blow and costs nothing. You are level 1, and the cells marked 1 are tier 1s (the ' +
-          '1 beside each sees nothing else covered). Open both: two free kills.',
+          'A creature at or below your level dies in one blow for nothing. You are level 1, and ' +
+          'the cells marked 1 are tier 1s. Open both: two free kills.',
         point: 'raw-ring',
         key: true,
         wait: {
@@ -140,28 +135,23 @@ export const LESSONS: readonly SchoolLesson[] = [
         },
       },
       {
-        say:
-          'Every tier 1 is gone, so you are level 2. The LV buttons count what is still alive of ' +
-          'each tier: LV 1 reads 0 now.',
+        say: 'Every tier 1 is gone, so you are level 2. The LV buttons count what is left: LV 1 reads 0.',
         wait: { next: true },
       },
       {
         say:
-          'The cell marked 3 is above your level, so the mark locks it: a click there does ' +
-          'nothing, and a slip cannot cost you. The corner below it is the last cell of the 2 ' +
-          'beside it, and at level 2 a 2 is free.',
+          'The cell marked 3 is above your level, so the mark locks it against a slip. The corner ' +
+          'below it is the last cell of the 2 beside it, and at level 2 a 2 is free.',
         point: 'raw-ring',
         wait: { open: [[4, 2]] },
       },
       {
-        say: 'Level 3, and the 3 is free now too.',
+        say: 'Level 3, and the 3 is free too.',
         point: 'raw-ring',
         wait: { open: [[4, 0]] },
       },
       {
-        say:
-          `${rule('named-kill')} Levelling is what turns the rest of the board free, so take ` +
-          'every free kill before anything else.',
+        say: `${rule('named-kill')} Take every free kill first; levelling frees the rest of the board.`,
         wait: { next: true },
       },
     ],
@@ -176,16 +166,14 @@ export const LESSONS: readonly SchoolLesson[] = [
     shown: ['? ? # ? ?', '5 5 # ? ?', 'k3 3 # ? ?'],
     steps: [
       {
-        say:
-          `${rule('residual-ring')} A beaten creature shows its own number while the pointer is ` +
-          'over it, and you subtract that the same way.',
+        say: `${rule('residual-ring')} Hover a beaten creature to see its own number.`,
         point: 'residual-ring',
         wait: { next: true },
       },
       {
         say:
-          'Each 5 sees the beaten 3, so 2 is hidden over the two covered cells: at or below your ' +
-          'level 2, so both are free. Open them.',
+          'Each 5 sees the beaten 3, so 2 is hidden over the two covered cells. You are level 2: ' +
+          'both are free. Open them.',
         point: 'residual-ring',
         key: true,
         wait: {
@@ -196,9 +184,7 @@ export const LESSONS: readonly SchoolLesson[] = [
         },
       },
       {
-        say:
-          'The block beyond the gap is the rest of the board, where nothing can be proven yet. ' +
-          'Take off what you can see first, and the raw ring does the rest.',
+        say: 'The block beyond the gap is the rest of the board, where nothing is proven yet.',
         wait: { next: true },
       },
     ],
@@ -214,21 +200,21 @@ export const LESSONS: readonly SchoolLesson[] = [
     steps: [
       {
         say:
-          `${rule('last-cell')} The 4s around the bottom right corner have one covered ` +
-          `neighbour left, so that cell is a tier 4. Mark it 4: ${HOW_TO_MARK}.`,
+          `${rule('last-cell')} The 4s at the bottom right have one covered neighbour left, so ` +
+          `it is a tier 4. Mark it 4: ${HOW_TO_MARK}.`,
         point: 'last-cell',
         key: true,
         wait: { mark: [8, 2], tier: 4 },
       },
       {
         say:
-          'A mark above your level locks the cell, so a slip cannot open it. The other creatures ' +
-          'are last cells too, and the tier 1 is free at level 1.',
+          'A mark above your level locks the cell. The other creatures are last cells too, and ' +
+          'the tier 1 is free at level 1.',
         point: 'last-cell',
         wait: { open: [[0, 0]] },
       },
       {
-        say: 'Every tier 1 is gone, so you are level 2, and the 2 is free.',
+        say: 'Level 2, and the 2 is free.',
         point: 'last-cell',
         wait: { open: [[3, 0]] },
       },
@@ -242,9 +228,7 @@ export const LESSONS: readonly SchoolLesson[] = [
         wait: { open: [[8, 2]] },
       },
       {
-        say:
-          'This is the workhorse, and it compounds: every cell named is a tier subtracted from ' +
-          'every other number it touches, which names the next.',
+        say: 'Every cell named is a tier subtracted from every number it touches, which names the next.',
         wait: { next: true },
       },
     ],
@@ -266,8 +250,7 @@ export const LESSONS: readonly SchoolLesson[] = [
       {
         say:
           'So the 5 over the two covered cells is a 4 and a 1, or a 3 and a 2, never a 5 and ' +
-          'nothing. And when every tier still alive is at or below your level, the whole board ' +
-          'is free. Open both.',
+          'nothing. Every tier alive is at or below your level, so the whole board is free. Open both.',
         point: 'counters',
         key: true,
         wait: {
@@ -295,7 +278,7 @@ export const LESSONS: readonly SchoolLesson[] = [
       {
         say:
           `${rule('subtract')} The 2 sees the first two covered cells and the 5 the first ` +
-          `three, so the third holds the difference, exactly 3. Mark it 3: ${HOW_TO_MARK}.`,
+          `three, so the third is exactly 3. Mark it 3: ${HOW_TO_MARK}.`,
         point: 'subtract',
         key: true,
         wait: { mark: [2, 0], tier: 3 },
@@ -303,24 +286,22 @@ export const LESSONS: readonly SchoolLesson[] = [
       {
         say:
           'The last 3 sees the third and fourth cells, and the first 3 sees those and the ' +
-          'second, so the second holds the difference: nothing. Open it.',
+          'second, so the second holds nothing. Open it.',
         point: 'subtract',
         wait: { open: [[1, 0]] },
       },
       {
-        say: 'The 2 has one covered cell left now. Mark it 2.',
+        say: 'The 2 has one covered cell left. Mark it 2.',
         point: 'last-cell',
         wait: { mark: [0, 0], tier: 2 },
       },
       {
-        say: 'And the last 3 is made by the 3 you named, so the fourth is empty. Open it.',
+        say: 'The last 3 is made by the 3 you named, so the fourth is empty. Open it.',
         point: 'residual-ring',
         wait: { open: [[3, 0]] },
       },
       {
-        say:
-          'The pattern to remember is x, x+z, z over a wall: beneath it lies x, empty, z, ' +
-          'whatever x and z are.',
+        say: 'The pattern: x, x+z, z over a wall means x, empty, z beneath it.',
         wait: { next: true },
       },
     ],
@@ -335,16 +316,12 @@ export const LESSONS: readonly SchoolLesson[] = [
     shown: ['? ? # ? ?', '9 9 # ? ?', '. . # ? ?'],
     steps: [
       {
-        say:
-          `${rule('bounds')} A 9 over two cells, and no tier above 5: each holds at least 4, so ` +
-          'both are a 4 or a 5.',
+        say: `${rule('bounds')} A 9 over two cells, no tier above 5: each is a 4 or a 5.`,
         point: 'bounds',
         wait: { next: true },
       },
       {
-        say:
-          'Pencil it in. Press N to switch the entry to Pencil, then with the pointer on the ' +
-          'first covered cell press 4 and 5.',
+        say: 'Pencil it in. Press N for Pencil, then with the pointer on the first covered cell press 4 and 5.',
         point: 'bounds',
         key: true,
         wait: { pencil: [0, 0], tiers: [4, 5] },
@@ -356,8 +333,8 @@ export const LESSONS: readonly SchoolLesson[] = [
       },
       {
         say:
-          'The pencil is a shield, read by its lowest candidate: 4 or 5 locks a cell until level ' +
-          '4, and can never expose you. A click on either does nothing now.',
+          'The pencil is read by its lowest candidate: 4 or 5 locks a cell until level 4, and a ' +
+          'click on it does nothing.',
         wait: { next: true },
       },
     ],
@@ -372,9 +349,9 @@ export const LESSONS: readonly SchoolLesson[] = [
     steps: [
       {
         say:
-          'At level 1 the 2 over the two covered cells on the left is a guess: either could be ' +
-          'the tier 2, and a tier 2 costs 2 of your 10 HP. Before any guess, take every free ' +
-          'kill: the two covered cells on the right are tier 1s.',
+          'At level 1 the 2 on the left is a guess: either cell could be the tier 2, at 2 of your ' +
+          '10 HP. Before any guess, take every free kill: the two covered cells on the right are ' +
+          'tier 1s.',
         point: 'raw-ring',
         wait: {
           open: [
@@ -384,9 +361,7 @@ export const LESSONS: readonly SchoolLesson[] = [
         },
       },
       {
-        say:
-          'Every tier 1 is gone, so you are level 2, and the 2 on the left is at or below your ' +
-          'level: both its cells are free. The guess was never needed.',
+        say: 'Level 2 now, so the 2 on the left is free. The guess was never needed.',
         point: 'raw-ring',
         wait: {
           open: [
@@ -398,7 +373,7 @@ export const LESSONS: readonly SchoolLesson[] = [
       {
         say:
           'Before a guess, know the worst case, and ask whether two more levels would make it ' +
-          'unnecessary. When nothing can be proven, the tutor (H) says both.',
+          'unnecessary. When nothing is proven, the tutor (H) says both.',
         wait: { next: true },
       },
     ],
@@ -413,16 +388,14 @@ export const LESSONS: readonly SchoolLesson[] = [
     shown: ['? ? # ? ? ?', '9 9 # ? ? ?'],
     steps: [
       {
-        say:
-          'Look at LV 5: one tier 5 is left. The 9 over two cells is a 4 and a 5, so the last 5 ' +
-          'is one of those two.',
+        say: 'LV 5 reads 1: one tier 5 left. The 9 over two cells is a 4 and a 5, so it is one of those two.',
         point: 'bounds',
         wait: { next: true },
       },
       {
         say:
-          `${rule('last-of-tier')} So every other covered cell, the rest of the board beyond ` +
-          'the gap, holds at most a 4, and at level 4 all of it is free. Open it.',
+          `${rule('last-of-tier')} So the rest of the board, beyond the gap, holds at most a 4, ` +
+          'and at level 4 all of it is free. Open it.',
         point: 'last-of-tier',
         key: true,
         wait: {
@@ -437,9 +410,7 @@ export const LESSONS: readonly SchoolLesson[] = [
         },
       },
       {
-        say:
-          'The last level-ups on every ladder are met by killing every creature of a tier, so ' +
-          'the endgame is finding the last one, and the counters are the map.',
+        say: 'The top thresholds are met by killing every creature of a tier, so every endgame is this hunt.',
         wait: { next: true },
       },
     ],

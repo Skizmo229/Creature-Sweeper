@@ -376,8 +376,10 @@ Still open:
 5. **The stuck case** (4.5): the worst case and the levels-away figure are facts about the rules;
    naming a cell to guess would be advice about odds, and the plan does not. Confirm.
 6. **The key.** `H` is free. `?` is the other candidate.
-7. **The guide's words** duplicated and tested, or the catalogue's trick sections generated from
-   the table (6.1).
+7. **The guide's words.** Decided 27 September 2026: the game's own, shorter than the catalogue's,
+   with the catalogue's sections, headings, tricks and ladder lists held by the tests (decision
+   0059). The owner finds the game wordy; the catalogue is the instrument's spec and keeps its
+   length.
 8. **A post-mortem.** The death screen could say "the move you missed": the tutor's pass on the
    board as it stood before the fatal click. It needs the pre-click state kept, which is one
    snapshot; it is cheap once Part 1 exists and is not in this plan's scope until the owner wants

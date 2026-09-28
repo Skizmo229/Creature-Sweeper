@@ -58,7 +58,7 @@ src/ui/         the prototype
   screens/        one builder per screen: ladders, boards, howto, backup, guide, school
   overlays/       ask.ts: the in-page yes/no question (never window.confirm); modal.ts: the one
                   modal overlay up at a time, and the ones the menus open
-  guide/          the field guide's words, the catalogue's: entries.ts (the tricks, the diagrams,
+  guide/          the field guide's words, in the catalogue's shape: entries.ts (the tricks, the diagrams,
                   guessing), ladders.ts (each ladder's note)
   school/         the school: lessons.ts (the nine lessons, as data), run.ts (one being taken)
   game/           the game screen: screen.ts (furniture), hud.ts (filling it in), mode.ts

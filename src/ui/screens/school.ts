@@ -21,14 +21,7 @@ export function buildSchoolList(a: SchoolListActions): HTMLElement {
   const back = el('button', 'ghost', '← Ladders');
   back.addEventListener('click', a.back);
   head.append(back, el('h1', undefined, 'School'));
-  head.append(
-    el(
-      'p',
-      'sub',
-      'Nine short lessons, one trick each, on boards drawn so that the trick is the move. Take ' +
-        'them in any order; nothing waits on them.',
-    ),
-  );
+  head.append(el('p', 'sub', 'Nine short lessons, one trick each, in any order.'));
   wrap.append(head);
 
   const grid = el('div', 'board-grid');

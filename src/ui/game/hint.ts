@@ -38,7 +38,7 @@ export function hintText(game: Game | null, mode: EntryMode): string {
   }
   const sweep =
     game && !game.hasSweep
-      ? 'no Sweep on this ladder — every cell is opened by hand'
+      ? 'no Sweep on this ladder'
       : game && placementRule(game.config.placement).guessFree
         ? 'S opens the clues at or below your level · D also opens your own marks'
         : game && !game.marksAreClaims

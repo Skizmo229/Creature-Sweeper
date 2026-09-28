@@ -66,8 +66,7 @@ export function buildSaveBackup(draft: string, error: string, a: SaveBackupActio
     el(
       'p',
       'overlay-note',
-      'Your save lives in this browser only. Keep a copy of this code to move it to ' +
-        'another device, or to get it back if the browser clears its data.',
+      'Your save lives in this browser only. Keep this code to move it or get it back.',
     ),
   );
 
