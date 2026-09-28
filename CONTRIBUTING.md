@@ -6,6 +6,18 @@ ladder generator whose output tunes all of it (`design/`). `README.md` is the fr
 `docs/refactoring-plan.md` is Milestone 3, the readability refactor, complete on 24 September
 2026: what was measured, what changed and why.
 
+## Issues and pull requests
+
+Bug reports, ideas and pull requests are all welcome on GitHub. A bug report helps most when it
+names the ladder and board and says what you did and what happened; the code from **Back up /
+restore save** on the list of game types carries the whole save, so a problem that depends on
+progress can be reproduced exactly. The maintainer reviews every pull request and merges it; the
+rules below are what a review asks of one.
+
+By contributing you agree to license your contribution under the project's licences: code under
+GPL-3.0-or-later, documentation and design research under CC BY-SA 4.0. The README's licence
+section says which files are which.
+
 ## Setup
 
 Node 22 (`.nvmrc`) and, for the ladder generator only, Python 3 with no packages.
@@ -50,8 +62,9 @@ They are covered by `test/invariants.test.ts` and by `npm run sim`, and every on
 
 `test/golden/` holds what the fixed-seed simulator runs in `scripts/golden.mjs` print.
 `npm run sim:golden:check` re-runs them and diffs. A change that is not meant to alter behaviour
-leaves every file byte-identical. A change that is meant to (a retune, a rule change) re-records with
-`npm run sim:golden` and says so in the commit message, with the diff as evidence of what moved.
+leaves every file byte-identical. A change that is meant to (a retune, a rule change) re-records
+with `npm run sim:golden` and says so in the commit message, with the diff as evidence of what
+moved.
 
 ## Refactor rules
 
@@ -83,7 +96,7 @@ leaves every file byte-identical. A change that is meant to (a retune, a rule ch
 - One commit per move, with a message that says what moved and what verified it.
 - `git config blame.ignoreRevsFile .git-blame-ignore-revs` makes blame look through the
   formatting-only commits listed there.
-- Each change is a branch; the owner reviews and merges.
+- Each change is a branch; the maintainer reviews and merges.
 - Decisions that a later reader might reverse without knowing why go in `docs/decisions/`.
 - Nothing that pictures the original game goes in the repository. `design/original-reference/`,
   `game_types.pdn` and `design/screenshots/` are untracked on purpose; see the README's licence
