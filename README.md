@@ -68,9 +68,9 @@ npm run typecheck      # twice: the second pass compiles the engine, sims and te
 npm run lint           # ESLint, failing on any warning; the size warnings are the readability bar Milestone 3 set
 npm run knip           # unused files and exports
 npm run format         # Prettier (format:check to verify)
-npm test               # 672 tests, including the invariants
-npm run sim:golden:check   # re-run seventeen fixed-seed simulator runs and diff against test/golden/
-npm run sim            # clear every one of the 884 boards headlessly (-- 200 for more seeds)
+npm test               # the test suite, including the invariants
+npm run sim:golden:check   # re-run the fixed-seed simulator runs and diff against test/golden/
+npm run sim            # clear every board headlessly (-- 200 for more seeds)
 npm run sim:run        # complete every type's Full Run
 npm run sim:spells -- 40 dungeon   # what each spell is worth on one ladder, board by board
 npm run sim:forced -- 30 oracle    # how many forced guesses a perfect deducer still faces
@@ -106,7 +106,7 @@ backs out, asking first whether to pause or abandon a game you have made a move 
 font, interface font, sound pack, glow after a fight, board-clear effect, text size, preview size,
 cursor highlight and its colour, strike-through, zoom ceiling) touches no rule and can never
 affect a record; every visual option is shown as a real board, or for the interface a copy of the
-HUD. A creature's icon is one of seven drawn pip shapes, or, through the icon picker's **Custom**
+HUD. A creature's icon is one of the drawn pip shapes, or, through the icon picker's **Custom**
 tile, any of 782 symbols from Dingbats and Wingdings 1 to 3, picked from each font's own chart.
 Wingdings itself cannot ship, so the symbols are their Unicode equivalents, drawn from open Noto
 fonts bundled with the game and cut down to just these symbols (Noto Sans Symbols 2, Noto Sans

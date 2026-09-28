@@ -10,7 +10,7 @@ All in `src/sim/cli/`, all driving the real engine with fixed seeds, all determi
 
 | Command | What it measures |
 | --- | --- |
-| `npm run sim [-- seeds]` | Clears every one of the 884 boards with the omniscient tier-order player. Reports the opening and HP lost; exits non-zero if any board cannot be cleared at full HP. The regression gate for `ladders.py`. |
+| `npm run sim [-- seeds]` | Clears every board of every ladder with the omniscient tier-order player. Reports the opening and HP lost; exits non-zero if any board cannot be cleared at full HP. The regression gate for `ladders.py`. |
 | `npm run sim:run` | Completes every type's Full Run ten boards deep on one HP pool. |
 | `npm run sim:spells -- N [ladder]` | The honest player, spell-less and with each spell policy: forced guesses, HP lost, clear rate, HP saved per cast and per mana. `POLICY=gym` plays WORKOUT as a farmer. |
 | `npm run sim:forced -- N [ladder] [a-b]` | The honest player beside a player that also takes the complete deducer's free moves, on the same seeds: what share of stuck points had a free move, how often a perfect deducer is still cornered, what share of boards is guess-free. Its `bad` and `hurt` columns must be zero. |
@@ -19,7 +19,7 @@ All in `src/sim/cli/`, all driving the real engine with fixed seeds, all determi
 | `npm run sim:sudoku -- N [--sweep]` | SUDOKU build cost per givens count and the tightest round of each board. |
 | `npx tsx src/sim/cli/opening.ts`, `placement.ts`, `topology.ts` | The opening, placement and topology experiments; the first two write `design/data/*.json` for the reference page. |
 | `npm run telemetry -- CODE-or-file` | A player's play statistics, pasted from the backup screen (`CST1:` code): per board, attempts and clears, opens and guesses, sweeps, casts, hints, HP lost, seconds and deaths by tier, tuned and modified dials apart. Read beside `sim:human`'s row for the same board. |
-| `npm run sim:golden` / `sim:golden:check` | Records or diffs the text of seventeen small runs of the above: the behaviour-preservation harness. |
+| `npm run sim:golden` / `sim:golden:check` | Records or diffs the text of small fixed-seed runs of the above (the list is `RUNS` in `scripts/golden.mjs`): the behaviour-preservation harness. |
 
 The **honest player** (`src/sim/honest.ts`) reads only what a player can see and deduces locally,
 so every "cornered" figure it gives is an upper bound. The **complete deducer**

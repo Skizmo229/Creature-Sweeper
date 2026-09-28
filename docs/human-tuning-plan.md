@@ -80,7 +80,7 @@ sum rule; grade 2 is a competent Minesweeper player who has learned it; grade 4 
 `src/sim/graded.ts`, with what it sees in `src/sim/reader.ts` and its techniques in
 `src/sim/tricks.ts`. A sibling of the honest player, not a parameterisation of it, for two
 reasons: the honest player's readers treat marks as facts and read hidden numbers by design, and
-ten of the fourteen golden runs play it, so leaving it untouched keeps them byte-identical.
+most of the golden runs play it, so leaving it untouched keeps them byte-identical.
 
 ### What it reads
 
@@ -198,8 +198,8 @@ the CLI `src/sim/cli/human.ts` iterates `type.boards` and prints a table per lad
 board, at grades 1 to 4 side by side, and every-ladder rows at one grade; `--profile` prints how
 often each technique fired. The solver can be attached as the ceiling through the same `rescue`
 hook `forced.ts` uses, which is how "forced at any grade" is reported beside "forced at this
-grade". One golden run (`human-normal`) fixes the printout. `docs/tuning.md`'s instrument table
-and the README's commands list gain the row.
+grade". Two golden runs fix the printout: `human-normal`, and `human-oracle` with `--profile`.
+`docs/tuning.md`'s instrument table and the README's commands list gain the row.
 
 ## 5. Validation
 

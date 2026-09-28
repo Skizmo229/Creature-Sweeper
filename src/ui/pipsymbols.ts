@@ -1,5 +1,5 @@
 /**
- * The symbols a creature's pips can be drawn as, beyond the seven drawn shapes: all of Dingbats,
+ * The symbols a creature's pips can be drawn as, beyond the drawn shapes: all of Dingbats,
  * Wingdings, Wingdings 2 and Wingdings 3, as the custom-icon window lays them out.
  *
  * Not the fonts themselves, which are Microsoft's and cannot ship. Every Wingdings character has

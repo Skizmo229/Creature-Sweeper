@@ -48,9 +48,9 @@ They are covered by `test/invariants.test.ts` and by `npm run sim`, and every on
 
 ## Golden simulator outputs
 
-`test/golden/` holds what sixteen fixed-seed simulator runs print. `npm run sim:golden:check`
-re-runs them and diffs. A change that is not meant to alter behaviour leaves every file
-byte-identical. A change that is meant to (a retune, a rule change) re-records with
+`test/golden/` holds what the fixed-seed simulator runs in `scripts/golden.mjs` print.
+`npm run sim:golden:check` re-runs them and diffs. A change that is not meant to alter behaviour
+leaves every file byte-identical. A change that is meant to (a retune, a rule change) re-records with
 `npm run sim:golden` and says so in the commit message, with the diff as evidence of what moved.
 
 ## Refactor rules
