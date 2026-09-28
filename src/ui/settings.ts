@@ -21,7 +21,15 @@
  * data), so every access is guarded and the game plays fine without it.
  */
 
-import { DEFAULT_GAMEPLAY, type GameplaySettings, type SweepMode } from '../engine/settings.js';
+import {
+  DEFAULT_GAMEPLAY,
+  type GameplaySettings,
+  MAX_SWEEP_BUDGET,
+  MAX_TIME_LIMIT,
+  MIN_SWEEP_BUDGET,
+  MIN_TIME_ATTACK_RATIO,
+  type SweepMode,
+} from '../engine/settings.js';
 import type { SfxPackId, TypeTheme, VictoryId } from './looktypes.js';
 import { lookFor, themeFor } from './looks.js';
 import {
@@ -51,22 +59,37 @@ function emptyData(): SettingsData {
   return { version: 1, presentation: DEFAULT_PRESENTATION, gameplay: DEFAULT_GAMEPLAY };
 }
 
-const SWEEP_MODES: readonly SweepMode[] = ['on', 'off', 'charge'];
+const SWEEP_MODES: readonly SweepMode[] = ['on', 'off', 'charge', 'budget'];
 
+/** A saved count, whole and within its range, or the fallback. */
+function whole(value: unknown, min: number, max: number, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.min(max, Math.max(min, Math.round(value)))
+    : fallback;
+}
+
+const bool = (value: unknown, fallback: boolean): boolean =>
+  typeof value === 'boolean' ? value : fallback;
+
+/** A saved set of dials. Every dial from before a setting reads as the tuned game's. */
 function readGameplay(raw: unknown): GameplaySettings {
   const g = (raw ?? {}) as Record<string, unknown>;
+  const d = DEFAULT_GAMEPLAY;
   return {
-    hpRatio: num(g.hpRatio, 0, 3, DEFAULT_GAMEPLAY.hpRatio),
-    hpRegenRatio: num(g.hpRegenRatio, 0, 1, DEFAULT_GAMEPLAY.hpRegenRatio),
-    enemyDamageRatio: num(g.enemyDamageRatio, 0, 3, DEFAULT_GAMEPLAY.enemyDamageRatio),
-    manaRegenRatio: num(g.manaRegenRatio, 0, 3, DEFAULT_GAMEPLAY.manaRegenRatio),
-    manaRewardRatio: num(g.manaRewardRatio, 0, 3, DEFAULT_GAMEPLAY.manaRewardRatio),
-    sweep: oneOf(g.sweep, SWEEP_MODES, DEFAULT_GAMEPLAY.sweep),
-    sweepChargeClicks:
-      typeof g.sweepChargeClicks === 'number'
-        ? Math.min(50, Math.max(1, Math.round(g.sweepChargeClicks)))
-        : DEFAULT_GAMEPLAY.sweepChargeClicks,
-    timeAttack: typeof g.timeAttack === 'boolean' ? g.timeAttack : DEFAULT_GAMEPLAY.timeAttack,
+    hpRatio: num(g.hpRatio, 0, 3, d.hpRatio),
+    hpRegenRatio: num(g.hpRegenRatio, 0, 1, d.hpRegenRatio),
+    enemyDamageRatio: num(g.enemyDamageRatio, 0, 3, d.enemyDamageRatio),
+    manaRegenRatio: num(g.manaRegenRatio, 0, 3, d.manaRegenRatio),
+    manaRewardRatio: num(g.manaRewardRatio, 0, 3, d.manaRewardRatio),
+    sweep: oneOf(g.sweep, SWEEP_MODES, d.sweep),
+    sweepChargeClicks: whole(g.sweepChargeClicks, 1, 50, d.sweepChargeClicks),
+    timeAttack: bool(g.timeAttack, d.timeAttack),
+    sweepBudget: whole(g.sweepBudget, MIN_SWEEP_BUDGET, MAX_SWEEP_BUDGET, d.sweepBudget),
+    spellPriceRatio: num(g.spellPriceRatio, 0, 3, d.spellPriceRatio),
+    startManaRatio: num(g.startManaRatio, 0, 3, d.startManaRatio),
+    countersHidden: bool(g.countersHidden, d.countersHidden),
+    timeAttackRatio: num(g.timeAttackRatio, MIN_TIME_ATTACK_RATIO, 1, d.timeAttackRatio),
+    timeLimit: whole(g.timeLimit, 0, MAX_TIME_LIMIT, d.timeLimit),
   };
 }
 

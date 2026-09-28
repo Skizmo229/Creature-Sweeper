@@ -1,6 +1,7 @@
 /**
- * How Sweep is gated by the player's dial (decision 0014): always on, off, or charged by the
- * cells opened by hand, ten a sweep by default. Engine-internal: `Game` banks a hand-opened cell
+ * How Sweep is gated by the player's dial (decision 0014): always on, off, charged by the cells
+ * opened by hand, ten a sweep by default, or a budget of so many sweeps a board (decision 0072).
+ * Engine-internal: `Game` banks a hand-opened cell
  * here, asks whether a sweep may go, and pays for one that did something. The dial lives in the
  * engine rather than the UI because the charge is earned by opening cells, which only the engine
  * sees, and so that a button that forgot to disable itself still cannot sweep past the gate.
@@ -15,6 +16,8 @@ export class SweepGate {
    * gate would be no gate at all. A cascade is one click, so it is one charge, for the same reason.
    */
   private charge = 0;
+  /** Sweeps spent from a budget. */
+  private used = 0;
 
   constructor(private readonly settings: GameplaySettings) {}
 
@@ -33,6 +36,12 @@ export class SweepGate {
     return this.settings.sweep === 'charge' ? this.settings.sweepChargeClicks : 0;
   }
 
+  /** Sweeps left of a board's budget; Infinity where the dial sets none. */
+  get left(): number {
+    if (this.settings.sweep !== 'budget') return Infinity;
+    return Math.max(0, this.settings.sweepBudget - this.used);
+  }
+
   /** Whether the dial lets a sweep go right now. */
   get open(): boolean {
     switch (this.settings.sweep) {
@@ -40,6 +49,8 @@ export class SweepGate {
         return false;
       case 'charge':
         return this.charge >= this.needed;
+      case 'budget':
+        return this.used < this.settings.sweepBudget;
       default:
         return true;
     }
@@ -51,5 +62,6 @@ export class SweepGate {
    */
   spend(): void {
     if (this.settings.sweep === 'charge') this.charge -= this.needed;
+    if (this.settings.sweep === 'budget') this.used++;
   }
 }

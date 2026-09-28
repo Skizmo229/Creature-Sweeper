@@ -74,6 +74,49 @@ export interface HudState {
   hintLine: boolean;
 }
 
+/** The Sweep buttons, their meter and their counts, and PATROL's Wait, brought up to date. */
+function syncSweep(els: GameScreenElements, game: Game): void {
+  const sweepMode = game.settings.sweep;
+  const gated = !game.sweepAvailable;
+  const safeCount = sweepMode === 'off' ? 0 : game.safeCells({ useMarks: false }).length;
+  const markCount = sweepMode === 'off' ? 0 : game.safeCells({ useMarks: true }).length;
+  if (els.sweepSafeBtn) {
+    // The meter goes on the button, because what the player needs to know is why THIS control
+    // is dark.
+    const left = sweepMode === 'budget' ? ` (${game.sweepsLeft} left)` : '';
+    els.sweepSafeBtn.textContent =
+      sweepMode === 'off'
+        ? 'Sweep off'
+        : gated
+          ? sweepMode === 'budget'
+            ? `Sweep${left}`
+            : `Sweep (${game.charge}/${game.chargeNeeded})`
+          : safeCount > 0
+            ? `Sweep ${safeCount}${left}`
+            : `Sweep${left}`;
+    els.sweepSafeBtn.disabled = gated || safeCount === 0;
+    els.sweepSafeBtn.title =
+      sweepMode === 'off'
+        ? 'Sweep is off in Settings.'
+        : sweepMode === 'charge'
+          ? `Cells opened by hand charge Sweep: ${game.chargeNeeded} per use, ` +
+            `${game.charge} banked.`
+          : sweepMode === 'budget'
+            ? `${game.settings.sweepBudget} sweeps a board; ${game.sweepsLeft} left.`
+            : 'Opens what is proven safe. Never costs HP.';
+  }
+  // The move count is what a player times a creature's walk by: every creature was on its route's
+  // corner at move 0 and walks one cell a move.
+  if (els.waitBtn) els.waitBtn.textContent = `[W]ait · move ${game.moves}`;
+  if (els.sweepMarkBtn) {
+    // Only offered when the marks actually buy something the proof cannot.
+    const extra = markCount - safeCount;
+    els.sweepMarkBtn.textContent =
+      sweepMode === 'off' ? 'Sweep off' : extra > 0 ? `Sweep + marks +${extra}` : 'Sweep + marks';
+    els.sweepMarkBtn.disabled = gated || extra <= 0;
+  }
+}
+
 /** Everything on the screen that reads the game, brought up to date. */
 export function syncGameScreen(els: GameScreenElements, s: HudState): void {
   const { game, mode } = s;
@@ -99,11 +142,15 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
     els.hud.run.textContent = `RUN${s.boardIndex}/${s.run.boardCount}`;
   }
 
+  // With the counters hidden the button is the tier alone, and never dims for a tier that is gone.
+  const { countersHidden } = game.settings;
   for (const btn of els.counters) {
     const tier = Number(btn.dataset.tier);
-    btn.textContent = `LV ${tier}\n×${pad(game.counterFor(tier), 2)}`;
+    btn.textContent = countersHidden
+      ? `LV ${tier}`
+      : `LV ${tier}\n×${pad(game.counterFor(tier), 2)}`;
     btn.classList.toggle('active', mode.markMode === tier);
-    btn.classList.toggle('done', game.counterFor(tier) <= 0);
+    btn.classList.toggle('done', !countersHidden && game.counterFor(tier) <= 0);
   }
   els.notesBtn.textContent = mode.notesMode ? 'Entry: Pencil' : 'Entry: Mark';
   els.notesBtn.title = mode.notesMode
@@ -141,40 +188,7 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
   }
   els.stage.classList.toggle('targeting', mode.pendingSpell !== null);
 
-  const sweepMode = game.settings.sweep;
-  const gated = !game.sweepAvailable;
-  const safeCount = sweepMode === 'off' ? 0 : game.safeCells({ useMarks: false }).length;
-  const markCount = sweepMode === 'off' ? 0 : game.safeCells({ useMarks: true }).length;
-  if (els.sweepSafeBtn) {
-    // The meter goes on the button, because what the player needs to know is why THIS control
-    // is dark.
-    els.sweepSafeBtn.textContent =
-      sweepMode === 'off'
-        ? 'Sweep off'
-        : gated
-          ? `Sweep (${game.charge}/${game.chargeNeeded})`
-          : safeCount > 0
-            ? `Sweep ${safeCount}`
-            : 'Sweep';
-    els.sweepSafeBtn.disabled = gated || safeCount === 0;
-    els.sweepSafeBtn.title =
-      sweepMode === 'off'
-        ? 'Sweep is off in Settings.'
-        : sweepMode === 'charge'
-          ? `Cells opened by hand charge Sweep: ${game.chargeNeeded} per use, ` +
-            `${game.charge} banked.`
-          : 'Opens what is proven safe. Never costs HP.';
-  }
-  // The move count is what a player times a creature's walk by: every creature was on its route's
-  // corner at move 0 and walks one cell a move.
-  if (els.waitBtn) els.waitBtn.textContent = `[W]ait · move ${game.moves}`;
-  if (els.sweepMarkBtn) {
-    // Only offered when the marks actually buy something the proof cannot.
-    const extra = markCount - safeCount;
-    els.sweepMarkBtn.textContent =
-      sweepMode === 'off' ? 'Sweep off' : extra > 0 ? `Sweep + marks +${extra}` : 'Sweep + marks';
-    els.sweepMarkBtn.disabled = gated || extra <= 0;
-  }
+  syncSweep(els, game);
 }
 
 /** A count of seconds as the clock setting shows it: the seconds, or minutes and seconds. */

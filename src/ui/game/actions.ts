@@ -86,8 +86,26 @@ export class BoardActions {
     }
     // In pencil mode a click annotates or does nothing; it never opens (decision 0008).
     if (this.h.mode.notesMode) return;
+    // A click on an open cell chords, when the player has asked: its ring swept at a sweep's price.
+    if (game.cellAt(x, y)?.open && this.h.settings.presentation.chord) {
+      this.chord(x, y);
+      return;
+    }
     if (this.h.refuse(x, y)) return;
     this.h.apply(this.h.move({ kind: 'open', x, y }));
+  }
+
+  /** Sweep one open cell's ring, as a sweep of the board would be sounded and refused. */
+  private chord(x: number, y: number): void {
+    const game = this.h.game();
+    if (!game || game.status !== 'playing') return;
+    if (!game.sweepAvailable) {
+      this.h.sfx.play('blocked');
+      return;
+    }
+    const events = this.h.move({ kind: 'chord', x, y, useMarks: false });
+    if (events.length > 0) this.h.sfx.play('sweep');
+    this.h.apply(events);
   }
 
   /** Untargeted spells fire at once; targeted ones arm and wait for a cell. */

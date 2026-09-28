@@ -20,6 +20,8 @@ export type Move =
   | { readonly kind: 'mark'; readonly x: number; readonly y: number; readonly mark: number }
   | { readonly kind: 'note'; readonly x: number; readonly y: number; readonly tier: number }
   | { readonly kind: 'sweep'; readonly useMarks: boolean }
+  /** A chord: one open cell's ring swept (`Game.sweepAt`). */
+  | { readonly kind: 'chord'; readonly x: number; readonly y: number; readonly useMarks: boolean }
   | { readonly kind: 'cast'; readonly id: SpellId; readonly x?: number; readonly y?: number }
   | { readonly kind: 'wait' };
 
@@ -34,6 +36,8 @@ export function playMove(game: Game, move: Move): GameEvent[] {
       return game.toggleNote(move.x, move.y, move.tier);
     case 'sweep':
       return game.sweep({ useMarks: move.useMarks });
+    case 'chord':
+      return game.sweepAt(move.x, move.y, { useMarks: move.useMarks });
     case 'cast':
       return game.cast(move.id, move.x, move.y);
     case 'wait':
@@ -62,6 +66,8 @@ export function encodeMove(move: Move): MoveCode {
       return ['n', move.x, move.y, move.tier];
     case 'sweep':
       return ['s', move.useMarks ? 1 : 0];
+    case 'chord':
+      return ['r', move.x, move.y, move.useMarks ? 1 : 0];
     case 'cast':
       return move.x === undefined || move.y === undefined
         ? ['c', move.id]
@@ -86,6 +92,9 @@ export function decodeMove(code: unknown): Move | null {
     return { kind: 'note', x: a, y: b, tier: c };
   }
   if (kind === 's' && n === 2 && (a === 0 || a === 1)) return { kind: 'sweep', useMarks: a === 1 };
+  if (kind === 'r' && n === 4 && whole(a) && whole(b) && (c === 0 || c === 1)) {
+    return { kind: 'chord', x: a, y: b, useMarks: c === 1 };
+  }
   if (kind === 'c' && typeof a === 'string' && Object.hasOwn(SPELLS, a)) {
     const id = a as SpellId;
     if (n === 2) return { kind: 'cast', id };

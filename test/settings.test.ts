@@ -12,6 +12,7 @@
 import { describe, expect, it } from 'vitest';
 import { boardConfig, findType } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
+import type { Cell } from '../src/engine/types.js';
 import { FullRun } from '../src/engine/run.js';
 import { resolveBattle } from '../src/engine/combat.js';
 import {
@@ -194,6 +195,118 @@ describe('the sweep dial', () => {
   });
 });
 
+describe('the spell price and starting mana dials', () => {
+  it('scale what a spell costs, WORKOUT’s own price too, and never EXP', () => {
+    const cfg = magicBoard();
+    const dear = Game.create(cfg, SEED, { settings: dials({ spellPriceRatio: 2 }) });
+    const plain = Game.create(cfg, SEED);
+    for (const id of plain.spells) expect(dear.spellCost(id)).toBe(plain.spellCost(id) * 2);
+    const workout = board('workout', 2);
+    const half = Game.create(workout, SEED, { settings: dials({ spellPriceRatio: 0.5 }) });
+    expect(half.spellCost('exercise')).toBe(
+      Math.round(Game.create(workout, SEED).spellCost('exercise') * 0.5),
+    );
+    // Free at zero, which is the easiest end.
+    const free = Game.create(cfg, SEED, { settings: dials({ spellPriceRatio: 0 }) });
+    expect(free.spellCost('reveal')).toBe(0);
+    expect(dear.ex).toBe(plain.ex);
+  });
+
+  it('scale the mana a board opens with', () => {
+    const cfg = magicBoard();
+    expect(Game.create(cfg, SEED, { settings: dials({ startManaRatio: 2 }) }).mana).toBe(
+      cfg.startMana * 2,
+    );
+    expect(Game.create(cfg, SEED, { settings: dials({ startManaRatio: 0 }) }).mana).toBe(0);
+  });
+});
+
+/**
+ * NORMAL's second board with something for a sweep to find right away: the board as dealt, or,
+ * where the opening proved nothing, with its first covered empty cell opened by hand.
+ */
+function sweepReady(settings: GameplaySettings): Game {
+  const game = Game.create(board('normal', 2), SEED, { settings });
+  if (game.safeCells({ useMarks: false }).length === 0) {
+    const empty = game.grid.flat().find((c) => c.present && !c.open && c.tier === 0)!;
+    game.open(empty.x, empty.y);
+  }
+  expect(game.safeCells({ useMarks: false }).length).toBeGreaterThan(0);
+  return game;
+}
+
+describe('a budget of sweeps', () => {
+  it('allows so many sweeps a board, spent only by a sweep that did something', () => {
+    const game = sweepReady(dials({ sweep: 'budget', sweepBudget: 1 }));
+    expect(game.sweepsLeft).toBe(1);
+    expect(game.sweepAvailable).toBe(true);
+    // Nothing is spent on a sweep that found nothing: it is a misread, not a use.
+    const stalled = Game.create(board('normal', 2), SEED, {
+      settings: dials({ sweep: 'budget', sweepBudget: 1 }),
+    });
+    if (stalled.safeCells({ useMarks: false }).length === 0) {
+      expect(stalled.sweep()).toEqual([]);
+      expect(stalled.sweepsLeft).toBe(1);
+    }
+    expect(game.sweep().length).toBeGreaterThan(0);
+    expect(game.sweepsLeft).toBe(0);
+    expect(game.sweepAvailable).toBe(false);
+    expect(game.sweep()).toEqual([{ type: 'blocked', reason: 'no-charge' }]);
+    expect(Game.create(board('normal', 2), SEED).sweepsLeft).toBe(Infinity);
+  });
+});
+
+describe('a chord', () => {
+  /** An open cell with a proven-safe covered neighbour, and that ring. */
+  const chordable = (game: Game): { at: Cell; ring: Set<Cell> } => {
+    const safe = new Set(game.safeCells({ useMarks: false }));
+    const at = game.grid
+      .flat()
+      .find((c) => c.present && c.open && game.neighboursOf(c).some((n) => safe.has(n)))!;
+    return { at, ring: new Set(game.neighboursOf(at)) };
+  };
+
+  it('sweeps one open cell’s ring, no more, at the price of a sweep', () => {
+    const game = sweepReady(dials({ sweep: 'on' }));
+    const { at, ring } = chordable(game);
+    const before = game.safeCells({ useMarks: false });
+    const events = game.sweepAt(at.x, at.y);
+    expect(events.some((e) => e.type === 'revealed')).toBe(true);
+    for (const cell of before) if (ring.has(cell)) expect(cell.open).toBe(true);
+    // A proven cell outside the ring opens only through a cascade the ring started.
+    for (const cell of before) {
+      if (!ring.has(cell) && cell.open) {
+        expect(game.neighboursOf(cell).some((n) => n.open && n.num === 0)).toBe(true);
+      }
+    }
+  });
+
+  it('is refused where a sweep is, and on a covered cell', () => {
+    const gated = sweepReady(DEFAULT_GAMEPLAY);
+    const { at } = chordable(gated);
+    // One cell opened by hand at most, well short of the ten a charge takes.
+    expect(gated.sweepAt(at.x, at.y)).toEqual([{ type: 'blocked', reason: 'no-charge' }]);
+    const off = sweepReady(dials({ sweep: 'off' }));
+    expect(off.sweepAt(at.x, at.y)).toEqual([{ type: 'blocked', reason: 'no-charge' }]);
+    const on = sweepReady(dials({ sweep: 'on' }));
+    const covered = on.grid.flat().find((c) => c.present && !c.open)!;
+    expect(on.sweepAt(covered.x, covered.y)).toEqual([{ type: 'blocked', reason: 'no-effect' }]);
+  });
+
+  it('spends the charge a sweep would', () => {
+    const game = sweepReady(dials({ sweep: 'charge', sweepChargeClicks: 1 }));
+    const { at } = chordable(game);
+    if (!game.sweepAvailable) {
+      const empty = game.grid.flat().find((c) => c.present && !c.open && c.tier === 0)!;
+      game.open(empty.x, empty.y);
+    }
+    expect(game.sweepAvailable).toBe(true);
+    const banked = game.charge;
+    const events = game.sweepAt(at.x, at.y);
+    expect(game.charge).toBe(events.length > 0 ? banked - 1 : banked);
+  });
+});
+
 describe('forfeit', () => {
   it('ends the board as a loss and reveals the creatures', () => {
     const game = Game.create(board('normal'), SEED);
@@ -248,6 +361,11 @@ describe('which settings keep a record', () => {
       { sweep: 'off' as const },
       { sweep: 'charge' as const, sweepChargeClicks: 25 },
       { timeAttack: true },
+      { spellPriceRatio: 2 },
+      { startManaRatio: 0.5 },
+      { countersHidden: true },
+      { timeAttackRatio: 0.5 },
+      { timeLimit: 300 },
     ]) {
       expect(isAtLeastAsHard(dials(patch)), JSON.stringify(patch)).toBe(true);
       expect(easierThanDefault(dials(patch))).toEqual([]);
@@ -265,7 +383,18 @@ describe('which settings keep a record', () => {
     expect(easierThanDefault(dials({ sweepChargeClicks: 1 }))).toEqual(['cells per sweep']);
   });
 
+  it('ranks a budget of sweeps below the charge, which it has no order against', () => {
+    // A budget of three sweeps might be more or less than ten cells a sweep buys on a board,
+    // so it cannot be called harder, and a dial that cannot be called harder records nothing.
+    expect(isAtLeastAsHard(dials({ sweep: 'budget' }))).toBe(false);
+    expect(easierThanDefault(dials({ sweep: 'budget', sweepBudget: 1 }))).toEqual(['Sweep']);
+  });
+
   it('refuses anything easier, and names it', () => {
+    expect(easierThanDefault(dials({ spellPriceRatio: 0.5, startManaRatio: 1.5 }))).toEqual([
+      'spell prices',
+      'starting mana',
+    ]);
     expect(isAtLeastAsHard(dials({ hpRatio: 1.05 }))).toBe(false);
     expect(easierThanDefault(dials({ hpRatio: 1.05 }))).toEqual(['player HP']);
     expect(easierThanDefault(dials({ enemyDamageRatio: 0 }))).toEqual(['creature damage']);
@@ -297,6 +426,9 @@ describe('THE DIALS CANNOT REACH THE LOAD-BEARING FACTS', () => {
     enemyDamageRatio: 3,
     manaRegenRatio: 0,
     manaRewardRatio: 0,
+    spellPriceRatio: 3,
+    startManaRatio: 0,
+    countersHidden: true,
     sweep: 'off',
   });
 

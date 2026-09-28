@@ -353,10 +353,7 @@ export class App {
     this.keeper.begin();
     this.recorder.begin();
     this.clock.begin();
-    this.clock.arm(
-      this.progress.boardRecord(typeId, board).bestTime,
-      this.settings.gameplay.timeAttack,
-    );
+    this.clock.arm(this.progress.boardRecord(typeId, board).bestTime, this.settings.gameplay);
     this.buildGameScreen();
     this.startClock();
   }
@@ -381,8 +378,9 @@ export class App {
     this.clock.begin();
     this.game = this.run.game;
     this.recorder.begin();
-    // A run races the run's own best, not board 1's.
-    this.clock.arm(this.progress.runRecord(typeId).bestTime, this.settings.gameplay.timeAttack);
+    // A run races the run's own best, not board 1's, and a limit per board over all its boards.
+    const best = this.progress.runRecord(typeId).bestTime;
+    this.clock.arm(best, this.settings.gameplay, this.run.boardCount);
     this.buildGameScreen();
     this.startClock();
   }

@@ -410,6 +410,12 @@ export interface PresentationSettings {
    * them on every board, not switched on again each time.
    */
   readonly beatenNumbers: boolean;
+  /**
+   * Whether a click on an open cell sweeps its ring, at the price of a sweep (decision 0071): a
+   * chord. A presentation setting, since it opens nothing a sweep would not and costs the same.
+   * Off by default: a click on an open cell has always done nothing.
+   */
+  readonly chord: boolean;
 }
 
 export const DEFAULT_PRESENTATION: PresentationSettings = {
@@ -452,6 +458,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   customPitches: false,
   tutor: true,
   beatenNumbers: false,
+  chord: false,
 };
 
 // -------------------------------------------------------------- sanitising
@@ -593,5 +600,6 @@ export function readPresentation(raw: unknown): PresentationSettings {
     tutor: typeof p.tutor === 'boolean' ? p.tutor : true,
     // A save from before the toggle reads as off: beaten creatures drawn as the game drew them.
     beatenNumbers: typeof p.beatenNumbers === 'boolean' ? p.beatenNumbers : false,
+    chord: typeof p.chord === 'boolean' ? p.chord : false,
   };
 }

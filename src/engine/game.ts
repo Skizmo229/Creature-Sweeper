@@ -9,7 +9,14 @@
 import type { BoardConfig, Cell, GameEvent, GameStatus, SweepOptions } from './types.js';
 import { Progression } from './combat.js';
 import { SPELLS, type SpellId } from './spells.js';
-import { DEFAULT_GAMEPLAY, type GameplaySettings, cellsPerMana, effectiveHp } from './settings.js';
+import {
+  DEFAULT_GAMEPLAY,
+  type GameplaySettings,
+  cellsPerMana,
+  effectiveHp,
+  spellPriceFor,
+  startManaFor,
+} from './settings.js';
 import { hasNote, hasNotes, lowestNote, noteBit, toggleNote as toggleNoteBit } from './notes.js';
 import { placementRule } from './placement/registry.js';
 import { mulberry32 } from './rng.js';
@@ -117,7 +124,7 @@ export class Game {
     this.hp = startHp;
     this.progression = new Progression(config.startLevel, config.exp);
     this.remaining = [...config.quantity];
-    this.mana = config.startMana;
+    this.mana = startManaFor(config.startMana, settings);
     this.marksPlaced = new Array<number>(config.tiers).fill(0);
     // Read off the board as dealt, before the opening, while every creature is on its corner.
     this.patrol = placementRule(config.placement).patrols ? new Patrol(grid) : null;
@@ -445,6 +452,11 @@ export class Game {
     return this.hasSweep ? this.gate.needed : 0;
   }
 
+  /** Sweeps left of the board's budget, or Infinity where the dial sets none. */
+  get sweepsLeft(): number {
+    return this.gate.left;
+  }
+
   /**
    * Whether this ladder offers Sweep at all. EASY does not: it is where the
    * sum rule is learned, and a button that reads the numbers for you takes
@@ -482,9 +494,19 @@ export class Game {
   }
 
   /**
-   * Open proven cells as a sweep does: driven from here they must not charge the meter, or a
-   * sweep would bank the next one and the gate would be decorative.
+   * A chord (decision 0071): one open cell's ring swept, its proven neighbours and nothing beyond,
+   * at a sweep's price, refused wherever a sweep is and on a covered cell.
    */
+  sweepAt(x: number, y: number, options: SweepOptions = {}): GameEvent[] {
+    if (this.status !== 'playing') return [{ type: 'blocked', reason: 'game-over' }];
+    const cell = this.cellAt(x, y);
+    if (!cell || !cell.open) return [{ type: 'blocked', reason: 'no-effect' }];
+    if (!this.sweepAvailable) return [{ type: 'blocked', reason: 'no-charge' }];
+    const ring = new Set(this.neighboursOf(cell));
+    return this.afterSweep(this.openProven(this.safeCells(options).filter((c) => ring.has(c))));
+  }
+
+  /** Open proven cells as a sweep does: not charging the meter, or a sweep would bank the next. */
   private openProven(targets: readonly Cell[]): GameEvent[] {
     const events: GameEvent[] = [];
     this.sweeping = true;
@@ -544,8 +566,9 @@ export class Game {
    */
   spellCost(id: SpellId): number {
     const workout = this.config.workout;
-    if (id === 'exercise' && workout) return workout.base + this.exerciseSurcharge;
-    return SPELLS[id].cost;
+    const price =
+      id === 'exercise' && workout ? workout.base + this.exerciseSurcharge : SPELLS[id].cost;
+    return spellPriceFor(price, this.settings);
   }
 
   /**
