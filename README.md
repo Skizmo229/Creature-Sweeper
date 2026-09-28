@@ -3,7 +3,8 @@
 A remix of [mamono sweeper](https://hojamaka.com/games/mamono_sweeper/) (itself a remix of
 Minesweeper) with heavy customisation, quality-of-life features, and a progression mode. Every
 cell's number is the **sum** of the neighbouring creatures' tiers, you level up by defeating them,
-and a fight below your level costs nothing. If this is ever released publicly it will be freeware.
+and a fight below your level costs nothing. It is free to play, and its code is free software
+(see [Licence](#licence)).
 
 ```bash
 npm install && npm run dev
@@ -26,9 +27,9 @@ Node 22 (`.nvmrc`); Python 3 only for the ladder generator.
 | `docs/refactoring-plan.md` | Milestone 3, the readability refactor (complete): what was measured and what changed |
 | `docs/strategies.md` | how a person clears a board: the tricks, graded, for players and for the graded player |
 | `docs/human-tuning-plan.md` | Milestone 4, tuning for the human player: the instrument, the measurements, the retune |
-| `docs/teaching-plan.md` | Milestone 5, built on branches for review: teaching the tricks in the game with a tutor, a school and a field guide |
+| `docs/teaching-plan.md` | Milestone 5, teaching the tricks in the game with a tutor, a school and a field guide: built, play-testing left |
 | `CONTRIBUTING.md` | setup, the check, and the rules for a change |
-| design reference | <https://claude.ai/artifact/8w8aAaG6MJ3LCnSbokJUXi> (built from `design/page.template.html`) |
+| `design/reference.html` | the design reference, a page to open in a browser: the original game's mechanics as verified, the ladders, the open questions (built from `design/page.template.html`) |
 
 ## Layout
 
@@ -36,7 +37,7 @@ Node 22 (`.nvmrc`); Python 3 only for the ladder generator.
 creature_sweeper/
 ├─ src/
 │  ├─ engine/     the rules engine: no DOM, no I/O, no timers; boards are pure (config, seed)
-│  ├─ ui/         the playable prototype: canvas board, HUD, settings, save, sound, effects
+│  ├─ ui/         the game in the browser: canvas board, HUD, settings, save, sound, effects
 │  ├─ sim/        headless measurement, all driving the real engine; cli/ holds the commands
 │  ├─ main.ts     browser entry
 │  └─ data.ts     Node-only loader for the ladder data
@@ -68,9 +69,9 @@ npm run typecheck      # twice: the second pass compiles the engine, sims and te
 npm run lint           # ESLint, failing on any warning; the size warnings are the readability bar Milestone 3 set
 npm run knip           # unused files and exports
 npm run format         # Prettier (format:check to verify)
-npm test               # 672 tests, including the invariants
-npm run sim:golden:check   # re-run seventeen fixed-seed simulator runs and diff against test/golden/
-npm run sim            # clear every one of the 884 boards headlessly (-- 200 for more seeds)
+npm test               # the test suite, including the invariants
+npm run sim:golden:check   # re-run the fixed-seed simulator runs and diff against test/golden/
+npm run sim            # clear every board headlessly (-- 200 for more seeds)
 npm run sim:run        # complete every type's Full Run
 npm run sim:spells -- 40 dungeon   # what each spell is worth on one ladder, board by board
 npm run sim:forced -- 30 oracle    # how many forced guesses a perfect deducer still faces
@@ -95,28 +96,30 @@ In dev, `window.cs` exposes the running app (`cs.play('normal', 3)`, `cs.current
 **Controls:** click to open · hover a beaten creature to see the number under it (not on PAIRS or
 DOMINOES) · right-click or a LV button to mark · number keys act on the cell under the cursor,
 marking or pencilling according to the Entry mode · `N` switches that mode · `Shift`+digit does
-the other one for that keystroke · `S` sweeps what is proven safe · `D` also trusts your marks ·
-`H` asks the tutor for the next provable move and why · `G` opens the field guide there · a
-spell's bracketed letter casts it (`C`ensus, `A`ugur, `R`eveal, `B`eacon, `E`xercise, offered
-cheapest first) · `W` waits a move on PATROL · scroll or `+`/`-` to zoom, `F` to reset · `P` pauses: the board, or
-the Full Run, waits on its tile with the clock stopped, and a click on the tile carries on · `Esc`
-backs out, asking first whether to pause or abandon a game you have made a move in.
+the other one for that keystroke · `S` sweeps what is proven safe (no Sweep on EASY or PATROL) ·
+`D` or `Shift`+`S` also trusts your marks · `H` asks the tutor for the next provable move and
+why · `G` opens the field guide there · a spell's bracketed letter casts it (`A`ugur, `C`ensus,
+`R`eveal, `B`eacon, `E`xercise, offered cheapest first) · `W` waits a move on PATROL, for a second
+on the clock · scroll or `+`/`-` to zoom, drag to pan a board bigger than the screen, `F` to fit
+it again · `P` pauses: the board, or the Full Run, waits on its tile with the clock stopped, and a
+click on the tile carries on · `Enter` goes on to a lesson's next step · `Esc` backs out, asking
+first whether to pause or abandon a game you have made a move in.
 
-**Settings** are two separate things. The presentation half (creature icons, board palette, board
-font, interface font, sound pack, glow after a fight, board-clear effect, text size, preview size,
-cursor highlight and its colour, strike-through, zoom ceiling) touches no rule and can never
-affect a record; every visual option is shown as a real board, or for the interface a copy of the
-HUD. A creature's icon is one of seven drawn pip shapes, or, through the icon picker's **Custom**
-tile, any of 782 symbols from Dingbats and Wingdings 1 to 3, picked from each font's own chart.
-Wingdings itself cannot ship, so the symbols are their Unicode equivalents, drawn from open Noto
-fonts bundled with the game and cut down to just these symbols (Noto Sans Symbols 2, Noto Sans
-Symbols, Noto Emoji and Noto Sans; licences in `public/FONT-LICENSES.txt`). The cursor highlight's
-colour is the green, one of four presets, or any colour mixed from red, green and blue through its
-own **Custom** tile. The gameplay half
-is seven dials that do change the rules (HP, Full Run regen, creature damage, mana regen, mana per
-creature, how Sweep is gated, Time Attack). Settings that make the game harder record normally;
-anything easier than the tuned game records no clear, no unlock and no best time, and the game says
-so live.
+**Settings** are two separate things. The presentation half (creature icons and colours, board
+palette, board font, interface font, sound pack, volume and the sound check, glow after a fight,
+board-clear effect, text size, preview size, cursor highlight and its colour, strike-through, zoom
+ceiling, the palette strip on the menu, and whether the tutor offers its Hint) touches no rule and
+can never affect a record; every visual option is shown as a real board, or for the interface a
+copy of the HUD. A creature's icon is one of the drawn pip shapes, or, through the icon picker's
+**Custom** tile, any of 782 symbols from Dingbats and Wingdings 1 to 3, picked from each font's
+own chart. Wingdings itself cannot ship, so the symbols are their Unicode equivalents, drawn from
+open Noto fonts bundled with the game and cut down to just these symbols (Noto Sans Symbols 2,
+Noto Sans Symbols, Noto Emoji and Noto Sans; licences in `public/FONT-LICENSES.txt`). The cursor
+highlight's colour is the green, one of four presets, or any colour mixed from red, green and blue
+through its own **Custom** tile. The gameplay half is seven dials that do change the rules (HP,
+Full Run regen, creature damage, mana regen, mana per creature, how Sweep is gated, Time Attack).
+Settings that make the game harder record normally; anything easier than the tuned game records
+no clear, no unlock and no best time, and the game says so live.
 
 **Game types.** 35 ladders of ten tuned boards, each with a scaling continuation past board 10
 (961 boards in all) and a Full Run (all ten on one HP pool).
@@ -175,16 +178,18 @@ in the design reference; expression is protected, and none of it has been taken.
 
 ## Licence
 
-**Code** (everything under `src/`, `test/`, `scripts/` and `design/*.py`, plus the build and
-config files) is licensed under the **GNU General Public License v3.0**. See [`LICENSE`](LICENSE).
+**Code** (everything under `src/` but the fonts below, `test/`, `scripts/` and `design/*.py`, plus
+the build and config files) is licensed under the **GNU General Public License, version 3 or (at
+your option) any later version** (`GPL-3.0-or-later`). See [`LICENSE`](LICENSE).
 
 **Design research and documentation** (`README.md`, `CLAUDE.md`, `CONTRIBUTING.md`, everything
 under `docs/`, `design/page.template.html`, the generated `design/reference.html` and the ladder
 data under `design/data/`) is licensed under **Creative Commons Attribution-ShareAlike 4.0
 International**. See [`LICENSE-DOCS`](LICENSE-DOCS).
 
-**Fonts** under `src/ui/fonts/` are not ours: twenty-six faces from Google Fonts, each under the
-**SIL Open Font License 1.1**, with every copyright notice and the licence in
+**Fonts** under `src/ui/fonts/` and `src/ui/pipfont/` are not ours: twenty-six faces from Google
+Fonts, and the four Noto faces the creature-icon symbols are cut from, each under the **SIL Open
+Font License 1.1**, with every copyright notice and the licence in
 [`public/FONT-LICENSES.txt`](public/FONT-LICENSES.txt), which ships beside them in every build.
 
 Neither licence covers the third-party material described above, none of which is in this

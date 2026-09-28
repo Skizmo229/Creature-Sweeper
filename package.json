@@ -6,7 +6,8 @@
     "node": ">=22"
   },
   "type": "module",
-  "description": "A Minesweeper/RPG hybrid — remix of mamono sweeper. Rules engine.",
+  "description": "A Minesweeper/RPG hybrid — remix of mamono sweeper, played in the browser.",
+  "license": "GPL-3.0-or-later",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

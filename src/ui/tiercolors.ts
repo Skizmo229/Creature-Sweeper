@@ -31,9 +31,9 @@ const FIRST_GILDED_TIER = 6;
  * the pip *count* already encodes magnitude, colour's job here is identity, so
  * the hues are spread instead of ramped.
  *
- * Validated against a near-black floor: the only soft spot is yellow against
- * green under protanopia (ΔE 6.4), and the pip count disambiguates that pair
- * completely on its own. Decision 0053 measures it again, by the method of 0050.
+ * Measured on 27 Sep 2026 by the method of 0050 (decision 0053): the closest
+ * pairs are tiers 1 and 2 under tritanopia (ΔE 12) and 3 and 4 under
+ * deuteranopia (16), and the pip count tells every pair apart on its own.
  */
 const HUES = ['#54c8ff', '#5fd97a', '#ffd447', '#ff8f3a', '#ff5fc4'];
 

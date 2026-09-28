@@ -79,7 +79,7 @@ ground too (`marksExtendReach`). `Game.inReach`; the exception is `Game.sealedIn
 
 ## Boards and ladders
 
-**Game type / ladder.** One of the 32 named modes (EASY, NORMAL, DUNGEON, ...). Each is a ladder
+**Game type / ladder.** One of the named modes (EASY, NORMAL, DUNGEON, ...). Each is a ladder
 of ten tuned boards plus a **continuation** (boards 11 to N, held in `extended`, never in
 `boards`). `LadderType` in `src/engine/config.ts`.
 
@@ -113,15 +113,15 @@ decides how fast the early levels come.
 
 **Wrap.** Which edges join: none, horizontal (a cylinder) or both (a torus). `Wrap`.
 
-**Shape.** Which cells of the bounding box exist: rect, donut, cross, diamond, cave, dungeon.
-Cut-away cells are **absent** (`present: false`), not empty. Parameters are always in cells.
-`BoardShape`, `shapeParam`; one `ShapeRule` per shape in `src/engine/shape/`, listed in
-`registry.ts`.
+**Shape.** Which cells of the bounding box exist: rect, donut, cross, diamond, pyramid, gear,
+card, heart, star, hexagon, circle, cave, dungeon. Cut-away cells are **absent**
+(`present: false`), not empty. Parameters are always in cells. `BoardShape`, `shapeParam`; one
+`ShapeRule` per shape in `src/engine/shape/`, listed in `registry.ts`.
 
 **Placement.** The rule that decides where creatures stand: uniform, sudoku, checker, pairs,
-dominoes, packs, congo. A placement never changes how many creatures there are. `Placement`;
-one `PlacementRule` per rule in `src/engine/placement/`, listed in `registry.ts`. See
-`docs/modes.md`.
+dominoes, packs, congo, patrol, sprinkles. A placement never changes how many creatures there
+are. `Placement`; one `PlacementRule` per rule in `src/engine/placement/`, listed in
+`registry.ts`. See `docs/modes.md`.
 
 **Mask.** The boolean grid of which cells exist for a shape; the dungeon also has a **spawnable**
 mask (room floor only).
@@ -174,8 +174,9 @@ catalogue, with an id such as `residual-ring` or `what-if`.
 **Clear rate.** Share of boards a player finishes. Guesses and clear rate disagree on ladders
 where a forced guess is cheap (DUNGEON's doorways, CHECKERBOARD's parity, DONUT's rims).
 
-**Golden output.** The recorded text of fourteen fixed-seed simulator runs in `test/golden/`,
-diffed by `npm run sim:golden:check`. A refactor leaves it byte-identical.
+**Golden output.** The recorded text of the fixed-seed simulator runs in `test/golden/` (listed
+in `scripts/golden.mjs`), diffed by `npm run sim:golden:check`. A refactor leaves it
+byte-identical.
 
 **Candidate file.** A `ladders.json` written from a modified `ladders.py`, pointed at with
 `CS_LADDERS=path`, so a retune is measured before it replaces the real data.

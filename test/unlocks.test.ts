@@ -284,11 +284,14 @@ describe('the gates as the game applies them', () => {
     expect(both.isTypeUnlocked(ladders, 'huge_extreme')).toBe(true);
   });
 
-  it('still lets the prototype escape hatch open everything', () => {
+  it('opens every ladder under Unlock everything, and the earned chain without it', () => {
     const progress = new Progress();
     progress.setUnlockAll(true);
     for (const type of ladders) {
       expect(progress.isTypeUnlocked(ladders, type.id), type.id).toBe(true);
     }
+    progress.setUnlockAll(false);
+    expect(progress.isTypeUnlocked(ladders, 'easy')).toBe(true);
+    expect(progress.isTypeUnlocked(ladders, 'normal')).toBe(false);
   });
 });

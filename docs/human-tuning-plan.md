@@ -55,7 +55,7 @@ simple techniques, where people still differ by a factor of two; there, the coun
 summed technique cost tracks time better than the hardest step alone but lets twenty easy steps
 outweigh one hard one, so it floors the sum at the hardest step's band. A 2026 nonogram study
 found that a SAT solver's search effort does not correlate with reported difficulty at all, while
-guessing, ambiguity and load do. (Sources in `docs/strategies.md`, section 8.)
+guessing, ambiguity and load do. (Sources at the end of `docs/strategies.md`.)
 
 So the graded player records four things per board and seed, and the retune decides which to
 match per ladder rather than collapsing them:
@@ -80,7 +80,7 @@ sum rule; grade 2 is a competent Minesweeper player who has learned it; grade 4 
 `src/sim/graded.ts`, with what it sees in `src/sim/reader.ts` and its techniques in
 `src/sim/tricks.ts`. A sibling of the honest player, not a parameterisation of it, for two
 reasons: the honest player's readers treat marks as facts and read hidden numbers by design, and
-ten of the fourteen golden runs play it, so leaving it untouched keeps them byte-identical.
+most of the golden runs play it, so leaving it untouched keeps them byte-identical.
 
 ### What it reads
 
@@ -198,8 +198,8 @@ the CLI `src/sim/cli/human.ts` iterates `type.boards` and prints a table per lad
 board, at grades 1 to 4 side by side, and every-ladder rows at one grade; `--profile` prints how
 often each technique fired. The solver can be attached as the ceiling through the same `rescue`
 hook `forced.ts` uses, which is how "forced at any grade" is reported beside "forced at this
-grade". One golden run (`human-normal`) fixes the printout. `docs/tuning.md`'s instrument table
-and the README's commands list gain the row.
+grade". Two golden runs fix the printout: `human-normal`, and `human-oracle` with `--profile`.
+`docs/tuning.md`'s instrument table and the README's commands list gain the row.
 
 ## 5. Validation
 
@@ -281,7 +281,7 @@ instrument says which one the ladder is failing on.
 
 ## 8. Teaching, and telemetry
 
-The catalogue is written for two readers at once, and section 7 of it says which trick each
+The catalogue is written for two readers at once, and section 10 of it says which trick each
 technique id is. Three routes into the game, in the order they are worth doing:
 
 1. **A per-ladder tip on the board screen.** The `blurb` field of `design/ladder_types.toml` is
@@ -385,10 +385,10 @@ What it says, read on the day it was recorded:
   (35% spell-less, which is what the table shows). HUGE x EXTREME was measured next on the same
   day and left alone: boards 7 to 10 clear 70, 55, 60 and 63% at grade 4 (40 seeds), on the
   target already, since decision 0019 tuned it against the perfect deducer to about where the
-  human target sits; board 8's 55% is within the noise of 40 seeds, about eight points. DONUT is the needle ladder: 3.5 moves on offer per pass, two guesses a
-  board, 80% of board 10. Its row is as made round on 26 September 2026 (decision 0045), six
-  density points up to hold the square ring's 95% and 80%; the square ring's row was 1.9 stuck,
-  3.5 on offer and 174 effort. The honest player finds the round ring harder than the graded
+  human target sits; board 8's 55% is within the noise of 40 seeds, about eight points. DONUT
+  is the needle ladder: 4.1 moves on offer per pass, two guesses a board, 80% of board 10. Its
+  row is as made round on 26 September 2026 (decision 0045), six density points up to hold the
+  square ring's 95% and 80%; the square ring's row was 1.9 stuck, 3.5 on offer and 174 effort. The honest player finds the round ring harder than the graded
   player does (68% against 83% before).
 - **The graded player clears more than the honest player where guesses are dear.** EXTREME 80%
   against the honest player's 55%, ORACLE 60% against 48%: it holds a pencil, bounds two

@@ -8,9 +8,10 @@ move on the board the player is stuck on, a **school** of short lessons that tea
 at a time on boards drawn for the purpose, and a **field guide** that holds the catalogue itself
 where a player can read it.
 
-Drafted 26 September 2026, proposed as **Milestone 5**. Not yet adopted; nothing here has been
-built. It depends on Milestone 4's instrument, the graded player, and on nothing else that is
-still open there: the tricks are written and tested, and the retune can go on beside this.
+Drafted 26 September 2026 as **Milestone 5**, built on 26 and 27 September and merged to `main`
+on 27 September 2026 (section 10); what is left is section 9's play-testing. It depends on
+Milestone 4's instrument, the graded player, and on nothing else that is still open there: the
+tricks are written and tested, and the retune can go on beside this.
 
 ## 1. The problem
 
@@ -34,7 +35,7 @@ still open there: the tricks are written and tested, and the retune can go on be
 The plan is shaped by how much of a teacher already exists.
 
 - **The tricks are code.** Each of the catalogue's twenty tricks is one technique in
-  `src/sim/tricks.ts`, at the catalogue's grade, with a table in section 7 of the catalogue
+  `src/sim/tricks.ts`, at the catalogue's grade, with a table in section 10 of the catalogue
   mapping the two. A technique takes a `View` and adds to a `Moves`: cells safe to open, cells
   named exactly, candidate sets narrowed.
 - **The reader reads only what a person can see.** `src/sim/reader.ts` builds a `Constraint`
@@ -71,7 +72,7 @@ These are the constraints every part below meets. Each is a sentence a reviewer 
    the retune calls one, by construction and not by agreement.
 4. **The catalogue is the single source of the words.** Each trick's name, grade and one-line
    explanation live in one table that the tutor's caption, the school's script and the guide's
-   entries all read, and a test holds that table to section 7 of the catalogue.
+   entries all read, and a test holds that table to section 10 of the catalogue.
 5. **Nothing is hand-drawn.** A lesson board and a guide diagram are real `Game`s rendered by the
    real `BoardView`, for decision 0025's reason: a picture that has quietly stopped being true is
    worse than none.
@@ -172,6 +173,10 @@ ask for help, and at what grade, is where the boards are hard for them, board by
 comes for free from a feature the player wants anyway. The dev handle exposes it (`cs.hints`).
 Nothing leaves the machine; the game is offline freeware.
 
+As built: a hinted clear sets no best time and, until a best time exists, keeps the fewest hints
+any clear has taken (decision 0065, amending 0048); the play statistics count hints per board
+(decision 0060). Neither splits the count by grade, and there is no `cs.hints` handle.
+
 ### 4.5 The stuck case
 
 When no grade yields, the board is at a forced guess, which the hard ladders' top boards force
@@ -195,7 +200,7 @@ Each a commit, on branch `m5-tutor`; the owner reviews and merges.
 1. Provenance in `tricks.ts` (4.2). Behaviour-neutral; golden byte-identical.
 2. The trick text table, `src/sim/tricktext.ts`: for every `TrickId` a name, the catalogue's
    sentence as a template, and the section it lives in. `test/tricktext.test.ts` holds every id
-   to section 7 of `docs/strategies.md`, both ways.
+   to section 10 of `docs/strategies.md`, both ways.
 3. `src/sim/tutor.ts` and its test (4.3), including the reader option that reads marked cells as unknown.
 4. The board overlay: `drawLesson` in `src/ui/board/overlays.ts`; `BoardDisplay` gains
    `lesson: Lesson | null`. Verified with canvas hashes as the Milestone 3 splits were.
@@ -323,7 +328,7 @@ The catalogue is written for two readers and reads well as prose; turning it int
 would cost it that. So the guide's words are a table in code (`src/ui/guide/entries.ts`, one
 entry per `TrickId` plus the entries for section 1, 8 and 9, each with a heading, a body and a
 diagram in the layout notation), and `test/guide.test.ts` holds the table to the document: every
-`TrickId` in section 7 has an entry, every entry's heading appears in the catalogue, and every
+`TrickId` in section 10 has an entry, every entry's heading appears in the catalogue, and every
 entry's diagram, built with `fromLayout`, fires its trick. The words are duplicated; their
 presence and their truth are not left to memory. If the duplication proves a nuisance the
 alternative is to generate section 2 to 6 of the catalogue from the table, which is the
@@ -371,11 +376,11 @@ Decided by the owner on 26 September 2026:
    that would prove the cell; lesson 8 excepted (5.3).
 4. **The ninth lesson** (the last of a tier, grade 4) is in (5.1).
 
-Still open:
+Open when the plan was drafted; items 6 and 7 have been decided since:
 
 5. **The stuck case** (4.5): the worst case and the levels-away figure are facts about the rules;
    naming a cell to guess would be advice about odds, and the plan does not. Confirm.
-6. **The key.** `H` is free. `?` is the other candidate.
+6. **The key.** Decided in the build: `H` (section 10). `?` was the other candidate.
 7. **The guide's words.** Decided 27 September 2026: the game's own, shorter than the catalogue's,
    with the catalogue's sections, headings, tricks and ladder lists held by the tests (decision
    0059). The owner finds the game wordy; the catalogue is the instrument's spec and keeps its
@@ -418,7 +423,8 @@ counters (decision 0049). Branch `m5-guide`, on top of it, holds Part 3 whole (6
 3): the entries and their test, the screen and its ways in (the rules card, the ladder list, `G`
 and "more" from the tutor), and each ladder's "How to play" from section 7, where HUGE and HUGE x
 EXTREME, which the catalogue has no note for, show their blurb. Section 8's item 7 is built as
-its default (the words copied, and tested word for word) and is still open.
+its default (the words copied, and tested word for word); it was decided the next day for the
+game's own shorter words (decision 0059).
 
 Branch `m5-school`, on top of that, holds the rest of Part 2 (5.6, steps 3 to 5). The tutor gained
 `provable`, everything a grade proves without a move, which the school refuses clicks by and is
@@ -434,4 +440,7 @@ CHECKERBOARD, DUNGEON and SPRINKLE DONUT. The cards use the catalogue's words on
 diagram, since the catalogue has none for those tricks yet; PATROL's walk and PYRAMID's face-up
 base, which 5.5 names, are not tricks in the catalogue's sections 2 to 6, so they get no card until
 the owner says what should decide one. Every step is committed with `npm run check` passing and
-the golden outputs byte-identical. What is left is section 9's play-testing by two people.
+the golden outputs byte-identical.
+
+The four branches were merged to `main` on 27 September 2026 (646b45c), after the owner played
+every lesson. What is left is section 9's play-testing by two people.

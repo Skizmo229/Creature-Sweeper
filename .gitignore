@@ -1,6 +1,6 @@
-# Third-party reference material — see design/original-reference/README.md.
-# Kept locally for verifying mechanics, deliberately not tracked: this project
-# is intended for public release and that folder is not our code.
+# Third-party reference material: the original game's client source, kept
+# locally for verifying mechanics and deliberately not tracked, because it is
+# not our code and this repository is public (README, "Third-party reference").
 design/original-reference/
 
 __pycache__/
@@ -11,10 +11,11 @@ dist/
 # Local, machine-specific harness settings.
 .claude/settings.local.json
 
-# OS and editor cruft.
+# OS and editor cruft. A Windows shortcut records the machine it was made on.
 .DS_Store
 Thumbs.db
 *.swp
+*.lnk
 
 # Screenshots of the ORIGINAL game and the Paint.NET file they were exported
 # from. Third-party expression: hojamaka's, not ours, and so not covered by

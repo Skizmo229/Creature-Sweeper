@@ -448,7 +448,7 @@ describe('spell shortcuts', () => {
    * would just mean the spell's own key silently never fires, which is worse
    * than a test failing here.
    */
-  const RESERVED = ['s', 'd', 'f', 'w', 'p'];
+  const RESERVED = ['s', 'd', 'f', 'w', 'p', 'h', 'g'];
 
   it('gives every spell the letter its name starts with', () => {
     expect(SPELL_ORDER.map((id) => spellKey(id))).toEqual(['a', 'c', 'r', 'b', 'e']);

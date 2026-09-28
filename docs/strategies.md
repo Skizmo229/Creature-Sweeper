@@ -430,9 +430,11 @@ with the trick the diagram sits under, at that trick's grade, on the cells the b
 | accounted for | `accounted` | 4 |
 | the last of a tier | `last-of-tier` | 4 |
 
-What the instrument does not model, and this page does not pretend to: attention (it finds every
-move of a grade and counts how many there were), arithmetic slips, wrong marks, deferring a
-guess, and the spending policies. `docs/human-tuning-plan.md` section 10 says which comes next.
+What the instrument does not model, and this page does not pretend to: arithmetic slips, wrong
+marks and deferring a guess. Attention and spending are options, not the default: by default it
+finds every move of a grade and counts how many there were, `--attention=R` looks near the last
+action first, and `--spells` spends mana as section 8 advises. `docs/human-tuning-plan.md`
+section 10 says which comes next.
 
 Sources for the outside material: the mamono sweeper community's guide at
 <https://mzrg.com/mines/mamono.shtml> (the core loop, the safe ring, group sums, the Blind
