@@ -10,10 +10,14 @@
  * same everywhere (`tiercolors.ts`). Shape is decoration; colour is information.
  */
 
+import { setNumberFont } from './board/digits.js';
+import { rgbOf } from './colorspace.js';
 import type { GlyphPip, Pip, PipShape, SfxPackId, TypeTheme, VictoryId } from './looktypes.js';
 import { PIP_FAMILY, findSymbol, glyphChar, isGlyphPip } from './pipsymbols.js';
+import type { CreatureGlyph } from './presentation.js';
 import type { SfxEvent } from './sfx.js';
 import { type TierPalette, tierColor, tierGilded } from './tiercolors.js';
+import { FONTS, type GameFont } from './typefaces.js';
 
 /** Every creature-icon shape, in the order the picker shows them. */
 export const PIP_SHAPES: readonly PipShape[] = [
@@ -179,11 +183,17 @@ export const BOND_COLOR = 'rgba(255, 255, 255, 0.5)';
  */
 export const BOX_RULE = 'rgba(8, 4, 12, 0.92)';
 
-/** Pencil marks: the same green as a mark, dimmed. A note is a weaker form of
+/** How far a pencil note's ink is dimmed from the mark's, as an alpha. */
+const NOTE_ALPHA = 0.72;
+
+/** Pencil marks: the mark's own colour, dimmed. A note is a weaker form of
  *  the same claim, so it should read as the same ink lightly applied rather
  *  than as a different kind of annotation. It wears the mark's dark outline
  *  too, which is what carries it on a light tile — see `drawNotes`. */
-export const NOTE_COLOR = 'rgba(53, 224, 106, 0.72)';
+export function noteColor(markColor: string): string {
+  const [r, g, b] = rgbOf(markColor);
+  return `rgba(${r}, ${g}, ${b}, ${NOTE_ALPHA})`;
+}
 
 /** Which of the nine grid positions are lit, per die face. */
 const DIE_FACES: Record<number, readonly number[]> = {
@@ -302,11 +312,99 @@ function pipPath(
   }
 }
 
+/** How a creature is drawn: as pips, as its tier's digit, or both, and the face the digit is set in. */
+export interface CreatureLook {
+  readonly glyph: CreatureGlyph;
+  readonly font: GameFont;
+}
+
+/** The game's own: pips, in the face the board's numbers were sized for. */
+const PIPS_LOOK: CreatureLook = { glyph: 'pips', font: FONTS['jetbrains-mono'] };
+
 /**
- * Draw a creature glyph filling a `size`-pixel cell at (x, y), in its tier's colour.
- * The 3x3 pip grid sits on a 16-unit cell, scaled to size.
+ * Draw a creature glyph filling a `size`-pixel cell at (x, y), in its tier's colour: its pips on
+ * a 3x3 grid over a 16-unit cell scaled to size, or its tier as a digit, or both.
  */
 export function drawCreature(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  tier: number,
+  theme: TypeTheme,
+  tierColors: TierPalette,
+  look: CreatureLook = PIPS_LOOK,
+): void {
+  const color = tierColor(tierColors, tier);
+  const gilded = tierGilded(tier);
+  if (look.glyph !== 'pips') {
+    const corner = look.glyph === 'both';
+    if (!corner) {
+      drawTierDigit(
+        ctx,
+        x,
+        y,
+        size,
+        tier,
+        color,
+        gilded ? tierColors.halo : null,
+        look.font,
+        false,
+      );
+      return;
+    }
+    // The pips first, the digit over their corner.
+    drawPips(ctx, x, y, size, tier, theme, tierColors);
+    drawTierDigit(ctx, x, y, size, tier, color, gilded ? tierColors.halo : null, look.font, true);
+    return;
+  }
+  drawPips(ctx, x, y, size, tier, theme, tierColors);
+}
+
+/** The digit's size as a share of the cell, drawn alone or tucked into the corner over the pips. */
+const DIGIT_SHARE = 0.72;
+const CORNER_DIGIT_SHARE = 0.4;
+/** Where the corner digit's centre sits, as a share of the cell from its top-left. */
+const CORNER_AT = 0.78;
+
+/**
+ * A creature's tier as a digit, in its colour over the dark outline every annotation wears, so
+ * it reads on any floor; a gilded tier's halo is drawn round it as it is round the pips.
+ */
+function drawTierDigit(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  tier: number,
+  color: string,
+  halo: string | null,
+  font: GameFont,
+  corner: boolean,
+): void {
+  const px = size * (corner ? CORNER_DIGIT_SHARE : DIGIT_SHARE);
+  const cx = x + size * (corner ? CORNER_AT : 0.5);
+  const cy = y + size * (corner ? CORNER_AT : 0.5);
+  const text = String(Math.min(9, Math.max(1, tier)));
+  ctx.save();
+  const { centre } = setNumberFont(ctx, font, px);
+  ctx.textAlign = 'center';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = Math.max(2, px * 0.18);
+  ctx.strokeStyle = MARK_OUTLINE;
+  ctx.strokeText(text, cx, cy + centre);
+  if (halo) {
+    ctx.lineWidth = Math.max(1, px * 0.09);
+    ctx.strokeStyle = halo;
+    ctx.strokeText(text, cx, cy + centre);
+  }
+  ctx.fillStyle = color;
+  ctx.fillText(text, cx, cy + centre);
+  ctx.restore();
+}
+
+/** The pips: a die face of the tier, in the shape the theme gives them. */
+function drawPips(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,

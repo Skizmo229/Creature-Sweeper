@@ -5,7 +5,7 @@
  */
 
 import { el } from '../dom.js';
-import { DEFAULT } from '../settings.js';
+import { DEFAULT } from '../presentation.js';
 import type { GameFont } from '../typefaces.js';
 
 export interface Choice {
@@ -275,7 +275,10 @@ export function choiceRow(screen: HTMLElement, host: HTMLElement, spec: ChoiceRo
  * A slider with its value spelled out beside it.
  *
  * `input` rather than `change`, so the number under the thumb tracks the drag. `onCommit`, if
- * given, fires once on release, for a setting too big to apply on every frame of a drag.
+ * given, fires once on release, for a setting too big to apply on every frame of a drag. With a
+ * `defaultValue` the slider carries a Reset, lit while it stands anywhere else, which moves it
+ * there as a drag and a release would: a slider is the one control on the screen with no tile
+ * to say what the default is, or to get back to it short of resetting its whole section.
  */
 export function slider(
   min: number,
@@ -285,6 +288,7 @@ export function slider(
   format: (v: number) => string,
   onSet: (value: number) => void,
   onCommit?: (value: number) => void,
+  defaultValue?: number,
 ): HTMLElement {
   const box = el('div', 'settings-slider');
   const input = el('input');
@@ -301,7 +305,29 @@ export function slider(
   });
   if (onCommit) input.addEventListener('change', () => onCommit(Number(input.value)));
   box.append(input, read);
+  if (defaultValue !== undefined) {
+    box.dataset.default = String(defaultValue);
+    const reset = el('button', 'ghost small settings-reset', 'Reset');
+    reset.type = 'button';
+    reset.title = `Back to ${format(defaultValue)}`;
+    reset.addEventListener('click', () => {
+      input.value = String(defaultValue);
+      // Through the input's own events, so everything listening to the drag hears the reset.
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('change'));
+    });
+    input.addEventListener('input', () => syncReset(box));
+    box.append(reset);
+    syncReset(box);
+  }
   return box;
+}
+
+/** A slider's Reset is lit only while the slider stands off its default. */
+function syncReset(box: HTMLElement): void {
+  const reset = box.querySelector<HTMLButtonElement>('.settings-reset');
+  if (!reset) return;
+  reset.disabled = box.querySelector('input')!.value === box.dataset.default;
 }
 
 /** Move a `slider` to a value set somewhere else, without calling its handlers. */
@@ -312,6 +338,7 @@ export function showSliderValue(
 ): void {
   box.querySelector('input')!.value = String(value);
   box.querySelector('.settings-value')!.textContent = format(value);
+  syncReset(box);
 }
 
 export function toggle(current: boolean, onSet: (v: boolean) => void): HTMLElement {

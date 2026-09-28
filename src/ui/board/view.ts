@@ -9,7 +9,12 @@
 import type { Game } from '../../engine/game.js';
 import type { Cell } from '../../engine/types.js';
 import type { Lesson } from '../../sim/tutor.js';
-import { DEFAULT_MAX_ZOOM, type HighlightStyle } from '../settings.js';
+import {
+  type BeatenLook,
+  type CreatureGlyph,
+  DEFAULT_MAX_ZOOM,
+  type HighlightStyle,
+} from '../presentation.js';
 import type { TypeTheme } from '../looktypes.js';
 import { PIP_FAMILY, glyphChar, isGlyphPip } from '../pipsymbols.js';
 import { MARK_COLOR } from '../theme.js';
@@ -33,6 +38,7 @@ import {
   drawGhostBand,
   drawHighlight,
   drawLesson,
+  drawReach,
   drawSeams,
   drawSilhouette,
   drawSprinkles,
@@ -55,26 +61,48 @@ import {
 export interface BoardDisplay {
   /** Ceiling for manual zoom, in CSS pixels per cell. */
   maxCell: number;
-  /** The face for every number, mark and pencil note on the board. */
+  /** Whether a board opens at the ceiling, panning when it does not fit, rather than fitted. */
+  startAtCeiling: boolean;
+  /** The face for every number, mark and pencil note on the board, and a creature's digit. */
   font: GameFont;
+  /** What a creature is drawn as: its pips, its tier as a digit, or both. */
+  glyph: CreatureGlyph;
   /** How the cursor lights the board, or null for not at all. */
   highlight: HighlightStyle | null;
   /** The colour it lights a cell in when a click there would land; where one would not, red. */
   highlightColor: string;
-  /** Whether a defeated creature keeps its struck-through corner. */
-  strikeDefeated: boolean;
+  /** How thick the highlight's line is, in CSS pixels. */
+  highlightWidth: number;
+  /** How a beaten creature is drawn: dimmed, struck through, both or neither. */
+  beatenLook: BeatenLook;
+  /** How large the numbers, marks and pencil notes are drawn, as a multiple of their own size. */
+  digitScale: number;
+  /** Whether the cells the crawl rule keeps out of reach are shaded. */
+  reachShading: boolean;
+  /** The colour of a mark, a pencil note (dimmed) and a wrapped board's seam. */
+  markColor: string;
+  /** How long a touch holds a cell before it does what a right-click does, in ms; 0 for never. */
+  longPressMs: number;
   /** Whether every beaten creature shows the number under it, not only the hovered one. */
   beatenNumbers: boolean;
   /** The colour a creature of each tier is drawn in, and the halo of tiers 6 to 9. */
   tierColors: TierPalette;
 }
 
-const DEFAULT_DISPLAY: BoardDisplay = {
+/** The renderer's own defaults, which the game's own settings resolve to; the tests start here. */
+export const DEFAULT_DISPLAY: BoardDisplay = {
   maxCell: DEFAULT_MAX_ZOOM,
+  startAtCeiling: false,
   font: FONTS['jetbrains-mono'],
+  glyph: 'pips',
   highlight: 'neighbours',
   highlightColor: MARK_COLOR,
-  strikeDefeated: true,
+  highlightWidth: 2,
+  beatenLook: 'dimStrike',
+  digitScale: 1,
+  reachShading: false,
+  markColor: MARK_COLOR,
+  longPressMs: 500,
   beatenNumbers: false,
   tierColors: DEFAULT_TIERS,
 };
@@ -174,7 +202,7 @@ export class BoardView implements InputHost {
     this.game = game;
     this.theme = theme;
     this.display = display;
-    this.fit();
+    this.fit(false, true);
   }
 
   /**
@@ -225,8 +253,10 @@ export class BoardView implements InputHost {
    * Largest whole-pixel cell the stage can hold, then centre the board. `keepZoom` is for a
    * refit the player did not ask for, the stage having changed size under them: a zoom they
    * chose is kept, clamped to the new stage, rather than thrown away because the HUD re-wrapped.
+   * `opening` is a board just set, which starts at the ceiling when the player has asked for
+   * that; F and a resize fit it, as ever.
    */
-  fit(keepZoom = false): void {
+  fit(keepZoom = false, opening = false): void {
     const game = this.game;
     if (!game) return;
 
@@ -264,12 +294,12 @@ export class BoardView implements InputHost {
     // the way down to MIN_CELL, so the setting can never leave a board unreachable.
     const zoomed = keepZoom && this.cellPx > this.fittedCell;
     this.fittedCellValue = Math.max(MIN_CELL, Math.min(this.display.maxCell, fitted));
+    const ceiling = Math.max(this.fittedCell, this.display.maxCell);
     this.cellPxValue = zoomed
-      ? Math.max(
-          this.fittedCell,
-          Math.min(this.cellPx, Math.max(this.fittedCell, this.display.maxCell)),
-        )
-      : this.fittedCell;
+      ? Math.max(this.fittedCell, Math.min(this.cellPx, ceiling))
+      : opening && this.display.startAtCeiling && !fixed
+        ? ceiling
+        : this.fittedCell;
 
     this.resizeCanvas(availW, availH);
     this.clampOrigin();
@@ -326,6 +356,9 @@ export class BoardView implements InputHost {
   }
   get canPan(): boolean {
     return this.canPanValue;
+  }
+  get longPressMs(): number {
+    return this.display.longPressMs;
   }
   get hovered(): Cell | null {
     return this.hoveredCellValue;
@@ -439,7 +472,11 @@ export class BoardView implements InputHost {
       theme,
       tierColors: this.display.tierColors,
       font: this.display.font,
-      strikeDefeated: this.display.strikeDefeated,
+      glyph: this.display.glyph,
+      beatenLook: this.display.beatenLook,
+      digitScale: this.display.digitScale,
+      reachShading: this.display.reachShading,
+      markColor: this.display.markColor,
       hovered: this.hoveredCellValue,
       beatenNumbers: this.display.beatenNumbers,
       creaturesHidden: this.creaturesHidden,
@@ -469,6 +506,7 @@ export class BoardView implements InputHost {
       }
     }
 
+    drawReach(p);
     // After the cells, so the board's edge is a clean line rather than something each rim cell
     // paints half of its own bevel over.
     drawSilhouette(p);
@@ -482,7 +520,9 @@ export class BoardView implements InputHost {
     if (hovered && game.status === 'playing' && this.display.highlight) {
       const lands = (cell: Cell): boolean =>
         this.cb.lands ? this.cb.lands(cell) : game.inReach(cell);
-      drawHighlight(p, hovered, this.display.highlight, this.display.highlightColor, lands);
+      drawHighlight(p, hovered, this.display.highlight, this.display.highlightColor, lands, {
+        width: this.display.highlightWidth,
+      });
     }
   }
 

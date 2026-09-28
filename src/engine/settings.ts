@@ -35,7 +35,17 @@ export type SweepMode =
   /** Gone entirely — every cell is opened by hand. */
   | 'off'
   /** Banked: opening cells by hand charges it, sweeping spends the charge. */
-  | 'charge';
+  | 'charge'
+  /** A budget: so many sweeps a board, `sweepBudget`, and no more. */
+  | 'budget';
+
+/** The most sweeps a budget can hold, and the least. */
+export const MAX_SWEEP_BUDGET = 20;
+export const MIN_SWEEP_BUDGET = 1;
+/** How far below the best Time Attack can race: half of it. */
+export const MIN_TIME_ATTACK_RATIO = 0.5;
+/** The longest a board's time limit can be, in seconds: half an hour. */
+export const MAX_TIME_LIMIT = 1800;
 
 export interface GameplaySettings {
   /** Scales the board's HP pool. 0 still leaves 1 HP — a board you enter
@@ -68,6 +78,28 @@ export interface GameplaySettings {
    * that "am I playing the tuned game?" is one question with one answer.
    */
   readonly timeAttack: boolean;
+  /** Sweeps a board allows, when `sweep` is 'budget'. */
+  readonly sweepBudget: number;
+  /**
+   * Scales every spell's price, WORKOUT's own included. Dearer is harder; 0 makes every spell
+   * free, the easiest end. It reaches no creature and no EXP: a spell removes nothing whatever it
+   * costs.
+   */
+  readonly spellPriceRatio: number;
+  /** Scales the mana a board opens with: "one Reveal exactly" on the magic ladders. */
+  readonly startManaRatio: number;
+  /**
+   * Whether the LV buttons hide how many of each tier are left. A hard mode, so it records: the
+   * counters are what the catalogue's counting tricks read. The tutor still reads them.
+   */
+  readonly countersHidden: boolean;
+  /** Time Attack races the best time times this: 1 the best itself, less is quicker. */
+  readonly timeAttackRatio: number;
+  /**
+   * Seconds a board must be cleared within, whatever its best; 0 for none. A Full Run gets one
+   * limit for the run, this times its boards. Enforced by the caller, as Time Attack is.
+   */
+  readonly timeLimit: number;
 }
 
 export const DEFAULT_GAMEPLAY: GameplaySettings = {
@@ -79,6 +111,12 @@ export const DEFAULT_GAMEPLAY: GameplaySettings = {
   sweep: 'charge',
   sweepChargeClicks: 10,
   timeAttack: false,
+  sweepBudget: 3,
+  spellPriceRatio: 1,
+  startManaRatio: 1,
+  countersHidden: false,
+  timeAttackRatio: 1,
+  timeLimit: 0,
 };
 
 /** The step every ratio slider moves in. */
@@ -88,9 +126,10 @@ const RATIO_STEP = 0.05;
  * True when nothing here makes the game easier than the tuned default.
  *
  * This is what decides whether a clear is written down as a record. Each dial
- * has a direction: less HP, less healing, more damage, less mana and a gated
- * Sweep are all harder, and Time Attack can only add a way to lose. A setting
- * left exactly at its default is "equal", which counts.
+ * has a direction: less HP, less healing, more damage, less mana, dearer spells,
+ * less opening mana and a gated Sweep are all harder; hidden counters, a time
+ * limit and a quicker Time Attack can only take away, so they are never easier.
+ * A setting left exactly at its default is "equal", which counts.
  *
  * Deliberately per-dial rather than a blanket "modified" flag, because most of
  * these are asymmetric — a player who wants a harder game should not have
@@ -103,6 +142,8 @@ export function isAtLeastAsHard(s: GameplaySettings): boolean {
     s.enemyDamageRatio >= DEFAULT_GAMEPLAY.enemyDamageRatio &&
     s.manaRegenRatio <= DEFAULT_GAMEPLAY.manaRegenRatio &&
     s.manaRewardRatio <= DEFAULT_GAMEPLAY.manaRewardRatio &&
+    s.spellPriceRatio >= DEFAULT_GAMEPLAY.spellPriceRatio &&
+    s.startManaRatio <= DEFAULT_GAMEPLAY.startManaRatio &&
     sweepRank(s) >= sweepRank(DEFAULT_GAMEPLAY) &&
     s.sweepChargeClicks >= DEFAULT_GAMEPLAY.sweepChargeClicks
   );
@@ -116,10 +157,21 @@ export function isAtLeastAsHard(s: GameplaySettings): boolean {
  * to it would otherwise be handed records and unlocks for a strictly easier
  * game. The charge size is the same argument in miniature: a
  * bank of 1 cell per sweep is nearly 'on' wearing a meter, so it has to be
- * compared rather than assumed finite-and-therefore-harder.
+ * compared rather than assumed finite-and-therefore-harder. A budget has no
+ * order against the charge at all, so it ranks below it and records nothing
+ * (decision 0072).
  */
 function sweepRank(s: GameplaySettings): number {
-  return s.sweep === 'off' ? 2 : s.sweep === 'charge' ? 1 : 0;
+  switch (s.sweep) {
+    case 'off':
+      return 3;
+    case 'charge':
+      return 2;
+    case 'budget':
+      return 1;
+    default:
+      return 0;
+  }
 }
 
 /** True when every dial sits exactly where the ladder was tuned. */
@@ -140,6 +192,8 @@ export function easierThanDefault(s: GameplaySettings): string[] {
   if (s.enemyDamageRatio < DEFAULT_GAMEPLAY.enemyDamageRatio) out.push('creature damage');
   if (s.manaRegenRatio > DEFAULT_GAMEPLAY.manaRegenRatio) out.push('mana regen');
   if (s.manaRewardRatio > DEFAULT_GAMEPLAY.manaRewardRatio) out.push('mana reward');
+  if (s.spellPriceRatio < DEFAULT_GAMEPLAY.spellPriceRatio) out.push('spell prices');
+  if (s.startManaRatio > DEFAULT_GAMEPLAY.startManaRatio) out.push('starting mana');
   if (sweepRank(s) < sweepRank(DEFAULT_GAMEPLAY)) out.push('Sweep');
   else if (s.sweepChargeClicks < DEFAULT_GAMEPLAY.sweepChargeClicks) out.push('cells per sweep');
   return out;
@@ -175,6 +229,16 @@ export function biteFor(tier: number, s: GameplaySettings): number {
 /** Mana a defeated tier-E creature pays. Its EXP is never scaled. */
 export function manaRewardFor(tier: number, s: GameplaySettings): number {
   return Math.max(0, Math.round(tier * s.manaRewardRatio));
+}
+
+/** What a spell costs after the dial, from its price on the table or WORKOUT's own. */
+export function spellPriceFor(price: number, s: GameplaySettings): number {
+  return Math.max(0, Math.round(price * s.spellPriceRatio));
+}
+
+/** The mana a board opens with after the dial. */
+export function startManaFor(base: number, s: GameplaySettings): number {
+  return Math.max(0, Math.round(base * s.startManaRatio));
 }
 
 /**

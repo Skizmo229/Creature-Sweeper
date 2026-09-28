@@ -47,6 +47,37 @@ export interface TypeTheme {
 /** Sound packs. See `sfx.ts` — each is a set of synthesis recipes, not files. */
 export type SfxPackId = 'chime' | 'blip' | 'thud' | 'glass';
 
+/** Everything the game can make a noise about; the recipes are in `sfx.ts`. */
+export type SfxEvent =
+  | 'open'
+  | 'cascade'
+  | 'mark'
+  | 'note'
+  | 'battle'
+  | 'kill'
+  | 'levelup'
+  | 'spell'
+  | 'sweep'
+  | 'blocked'
+  | 'win'
+  | 'lose';
+
+/** Every sound event, for reading a saved list of them. */
+export const SFX_EVENTS: readonly SfxEvent[] = [
+  'open',
+  'cascade',
+  'mark',
+  'note',
+  'battle',
+  'kill',
+  'levelup',
+  'spell',
+  'sweep',
+  'blocked',
+  'win',
+  'lose',
+];
+
 /**
  * Board-clear celebrations. See `victory/`.
  *

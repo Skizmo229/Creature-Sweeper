@@ -14,37 +14,31 @@ import {
   HIGHLIGHT_PIN,
   highlightSampleBoard,
   highlightSampleLands,
-  sampleBoard,
-  samplePin,
   tierSampleBoard,
   zoomSampleBoard,
 } from '../preview.js';
 import {
+  type BeatenLook,
   CUSTOM_TIERS,
   DEFAULT,
+  DEFAULT_MAX_ZOOM,
   MAX_MAX_ZOOM,
-  MAX_PREVIEW_SIZE,
-  MAX_TEXT_SIZE,
   MIN_MAX_ZOOM,
-  MIN_PREVIEW_SIZE,
-  MIN_TEXT_SIZE,
   OFF,
   HIGHLIGHT_COLORS,
   HIGHLIGHT_NAMES,
   type HighlightStyle,
   type IconChoice,
-  type MenuStrip,
   type TierColorChoice,
-} from '../settings.js';
-import { MARK_COLOR, PIP_NAMES, PIP_SHAPES, pipName } from '../theme.js';
+} from '../presentation.js';
+import { OUT_OF_REACH_COLOR, PIP_NAMES, PIP_SHAPES, pipName } from '../theme.js';
 import { DEFAULT_TIERS, TIER_PRESETS, type TierPalette, tierColor } from '../tiercolors.js';
 import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
 import { SYMBOL_COUNT, isGlyphPip } from '../pipsymbols.js';
 import { FONTS, FONT_IDS, type FontId, type GameFont, LEGIBLE_FONT } from '../typefaces.js';
-import { type PresentationPatch, type ScreenContext, previewCell, typeName } from './context.js';
+import { type ScreenContext, typeName } from './context.js';
 import { openColorWindow } from './customcolor.js';
 import { openTierWindow } from './customtiers.js';
-import { CHIP_CELL } from './render.js';
 import { renderPreview } from './render.js';
 import { fontSorts, paletteSorts } from './sorts.js';
 import { openSymbolWindow } from './symbols.js';
@@ -226,7 +220,7 @@ const HUD_READOUTS = [
  * A copy of the HUD's first `count` readouts, as an example. The real HUD's own classes, so each
  * readout reserves the width it does in play.
  */
-function hudCopy(
+export function hudCopy(
   cls: string,
   tierColors: TierPalette,
   count: number = HUD_READOUTS.length,
@@ -284,127 +278,11 @@ export function interfaceFontRow(ctx: ScreenContext, host: HTMLElement): void {
 }
 
 /**
- * Save a setting that resizes the screen, from a slider in `control`. Rebuilding reflows
- * everything above the row, so the row is held where the player's pointer left it rather than
- * where the scroll offset says. `control` carries `data-setting`, so its rebuilt copy is found.
- */
-function pickHoldingRow(ctx: ScreenContext, control: HTMLElement, patch: PresentationPatch): void {
-  const before = control.getBoundingClientRect().top;
-  ctx.pick(patch);
-  const after = document
-    .querySelector(`[data-setting="${control.dataset.setting}"]`)
-    ?.getBoundingClientRect().top;
-  if (after !== undefined) window.scrollBy(0, after - before);
-}
-
-/**
- * The whole page is the example, but not DURING a drag: resizing every line on the screen moves
- * the slider out from under the pointer. So a copy of the HUD follows the thumb, and the page
- * itself changes once, on release.
- */
-export function textSizeRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p } = ctx;
-  const textDemo = hudCopy('text-size-demo', ctx.display().tierColors);
-  const showTextSize = (size: number): void => {
-    // Relative to what the page is already set at, which is what rem means.
-    textDemo.style.setProperty('--demo-scale', String(size / p.textSize));
-  };
-  const textControl = el('div', 'settings-stack');
-  textControl.dataset.setting = 'textSize';
-  textControl.append(
-    slider(
-      MIN_TEXT_SIZE,
-      MAX_TEXT_SIZE,
-      0.05,
-      p.textSize,
-      (v) => `${Math.round(v * 100)}%`,
-      showTextSize,
-      (v) => pickHoldingRow(ctx, textControl, { textSize: v }),
-    ),
-  );
-  textControl.append(textDemo);
-
-  wideRow(
-    host,
-    'Text size',
-    'The HUD, the menus and this screen. The board is sized by zoom instead.',
-    textControl,
-  );
-}
-
-/**
- * Every example board on this screen is drawn again at the new size, so, like the text size, the
- * screen changes on release; while the thumb moves, one thumbnail beside it follows. The zoom
- * example is left alone: it is drawn at the size it sets.
- */
-export function previewSizeRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, currentTheme } = ctx;
-  const sample = el('div', 'preview-size-demo');
-  const drawSample = (size: number): void => {
-    sample.replaceChildren(
-      renderPreview(sampleBoard(), currentTheme, ctx.display({ highlight: null }), {
-        cell: previewCell(CHIP_CELL, size),
-        pin: samplePin(),
-      }).canvas,
-    );
-  };
-  drawSample(p.previewSize);
-
-  const control = el('div', 'settings-stack');
-  control.dataset.setting = 'previewSize';
-  control.append(
-    slider(
-      MIN_PREVIEW_SIZE,
-      MAX_PREVIEW_SIZE,
-      0.05,
-      p.previewSize,
-      (v) => `${Math.round(v * 100)}%`,
-      drawSample,
-      (v) => pickHoldingRow(ctx, control, { previewSize: v }),
-    ),
-  );
-  control.append(sample);
-
-  wideRow(
-    host,
-    'Preview size',
-    'The example boards on this screen and in its windows. The zoom example keeps its own size.',
-    control,
-  );
-}
-
-/** Each option is shown on a copy of this ladder's own card from the ladder list. */
-export function menuStripRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, typeId } = ctx;
-  const card = (strip: MenuStrip) => (): HTMLElement => {
-    const demo = el('div', `type-card strip-${strip} strip-demo`);
-    demo.append(el('span', 'type-name', typeName(typeId)));
-    demo.append(el('span', 'type-meta', '0 boards cleared'));
-    return demo;
-  };
-  wideRow(
-    host,
-    'Palette strip on the game types',
-    'Where each card on the list of game types wears its ladder’s colour.',
-    gallery(
-      [
-        { value: 'left', label: 'Default — down the left side', example: card('left') },
-        { value: 'sides', label: 'Palette strip on vertical sides', example: card('sides') },
-        { value: 'all', label: 'Palette strip on all sides', example: card('all') },
-        { value: OFF, label: 'No palette strip', example: card(OFF) },
-      ],
-      p.menuStrip,
-      (v) => ctx.pick({ menuStrip: v as MenuStrip }),
-    ),
-  );
-}
-
-/**
  * The cursor highlight's example: its board held lit, drawn with the presentation as it stands but
  * for `over`, on the grid of the ladder the player came from: hex on HIVE, square boxes elsewhere.
  * The covered cells right of the lit one are out of reach, so the example shows a refusal too.
  */
-function highlightChip(ctx: ScreenContext, over: Partial<BoardDisplay>): () => HTMLElement {
+export function highlightChip(ctx: ScreenContext, over: Partial<BoardDisplay>): () => HTMLElement {
   const hex = ladders.find((t) => t.id === ctx.typeId)?.topology === 'hex';
   return () =>
     renderPreview(
@@ -427,8 +305,9 @@ export function highlightRow(ctx: ScreenContext, host: HTMLElement): void {
     (hex
       ? 'What the cursor lights up on this ladder’s hexagons: the default lights the six real ' +
         'neighbours, the flat block always the same eight.'
-      : 'What the cursor lights up. On squares both light the same eight; they differ on hexagons ' +
-        'and across a wrapped edge, which only the default follows.') + refusal,
+      : 'What the cursor lights up. On squares the first and the block light the same eight; ' +
+        'they differ on hexagons and across a wrapped edge, which only the default follows. The ' +
+        'last lights the numbers that see a covered cell.') + refusal,
     gallery(
       [
         {
@@ -471,6 +350,18 @@ export function highlightColorRow(ctx: ScreenContext, host: HTMLElement): void {
       : () => el('div', 'picker-placeholder', 'Any colour, mixed from red, green and blue'),
     open: () =>
       openColorWindow(ctx.host, {
+        title: 'Custom highlight colour',
+        blurb:
+          'Mix a colour from red, green and blue, or type it in hex. Red is taken: it crosses ' +
+          'out a click that would do nothing.',
+        mixedLabel: 'A click that lands',
+        taken: [
+          {
+            color: OUT_OF_REACH_COLOR,
+            label: 'A click that would do nothing',
+            name: 'the red that crosses out a click that would do nothing',
+          },
+        ],
         current: settings.highlightColor(typeId),
         example: (color) => chip(color)(),
         onUse: pick,
@@ -486,7 +377,11 @@ export function highlightColorRow(ctx: ScreenContext, host: HTMLElement): void {
       (style ? '' : ' The highlight is off above, so none of this shows until it is on.'),
     gallery(
       [
-        { value: DEFAULT, label: 'Game type default — green', example: chip(MARK_COLOR) },
+        {
+          value: DEFAULT,
+          label: `Game type default — ${p.markColor === DEFAULT ? 'green' : 'the mark colour'}`,
+          example: chip(settings.markColor(typeId)),
+        },
         ...HIGHLIGHT_COLORS.map((c): Choice => ({
           value: c.color,
           label: c.name,
@@ -500,28 +395,28 @@ export function highlightColorRow(ctx: ScreenContext, host: HTMLElement): void {
   );
 }
 
-export function strikeRow(ctx: ScreenContext, host: HTMLElement): void {
+/** How a beaten creature is drawn, each look on the standard example. */
+export function beatenLookRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, currentTheme } = ctx;
+  const look = (beatenLook: BeatenLook, label: string): Choice => ({
+    value: beatenLook,
+    label,
+    example: ctx.chipBoard(currentTheme, { beatenLook }),
+  });
   wideRow(
     host,
-    'Strike out defeated creatures',
-    'The diagonal line across a beaten creature. Off, the dimmed glyph alone says so, which reads ' +
-      'better at small cell sizes.',
+    'Beaten creatures',
+    'How a beaten creature is drawn. Dimmed alone reads better at small cell sizes, where the ' +
+      'stroke crosses the pips; plain leaves the open floor under it to say it is beaten.',
     gallery(
       [
-        {
-          value: 'on',
-          label: 'Struck through',
-          example: ctx.chipBoard(currentTheme, { strikeDefeated: true }),
-        },
-        {
-          value: 'off',
-          label: 'Left plain',
-          example: ctx.chipBoard(currentTheme, { strikeDefeated: false }),
-        },
+        look('dimStrike', 'Dimmed and struck through'),
+        look('strike', 'Struck through'),
+        look('dim', 'Dimmed'),
+        look('plain', 'Plain'),
       ],
-      p.strikeDefeated ? 'on' : 'off',
-      (v) => ctx.pick({ strikeDefeated: v === 'on' }),
+      p.beatenLook,
+      (v) => ctx.pick({ beatenLook: v as BeatenLook }),
     ),
   );
 }
@@ -532,7 +427,7 @@ export function strikeRow(ctx: ScreenContext, host: HTMLElement): void {
  * drag, and forty thumbnails a frame is not a slider.
  */
 export function zoomRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, settings, currentTheme } = ctx;
+  const { p, currentTheme } = ctx;
   const zoomBox = el('div', 'zoom-demo');
   const drawZoom = (cell: number): void => {
     zoomBox.replaceChildren(
@@ -552,8 +447,10 @@ export function zoomRow(ctx: ScreenContext, host: HTMLElement): void {
       (v) => {
         const cell = Math.round(v);
         drawZoom(cell);
-        settings.setPresentation({ maxZoom: cell });
+        ctx.set({ maxZoom: cell });
       },
+      undefined,
+      DEFAULT_MAX_ZOOM,
     ),
   );
   zoomControl.append(zoomBox);

@@ -27,6 +27,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   spells.ts       the five spells, their prices, the mana economy, spellKey
   cast.ts         what each spell does, behind the SpellHost interface
   sweep.ts        Sweep's proof: safeCells and its named proofs; the Sudoku harvest
+  sweepgate.ts    how the dial gates Sweep: on, off, or charged by the cells opened by hand
   reach.ts        the crawl rule: withinReach and computeSealed
   patrol.ts       PATROL's walking creatures: routes, the step after every action, route marks
   placement/      the placement rules: one record per rule, and nobody else names one
@@ -73,10 +74,18 @@ src/ui/         the game in the browser
   board/          the canvas: view.ts (state, fit, zoom, render order), geometry.ts,
                   digits.ts, paint.ts (cell painters), overlays.ts (silhouette, seams, bonds,
                   highlight), input.ts (pointer, wheel, pinch)
-  settings.ts     the presentation settings and the store
+  presentation.ts  the presentation settings: each one's options, its default and its reader
+                  (DOM-free)
+  ladderown.ts    a ladder's own presentation settings: which can be, and reading a save's
+                  (decision 0070)
+  settings.ts     the settings store, and what each presentation setting resolves to on a ladder
   telemetry.ts    the play statistics: what each board cost, their code, and their reading (DOM-free)
   telemetrystore.ts  the play statistics in storage, their own key, never in the save code
-  settingsscreen/  the settings form: context, widgets, render, look, effects, gameplay, screen;
+  settingsscreen/  the settings form: context, widgets, render, screen, and its sections: look.ts
+                  and effects.ts (the Presentation rows: what is drawn, and what plays itself),
+                  board.ts (more of the Presentation rows), interface.ts (the page around the
+                  board), sound.ts, gameplay.ts (the dials, the chord, the tutor), presets.ts
+                  (the bundles and fullscreen), scope.ts (for every ladder or this one alone);
                   symbols.ts is the custom creature icon's window of symbols, colormixer.ts the
                   sliders that mix a colour from red, green and blue, customcolor.ts the custom
                   highlight colour's window of them, customtiers.ts the custom creature colours'
@@ -213,8 +222,11 @@ play whole runs headlessly.
 Two halves that behave completely differently. `src/engine/settings.ts` holds the **gameplay
 dials**: they change rules, so they are engine state, and they decide whether a board counts for
 a record (`isAtLeastAsHard`: harder records, easier records nothing, unlocks included).
-`src/ui/settings.ts` holds the **presentation settings** and the store; none of those touches a
-rule. `settingsscreen/` is the form, built detached and handed back to `App`.
+`src/ui/presentation.ts` holds the **presentation settings** (what each is, its options, its
+default, its reader) and `src/ui/settings.ts` the store and what each resolves to on a ladder;
+none of those touches a rule. A ladder can have the look and sound of its board of its own:
+`Settings.presentationFor(typeId)` resolves a ladder, and every reader of such a setting goes
+through it (decision 0070). `settingsscreen/` is the form, built detached and handed back to `App`.
 
 ## Where knowledge lives
 

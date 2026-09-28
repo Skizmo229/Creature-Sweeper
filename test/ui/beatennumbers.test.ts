@@ -11,13 +11,11 @@ import { boardConfig } from '../../src/engine/config.js';
 import { Game } from '../../src/engine/game.js';
 import { App } from '../../src/ui/app.js';
 import { offersBeatenNumbers } from '../../src/ui/board/paint.js';
-import { type BoardDisplay, BoardView } from '../../src/ui/board/view.js';
+import { type BoardDisplay, BoardView, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { ladders } from '../../src/ui/ladders.js';
 import { themeFor } from '../../src/ui/looks.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
-import { DEFAULT_TIERS } from '../../src/ui/tiercolors.js';
-import { FONTS } from '../../src/ui/typefaces.js';
 
 /** The app's surface as the test drives it, private members included. */
 interface Driver {
@@ -63,13 +61,10 @@ describe('what the board draws', () => {
   afterEach(() => recording.stop());
 
   const display = (beatenNumbers: boolean): BoardDisplay => ({
-    maxCell: 48,
-    font: FONTS['jetbrains-mono'],
+    ...DEFAULT_DISPLAY,
     highlight: null,
     highlightColor: '#ffffff',
-    strikeDefeated: true,
     beatenNumbers,
-    tierColors: DEFAULT_TIERS,
   });
 
   /**

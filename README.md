@@ -96,10 +96,11 @@ In dev, `window.cs` exposes the running app (`cs.play('normal', 3)`, `cs.current
 
 **Controls:** click to open · hover a beaten creature to see the number under it (not on PAIRS or
 DOMINOES) · `U`, or the **Beaten** button beside Entry, shows every one at once, which is how a
-touch screen sees them · right-click or a LV button to mark · number keys act on the cell under
+touch screen sees them · right-click, or a long press on a touch screen, or a LV button to mark · number keys act on the cell under
 the cursor, marking or pencilling according to the Entry mode · `N` switches that mode ·
 `Shift`+digit does the other one for that keystroke · `S` sweeps what is proven safe (no Sweep on
-EASY or PATROL) · `D` or `Shift`+`S` also trusts your marks · `H` asks the tutor for the next
+EASY or PATROL) · `D` or `Shift`+`S` also trusts your marks · a click on an open number sweeps its ring alone when the
+chord setting is on · `H` asks the tutor for the next
 provable move and why · `G` opens the field guide there · a spell's bracketed letter casts it
 (`A`ugur, `C`ensus, `R`eveal, `B`eacon, `E`xercise, offered cheapest first) · `W` waits a move on
 PATROL, for a second on the clock · scroll or `+`/`-` to zoom, drag to pan a board bigger than the
@@ -107,21 +108,28 @@ screen, `F` to fit it again · `P` pauses: the board, or the Full Run, waits on 
 clock stopped, and a click on the tile carries on · `Enter` goes on to a lesson's next step ·
 `Esc` backs out, asking first whether to pause or abandon a game you have made a move in.
 
-**Settings** are two separate things. The presentation half (creature icons and colours, board
-palette, board font, interface font, sound pack, volume and the sound check, glow after a fight,
-board-clear effect, text size, preview size, cursor highlight and its colour, strike-through, zoom
-ceiling, the palette strip on the menu, and whether the tutor offers its Hint) touches no rule and
-can never affect a record; every visual option is shown as a real board, or for the interface a
-copy of the HUD. A creature's icon is one of the drawn pip shapes, or, through the icon picker's
+**Settings** are two separate things. The presentation half touches no rule and can never affect
+a record: creature icons, their tier as a digit, and their colours; board palette, board font
+and digit size; interface font and text size; the mark colour; the cursor highlight, its colour
+and thickness; how a beaten creature is drawn; reach shading on the crawl ladders; the zoom
+ceiling and whether boards open at it; the sound pack, the volume, which sounds play and the sound
+check; the glow and the motion after a fight; the board-clear effect, when it plays, what holds
+the card and its speed; the clock, the hint line, the palette strip, what a right-click does, the
+long press on a touch screen, whether Back pauses without asking, whether statistics are kept,
+the chord, and the tutor's style and grade. Every visual option is shown as a real board, or for
+the interface a copy of the HUD, and any of a board's look and sound can be chosen for one ladder
+alone. A creature's icon is one of the drawn pip shapes, or, through the icon picker's
 **Custom** tile, any of 782 symbols from Dingbats and Wingdings 1 to 3, picked from each font's
 own chart. Wingdings itself cannot ship, so the symbols are their Unicode equivalents, drawn from
 open Noto fonts bundled with the game and cut down to just these symbols (Noto Sans Symbols 2,
 Noto Sans Symbols, Noto Emoji and Noto Sans; licences in `public/FONT-LICENSES.txt`). The cursor
 highlight's colour is the green, one of four presets, or any colour mixed from red, green and blue
-through its own **Custom** tile. The gameplay half is seven dials that do change the rules (HP,
-Full Run regen, creature damage, mana regen, mana per creature, how Sweep is gated, Time Attack).
-Settings that make the game harder record normally; anything easier than the tuned game records
-no clear, no unlock and no best time, and the game says so live.
+through its own **Custom** tile, and the mark colour likewise. The gameplay half is the dials that
+do change the rules (HP, Full Run regen, creature damage, mana regen, mana per creature, spell
+prices, starting mana, how Sweep is gated, hidden counters, Time Attack and how far below the best
+it races, a time limit per board), with Tuned, Relaxed and Brutal presets. Settings that make the
+game harder record normally; anything easier than the tuned game records no clear, no unlock and
+no best time, and the game says so live.
 
 **Game types.** 35 ladders of ten tuned boards, each with a scaling continuation past board 10
 (961 boards in all) and a Full Run (all ten on one HP pool).

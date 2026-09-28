@@ -27,13 +27,20 @@ export function dressDocument(settings: Settings, typeId: string): void {
 
 /** The renderer's slice of the presentation settings. */
 export function boardDisplayFor(settings: Settings, typeId: string): BoardDisplay {
-  const p = settings.presentation;
+  const p = settings.presentationFor(typeId);
   return {
     maxCell: p.maxZoom,
+    startAtCeiling: p.startAtCeiling,
     font: settings.boardFont(typeId),
+    glyph: p.glyph,
     highlight: settings.highlightStyle(typeId),
     highlightColor: settings.highlightColor(typeId),
-    strikeDefeated: p.strikeDefeated,
+    highlightWidth: p.highlightWidth,
+    beatenLook: p.beatenLook,
+    digitScale: p.digitSize,
+    reachShading: p.reachShading,
+    markColor: settings.markColor(typeId),
+    longPressMs: p.longPress,
     beatenNumbers: p.beatenNumbers,
     tierColors: settings.tierColors(typeId),
   };

@@ -180,7 +180,7 @@ export class Teaching {
 
   /** What to point at on the board: the tutor's own lesson if asked, else the step's. */
   pointer(): Lesson | null {
-    return this.tutor.shown() ?? this.lesson?.pointer() ?? null;
+    return this.tutor.pointer() ?? this.lesson?.pointer() ?? null;
   }
 
   /** The guide from a board: at the trick the tutor is showing, or at guessing well at a guess. */

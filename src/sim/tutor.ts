@@ -66,6 +66,8 @@ export interface TutorOptions {
   peek?: boolean;
   /** Where the player last acted; lessons nearest it come first. */
   near?: Cell | null;
+  /** The dearest grade to try; every grade when left out. */
+  most?: Grade;
 }
 
 /** What one press of the tutor found. */
@@ -123,6 +125,7 @@ export function explain(game: Game, options: TutorOptions = {}): Explanation {
   for (let restart = 0; restart < MOST_RESTARTS; restart++) {
     let narrowedAny = false;
     for (const g of GRADES) {
+      if (options.most !== undefined && g > options.most) break;
       const view = pencil.view(peek);
       const concluding: Lesson[] = [];
       let narrowed = 0;

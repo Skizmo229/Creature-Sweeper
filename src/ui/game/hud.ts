@@ -11,6 +11,7 @@ import type { FullRun } from '../../engine/run.js';
 import { type SpellId, spellLabel } from '../../engine/spells.js';
 import type { Cell } from '../../engine/types.js';
 import { el } from '../dom.js';
+import type { ClockStyle } from '../presentation.js';
 import { type TierPalette, tierColor, tierGilded } from '../tiercolors.js';
 import { hintText } from './hint.js';
 import type { EntryMode } from './mode.js';
@@ -69,6 +70,51 @@ export interface HudState {
   tierColors: TierPalette;
   /** Whether every beaten creature shows its number: what the Beaten toggle says. */
   beatenNumbers: boolean;
+  /** Whether the hint line says what a click does; the tutor and a lesson speak there anyway. */
+  hintLine: boolean;
+}
+
+/** The Sweep buttons, their meter and their counts, and PATROL's Wait, brought up to date. */
+function syncSweep(els: GameScreenElements, game: Game): void {
+  const sweepMode = game.settings.sweep;
+  const gated = !game.sweepAvailable;
+  const safeCount = sweepMode === 'off' ? 0 : game.safeCells({ useMarks: false }).length;
+  const markCount = sweepMode === 'off' ? 0 : game.safeCells({ useMarks: true }).length;
+  if (els.sweepSafeBtn) {
+    // The meter goes on the button, because what the player needs to know is why THIS control
+    // is dark.
+    const left = sweepMode === 'budget' ? ` (${game.sweepsLeft} left)` : '';
+    els.sweepSafeBtn.textContent =
+      sweepMode === 'off'
+        ? 'Sweep off'
+        : gated
+          ? sweepMode === 'budget'
+            ? `Sweep${left}`
+            : `Sweep (${game.charge}/${game.chargeNeeded})`
+          : safeCount > 0
+            ? `Sweep ${safeCount}${left}`
+            : `Sweep${left}`;
+    els.sweepSafeBtn.disabled = gated || safeCount === 0;
+    els.sweepSafeBtn.title =
+      sweepMode === 'off'
+        ? 'Sweep is off in Settings.'
+        : sweepMode === 'charge'
+          ? `Cells opened by hand charge Sweep: ${game.chargeNeeded} per use, ` +
+            `${game.charge} banked.`
+          : sweepMode === 'budget'
+            ? `${game.settings.sweepBudget} sweeps a board; ${game.sweepsLeft} left.`
+            : 'Opens what is proven safe. Never costs HP.';
+  }
+  // The move count is what a player times a creature's walk by: every creature was on its route's
+  // corner at move 0 and walks one cell a move.
+  if (els.waitBtn) els.waitBtn.textContent = `[W]ait · move ${game.moves}`;
+  if (els.sweepMarkBtn) {
+    // Only offered when the marks actually buy something the proof cannot.
+    const extra = markCount - safeCount;
+    els.sweepMarkBtn.textContent =
+      sweepMode === 'off' ? 'Sweep off' : extra > 0 ? `Sweep + marks +${extra}` : 'Sweep + marks';
+    els.sweepMarkBtn.disabled = gated || extra <= 0;
+  }
 }
 
 /** Everything on the screen that reads the game, brought up to date. */
@@ -96,11 +142,15 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
     els.hud.run.textContent = `RUN${s.boardIndex}/${s.run.boardCount}`;
   }
 
+  // With the counters hidden the button is the tier alone, and never dims for a tier that is gone.
+  const { countersHidden } = game.settings;
   for (const btn of els.counters) {
     const tier = Number(btn.dataset.tier);
-    btn.textContent = `LV ${tier}\n×${pad(game.counterFor(tier), 2)}`;
+    btn.textContent = countersHidden
+      ? `LV ${tier}`
+      : `LV ${tier}\n×${pad(game.counterFor(tier), 2)}`;
     btn.classList.toggle('active', mode.markMode === tier);
-    btn.classList.toggle('done', game.counterFor(tier) <= 0);
+    btn.classList.toggle('done', !countersHidden && game.counterFor(tier) <= 0);
   }
   els.notesBtn.textContent = mode.notesMode ? 'Entry: Pencil' : 'Entry: Mark';
   els.notesBtn.title = mode.notesMode
@@ -116,6 +166,7 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
   // The tutor speaks where the hint does, and in the ink rather than the hint's grey: it is the
   // thing the player just asked for.
   els.hint.textContent = s.tutor ?? s.lesson?.say ?? hintText(game, mode);
+  els.hint.hidden = !s.hintLine && s.tutor === null && s.lesson === null;
   els.hint.classList.toggle('tutoring', s.tutor !== null);
   els.hint.classList.toggle('teaching', s.tutor === null && s.lesson !== null);
   if (s.tutor !== null) els.hint.append(' ', els.more);
@@ -137,47 +188,30 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
   }
   els.stage.classList.toggle('targeting', mode.pendingSpell !== null);
 
-  const sweepMode = game.settings.sweep;
-  const gated = !game.sweepAvailable;
-  const safeCount = sweepMode === 'off' ? 0 : game.safeCells({ useMarks: false }).length;
-  const markCount = sweepMode === 'off' ? 0 : game.safeCells({ useMarks: true }).length;
-  if (els.sweepSafeBtn) {
-    // The meter goes on the button, because what the player needs to know is why THIS control
-    // is dark.
-    els.sweepSafeBtn.textContent =
-      sweepMode === 'off'
-        ? 'Sweep off'
-        : gated
-          ? `Sweep (${game.charge}/${game.chargeNeeded})`
-          : safeCount > 0
-            ? `Sweep ${safeCount}`
-            : 'Sweep';
-    els.sweepSafeBtn.disabled = gated || safeCount === 0;
-    els.sweepSafeBtn.title =
-      sweepMode === 'off'
-        ? 'Sweep is off in Settings.'
-        : sweepMode === 'charge'
-          ? `Cells opened by hand charge Sweep: ${game.chargeNeeded} per use, ` +
-            `${game.charge} banked.`
-          : 'Opens what is proven safe. Never costs HP.';
-  }
-  // The move count is what a player times a creature's walk by: every creature was on its route's
-  // corner at move 0 and walks one cell a move.
-  if (els.waitBtn) els.waitBtn.textContent = `[W]ait · move ${game.moves}`;
-  if (els.sweepMarkBtn) {
-    // Only offered when the marks actually buy something the proof cannot.
-    const extra = markCount - safeCount;
-    els.sweepMarkBtn.textContent =
-      sweepMode === 'off' ? 'Sweep off' : extra > 0 ? `Sweep + marks +${extra}` : 'Sweep + marks';
-    els.sweepMarkBtn.disabled = gated || extra <= 0;
-  }
+  syncSweep(els, game);
 }
 
-/** The clock readout. "LEFT" rather than a glyph, because the font is a player setting. */
-export function syncClock(els: GameScreenElements, elapsed: number, left: number | null): void {
+/** A count of seconds as the clock setting shows it: the seconds, or minutes and seconds. */
+export function clockText(seconds: number, style: ClockStyle): string {
+  if (style !== 'minutes') return String(seconds);
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+/**
+ * The clock readout, in the style the player chose, or hidden. "LEFT" rather than a glyph,
+ * because the font is a player setting.
+ */
+export function syncClock(
+  els: GameScreenElements,
+  elapsed: number,
+  left: number | null,
+  style: ClockStyle,
+): void {
   const t = els.hud.t;
   if (!t) return;
-  t.textContent = left === null ? `TIME ${elapsed}` : `TIME ${left} LEFT`;
+  t.hidden = style === 'hidden';
+  t.textContent =
+    left === null ? `TIME ${clockText(elapsed, style)}` : `TIME ${clockText(left, style)} LEFT`;
   // Under ten seconds it reads like the HP counter does: it is the number about to end the board.
   t.classList.toggle('low', left !== null && left <= 10);
 }

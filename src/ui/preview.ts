@@ -272,6 +272,36 @@ export function tierSampleBoard(): Game {
   );
 }
 
+/** How far the reach example's crawl rule reaches: DUNGEON's two steps. */
+const REACH_SAMPLE_STEPS = 2;
+
+/**
+ * The reach-shading example: a board with a crawl rule, opened at its left end, so the tiles at
+ * its right are out of reach and the ones beside the open ground are not. Dealt from the fixed
+ * seed on until a layout has numbered ground to open at the left and leaves cells out of reach.
+ */
+export function reachSampleBoard(): Game {
+  return once('reach', () => {
+    for (let i = 0; i < MAX_DEALS; i++) {
+      const game = Game.create(
+        previewConfig({ width: 8, height: 4, quantity: [1, 1, 1, 1], reach: REACH_SAMPLE_STEPS }),
+        SEED + i,
+      );
+      const first = cellsOf(game, (c) => c.tier === 0 && c.num > 0 && c.x <= 1)[0];
+      if (!first) continue;
+      game.open(first.x, first.y);
+      const next = cellsOf(game, (c) => !c.open && c.tier === 0 && c.num > 0 && c.x <= 1).find(
+        (c) => game.inReach(c),
+      );
+      if (next) game.open(next.x, next.y);
+      const covered = cellsOf(game, (c) => !c.open);
+      if (covered.some((c) => !game.inReach(c)) && covered.some((c) => game.inReach(c)))
+        return game;
+    }
+    throw new Error(`no reach example in ${MAX_DEALS} deals leaves cells out of reach`);
+  });
+}
+
 /** The hex highlight example — HIVE's. */
 export function hexSampleBoard(): Game {
   return highlightSampleBoard('hex');

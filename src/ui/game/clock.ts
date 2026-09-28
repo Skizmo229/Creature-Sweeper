@@ -5,6 +5,11 @@
  * best and nothing else; expiry is reported by the caller through `game.forfeit`.
  */
 
+import type { GameplaySettings } from '../../engine/settings.js';
+
+/** The dials the clock reads: whether Time Attack is on, how far below the best it races, the limit. */
+export type ClockSettings = Pick<GameplaySettings, 'timeAttack' | 'timeAttackRatio' | 'timeLimit'>;
+
 export class BoardClock {
   /** When this board's clock started, or null before a board is dealt. */
   startedAt: number | null = null;
@@ -23,13 +28,19 @@ export class BoardClock {
   }
 
   /**
-   * Set the countdown, if Time Attack has something to race: the player's own previous best, a
-   * time they have already proved is achievable, so the mode is exactly as hard as they last
-   * made it. A board with no best has nothing to race and plays normally.
+   * Set the countdown, if there is something to race: the player's own previous best, a time they
+   * have already proved is achievable, so the mode is exactly as hard as they last made it, times
+   * the ratio they chose; or the fixed limit they set, once for each of `boards`; the shorter of
+   * the two where both apply. A board with neither plays normally.
    */
-  arm(best: number | null, timeAttack: boolean): void {
+  arm(best: number | null, s: ClockSettings, boards = 1): void {
     this.timeExpired = false;
-    this.timeLimit = timeAttack && best !== null && best > 0 ? best : null;
+    const race =
+      s.timeAttack && best !== null && best > 0
+        ? Math.max(1, Math.ceil(best * s.timeAttackRatio))
+        : null;
+    const limit = s.timeLimit > 0 ? s.timeLimit * boards : null;
+    this.timeLimit = race === null ? limit : limit === null ? race : Math.min(race, limit);
   }
 
   /**

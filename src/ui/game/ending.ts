@@ -95,6 +95,7 @@ export class BoardEnding {
     const recorded = isAtLeastAsHard(game.settings);
     // Read before the clear is written down, after which every clear would look like a repeat.
     const firstClear = won && !progress.boardRecord(typeId, boardIndex).cleared;
+    const plays = won && this.effectPlays(firstClear);
     let unlocked: number | null = null;
     // A board cleared on settings easier than the tuned ones is not written down at all.
     if (won && recorded) {
@@ -116,8 +117,8 @@ export class BoardEnding {
       seed,
       won,
       perfect,
-      // The wait is for watching the clear effect, so with the effect off there is none.
-      held: firstClear && settings.victoryEffect(typeId) !== null,
+      // The wait is for watching the clear effect, so with no effect to watch there is none.
+      hold: firstClear && plays ? settings.presentationFor(typeId).cardHold : 'none',
       timeExpired: clock.timeExpired,
       seconds,
       fatal: this.fatalBattle,
@@ -138,7 +139,18 @@ export class BoardEnding {
     });
     this.h.root.querySelector('.screen')?.append(overlay);
     this.h.view()?.render();
-    if (won) this.celebrate();
+    if (plays) this.celebrate();
+  }
+
+  /**
+   * Whether the clear effect plays on this clear: there is one, and it plays on every clear or
+   * this is the board's first.
+   */
+  private effectPlays(firstClear: boolean): boolean {
+    const { settings } = this.h;
+    const typeId = this.h.typeId();
+    if (settings.victoryEffect(typeId) === null) return false;
+    return settings.presentationFor(typeId).victoryWhen === 'every' || firstClear;
   }
 
   private finishRunBoard(): void {
@@ -150,6 +162,9 @@ export class BoardEnding {
     const type = ladders.find((t) => t.id === typeId)!;
     const midRun = game.status === 'won' && !run.isLastBoard;
     const recorded = isAtLeastAsHard(game.settings);
+    // A run's boards were all cleared before it opened, unless Unlock everything let it in.
+    const plays =
+      game.status === 'won' && this.effectPlays(!progress.boardRecord(typeId, boardIndex).cleared);
 
     if (!midRun) {
       clock.freeze();
@@ -183,7 +198,7 @@ export class BoardEnding {
     });
     this.h.root.querySelector('.screen')?.append(overlay);
     this.h.view()?.render();
-    if (game.status === 'won') this.celebrate();
+    if (plays) this.celebrate();
   }
 
   /**
@@ -201,9 +216,9 @@ export class BoardEnding {
     this.stopVictory = playVictory(
       stage,
       effect,
-      settings.themeFor(typeId),
-      settings.tierColors(typeId),
+      settings.victoryLook(typeId),
       this.h.view()?.victorySource(),
+      settings.presentationFor(typeId).effectSpeed,
     );
   }
 }

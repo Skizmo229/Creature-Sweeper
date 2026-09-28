@@ -55,8 +55,9 @@ free.
 
 **Sweep.** Opens every cell the engine can prove safe. **Strict** Sweep uses only facts (numbers,
 open tiers, givens, Census, Augur, the placement proofs). **Assisted** Sweep also trusts the player's
-marks. **Charged** Sweep (the default) is rationed: ten hand-opened cells buy one sweep.
-`Game.safeCells`, `Game.sweep`.
+marks. **Charged** Sweep (the default) is rationed: ten hand-opened cells buy one sweep; a **budget**
+is so many sweeps a board (decision 0072). A **chord** sweeps one open cell's ring at a sweep's
+price (decision 0071). `Game.safeCells`, `Game.sweep`, `Game.sweepAt`.
 
 **Spells.** Augur (20 mana, names the strongest of a cell's hidden creatures), Census (30, counts
 them), Reveal (75, tells you a cell's tier as a given and opens the empty ground around it),

@@ -12,23 +12,31 @@ import { el } from '../dom.js';
 import { themeFor } from '../looks.js';
 import { sampleBoard } from '../preview.js';
 import { type SettingsScreenOptions, makeContext, previewCell, typeName } from './context.js';
-import { clearEffectRow, fightRimRow, soundRow, stopSettingsDemo } from './effects.js';
-import { gameplaySection } from './gameplay.js';
+import { clearEffectRow, fightRimRow, motionRow, soundRow, stopSettingsDemo } from './effects.js';
 import {
+  digitSizeRow,
+  glyphRow,
+  highlightWidthRow,
+  markColorRow,
+  reachShadingRow,
+  startAtCeilingRow,
+} from './board.js';
+import { gameplaySection } from './gameplay.js';
+import { interfaceSection } from './interface.js';
+import {
+  beatenLookRow,
   boardFontRow,
   highlightColorRow,
   highlightRow,
   iconsRow,
   interfaceFontRow,
   paletteRow,
-  previewSizeRow,
-  strikeRow,
-  menuStripRow,
-  textSizeRow,
   tierColorsRow,
   zoomRow,
 } from './look.js';
 import { CHIP_CELL } from './render.js';
+import { soundSection } from './sound.js';
+import { scopeBar } from './scope.js';
 import { section } from './widgets.js';
 
 export type { SettingsScreenOptions } from './context.js';
@@ -72,6 +80,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   };
 
   const ctx = makeContext(opts, wrap, rebuild);
+  scopeBar(ctx, head);
 
   const look = section(
     wrap,
@@ -79,22 +88,40 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
     'None of this touches a rule or a record. Every example is a real board drawn by the game.',
   );
   iconsRow(ctx, look);
+  glyphRow(ctx, look);
   tierColorsRow(ctx, look);
   paletteRow(ctx, look);
   boardFontRow(ctx, look);
+  digitSizeRow(ctx, look);
   interfaceFontRow(ctx, look);
-  textSizeRow(ctx, look);
-  previewSizeRow(ctx, look);
-  menuStripRow(ctx, look);
+  markColorRow(ctx, look);
   highlightRow(ctx, look);
   highlightColorRow(ctx, look);
-  strikeRow(ctx, look);
+  highlightWidthRow(ctx, look);
+  beatenLookRow(ctx, look);
+  reachShadingRow(ctx, look);
   zoomRow(ctx, look);
+  startAtCeilingRow(ctx, look);
   soundRow(ctx, look);
   fightRimRow(ctx, look);
+  motionRow(ctx, look);
   clearEffectRow(ctx, look);
 
-  gameplaySection(ctx);
+  // What a ladder cannot have of its own waits for the scope that can set it.
+  if (ctx.ladderScope) {
+    wrap.append(
+      el(
+        'p',
+        'settings-blurb',
+        'The interface, the sound and the gameplay dials are for every ladder; switch to Every ' +
+          'ladder above to set them.',
+      ),
+    );
+  } else {
+    interfaceSection(ctx);
+    soundSection(ctx);
+    gameplaySection(ctx);
+  }
 
   const tools = el('div', 'tools');
   const resetLook = el('button', 'ghost', 'Reset presentation');

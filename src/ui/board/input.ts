@@ -19,6 +19,8 @@ export interface InputHost {
   readonly maxCell: number;
   /** Only true when the board is larger than the viewport, so panning exists. */
   readonly canPan: boolean;
+  /** How long a touch holds a cell before it does what a right-click does, in ms; 0 for never. */
+  readonly longPressMs: number;
   readonly hovered: Cell | null;
   cellAtClient(clientX: number, clientY: number): Cell | null;
   /** Scale about a canvas point, so wheel-zoom keeps what is under the cursor put. */
@@ -51,6 +53,11 @@ export class BoardInput {
    * lift at the end of a zoom that opened a cell would be a way to end a run by zooming.
    */
   private gesture = false;
+  /**
+   * A finger held still on a cell: the timer that will treat the hold as a right-click, and
+   * where the finger came down, so a finger that wanders is a drag or a tap and not a hold.
+   */
+  private press: { timer: ReturnType<typeof setTimeout>; x: number; y: number } | null = null;
 
   constructor(private readonly host: InputHost) {}
 
@@ -89,6 +96,7 @@ export class BoardInput {
         if (this.touches.size > 2) return;
       }
       this.dragMoved = false;
+      if (e.pointerType === 'touch') this.armPress(e.clientX, e.clientY);
       // Only arm a drag when there is somewhere to drag to. On a board that fits, a click is
       // unambiguous and never has to survive drag tracking.
       if (host.canPan) {
@@ -103,30 +111,11 @@ export class BoardInput {
       }
     });
 
-    c.addEventListener('pointermove', (e) => {
-      if (this.touches.has(e.pointerId)) {
-        this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-        if (this.pinch && this.touches.size >= 2) {
-          this.movePinch();
-          return;
-        }
-        if (this.gesture) return;
-      }
-      if (this.dragging) {
-        const dx = e.clientX - this.dragStart.x;
-        const dy = e.clientY - this.dragStart.y;
-        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
-          this.dragMoved = true;
-          host.panTo(this.dragStart.ox + dx, this.dragStart.oy + dy);
-        }
-        return;
-      }
-      const cell = host.cellAtClient(e.clientX, e.clientY);
-      if (cell !== host.hovered) host.hover(cell);
-    });
+    c.addEventListener('pointermove', (e) => this.onPointerMove(e));
 
     const endDrag = (e: PointerEvent) => {
       if (e.button === 2) return; // right-click was handled on pointerdown
+      this.cancelPress();
       if (this.touches.delete(e.pointerId)) {
         if (this.touches.size < 2) this.pinch = null;
         // The lift that ends a pinch opens nothing, and nor does the last finger of it coming
@@ -148,11 +137,40 @@ export class BoardInput {
     c.addEventListener('pointerup', endDrag);
     c.addEventListener('pointercancel', (e) => {
       this.dragging = false;
+      this.cancelPress();
       this.touches.delete(e.pointerId);
       if (this.touches.size < 2) this.pinch = null;
     });
 
     c.addEventListener('pointerleave', () => host.leave());
+  }
+
+  /** The pointer moved: a pinch, a hold that wandered, a drag, or the cursor over a cell. */
+  private onPointerMove(e: PointerEvent): void {
+    const { host } = this;
+    if (this.touches.has(e.pointerId)) {
+      this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (this.pinch && this.touches.size >= 2) {
+        this.movePinch();
+        return;
+      }
+      if (this.gesture) return;
+      // A finger that has wandered off where it came down is not holding a cell.
+      if (this.press && Math.hypot(e.clientX - this.press.x, e.clientY - this.press.y) > 6) {
+        this.cancelPress();
+      }
+    }
+    if (this.dragging) {
+      const dx = e.clientX - this.dragStart.x;
+      const dy = e.clientY - this.dragStart.y;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+        this.dragMoved = true;
+        host.panTo(this.dragStart.ox + dx, this.dragStart.oy + dy);
+      }
+      return;
+    }
+    const cell = host.cellAtClient(e.clientX, e.clientY);
+    if (cell !== host.hovered) host.hover(cell);
   }
 
   /**
@@ -162,6 +180,7 @@ export class BoardInput {
    */
   private beginPinch(): void {
     const { host } = this;
+    this.cancelPress();
     const [a, b] = [...this.touches.values()];
     const rect = host.canvas.getBoundingClientRect();
     this.pinch = pinchStart(a!.x - rect.left, a!.y - rect.top, b!.x - rect.left, b!.y - rect.top, {
@@ -179,6 +198,30 @@ export class BoardInput {
         /* already released */
       }
     }
+  }
+
+  /**
+   * A finger has come down on a cell: if it is still there when the setting's time is up, the
+   * hold is a right-click, and the lift that ends it opens nothing, as a drag's does not.
+   */
+  private armPress(x: number, y: number): void {
+    this.cancelPress();
+    const ms = this.host.longPressMs;
+    if (ms <= 0) return;
+    const timer = setTimeout(() => {
+      this.press = null;
+      const cell = this.host.cellAtClient(x, y);
+      if (!cell) return;
+      this.dragMoved = true;
+      this.host.onCycleMark(cell.x, cell.y);
+    }, ms);
+    this.press = { timer, x, y };
+  }
+
+  private cancelPress(): void {
+    if (!this.press) return;
+    clearTimeout(this.press.timer);
+    this.press = null;
   }
 
   private movePinch(): void {

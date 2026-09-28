@@ -22,6 +22,7 @@ import {
   HIGHLIGHT_PIN,
   hexSampleBoard,
   highlightSampleBoard,
+  reachSampleBoard,
   sampleBoard,
   samplePin,
   tierSampleBoard,
@@ -203,6 +204,17 @@ describe('the gallery examples', () => {
     const glyphs = beaten.filter((c) => c !== pin);
     expect(glyphs.length).toBeGreaterThanOrEqual(2);
     for (const glyph of glyphs) expect(glyph.tier).toBeGreaterThan(pin.tier);
+  });
+
+  it('leaves cells out of reach, and cells in reach, on the reach-shading example', () => {
+    // The shading is the difference between the two, so the example has to have both.
+    const board = reachSampleBoard();
+    expect(board.config.reach).toBeGreaterThan(0);
+    const covered = board.grid.flat().filter((c) => c.present && !c.open);
+    expect(covered.some((c) => !board.inReach(c))).toBe(true);
+    expect(covered.some((c) => board.inReach(c))).toBe(true);
+    expect(board.status).toBe('playing');
+    expect(reachSampleBoard()).toBe(board);
   });
 
   it('shows a creature and a number on the zoom example', () => {

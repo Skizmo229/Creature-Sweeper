@@ -13,15 +13,13 @@ import type { Cell } from '../../src/engine/types.js';
 import { App } from '../../src/ui/app.js';
 import { type Layout, MIN_CELL, centreOf } from '../../src/ui/board/geometry.js';
 import { TILE_INSET } from '../../src/ui/board/paint.js';
-import { type BoardDisplay, BoardView } from '../../src/ui/board/view.js';
+import { type BoardDisplay, BoardView, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { hexPoints, hexRadius } from '../../src/ui/hexgeom.js';
 import { themeFor } from '../../src/ui/looks.js';
 import { HIGHLIGHT_PIN, highlightSampleBoard, highlightSampleLands } from '../../src/ui/preview.js';
-import { HIGHLIGHT_COLORS, type HighlightStyle } from '../../src/ui/settings.js';
+import { HIGHLIGHT_COLORS, type HighlightStyle } from '../../src/ui/presentation.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
 import { MARK_COLOR, MARK_OUTLINE, OUT_OF_REACH_COLOR } from '../../src/ui/theme.js';
-import { DEFAULT_TIERS } from '../../src/ui/tiercolors.js';
-import { FONTS } from '../../src/ui/typefaces.js';
 
 type Point = readonly [number, number];
 
@@ -112,13 +110,9 @@ beforeEach(() => {
 afterEach(() => recording.stop());
 
 const display = (highlight: HighlightStyle | null, highlightColor = MARK_COLOR): BoardDisplay => ({
-  maxCell: 48,
-  font: FONTS['jetbrains-mono'],
+  ...DEFAULT_DISPLAY,
   highlight,
   highlightColor,
-  strikeDefeated: true,
-  beatenNumbers: false,
-  tierColors: DEFAULT_TIERS,
 });
 
 /** A board drawn with `cell` held under the cursor, and the strokes the rendering made. */

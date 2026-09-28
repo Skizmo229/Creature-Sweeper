@@ -137,8 +137,8 @@ and the two test lists that pin the ladder set.
 2. Apply it in `Game` unconditionally (a Full Run passes the unscaled pool for this reason).
 3. `test/settings.test.ts`: the tier-order player must still clear every battle ladder without
    being hit at the dial's harshest setting, and end on the same EXP and level.
-4. The settings screen row, and the three places that say "easier than the tuned game records
-   nothing".
+4. Its reader in `readGameplay` (`src/ui/settings.ts`), the settings screen row, and the three
+   places that say "easier than the tuned game records nothing".
 5. Paused games keep their dials (`src/ui/paused.ts` reads a stored game's dials over
    `DEFAULT_GAMEPLAY`), so a game paused before the dial existed resumes at its default.
 
@@ -153,8 +153,10 @@ and the two test lists that pin the ladder set.
 
 ## Adding a presentation setting
 
-1. `PresentationSettings`, its default and its reader in `src/ui/settings.ts` (the reader ignores
-   unknown keys, so old saves need no migration; a retired setting can simply go).
+1. `PresentationSettings`, its default and its reader in `src/ui/presentation.ts` (the reader ignores
+   unknown keys, so old saves need no migration; a retired setting can simply go). If a ladder
+   may have it of its own, its key goes in `LADDER_SCOPED` too (decision 0070), and every row
+   that saves it writes through `ctx.set` or `ctx.pick`, which know the scope.
 2. A row in `src/ui/settingsscreen/` (`look.ts` for a setting that is drawn, `effects.ts` for one
    that plays itself), called from `screen.ts`, as a gallery of real boards where the setting is
    visual, with any "game type default" option naming what it resolves to. An example board is

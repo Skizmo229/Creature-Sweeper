@@ -163,7 +163,12 @@ export class App {
       boardIndex: () => this.boardIndex,
       clock: this.clock,
       tutor: this.teaching.tutor,
-      telemetry: this.telemetry,
+      // Written down only while the player keeps statistics; the store itself stays.
+      telemetry: {
+        record: (...attempt) => {
+          if (this.settings.presentation.keepStats) this.telemetry.record(...attempt);
+        },
+      },
       play: (move) => this.keeper.move(move),
     });
     window.addEventListener('keydown', (e) => this.onKey(e));
@@ -190,6 +195,7 @@ export class App {
     const { customPitches, soundCheck, sfxVolume } = this.settings.presentation;
     this.sfx.setPitches(customPitches ? soundCheck.pitches : {});
     this.sfx.setVolume(sfxVolume);
+    this.sfx.setSilenced(this.settings.presentation.silenced);
     this.view?.setDisplay(
       this.settings.themeFor(this.typeId),
       boardDisplayFor(this.settings, this.typeId),
@@ -347,10 +353,7 @@ export class App {
     this.keeper.begin();
     this.recorder.begin();
     this.clock.begin();
-    this.clock.arm(
-      this.progress.boardRecord(typeId, board).bestTime,
-      this.settings.gameplay.timeAttack,
-    );
+    this.clock.arm(this.progress.boardRecord(typeId, board).bestTime, this.settings.gameplay);
     this.buildGameScreen();
     this.startClock();
   }
@@ -375,8 +378,9 @@ export class App {
     this.clock.begin();
     this.game = this.run.game;
     this.recorder.begin();
-    // A run races the run's own best, not board 1's.
-    this.clock.arm(this.progress.runRecord(typeId).bestTime, this.settings.gameplay.timeAttack);
+    // A run races the run's own best, not board 1's, and a limit per board over all its boards.
+    const best = this.progress.runRecord(typeId).bestTime;
+    this.clock.arm(best, this.settings.gameplay, this.run.boardCount);
     this.buildGameScreen();
     this.startClock();
   }
@@ -417,14 +421,9 @@ export class App {
     const taken = takeUp(slot);
     if (taken === null) return false;
     if (taken === 'changed') {
-      this.modal.ask({
-        title: 'CANNOT RESUME',
-        body: 'An update has changed this game since it was paused, so it cannot be taken up.',
-        confirmLabel: 'Start again',
-        cancelLabel: 'Back',
-        onConfirm: () =>
-          'run' in slot ? this.startFullRun(slot.typeId) : this.startBoard(slot.typeId, slot.board),
-      });
+      this.modal.cannotResume(() =>
+        'run' in slot ? this.startFullRun(slot.typeId) : this.startBoard(slot.typeId, slot.board),
+      );
       return true;
     }
     const { game, run, moves, paused } = taken;
@@ -526,34 +525,31 @@ export class App {
     const run = this.run;
     const playing = run ? run.status === 'playing' : this.game?.status === 'playing';
     if (!playing || !(run || this.keeper.holding)) return this.showBoards(this.typeId);
-    this.modal.ask({
-      title: run ? 'LEAVE RUN?' : `LEAVE BOARD ${this.boardIndex}?`,
-      body:
-        (run
-          ? `${this.typeName()} full run, board ${this.boardIndex} of ${run.boardCount}, ` +
-            `HP ${run.hp}/${run.maxHp}. `
-          : '') + 'Pause it to carry on later from exactly here, or abandon it.',
-      confirmLabel: run ? 'Pause run' : 'Pause',
-      cancelLabel: 'Keep playing',
-      onConfirm: () => this.pause(),
-      alternate: {
-        label: run ? 'Abandon run' : 'Abandon',
-        onChoose: () => {
-          // An abandoned run is neither won nor lost, but it did reach a board.
-          if (run) {
-            this.progress.recordRun(this.typeId, {
-              completed: false,
-              reachedBoard: this.boardIndex,
-              hp: run.hp,
-              seconds: this.clock.elapsedSeconds(),
-            });
-          }
-          this.recorder.end('abandoned');
-          this.keeper.end();
-          this.showBoards(this.typeId);
-        },
-      },
+    if (this.settings.presentation.backPauses) return this.pause();
+    this.modal.leaveGame({
+      boardIndex: this.boardIndex,
+      typeName: this.typeName(),
+      run,
+      onPause: () => this.pause(),
+      onAbandon: () => this.abandon(),
     });
+  }
+
+  /** Abandon the board, or the run, on screen: its slot emptied, a run written down as an attempt. */
+  private abandon(): void {
+    const run = this.run;
+    // An abandoned run is neither won nor lost, but it did reach a board.
+    if (run) {
+      this.progress.recordRun(this.typeId, {
+        completed: false,
+        reachedBoard: this.boardIndex,
+        hp: run.hp,
+        seconds: this.clock.elapsedSeconds(),
+      });
+    }
+    this.recorder.end('abandoned');
+    this.keeper.end();
+    this.showBoards(this.typeId);
   }
 
   /** Pause: the game is already kept, so this writes the clock down and leaves it. */
@@ -572,9 +568,9 @@ export class App {
     const game = this.game!;
     this.teaching.tutor.dismiss();
 
-    if (this.els) flashStage(this.els.stage, events, this.settings.presentation.fightRim);
+    if (this.els) flashStage(this.els.stage, events, this.settings.presentationFor(this.typeId));
     if (this.sfx.enabled) {
-      const sound = soundFor(events);
+      const sound = soundFor(events, (e) => this.sfx.plays(e));
       if (sound) this.sfx.play(sound);
     }
 
@@ -599,6 +595,7 @@ export class App {
       lesson: this.teaching.lessonLine(),
       tierColors: this.settings.tierColors(this.typeId),
       beatenNumbers: this.settings.presentation.beatenNumbers,
+      hintLine: this.settings.presentation.hintLine,
     });
     this.view?.setLesson(this.teaching.pointer());
     this.view?.render();
@@ -610,7 +607,8 @@ export class App {
   /** The tutor's press: a hint, pointed at the board and said in the hint line. It opens nothing. */
   private explainBoard(): void {
     if (this.game && this.els?.whyBtn) {
-      this.teaching.tutor.press(this.game, this.view?.hoveredCell ?? null);
+      const near = this.view?.hoveredCell ?? null;
+      this.teaching.tutor.press(this.game, near, this.settings.presentation);
       this.keeper.save();
     }
     this.refresh();
@@ -620,7 +618,8 @@ export class App {
 
   private updateClock(): void {
     const left = this.clock.remainingSeconds();
-    if (this.els) syncClock(this.els, this.clock.elapsedSeconds(), left);
+    const style = this.settings.presentation.clock;
+    if (this.els) syncClock(this.els, this.clock.elapsedSeconds(), left, style);
     // The engine owns no clock, so "the countdown ran out" is a fact only this loop can know,
     // and `forfeit` is how it hands that back to the rules.
     if (left === 0 && !this.clock.timeExpired && this.game?.status === 'playing') {

@@ -1,5 +1,5 @@
 /**
- * The player's settings, and what they resolve to on a given ladder.
+ * The player's settings store, and what each presentation setting resolves to on a given ladder.
  *
  * Two halves that behave very differently:
  *
@@ -7,18 +7,15 @@
  * and the interface's, sound, the clear effect, the glow after a fight, the
  * cursor highlight and its colour, the struck-out creatures, the zoom ceiling.
  * None of it touches a rule, so none of it can affect whether a clear is
- * recorded.
+ * recorded. What each one is, and how a saved one is read, is `presentation.ts`.
  *
  * **Gameplay** — the dials in `engine/settings.ts`. Those change the rules, so
  * they decide whether a board counts. See `isAtLeastAsHard`: a player who
  * makes the game *harder* keeps their records, a player who makes it easier
  * keeps their unlocks but not their times.
  *
- * Every presentation setting has the same three-way shape the player asked
- * for: `'default'` means "whatever this game type says", a named value means
- * "this, everywhere", and where it makes sense `'off'` means "not at all".
- * That is why every resolver below takes a `typeId` — 'default' is not a
- * value, it is a deferral.
+ * `'default'` is a deferral, not a value, which is why every resolver below
+ * takes a `typeId`.
  *
  * localStorage can throw or come back empty (private windows, blocked site
  * data), so every access is guarded and the game plays fine without it.
@@ -27,400 +24,80 @@
 import {
   DEFAULT_GAMEPLAY,
   type GameplaySettings,
+  MAX_SWEEP_BUDGET,
+  MAX_TIME_LIMIT,
+  MIN_SWEEP_BUDGET,
+  MIN_TIME_ATTACK_RATIO,
   type SweepMode,
-  snapRatio,
 } from '../engine/settings.js';
-import type { Pip, SfxPackId, TypeTheme, VictoryId } from './looktypes.js';
+import type { SfxPackId, TypeTheme, VictoryId } from './looktypes.js';
 import { lookFor, themeFor } from './looks.js';
-import { MARK_COLOR } from './theme.js';
+import { LADDER_SCOPED, type LadderOwn, readLadderOwn } from './ladderown.js';
 import {
-  DEFAULT_TIERS,
-  TIER_COUNT,
-  TIER_PRESETS,
-  type TierPalette,
-  type TierPresetId,
-} from './tiercolors.js';
-import { type FontId, type GameFont, TITLE_FONT, fontFor, migrateFontChoice } from './typefaces.js';
+  CUSTOM_TIERS,
+  DEFAULT,
+  type HighlightStyle,
+  OFF,
+  type PresentationSettings,
+  DEFAULT_PRESENTATION,
+  num,
+  oneOf,
+  readPresentation,
+} from './presentation.js';
+import { MARK_COLOR } from './theme.js';
+import { DEFAULT_TIERS, TIER_PRESETS, type TierPalette } from './tiercolors.js';
+import { type GameFont, TITLE_FONT, fontFor } from './typefaces.js';
 import { SETTINGS_KEY as KEY } from './savefile.js';
-
-/** "Use the game type's own" — a deferral, not a value. */
-export const DEFAULT = 'default';
-/** "None at all" — only offered where silence is a sensible answer. */
-export const OFF = 'off';
-
-/** A drawn shape, or a symbol from the custom-icon window, written as `U+2764`. */
-export type IconChoice = typeof DEFAULT | Pip;
-/** A game type id, whose palette is borrowed wholesale. */
-export type PaletteChoice = typeof DEFAULT | string;
-export type FontChoice = typeof DEFAULT | FontId;
-export type SfxChoice = typeof DEFAULT | typeof OFF | SfxPackId;
-export type VictoryChoice = typeof DEFAULT | typeof OFF | VictoryId;
-
-/**
- * How much of the board the cursor lights up.
- *
- * 'neighbours' is what the game has always done and what every type defaults
- * to: the hovered cell plus everything genuinely adjacent to it, which on a
- * hex board is six cells and on a wrapped board jumps across the seam. That
- * last part is the reason it is worth keeping as the default — it teaches the
- * topology faster than any amount of explaining.
- *
- * 'block' is the literal 3x3 square regardless of topology, for a player who
- * wants a steady shape rather than a truthful one.
- */
-export type HighlightStyle = 'neighbours' | 'cell' | 'block';
-export type HighlightChoice = typeof DEFAULT | typeof OFF | HighlightStyle;
-
-export const HIGHLIGHT_NAMES: Record<HighlightStyle, string> = {
-  neighbours: 'True neighbours — follows hex and wrapped edges',
-  cell: 'Just the cell under the cursor',
-  block: 'Flat 3×3 block, whatever the board shape',
-};
-
-/** A colour as `#rrggbb` in lower case, or the game type's own, the mark green. */
-export type HighlightColorChoice = typeof DEFAULT | string;
-
-/**
- * The colours the cursor highlight is offered in besides the game type's green, which every ladder
- * defaults to; the Custom tile makes any other. Chosen by measurement against every palette and
- * against the red a click that would do nothing is lit in (decision 0050): white stands out on the
- * most tiles and yellow next, and with red–green colour blindness, where the green is the hardest
- * of them to tell from the red, magenta is the easiest, cyan holds for the commoner kind and
- * yellow for the other.
- */
-export const HIGHLIGHT_COLORS: readonly { readonly name: string; readonly color: string }[] = [
-  { name: 'White', color: '#ffffff' },
-  { name: 'Yellow', color: '#ffeb3b' },
-  { name: 'Cyan', color: '#2ee6ff' },
-  { name: 'Magenta', color: '#ff4dff' },
-];
-
-/**
- * A colour written in hex, `#2ee6ff` or the short `#2ef`, with or without its '#' and in either
- * case, as the setting keeps it: `#rrggbb` in lower case. Null for anything else.
- */
-export function readHexColor(text: unknown): string | null {
-  if (typeof text !== 'string') return null;
-  const digits = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(text.trim())?.[1]?.toLowerCase();
-  if (!digits) return null;
-  return `#${digits.length === 3 ? [...digits].map((d) => d + d).join('') : digits}`;
-}
-
-/** The player's own tier colours, mixed in the custom window and kept in `customTierColors`. */
-export const CUSTOM_TIERS = 'custom';
-/** The colours a creature's tiers are drawn in: the game's own, a preset, or the player's own. */
-export type TierColorChoice = typeof DEFAULT | TierPresetId | typeof CUSTOM_TIERS;
-
-/**
- * Which fights light the edge of the board. 'every' is green for a fight that cost nothing, blue
- * for one that levelled the player up and red for one that hurt; 'levelups' keeps the blue and
- * the red and leaves the green out, since clean fights are most of a board; 'off' is none. See
- * `game/flash.ts`.
- */
-export type FightRim = 'every' | 'levelups' | typeof OFF;
-const FIGHT_RIMS: readonly FightRim[] = ['every', 'levelups', OFF];
-
-/**
- * Where a game-type card on the ladder list wears its ladder's colour: down its left edge (the
- * default), down both vertical edges, all the way round, or nowhere.
- */
-export type MenuStrip = 'left' | 'sides' | 'all' | typeof OFF;
-const MENU_STRIPS: readonly MenuStrip[] = ['left', 'sides', 'all', OFF];
-
-/**
- * How large the interface's text can be set, as a multiple of the browser's
- * own size. Applied as the root font size, which every size in the stylesheet
- * is written against, so the HUD, the menus and this screen all follow it and
- * the board — a canvas, sized by its cells — does not.
- */
-export const MIN_TEXT_SIZE = 0.75;
-export const MAX_TEXT_SIZE = 1.75;
-const DEFAULT_TEXT_SIZE = 1;
-
-/**
- * How large the settings screen's example boards can be drawn, as a multiple of the size each
- * was designed at. Every example but the zoom ceiling's, which is drawn at the size it sets.
- */
-export const MIN_PREVIEW_SIZE = 0.5;
-export const MAX_PREVIEW_SIZE = 3;
-const DEFAULT_PREVIEW_SIZE = 1;
-
-/** Cell sizes the zoom ceiling can be set to, in CSS pixels. */
-export const MIN_MAX_ZOOM = 24;
-export const MAX_MAX_ZOOM = 128;
-export const DEFAULT_MAX_ZOOM = 48;
-
-/**
- * What the sound check keeps between sessions: the computer keys assigned to sounds and the notes
- * sounds are tuned to. A sound is named `pack:event` (`sfxSoundId`). Plain records, so the save
- * and its backup code stay plain JSON.
- */
-export interface SoundCheckSettings {
-  /** A computer key, as the sound check names it, to the sound it plays. */
-  readonly keys: Readonly<Record<string, string>>;
-  /** A sound to the MIDI note it is tuned to. */
-  readonly pitches: Readonly<Record<string, number>>;
-  /**
-   * The sound check's own volume, as a multiple of each sound's level in play. It scales only
-   * what the sound check plays; the game's sounds never see it.
-   */
-  readonly volume: number;
-}
-
-/** Loud enough to hear a quiet sound clearly, short of drowning the room. */
-export const MAX_SOUND_CHECK_VOLUME = 3;
-
-/**
- * Three times the level each pack was voiced at, as loud as the sound check goes. Past 1, the
- * mixer's limiter holds the peaks down, so a loud setting cannot clip or blast.
- */
-export const MAX_SFX_VOLUME = 3;
-/** The level every pack was voiced at, and what a save from before the setting reads as. */
-const DEFAULT_SFX_VOLUME = 1;
-
-export interface PresentationSettings {
-  readonly icons: IconChoice;
-  /** The colour of each creature tier, wherever a tier is drawn: the board, the HUD, the LV buttons. */
-  readonly tierColors: TierColorChoice;
-  /**
-   * The tier colours the player mixed, or null for none yet. Kept while a preset is chosen, so the
-   * Custom tile still holds them to go back to.
-   */
-  readonly customTierColors: TierPalette | null;
-  readonly palette: PaletteChoice;
-  /** The face of the board's numbers and marks. */
-  readonly font: FontChoice;
-  /**
-   * The face of the HUD, the menus and the settings screen: everything but the board. A face
-   * chosen here dresses the game's title too, which the board's font never does.
-   */
-  readonly interfaceFont: FontChoice;
-  readonly sfx: SfxChoice;
-  /**
-   * How loud the game's sounds are, as a multiple of each pack's own level. The sound check
-   * has a volume of its own and does not follow this one.
-   */
-  readonly sfxVolume: number;
-  readonly victory: VictoryChoice;
-  readonly highlight: HighlightChoice;
-  /**
-   * The colour the cursor lights a cell in when a click there would land. A click that would do
-   * nothing is lit red whatever this is, because red is what says so (decision 0050).
-   */
-  readonly highlightColor: HighlightColorChoice;
-  /**
-   * Whether a defeated creature keeps its struck-through corner.
-   *
-   * The stroke is how "dealt with" reads at a glance, so turning it off leaves
-   * the dimmed glyph doing that job alone. Offered because at small cell sizes
-   * the stroke crosses the pips and some players read it as clutter.
-   */
-  readonly strikeDefeated: boolean;
-  /** Which fights light the edge of the board. The shake and the level-up glow are not this. */
-  readonly fightRim: FightRim;
-  readonly menuStrip: MenuStrip;
-  /** Ceiling for manual zoom, in CSS pixels per cell. */
-  readonly maxZoom: number;
-  /** Size of the interface's text — HUD, menus, settings — as a multiple. */
-  readonly textSize: number;
-  /** Size of the settings screen's example boards, as a multiple. */
-  readonly previewSize: number;
-  /**
-   * Silence everything, from the always-present speaker in the corner.
-   *
-   * Deliberately NOT the same thing as setting `sfx` to OFF, even though both
-   * end in silence. The pack is a taste — which of five voices the game
-   * speaks in — and muting is a circumstance: someone walked in, the room is
-   * quiet, it is late. Folding the second into the first would throw the
-   * player's chosen pack away every time they silenced the game for a minute,
-   * and there would be nothing to restore when they turned it back on.
-   */
-  readonly muted: boolean;
-  readonly soundCheck: SoundCheckSettings;
-  /**
-   * Whether sounds retuned in the sound check play at their new pitch in the game as well. Off
-   * by default: the sound check is a place to experiment, and what is tried there should not
-   * follow the player onto a board until they ask it to.
-   */
-  readonly customPitches: boolean;
-  /**
-   * Whether the tutor is offered on a board: the "[H]int" button and the key
-   * (docs/teaching-plan.md). A presentation setting and not a gameplay dial, because it changes
-   * nothing about the rules or the records: a hinted board sets no best time whether the button
-   * is there or not, and a board without it is simply played without asking.
-   */
-  readonly tutor: boolean;
-  /**
-   * Whether every beaten creature shows the number under it, as the hovered one always does: the
-   * game screen's "Beaten" toggle and `U` (decision 0067). Kept, like `muted`, because a player
-   * who reads the board by those numbers (on a touch screen, the only way to read them) wants
-   * them on every board, not switched on again each time.
-   */
-  readonly beatenNumbers: boolean;
-}
-
-const DEFAULT_PRESENTATION: PresentationSettings = {
-  icons: DEFAULT,
-  tierColors: DEFAULT,
-  customTierColors: null,
-  palette: DEFAULT,
-  font: DEFAULT,
-  interfaceFont: DEFAULT,
-  sfx: DEFAULT,
-  sfxVolume: DEFAULT_SFX_VOLUME,
-  victory: DEFAULT,
-  highlight: DEFAULT,
-  highlightColor: DEFAULT,
-  strikeDefeated: true,
-  fightRim: 'every',
-  menuStrip: 'left',
-  maxZoom: DEFAULT_MAX_ZOOM,
-  textSize: DEFAULT_TEXT_SIZE,
-  previewSize: DEFAULT_PREVIEW_SIZE,
-  muted: false,
-  soundCheck: { keys: {}, pitches: {}, volume: 1 },
-  customPitches: false,
-  tutor: true,
-  beatenNumbers: false,
-};
+import type { VictoryLook } from './victory/play.js';
 
 interface SettingsData {
   version: 1;
   presentation: PresentationSettings;
+  /** Each ladder's own presentation settings, by id, over the ones for every ladder (0070). */
+  ladders: Record<string, LadderOwn>;
   gameplay: GameplaySettings;
 }
 
 function emptyData(): SettingsData {
-  return { version: 1, presentation: DEFAULT_PRESENTATION, gameplay: DEFAULT_GAMEPLAY };
+  return {
+    version: 1,
+    presentation: DEFAULT_PRESENTATION,
+    ladders: {},
+    gameplay: DEFAULT_GAMEPLAY,
+  };
 }
 
-// -------------------------------------------------------------- sanitising
-//
-// A saved file is untrusted input: it may predate a setting, postdate one that
-// was removed, or have been edited by hand. Everything below falls back to the
-// default rather than throwing, because a settings file is never worth losing
-// a save over.
+const SWEEP_MODES: readonly SweepMode[] = ['on', 'off', 'charge', 'budget'];
 
-const SWEEP_MODES: readonly SweepMode[] = ['on', 'off', 'charge'];
-
-function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
-  return typeof value === 'string' && (allowed as readonly string[]).includes(value)
-    ? (value as T)
-    : fallback;
-}
-
-function num(value: unknown, min: number, max: number, fallback: number): number {
+/** A saved count, whole and within its range, or the fallback. */
+function whole(value: unknown, min: number, max: number, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value)
-    ? snapRatio(value, min, max)
+    ? Math.min(max, Math.max(min, Math.round(value)))
     : fallback;
 }
 
-/** The highest note MIDI numbers, which the sound check's pitches are written in. */
-const MAX_MIDI_NOTE = 127;
+const bool = (value: unknown, fallback: boolean): boolean =>
+  typeof value === 'boolean' ? value : fallback;
 
-/**
- * Entries of the wrong type are dropped one at a time. An id this build does not know is kept, as
- * `icons` keeps an unknown pip, and the sound check passes over it.
- */
-function readSoundCheck(raw: unknown): SoundCheckSettings {
-  const s = (raw ?? {}) as Record<string, unknown>;
-  const record = (v: unknown): Record<string, unknown> =>
-    typeof v === 'object' && v !== null ? (v as Record<string, unknown>) : {};
-  const keys = Object.entries(record(s.keys)).filter(
-    (e): e is [string, string] => typeof e[1] === 'string',
-  );
-  const pitches = Object.entries(record(s.pitches)).filter(
-    (e): e is [string, number] =>
-      typeof e[1] === 'number' && Number.isInteger(e[1]) && e[1] >= 0 && e[1] <= MAX_MIDI_NOTE,
-  );
-  return {
-    keys: Object.fromEntries(keys),
-    pitches: Object.fromEntries(pitches),
-    // A save from before the volume was kept reads as the level every sound plays at.
-    volume: num(s.volume, 0, MAX_SOUND_CHECK_VOLUME, 1),
-  };
-}
-
-/** A palette of the player's own, or null unless every tier and the halo is a colour. */
-function readTierPalette(raw: unknown): TierPalette | null {
-  if (typeof raw !== 'object' || raw === null) return null;
-  const { colors, halo } = raw as Record<string, unknown>;
-  if (!Array.isArray(colors) || colors.length !== TIER_COUNT) return null;
-  const read = colors.map(readHexColor);
-  const ring = readHexColor(halo);
-  if (!ring || read.some((c) => c === null)) return null;
-  return { colors: read as string[], halo: ring };
-}
-
-function readPresentation(raw: unknown): PresentationSettings {
-  const p = (raw ?? {}) as Record<string, unknown>;
-  const str = (k: string, fallback: string): string =>
-    typeof p[k] === 'string' ? (p[k] as string) : fallback;
-  // Retired ids map to their successors — see `migrateFontChoice`. An id this
-  // build does not know is kept, like `icons`, and resolves to the baseline
-  // face until a build that knows it reads the save.
-  const font = migrateFontChoice(str('font', DEFAULT)) as FontChoice;
-  const customTierColors = readTierPalette(p.customTierColors);
-  const tierColors = str('tierColors', DEFAULT) as TierColorChoice;
-  return {
-    // Not validated against the shape list on purpose: an unknown pip falls
-    // through `drawCreature`'s own default, and rejecting it here would lose a
-    // setting written by a newer build.
-    icons: str('icons', DEFAULT) as IconChoice,
-    // A save from before this setting reads as the game's own colours, and so does one choosing
-    // its own colours without a whole palette of them. A preset this build does not know is kept,
-    // as `icons` keeps an unknown pip, and resolves to the game's own.
-    tierColors: tierColors === CUSTOM_TIERS && !customTierColors ? DEFAULT : tierColors,
-    customTierColors,
-    palette: str('palette', DEFAULT),
-    font,
-    // A save from before this setting had one font for the board and the
-    // interface both, so it reads as that font here too (decision 0033).
-    interfaceFont: migrateFontChoice(str('interfaceFont', font)) as FontChoice,
-    sfx: str('sfx', DEFAULT) as SfxChoice,
-    // A save from before this setting reads as full volume, the only level the game had.
-    sfxVolume: num(p.sfxVolume, 0, MAX_SFX_VOLUME, DEFAULT_SFX_VOLUME),
-    victory: str('victory', DEFAULT) as VictoryChoice,
-    highlight: str('highlight', DEFAULT) as HighlightChoice,
-    // A save from before this setting, or one holding anything but a colour, reads as the green
-    // the highlight was always drawn in.
-    highlightColor: readHexColor(p.highlightColor) ?? DEFAULT,
-    strikeDefeated: typeof p.strikeDefeated === 'boolean' ? p.strikeDefeated : true,
-    // A save from before this setting reads as every fight, which is how the glow first shipped.
-    fightRim: oneOf(p.fightRim, FIGHT_RIMS, 'every'),
-    menuStrip: oneOf(p.menuStrip, MENU_STRIPS, 'left'),
-    maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
-    // A save from before this setting has no field, and reads as the size the
-    // game always had.
-    textSize: num(p.textSize, MIN_TEXT_SIZE, MAX_TEXT_SIZE, DEFAULT_TEXT_SIZE),
-    // A save from before this setting reads as the size the examples were always drawn at.
-    previewSize: num(p.previewSize, MIN_PREVIEW_SIZE, MAX_PREVIEW_SIZE, DEFAULT_PREVIEW_SIZE),
-    // Defaults to unmuted, so a save written before the speaker existed opens
-    // with sound on — which is the state that save was actually played in.
-    muted: typeof p.muted === 'boolean' ? p.muted : false,
-    soundCheck: readSoundCheck(p.soundCheck),
-    customPitches: typeof p.customPitches === 'boolean' ? p.customPitches : false,
-    // A save from before the tutor existed reads as offering it, as a new player's does.
-    tutor: typeof p.tutor === 'boolean' ? p.tutor : true,
-    // A save from before the toggle reads as off: beaten creatures drawn as the game drew them.
-    beatenNumbers: typeof p.beatenNumbers === 'boolean' ? p.beatenNumbers : false,
-  };
-}
-
+/** A saved set of dials. Every dial from before a setting reads as the tuned game's. */
 function readGameplay(raw: unknown): GameplaySettings {
   const g = (raw ?? {}) as Record<string, unknown>;
+  const d = DEFAULT_GAMEPLAY;
   return {
-    hpRatio: num(g.hpRatio, 0, 3, DEFAULT_GAMEPLAY.hpRatio),
-    hpRegenRatio: num(g.hpRegenRatio, 0, 1, DEFAULT_GAMEPLAY.hpRegenRatio),
-    enemyDamageRatio: num(g.enemyDamageRatio, 0, 3, DEFAULT_GAMEPLAY.enemyDamageRatio),
-    manaRegenRatio: num(g.manaRegenRatio, 0, 3, DEFAULT_GAMEPLAY.manaRegenRatio),
-    manaRewardRatio: num(g.manaRewardRatio, 0, 3, DEFAULT_GAMEPLAY.manaRewardRatio),
-    sweep: oneOf(g.sweep, SWEEP_MODES, DEFAULT_GAMEPLAY.sweep),
-    sweepChargeClicks:
-      typeof g.sweepChargeClicks === 'number'
-        ? Math.min(50, Math.max(1, Math.round(g.sweepChargeClicks)))
-        : DEFAULT_GAMEPLAY.sweepChargeClicks,
-    timeAttack: typeof g.timeAttack === 'boolean' ? g.timeAttack : DEFAULT_GAMEPLAY.timeAttack,
+    hpRatio: num(g.hpRatio, 0, 3, d.hpRatio),
+    hpRegenRatio: num(g.hpRegenRatio, 0, 1, d.hpRegenRatio),
+    enemyDamageRatio: num(g.enemyDamageRatio, 0, 3, d.enemyDamageRatio),
+    manaRegenRatio: num(g.manaRegenRatio, 0, 3, d.manaRegenRatio),
+    manaRewardRatio: num(g.manaRewardRatio, 0, 3, d.manaRewardRatio),
+    sweep: oneOf(g.sweep, SWEEP_MODES, d.sweep),
+    sweepChargeClicks: whole(g.sweepChargeClicks, 1, 50, d.sweepChargeClicks),
+    timeAttack: bool(g.timeAttack, d.timeAttack),
+    sweepBudget: whole(g.sweepBudget, MIN_SWEEP_BUDGET, MAX_SWEEP_BUDGET, d.sweepBudget),
+    spellPriceRatio: num(g.spellPriceRatio, 0, 3, d.spellPriceRatio),
+    startManaRatio: num(g.startManaRatio, 0, 3, d.startManaRatio),
+    countersHidden: bool(g.countersHidden, d.countersHidden),
+    timeAttackRatio: num(g.timeAttackRatio, MIN_TIME_ATTACK_RATIO, 1, d.timeAttackRatio),
+    timeLimit: whole(g.timeLimit, 0, MAX_TIME_LIMIT, d.timeLimit),
   };
 }
 
@@ -440,6 +117,7 @@ export class Settings {
         return new Settings({
           version: 1,
           presentation: readPresentation(parsed.presentation),
+          ladders: readLadderOwn(parsed.ladders),
           gameplay: readGameplay(parsed.gameplay),
         });
       }
@@ -464,8 +142,44 @@ export class Settings {
     return () => this.listeners.delete(fn);
   }
 
+  /** The settings for every ladder. A ladder's own are over these in `presentationFor`. */
   get presentation(): PresentationSettings {
     return this.data.presentation;
+  }
+
+  /** The settings in force on a ladder: those for every ladder, under the ladder's own. */
+  presentationFor(typeId: string): PresentationSettings {
+    const own = this.data.ladders[typeId];
+    return own ? { ...this.data.presentation, ...own } : this.data.presentation;
+  }
+
+  /** Which settings a ladder has of its own. */
+  ownKeys(typeId: string): (keyof PresentationSettings)[] {
+    return Object.keys(this.data.ladders[typeId] ?? {}) as (keyof PresentationSettings)[];
+  }
+
+  /**
+   * Save settings for one ladder alone, or with null for every ladder. Only the settings a ladder
+   * can have of its own (`LADDER_SCOPED`) are kept as its; the rest of the patch is for all.
+   */
+  setPresentationFor(typeId: string | null, patch: Partial<PresentationSettings>): void {
+    if (typeId === null) return this.setPresentation(patch);
+    const own: Record<string, unknown> = { ...this.data.ladders[typeId] };
+    const shared: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(patch)) {
+      if ((LADDER_SCOPED as readonly string[]).includes(key)) own[key] = value;
+      else shared[key] = value;
+    }
+    this.data.ladders = { ...this.data.ladders, [typeId]: own as LadderOwn };
+    this.data.presentation = { ...this.data.presentation, ...shared };
+    this.persist();
+  }
+
+  /** Give a ladder up its own settings: the settings for every ladder are its again. */
+  clearLadder(typeId: string): void {
+    const { [typeId]: _gone, ...rest } = this.data.ladders;
+    this.data.ladders = rest;
+    this.persist();
   }
 
   get gameplay(): GameplaySettings {
@@ -482,8 +196,10 @@ export class Settings {
     this.persist();
   }
 
+  /** Every presentation setting back to the game's own, every ladder's own included. */
   resetPresentation(): void {
     this.data.presentation = DEFAULT_PRESENTATION;
+    this.data.ladders = {};
     this.persist();
   }
 
@@ -507,7 +223,7 @@ export class Settings {
    * should not also borrow its hexes, and the two were never one decision.
    */
   themeFor(typeId: string): TypeTheme {
-    const { palette, icons } = this.data.presentation;
+    const { palette, icons } = this.presentationFor(typeId);
     const base = themeFor(palette === DEFAULT ? typeId : palette);
     const pip = icons === DEFAULT ? themeFor(typeId).pip : icons;
     return { ...base, pip };
@@ -525,13 +241,13 @@ export class Settings {
 
   /** The face for this ladder's board: its numbers and marks. */
   boardFont(typeId: string): GameFont {
-    const choice = this.data.presentation.font;
+    const choice = this.presentationFor(typeId).font;
     return fontFor(choice === DEFAULT ? lookFor(typeId).font : choice);
   }
 
   /** The face for this ladder's HUD and menus, and everything else outside the board. */
   interfaceFont(typeId: string): GameFont {
-    const choice = this.data.presentation.interfaceFont;
+    const choice = this.presentationFor(typeId).interfaceFont;
     return fontFor(choice === DEFAULT ? lookFor(typeId).font : choice);
   }
 
@@ -544,21 +260,31 @@ export class Settings {
    */
   sfxPack(typeId: string): SfxPackId | null {
     if (this.data.presentation.muted) return null;
-    const choice = this.data.presentation.sfx;
+    const choice = this.presentationFor(typeId).sfx;
     if (choice === OFF) return null;
     return (choice === DEFAULT ? lookFor(typeId).sfx : choice) as SfxPackId;
   }
 
+  /** What a board-clear effect draws the creatures in: this ladder's palette, the tier colours, the glyph. */
+  victoryLook(typeId: string): VictoryLook {
+    const p = this.presentationFor(typeId);
+    return {
+      theme: this.themeFor(typeId),
+      tierColors: this.tierColors(typeId),
+      creature: { glyph: p.glyph, font: this.boardFont(typeId) },
+    };
+  }
+
   /** The board-clear effect, or null for none. */
   victoryEffect(typeId: string): VictoryId | null {
-    const choice = this.data.presentation.victory;
+    const choice = this.presentationFor(typeId).victory;
     if (choice === OFF) return null;
     return (choice === DEFAULT ? lookFor(typeId).victory : choice) as VictoryId;
   }
 
   /** How the cursor lights the board, or null for no highlight at all. */
-  highlightStyle(_typeId: string): HighlightStyle | null {
-    const choice = this.data.presentation.highlight;
+  highlightStyle(typeId: string): HighlightStyle | null {
+    const choice = this.presentationFor(typeId).highlight;
     if (choice === OFF) return null;
     // No type currently overrides this, but resolving through `lookFor`'s
     // sibling would be the place to start if one ever wants to.
@@ -570,17 +296,24 @@ export class Settings {
   }
 
   /** The colour of each creature tier, and the halo of tiers 6 to 9. */
-  tierColors(_typeId: string): TierPalette {
-    const { tierColors, customTierColors } = this.data.presentation;
+  tierColors(typeId: string): TierPalette {
+    const { tierColors, customTierColors } = this.presentationFor(typeId);
     // No ladder has colours of its own for its tiers: a tier looks the same on every board.
     if (tierColors === CUSTOM_TIERS) return customTierColors ?? DEFAULT_TIERS;
     return TIER_PRESETS.find((t) => t.id === tierColors)?.palette ?? DEFAULT_TIERS;
   }
 
-  /** The colour the cursor lights a cell in when a click there would land. */
-  highlightColor(_typeId: string): string {
-    const choice = this.data.presentation.highlightColor;
-    // No ladder overrides this either, so every type's default is the green of a mark.
+  /** The colour of a mark, and so of a pencil note and a wrapped board's seam. */
+  markColor(typeId: string): string {
+    const choice = this.presentationFor(typeId).markColor;
+    // No ladder overrides this, so every type's default is the green of the original's marks.
     return choice === DEFAULT ? MARK_COLOR : choice;
+  }
+
+  /** The colour the cursor lights a cell in when a click there would land. */
+  highlightColor(typeId: string): string {
+    const choice = this.presentationFor(typeId).highlightColor;
+    // No ladder overrides this either: every type's default is the mark's colour, whatever that is.
+    return choice === DEFAULT ? this.markColor(typeId) : choice;
   }
 }

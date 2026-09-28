@@ -62,7 +62,15 @@ function randomMove(game: Game, rng: Rng): Move {
   if (r < 0.47) return { kind: 'open', x, y };
   if (r < 0.62) return { kind: 'mark', x, y, mark: Math.floor(rng() * (game.config.tiers + 1)) };
   if (r < 0.77) return { kind: 'note', x, y, tier: Math.floor(rng() * (game.config.tiers + 1)) };
-  if (r < 0.85) return { kind: 'sweep', useMarks: rng() < 0.5 };
+  if (r < 0.84) return { kind: 'sweep', useMarks: rng() < 0.5 };
+  if (r < 0.88) {
+    const open =
+      pickOf(
+        rng,
+        cells.filter((c) => c.open),
+      ) ?? cell;
+    return { kind: 'chord', x: open.x, y: open.y, useMarks: rng() < 0.5 };
+  }
   const spell = pickOf(rng, game.spells);
   if (r < 0.95 && spell) return { kind: 'cast', id: spell, x, y };
   return { kind: 'wait' };
@@ -119,6 +127,8 @@ describe('a board replayed from its moves', () => {
       ['o', 1, 2.5],
       ['m', 1, 2],
       ['s', 2],
+      ['r', 1, 2],
+      ['r', 1, 2, 2],
       ['c', 'banish'],
       ['c', 'reveal', 1],
       ['w', 0],

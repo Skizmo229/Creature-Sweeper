@@ -10,17 +10,16 @@ import './setup.js';
 import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../src/ui/app.js';
-import { type BoardDisplay, BoardView } from '../../src/ui/board/view.js';
+import { type BoardDisplay, BoardView, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { colorDifference } from '../../src/ui/colorspace.js';
 import { themeFor } from '../../src/ui/looks.js';
 import { HIGHLIGHT_PIN, highlightSampleBoard } from '../../src/ui/preview.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
-import { DEFAULT, HIGHLIGHT_COLORS, OFF, Settings, readHexColor } from '../../src/ui/settings.js';
+import { DEFAULT, HIGHLIGHT_COLORS, OFF, readHexColor } from '../../src/ui/presentation.js';
+import { Settings } from '../../src/ui/settings.js';
 import { NEAR_REFUSAL } from '../../src/ui/settingsscreen/customcolor.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
-import { FONTS } from '../../src/ui/typefaces.js';
 import { MARK_COLOR, OUT_OF_REACH_COLOR } from '../../src/ui/theme.js';
-import { DEFAULT_TIERS } from '../../src/ui/tiercolors.js';
 
 interface Driver {
   play(typeId: string, board: number, seed?: number): void;
@@ -105,13 +104,9 @@ describe('the board', () => {
   afterEach(() => recording.stop());
 
   const display = (highlightColor: string): BoardDisplay => ({
-    maxCell: 48,
-    font: FONTS['jetbrains-mono'],
+    ...DEFAULT_DISPLAY,
     highlight: 'neighbours',
     highlightColor,
-    strikeDefeated: true,
-    beatenNumbers: false,
-    tierColors: DEFAULT_TIERS,
   });
   // The example's lit cell is interior on the square grid: itself and its eight neighbours.
   const RING = 9;

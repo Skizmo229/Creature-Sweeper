@@ -7,7 +7,8 @@
  */
 
 import { el } from './dom.js';
-import { MAX_SFX_VOLUME, type Settings } from './settings.js';
+import { MAX_SFX_VOLUME } from './presentation.js';
+import type { Settings } from './settings.js';
 
 /** The same step as the settings screen's slider, so the two always land on the same values. */
 const VOLUME_STEP = 0.05;

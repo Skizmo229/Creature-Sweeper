@@ -26,13 +26,18 @@
  * Every effect is finite and removes itself. There is no idle loop.
  */
 
-import type { TierPalette } from '../tiercolors.js';
-import type { TypeTheme, VictoryId } from '../looktypes.js';
+import type { VictoryId } from '../looktypes.js';
 import { ambientPainter } from './ambient.js';
 import { iconPainter } from './icons.js';
-import { type Stage, type VictorySource, type VictorySprite, buildAtlas } from './stage.js';
+import {
+  type Stage,
+  type VictoryLook,
+  type VictorySource,
+  type VictorySprite,
+  buildAtlas,
+} from './stage.js';
 
-export type { VictorySource, VictorySprite } from './stage.js';
+export type { VictoryLook, VictorySource, VictorySprite } from './stage.js';
 
 /** The effects that animate the board's creatures rather than covering them. */
 const ICON_EFFECTS: ReadonlySet<string> = new Set<VictoryId>([
@@ -66,8 +71,14 @@ const DURATION: Record<VictoryId, number> = {
   wipeRadial: 2000,
 };
 
+/** How long an effect runs at a speed, in milliseconds: its own length divided by the speed. */
+export function effectDuration(effect: VictoryId, speed: number): number {
+  return DURATION[effect] / speed;
+}
+
 /**
- * Run an effect over `host`, and return a function that stops it early.
+ * Run an effect over `host` at `speed`, a multiple of its own pace, and return a function that
+ * stops it early.
  *
  * The stop function matters twice over. A player who clicks "Next board" half
  * a second in gets the screen rebuilt under the animation, and an effect still
@@ -78,10 +89,11 @@ const DURATION: Record<VictoryId, number> = {
 export function playVictory(
   host: HTMLElement,
   effect: VictoryId,
-  theme: TypeTheme,
-  tierColors: TierPalette,
+  look: VictoryLook,
   source?: VictorySource,
+  speed = 1,
 ): () => void {
+  const { theme, tierColors } = look;
   const layer = makeLayer(host);
   if (!layer) {
     return () => {
@@ -97,7 +109,7 @@ export function playVictory(
   const { chosen, sprites } = borrow(effect, rect, source);
   let borrowed = sprites.length ? source! : null;
 
-  const duration = DURATION[chosen];
+  const duration = effectDuration(chosen, speed);
   const stage: Stage = {
     w,
     h,
@@ -105,7 +117,7 @@ export function playVictory(
     tierColors,
     colors,
     sprites,
-    atlas: sprites.length ? buildAtlas(theme, tierColors, sprites) : new Map(),
+    atlas: sprites.length ? buildAtlas(look, sprites) : new Map(),
     seconds: duration / 1000,
   };
   const painter = ICON_EFFECTS.has(chosen)
@@ -120,8 +132,9 @@ export function playVictory(
   const frame = (now: number) => {
     const t = (now - start) / duration;
     // Clamped, because a backgrounded tab resumes with a delta of seconds and
-    // an unclamped step would teleport everything through the floor.
-    const dt = Math.min(1 / 20, Math.max(0, (now - last) / 1000));
+    // an unclamped step would teleport everything through the floor. The speed scales the step
+    // too, so a physics effect falls faster rather than being cut short.
+    const dt = Math.min(1 / 20, Math.max(0, (now - last) / 1000)) * speed;
     last = now;
     if (stopped || t >= 1) {
       finish();

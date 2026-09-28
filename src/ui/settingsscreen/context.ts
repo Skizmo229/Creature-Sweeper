@@ -7,11 +7,13 @@
 import type { BoardDisplay } from '../board/view.js';
 import { ladders } from '../ladders.js';
 import { sampleBoard, samplePin } from '../preview.js';
-import { DEFAULT, type PresentationSettings, type Settings } from '../settings.js';
+import { DEFAULT, type PresentationSettings } from '../presentation.js';
+import type { Settings } from '../settings.js';
 import type { SfxEvent } from '../sfx.js';
 import type { LadderLook, Pip, SfxPackId, TypeTheme } from '../looktypes.js';
 import { lookFor, themeFor } from '../looks.js';
 import { CHIP_CELL, DEMO_CELL, renderPreview } from './render.js';
+import { inLadderScope } from './scope.js';
 
 export interface SettingsScreenOptions {
   settings: Settings;
@@ -43,8 +45,10 @@ export interface ScreenContext {
   readonly onAudition: (pack: SfxPackId, event: SfxEvent, ratio?: number, volume?: number) => void;
   /** The screen element: sections append to it, and the picker overlay lives inside it. */
   readonly host: HTMLElement;
-  /** The presentation settings as saved. */
+  /** The presentation settings in force on this ladder: those for every ladder under its own. */
   readonly p: PresentationSettings;
+  /** Whether a pick is for this ladder alone (decision 0070). */
+  readonly ladderScope: boolean;
   readonly ident: LadderLook;
   /** This ladder's icon as things currently stand, which a palette tile wears. */
   readonly currentPip: Pip;
@@ -58,7 +62,9 @@ export interface ScreenContext {
   display(over?: Partial<BoardDisplay>): BoardDisplay;
   /** One thumbnail of the standard example board. */
   chipBoard(theme: TypeTheme, over?: Partial<BoardDisplay>): () => HTMLElement;
-  /** Save a visual setting and redraw every example against it. */
+  /** Save a setting for the scope the screen is in, without redrawing. */
+  set(patch: PresentationPatch): void;
+  /** Save a visual setting for the scope the screen is in and redraw every example against it. */
   pick(patch: PresentationPatch): void;
   /** Rebuild the screen in place from the store, keeping the scroll position. */
   rebuild(): void;
@@ -79,15 +85,25 @@ export function makeContext(
   rebuild: () => void,
 ): ScreenContext {
   const { settings, typeId, tiers, onPreview, onAudition } = opts;
-  const p = settings.presentation;
+  const ladderScope = inLadderScope();
+  const p = settings.presentationFor(typeId);
+  const set = (patch: PresentationPatch): void =>
+    settings.setPresentationFor(ladderScope ? typeId : null, patch);
   const currentTheme = settings.themeFor(typeId);
   const chipCell = previewCell(CHIP_CELL, p.previewSize);
   const display = (over: Partial<BoardDisplay> = {}): BoardDisplay => ({
     maxCell: p.maxZoom,
+    startAtCeiling: p.startAtCeiling,
     font: settings.boardFont(typeId),
+    glyph: p.glyph,
     highlight: settings.highlightStyle(typeId),
     highlightColor: settings.highlightColor(typeId),
-    strikeDefeated: p.strikeDefeated,
+    highlightWidth: p.highlightWidth,
+    beatenLook: p.beatenLook,
+    digitScale: p.digitSize,
+    reachShading: p.reachShading,
+    markColor: settings.markColor(typeId),
+    longPressMs: p.longPress,
     // The examples show creatures: where one needs a beaten creature's number, it holds the cursor
     // there (decision 0034), so the game screen's toggle does not reach them.
     beatenNumbers: false,
@@ -102,6 +118,7 @@ export function makeContext(
     onAudition,
     host,
     p,
+    ladderScope,
     ident: lookFor(typeId),
     currentPip: p.icons === DEFAULT ? themeFor(typeId).pip : p.icons,
     currentTheme,
@@ -117,8 +134,9 @@ export function makeContext(
           cell: chipCell,
           pin: samplePin(),
         }).canvas,
+    set,
     pick(patch) {
-      settings.setPresentation(patch);
+      set(patch);
       rebuild();
     },
     rebuild,
