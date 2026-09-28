@@ -3,7 +3,7 @@
  * at once. The pack a ladder speaks in is chosen with its look, in the Presentation section.
  */
 
-import { MAX_SFX_VOLUME } from '../presentation.js';
+import { DEFAULT_SFX_VOLUME, MAX_SFX_VOLUME } from '../presentation.js';
 import type { ScreenContext } from './context.js';
 import { row, section, showSliderValue, slider, toggle } from './widgets.js';
 
@@ -20,6 +20,7 @@ export function soundSection(ctx: ScreenContext): void {
     (v) => settings.setPresentation({ sfxVolume: v }),
     // Heard on release rather than a sound per step of the drag.
     () => ctx.onPreview('levelup'),
+    DEFAULT_SFX_VOLUME,
   );
   // The speaker's own slider sets the same volume, and can while this screen is open.
   const unhook = settings.onChange(() => {

@@ -7,6 +7,8 @@
 import { el } from '../dom.js';
 import { sampleBoard, samplePin } from '../preview.js';
 import {
+  DEFAULT_PREVIEW_SIZE,
+  DEFAULT_TEXT_SIZE,
   MAX_PREVIEW_SIZE,
   MAX_TEXT_SIZE,
   type MenuStrip,
@@ -63,6 +65,7 @@ function textSizeRow(ctx: ScreenContext, host: HTMLElement): void {
       (v) => `${Math.round(v * 100)}%`,
       showTextSize,
       (v) => pickHoldingRow(ctx, textControl, { textSize: v }),
+      DEFAULT_TEXT_SIZE,
     ),
   );
   textControl.append(textDemo);
@@ -104,6 +107,7 @@ function previewSizeRow(ctx: ScreenContext, host: HTMLElement): void {
       (v) => `${Math.round(v * 100)}%`,
       drawSample,
       (v) => pickHoldingRow(ctx, control, { previewSize: v }),
+      DEFAULT_PREVIEW_SIZE,
     ),
   );
   control.append(sample);

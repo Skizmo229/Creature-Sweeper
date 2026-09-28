@@ -13,7 +13,7 @@
 
 import { el } from '../dom.js';
 import type { SfxPackId } from '../looktypes.js';
-import { MAX_SOUND_CHECK_VOLUME } from '../presentation.js';
+import { DEFAULT_PRESENTATION, MAX_SOUND_CHECK_VOLUME } from '../presentation.js';
 import type { Settings } from '../settings.js';
 import { type SfxEvent, sfxPitch, sfxRatio, sfxSoundId } from '../sfx.js';
 import { SFX_EVENT_NAMES, SFX_NAMES } from '../theme.js';
@@ -336,6 +336,7 @@ class SoundCheck {
           save(this.ctx.settings);
           if (this.tuning) this.play(this.tuning);
         },
+        DEFAULT_PRESENTATION.soundCheck.volume,
       ),
     );
     tools.append(this.assignBtn, this.clearBtn, loudness, this.status);

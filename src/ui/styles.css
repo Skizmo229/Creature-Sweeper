@@ -1258,6 +1258,16 @@ button.board-card:hover:not(:disabled) {
   min-width: 8ch;
   text-align: right;
 }
+/* A slider's way back to its default, dark while it stands there. */
+.settings-reset {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  font-size: 0.68rem;
+}
+.settings-reset:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
 
 .settings-stack {
   display: flex;

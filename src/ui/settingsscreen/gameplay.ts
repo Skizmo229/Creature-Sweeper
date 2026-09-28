@@ -67,10 +67,19 @@ export function gameplaySection(ctx: ScreenContext): void {
       play,
       label,
       shadeByDifficulty(
-        slider(0, max, 0.05, g()[key], ratio, (v) => {
-          settings.setGameplay({ [key]: Math.round(v * 100) / 100 });
-          refreshStatus();
-        }),
+        slider(
+          0,
+          max,
+          0.05,
+          g()[key],
+          ratio,
+          (v) => {
+            settings.setGameplay({ [key]: Math.round(v * 100) / 100 });
+            refreshStatus();
+          },
+          undefined,
+          DEFAULT_GAMEPLAY[key],
+        ),
         DEFAULT_GAMEPLAY[key],
         easyEnd,
         hardEnd,
@@ -204,6 +213,8 @@ function sweepControl(ctx: ScreenContext, refreshStatus: () => void): HTMLElemen
           settings.setGameplay({ sweepChargeClicks: Math.round(v) });
           refreshStatus();
         },
+        undefined,
+        DEFAULT_GAMEPLAY.sweepChargeClicks,
       ),
       DEFAULT_GAMEPLAY.sweepChargeClicks,
       MIN_CHARGE_CLICKS,

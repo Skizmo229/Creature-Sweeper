@@ -20,6 +20,7 @@ import {
 import {
   CUSTOM_TIERS,
   DEFAULT,
+  DEFAULT_MAX_ZOOM,
   MAX_MAX_ZOOM,
   MIN_MAX_ZOOM,
   OFF,
@@ -430,6 +431,8 @@ export function zoomRow(ctx: ScreenContext, host: HTMLElement): void {
         drawZoom(cell);
         settings.setPresentation({ maxZoom: cell });
       },
+      undefined,
+      DEFAULT_MAX_ZOOM,
     ),
   );
   zoomControl.append(zoomBox);

@@ -110,7 +110,7 @@ const MENU_STRIPS: readonly MenuStrip[] = ['left', 'sides', 'all', OFF];
  */
 export const MIN_TEXT_SIZE = 0.75;
 export const MAX_TEXT_SIZE = 1.75;
-const DEFAULT_TEXT_SIZE = 1;
+export const DEFAULT_TEXT_SIZE = 1;
 
 /**
  * How large the settings screen's example boards can be drawn, as a multiple of the size each
@@ -118,7 +118,7 @@ const DEFAULT_TEXT_SIZE = 1;
  */
 export const MIN_PREVIEW_SIZE = 0.5;
 export const MAX_PREVIEW_SIZE = 3;
-const DEFAULT_PREVIEW_SIZE = 1;
+export const DEFAULT_PREVIEW_SIZE = 1;
 
 /** Cell sizes the zoom ceiling can be set to, in CSS pixels. */
 export const MIN_MAX_ZOOM = 24;
@@ -151,7 +151,7 @@ export const MAX_SOUND_CHECK_VOLUME = 3;
  */
 export const MAX_SFX_VOLUME = 3;
 /** The level every pack was voiced at, and what a save from before the setting reads as. */
-const DEFAULT_SFX_VOLUME = 1;
+export const DEFAULT_SFX_VOLUME = 1;
 
 export interface PresentationSettings {
   readonly icons: IconChoice;
