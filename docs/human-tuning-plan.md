@@ -55,7 +55,7 @@ simple techniques, where people still differ by a factor of two; there, the coun
 summed technique cost tracks time better than the hardest step alone but lets twenty easy steps
 outweigh one hard one, so it floors the sum at the hardest step's band. A 2026 nonogram study
 found that a SAT solver's search effort does not correlate with reported difficulty at all, while
-guessing, ambiguity and load do. (Sources in `docs/strategies.md`, section 8.)
+guessing, ambiguity and load do. (Sources at the end of `docs/strategies.md`.)
 
 So the graded player records four things per board and seed, and the retune decides which to
 match per ladder rather than collapsing them:
@@ -281,7 +281,7 @@ instrument says which one the ladder is failing on.
 
 ## 8. Teaching, and telemetry
 
-The catalogue is written for two readers at once, and section 7 of it says which trick each
+The catalogue is written for two readers at once, and section 10 of it says which trick each
 technique id is. Three routes into the game, in the order they are worth doing:
 
 1. **A per-ladder tip on the board screen.** The `blurb` field of `design/ladder_types.toml` is

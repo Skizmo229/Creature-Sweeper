@@ -35,7 +35,7 @@ tricks are written and tested, and the retune can go on beside this.
 The plan is shaped by how much of a teacher already exists.
 
 - **The tricks are code.** Each of the catalogue's twenty tricks is one technique in
-  `src/sim/tricks.ts`, at the catalogue's grade, with a table in section 7 of the catalogue
+  `src/sim/tricks.ts`, at the catalogue's grade, with a table in section 10 of the catalogue
   mapping the two. A technique takes a `View` and adds to a `Moves`: cells safe to open, cells
   named exactly, candidate sets narrowed.
 - **The reader reads only what a person can see.** `src/sim/reader.ts` builds a `Constraint`
@@ -72,7 +72,7 @@ These are the constraints every part below meets. Each is a sentence a reviewer 
    the retune calls one, by construction and not by agreement.
 4. **The catalogue is the single source of the words.** Each trick's name, grade and one-line
    explanation live in one table that the tutor's caption, the school's script and the guide's
-   entries all read, and a test holds that table to section 7 of the catalogue.
+   entries all read, and a test holds that table to section 10 of the catalogue.
 5. **Nothing is hand-drawn.** A lesson board and a guide diagram are real `Game`s rendered by the
    real `BoardView`, for decision 0025's reason: a picture that has quietly stopped being true is
    worse than none.
@@ -200,7 +200,7 @@ Each a commit, on branch `m5-tutor`; the owner reviews and merges.
 1. Provenance in `tricks.ts` (4.2). Behaviour-neutral; golden byte-identical.
 2. The trick text table, `src/sim/tricktext.ts`: for every `TrickId` a name, the catalogue's
    sentence as a template, and the section it lives in. `test/tricktext.test.ts` holds every id
-   to section 7 of `docs/strategies.md`, both ways.
+   to section 10 of `docs/strategies.md`, both ways.
 3. `src/sim/tutor.ts` and its test (4.3), including the reader option that reads marked cells as unknown.
 4. The board overlay: `drawLesson` in `src/ui/board/overlays.ts`; `BoardDisplay` gains
    `lesson: Lesson | null`. Verified with canvas hashes as the Milestone 3 splits were.
@@ -328,7 +328,7 @@ The catalogue is written for two readers and reads well as prose; turning it int
 would cost it that. So the guide's words are a table in code (`src/ui/guide/entries.ts`, one
 entry per `TrickId` plus the entries for section 1, 8 and 9, each with a heading, a body and a
 diagram in the layout notation), and `test/guide.test.ts` holds the table to the document: every
-`TrickId` in section 7 has an entry, every entry's heading appears in the catalogue, and every
+`TrickId` in section 10 has an entry, every entry's heading appears in the catalogue, and every
 entry's diagram, built with `fromLayout`, fires its trick. The words are duplicated; their
 presence and their truth are not left to memory. If the duplication proves a nuisance the
 alternative is to generate section 2 to 6 of the catalogue from the table, which is the
