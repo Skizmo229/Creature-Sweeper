@@ -38,6 +38,8 @@ export interface Paint {
   readonly glyph: CreatureGlyph;
   /** How a beaten creature is drawn: dimmed, struck through, both or neither. */
   readonly beatenLook: BeatenLook;
+  /** How large the numbers, marks and pencil notes are drawn, as a multiple of their own size. */
+  readonly digitScale: number;
   /** The cell under the cursor (or pinned), if any. */
   readonly hovered: Cell | null;
   /** Whether every beaten creature shows its number, as the hovered one does (decision 0067). */
@@ -145,7 +147,7 @@ export function drawAnnotation(p: Paint, cell: Cell, cx: number, cy: number): vo
     const box = contentBox(p.layout, cx, cy);
     // Outlined, because green alone vanishes on a light tile like EASY's olive.
     ctx.save();
-    const { centre } = setNumberFont(ctx, p.font, box.size * 0.58);
+    const { centre } = setNumberFont(ctx, p.font, box.size * 0.58 * p.digitScale);
     ctx.textAlign = 'center';
     ctx.lineJoin = 'round';
     ctx.lineWidth = Math.max(2, box.size * 0.16);
@@ -174,7 +176,7 @@ export function drawOccupied(p: Paint, cx: number, cy: number): void {
   ctx.fill();
   ctx.save();
   ctx.fillStyle = theme.hot;
-  const { centre } = setNumberFont(ctx, p.font, box.size * 0.62);
+  const { centre } = setNumberFont(ctx, p.font, box.size * 0.62 * p.digitScale);
   ctx.textAlign = 'center';
   ctx.fillText('?', cx, cy + centre);
   ctx.restore();
@@ -197,7 +199,7 @@ function drawNotes(p: Paint, cell: Cell, cx: number, cy: number): void {
   const pad = box.size * 0.12;
   const w = (box.size - pad * 2) / cols;
   const h = (box.size - pad * 2) / rows;
-  const font = Math.round(Math.min(w, h) * 0.86);
+  const font = Math.round(Math.min(w, h) * 0.86 * p.digitScale);
   if (font < 5) return; // below this the pips are noise, not information
 
   ctx.save();
@@ -276,7 +278,7 @@ export function drawOpen(p: Paint, cell: Cell, cx: number, cy: number): void {
   // Red on a creature's own cell, ink on open ground, as in the original.
   ctx.fillStyle = cell.tier > 0 ? theme.hot : theme.ink;
   const scale = text.length > 1 ? 0.5 : 0.62;
-  const { centre } = setNumberFont(ctx, p.font, box.size * scale);
+  const { centre } = setNumberFont(ctx, p.font, box.size * scale * p.digitScale);
   ctx.textAlign = 'center';
   ctx.fillText(text, cx, cy + centre);
   ctx.restore();

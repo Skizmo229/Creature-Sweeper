@@ -164,6 +164,15 @@ export const MIN_PREVIEW_SIZE = 0.5;
 export const MAX_PREVIEW_SIZE = 3;
 export const DEFAULT_PREVIEW_SIZE = 1;
 
+/**
+ * How large the board's numbers, marks and pencil notes are drawn, as a multiple of the size each
+ * was designed at. The interface's text has its own size; this is the board's, a low-vision aid
+ * the board lacked. A creature's digit and the corner badges keep their own sizes.
+ */
+export const MIN_DIGIT_SIZE = 0.7;
+export const MAX_DIGIT_SIZE = 1.4;
+export const DEFAULT_DIGIT_SIZE = 1;
+
 /** Cell sizes the zoom ceiling can be set to, in CSS pixels. */
 export const MIN_MAX_ZOOM = 24;
 export const MAX_MAX_ZOOM = 128;
@@ -231,6 +240,8 @@ export interface PresentationSettings {
   readonly highlightColor: HighlightColorChoice;
   /** How a beaten creature is drawn (`BeatenLook`). */
   readonly beatenLook: BeatenLook;
+  /** Size of the board's numbers, marks and pencil notes, as a multiple. */
+  readonly digitSize: number;
   /** Which fights light the edge of the board. The shake and the level-up glow are not this. */
   readonly fightRim: FightRim;
   /** The stage's own shake and glow after a fight (`Motion`); the rim above is separate. */
@@ -298,6 +309,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   highlight: DEFAULT,
   highlightColor: DEFAULT,
   beatenLook: 'dimStrike',
+  digitSize: DEFAULT_DIGIT_SIZE,
   fightRim: 'every',
   motion: 'full',
   menuStrip: 'left',
@@ -407,6 +419,8 @@ export function readPresentation(raw: unknown): PresentationSettings {
     // (`strikeDefeated`); off, it reads as the dimmed glyph that was left, and on or absent as
     // the game's own look.
     beatenLook: oneOf(p.beatenLook, BEATEN_LOOKS, p.strikeDefeated === false ? 'dim' : 'dimStrike'),
+    // A save from before this setting reads as the size the board's digits were always drawn at.
+    digitSize: num(p.digitSize, MIN_DIGIT_SIZE, MAX_DIGIT_SIZE, DEFAULT_DIGIT_SIZE),
     // A save from before this setting reads as every fight, which is how the glow first shipped.
     fightRim: oneOf(p.fightRim, FIGHT_RIMS, 'every'),
     // A save from before this setting reads as both, which the stage always did.

@@ -70,6 +70,8 @@ export interface BoardDisplay {
   highlightColor: string;
   /** How a beaten creature is drawn: dimmed, struck through, both or neither. */
   beatenLook: BeatenLook;
+  /** How large the numbers, marks and pencil notes are drawn, as a multiple of their own size. */
+  digitScale: number;
   /** Whether every beaten creature shows the number under it, not only the hovered one. */
   beatenNumbers: boolean;
   /** The colour a creature of each tier is drawn in, and the halo of tiers 6 to 9. */
@@ -84,6 +86,7 @@ export const DEFAULT_DISPLAY: BoardDisplay = {
   highlight: 'neighbours',
   highlightColor: MARK_COLOR,
   beatenLook: 'dimStrike',
+  digitScale: 1,
   beatenNumbers: false,
   tierColors: DEFAULT_TIERS,
 };
@@ -450,6 +453,7 @@ export class BoardView implements InputHost {
       font: this.display.font,
       glyph: this.display.glyph,
       beatenLook: this.display.beatenLook,
+      digitScale: this.display.digitScale,
       hovered: this.hoveredCellValue,
       beatenNumbers: this.display.beatenNumbers,
       creaturesHidden: this.creaturesHidden,
