@@ -66,7 +66,7 @@ export interface SaveData {
    * choice anyone makes twice.
    */
   scaling: Record<string, number>;
-  /** Prototype escape hatch: ignore the unlock chain. */
+  /** "Unlock everything": ignore the unlock chain; clears still count (decision 0066). */
   unlockAll: boolean;
   /**
    * The rules card has been shown once, so it stops opening itself.
