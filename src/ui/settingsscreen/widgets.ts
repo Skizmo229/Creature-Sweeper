@@ -5,7 +5,7 @@
  */
 
 import { el } from '../dom.js';
-import { DEFAULT } from '../settings.js';
+import { DEFAULT } from '../presentation.js';
 import type { GameFont } from '../typefaces.js';
 
 export interface Choice {

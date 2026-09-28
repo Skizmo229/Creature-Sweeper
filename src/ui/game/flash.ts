@@ -7,7 +7,7 @@
  */
 
 import type { GameEvent } from '../../engine/types.js';
-import type { FightRim } from '../settings.js';
+import type { FightRim } from '../presentation.js';
 
 export function flashStage(stage: HTMLElement, events: GameEvent[], rim: FightRim): void {
   if (events.some((ev) => ev.type === 'battle' && ev.damage > 0)) restart(stage, 'shake');

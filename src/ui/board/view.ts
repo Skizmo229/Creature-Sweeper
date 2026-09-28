@@ -9,7 +9,7 @@
 import type { Game } from '../../engine/game.js';
 import type { Cell } from '../../engine/types.js';
 import type { Lesson } from '../../sim/tutor.js';
-import { DEFAULT_MAX_ZOOM, type HighlightStyle } from '../settings.js';
+import { DEFAULT_MAX_ZOOM, type HighlightStyle } from '../presentation.js';
 import type { TypeTheme } from '../looktypes.js';
 import { PIP_FAMILY, glyphChar, isGlyphPip } from '../pipsymbols.js';
 import { MARK_COLOR } from '../theme.js';

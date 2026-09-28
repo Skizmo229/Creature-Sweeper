@@ -153,7 +153,7 @@ and the two test lists that pin the ladder set.
 
 ## Adding a presentation setting
 
-1. `PresentationSettings`, its default and its reader in `src/ui/settings.ts` (the reader ignores
+1. `PresentationSettings`, its default and its reader in `src/ui/presentation.ts` (the reader ignores
    unknown keys, so old saves need no migration; a retired setting can simply go).
 2. A row in `src/ui/settingsscreen/` (`look.ts` for a setting that is drawn, `effects.ts` for one
    that plays itself), called from `screen.ts`, as a gallery of real boards where the setting is

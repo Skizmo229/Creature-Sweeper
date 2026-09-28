@@ -7,7 +7,8 @@
 import type { BoardDisplay } from '../board/view.js';
 import { ladders } from '../ladders.js';
 import { sampleBoard, samplePin } from '../preview.js';
-import { DEFAULT, type PresentationSettings, type Settings } from '../settings.js';
+import { DEFAULT, type PresentationSettings } from '../presentation.js';
+import type { Settings } from '../settings.js';
 import type { SfxEvent } from '../sfx.js';
 import type { LadderLook, Pip, SfxPackId, TypeTheme } from '../looktypes.js';
 import { lookFor, themeFor } from '../looks.js';

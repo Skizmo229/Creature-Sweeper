@@ -15,7 +15,8 @@ import { type Rgb, colorDifference, hexOf, rgbOf } from '../../src/ui/colorspace
 import { LOOK_IDS, themeFor } from '../../src/ui/looks.js';
 import { tierSampleBoard } from '../../src/ui/preview.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
-import { CUSTOM_TIERS, DEFAULT, Settings } from '../../src/ui/settings.js';
+import { CUSTOM_TIERS, DEFAULT } from '../../src/ui/presentation.js';
+import { Settings } from '../../src/ui/settings.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
 import {
   DEFAULT_TIERS,

@@ -9,7 +9,7 @@ import type { GameEvent } from '../../engine/types.js';
 import { el } from '../dom.js';
 import { flashRim } from '../game/flash.js';
 import { PREVIEW_SEED, clearedBoard } from '../preview.js';
-import { DEFAULT, type FightRim, MAX_SFX_VOLUME, OFF } from '../settings.js';
+import { DEFAULT, type FightRim, MAX_SFX_VOLUME, OFF } from '../presentation.js';
 import { SFX_NAMES, VICTORY_NAMES } from '../theme.js';
 import type { SfxPackId, VictoryId } from '../looktypes.js';
 import { playVictory } from '../victory/play.js';

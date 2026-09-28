@@ -17,7 +17,7 @@ import { type BoardDisplay, BoardView } from '../../src/ui/board/view.js';
 import { hexPoints, hexRadius } from '../../src/ui/hexgeom.js';
 import { themeFor } from '../../src/ui/looks.js';
 import { HIGHLIGHT_PIN, highlightSampleBoard, highlightSampleLands } from '../../src/ui/preview.js';
-import { HIGHLIGHT_COLORS, type HighlightStyle } from '../../src/ui/settings.js';
+import { HIGHLIGHT_COLORS, type HighlightStyle } from '../../src/ui/presentation.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
 import { MARK_COLOR, MARK_OUTLINE, OUT_OF_REACH_COLOR } from '../../src/ui/theme.js';
 import { DEFAULT_TIERS } from '../../src/ui/tiercolors.js';

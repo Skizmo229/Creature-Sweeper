@@ -9,7 +9,7 @@ import { placementRule } from '../../engine/placement/registry.js';
 import type { Cell } from '../../engine/types.js';
 import type { Lesson } from '../../sim/tutor.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
-import type { HighlightStyle } from '../settings.js';
+import type { HighlightStyle } from '../presentation.js';
 import {
   BOARD_OUTLINE,
   BOND_COLOR,

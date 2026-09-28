@@ -73,7 +73,9 @@ src/ui/         the game in the browser
   board/          the canvas: view.ts (state, fit, zoom, render order), geometry.ts,
                   digits.ts, paint.ts (cell painters), overlays.ts (silhouette, seams, bonds,
                   highlight), input.ts (pointer, wheel, pinch)
-  settings.ts     the presentation settings and the store
+  presentation.ts  the presentation settings: each one's options, its default and its reader
+                  (DOM-free)
+  settings.ts     the settings store, and what each presentation setting resolves to on a ladder
   telemetry.ts    the play statistics: what each board cost, their code, and their reading (DOM-free)
   telemetrystore.ts  the play statistics in storage, their own key, never in the save code
   settingsscreen/  the settings form: context, widgets, render, look, effects, gameplay, screen;
@@ -213,8 +215,9 @@ play whole runs headlessly.
 Two halves that behave completely differently. `src/engine/settings.ts` holds the **gameplay
 dials**: they change rules, so they are engine state, and they decide whether a board counts for
 a record (`isAtLeastAsHard`: harder records, easier records nothing, unlocks included).
-`src/ui/settings.ts` holds the **presentation settings** and the store; none of those touches a
-rule. `settingsscreen/` is the form, built detached and handed back to `App`.
+`src/ui/presentation.ts` holds the **presentation settings** (what each is, its options, its
+default, its reader) and `src/ui/settings.ts` the store and what each resolves to on a ladder;
+none of those touches a rule. `settingsscreen/` is the form, built detached and handed back to `App`.
 
 ## Where knowledge lives
 

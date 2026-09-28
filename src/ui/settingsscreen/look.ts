@@ -35,7 +35,7 @@ import {
   type IconChoice,
   type MenuStrip,
   type TierColorChoice,
-} from '../settings.js';
+} from '../presentation.js';
 import { MARK_COLOR, PIP_NAMES, PIP_SHAPES, pipName } from '../theme.js';
 import { DEFAULT_TIERS, TIER_PRESETS, type TierPalette, tierColor } from '../tiercolors.js';
 import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
