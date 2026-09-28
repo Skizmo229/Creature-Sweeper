@@ -178,16 +178,18 @@ in the design reference; expression is protected, and none of it has been taken.
 
 ## Licence
 
-**Code** (everything under `src/`, `test/`, `scripts/` and `design/*.py`, plus the build and
-config files) is licensed under the **GNU General Public License v3.0**. See [`LICENSE`](LICENSE).
+**Code** (everything under `src/` but the fonts below, `test/`, `scripts/` and `design/*.py`, plus
+the build and config files) is licensed under the **GNU General Public License, version 3 or (at
+your option) any later version** (`GPL-3.0-or-later`). See [`LICENSE`](LICENSE).
 
 **Design research and documentation** (`README.md`, `CLAUDE.md`, `CONTRIBUTING.md`, everything
 under `docs/`, `design/page.template.html`, the generated `design/reference.html` and the ladder
 data under `design/data/`) is licensed under **Creative Commons Attribution-ShareAlike 4.0
 International**. See [`LICENSE-DOCS`](LICENSE-DOCS).
 
-**Fonts** under `src/ui/fonts/` are not ours: twenty-six faces from Google Fonts, each under the
-**SIL Open Font License 1.1**, with every copyright notice and the licence in
+**Fonts** under `src/ui/fonts/` and `src/ui/pipfont/` are not ours: twenty-six faces from Google
+Fonts, and the four Noto faces the creature-icon symbols are cut from, each under the **SIL Open
+Font License 1.1**, with every copyright notice and the licence in
 [`public/FONT-LICENSES.txt`](public/FONT-LICENSES.txt), which ships beside them in every build.
 
 Neither licence covers the third-party material described above, none of which is in this
