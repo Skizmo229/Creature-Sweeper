@@ -308,6 +308,12 @@ export interface PresentationSettings {
   /** How long a touch holds a cell before it does what a right-click does, in ms; 0 for never. */
   readonly longPress: number;
   /**
+   * Whether Back, and Escape, pause a board with a move in it at once rather than asking whether
+   * to pause or abandon it. Pausing loses nothing (decision 0057), so the question is only ever
+   * a chance to abandon; a player who never wants that can skip it.
+   */
+  readonly backPauses: boolean;
+  /**
    * Whether the line under the board says what a click does right now. Off, the line is kept for
    * the tutor and a lesson, which speak there, and hidden otherwise: once the controls are known
    * it is the busiest line on the screen.
@@ -383,6 +389,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   clock: 'seconds',
   rightClick: 'cycleUp',
   longPress: DEFAULT_LONG_PRESS,
+  backPauses: false,
   hintLine: true,
   maxZoom: DEFAULT_MAX_ZOOM,
   textSize: DEFAULT_TEXT_SIZE,
@@ -502,6 +509,7 @@ export function readPresentation(raw: unknown): PresentationSettings {
     clock: oneOf(p.clock, CLOCK_STYLES, 'seconds'),
     rightClick: oneOf(p.rightClick, RIGHT_CLICKS, 'cycleUp'),
     longPress: Math.round(num(p.longPress, MIN_LONG_PRESS, MAX_LONG_PRESS, DEFAULT_LONG_PRESS)),
+    backPauses: typeof p.backPauses === 'boolean' ? p.backPauses : false,
     hintLine: typeof p.hintLine === 'boolean' ? p.hintLine : true,
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
     // A save from before this setting has no field, and reads as the size the

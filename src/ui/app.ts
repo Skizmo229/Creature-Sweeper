@@ -522,6 +522,7 @@ export class App {
     const run = this.run;
     const playing = run ? run.status === 'playing' : this.game?.status === 'playing';
     if (!playing || !(run || this.keeper.holding)) return this.showBoards(this.typeId);
+    if (this.settings.presentation.backPauses) return this.pause();
     this.modal.leaveGame({
       boardIndex: this.boardIndex,
       typeName: this.typeName(),

@@ -52,6 +52,13 @@ export function interfaceSection(ctx: ScreenContext): void {
   );
   row(
     host,
+    'Back pauses without asking',
+    toggle(ctx.p.backPauses, (v) => ctx.settings.setPresentation({ backPauses: v })),
+    'Leaving a board with a move in it pauses it at once, instead of asking whether to pause or ' +
+      'abandon. Pausing loses nothing. To abandon a game, turn this off.',
+  );
+  row(
+    host,
     'Hint line',
     toggle(ctx.p.hintLine, (v) => ctx.settings.setPresentation({ hintLine: v })),
     'The line under the board saying what a click does now and which keys do what. The tutor ' +
