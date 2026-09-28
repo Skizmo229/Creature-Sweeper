@@ -11,6 +11,7 @@ import type { FullRun } from '../../engine/run.js';
 import { type SpellId, spellLabel } from '../../engine/spells.js';
 import type { Cell } from '../../engine/types.js';
 import { el } from '../dom.js';
+import type { ClockStyle } from '../presentation.js';
 import { type TierPalette, tierColor, tierGilded } from '../tiercolors.js';
 import { hintText } from './hint.js';
 import type { EntryMode } from './mode.js';
@@ -173,11 +174,27 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
   }
 }
 
-/** The clock readout. "LEFT" rather than a glyph, because the font is a player setting. */
-export function syncClock(els: GameScreenElements, elapsed: number, left: number | null): void {
+/** A count of seconds as the clock setting shows it: the seconds, or minutes and seconds. */
+export function clockText(seconds: number, style: ClockStyle): string {
+  if (style !== 'minutes') return String(seconds);
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+/**
+ * The clock readout, in the style the player chose, or hidden. "LEFT" rather than a glyph,
+ * because the font is a player setting.
+ */
+export function syncClock(
+  els: GameScreenElements,
+  elapsed: number,
+  left: number | null,
+  style: ClockStyle,
+): void {
   const t = els.hud.t;
   if (!t) return;
-  t.textContent = left === null ? `TIME ${elapsed}` : `TIME ${left} LEFT`;
+  t.hidden = style === 'hidden';
+  t.textContent =
+    left === null ? `TIME ${clockText(elapsed, style)}` : `TIME ${clockText(left, style)} LEFT`;
   // Under ten seconds it reads like the HP counter does: it is the number about to end the board.
   t.classList.toggle('low', left !== null && left <= 10);
 }

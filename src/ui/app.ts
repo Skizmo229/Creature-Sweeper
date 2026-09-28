@@ -611,7 +611,8 @@ export class App {
 
   private updateClock(): void {
     const left = this.clock.remainingSeconds();
-    if (this.els) syncClock(this.els, this.clock.elapsedSeconds(), left);
+    const style = this.settings.presentation.clock;
+    if (this.els) syncClock(this.els, this.clock.elapsedSeconds(), left, style);
     // The engine owns no clock, so "the countdown ran out" is a fact only this loop can know,
     // and `forfeit` is how it hands that back to the rules.
     if (left === 0 && !this.clock.timeExpired && this.game?.status === 'playing') {

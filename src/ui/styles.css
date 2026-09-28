@@ -1263,6 +1263,14 @@ button.board-card:hover:not(:disabled) {
   min-width: 8ch;
   text-align: right;
 }
+/* The clock row's samples: a readout in the HUD's own clothes, at a size a tile can hold. */
+.hud.clock-demo {
+  font-size: 1.1rem;
+  padding: 8px 12px;
+}
+.hud.clock-demo .hud-t {
+  min-width: 0;
+}
 /* A slider's way back to its default, dark while it stands there. */
 .settings-reset {
   flex: 0 0 auto;

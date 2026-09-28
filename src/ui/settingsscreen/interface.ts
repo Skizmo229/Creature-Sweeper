@@ -5,8 +5,10 @@
  */
 
 import { el } from '../dom.js';
+import { clockText } from '../game/hud.js';
 import { sampleBoard, samplePin } from '../preview.js';
 import {
+  type ClockStyle,
   DEFAULT_PREVIEW_SIZE,
   DEFAULT_TEXT_SIZE,
   MAX_PREVIEW_SIZE,
@@ -26,6 +28,38 @@ export function interfaceSection(ctx: ScreenContext): void {
   textSizeRow(ctx, host);
   previewSizeRow(ctx, host);
   menuStripRow(ctx, host);
+  clockRow(ctx, host);
+}
+
+/** A copy of the HUD's clock readout, as a sample of a style. */
+function clockSample(text: string): () => HTMLElement {
+  return () => {
+    const copy = el('div', 'hud clock-demo');
+    copy.append(el('span', 'hud-item hud-t', text));
+    return copy;
+  };
+}
+
+/** The clock's style, each shown as the readout it gives at two minutes and five seconds in. */
+function clockRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p } = ctx;
+  const sample = 125;
+  const at = (style: ClockStyle): string => `TIME ${clockText(sample, style)}`;
+  wideRow(
+    host,
+    'Clock',
+    'How the time reads in the HUD, or hidden. The clock runs either way, so best times and Time ' +
+      'Attack are unchanged.',
+    gallery(
+      [
+        { value: 'seconds', label: 'Seconds', example: clockSample(at('seconds')) },
+        { value: 'minutes', label: 'Minutes and seconds', example: clockSample(at('minutes')) },
+        { value: 'hidden', label: 'Hidden' },
+      ],
+      p.clock,
+      (v) => ctx.pick({ clock: v as ClockStyle }),
+    ),
+  );
 }
 
 /**

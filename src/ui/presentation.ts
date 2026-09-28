@@ -105,6 +105,14 @@ export type Motion = 'full' | 'noShake' | 'none';
 const MOTIONS: readonly Motion[] = ['full', 'noShake', 'none'];
 
 /**
+ * How the HUD's clock reads: seconds, as the game has always counted; minutes and seconds; or not
+ * at all, for a player who plays better without a timer over them. The clock runs underneath
+ * whatever this says, so a best time and Time Attack are what they were.
+ */
+export type ClockStyle = 'seconds' | 'minutes' | 'hidden';
+const CLOCK_STYLES: readonly ClockStyle[] = ['seconds', 'minutes', 'hidden'];
+
+/**
  * Where a game-type card on the ladder list wears its ladder's colour: down its left edge (the
  * default), down both vertical edges, all the way round, or nowhere.
  */
@@ -205,6 +213,8 @@ export interface PresentationSettings {
   /** The stage's own shake and glow after a fight (`Motion`); the rim above is separate. */
   readonly motion: Motion;
   readonly menuStrip: MenuStrip;
+  /** How the HUD's clock reads, or whether it shows at all (`ClockStyle`). */
+  readonly clock: ClockStyle;
   /** Ceiling for manual zoom, in CSS pixels per cell. */
   readonly maxZoom: number;
   /** Size of the interface's text — HUD, menus, settings — as a multiple. */
@@ -261,6 +271,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   fightRim: 'every',
   motion: 'full',
   menuStrip: 'left',
+  clock: 'seconds',
   maxZoom: DEFAULT_MAX_ZOOM,
   textSize: DEFAULT_TEXT_SIZE,
   previewSize: DEFAULT_PREVIEW_SIZE,
@@ -365,6 +376,8 @@ export function readPresentation(raw: unknown): PresentationSettings {
     // A save from before this setting reads as both, which the stage always did.
     motion: oneOf(p.motion, MOTIONS, 'full'),
     menuStrip: oneOf(p.menuStrip, MENU_STRIPS, 'left'),
+    // A save from before this setting reads as seconds, which the clock always counted in.
+    clock: oneOf(p.clock, CLOCK_STYLES, 'seconds'),
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
     // A save from before this setting has no field, and reads as the size the
     // game always had.
