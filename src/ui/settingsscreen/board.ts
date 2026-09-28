@@ -9,9 +9,12 @@ import {
   type CreatureGlyph,
   DEFAULT,
   DEFAULT_DIGIT_SIZE,
+  DEFAULT_HIGHLIGHT_WIDTH,
   MARK_COLORS,
   MAX_DIGIT_SIZE,
+  MAX_HIGHLIGHT_WIDTH,
   MIN_DIGIT_SIZE,
+  MIN_HIGHLIGHT_WIDTH,
 } from '../presentation.js';
 import {
   AUGUR_COLOR,
@@ -23,6 +26,7 @@ import {
 } from '../theme.js';
 import type { ScreenContext } from './context.js';
 import { type TakenColor, openColorWindow } from './customcolor.js';
+import { highlightChip } from './look.js';
 import { renderPreview } from './render.js';
 import { type Choice, gallery, row, slider, toggle, wideRow } from './widgets.js';
 
@@ -126,6 +130,39 @@ export function digitSizeRow(ctx: ScreenContext, host: HTMLElement): void {
     host,
     'Digit size',
     'The numbers, marks and pencil notes on the board. The interface’s text has its own size.',
+    control,
+  );
+}
+
+/**
+ * The cursor highlight's thickness. The highlight example follows the thumb, redrawn in place,
+ * and the screen changes once, on release.
+ */
+export function highlightWidthRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p } = ctx;
+  const sample = el('div', 'highlight-width-demo');
+  const drawSample = (width: number): void => {
+    sample.replaceChildren(highlightChip(ctx, { highlightWidth: width })());
+  };
+  drawSample(p.highlightWidth);
+  const control = el('div', 'settings-stack');
+  control.append(
+    slider(
+      MIN_HIGHLIGHT_WIDTH,
+      MAX_HIGHLIGHT_WIDTH,
+      1,
+      p.highlightWidth,
+      (v) => `${Math.round(v)}px`,
+      drawSample,
+      (v) => ctx.pick({ highlightWidth: Math.round(v) }),
+      DEFAULT_HIGHLIGHT_WIDTH,
+    ),
+    sample,
+  );
+  wideRow(
+    host,
+    'Cursor highlight thickness',
+    'The line the cursor draws round a cell, for a large zoom or a big screen.',
     control,
   );
 }

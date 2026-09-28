@@ -16,6 +16,7 @@ import { clearEffectRow, fightRimRow, motionRow, soundRow, stopSettingsDemo } fr
 import {
   digitSizeRow,
   glyphRow,
+  highlightWidthRow,
   markColorRow,
   reachShadingRow,
   startAtCeilingRow,
@@ -94,6 +95,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   markColorRow(ctx, look);
   highlightRow(ctx, look);
   highlightColorRow(ctx, look);
+  highlightWidthRow(ctx, look);
   beatenLookRow(ctx, look);
   reachShadingRow(ctx, look);
   zoomRow(ctx, look);

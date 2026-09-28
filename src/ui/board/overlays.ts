@@ -348,7 +348,7 @@ export function drawReach(p: Paint): void {
  */
 const HEX_DIAGONAL_REACH = Math.cos(Math.PI / 6) / Math.cos(Math.PI / 12);
 
-/** The cursor highlight's line, in CSS pixels. */
+/** The cursor highlight's line, in CSS pixels, where nothing else is asked for. */
 const HIGHLIGHT_WIDTH = 2;
 /** The dark outline under a cross, each side of its line, in CSS pixels. */
 const CROSS_OUTLINE = 1;
@@ -359,7 +359,7 @@ const CROSS_OUTLINE = 1;
  * mark wears. The outline is there because the red alone is under 2:1 against the covered tile of
  * 22 of the 33 palettes (measured 27 Sep 2026); on it, the red is over 3.8:1 on every one.
  */
-function crossOut(p: Paint, cx: number, cy: number): void {
+function crossOut(p: Paint, cx: number, cy: number, width: number): void {
   const { ctx, layout } = p;
   const reach = layout.hex
     ? ((hexRadius(layout.cellPx) - TILE_INSET) * HEX_DIAGONAL_REACH) / Math.SQRT2
@@ -370,21 +370,31 @@ function crossOut(p: Paint, cx: number, cy: number): void {
   ctx.moveTo(cx + reach, cy - reach);
   ctx.lineTo(cx - reach, cy + reach);
   ctx.strokeStyle = MARK_OUTLINE;
-  ctx.lineWidth = HIGHLIGHT_WIDTH + 2 * CROSS_OUTLINE;
+  ctx.lineWidth = width + 2 * CROSS_OUTLINE;
   ctx.stroke();
   ctx.strokeStyle = OUT_OF_REACH_COLOR;
-  ctx.lineWidth = HIGHLIGHT_WIDTH;
+  ctx.lineWidth = width;
   ctx.stroke();
+}
+
+/**
+ * The open cells that constrain a covered one: the numbers beside it, and the beaten creatures,
+ * whose number is under them. Open ground numbered 0 sees nothing that is still hidden.
+ */
+function seenBy(p: Paint, cell: Cell): Cell[] {
+  return p.game.neighboursOf(cell).filter((n) => n.open && (n.num > 0 || n.tier > 0));
 }
 
 /**
  * Light the cell under the cursor, and depending on the style its surroundings too.
  * 'neighbours' asks the engine what is genuinely adjacent (six on hex, across a seam on a wrapped
  * board); 'block' is the literal 3x3 of grid coordinates and deliberately does not fold wrapped
- * edges in. Each cell is asked for itself whether a click there would land, so hovering the edge
- * of your reach shows the boundary rather than just which side the centre is on. One that would
- * is boxed in the player's `color`; one that would not is crossed out in red instead, so the
- * refusal reads by its shape as well as its colour (decision 0051).
+ * edges in; 'seen' lights the open numbers that constrain a covered cell, and over an open cell
+ * what it sees. Each cell is asked for itself whether a click there would land, so hovering the
+ * edge of your reach shows the boundary rather than just which side the centre is on. One that
+ * would is boxed in the player's `color`; one that would not is crossed out in red instead, so the
+ * refusal reads by its shape as well as its colour (decision 0051). `width` is the line's, in CSS
+ * pixels.
  */
 export function drawHighlight(
   p: Paint,
@@ -392,12 +402,13 @@ export function drawHighlight(
   style: HighlightStyle,
   color: string,
   lands: (cell: Cell) => boolean,
+  { width = HIGHLIGHT_WIDTH }: { width?: number } = {},
 ): void {
   const { ctx, game, layout } = p;
   const light = (cell: Cell, inset: number): void => {
     const { cx, cy } = centreOf(layout, cell.x, cell.y);
     if (!lands(cell)) {
-      crossOut(p, cx, cy);
+      crossOut(p, cx, cy, width);
       return;
     }
     ctx.strokeStyle = color;
@@ -405,13 +416,15 @@ export function drawHighlight(
     ctx.stroke();
   };
   ctx.save();
-  ctx.lineWidth = HIGHLIGHT_WIDTH;
+  ctx.lineWidth = width;
 
   if (style !== 'cell') {
     ctx.globalAlpha = 0.4;
     const around: Cell[] = [];
-    if (style === 'neighbours') {
+    if (style === 'neighbours' || (style === 'seen' && hovered.open)) {
       around.push(...game.neighboursOf(hovered));
+    } else if (style === 'seen') {
+      around.push(...seenBy(p, hovered));
     } else {
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {

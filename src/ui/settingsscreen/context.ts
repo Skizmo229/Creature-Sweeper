@@ -90,6 +90,7 @@ export function makeContext(
     glyph: p.glyph,
     highlight: settings.highlightStyle(typeId),
     highlightColor: settings.highlightColor(typeId),
+    highlightWidth: p.highlightWidth,
     beatenLook: p.beatenLook,
     digitScale: p.digitSize,
     reachShading: p.reachShading,

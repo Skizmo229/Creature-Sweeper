@@ -282,7 +282,7 @@ export function interfaceFontRow(ctx: ScreenContext, host: HTMLElement): void {
  * for `over`, on the grid of the ladder the player came from: hex on HIVE, square boxes elsewhere.
  * The covered cells right of the lit one are out of reach, so the example shows a refusal too.
  */
-function highlightChip(ctx: ScreenContext, over: Partial<BoardDisplay>): () => HTMLElement {
+export function highlightChip(ctx: ScreenContext, over: Partial<BoardDisplay>): () => HTMLElement {
   const hex = ladders.find((t) => t.id === ctx.typeId)?.topology === 'hex';
   return () =>
     renderPreview(
@@ -305,8 +305,9 @@ export function highlightRow(ctx: ScreenContext, host: HTMLElement): void {
     (hex
       ? 'What the cursor lights up on this ladder’s hexagons: the default lights the six real ' +
         'neighbours, the flat block always the same eight.'
-      : 'What the cursor lights up. On squares both light the same eight; they differ on hexagons ' +
-        'and across a wrapped edge, which only the default follows.') + refusal,
+      : 'What the cursor lights up. On squares the first and the block light the same eight; ' +
+        'they differ on hexagons and across a wrapped edge, which only the default follows. The ' +
+        'last lights the numbers that see a covered cell.') + refusal,
     gallery(
       [
         {

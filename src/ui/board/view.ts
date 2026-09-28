@@ -71,6 +71,8 @@ export interface BoardDisplay {
   highlight: HighlightStyle | null;
   /** The colour it lights a cell in when a click there would land; where one would not, red. */
   highlightColor: string;
+  /** How thick the highlight's line is, in CSS pixels. */
+  highlightWidth: number;
   /** How a beaten creature is drawn: dimmed, struck through, both or neither. */
   beatenLook: BeatenLook;
   /** How large the numbers, marks and pencil notes are drawn, as a multiple of their own size. */
@@ -95,6 +97,7 @@ export const DEFAULT_DISPLAY: BoardDisplay = {
   glyph: 'pips',
   highlight: 'neighbours',
   highlightColor: MARK_COLOR,
+  highlightWidth: 2,
   beatenLook: 'dimStrike',
   digitScale: 1,
   reachShading: false,
@@ -517,7 +520,9 @@ export class BoardView implements InputHost {
     if (hovered && game.status === 'playing' && this.display.highlight) {
       const lands = (cell: Cell): boolean =>
         this.cb.lands ? this.cb.lands(cell) : game.inReach(cell);
-      drawHighlight(p, hovered, this.display.highlight, this.display.highlightColor, lands);
+      drawHighlight(p, hovered, this.display.highlight, this.display.highlightColor, lands, {
+        width: this.display.highlightWidth,
+      });
     }
   }
 

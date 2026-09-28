@@ -49,14 +49,25 @@ export type VictoryChoice = typeof DEFAULT | typeof OFF | VictoryId;
  * 'block' is the literal 3x3 square regardless of topology, for a player who
  * wants a steady shape rather than a truthful one.
  */
-export type HighlightStyle = 'neighbours' | 'cell' | 'block';
+export type HighlightStyle = 'neighbours' | 'cell' | 'block' | 'seen';
 export type HighlightChoice = typeof DEFAULT | typeof OFF | HighlightStyle;
 
+/**
+ * 'seen' lights what constrains a covered cell: the open numbers and beaten creatures beside it,
+ * which is the setup of every subtraction; over an open cell it lights what that cell sees, as
+ * 'neighbours' does.
+ */
 export const HIGHLIGHT_NAMES: Record<HighlightStyle, string> = {
   neighbours: 'True neighbours — follows hex and wrapped edges',
   cell: 'Just the cell under the cursor',
   block: 'Flat 3×3 block, whatever the board shape',
+  seen: 'The numbers that see a covered cell, and what an open one sees',
 };
+
+/** How thick the cursor highlight's line is, in CSS pixels; thicker for a large zoom or screen. */
+export const MIN_HIGHLIGHT_WIDTH = 1;
+export const MAX_HIGHLIGHT_WIDTH = 4;
+export const DEFAULT_HIGHLIGHT_WIDTH = 2;
 
 /** A colour as `#rrggbb` in lower case, or the game type's own, the mark green. */
 export type HighlightColorChoice = typeof DEFAULT | string;
@@ -280,6 +291,8 @@ export interface PresentationSettings {
    * nothing is lit red whatever this is, because red is what says so (decision 0050).
    */
   readonly highlightColor: HighlightColorChoice;
+  /** How thick the cursor highlight's line is, in CSS pixels. */
+  readonly highlightWidth: number;
   /**
    * The colour of the player's marks and, dimmed, their pencil notes, and of a wrapped board's
    * seam; the cursor highlight follows it unless it has a colour of its own. The game's own is
@@ -391,6 +404,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   victory: DEFAULT,
   highlight: DEFAULT,
   highlightColor: DEFAULT,
+  highlightWidth: DEFAULT_HIGHLIGHT_WIDTH,
   markColor: DEFAULT,
   beatenLook: 'dimStrike',
   digitSize: DEFAULT_DIGIT_SIZE,
@@ -507,6 +521,9 @@ export function readPresentation(raw: unknown): PresentationSettings {
     // the highlight was always drawn in.
     highlightColor: readHexColor(p.highlightColor) ?? DEFAULT,
     markColor: readHexColor(p.markColor) ?? DEFAULT,
+    highlightWidth: Math.round(
+      num(p.highlightWidth, MIN_HIGHLIGHT_WIDTH, MAX_HIGHLIGHT_WIDTH, DEFAULT_HIGHLIGHT_WIDTH),
+    ),
     // A save from before the look was a choice held only whether the stroke was on
     // (`strikeDefeated`); off, it reads as the dimmed glyph that was left, and on or absent as
     // the game's own look.
