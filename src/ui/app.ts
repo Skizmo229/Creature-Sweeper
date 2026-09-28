@@ -572,7 +572,7 @@ export class App {
     const game = this.game!;
     this.teaching.tutor.dismiss();
 
-    if (this.els) flashStage(this.els.stage, events, this.settings.presentation.fightRim);
+    if (this.els) flashStage(this.els.stage, events, this.settings.presentation);
     if (this.sfx.enabled) {
       const sound = soundFor(events);
       if (sound) this.sfx.play(sound);

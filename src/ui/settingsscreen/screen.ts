@@ -12,7 +12,7 @@ import { el } from '../dom.js';
 import { themeFor } from '../looks.js';
 import { sampleBoard } from '../preview.js';
 import { type SettingsScreenOptions, makeContext, previewCell, typeName } from './context.js';
-import { clearEffectRow, fightRimRow, soundRow, stopSettingsDemo } from './effects.js';
+import { clearEffectRow, fightRimRow, motionRow, soundRow, stopSettingsDemo } from './effects.js';
 import { gameplaySection } from './gameplay.js';
 import { interfaceSection } from './interface.js';
 import {
@@ -88,6 +88,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   zoomRow(ctx, look);
   soundRow(ctx, look);
   fightRimRow(ctx, look);
+  motionRow(ctx, look);
   clearEffectRow(ctx, look);
 
   interfaceSection(ctx);

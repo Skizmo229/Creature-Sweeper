@@ -2,17 +2,23 @@
  * What the stage shows of an action, beside its sound: a shake when a fight cost HP; the rim lit
  * red for that, blue for a fight that levelled the player up, or green for one that cost nothing;
  * and a glow on a level-up. The look is in styles.css; this decides which from the action's
- * events, and restarts the animations. The rim follows the player's setting; the shake and the
- * glow do not.
+ * events, and restarts the animations. The rim follows one setting (`fightRim`) and the shake and
+ * the glow another (`motion`).
  */
 
 import type { GameEvent } from '../../engine/types.js';
-import type { FightRim } from '../presentation.js';
+import type { PresentationSettings } from '../presentation.js';
 
-export function flashStage(stage: HTMLElement, events: GameEvent[], rim: FightRim): void {
-  if (events.some((ev) => ev.type === 'battle' && ev.damage > 0)) restart(stage, 'shake');
-  flashRim(stage, events, rim);
-  if (events.some((ev) => ev.type === 'levelUp')) restart(stage, 'levelup');
+/** The two settings the stage's flashes read. */
+export type FlashSettings = Pick<PresentationSettings, 'fightRim' | 'motion'>;
+
+/** Play what an action's events call for on the stage, or on the settings screen's example. */
+export function flashStage(stage: HTMLElement, events: GameEvent[], p: FlashSettings): void {
+  if (p.motion === 'full' && events.some((ev) => ev.type === 'battle' && ev.damage > 0)) {
+    restart(stage, 'shake');
+  }
+  flashRim(stage, events, p.fightRim);
+  if (p.motion !== 'none' && events.some((ev) => ev.type === 'levelUp')) restart(stage, 'levelup');
 }
 
 /**
@@ -20,7 +26,11 @@ export function flashStage(stage: HTMLElement, events: GameEvent[], rim: FightRi
  * Only one rim class is ever on the element: with two, the later CSS rule would win and the
  * other colour could never play.
  */
-export function flashRim(host: HTMLElement, events: GameEvent[], rim: FightRim): void {
+export function flashRim(
+  host: HTMLElement,
+  events: GameEvent[],
+  rim: FlashSettings['fightRim'],
+): void {
   const outcome = rimFor(events, rim);
   if (!outcome) return;
   host.classList.remove('fight-clean', 'fight-levelup', 'fight-hurt');
@@ -32,7 +42,10 @@ export function flashRim(host: HTMLElement, events: GameEvent[], rim: FightRim):
  * them cost HP, else blue if the action levelled the player up, else green, which 'levelups'
  * leaves out.
  */
-function rimFor(events: GameEvent[], rim: FightRim): 'clean' | 'levelup' | 'hurt' | null {
+function rimFor(
+  events: GameEvent[],
+  rim: FlashSettings['fightRim'],
+): 'clean' | 'levelup' | 'hurt' | null {
   const battles = events.filter((ev) => ev.type === 'battle');
   if (rim === 'off' || battles.length === 0) return null;
   if (battles.some((ev) => ev.damage > 0)) return 'hurt';

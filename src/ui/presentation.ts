@@ -96,6 +96,15 @@ export type FightRim = 'every' | 'levelups' | typeof OFF;
 const FIGHT_RIMS: readonly FightRim[] = ['every', 'levelups', OFF];
 
 /**
+ * What the stage does of its own accord after a fight: the shake when a fight cost HP and the
+ * glow inside the stage on a level-up, both of them, the glow alone, or neither. The rim is the
+ * fight glow's setting and not this one. Before this existed only the operating system's
+ * reduced-motion preference could switch them off, and it still does.
+ */
+export type Motion = 'full' | 'noShake' | 'none';
+const MOTIONS: readonly Motion[] = ['full', 'noShake', 'none'];
+
+/**
  * Where a game-type card on the ladder list wears its ladder's colour: down its left edge (the
  * default), down both vertical edges, all the way round, or nowhere.
  */
@@ -193,6 +202,8 @@ export interface PresentationSettings {
   readonly strikeDefeated: boolean;
   /** Which fights light the edge of the board. The shake and the level-up glow are not this. */
   readonly fightRim: FightRim;
+  /** The stage's own shake and glow after a fight (`Motion`); the rim above is separate. */
+  readonly motion: Motion;
   readonly menuStrip: MenuStrip;
   /** Ceiling for manual zoom, in CSS pixels per cell. */
   readonly maxZoom: number;
@@ -248,6 +259,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   highlightColor: DEFAULT,
   strikeDefeated: true,
   fightRim: 'every',
+  motion: 'full',
   menuStrip: 'left',
   maxZoom: DEFAULT_MAX_ZOOM,
   textSize: DEFAULT_TEXT_SIZE,
@@ -350,6 +362,8 @@ export function readPresentation(raw: unknown): PresentationSettings {
     strikeDefeated: typeof p.strikeDefeated === 'boolean' ? p.strikeDefeated : true,
     // A save from before this setting reads as every fight, which is how the glow first shipped.
     fightRim: oneOf(p.fightRim, FIGHT_RIMS, 'every'),
+    // A save from before this setting reads as both, which the stage always did.
+    motion: oneOf(p.motion, MOTIONS, 'full'),
     menuStrip: oneOf(p.menuStrip, MENU_STRIPS, 'left'),
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
     // A save from before this setting has no field, and reads as the size the

@@ -429,7 +429,8 @@ button.board-card:hover:not(:disabled) {
  * animation had played would hold the stage against the other for the rest
  * of the board.
  */
-.stage {
+.stage,
+.rim-demo {
   animation: var(--shake, none), var(--levelup, none);
 }
 
@@ -451,7 +452,8 @@ button.board-card:hover:not(:disabled) {
     transform: translate(3px, 4px);
   }
 }
-.stage.shake {
+.stage.shake,
+.rim-demo.shake {
   --shake: shake 260ms ease-in-out;
 }
 
@@ -466,7 +468,8 @@ button.board-card:hover:not(:disabled) {
     box-shadow: inset 0 0 0 0 rgba(255, 245, 200, 0);
   }
 }
-.stage.levelup {
+.stage.levelup,
+.rim-demo.levelup {
   --levelup: levelup 650ms ease-out;
 }
 
@@ -522,7 +525,9 @@ button.board-card:hover:not(:disabled) {
 
 @media (prefers-reduced-motion: reduce) {
   .stage.shake,
-  .stage.levelup {
+  .stage.levelup,
+  .rim-demo.shake,
+  .rim-demo.levelup {
     animation: none;
   }
 }

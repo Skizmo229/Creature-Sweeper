@@ -7,9 +7,9 @@
 import { randomSeed } from '../../engine/rng.js';
 import type { GameEvent } from '../../engine/types.js';
 import { el } from '../dom.js';
-import { flashRim } from '../game/flash.js';
+import { flashStage } from '../game/flash.js';
 import { PREVIEW_SEED, clearedBoard } from '../preview.js';
-import { DEFAULT, type FightRim, OFF } from '../presentation.js';
+import { DEFAULT, type FightRim, type Motion, OFF } from '../presentation.js';
 import { SFX_NAMES, VICTORY_NAMES } from '../theme.js';
 import type { SfxPackId, VictoryId } from '../looktypes.js';
 import { playVictory } from '../victory/play.js';
@@ -84,8 +84,9 @@ const fought = (damage: number): GameEvent => ({
 
 /**
  * The example board sits in a stage of its own, and the buttons act out a clean fight, a level-up
- * and a hit through `flashRim`, the game's own code, under whichever option is chosen, so the
- * difference between the options is something to try rather than to read about.
+ * and a hit through `flashStage`, the game's own code, under whichever options are chosen here
+ * and in the Motion row below, so the difference between the options is something to try rather
+ * than to read about.
  */
 export function fightRimRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, settings, currentTheme } = ctx;
@@ -95,7 +96,7 @@ export function fightRimRow(ctx: ScreenContext, host: HTMLElement): void {
   const acts = el('div', 'rim-demo-acts');
   const act = (label: string, events: GameEvent[]): void => {
     const btn = el('button', 'ghost small', label);
-    btn.addEventListener('click', () => flashRim(demo, events, settings.presentation.fightRim));
+    btn.addEventListener('click', () => flashStage(demo, events, settings.presentation));
     acts.append(btn);
   };
   act('Clean fight', [fought(0)]);
@@ -123,6 +124,27 @@ export function fightRimRow(ctx: ScreenContext, host: HTMLElement): void {
     'The board’s edge lights up after a fight: green for free, blue for a level-up, red for HP ' +
       'lost, red over blue for both. The buttons play each kind.',
     stack,
+  );
+}
+
+/** The stage's own shake and glow, played by the glow row's buttons above under the option chosen. */
+export function motionRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p, settings } = ctx;
+  wideRow(
+    host,
+    'Motion after a fight',
+    'The board shakes when a fight costs HP and glows inside on a level-up. The buttons above play ' +
+      'them. A system set to reduce motion switches both off whatever this says.',
+    gallery(
+      [
+        { value: 'full', label: 'Shake and glow' },
+        { value: 'noShake', label: 'Glow only, no shake' },
+        { value: 'none', label: 'Neither' },
+      ],
+      p.motion,
+      (v) => settings.setPresentation({ motion: v as Motion }),
+      true,
+    ),
   );
 }
 
