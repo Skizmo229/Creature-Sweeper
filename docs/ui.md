@@ -1,7 +1,8 @@
 # Presentation
 
 The rules the UI follows and why. Nothing here touches a game rule; that is the point of the split
-between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the gameplay dials).
+between `src/ui/presentation.ts` and `src/ui/settings.ts` (the presentation settings and their
+store) and `src/engine/settings.ts` (the gameplay dials).
 
 ## Screens and input
 
@@ -35,6 +36,18 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   the hovered cell.
 - Two fingers pinch-zoom, and no lift in a touch that ever had two fingers down opens a cell. Only
   `pointerType === 'touch'` is tracked. The arithmetic is in `pinch.ts`.
+- A finger held still on a covered cell for the long-press setting's time (`longPress`, half a
+  second by default, 0 for never) does what a right-click does, and its lift opens nothing; a
+  finger that wanders, lifts early or is joined by a second does not (decision 0077). What a
+  right-click does is itself a setting (`rightClick`): cycle the mark up, down, through the tiers
+  still on the counters, or clear it; the arithmetic is `nextMark` in `game/actions.ts`.
+- A click on an open cell chords when the player asks (`chord`, off by default): the cell's ring
+  swept at a sweep's price, through `Game.sweepAt`, a move of its own (decision 0071). Off, the
+  click is refused by the engine and sounds as one, as it always was.
+- Back, and Escape, pause a board with a move in it without asking while `backPauses` is on;
+  pausing loses nothing (decision 0057), so the question is only ever a chance to abandon.
+- The hint line under the board can be switched off (`hintLine`); the tutor and a lesson speak
+  there whatever it says, and the line hides again when they stop.
 - The board refits whenever its stage changes size (`ResizeObserver`), keeping a zoom the player
   chose; `F` and a window resize reset it. The zoom ceiling caps magnification only.
 - The clock starts when the board is dealt. Time Attack counts down from the player's own best and
@@ -65,17 +78,37 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - Absent cells and revealed empty floor must look different.
 - A beaten creature shows its number while hovered, and every one does while the game screen's
   Beaten toggle is on (`U`; decision 0067), which is how a touch screen sees them. Neither happens
-  on PAIRS or DOMINOES, by request, nor on a search board, where nothing is beaten. Its glyph is
-  dimmed rather than washed; the strike-through is optional.
+  on PAIRS or DOMINOES, by request, nor on a search board, where nothing is beaten. How it is
+  drawn is a setting (`beatenLook`): dimmed and struck through, the game's own; struck; dimmed,
+  which reads better at small cells, where the stroke crosses the pips; or plain. A creature can
+  be drawn as its tier's digit instead of its pips, or as both (`glyph`, decision 0074); the clear
+  effects draw with the same look.
 - Sudoku boards get a translucent wash on alternate boxes and a box rule about twice a cell edge,
-  drawn in one pass; givens are gold (`GIVEN_COLOR`), player marks green. Pencil notes wear a dark
-  outline because the dimmed green alone measured 1.22:1 on EASY.
+  drawn in one pass; givens are gold (`GIVEN_COLOR`), player marks the mark colour: the green of
+  the original unless the player chose another, from presets measured clear of every annotation
+  colour or their own (`markColor`, decision 0076). Pencil notes are that colour dimmed, and wear
+  a dark outline because the dimmed green alone measured 1.22:1 on EASY.
 - A palette's `hot` (the number on a beaten creature) must be told apart from its `ink`, not only
   from the floor; the shipped minimum separation is 93 RGB units. Gold is unavailable for `hot`
   wherever givens are drawn, and BLIND's near-white `ink` leaves only saturation to separate on.
 - Palette and icon are separate settings; the menus keep the ladder's own accent whatever the
   board wears.
-- The HUD says words (`Level`, `Next Level`, `TIME 12 LEFT`), no zero padding. The level number
+- The board's numbers, marks and pencil notes are sized to one measured height times the digit
+  size setting (`digitSize`, `Paint.digitScale`); a creature's digit and the corner badges keep
+  their own sizes.
+- On DUNGEON and PETRI DISH the cells the crawl rule keeps out of reach can be shaded
+  (`reachShading`, `drawReach`), off by default: the rule made visible where the cursor shows it
+  one cell at a time. It reads nothing but the geometry the rule reads, and a sealed-in board,
+  entirely in reach, draws no shade.
+- The cursor highlight has a fourth shape, 'seen': over a covered cell the open numbers and beaten
+  creatures beside it, the setup of every subtraction; over an open cell what it sees. Its line's
+  thickness is a setting (`highlightWidth`), and the cross over a refused cell is drawn with it.
+- A board opens fitted to its stage, or at the zoom ceiling when the player asks
+  (`startAtCeiling`), panning when it does not fit; F and a resize fit it as ever.
+- The HUD says words (`Level`, `Next Level`, `TIME 12 LEFT`), no zero padding. The clock reads
+  in seconds, in minutes and seconds, or not at all (`clock`), running underneath whatever it
+  shows. The LV buttons hide their counts under the hidden-counters dial (decision 0073), and
+  Sweep's button says how many of a budget are left. The level number
   and the LV buttons wear the tier's creature colour (`tierColor`), with the halo, gold unless the
   player's own colours say otherwise, as a stroke or border for tiers 6 to 9. Readouts are 1.9rem (1.7 on a phone), by request, so the HUD takes two rows on
   a laptop.
@@ -212,6 +245,20 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   white as it gets easier (pure white at the easiest end), toward black as it gets harder (pure
   black at the hardest). The readout beside it keeps the accent, since black text would vanish on
   the dark panel.
+- The screen is four sections: Presentation (what a board looks and sounds like), Interface (the
+  page around it), Sound (the volume, which sounds play, the custom pitches) and Gameplay (the
+  dials, the chord, the tutor). Under the title a switch says whom the choices are for: every
+  ladder, or the ladder the screen was opened from alone (decision 0070). In a ladder's scope only
+  Presentation shows, a line names what the ladder has of its own, and a button gives it up;
+  every row that saves goes through `ctx.set` or `ctx.pick`, which know the scope.
+- Every slider carries a Reset to its default, lit only while it stands elsewhere, which moves
+  it through the slider's own events so everything listening hears it.
+- Presets are one-click bundles: Tuned, Relaxed and Brutal for the dials, each from the tuned
+  game, and Low vision for the look. Fullscreen is a button, since a browser grants it from a
+  click only, disabled where the browser does not offer it.
+- The tutor's rows sit with the dials: whether it is offered, how much a hint says (the whole
+  lesson, or only where to look: the numbers ringed and nothing concluded), and the dearest grade
+  it tries, which says when nothing under it proves a move rather than calling the board a guess.
 
 ## Fonts
 
@@ -262,6 +309,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - Sound is synthesised. The `AudioContext` is built lazily on the first sound and resumed on every
   call; every entry point swallows its own failure; one sound per action, the loudest event wins.
   Muting is not the same as the OFF pack, and the speaker repaints itself on every settings change.
+- Sounds can be silenced one by one (`silenced`, a list of events): the Sound section offers every
+  sound, no sound per cell, or results only, and the sound check a box per sound. The mixer passes
+  over a silenced event in play and auditions it still, and an action whose loudest sound is
+  silenced makes its next loudest (`game/sound.ts`), so silencing the kill leaves the click.
 - The speaker carries the Sound effects volume (the same setting, not a second one), hidden, by
   request, until the speaker is hovered or reached by Tab, and held open while its thumb is held.
   It drops beneath the speaker, because beside it the pointer would cross it on the way to the
@@ -299,14 +350,20 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   Escape still leaves. A first clear is one the save had never recorded. A replay, a loss and a
   clear with the effect off (nothing to watch) show the card at once. A Full Run never holds one:
   its boards were all cleared before it opened, and between boards its clock is still running.
+  What holds the card (the effect's length, a click anywhere, or nothing), whether the effect plays
+  on every clear or a board's first only, and its speed, which scales a physics effect's step as
+  well as its length, are settings (decision 0075).
 - A fight that costs HP shakes the stage, and a level-up glows inside it. They are the stage's own
   animations, one slot each in its `animation` list, filled by the `shake` and `levelup` classes.
   Two rules setting `animation` would let one displace the other, and a class left on after its
-  animation played would block the other for the rest of the board.
+  animation played would block the other for the rest of the board. Both follow the motion
+  setting (`motion`): both, the glow alone, or neither, under the system's reduced-motion
+  preference as ever; the settings screen's glow example plays them too.
 - A fight lights the stage's rim, fading inward: green when it cost nothing, blue when it levelled
   the player up, red when it cost HP. One rim per action, since a sweep can fight several: red if
   any fight in it hurt, else blue if it levelled up, else green. The player can keep it for every
-  fight, for level-ups and damage only (blue and red, no green), or turn it off (`fightRim`); the
+  fight, for level-ups and damage only (blue and red, no green), for damage only, or turn it off
+  (`fightRim`); the
   shake and the level-up glow ignore it. The blue is deeper than the cyan of a spell's targeting
   outline, which sits in the same place. It is `.stage::after`, over the canvas so it shows
   however much of the stage the board covers, and deaf to the pointer. Only one of the three rim
@@ -319,7 +376,8 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   save** exports a `CS1:` base64 code (quotes survive chat apps, JSON does not). Import refuses a
   code that would load as a blank save. Changing `SaveData` means writing a migration; codes are in
   the wild. The settings reader ignores unknown keys, which is what lets a retired setting go
-  without one.
+  without one. Each ladder's own presentation settings travel under `ladders`, kept only where
+  the save held a value (decision 0070).
 - The play statistics (decision 0060) are a third store, `creature-sweeper.telemetry.v1`, never
   inside the save code: per board, attempts and how they ended, opens and guesses, sweeps, casts,
   hints, HP lost, seconds and what dealt each death, tuned and modified dials apart. The backup

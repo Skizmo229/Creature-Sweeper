@@ -83,7 +83,9 @@ src/ui/         the game in the browser
   telemetrystore.ts  the play statistics in storage, their own key, never in the save code
   settingsscreen/  the settings form: context, widgets, render, screen, and its sections: look.ts
                   and effects.ts (the Presentation rows: what is drawn, and what plays itself),
-                  interface.ts (the page around the board), sound.ts, gameplay.ts (the dials);
+                  board.ts (more of the Presentation rows), interface.ts (the page around the
+                  board), sound.ts, gameplay.ts (the dials, the chord, the tutor), presets.ts
+                  (the bundles and fullscreen), scope.ts (for every ladder or this one alone);
                   symbols.ts is the custom creature icon's window of symbols, colormixer.ts the
                   sliders that mix a colour from red, green and blue, customcolor.ts the custom
                   highlight colour's window of them, customtiers.ts the custom creature colours'
@@ -222,7 +224,9 @@ dials**: they change rules, so they are engine state, and they decide whether a 
 a record (`isAtLeastAsHard`: harder records, easier records nothing, unlocks included).
 `src/ui/presentation.ts` holds the **presentation settings** (what each is, its options, its
 default, its reader) and `src/ui/settings.ts` the store and what each resolves to on a ladder;
-none of those touches a rule. `settingsscreen/` is the form, built detached and handed back to `App`.
+none of those touches a rule. A ladder can have the look and sound of its board of its own:
+`Settings.presentationFor(typeId)` resolves a ladder, and every reader of such a setting goes
+through it (decision 0070). `settingsscreen/` is the form, built detached and handed back to `App`.
 
 ## Where knowledge lives
 
