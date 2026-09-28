@@ -180,7 +180,8 @@ in the design reference; expression is protected, and none of it has been taken.
 
 ## Licence
 
-Copyright © 2026 Skizmo229 and contributors.
+Copyright © 2026 Skizmo229 and contributors. In the game, the About card on the list of game types
+says the same and links here.
 
 **Code** (everything under `src/` but the fonts below, `test/`, `scripts/` and `design/*.py`, plus
 the build and config files) is licensed under the **GNU General Public License, version 3 or (at

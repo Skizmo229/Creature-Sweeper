@@ -2,7 +2,7 @@
  * The ladder list: every game type, locked or not, with what it takes to unlock it and how far
  * the player has got, in four columns by category (decision 0036). Each name wears the face its ladder's screens do, its own unless the player
  * chose one for the interface, so the list previews the ladders (decision 0021). The tools under
- * it reach the how-to, settings, the save backup and the reset.
+ * it reach the how-to, settings, the save backup, About and the reset.
  */
 
 import { LADDER_CATEGORIES, type LadderCategory } from '../../engine/config.js';
@@ -28,6 +28,8 @@ export interface LadderListActions {
   school(): void;
   openSettings(): void;
   backup(): void;
+  /** Who made the game, its licence and its source (decision 0069). */
+  about(): void;
   /** Asks first; the list is rebuilt on confirmation. */
   resetProgress(): void;
   setUnlockAll(on: boolean): void;
@@ -167,6 +169,10 @@ function buildTools(a: LadderListActions): HTMLElement {
   const backup = el('button', 'ghost', 'Back up / restore save');
   backup.addEventListener('click', a.backup);
   tools.append(backup);
+
+  const about = el('button', 'ghost', 'About');
+  about.addEventListener('click', a.about);
+  tools.append(about);
 
   const reset = el('button', 'ghost', 'Reset progress');
   reset.addEventListener('click', a.resetProgress);

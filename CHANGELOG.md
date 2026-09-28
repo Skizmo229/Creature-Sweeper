@@ -13,3 +13,4 @@ The first numbered version: the game as built through Milestone 5, for play-test
 - Paused games, the save backed up as a code, and play statistics kept on the device.
 - The Beaten toggle (`U`): the number under every beaten creature at once, which is how a touch
   screen sees them.
+- An About card: the version, the credit to mamono sweeper, the licence, and the source on GitHub.

@@ -81,6 +81,11 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   a laptop.
 - The rules card leads with the sum rule and its proof (a number can exceed 8). Only EASY explains
   a death (`TEACHING_TYPE`); the loss note says "took your last N HP".
+- The About card (the list of game types, `src/ui/screens/about.ts`; decision 0069) says the
+  version, the remix credit, the copyright and the GPL's notices, and links the licence, the
+  source on GitHub, the original and the font notices. It is the game's only place with links, so
+  they wear the accent and an underline, and each opens a tab of its own: on itch.io the game runs
+  in a frame, and GitHub will not load inside one.
 - The tutor (`H`, the "[H]int" button beside Sweep; `src/ui/game/tutor.ts` is its face,
   `src/sim/tutor.ts` its reading; docs/teaching-plan.md) speaks in the hint line, in the ink
   rather than the hint's grey, and points on the board in violet (`TUTOR_COLOR`), which no other
