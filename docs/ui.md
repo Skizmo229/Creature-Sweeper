@@ -92,7 +92,8 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - The field guide (`src/ui/screens/guide.ts`, its words in `src/ui/guide/entries.ts`;
   docs/teaching-plan.md, Part 3) is the catalogue in the game, for reading: an overlay that scrolls
   inside itself with its head and Close pinned, a section per catalogue section and a row of jumps
-  to them. Its words are the catalogue's, held to it by `test/guide.test.ts`. Each diagram is the
+  to them. Its shape is the catalogue's, held to it by `test/guide.test.ts`; its words are the
+  game's own, shorter (decision 0059). Each diagram is the
   catalogue's board drawn by a non-interactive `BoardView` in the look of the ladder the player is
   on, with the tutor's own lesson for it laid over and what the tutor says there beneath, in the
   tutor's violet; the damage table is the engine's formula, the costs that kill from 10 HP in the
@@ -119,7 +120,7 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   has changed is refused with CANNOT RESUME, which offers to start the board again.
 - A ladder whose rules add a trick of its own (the guide's ladder-only entries, asked of the rules)
   shows a card in the rules card's style the first time its boards are opened: the catalogue's
-  note on it and those tricks, in the catalogue's words, with a way into the guide. Once only (the
+  note on it and those tricks, in the guide's words, with a way into the guide. Once only (the
   save's `ladderCards`), and never required.
 
 ## Settings screen

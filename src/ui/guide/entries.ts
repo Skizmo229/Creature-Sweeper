@@ -1,10 +1,11 @@
 /**
  * The field guide's words (docs/teaching-plan.md, section 6): the catalogue, `docs/strategies.md`,
- * sections 1 to 6, 8 and 9, as a player reads it in the game. The words are the catalogue's,
- * copied less what speaks to a developer, and `test/guide.test.ts` holds them to it: every
- * paragraph word for word, every heading to one of its bold leads, every trick to an entry, every
- * diagram to the entry of its trick, and every entry's ladders to the ones the catalogue names.
- * DOM-free, so the test can read it; `src/ui/screens/guide.ts` draws it.
+ * sections 1 to 6, 8 and 9, as a player reads it in the game. The shape is the catalogue's and
+ * `test/guide.test.ts` holds it to it: every section one of its sections, every heading one of
+ * its bold leads, every trick an entry, every diagram in the entry of its trick, and every entry's
+ * ladders the ones the catalogue names. The words are the game's own, shorter than the
+ * catalogue's (decision 0059). DOM-free, so the test can read it; `src/ui/screens/guide.ts` draws
+ * it.
  */
 
 import type { LadderType } from '../../engine/config.js';
@@ -96,13 +97,11 @@ const hallways = (r: LadderRules): boolean => r.shape.hallways;
 /** A ladder whose loadout has Augur: asked of the data, never of a name (CLAUDE.md). */
 const augur = (r: LadderRules): boolean => r.spells.includes('augur');
 
-/** What the guide says before its first section: the catalogue's account of the grades. */
+/** What the guide says before its first section: the grades in a breath. */
 export const GUIDE_INTRO: readonly string[] = [
-  'The grades are how much has to be held in the head at once. Grade 0 is a glance at one cell. ' +
-    'Grade 1 is one number and a little arithmetic. Grade 2 is two numbers together. Grade 3 is a ' +
-    'supposition followed a step or two. Grade 4 is counting the whole board. A grade-1 player ' +
-    'who never learns more can still clear a great many boards; the rest is what makes the hard ' +
-    'ladders clearable at all.',
+  'The grades are how much you hold in your head at once: grade 0 one cell, grade 1 one number, ' +
+    'grade 2 two numbers, grade 3 a supposition followed a step or two, grade 4 the whole board. ' +
+    'A grade-1 player clears a great many boards; the rest is for the hard ladders.',
 ];
 
 /** The damage table's tiers and levels, as the catalogue's section 1 lays it out. */
@@ -118,34 +117,27 @@ export const GUIDE: readonly GuideSection[] = [
       {
         heading: 'A number is the sum of the tiers around it, not a count',
         body: [
-          'A 4 might be one tier 4, or two tier 2s, or a 3 and a 1, or four tier 1s, and you are ' +
-            'never told which. A 9 fits behind a cell that has only eight neighbours. A ' +
-            'Minesweeper player reads a 4 as four creatures, plays on it, and concludes the board ' +
-            'lied.',
+          'A 4 might be one tier 4, two 2s, a 3 and a 1, or four 1s. A 9 fits behind a cell with ' +
+            'only eight neighbours.',
         ],
       },
       {
         heading: 'Your level is a shield, and it is the only one',
         body: [
-          'A creature at or below your level dies in one blow and costs nothing. Above it the ' +
-            'cost is a staircase, tier x (ceil(tier / level) - 1): one tier over your level costs ' +
-            'exactly that tier, two over is a cliff. At full HP on the common 10-HP ladders, a ' +
-            'cost of 10 or more is death.',
+          'A creature at or below your level dies in one blow for nothing. Above it the cost ' +
+            'climbs in steps: one tier over costs that tier, two over is a cliff.',
           { table: 'damage' },
-          'Death is at 0 exactly, so a fight you survive costs less than your HP, strictly. At ' +
-            'level 1 a tier 4 or 5 kills you from full health; at level 2 a tier 5 still does. ' +
-            'From level 3 nothing on a five-tier board kills in one fight, and the game changes ' +
-            'character: a guess becomes a price.',
+          'Death is at 0 exactly. At level 1 a tier 4 or 5 kills you from full health, and at ' +
+            'level 2 a tier 5 still does. From level 3 nothing on a five-tier board kills in one ' +
+            'fight, and a guess becomes a price.',
         ],
       },
       {
         heading: 'Every board can be cleared without losing a point',
         body: [
-          'The EXP each level needs is always already on the board among creatures you can kill ' +
-            'for free. HP is a guess budget, spent on nothing but guesses and misreads. So the ' +
-            'question at every moment is not "what is this cell" but "is anything here above my ' +
-            'level", and most of the tricks below are ways of answering that without knowing the ' +
-            'tier.',
+          'The EXP each level needs is always on the board among creatures you can kill for ' +
+            'free. HP goes on nothing but guesses and misreads, so the question is never "what ' +
+            'is this cell" but "is anything here above my level".',
         ],
       },
     ],
@@ -158,22 +150,20 @@ export const GUIDE: readonly GuideSection[] = [
         heading: 'The raw ring',
         trick: 'raw-ring',
         body: [
-          'An open number at or below your level makes every covered cell around it safe, however ' +
-            'many there are: whatever is there adds up to that number, so no single one of them is ' +
-            'more. At level 2:',
+          'An open number at or below your level makes every covered cell around it safe: no one ' +
+            'cell can hold more than the whole sum. At level 2:',
           drawing('raw-ring'),
-          'All five covered cells are free to open. Nothing needs adding up; you are only ' +
-            'comparing the number with your level. This is the trick that makes a board at Expert ' +
-            'Minesweeper density playable, and the one to learn first.',
+          'All five covered cells are free. Nothing to add up; compare the number with your ' +
+            'level. Learn this one first.',
         ],
       },
       {
         heading: 'The free kill',
         trick: 'named-kill',
         body: [
-          'A cell you have marked with a tier at or below your level is a creature you can kill ' +
-            'for nothing. Marks are made below your level and harvested when the level comes; keep ' +
-            'the harvest going, because levelling is what turns the rest of the board free.',
+          'A cell marked with a tier at or below your level is a creature you can kill for ' +
+            'nothing. Mark below your level and harvest when the level comes; levelling is what ' +
+            'turns the rest of the board free.',
         ],
       },
       {
@@ -181,9 +171,9 @@ export const GUIDE: readonly GuideSection[] = [
         trick: 'met-partner',
         on: pairs,
         body: [
-          'Every creature has exactly one creature next to it. A beaten creature that already ' +
-            'touches another creature has found its partner, so everything else around it is ' +
-            'empty ground, at any level.',
+          'Every creature has exactly one creature beside it. A beaten creature already touching ' +
+            'another has found its partner, so everything else around it is empty ground, at any ' +
+            'level.',
         ],
       },
       {
@@ -191,18 +181,18 @@ export const GUIDE: readonly GuideSection[] = [
         trick: 'corridor',
         on: hallways,
         body: [
-          'Hallways are one cell wide and always empty, and so is the room cell a hallway arrives ' +
-            'at. A thin passage between two rooms can be walked without a thought; a one-cell ' +
-            "notch in a room's wall is not a passage, it is room floor, and can hold a creature.",
+          'Hallways are one cell wide and always empty, and so is the room cell a hallway ' +
+            "arrives at. A one-cell notch in a room's wall is not a hallway: it is room floor, " +
+            'and can hold a creature.',
         ],
       },
       {
         heading: 'The whole pack',
         on: packs,
         body: [
-          'A pack is one creature of every tier, standing together and touching no other pack. A ' +
-            'pack that has shown every tier is finished, and every covered cell around it is ' +
-            'empty ground.',
+          'A pack is one creature of every tier, standing together and touching no other pack. ' +
+            'A pack that has shown every tier is finished: every covered cell around it is empty ' +
+            'ground.',
         ],
       },
       {
@@ -210,9 +200,9 @@ export const GUIDE: readonly GuideSection[] = [
         trick: 'sprinkles',
         on: shown,
         body: [
-          'Every creature is drawn where it stands, each pair as one sprinkle across its two ' +
-            'cells. A covered cell with no sprinkle is empty ground, free at any level; a cell ' +
-            'under a sprinkle is a creature, never empty ground.',
+          'Every creature is drawn where it stands, each pair as one sprinkle across two cells. ' +
+            'No sprinkle means empty ground, free at any level; a sprinkle means a creature, ' +
+            'never ground.',
         ],
       },
     ],
@@ -226,37 +216,34 @@ export const GUIDE: readonly GuideSection[] = [
         trick: 'residual-ring',
         body: [
           'Open ground counts 0 and a beaten creature counts its tier, so take them off the ' +
-            'number first. What is left is what is still hidden, and it obeys the raw-ring rule: ' +
-            'at or below your level, the covered cells are all free; 0, they are all empty ground. ' +
-            'At level 2:',
+            'number first. What is left obeys the raw-ring rule: at or below your level, every ' +
+            'covered cell is free; 0, they are all empty ground. At level 2:',
           drawing('residual-ring'),
-          'Each 5 sees a beaten tier 3, so 2 is hidden over the two covered cells, and both are ' +
-            'free. Hovering a beaten creature shows its own number, which you subtract the same ' +
-            'way, except on PAIRS and DOMINOES, where it is not shown.',
+          'Each 5 sees a beaten 3, so 2 is hidden over the two covered cells, and both are free. ' +
+            'Hover a beaten creature to see its own number, except on PAIRS and DOMINOES, where ' +
+            'it is hidden.',
         ],
       },
       {
         heading: 'The last cell',
         trick: 'last-cell',
         body: [
-          'A number with exactly one covered neighbour left has named it: the cell holds whatever ' +
-            'is still hidden, exactly.',
+          'A number with one covered neighbour left has named it: that cell holds exactly what ' +
+            'is still hidden.',
           drawing('last-cell'),
-          'That cell is a tier 4, and every number around it says so. Mark it 4 and come back at ' +
-            'level 4; until then a mark above your level locks the cell so a slip cannot open it. ' +
-            'This is the workhorse, and it compounds: every cell named is a tier subtracted from ' +
-            'every other number it touches, which names the next.',
+          'That cell is a tier 4. Mark it and come back at level 4; until then the mark locks it ' +
+            'against a slip. Every cell named is a tier subtracted from every other number it ' +
+            'touches, which names the next.',
         ],
       },
       {
         heading: 'The counters',
         trick: 'counters',
         body: [
-          'The LV buttons show how many creatures of each tier are still alive. A tier whose ' +
-            'counter reads 0 is gone, so no number hides one: a 5 over two cells with no 5s left ' +
-            'is a 4 and a 1, or a 3 and a 2. When every tier still alive is at or below your ' +
-            'level, the whole board is free and you can click anything. Read the counters before ' +
-            'every guess.',
+          'The LV buttons count the creatures of each tier still alive. A tier at 0 is gone, so ' +
+            'no number hides one: with no 5s left, a 5 over two cells is a 4 and a 1, or a 3 and ' +
+            'a 2. When every tier alive is at or below your level, the whole board is free. Read ' +
+            'the counters before every guess.',
         ],
       },
       {
@@ -264,11 +251,10 @@ export const GUIDE: readonly GuideSection[] = [
         trick: 'lone-dark',
         on: colours,
         body: [
-          'Even tiers stand only on light squares, odd tiers only on dark, and empty ground ' +
-            'anywhere. The light squares behind a number add up to an even amount, so the ' +
-            "number's parity is decided by its dark neighbours alone. If only one dark square " +
-            'around a number is still covered and the hidden amount is even, that square is ' +
-            'empty, at any level.',
+          'Even tiers stand on light squares, odd tiers on dark, and empty ground anywhere. ' +
+            "Light squares add up to an even amount, so a number's parity comes from its dark " +
+            'neighbours alone: one dark square left and an even hidden amount means that square ' +
+            'is empty, at any level.',
         ],
       },
       {
@@ -276,9 +262,9 @@ export const GUIDE: readonly GuideSection[] = [
         trick: 'partner-number',
         on: pairs,
         body: [
-          "A beaten creature's own number is its partner's tier, because nothing else it touches " +
-            'is a creature. If it has one covered neighbour left, that is the partner and you know ' +
-            'its tier; if its number is at or below your level, the whole ring is free.',
+          "A beaten creature's own number is its partner's tier, since nothing else it touches " +
+            'is a creature. One covered neighbour left is the partner, tier known; a number at ' +
+            'or below your level frees the whole ring.',
         ],
       },
       {
@@ -286,10 +272,10 @@ export const GUIDE: readonly GuideSection[] = [
         trick: 'census-ring',
         on: shown,
         body: [
-          'A number says how much tier is hidden around it, and the sprinkles say how many ' +
-            'creatures share it, as a Census would. Each is worth at least 1, so the biggest can ' +
-            'be no more than the remainder less one for every other: a 3 over three sprinkles is ' +
-            'three tier 1s, and a 5 over three is nothing above a 3.',
+          'The number says how much tier is hidden; the sprinkles say how many creatures share ' +
+            'it. Each is worth at least 1, so the biggest is at most the amount less one for ' +
+            'every other: a 3 over three sprinkles is three 1s, and a 5 over three is nothing ' +
+            'above a 3.',
         ],
       },
       {
@@ -297,11 +283,11 @@ export const GUIDE: readonly GuideSection[] = [
         trick: 'augur-cap',
         on: augur,
         body: [
-          'An Augur names the strongest creature around a number, so nothing hidden there is ' +
-            'above it: at or below your level the whole ring is free, and above it no cell can ' +
-            'be more. Sum, count and strongest together pin most rings: a 7 over three cells ' +
-            'with a strongest of 3 is 3, 3 and 1, or 3, 2 and 2. Aim it where a number is spread ' +
-            'over many cells, since that is where the strongest is likeliest to be small.',
+          'An Augur names the strongest creature around a number: at or below your level the ' +
+            'ring is free, and above it no cell can be more. Sum, count and strongest together ' +
+            'pin most rings: a 7 over three cells with a strongest of 3 is 3, 3 and 1, or 3, 2 ' +
+            'and 2. Aim it at a number spread over many cells, where the strongest is likeliest ' +
+            'small.',
         ],
       },
     ],
@@ -314,27 +300,24 @@ export const GUIDE: readonly GuideSection[] = [
         heading: 'Subtraction, or the 1-2-1',
         trick: 'subtract',
         body: [
-          "When one number's covered cells all lie inside another's, take the smaller from the " +
-            'larger: the cells only the larger one sees hold the difference, exactly. This is ' +
-            "Minesweeper's 1-2-1 with the numbers free to vary. Along a wall:",
+          "When one number's covered cells all lie inside another's, the cells only the larger " +
+            'sees hold the difference, exactly. Along a wall:',
           drawing('subtract'),
-          'At level 1, the 2 sees the first two covered cells and the 5 the first three, so the ' +
-            'third is a 3. The last 3 sees the third and fourth, and the first 3 sees those and ' +
-            'the second, so the second is empty. That leaves the first for the 2, and the fourth ' +
-            'empty. The pattern to remember is x, x+z, z over a wall: beneath it lies x, empty, z, ' +
-            'whatever x and z are; when x is at or below your level, the raw ring has given you ' +
-            'the first two cells already. Four in a row, a, a+b, a+b, b, put empty ground under ' +
-            'both ends and a, b under the middle pair.',
+          'At level 1 the 2 sees the first two covered cells and the 5 the first three, so the ' +
+            'third is a 3. The last 3 sees the third and fourth, the first 3 sees those and the ' +
+            'second, so the second is empty; the first is the 2, and the fourth is empty. The ' +
+            'pattern: x, x+z, z over a wall means x, empty, z beneath it. Four in a row, a, a+b, ' +
+            'a+b, b, means empty ground under both ends and a, b under the middle.',
         ],
       },
       {
         heading: 'Overlap',
         trick: 'overlap',
         body: [
-          'Two numbers that share some covered cells but not all: the cells each sees alone are ' +
-            'bounded by the other. If a 3 and a 7 share two cells, those two hold at most 3, so ' +
-            "the 7's private cell holds at least 4; and since that private cell holds at most 5, " +
-            "the shared pair holds at least 2, so the 3's private cell holds at most 1.",
+          "Two numbers that share some covered cells but not all bound each other's private " +
+            "cells. A 3 and a 7 sharing two cells: the pair holds at most 3, so the 7's own cell " +
+            "holds at least 4; that cell holds at most 5, so the pair holds at least 2 and the 3's " +
+            'own cell at most 1.',
         ],
       },
       {
@@ -342,20 +325,18 @@ export const GUIDE: readonly GuideSection[] = [
         trick: 'bounds',
         body: [
           'One number on its own says what each of its cells can be. A 9 over two cells on a ' +
-            'five-tier board is a 4 and a 5, so both are creatures, both are dangerous below level ' +
-            '4, and neither is worth a guess. In general a hidden amount r over k cells puts at ' +
-            'least r - (k - 1) x top in every cell, where top is the highest tier still alive; ' +
-            'when that is above 0, every cell is a creature. Pencil the candidates in; the pencil ' +
-            'is a shield, read by its lowest candidate, so "4 or 5" locks a cell until level 4 and ' +
-            'can never expose you.',
+            'five-tier board is a 4 and a 5: both creatures, both dangerous below level 4, ' +
+            'neither worth a guess. In general a hidden r over k cells puts at least ' +
+            'r - (k - 1) x top in every cell, top being the highest tier alive; above 0, every ' +
+            'cell is a creature. Pencil the candidates in: the pencil is read by its lowest ' +
+            'candidate, so "4 or 5" locks a cell until level 4 and can never expose you.',
           drawing('bounds'),
-          'The counters sharpen it, because a tier with none left is no candidate. With only 2s ' +
-            'and 5s left, a 9 over three cells:',
+          'The counters sharpen it: a tier with none left is no candidate. With only 2s and 5s ' +
+            'left, a 9 over three cells:',
           drawing('bounds', 1),
-          'None of the three can be empty, since two of them make 4, 7 or 10 from 2s and 5s, ' +
-            'never 9; so all three are creatures, and the only way to make 9 is 2 + 2 + 5. You ' +
-            'know what is there and not where, which at level 2 is two free kills and one that ' +
-            'costs 10.',
+          'Two of them make 4, 7 or 10, never 9, so all three are creatures, and the only way to ' +
+            '9 is 2 + 2 + 5. You know what is there, not where: at level 2, two free kills and ' +
+            'one that costs 10.',
         ],
       },
       {
@@ -363,11 +344,10 @@ export const GUIDE: readonly GuideSection[] = [
         trick: 'colour-cap',
         on: colours,
         body: [
-          'A light square hides at most the largest even amount at or below what is hidden; a ' +
-            'dark square under an odd amount may hide all of it, and under an even amount with ' +
-            'other dark squares in sight, all but the 1 its partner must carry. So half a ' +
-            "number's ring can be free while the other half is not, which is the shape of " +
-            'deduction that belongs to this board alone.',
+          'A light square hides at most the largest even amount at or below what is hidden. A ' +
+            'dark square under an odd amount may hide all of it; under an even amount with other ' +
+            'dark squares in sight, all but the 1 its partner must carry. So half a ring can be ' +
+            'free while the other half is not.',
         ],
       },
       {
@@ -375,9 +355,9 @@ export const GUIDE: readonly GuideSection[] = [
         trick: 'pack-gap',
         on: packs,
         body: [
-          'A covered cell beside a pack holds one of the tiers that pack has not shown yet, or ' +
-            'nothing. A pack showing 6, 5 and 4 caps everything beside it at 3. A pack missing ' +
-            'exactly one tier with exactly one covered cell touching it has named that cell.',
+          'A covered cell beside a pack holds one of the tiers the pack has not shown, or ' +
+            'nothing. A pack showing 6, 5 and 4 caps everything beside it at 3; a pack missing ' +
+            'one tier with one covered cell touching it has named that cell.',
         ],
       },
     ],
@@ -390,16 +370,15 @@ export const GUIDE: readonly GuideSection[] = [
         heading: 'Suppose, then follow it',
         trick: 'what-if',
         body: [
-          'When no number settles a cell on its own, suppose it holds a tier and follow what ' +
-            'that forces from one number to the next; a supposition that ends at a number that ' +
-            'cannot be made is false, and that tier is struck off the cell. Three 3s around one ' +
-            'creature, at level 2:',
+          'When no number settles a cell, suppose it holds a tier and follow what that forces ' +
+            'from number to number. A supposition that ends at a number that cannot be made is ' +
+            'false, and that tier is struck off. Three 3s around one creature, at level 2:',
           drawing('what-if'),
           'Suppose the cell left of the middle is a 3. Then the top-left 3 is made and its other ' +
-            'two cells are empty, so the top-right 3 must be made by the cell right of the middle, ' +
-            'and the bottom 3 would see 6. So it is not a 3, nor by the same steps is the cell ' +
-            'right of the middle, and at level 2 both are free. Two numbers along is about as far ' +
-            'as anyone follows it at the board.',
+            'cells are empty, so the top-right 3 must be made by the cell right of the middle, ' +
+            'and the bottom 3 would see 6. So it is not a 3; by the same steps nor is the cell ' +
+            'right of the middle, and at level 2 both are free. Two numbers along is about as ' +
+            'far as anyone follows it.',
         ],
       },
       {
@@ -407,11 +386,10 @@ export const GUIDE: readonly GuideSection[] = [
         trick: 'line-reach',
         on: lines,
         body: [
-          'Each pack is a straight or bent line of one of every tier, led by the 6, and no member ' +
-            'is orthogonally beside any but its neighbours in the line. So a line only continues ' +
-            'from its two ends, the cells orthogonally beside a member in the middle of a known ' +
-            'stretch are empty, and any cell the missing members could not reach by walking from ' +
-            'an end is empty too.',
+          'A line is one of every tier, led by the 6, straight or bent, and no member is ' +
+            'orthogonally beside any but its neighbours in the line. So a line grows only from ' +
+            'its two ends: the cells orthogonally beside a middle member are empty, and so is any ' +
+            'cell the missing members could not reach from an end.',
         ],
       },
     ],
@@ -424,12 +402,11 @@ export const GUIDE: readonly GuideSection[] = [
         heading: 'Accounted for',
         trick: 'accounted',
         body: [
-          'The counters say exactly how much tier is left on the board. Numbers whose covered ' +
-            'cells do not overlap each account for their own hidden amount, and once a set of them ' +
-            'accounts for all of it, every other covered cell on the board is empty, the ' +
-            'untouched middle included. Short of that, whatever is unaccounted for is spread over ' +
-            'the cells outside those rings, and if that remainder is at or below your level, all ' +
-            'of those cells are free.',
+          'The counters say exactly how much tier is left. Numbers whose covered cells do not ' +
+            'overlap each account for their own hidden amount; once they account for all of it, ' +
+            'every other covered cell is empty, the untouched middle included. Short of that, the ' +
+            'rest is spread over the cells outside those rings, and if it is at or below your ' +
+            'level, all of those cells are free.',
         ],
       },
       {
@@ -437,12 +414,11 @@ export const GUIDE: readonly GuideSection[] = [
         trick: 'last-of-tier',
         body: [
           'When one creature of the top tier is left and some number cannot be made without it, ' +
-            'that is where it is, and nowhere else can hold one. One 5 left and a 9 over two cells:',
+            'that is where it is. One 5 left and a 9 over two cells:',
           drawing('last-of-tier'),
           'The 9 is a 4 and a 5, so the last 5 is one of those two, and every other covered cell ' +
-            'on the board is at most a 4. At level 4 all of it is free. The last few level-ups on ' +
-            'every ladder are exactly this hunt: the top thresholds are met by killing every ' +
-            'creature of a tier, so the endgame is finding the last one, and the counters are the ' +
+            'is at most a 4: at level 4 all of it is free. The top thresholds are met by killing ' +
+            'every creature of a tier, so every endgame is this hunt, and the counters are the ' +
             'map.',
         ],
       },
@@ -451,47 +427,46 @@ export const GUIDE: readonly GuideSection[] = [
   {
     title: GUESSING_WELL,
     intro: [
-      "You will be forced to guess, and the hard ladders' top boards force it on everyone. What " +
-        'separates players is what the guess costs.',
+      'You will be forced to guess; the hard ladders force it on everyone. What separates ' +
+        'players is what the guess costs.',
     ],
     entries: [
       {
         heading: 'Check the counters and take every free kill first',
         body: [
-          'Levelling is the cheapest safety there is: a cell that is a 3-or-5 today is a free ' +
-            'kill at level 5. Before any guess, ask whether two more levels would make it ' +
-            'unnecessary, and whether those levels are already on the board.',
+          'Levelling is the cheapest safety: a 3-or-5 today is a free kill at level 5. Before ' +
+            'any guess, ask whether two more levels would make it unnecessary, and whether they ' +
+            'are already on the board.',
         ],
       },
       {
         heading: 'Know the worst case',
         body: [
-          "The cell's ceiling is the smallest hidden amount among the numbers touching it, " +
-            'capped by the top tier still alive. Look the ceiling up in the table in section 1 at ' +
-            'your level: if the worst case would kill, do not click there.',
+          "A cell's ceiling is the smallest hidden amount among the numbers touching it, capped " +
+            'by the top tier alive. Look it up in the table at your level; if the worst case ' +
+            'would kill, do not click there.',
         ],
       },
       {
         heading: 'Prefer the cell that says the most',
         body: [
-          'Among survivable cells, the one touched by more numbers, or beside a large blank area, ' +
-            'tells you more when it opens; a corner or rim cell is likelier to open blank ground.',
+          'Among survivable cells, prefer one touched by more numbers or beside a large blank ' +
+            'area; a rim or corner cell is likelier to open blank ground.',
         ],
       },
       {
         heading: 'A guess you know something about is cheaper than one you do not',
         body: [
-          "This is the finding behind every placement ladder: a doorway read, a colour, a pack's " +
-            "gap all cap what a guess can be. A cell no number touches is worth the board's " +
-            'average, which the counters tell you: total tier left divided by covered cells.',
+          "A doorway, a colour, a pack's gap all cap what a guess can be. A cell no number " +
+            "touches is worth the board's average: total tier left divided by covered cells, " +
+            'from the counters.',
         ],
       },
       {
         heading: 'One tier over is cheap; two is a cliff',
         body: [
-          'At level 3 a tier 4 costs 4 and a tier 5 costs 5; at level 2 a tier 5 costs 10. So a ' +
-            'guess whose candidates are all within one tier of your level is a price, and one ' +
-            'that reaches two over is a gamble on your life.',
+          'At level 3 a tier 4 costs 4 and a tier 5 costs 5; at level 2 a tier 5 costs 10. A ' +
+            'guess within one tier of your level is a price; two over is a gamble on your life.',
         ],
       },
       {
@@ -504,10 +479,9 @@ export const GUIDE: readonly GuideSection[] = [
       {
         heading: 'Never trust a mark you did not prove',
         body: [
-          'The endgame kills more players through a wrong mark than through a bad guess: assisted ' +
-            'Sweep opens whatever your marks leave provable, and a mark at or below your level is ' +
-            'a cell you will open by hand without a thought. If a mark was a guess, pencil it ' +
-            'instead.',
+          'A wrong mark kills more players than a bad guess: assisted Sweep opens what your ' +
+            'marks leave provable, and a mark at or below your level is a cell you will open ' +
+            'without a thought. If a mark was a guess, pencil it instead.',
         ],
       },
     ],
@@ -521,17 +495,16 @@ export const GUIDE: readonly GuideSection[] = [
             list: [
               'Reading a 4 as four creatures.',
               "Forgetting to subtract a beaten creature's tier from the number beside it.",
-              "Reading a number as if the level were one higher than it is; the level's colour is " +
-                'the colour of the strongest creature it can beat.',
+              "Reading a number as if the level were one higher; the level's colour is the " +
+                'strongest tier it beats.',
               'Trusting a wrong mark into the endgame.',
-              'Reading the pencil the wrong way round: notes say what a cell might still be, and ' +
-                'the game reads only the lowest one; a note of 5 alone locks a cell, a note of 0 ' +
-                'and 5 does not.',
+              'Reading the pencil backwards: notes say what a cell might still be, and the game ' +
+                'reads the lowest, so a note of 5 locks a cell and a note of 0 and 5 does not.',
               'Guessing in the untouched middle when a rim cell with a number on it was available.',
               'Not checking the counters before a guess, when the tier that frightened you was ' +
                 'already dead.',
-              'On DUNGEON, forgetting that reach is measured from open ground, so a Reveal pushes ' +
-                'the frontier and a mark does not.',
+              'On DUNGEON, forgetting that reach is measured from open ground: a Reveal pushes ' +
+                'the frontier, a mark does not.',
             ],
           },
         ],
