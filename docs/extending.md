@@ -16,9 +16,10 @@ cell, feeds it to Sweep and draws it, as Census does, is every step.
 1. **The spell.** Its id in `SpellId` and its record (name, cost, `targeted`, blurb) in `SPELLS`,
    `src/engine/spells.ts`. The keyboard shortcut is the name's first letter (`spellKey`), so the
    name cannot start with another spell's letter or one the board uses: `S` (Sweep), `D` (assisted
-   Sweep), `F` (fit), `W` (PATROL's Wait) or `N` (entry mode). `test/spells.test.ts` fails on a
-   clash with a spell, `S`, `D`, `F` or `W`, but not with `N`, which the board reads after the spell
-   letters: a spell named with an N would silently take the entry-mode key.
+   Sweep), `F` (fit), `W` (PATROL's Wait), `P` (pause), `H` (the tutor's hint), `G` (the field
+   guide) or `N` (entry mode). `test/spells.test.ts` fails on a clash with a spell or any of these
+   but `N`, which the board reads after the spell letters: a spell named with an N would silently
+   take the entry-mode key.
 2. **What it does.** Its entry in `SPELL_EFFECTS`, `src/engine/cast.ts`, which the compiler asks
    for, and the function it names: it returns the events and a `detail`, or a `blocked` reason.
    `Game.cast` already makes the checks every spell shares (offered, affordable, on the board, in
@@ -47,9 +48,9 @@ cell, feeds it to Sweep and draws it, as Census does, is every step.
    saves as much HP per mana as Reveal, and `docs/tuning.md` holds Reveal's own figure. If a
    ladder in `test/golden/` gains it, re-record with `npm run sim:golden`.
 8. **Tests and docs.** A block in `test/spells.test.ts`, whose shortcut test and `magicConfig`
-   list every spell (the affordability test reads the data). The README's controls line and test
-   count; `docs/glossary.md`: its entry, the Spells entry, and strict Sweep's list if it informs;
-   `docs/tuning.md`: the price list and the value table; "the four spells" in
+   list every spell (the affordability test reads the data). The README's controls line;
+   `docs/glossary.md`: its entry, the Spells entry, and strict Sweep's list if it informs;
+   `docs/tuning.md`: the price list and the value table; the spell count on `spells.ts`'s line in
    `docs/architecture.md`; the spell table and status note in `design/page.template.html`, then
    `python design/build.py`; and a decision record for its design and measured price.
 

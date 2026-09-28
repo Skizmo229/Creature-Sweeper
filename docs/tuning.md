@@ -120,8 +120,8 @@ ladder, each spell against playing spell-less on the ladders that offer it:
 ## Open questions, in order of weight
 
 1. **The ladders have never been played.** Everything is derived and simulation-checked, not
-   playtested. Playtesting may run alongside the refactor; tuning changes live in
-   `ladder_types.toml` and `ladders.py`.
+   playtested. Play-testing is what both plans wait on (`docs/human-tuning-plan.md` step 4.10,
+   `docs/teaching-plan.md` section 9); tuning changes live in `ladder_types.toml` and `ladders.py`.
 2. **Boards contain unresolvable 50/50s, and the solver can say which.** Guess-free
    generate-and-test is affordable early and impossible late: a perfect deducer finishes NORMAL
    94% guess-free, ARCANE 73%, DUNGEON 59%, DONUT 36%, and 0% of board 10 on EXTREME, HUGE x
@@ -134,7 +134,7 @@ ladder, each spell against playing spell-less on the ladders that offer it:
    maximum buys nothing more and runs the dial backwards. HUGE x EXTREME is deep everywhere and was
    retuned (lock 7 on boards 7 to 10 and density stepped back) to make board 10 winnable.
    **Settled on 26 September 2026 on a human figure** (`docs/human-tuning-plan.md`): EXTREME holds
-   lock 3 to the top (decision 0041) and ORACLE lock 4 from board 7 (decision 0042), each taking
+   lock 3 to the top (decision 0041) and ORACLE lock 4 from board 4 (decision 0042), each taking
    the graded player at grade 4 from single digits on board 10 to the 60 to 70% target; the two
    extra HP on ORACLE were measured and not taken, since they carried board 10 past the target.
 4. **The placement-rule ladders play easier than their tuning says**, because they were tuned

@@ -385,10 +385,10 @@ What it says, read on the day it was recorded:
   (35% spell-less, which is what the table shows). HUGE x EXTREME was measured next on the same
   day and left alone: boards 7 to 10 clear 70, 55, 60 and 63% at grade 4 (40 seeds), on the
   target already, since decision 0019 tuned it against the perfect deducer to about where the
-  human target sits; board 8's 55% is within the noise of 40 seeds, about eight points. DONUT is the needle ladder: 3.5 moves on offer per pass, two guesses a
-  board, 80% of board 10. Its row is as made round on 26 September 2026 (decision 0045), six
-  density points up to hold the square ring's 95% and 80%; the square ring's row was 1.9 stuck,
-  3.5 on offer and 174 effort. The honest player finds the round ring harder than the graded
+  human target sits; board 8's 55% is within the noise of 40 seeds, about eight points. DONUT
+  is the needle ladder: 4.1 moves on offer per pass, two guesses a board, 80% of board 10. Its
+  row is as made round on 26 September 2026 (decision 0045), six density points up to hold the
+  square ring's 95% and 80%; the square ring's row was 1.9 stuck, 3.5 on offer and 174 effort. The honest player finds the round ring harder than the graded
   player does (68% against 83% before).
 - **The graded player clears more than the honest player where guesses are dear.** EXTREME 80%
   against the honest player's 55%, ORACLE 60% against 48%: it holds a pencil, bounds two

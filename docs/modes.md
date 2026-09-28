@@ -44,8 +44,8 @@ even at 37%.
 **WRAPPED CROSS** is CROSS on a torus. Wrapping a *shape* does the opposite of wrapping a
 rectangle: a cross is nearly all rim, so it loses little information, and joining its four dead-end
 arms into two loops lets a player stuck at one tip work in from the other. It is easier than CROSS
-and ships 1.2 density points above it to sit on CROSS's curve. Gated on its two parents, not on a
-board count.
+and ships 1.2 density points above it to sit on CROSS's curve. Counted like the other shapes, not
+gated on its two parents (decision 0036).
 
 **RAGGED CAVE** is grown, never trimmed. Cells are laid down as whole 2x2 squares and none is ever
 removed, so no passage one cell wide can exist; corner-to-corner touches are refused at placement.
