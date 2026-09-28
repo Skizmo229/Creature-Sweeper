@@ -1,12 +1,14 @@
 /**
  * One ladder's boards: the tuned ten, the Full Run tile (the eleventh, a board card in every
  * structural respect) and the scaling tile (the twelfth: one card with a dial, because a tile per
- * continuation board would bury the ladder it belongs to).
+ * continuation board would bury the ladder it belongs to). A tile with a game paused on it says
+ * so, and a click on it takes the game up (decision 0057).
  */
 
 import { boardRow, maxBoard } from '../../engine/config.js';
 import { el } from '../dom.js';
 import { ladders } from '../ladders.js';
+import { type PausedGame, pausedGames } from '../paused.js';
 import type { Progress } from '../progress.js';
 import { themeFor } from '../looks.js';
 
@@ -53,8 +55,10 @@ export function buildBoardList(typeId: string, a: BoardListActions): HTMLElement
     card.append(el('span', 'board-stat', `${board.monsters} creatures · ${board.density}%`));
     card.append(el('span', 'board-stat', `HP ${board.hp} · ${board.tiers} tiers`));
 
+    const paused = unlocked ? pausedGames.get({ typeId, board: board.n }) : null;
     const badge = el('span', 'board-badge');
     if (!unlocked) badge.textContent = 'Locked';
+    else if (paused) showPaused(card, badge, paused);
     else if (rec.bestTime !== null) {
       badge.textContent = `${rec.perfect ? '★ ' : ''}best ${rec.bestTime}s`;
     } else badge.textContent = 'Not cleared';
@@ -67,6 +71,15 @@ export function buildBoardList(typeId: string, a: BoardListActions): HTMLElement
   grid.append(scalingCard(typeId, a));
   wrap.append(grid);
   return wrap;
+}
+
+/** A tile with a game paused on it: where the game stands, and that a click carries it on. */
+function showPaused(card: HTMLElement, badge: HTMLElement, paused: PausedGame): void {
+  card.classList.add('paused');
+  const where = paused.legs ? `board ${paused.board} · ` : '';
+  badge.textContent = `Paused · ${where}HP ${paused.hp}/${paused.maxHp}`;
+  const note = `Paused at ${Math.floor(paused.elapsedMs / 1000)}s. Click to carry on from there.`;
+  card.title = card.title ? `${note}\n\n${card.title}` : note;
 }
 
 /**
@@ -115,7 +128,9 @@ function scalingCard(typeId: string, a: BoardListActions): HTMLElement {
     card.classList.toggle('done', rec.cleared);
     card.classList.toggle('perfect', rec.perfect);
     badge.textContent = `Locked — clear ${type.boards.length}`;
-    play.textContent = rec.cleared ? 'Replay' : 'Play';
+    const paused = unlocked && pausedGames.get({ typeId, board }) !== null;
+    card.classList.toggle('paused', paused);
+    play.textContent = paused ? 'Resume' : rec.cleared ? 'Replay' : 'Play';
     card.title = unlocked
       ? `Boards ${first} to ${last}: the ladder's own schedules carried past ` +
         `board ${type.boards.length} and clamped where they stop changing. ` +
@@ -168,8 +183,10 @@ function fullRunCard(typeId: string, a: BoardListActions): HTMLElement {
     el('span', 'board-stat', heal > 0 ? `+${heal} healed per board` : 'no healing at all'),
   );
 
+  const paused = unlocked ? pausedGames.get({ typeId, run: true }) : null;
   const badge = el('span', 'board-badge');
   if (!unlocked) badge.textContent = `Locked — clear ${last}`;
+  else if (paused) showPaused(card, badge, paused);
   else if (rec.cleared && rec.bestTime !== null) badge.textContent = `★ best ${rec.bestTime}s`;
   else if (rec.attempts > 0) badge.textContent = `best: board ${rec.bestBoard}`;
   else badge.textContent = 'Not attempted';

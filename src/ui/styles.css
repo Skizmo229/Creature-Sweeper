@@ -281,6 +281,14 @@ button.board-card:hover:not(:disabled) {
 .board-card.perfect {
   box-shadow: inset 0 0 0 1px var(--tint);
 }
+/* A game is waiting on this tile (decision 0057). */
+.board-card.paused {
+  border-style: dashed;
+  border-color: var(--tint);
+}
+.board-card.paused .board-badge {
+  font-weight: 700;
+}
 .board-n {
   font-size: 1.5rem;
   font-weight: 700;

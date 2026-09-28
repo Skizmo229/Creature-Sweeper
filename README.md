@@ -98,7 +98,9 @@ marking or pencilling according to the Entry mode · `N` switches that mode · `
 the other one for that keystroke · `S` sweeps what is proven safe · `D` also trusts your marks ·
 `H` asks the tutor for the next provable move and why · `G` opens the field guide there · a
 spell's bracketed letter casts it (`C`ensus, `A`ugur, `R`eveal, `B`eacon, `E`xercise, offered
-cheapest first) · `W` waits a move on PATROL · scroll or `+`/`-` to zoom, `F` to reset · `Esc` backs out.
+cheapest first) · `W` waits a move on PATROL · scroll or `+`/`-` to zoom, `F` to reset · `P` pauses: the board, or
+the Full Run, waits on its tile with the clock stopped, and a click on the tile carries on · `Esc`
+backs out, asking first whether to pause or abandon a game you have made a move in.
 
 **Settings** are two separate things. The presentation half (creature icons, board palette, board
 font, interface font, sound pack, glow after a fight, board-clear effect, text size, preview size,

@@ -51,7 +51,9 @@ export class Modal {
   eraseProgress(onErase: () => void): void {
     this.ask({
       title: 'ERASE PROGRESS?',
-      body: 'Every unlock, clear time and full run on this device. This cannot be undone.',
+      body:
+        'Every unlock, clear time, full run and paused game on this device. ' +
+        'This cannot be undone.',
       confirmLabel: 'Erase everything',
       cancelLabel: 'Cancel',
       onConfirm: onErase,

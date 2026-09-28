@@ -137,6 +137,17 @@ and the two test lists that pin the ladder set.
    being hit at the dial's harshest setting, and end on the same EXP and level.
 4. The settings screen row, and the three places that say "easier than the tuned game records
    nothing".
+5. Paused games keep their dials (`src/ui/paused.ts` reads a stored game's dials over
+   `DEFAULT_GAMEPLAY`), so a game paused before the dial existed resumes at its default.
+
+## Adding a player action
+
+1. A `Move` kind in `src/engine/replay.ts`: `playMove`, `encodeMove` and `decodeMove`. A paused
+   game is its moves replayed (decision 0057), so an action that is not a move is not kept, and
+   the game is refused on resuming.
+2. Make it through `BoardActions`' `move` in `src/ui/game/actions.ts`, never on the game directly.
+3. `randomMove` in `test/replay.test.ts`, so the replay is checked with it on every ladder. Nothing
+   after the deal may draw a random number.
 
 ## Adding a presentation setting
 

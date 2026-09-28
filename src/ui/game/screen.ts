@@ -14,7 +14,10 @@ import { themeFor } from '../looks.js';
 
 export interface GameScreenActions {
   openSettings(): void;
+  /** Leave the board, asking first whether to pause or abandon a game with anything in it. */
   leave(): void;
+  /** Pause: the board waits on the board list, its clock stopped (decision 0057). */
+  pause(): void;
   pickTier(tier: number): void;
   /** The tier-0 pencil: switches to pencil mode and arms tier 0. */
   pencilEmpty(): void;
@@ -73,7 +76,7 @@ export function buildGameScreen(
   // the menus stay recognisable however the board is painted.
   wrap.style.setProperty('--tint', themeFor(typeId).accent);
 
-  const { hudEl, hud } = buildHud(game, run, a);
+  const { hudEl, hud } = buildHud(game, run, a, lesson === null);
   wrap.append(
     hudEl,
     lesson ? el('div', 'board-label', lesson) : boardLabel(type.name, game, boardIndex, run),
@@ -100,11 +103,12 @@ export function buildGameScreen(
   return { root: wrap, stage, canvas, hud, ...controls, spellBtns, hint, more, next };
 }
 
-/** The HUD: the readouts `hud.ts` fills in, and the Settings and Back buttons. */
+/** The HUD: the readouts `hud.ts` fills in, and the Settings, Pause and Back buttons. */
 function buildHud(
   game: Game,
   run: FullRun | null,
   a: GameScreenActions,
+  pausable: boolean,
 ): { hudEl: HTMLElement; hud: Record<string, HTMLElement> } {
   const hudEl = el('div', 'hud');
   const hud: Record<string, HTMLElement> = {};
@@ -128,7 +132,14 @@ function buildHud(
   gear.title = 'Settings — the board is waiting exactly where you left it.';
   gear.addEventListener('click', a.openSettings);
   hudEl.append(gear);
-  const back = el('button', 'ghost small', run ? 'Abandon' : 'Back');
+  // A lesson is not a game to come back to; it is started again from the school.
+  if (pausable) {
+    const pause = el('button', 'ghost small', 'Pause');
+    pause.title = 'Pause [P]: the clock stops, and the board waits on the board list.';
+    pause.addEventListener('click', a.pause);
+    hudEl.append(pause);
+  }
+  const back = el('button', 'ghost small', 'Back');
   back.addEventListener('click', a.leave);
   hudEl.append(back);
   return { hudEl, hud };

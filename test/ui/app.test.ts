@@ -461,7 +461,7 @@ describe('Escape and the entry modes', () => {
   it('asks before Escape leaves a Full Run, and a second Escape answers no', () => {
     app.runFull('easy', 7);
     key('Escape');
-    expect(text('.overlay h2')).toBe('ABANDON RUN?');
+    expect(text('.overlay h2')).toBe('LEAVE RUN?');
     key('Escape');
     expect(document.querySelector('.overlay')).toBeNull();
     expect(onGame()).toBe(true);

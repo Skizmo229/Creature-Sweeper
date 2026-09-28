@@ -15,6 +15,7 @@ import { BoardView } from './board/view.js';
 import { boardDisplayFor, dressDocument, wearInterfaceFont } from './dress.js';
 import { BoardClock } from './game/clock.js';
 import { BoardEnding } from './game/ending.js';
+import { BoardKeeper, takeUp } from './game/keeper.js';
 import { gatePalette, syncClock, syncGameScreen } from './game/hud.js';
 import { EntryMode } from './game/mode.js';
 import { BoardActions } from './game/actions.js';
@@ -24,6 +25,7 @@ import { soundFor } from './game/sound.js';
 import { ladders } from './ladders.js';
 import { buildSpeaker } from './mute.js';
 import { Modal } from './overlays/modal.js';
+import { type Slot, pausedGames } from './paused.js';
 import { Progress } from './progress.js';
 import { buildBoardList } from './screens/boards.js';
 import { buildLadderList } from './screens/ladders.js';
@@ -58,15 +60,19 @@ export class App {
     view: () => this.view,
     mode: this.mode,
     sfx: this.sfx,
+    move: (move) => this.keeper.move(move),
     apply: (events) => this.apply(events),
     refresh: () => this.refresh(),
     leaveGame: () => this.leaveGame(),
+    pause: () => this.pause(),
     explain: () => this.explainBoard(),
     guide: () => this.teaching.guideFromBoard(),
     refuse: (x, y) => this.teaching.refuse(this.game?.cellAt(x, y) ?? null),
     next: () => this.teaching.next(),
   });
   private readonly clock = new BoardClock();
+  /** The board on screen kept as a paused game, move by move (decision 0057). */
+  private readonly keeper: BoardKeeper;
   /** Where the settings screen goes back to while it is showing; Escape takes the same route. */
   private settingsBack: (() => void) | null = null;
   /** The modal overlay over the screen: a question, the how-to, the save backup, the guide. */
@@ -133,12 +139,20 @@ export class App {
       startFullRun: (typeId, seed) => this.startFullRun(typeId, seed),
       advanceRun: () => this.advanceRun(),
       leaveGame: () => this.leaveGame(),
-      showBoards: (typeId) => {
-        this.run = null;
-        this.showBoards(typeId);
-      },
+      showBoards: (typeId) => this.showBoards(typeId),
+    });
+    this.keeper = new BoardKeeper({
+      game: () => this.game,
+      run: () => this.run,
+      typeId: () => this.typeId,
+      boardIndex: () => this.boardIndex,
+      clock: this.clock,
+      tutor: this.teaching.tutor,
     });
     window.addEventListener('keydown', (e) => this.onKey(e));
+    // The clock is kept with the game, so it is written down as the page goes away.
+    window.addEventListener('pagehide', () => this.keeper.save());
+    document.addEventListener('visibilitychange', () => this.keeper.save());
     window.addEventListener('resize', () => this.view?.fit());
     // A settings change has to reach the board the player came from, not just the next one.
     this.settings.onChange(() => this.applyPresentation());
@@ -225,6 +239,7 @@ export class App {
         resetProgress: () =>
           this.modal.eraseProgress(() => {
             this.progress.reset();
+            pausedGames.clearAll();
             this.showTypes();
           }),
         setUnlockAll: (on) => {
@@ -244,6 +259,7 @@ export class App {
 
   private showBoards(typeId: string): void {
     this.clearScreen();
+    this.run = null;
     // "Game type default" and the fonts follow the ladder you are looking at, so the type has to
     // be current before anything is drawn.
     this.typeId = typeId;
@@ -293,7 +309,10 @@ export class App {
 
   // ------------------------------------------------------------ the board
 
-  private startBoard(typeId: string, board: number, seed = randomSeed()): void {
+  /** Deal a board, or with no seed asked for, take up the game paused on it if there is one. */
+  private startBoard(typeId: string, board: number, seed?: number): void {
+    if (seed === undefined && this.resume({ typeId, board })) return;
+    seed ??= randomSeed();
     this.run = null;
     this.teaching.leaveLesson();
     this.typeId = typeId;
@@ -305,6 +324,7 @@ export class App {
     // `Game.create` applies the board's opening rule, so by the time it returns the automatic
     // first click has been made and the clock is already the player's problem.
     this.game = Game.create(cfg, seed, { settings: this.settings.gameplay });
+    this.keeper.begin();
     this.clock.begin();
     this.clock.arm(
       this.progress.boardRecord(typeId, board).bestTime,
@@ -318,7 +338,9 @@ export class App {
    * Begin a Full Run. The clock is started once here and never restarted, because a run's time
    * is the run's; it starts on board 1's opening, as a single board's does.
    */
-  private startFullRun(typeId: string, seed = randomSeed()): void {
+  private startFullRun(typeId: string, seed?: number): void {
+    if (seed === undefined && this.resume({ typeId, run: true })) return;
+    seed ??= randomSeed();
     this.teaching.leaveLesson();
     this.typeId = typeId;
     this.seed = seed;
@@ -326,6 +348,7 @@ export class App {
     this.boardIndex = this.run.boardIndex;
     this.resetBoardState();
     this.teaching.tutor.resetRun();
+    this.keeper.begin();
 
     // `FullRun.start` has already built board 1 and dealt its opening.
     this.clock.begin();
@@ -347,6 +370,7 @@ export class App {
     this.boardIndex = run.boardIndex;
     this.game = run.game;
     this.resetBoardState();
+    this.keeper.nextBoard();
     this.buildGameScreen();
     this.startClock();
   }
@@ -354,11 +378,54 @@ export class App {
   /** A school lesson's board, which `teaching` has begun: no records, and no best time. */
   private startLesson(game: Game): void {
     this.run = null;
+    this.keeper.release();
     this.resetBoardState();
     this.game = game;
     this.clock.begin();
     this.buildGameScreen();
     this.startClock();
+  }
+
+  /**
+   * Take up the game paused in a slot, exactly where it stood, the clock included; false when the
+   * slot is empty. A run paused on a cleared board goes on to the next, as Continue would have.
+   */
+  private resume(slot: Slot): boolean {
+    const taken = takeUp(slot);
+    if (taken === null) return false;
+    if (taken === 'changed') {
+      this.modal.ask({
+        title: 'CANNOT RESUME',
+        body: 'An update has changed this game since it was paused, so it cannot be taken up.',
+        confirmLabel: 'Start again',
+        cancelLabel: 'Back',
+        onConfirm: () =>
+          'run' in slot ? this.startFullRun(slot.typeId) : this.startBoard(slot.typeId, slot.board),
+      });
+      return true;
+    }
+    const { game, run, moves, paused } = taken;
+    this.teaching.leaveLesson();
+    this.typeId = slot.typeId;
+    this.run = run;
+    this.game = game;
+    this.seed = paused.seed;
+    this.boardIndex = run?.boardIndex ?? paused.board;
+    this.resetBoardState();
+    this.teaching.tutor.hints = paused.hints;
+    this.teaching.tutor.runHints = paused.runHints;
+    this.clock.resumeAt(paused.elapsedMs);
+    this.clock.timeLimit = paused.timeLimit;
+    this.clock.timeExpired = false;
+    this.keeper.begin(moves);
+    this.keeper.save();
+    if (run?.boardWon) {
+      this.advanceRun();
+    } else {
+      this.buildGameScreen();
+      this.startClock();
+    }
+    return true;
   }
 
   /** Per-board input state. Never touches the clock; a run outlives a board. */
@@ -389,6 +456,7 @@ export class App {
             this.startClock();
           }),
         leave: () => this.leaveGame(),
+        pause: () => this.pause(),
         pickTier: (tier) => this.actions.pickTier(tier),
         pencilEmpty: () => {
           this.mode.notesMode = true;
@@ -431,35 +499,48 @@ export class App {
   // ---------------------------------------------------------------- actions
 
   /**
-   * Back out to board select. A run cannot be resumed, so leaving one asks first; a single board
-   * is replayable at will and needs no guard.
+   * Back out to board select. A game with anything in it asks first whether to pause it or
+   * abandon it; a board with no move made yet has nothing to lose and needs no guard.
    */
   private leaveGame(): void {
     if (this.teaching.lesson) return this.teaching.school();
-    if (this.run && this.run.status === 'playing') {
-      const run = this.run;
-      this.modal.ask({
-        title: 'ABANDON RUN?',
-        body:
-          `${this.typeName()} full run, board ${this.boardIndex} of ${run.boardCount}, ` +
-          `HP ${run.hp}/${run.maxHp}. A run cannot be resumed.`,
-        confirmLabel: 'Abandon run',
-        cancelLabel: 'Keep playing',
-        onConfirm: () => {
+    const run = this.run;
+    const playing = run ? run.status === 'playing' : this.game?.status === 'playing';
+    if (!playing || !(run || this.keeper.holding)) return this.showBoards(this.typeId);
+    this.modal.ask({
+      title: run ? 'LEAVE RUN?' : `LEAVE BOARD ${this.boardIndex}?`,
+      body:
+        (run
+          ? `${this.typeName()} full run, board ${this.boardIndex} of ${run.boardCount}, ` +
+            `HP ${run.hp}/${run.maxHp}. `
+          : '') + 'Pause it to carry on later from exactly here, or abandon it.',
+      confirmLabel: run ? 'Pause run' : 'Pause',
+      cancelLabel: 'Keep playing',
+      onConfirm: () => this.pause(),
+      alternate: {
+        label: run ? 'Abandon run' : 'Abandon',
+        onChoose: () => {
           // An abandoned run is neither won nor lost, but it did reach a board.
-          this.progress.recordRun(this.typeId, {
-            completed: false,
-            reachedBoard: this.boardIndex,
-            hp: run.hp,
-            seconds: this.clock.elapsedSeconds(),
-          });
-          this.run = null;
+          if (run) {
+            this.progress.recordRun(this.typeId, {
+              completed: false,
+              reachedBoard: this.boardIndex,
+              hp: run.hp,
+              seconds: this.clock.elapsedSeconds(),
+            });
+          }
+          this.keeper.end();
           this.showBoards(this.typeId);
         },
-      });
-      return;
-    }
-    this.run = null;
+      },
+    });
+  }
+
+  /** Pause: the game is already kept, so this writes the clock down and leaves it. */
+  private pause(): void {
+    if (this.teaching.lesson) return;
+    this.keeper.save();
+    this.keeper.release();
     this.showBoards(this.typeId);
   }
 
@@ -509,6 +590,7 @@ export class App {
   private explainBoard(): void {
     if (this.game && this.els?.whyBtn) {
       this.teaching.tutor.press(this.game, this.view?.hoveredCell ?? null);
+      this.keeper.save();
     }
     this.refresh();
   }
@@ -534,6 +616,8 @@ export class App {
 
   /** The board on screen has been won or lost (game/ending.ts). */
   private finish(): void {
+    // A game that is over is not kept; a run waiting on Continue still is.
+    if (this.run?.status !== 'playing') this.keeper.end();
     this.ending.finish();
   }
 }

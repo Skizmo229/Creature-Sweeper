@@ -9,6 +9,7 @@ import { LADDER_CATEGORIES, type LadderCategory } from '../../engine/config.js';
 import { easierThanDefault } from '../../engine/settings.js';
 import { el } from '../dom.js';
 import { ladders } from '../ladders.js';
+import { pausedGames } from '../paused.js';
 import type { Progress } from '../progress.js';
 import type { Settings } from '../settings.js';
 import { themeFor } from '../looks.js';
@@ -119,6 +120,9 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
         meta.textContent = `${boards} cleared`;
       }
     }
+    // A game waiting on this ladder is worth finding from here, whatever else the card says.
+    const paused = unlocked ? pausedGames.countOn(type.id) : 0;
+    if (paused > 0) meta.textContent += ` · ${paused} paused`;
     card.append(meta);
     card.append(el('span', 'type-axis', type.axis));
     card.addEventListener('click', () => a.pickType(type.id));
