@@ -590,15 +590,16 @@ describe('the magic ladders', () => {
    * enough to matter here that is worth knowing about.
    */
   it('makes answering every forced guess cost a real share of a board', () => {
-    // Measured forced guesses a board, at board 10, per ladder.
+    // Forced guesses a board at board 10, the honest player spell-less, 40 seeds, measured
+    // 28 September 2026 (docs/tuning.md).
     const stuckAtTen: Record<string, number> = {
       arcane: 5.0,
       oracle: 7.4,
-      diamond: 1.5,
-      donut: 7.0,
-      cross: 2.5,
+      diamond: 3.7,
+      donut: 6.9,
+      cross: 4.2,
       cave: 5.5,
-      dungeon: 3.9,
+      dungeon: 4.7,
     };
     for (const type of magicTypes) {
       const stuck = stuckAtTen[type.id];
@@ -610,10 +611,6 @@ describe('the magic ladders', () => {
         Math.floor(board.empty / MANA_PER_EMPTY_CELLS);
       const answerEverything = stuck * SPELLS.reveal.cost;
 
-      // DIAMOND is exempt and that is a difficulty fact, not a pricing one: it
-      // corners a deductive player 1.5 times a board, so there is barely
-      // anything to buy however it is priced.
-      if (type.id === 'diamond') continue;
       expect(
         answerEverything / pool,
         `${type.id}#10 can buy its way out of everything`,
