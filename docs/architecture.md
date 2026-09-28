@@ -45,6 +45,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   fight.ts        a fight: Exercise's borrowed level, the damage, the kill's EXP, won or lost
   game.ts         the state machine: open, mark, note, sweep, cast, forfeit
   run.ts          Full Run: ten boards, one HP pool
+  replay.ts       a board as the moves made on it: replaying them, and a board's fingerprint
   settings.ts     the gameplay dials, their defaults and directions
   config.ts       reads ladders.json rows into BoardConfig; has each placement rule check its row
 src/ui/         the prototype
