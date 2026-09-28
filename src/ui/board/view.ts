@@ -77,6 +77,8 @@ export interface BoardDisplay {
   reachShading: boolean;
   /** The colour of a mark, a pencil note (dimmed) and a wrapped board's seam. */
   markColor: string;
+  /** How long a touch holds a cell before it does what a right-click does, in ms; 0 for never. */
+  longPressMs: number;
   /** Whether every beaten creature shows the number under it, not only the hovered one. */
   beatenNumbers: boolean;
   /** The colour a creature of each tier is drawn in, and the halo of tiers 6 to 9. */
@@ -94,6 +96,7 @@ export const DEFAULT_DISPLAY: BoardDisplay = {
   digitScale: 1,
   reachShading: false,
   markColor: MARK_COLOR,
+  longPressMs: 500,
   beatenNumbers: false,
   tierColors: DEFAULT_TIERS,
 };
@@ -345,6 +348,9 @@ export class BoardView implements InputHost {
   }
   get canPan(): boolean {
     return this.canPanValue;
+  }
+  get longPressMs(): number {
+    return this.display.longPressMs;
   }
   get hovered(): Cell | null {
     return this.hoveredCellValue;

@@ -93,6 +93,7 @@ export function makeContext(
     digitScale: p.digitSize,
     reachShading: p.reachShading,
     markColor: settings.markColor(typeId),
+    longPressMs: p.longPress,
     // The examples show creatures: where one needs a beaten creature's number, it holds the cursor
     // there (decision 0034), so the game screen's toggle does not reach them.
     beatenNumbers: false,

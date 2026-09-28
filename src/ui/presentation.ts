@@ -206,6 +206,15 @@ export const MIN_DIGIT_SIZE = 0.7;
 export const MAX_DIGIT_SIZE = 1.4;
 export const DEFAULT_DIGIT_SIZE = 1;
 
+/**
+ * How long a finger holds a covered cell before the hold does what a right-click does, in
+ * milliseconds; 0 for never. A touch screen has no right-click, so without this the LV buttons
+ * are its only way to mark. Half a second is long enough that a slow tap still opens.
+ */
+export const MIN_LONG_PRESS = 0;
+export const MAX_LONG_PRESS = 1000;
+export const DEFAULT_LONG_PRESS = 500;
+
 /** Cell sizes the zoom ceiling can be set to, in CSS pixels. */
 export const MIN_MAX_ZOOM = 24;
 export const MAX_MAX_ZOOM = 128;
@@ -296,6 +305,8 @@ export interface PresentationSettings {
   readonly clock: ClockStyle;
   /** What a right-click on a covered cell does (`RightClick`). */
   readonly rightClick: RightClick;
+  /** How long a touch holds a cell before it does what a right-click does, in ms; 0 for never. */
+  readonly longPress: number;
   /**
    * Whether the line under the board says what a click does right now. Off, the line is kept for
    * the tutor and a lesson, which speak there, and hidden otherwise: once the controls are known
@@ -371,6 +382,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   menuStrip: 'left',
   clock: 'seconds',
   rightClick: 'cycleUp',
+  longPress: DEFAULT_LONG_PRESS,
   hintLine: true,
   maxZoom: DEFAULT_MAX_ZOOM,
   textSize: DEFAULT_TEXT_SIZE,
@@ -489,6 +501,7 @@ export function readPresentation(raw: unknown): PresentationSettings {
     // A save from before this setting reads as seconds, which the clock always counted in.
     clock: oneOf(p.clock, CLOCK_STYLES, 'seconds'),
     rightClick: oneOf(p.rightClick, RIGHT_CLICKS, 'cycleUp'),
+    longPress: Math.round(num(p.longPress, MIN_LONG_PRESS, MAX_LONG_PRESS, DEFAULT_LONG_PRESS)),
     hintLine: typeof p.hintLine === 'boolean' ? p.hintLine : true,
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
     // A save from before this setting has no field, and reads as the size the

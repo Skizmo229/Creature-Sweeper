@@ -9,11 +9,14 @@ import { clockText } from '../game/hud.js';
 import { sampleBoard, samplePin } from '../preview.js';
 import {
   type ClockStyle,
+  DEFAULT_LONG_PRESS,
   DEFAULT_PREVIEW_SIZE,
   DEFAULT_TEXT_SIZE,
+  MAX_LONG_PRESS,
   MAX_PREVIEW_SIZE,
   MAX_TEXT_SIZE,
   type MenuStrip,
+  MIN_LONG_PRESS,
   MIN_PREVIEW_SIZE,
   MIN_TEXT_SIZE,
   OFF,
@@ -31,6 +34,22 @@ export function interfaceSection(ctx: ScreenContext): void {
   menuStripRow(ctx, host);
   clockRow(ctx, host);
   rightClickRow(ctx, host);
+  row(
+    host,
+    'Long press to mark',
+    slider(
+      MIN_LONG_PRESS,
+      MAX_LONG_PRESS,
+      50,
+      ctx.p.longPress,
+      (v) => (v === 0 ? 'Off' : `${Math.round(v)} ms`),
+      (v) => ctx.settings.setPresentation({ longPress: Math.round(v) }),
+      undefined,
+      DEFAULT_LONG_PRESS,
+    ),
+    'On a touch screen, how long a finger holds a covered cell before the hold does what a ' +
+      'right-click does. Off, the LV buttons are the only way to mark by touch.',
+  );
   row(
     host,
     'Hint line',

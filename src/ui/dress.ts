@@ -38,6 +38,7 @@ export function boardDisplayFor(settings: Settings, typeId: string): BoardDispla
     digitScale: p.digitSize,
     reachShading: p.reachShading,
     markColor: settings.markColor(typeId),
+    longPressMs: p.longPress,
     beatenNumbers: p.beatenNumbers,
     tierColors: settings.tierColors(typeId),
   };
