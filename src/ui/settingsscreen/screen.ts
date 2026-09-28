@@ -14,6 +14,7 @@ import { sampleBoard } from '../preview.js';
 import { type SettingsScreenOptions, makeContext, previewCell, typeName } from './context.js';
 import { clearEffectRow, fightRimRow, soundRow, stopSettingsDemo } from './effects.js';
 import { gameplaySection } from './gameplay.js';
+import { interfaceSection } from './interface.js';
 import {
   boardFontRow,
   highlightColorRow,
@@ -21,14 +22,12 @@ import {
   iconsRow,
   interfaceFontRow,
   paletteRow,
-  previewSizeRow,
   strikeRow,
-  menuStripRow,
-  textSizeRow,
   tierColorsRow,
   zoomRow,
 } from './look.js';
 import { CHIP_CELL } from './render.js';
+import { soundSection } from './sound.js';
 import { section } from './widgets.js';
 
 export type { SettingsScreenOptions } from './context.js';
@@ -83,9 +82,6 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   paletteRow(ctx, look);
   boardFontRow(ctx, look);
   interfaceFontRow(ctx, look);
-  textSizeRow(ctx, look);
-  previewSizeRow(ctx, look);
-  menuStripRow(ctx, look);
   highlightRow(ctx, look);
   highlightColorRow(ctx, look);
   strikeRow(ctx, look);
@@ -94,6 +90,8 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   fightRimRow(ctx, look);
   clearEffectRow(ctx, look);
 
+  interfaceSection(ctx);
+  soundSection(ctx);
   gameplaySection(ctx);
 
   const tools = el('div', 'tools');

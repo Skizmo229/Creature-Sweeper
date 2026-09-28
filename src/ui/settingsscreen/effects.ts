@@ -9,14 +9,14 @@ import type { GameEvent } from '../../engine/types.js';
 import { el } from '../dom.js';
 import { flashRim } from '../game/flash.js';
 import { PREVIEW_SEED, clearedBoard } from '../preview.js';
-import { DEFAULT, type FightRim, MAX_SFX_VOLUME, OFF } from '../presentation.js';
+import { DEFAULT, type FightRim, OFF } from '../presentation.js';
 import { SFX_NAMES, VICTORY_NAMES } from '../theme.js';
 import type { SfxPackId, VictoryId } from '../looktypes.js';
 import { playVictory } from '../victory/play.js';
 import { type ScreenContext, typeName } from './context.js';
 import { renderPreview } from './render.js';
 import { openSoundCheck } from './soundcheck.js';
-import { type Choice, gallery, row, showSliderValue, slider, toggle, wideRow } from './widgets.js';
+import { type Choice, gallery, wideRow } from './widgets.js';
 
 /**
  * The board-clear demo currently running, if any. Module-level because a screen rebuild throws
@@ -69,37 +69,6 @@ export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
     'Sound effects',
     'Picking a pack plays it. Sound check plays any sound from any pack and assigns keys.',
     stack,
-  );
-  const percent = (v: number): string => `${Math.round(v * 100)}%`;
-  const volume = slider(
-    0,
-    MAX_SFX_VOLUME,
-    0.05,
-    p.sfxVolume,
-    percent,
-    (v) => settings.setPresentation({ sfxVolume: v }),
-    // Heard on release rather than a sound per step of the drag.
-    () => ctx.onPreview('levelup'),
-  );
-  // The speaker's own slider sets the same volume, and can while this screen is open.
-  const unhook = settings.onChange(() => {
-    if (volume.isConnected) showSliderValue(volume, settings.presentation.sfxVolume, percent);
-    else unhook();
-  });
-  row(
-    host,
-    'Sound effects volume',
-    volume,
-    'How loud every sound in play is, up to three times usual; past 100% the loudest are held ' +
-      'back. The speaker in the corner shows this slider too. The sound check has its own volume.',
-  );
-  // Updates only the store, like the sound gallery: nothing on the screen is drawn in terms of it.
-  row(
-    host,
-    'Custom pitches in play',
-    toggle(p.customPitches, (v) => settings.setPresentation({ customPitches: v })),
-    'Sounds retuned in the sound check play at their new pitch in games too. Off, they play at ' +
-      'their own pitch and the tuning is kept.',
   );
 }
 

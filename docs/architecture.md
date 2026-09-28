@@ -78,7 +78,9 @@ src/ui/         the game in the browser
   settings.ts     the settings store, and what each presentation setting resolves to on a ladder
   telemetry.ts    the play statistics: what each board cost, their code, and their reading (DOM-free)
   telemetrystore.ts  the play statistics in storage, their own key, never in the save code
-  settingsscreen/  the settings form: context, widgets, render, look, effects, gameplay, screen;
+  settingsscreen/  the settings form: context, widgets, render, screen, and its sections: look.ts
+                  and effects.ts (the Presentation rows: what is drawn, and what plays itself),
+                  interface.ts (the page around the board), sound.ts, gameplay.ts (the dials);
                   symbols.ts is the custom creature icon's window of symbols, colormixer.ts the
                   sliders that mix a colour from red, green and blue, customcolor.ts the custom
                   highlight colour's window of them, customtiers.ts the custom creature colours'
