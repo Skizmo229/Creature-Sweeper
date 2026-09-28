@@ -129,13 +129,13 @@ function buildHud(
   mk('t', 'right');
   // Spelled out rather than a gear glyph: the font is a player setting (decision 0021).
   const gear = el('button', 'ghost small', 'Settings');
-  gear.title = 'Settings — the board is waiting exactly where you left it.';
+  gear.title = 'Settings. The board waits.';
   gear.addEventListener('click', a.openSettings);
   hudEl.append(gear);
   // A lesson is not a game to come back to; it is started again from the school.
   if (pausable) {
     const pause = el('button', 'ghost small', 'Pause');
-    pause.title = 'Pause [P]: the clock stops, and the board waits on the board list.';
+    pause.title = 'Pause [P]: the clock stops; resume from the board list.';
     pause.addEventListener('click', a.pause);
     hudEl.append(pause);
   }
@@ -195,7 +195,7 @@ function buildPalette(
   // Tier 0 is a candidate only the pencil can hold: "this might just be ground" is a real
   // hypothesis on a board where most cells are. Hidden on SUDOKU, where no covered cell is empty.
   const emptyNoteBtn = el('button', 'counter note-empty', '0\nempty');
-  emptyNoteBtn.title = 'Pencil "might be empty ground" — tier 0, no creature at all.';
+  emptyNoteBtn.title = 'Pencil "might be empty ground".';
   emptyNoteBtn.addEventListener('click', a.pencilEmpty);
   palette.append(emptyNoteBtn);
 
@@ -209,16 +209,14 @@ function buildPalette(
   let sweepMarkBtn: HTMLButtonElement | null = null;
   if (game.hasSweep) {
     sweepSafeBtn = el('button', 'sweep', 'Sweep');
-    sweepSafeBtn.title = 'Open only what is proven safe at your level. Can never cost HP.';
+    sweepSafeBtn.title = 'Opens what is proven safe. Never costs HP.';
     sweepSafeBtn.addEventListener('click', () => a.sweep(false));
     palette.append(sweepSafeBtn);
 
     // Where a mark is a creature's route rather than a claim, there is nothing for it to trust.
     if (game.marksAreClaims) {
       sweepMarkBtn = el('button', 'sweep assist', 'Sweep + marks');
-      sweepMarkBtn.title =
-        'Also trust your marks as correct tier claims. ' +
-        'Reaches further, but a wrong mark can cost HP.';
+      sweepMarkBtn.title = 'Also trusts your marks. Reaches further; a wrong mark can cost HP.';
       sweepMarkBtn.addEventListener('click', () => a.sweep(true));
       palette.append(sweepMarkBtn);
     }
@@ -226,7 +224,7 @@ function buildPalette(
   let waitBtn: HTMLButtonElement | null = null;
   if (game.patrols) {
     waitBtn = el('button', 'sweep wait', '[W]ait');
-    waitBtn.title = 'Let the creatures take a step without doing anything else. Costs nothing.';
+    waitBtn.title = 'The creatures take a step. Costs nothing.';
     waitBtn.addEventListener('click', a.wait);
     palette.append(waitBtn);
   }
@@ -236,8 +234,8 @@ function buildPalette(
   if (tutor) {
     whyBtn = el('button', 'sweep why', 'Why? [H]');
     whyBtn.title =
-      'Point at the next move that can be proven, and say why. Opens nothing; a board with a ' +
-      'hint on it sets no best time.';
+      'Points at the next provable move and says why. Opens nothing; a hinted board sets no ' +
+      'best time.';
     whyBtn.addEventListener('click', a.explain);
     palette.append(whyBtn);
   }
