@@ -267,7 +267,7 @@ const censusRing: Trick = {
   },
 };
 
-// An Augur names the strongest tier around a number, so nothing hidden there is above it: at or
+// An Augur names the strongest hidden tier around a number, so nothing there is above it: at or
 // below the level the ring is free, and above it the pencil loses every tier past it.
 const augurCap: Trick = {
   grade: 1,

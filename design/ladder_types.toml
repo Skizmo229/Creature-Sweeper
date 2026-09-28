@@ -936,7 +936,7 @@ archetype = "descending"
 axis = "Magic that tells, never shows"
 blurb = """\
   ARCANE's boards with two spells that only answer: Census counts the creatures behind a number, \
-  Augur names the strongest. No spell ever opens a cell for you."""
+  Augur names the strongest hidden one. No spell ever opens a cell for you."""
 size = [[30, 16], [30, 16], [30, 16], [32, 17], [32, 17], [34, 18], [34, 18], [36, 19], [36, 19], [38, 20]]
 tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
 density = [0.265, 0.274, 0.283, 0.292, 0.301, 0.31, 0.319, 0.328, 0.337, 0.345]

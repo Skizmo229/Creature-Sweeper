@@ -335,17 +335,19 @@ on BLIND, so the whole value of the spells is the guesses they replace (decision
 ARCANE's boards and schedule with Census and Augur, the two spells that only answer questions:
 neither opens a cell nor names one, so every guess stays the player's. Augur is Echo from the
 design reference, built under a name whose letter is free (decision 0006): the strongest tier among
-a cell's neighbours, open ones included, stored in `Cell.augur` and drawn as a cream badge in the
-top-right corner, the mirror of Census's. Sweep reads it as a proof (`provenByAugur`: at or below
+a cell's covered neighbours (decision 0062), stored in `Cell.augur` and drawn as a cream badge in
+the top-right corner, the mirror of Census's. Sweep reads it as a proof (`provenByAugur`: at or below
 your level the ring is free), the graded player's `augur-cap` trick frees the ring or narrows the
 pencil to the tiers at or below it, and the honest player caps its guesses with it. What would
 silently break it: a proof that read the ceiling as a bound on the hidden *sum*, which it is not,
-or an Augur that skipped open neighbours, which would make it a different fact from the one the
-blurb states.
+or an answer that counted open neighbours again, which would bound nothing hidden and make it a
+different fact from the one the blurb states.
 
 Measured, the answer is rarely the one that frees a ring: the graded player, casting only where a
 ring could be all at or below its level, found it so in 1 of 67 casts (boards 4 to 10, 30 seeds,
 27 September 2026), so the spell's value as played is nil, exactly as Census's is, and its price is
-Echo's paper 6 on the tripled scale (decision 0055). Ships at ARCANE's schedule, at the density
+Echo's paper 6 on the tripled scale (decision 0055). Leaving open neighbours out of the answer
+(decision 0062) changed none of 181 casts: a beaten creature is almost always within the level, so
+it never sets an answer above it. Ships at ARCANE's schedule, at the density
 ceiling: a grade-2 graded player spending mana clears 100% of both ladders, so density cannot move
 it and the lock is the lever if it should bite (decision 0056).

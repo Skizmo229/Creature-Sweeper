@@ -73,7 +73,7 @@ export const TRICK_TEXT: Readonly<Record<TrickId, TrickText>> = {
     name: 'The strongest one',
     section: 3,
     rule:
-      'An Augur names the strongest creature around a number: at or below your level the whole ' +
+      'An Augur names the strongest hidden creature around a number: at or below your level the ' +
       'ring is free, and above it no cell can be more.',
   },
   counters: {

@@ -4,6 +4,7 @@
  * where a Census or an Augur is worth aiming. `honest.ts` plays with it.
  */
 
+import { strongestHidden } from '../engine/cast.js';
 import type { Game } from '../engine/game.js';
 import type { Cell } from '../engine/types.js';
 import { ringIsFree } from '../engine/placement/pairs.js';
@@ -508,7 +509,7 @@ export function augurOracle(game: Game, guess: Cell): Cell | null {
     const ns = game.neighboursOf(cell);
     if (!ns.some((n) => !n.open && n.mark === 0)) continue;
 
-    cell.augur = Math.max(0, ...ns.map((n) => n.tier));
+    cell.augur = strongestHidden(ns);
     const unlocked = safeToOpen(game, allConstraints(game)).some((c) => !c.open);
     cell.augur = null;
     if (unlocked) return cell;
