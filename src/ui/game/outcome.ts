@@ -27,6 +27,14 @@ function modifiedNote(gameplay: GameplaySettings): HTMLElement {
   );
 }
 
+/**
+ * How many hints a clear took. Said on the card because this is where the missing best time would
+ * look like a bug; the tile says what the clear left behind instead (decision 0065).
+ */
+function hintsNote(hints: number): HTMLElement {
+  return el('p', 'overlay-note', `Cleared with ${hints} hint${hints === 1 ? '' : 's'}.`);
+}
+
 export interface BoardOutcome {
   game: Game;
   typeId: string;
@@ -103,12 +111,7 @@ export function buildBoardOutcome(o: BoardOutcome): HTMLElement {
   // Said here rather than only in Settings, because this is the moment the absence of a new best
   // time would otherwise look like a bug.
   if (won && !o.recorded) card.append(modifiedNote(o.gameplay));
-  // Said here for the same reason: this is where the missing best time would look like a bug.
-  if (won && o.recorded && o.hints > 0) {
-    card.append(
-      el('p', 'overlay-note', `Cleared with ${o.hints} hint${o.hints === 1 ? '' : 's'}.`),
-    );
-  }
+  if (won && o.recorded && o.hints > 0) card.append(hintsNote(o.hints));
   if (o.unlocked !== null) {
     card.append(el('p', 'overlay-note', `Board ${o.unlocked} unlocked.`));
   } else if (won && o.boardIndex >= o.ladderLength) {
@@ -147,6 +150,9 @@ export interface RunOutcome {
   boardIndex: number;
   seconds: number;
   recorded: boolean;
+  /** Times the tutor was asked on this board, and over the run. A hinted run sets no best time. */
+  hints: number;
+  runHints: number;
   gameplay: GameplaySettings;
   onContinue(): void;
   onNewRun(): void;
@@ -190,6 +196,7 @@ export function buildRunOutcome(o: RunOutcome): HTMLElement {
             : `Already at full HP, so the +${run.healPerBoard} heal is wasted.`,
       ),
     );
+    if (o.recorded && o.hints > 0) card.append(hintsNote(o.hints));
     card.append(el('p', 'overlay-note', 'Level, EXP and mana reset next board. Only HP carries.'));
   } else if (won) {
     const perfect = game.hp === run.maxHp;
@@ -210,6 +217,7 @@ export function buildRunOutcome(o: RunOutcome): HTMLElement {
           : `${run.damageTaken} HP lost across the ladder.`,
       ),
     );
+    if (o.recorded && o.runHints > 0) card.append(hintsNote(o.runHints));
   } else {
     card.append(el('h2', undefined, 'RUN OVER'));
     card.append(
