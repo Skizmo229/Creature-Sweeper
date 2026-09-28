@@ -8,7 +8,9 @@ import type { Game } from '../../engine/game.js';
 import type { Move } from '../../engine/replay.js';
 import { SPELLS, type SpellId, spellKey } from '../../engine/spells.js';
 import type { Cell, GameEvent } from '../../engine/types.js';
+import { offersBeatenNumbers } from '../board/paint.js';
 import type { BoardView } from '../board/view.js';
+import type { Settings } from '../settings.js';
 import type { Sfx } from '../sfx.js';
 import type { EntryMode } from './mode.js';
 
@@ -21,6 +23,8 @@ export interface BoardActionsHost {
   view(): BoardView | null;
   readonly mode: EntryMode;
   readonly sfx: Sfx;
+  /** Where the Beaten toggle is kept, as the speaker keeps the mute. */
+  readonly settings: Settings;
   /** Make a move on the board on screen: the one door every action of the player's goes through. */
   move(move: Move): GameEvent[];
   apply(events: GameEvent[]): void;
@@ -112,6 +116,17 @@ export class BoardActions {
     this.h.refresh();
   }
 
+  /**
+   * The Beaten toggle: every beaten creature shows its number, or its creature again (decision
+   * 0067). A way of looking and not a move, so it is kept in the settings, not the game.
+   */
+  toggleBeatenNumbers(): void {
+    const game = this.h.game();
+    if (!game || !offersBeatenNumbers(game)) return;
+    this.h.settings.setPresentation({ beatenNumbers: !this.h.settings.presentation.beatenNumbers });
+    this.h.refresh();
+  }
+
   doSweep(useMarks: boolean): void {
     const game = this.h.game();
     if (!game || game.status !== 'playing') return;
@@ -155,6 +170,13 @@ export class BoardActions {
     if (e.key === 'Escape') {
       if (this.h.mode.escape()) this.h.refresh();
       else this.h.leaveGame();
+      return;
+    }
+    // Looking, not a move, so it works on a board that has ended; left to the browser with a
+    // modifier held, where Ctrl+U and Cmd+U mean something of their own.
+    if (e.key.toLowerCase() === 'u' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      this.toggleBeatenNumbers();
       return;
     }
     if (game.status !== 'playing') return;

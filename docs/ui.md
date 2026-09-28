@@ -62,8 +62,10 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   work because `tracePath` insets each cell by a pixel. Silhouette adjacency is deliberately not
   `neighboursOf`, which wraps; the seam is drawn dashed by `drawSeams`, per present cell.
 - Absent cells and revealed empty floor must look different.
-- A beaten creature shows its number while hovered (not on PAIRS or DOMINOES, by request). Its
-  glyph is dimmed rather than washed; the strike-through is optional.
+- A beaten creature shows its number while hovered, and every one does while the game screen's
+  Beaten toggle is on (`U`; decision 0067), which is how a touch screen sees them. Neither happens
+  on PAIRS or DOMINOES, by request, nor on a search board, where nothing is beaten. Its glyph is
+  dimmed rather than washed; the strike-through is optional.
 - Sudoku boards get a translucent wash on alternate boxes and a box rule about twice a cell edge,
   drawn in one pass; givens are gold (`GIVEN_COLOR`), player marks green. Pencil notes wear a dark
   outline because the dimmed green alone measured 1.22:1 on EASY.
@@ -84,13 +86,14 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   annotation uses: the numbers a proof read are ringed, the covered cells they see lit faintly, a
   safe cell washed in the mark green, a named cell ringed in its tier's colour with the tier
   written on it, a narrowed cell ringed dashed with its candidates (or "≤n" for a ceiling). A
-  beaten creature a proof read has its number written on it, since hover is the only other way to
-  see it. It opens nothing and trusts no mark. Each press shows the next lesson; any move on the
-  board dismisses it; the dev handle's `sync` dismisses it too. Every press is a hint: the clear
-  card says how many, and a hinted board sets no best time (decision 0048); until one is set, its
-  tile shows the fewest hints a clear took instead (decision 0065). A Full Run's cards say it too:
-  a board of the run its own count, the completed run the run's. The button is a
-  presentation setting (Gameplay section, "Tutor"), because it changes no rule and no record.
+  beaten creature a proof read has its number written on it unless the board is already showing
+  it, hovered or with the Beaten toggle on. It opens nothing and trusts no mark. Each press shows
+  the next lesson; any move on the board dismisses it; the dev handle's `sync` dismisses it too.
+  Every press is a hint: the clear card says how many, and a hinted board sets no best time
+  (decision 0048); until one is set, its tile shows the fewest hints a clear took instead (decision
+  0065). A Full Run's cards say it too: a board of the run its own count, the completed run the
+  run's. The button is a presentation setting (Gameplay section, "Tutor"), because it changes no
+  rule and no record.
 - The field guide (`src/ui/screens/guide.ts`, its words in `src/ui/guide/entries.ts`;
   docs/teaching-plan.md, Part 3) is the catalogue in the game, for reading: an overlay that scrolls
   inside itself with its head and Close pinned, a section per catalogue section and a row of jumps
@@ -135,8 +138,9 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
 - The standard example, which the icon, palette, board font and strike galleries draw, shows
   every digit from 0 to 9 in the ink and every colour a palette paints on a board (decision 0034).
   Its thumbnails hold the cursor over a beaten creature, highlight off, because hover is the only
-  way a board draws `hot`. It is dealt by rejection from the fixed seed until a layout shows all
-  ten digits, so a change to the generator moves it rather than breaking it.
+  way an example draws `hot` (the Beaten toggle never reaches the examples). It is dealt by
+  rejection from the fixed seed until a layout shows all ten digits, so a change to the generator
+  moves it rather than breaking it.
 - Icons, palette and the two fonts show two tiles, Default and User choice; the full gallery opens
   in a picker inside the settings element, which catches Escape in the capture phase.
 - The palette and font windows can be sorted, by a row of buttons under the title (decision

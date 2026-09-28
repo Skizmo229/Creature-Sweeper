@@ -110,6 +110,7 @@ describe('the board', () => {
     highlight: 'neighbours',
     highlightColor,
     strikeDefeated: true,
+    beatenNumbers: false,
     tierColors: DEFAULT_TIERS,
   });
   // The example's lit cell is interior on the square grid: itself and its eight neighbours.

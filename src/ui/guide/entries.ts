@@ -220,8 +220,8 @@ export const GUIDE: readonly GuideSection[] = [
             'covered cell is free; 0, they are all empty ground. At level 2:',
           drawing('residual-ring'),
           'Each 5 sees a beaten 3, so 2 is hidden over the two covered cells, and both are free. ' +
-            'Hover a beaten creature to see its own number, except on PAIRS and DOMINOES, where ' +
-            'it is hidden.',
+            'Hover a beaten creature to see its own number, or press U to see them all, except ' +
+            'on PAIRS and DOMINOES, where it is hidden.',
         ],
       },
       {

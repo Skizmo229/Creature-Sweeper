@@ -30,7 +30,14 @@ import {
   contentBox,
   squareCorners,
 } from './geometry.js';
-import { type Paint, TILE_INSET, drawCovered, drawOpen, tracePath } from './paint.js';
+import {
+  type Paint,
+  TILE_INSET,
+  drawCovered,
+  drawOpen,
+  showsBeatenNumber,
+  tracePath,
+} from './paint.js';
 
 /**
  * Repeat the board's far edge just beyond each joined edge, dimmed, so a wrapped board reads as
@@ -430,10 +437,11 @@ export function drawLesson(p: Paint, lesson: Lesson): void {
     tracePath(p, cx, cy, 2);
     ctx.stroke();
   }
-  // A beaten creature's number shows only while hovered, and a proof that read one has to be
-  // checkable without the cursor leaving the lesson, so the number is written on it for now.
+  // A proof that read a beaten creature's number has to be checkable without the cursor on it, so
+  // the number is written on the creature while the lesson shows, unless the board already shows
+  // it there (hovered, or with the Beaten toggle on; decision 0067).
   for (const c of lesson.why.constraints) {
-    if (c.cell.tier > 0) {
+    if (c.cell.tier > 0 && !showsBeatenNumber(p, c.cell)) {
       const { cx, cy } = centreOf(layout, c.cell.x, c.cell.y);
       writeOnCell(p, cx, cy, String(c.cell.num), TUTOR_COLOR, 0.5);
     }

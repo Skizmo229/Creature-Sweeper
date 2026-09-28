@@ -94,16 +94,17 @@ In dev, `window.cs` exposes the running app (`cs.play('normal', 3)`, `cs.current
 ## Playing
 
 **Controls:** click to open · hover a beaten creature to see the number under it (not on PAIRS or
-DOMINOES) · right-click or a LV button to mark · number keys act on the cell under the cursor,
-marking or pencilling according to the Entry mode · `N` switches that mode · `Shift`+digit does
-the other one for that keystroke · `S` sweeps what is proven safe (no Sweep on EASY or PATROL) ·
-`D` or `Shift`+`S` also trusts your marks · `H` asks the tutor for the next provable move and
-why · `G` opens the field guide there · a spell's bracketed letter casts it (`A`ugur, `C`ensus,
-`R`eveal, `B`eacon, `E`xercise, offered cheapest first) · `W` waits a move on PATROL, for a second
-on the clock · scroll or `+`/`-` to zoom, drag to pan a board bigger than the screen, `F` to fit
-it again · `P` pauses: the board, or the Full Run, waits on its tile with the clock stopped, and a
-click on the tile carries on · `Enter` goes on to a lesson's next step · `Esc` backs out, asking
-first whether to pause or abandon a game you have made a move in.
+DOMINOES) · `U`, or the **Beaten** button beside Entry, shows every one at once, which is how a
+touch screen sees them · right-click or a LV button to mark · number keys act on the cell under
+the cursor, marking or pencilling according to the Entry mode · `N` switches that mode ·
+`Shift`+digit does the other one for that keystroke · `S` sweeps what is proven safe (no Sweep on
+EASY or PATROL) · `D` or `Shift`+`S` also trusts your marks · `H` asks the tutor for the next
+provable move and why · `G` opens the field guide there · a spell's bracketed letter casts it
+(`A`ugur, `C`ensus, `R`eveal, `B`eacon, `E`xercise, offered cheapest first) · `W` waits a move on
+PATROL, for a second on the clock · scroll or `+`/`-` to zoom, drag to pan a board bigger than the
+screen, `F` to fit it again · `P` pauses: the board, or the Full Run, waits on its tile with the
+clock stopped, and a click on the tile carries on · `Enter` goes on to a lesson's next step ·
+`Esc` backs out, asking first whether to pause or abandon a game you have made a move in.
 
 **Settings** are two separate things. The presentation half (creature icons and colours, board
 palette, board font, interface font, sound pack, volume and the sound check, glow after a fight,

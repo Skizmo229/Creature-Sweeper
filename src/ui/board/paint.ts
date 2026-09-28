@@ -37,8 +37,37 @@ export interface Paint {
   readonly strikeDefeated: boolean;
   /** The cell under the cursor (or pinned), if any. */
   readonly hovered: Cell | null;
+  /** Whether every beaten creature shows its number, as the hovered one does (decision 0067). */
+  readonly beatenNumbers: boolean;
   /** True while a board-clear effect has taken the creature glyphs over. */
   readonly creaturesHidden: boolean;
+}
+
+/**
+ * Whether a board has beaten creatures whose numbers are the player's to read: not on a pairing
+ * board, whose rule hides them (decision 0012), nor on a search board, where nothing is fought
+ * before the win uncovers everything. The one question the hover, the toggle and its button ask.
+ */
+export function offersBeatenNumbers(game: Game): boolean {
+  return !game.config.search && placementRule(game.config.placement).display.hoverShowsNumber;
+}
+
+/**
+ * Whether a beaten creature's cell shows the number under it rather than the creature: while
+ * hovered, or always while the player has asked for every one (decision 0067), and never while a
+ * clear effect owns the glyphs.
+ */
+export function showsBeatenNumber(
+  p: Pick<Paint, 'game' | 'hovered' | 'beatenNumbers' | 'creaturesHidden'>,
+  cell: Cell,
+): boolean {
+  return (
+    cell.tier > 0 &&
+    !cell.alive &&
+    !p.creaturesHidden &&
+    (cell === p.hovered || p.beatenNumbers) &&
+    offersBeatenNumbers(p.game)
+  );
 }
 
 /** How far inside its true bounds a tile's outline runs, so neighbours read as separate. */
@@ -191,10 +220,11 @@ function drawNotes(p: Paint, cell: Cell, cx: number, cy: number): void {
 }
 
 /**
- * Open floor: its number, or its creature. A defeated creature under the cursor shows the number
- * underneath it instead (never on a pairing board, where that number is the partner's tier and
- * read as the creature's own; decision 0012). While a clear effect owns the glyphs the cell is
- * bare floor, and the effect draws the creature.
+ * Open floor: its number, or its creature. A defeated creature under the cursor, or every one
+ * while the player has asked (decision 0067), shows the number underneath it instead (never on a
+ * pairing board, where that number is the partner's tier and read as the creature's own; decision
+ * 0012). While a clear effect owns the glyphs the cell is bare floor, and the effect draws the
+ * creature.
  */
 export function drawOpen(p: Paint, cell: Cell, cx: number, cy: number): void {
   const { ctx, theme, game } = p;
@@ -207,14 +237,9 @@ export function drawOpen(p: Paint, cell: Cell, cx: number, cy: number): void {
   // bigger step there.
   if (washesCell(game, cell)) fillWash(ctx, 0.17);
 
-  const hoverNumber =
-    cell.tier > 0 &&
-    !cell.alive &&
-    cell === p.hovered &&
-    !p.creaturesHidden &&
-    placementRule(game.config.placement).display.hoverShowsNumber;
+  const beatenNumber = showsBeatenNumber(p, cell);
 
-  if (cell.tier > 0 && !hoverNumber) {
+  if (cell.tier > 0 && !beatenNumber) {
     if (p.creaturesHidden) return;
     ctx.save();
     if (!cell.alive) ctx.globalAlpha = BEATEN_ALPHA;
@@ -236,7 +261,7 @@ export function drawOpen(p: Paint, cell: Cell, cx: number, cy: number): void {
     return;
   }
 
-  const showNumber = cell.tier > 0 ? hoverNumber : cell.num > 0;
+  const showNumber = cell.tier > 0 ? beatenNumber : cell.num > 0;
   if (!showNumber) return;
 
   const text = String(cell.num);

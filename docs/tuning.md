@@ -146,5 +146,5 @@ ladder, each spell against playing spell-less on the ladders that offer it:
 6. **Marks are not gated the way the pencil is** (a mark may claim the wrong parity on
    CHECKERBOARD). A decision, left open.
 7. **Smaller:** BLIND's unlock timing (70 boards) is a guess; pinch-zoom has only met
-   synthetic touch events; touch has no hover, so a beaten creature's number is unreachable on a
-   phone.
+   synthetic touch events; touch has no hover, so on a phone a beaten creature's number is read
+   through the Beaten toggle (decision 0067).

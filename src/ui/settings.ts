@@ -250,6 +250,13 @@ export interface PresentationSettings {
    * is there or not, and a board without it is simply played without asking.
    */
   readonly tutor: boolean;
+  /**
+   * Whether every beaten creature shows the number under it, as the hovered one always does: the
+   * game screen's "Beaten" toggle and `U` (decision 0067). Kept, like `muted`, because a player
+   * who reads the board by those numbers (on a touch screen, the only way to read them) wants
+   * them on every board, not switched on again each time.
+   */
+  readonly beatenNumbers: boolean;
 }
 
 const DEFAULT_PRESENTATION: PresentationSettings = {
@@ -274,6 +281,7 @@ const DEFAULT_PRESENTATION: PresentationSettings = {
   soundCheck: { keys: {}, pitches: {}, volume: 1 },
   customPitches: false,
   tutor: true,
+  beatenNumbers: false,
 };
 
 interface SettingsData {
@@ -394,6 +402,8 @@ function readPresentation(raw: unknown): PresentationSettings {
     customPitches: typeof p.customPitches === 'boolean' ? p.customPitches : false,
     // A save from before the tutor existed reads as offering it, as a new player's does.
     tutor: typeof p.tutor === 'boolean' ? p.tutor : true,
+    // A save from before the toggle reads as off: beaten creatures drawn as the game drew them.
+    beatenNumbers: typeof p.beatenNumbers === 'boolean' ? p.beatenNumbers : false,
   };
 }
 
