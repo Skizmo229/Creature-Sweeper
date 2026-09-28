@@ -16,6 +16,8 @@ import {
   encodeSave,
   localDate,
 } from '../savefile.js';
+import { describeTelemetry, encodeTelemetry } from '../telemetry.js';
+import { TelemetryStore } from '../telemetrystore.js';
 
 /** The save exactly as stored. Blocked storage reads as no save at all. */
 function readStoredSave(): SaveBundle {
@@ -73,25 +75,17 @@ export function buildSaveBackup(draft: string, error: string, a: SaveBackupActio
 
   appendExport(card, current, code);
   appendRestore(card, current, draft, error, a);
+  appendStatistics(card);
 
   overlay.append(card);
   return overlay;
 }
 
-/** The way out: this browser's save as a code, to copy or to download as a file. */
-function appendExport(card: HTMLElement, current: SaveBundle, code: string): void {
-  card.append(el('p', 'backup-label', `This browser — ${describeSave(current)}`));
-  const out = el('textarea', 'backup-code');
-  out.readOnly = true;
-  out.value = code;
-  out.rows = 4;
-  out.addEventListener('focus', () => out.select());
-  card.append(out);
-
-  const exportRow = el('div', 'overlay-actions');
-  const copy = el('button', 'primary', 'Copy code');
+/** A button that copies a code, selecting it in its box; says so, or says what to do instead. */
+function copyButton(box: HTMLTextAreaElement, code: string, style: string): HTMLButtonElement {
+  const copy = el('button', style, 'Copy code');
   copy.addEventListener('click', async () => {
-    out.select();
+    box.select();
     let copied = false;
     try {
       await navigator.clipboard.writeText(code);
@@ -105,6 +99,21 @@ function appendExport(card: HTMLElement, current: SaveBundle, code: string): voi
     }
     copy.textContent = copied ? 'Copied' : 'Select the code and copy it';
   });
+  return copy;
+}
+
+/** The way out: this browser's save as a code, to copy or to download as a file. */
+function appendExport(card: HTMLElement, current: SaveBundle, code: string): void {
+  card.append(el('p', 'backup-label', `This browser — ${describeSave(current)}`));
+  const out = el('textarea', 'backup-code');
+  out.readOnly = true;
+  out.value = code;
+  out.rows = 4;
+  out.addEventListener('focus', () => out.select());
+  card.append(out);
+
+  const exportRow = el('div', 'overlay-actions');
+  const copy = copyButton(out, code, 'primary');
   const download = el('button', 'ghost', 'Download file');
   download.addEventListener('click', () => {
     const blob = new Blob([code], { type: 'text/plain' });
@@ -193,4 +202,31 @@ function appendRestore(
   close.addEventListener('click', a.close);
   importRow.append(restore, load, close);
   card.append(importRow);
+}
+
+/**
+ * The play statistics (`src/ui/telemetry.ts`), as a code to paste to the owner. Read straight
+ * from storage, as the save is; they leave this device only this way, and never inside the save
+ * code. Cleared with the progress, from the ladder list.
+ */
+function appendStatistics(card: HTMLElement): void {
+  const data = TelemetryStore.load().current;
+  card.append(el('p', 'backup-label', `Play statistics — ${describeTelemetry(data)}`));
+  card.append(
+    el(
+      'p',
+      'overlay-note',
+      'What each board cost you: attempts, guesses, HP, time. Kept on this device only; paste ' +
+        'the code to the developer to help tune the game.',
+    ),
+  );
+  const out = el('textarea', 'backup-code');
+  out.readOnly = true;
+  out.value = encodeTelemetry(data);
+  out.rows = 3;
+  out.addEventListener('focus', () => out.select());
+  card.append(out);
+  const row = el('div', 'overlay-actions');
+  row.append(copyButton(out, out.value, 'ghost'));
+  card.append(row);
 }

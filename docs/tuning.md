@@ -18,6 +18,7 @@ All in `src/sim/cli/`, all driving the real engine with fixed seeds, all determi
 | `npm run sim:human -- N [ladder] [a-b]` | The graded player, a person's tricks up to a grade (`docs/strategies.md`): what each board demands, grade by grade; stuck points, lethal guesses and clear rate at each grade; moves on offer when it had to look. `--profile` counts each trick's conclusions, `--peek` reads the numbers PAIRS hides, `--solver` attaches the complete deducer, `--spells` spends mana as the catalogue advises, `--attention=R` looks near the last action first and counts the scans. Its `unsound` column must be zero. |
 | `npm run sim:sudoku -- N [--sweep]` | SUDOKU build cost per givens count and the tightest round of each board. |
 | `npx tsx src/sim/cli/opening.ts`, `placement.ts`, `topology.ts` | The opening, placement and topology experiments; the first two write `design/data/*.json` for the reference page. |
+| `npm run telemetry -- CODE-or-file` | A player's play statistics, pasted from the backup screen (`CST1:` code): per board, attempts and clears, opens and guesses, sweeps, casts, hints, HP lost, seconds and deaths by tier, tuned and modified dials apart. Read beside `sim:human`'s row for the same board. |
 | `npm run sim:golden` / `sim:golden:check` | Records or diffs the text of seventeen small runs of the above: the behaviour-preservation harness. |
 
 The **honest player** (`src/sim/honest.ts`) reads only what a player can see and deduces locally,

@@ -52,7 +52,7 @@ export class Modal {
     this.ask({
       title: 'ERASE PROGRESS?',
       body:
-        'Every unlock, clear time, full run and paused game on this device. ' +
+        'Every unlock, clear time, full run, paused game and play statistic on this device. ' +
         'This cannot be undone.',
       confirmLabel: 'Erase everything',
       cancelLabel: 'Cancel',
