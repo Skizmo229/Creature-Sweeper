@@ -116,7 +116,7 @@ const display = (highlight: HighlightStyle | null, highlightColor = MARK_COLOR):
   font: FONTS['jetbrains-mono'],
   highlight,
   highlightColor,
-  strikeDefeated: true,
+  beatenLook: 'dimStrike',
   beatenNumbers: false,
   tierColors: DEFAULT_TIERS,
 });

@@ -87,6 +87,23 @@ export const CUSTOM_TIERS = 'custom';
 export type TierColorChoice = typeof DEFAULT | TierPresetId | typeof CUSTOM_TIERS;
 
 /**
+ * How a beaten creature is drawn: dimmed and struck through, which is how the game always drew
+ * it; struck through at full strength; dimmed alone, which reads better at small cell sizes,
+ * where the stroke crosses the pips; or plain, exactly as a live one would be, for a player who
+ * reads "beaten" from the open floor under it.
+ */
+export type BeatenLook = 'dimStrike' | 'strike' | 'dim' | 'plain';
+const BEATEN_LOOKS: readonly BeatenLook[] = ['dimStrike', 'strike', 'dim', 'plain'];
+
+/** A beaten look as its two parts: whether the glyph is dimmed, and whether it is struck. */
+export function beatenParts(look: BeatenLook): { dim: boolean; strike: boolean } {
+  return {
+    dim: look === 'dimStrike' || look === 'dim',
+    strike: look === 'dimStrike' || look === 'strike',
+  };
+}
+
+/**
  * Which fights light the edge of the board. 'every' is green for a fight that cost nothing, blue
  * for one that levelled the player up and red for one that hurt; 'levelups' keeps the blue and
  * the red and leaves the green out, since clean fights are most of a board; 'off' is none. See
@@ -200,14 +217,8 @@ export interface PresentationSettings {
    * nothing is lit red whatever this is, because red is what says so (decision 0050).
    */
   readonly highlightColor: HighlightColorChoice;
-  /**
-   * Whether a defeated creature keeps its struck-through corner.
-   *
-   * The stroke is how "dealt with" reads at a glance, so turning it off leaves
-   * the dimmed glyph doing that job alone. Offered because at small cell sizes
-   * the stroke crosses the pips and some players read it as clutter.
-   */
-  readonly strikeDefeated: boolean;
+  /** How a beaten creature is drawn (`BeatenLook`). */
+  readonly beatenLook: BeatenLook;
   /** Which fights light the edge of the board. The shake and the level-up glow are not this. */
   readonly fightRim: FightRim;
   /** The stage's own shake and glow after a fight (`Motion`); the rim above is separate. */
@@ -273,7 +284,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   victory: DEFAULT,
   highlight: DEFAULT,
   highlightColor: DEFAULT,
-  strikeDefeated: true,
+  beatenLook: 'dimStrike',
   fightRim: 'every',
   motion: 'full',
   menuStrip: 'left',
@@ -377,7 +388,10 @@ export function readPresentation(raw: unknown): PresentationSettings {
     // A save from before this setting, or one holding anything but a colour, reads as the green
     // the highlight was always drawn in.
     highlightColor: readHexColor(p.highlightColor) ?? DEFAULT,
-    strikeDefeated: typeof p.strikeDefeated === 'boolean' ? p.strikeDefeated : true,
+    // A save from before the look was a choice held only whether the stroke was on
+    // (`strikeDefeated`); off, it reads as the dimmed glyph that was left, and on or absent as
+    // the game's own look.
+    beatenLook: oneOf(p.beatenLook, BEATEN_LOOKS, p.strikeDefeated === false ? 'dim' : 'dimStrike'),
     // A save from before this setting reads as every fight, which is how the glow first shipped.
     fightRim: oneOf(p.fightRim, FIGHT_RIMS, 'every'),
     // A save from before this setting reads as both, which the stage always did.

@@ -110,7 +110,7 @@ describe('the board', () => {
     font: FONTS['jetbrains-mono'],
     highlight: 'neighbours',
     highlightColor,
-    strikeDefeated: true,
+    beatenLook: 'dimStrike',
     beatenNumbers: false,
     tierColors: DEFAULT_TIERS,
   });

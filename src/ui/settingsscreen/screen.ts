@@ -16,13 +16,13 @@ import { clearEffectRow, fightRimRow, motionRow, soundRow, stopSettingsDemo } fr
 import { gameplaySection } from './gameplay.js';
 import { interfaceSection } from './interface.js';
 import {
+  beatenLookRow,
   boardFontRow,
   highlightColorRow,
   highlightRow,
   iconsRow,
   interfaceFontRow,
   paletteRow,
-  strikeRow,
   tierColorsRow,
   zoomRow,
 } from './look.js';
@@ -84,7 +84,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   interfaceFontRow(ctx, look);
   highlightRow(ctx, look);
   highlightColorRow(ctx, look);
-  strikeRow(ctx, look);
+  beatenLookRow(ctx, look);
   zoomRow(ctx, look);
   soundRow(ctx, look);
   fightRimRow(ctx, look);

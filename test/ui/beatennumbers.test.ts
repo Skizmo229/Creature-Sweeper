@@ -67,7 +67,7 @@ describe('what the board draws', () => {
     font: FONTS['jetbrains-mono'],
     highlight: null,
     highlightColor: '#ffffff',
-    strikeDefeated: true,
+    beatenLook: 'dimStrike',
     beatenNumbers,
     tierColors: DEFAULT_TIERS,
   });

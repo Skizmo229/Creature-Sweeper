@@ -9,6 +9,7 @@ import { hasNote } from '../../engine/notes.js';
 import { placementRule } from '../../engine/placement/registry.js';
 import type { Cell } from '../../engine/types.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
+import { type BeatenLook, beatenParts } from '../presentation.js';
 import {
   AUGUR_COLOR,
   CENSUS_COLOR,
@@ -33,8 +34,8 @@ export interface Paint {
   /** The colour of each tier, and the halo of tiers 6 to 9. */
   readonly tierColors: TierPalette;
   readonly font: GameFont;
-  /** Whether a defeated creature keeps its struck-through corner. */
-  readonly strikeDefeated: boolean;
+  /** How a beaten creature is drawn: dimmed, struck through, both or neither. */
+  readonly beatenLook: BeatenLook;
   /** The cell under the cursor (or pinned), if any. */
   readonly hovered: Cell | null;
   /** Whether every beaten creature shows its number, as the hovered one does (decision 0067). */
@@ -241,13 +242,14 @@ export function drawOpen(p: Paint, cell: Cell, cx: number, cy: number): void {
 
   if (cell.tier > 0 && !beatenNumber) {
     if (p.creaturesHidden) return;
+    const { dim, strike } = beatenParts(p.beatenLook);
     ctx.save();
-    if (!cell.alive) ctx.globalAlpha = BEATEN_ALPHA;
+    if (!cell.alive && dim) ctx.globalAlpha = BEATEN_ALPHA;
     drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme, p.tierColors);
     ctx.restore();
     // A struck-through corner reads as "dealt with" at a glance. Optional, because at small
     // cell sizes the stroke crosses the pips.
-    if (!cell.alive && p.strikeDefeated) {
+    if (!cell.alive && strike) {
       ctx.save();
       ctx.strokeStyle = theme.ink;
       ctx.globalAlpha = 0.3;

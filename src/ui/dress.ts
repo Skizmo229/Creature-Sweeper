@@ -33,7 +33,7 @@ export function boardDisplayFor(settings: Settings, typeId: string): BoardDispla
     font: settings.boardFont(typeId),
     highlight: settings.highlightStyle(typeId),
     highlightColor: settings.highlightColor(typeId),
-    strikeDefeated: p.strikeDefeated,
+    beatenLook: p.beatenLook,
     beatenNumbers: p.beatenNumbers,
     tierColors: settings.tierColors(typeId),
   };

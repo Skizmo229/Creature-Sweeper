@@ -293,7 +293,7 @@ describe('what is drawn in them', () => {
       font: FONTS['jetbrains-mono'],
       highlight: null,
       highlightColor: '#ffffff',
-      strikeDefeated: false,
+      beatenLook: 'dim',
       beatenNumbers: false,
       tierColors: MARKED,
     };

@@ -9,7 +9,7 @@
 import type { Game } from '../../engine/game.js';
 import type { Cell } from '../../engine/types.js';
 import type { Lesson } from '../../sim/tutor.js';
-import { DEFAULT_MAX_ZOOM, type HighlightStyle } from '../presentation.js';
+import { type BeatenLook, DEFAULT_MAX_ZOOM, type HighlightStyle } from '../presentation.js';
 import type { TypeTheme } from '../looktypes.js';
 import { PIP_FAMILY, glyphChar, isGlyphPip } from '../pipsymbols.js';
 import { MARK_COLOR } from '../theme.js';
@@ -61,8 +61,8 @@ export interface BoardDisplay {
   highlight: HighlightStyle | null;
   /** The colour it lights a cell in when a click there would land; where one would not, red. */
   highlightColor: string;
-  /** Whether a defeated creature keeps its struck-through corner. */
-  strikeDefeated: boolean;
+  /** How a beaten creature is drawn: dimmed, struck through, both or neither. */
+  beatenLook: BeatenLook;
   /** Whether every beaten creature shows the number under it, not only the hovered one. */
   beatenNumbers: boolean;
   /** The colour a creature of each tier is drawn in, and the halo of tiers 6 to 9. */
@@ -74,7 +74,7 @@ const DEFAULT_DISPLAY: BoardDisplay = {
   font: FONTS['jetbrains-mono'],
   highlight: 'neighbours',
   highlightColor: MARK_COLOR,
-  strikeDefeated: true,
+  beatenLook: 'dimStrike',
   beatenNumbers: false,
   tierColors: DEFAULT_TIERS,
 };
@@ -439,7 +439,7 @@ export class BoardView implements InputHost {
       theme,
       tierColors: this.display.tierColors,
       font: this.display.font,
-      strikeDefeated: this.display.strikeDefeated,
+      beatenLook: this.display.beatenLook,
       hovered: this.hoveredCellValue,
       beatenNumbers: this.display.beatenNumbers,
       creaturesHidden: this.creaturesHidden,

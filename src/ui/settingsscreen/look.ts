@@ -18,6 +18,7 @@ import {
   zoomSampleBoard,
 } from '../preview.js';
 import {
+  type BeatenLook,
   CUSTOM_TIERS,
   DEFAULT,
   DEFAULT_MAX_ZOOM,
@@ -377,28 +378,28 @@ export function highlightColorRow(ctx: ScreenContext, host: HTMLElement): void {
   );
 }
 
-export function strikeRow(ctx: ScreenContext, host: HTMLElement): void {
+/** How a beaten creature is drawn, each look on the standard example. */
+export function beatenLookRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, currentTheme } = ctx;
+  const look = (beatenLook: BeatenLook, label: string): Choice => ({
+    value: beatenLook,
+    label,
+    example: ctx.chipBoard(currentTheme, { beatenLook }),
+  });
   wideRow(
     host,
-    'Strike out defeated creatures',
-    'The diagonal line across a beaten creature. Off, the dimmed glyph alone says so, which reads ' +
-      'better at small cell sizes.',
+    'Beaten creatures',
+    'How a beaten creature is drawn. Dimmed alone reads better at small cell sizes, where the ' +
+      'stroke crosses the pips; plain leaves the open floor under it to say it is beaten.',
     gallery(
       [
-        {
-          value: 'on',
-          label: 'Struck through',
-          example: ctx.chipBoard(currentTheme, { strikeDefeated: true }),
-        },
-        {
-          value: 'off',
-          label: 'Left plain',
-          example: ctx.chipBoard(currentTheme, { strikeDefeated: false }),
-        },
+        look('dimStrike', 'Dimmed and struck through'),
+        look('strike', 'Struck through'),
+        look('dim', 'Dimmed'),
+        look('plain', 'Plain'),
       ],
-      p.strikeDefeated ? 'on' : 'off',
-      (v) => ctx.pick({ strikeDefeated: v === 'on' }),
+      p.beatenLook,
+      (v) => ctx.pick({ beatenLook: v as BeatenLook }),
     ),
   );
 }
