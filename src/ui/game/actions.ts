@@ -10,6 +10,7 @@ import { SPELLS, type SpellId, spellKey } from '../../engine/spells.js';
 import type { Cell, GameEvent } from '../../engine/types.js';
 import { offersBeatenNumbers } from '../board/paint.js';
 import type { BoardView } from '../board/view.js';
+import type { RightClick } from '../presentation.js';
 import type { Settings } from '../settings.js';
 import type { Sfx } from '../sfx.js';
 import type { EntryMode } from './mode.js';
@@ -42,6 +43,23 @@ export interface BoardActionsHost {
   refuse(x: number, y: number): boolean;
   /** On a lesson board: go on to the next step. */
   next(): void;
+}
+
+/**
+ * The mark a right-click leaves on a cell marked `mark`, 0 for none: the next tier up or down
+ * round the cycle, the next still on the counters, or nothing. A cycle passes through "no mark"
+ * once round, as it always did.
+ */
+export function nextMark(game: Game, mark: number, rule: RightClick): number {
+  const top = game.config.tiers;
+  if (rule === 'clear') return 0;
+  if (rule === 'cycleDown') return mark === 0 ? top : mark - 1;
+  let next = mark;
+  for (let step = 0; step < top; step++) {
+    next = next >= top ? 0 : next + 1;
+    if (next === 0 || rule === 'cycleUp' || game.counterFor(next) > 0) return next;
+  }
+  return 0;
 }
 
 export class BoardActions {
@@ -91,12 +109,18 @@ export class BoardActions {
     this.h.refresh();
   }
 
+  /**
+   * A right-click (or a long press) on a covered cell, as the setting has it: the mark cycled up,
+   * down or through the tiers still on the counters, or cleared. A cycle that comes round to
+   * nothing, and a clear, mark the cell with its own mark, which is how the engine takes one off.
+   */
   cycleMark(x: number, y: number): void {
     const game = this.h.game();
     if (!game || game.status !== 'playing') return;
     const cell = game.cellAt(x, y);
     if (!cell || cell.open) return;
-    const next = cell.mark >= game.config.tiers ? 0 : cell.mark + 1;
+    const next = nextMark(game, cell.mark, this.h.settings.presentation.rightClick);
+    if (next === cell.mark) return;
     this.h.apply(this.h.move({ kind: 'mark', x, y, mark: next === 0 ? cell.mark : next }));
   }
 

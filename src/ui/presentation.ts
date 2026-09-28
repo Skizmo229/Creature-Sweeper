@@ -155,6 +155,16 @@ export type Motion = 'full' | 'noShake' | 'none';
 const MOTIONS: readonly Motion[] = ['full', 'noShake', 'none'];
 
 /**
+ * What a right-click on a covered cell does: cycles the mark up through the tiers, as the game
+ * always did; cycles it down; cycles only through the tiers still on the counters, so a tier the
+ * board has none of is passed over; or clears the mark. On a nine-tier board the cycle is nine
+ * clicks, which is what the others are for. An LV button or a number key marks a tier outright
+ * whatever this says.
+ */
+export type RightClick = 'cycleUp' | 'cycleDown' | 'cycleCounters' | 'clear';
+const RIGHT_CLICKS: readonly RightClick[] = ['cycleUp', 'cycleDown', 'cycleCounters', 'clear'];
+
+/**
  * How the HUD's clock reads: seconds, as the game has always counted; minutes and seconds; or not
  * at all, for a player who plays better without a timer over them. The clock runs underneath
  * whatever this says, so a best time and Time Attack are what they were.
@@ -284,6 +294,8 @@ export interface PresentationSettings {
   readonly menuStrip: MenuStrip;
   /** How the HUD's clock reads, or whether it shows at all (`ClockStyle`). */
   readonly clock: ClockStyle;
+  /** What a right-click on a covered cell does (`RightClick`). */
+  readonly rightClick: RightClick;
   /**
    * Whether the line under the board says what a click does right now. Off, the line is kept for
    * the tutor and a lesson, which speak there, and hidden otherwise: once the controls are known
@@ -358,6 +370,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   motion: 'full',
   menuStrip: 'left',
   clock: 'seconds',
+  rightClick: 'cycleUp',
   hintLine: true,
   maxZoom: DEFAULT_MAX_ZOOM,
   textSize: DEFAULT_TEXT_SIZE,
@@ -475,6 +488,7 @@ export function readPresentation(raw: unknown): PresentationSettings {
     menuStrip: oneOf(p.menuStrip, MENU_STRIPS, 'left'),
     // A save from before this setting reads as seconds, which the clock always counted in.
     clock: oneOf(p.clock, CLOCK_STYLES, 'seconds'),
+    rightClick: oneOf(p.rightClick, RIGHT_CLICKS, 'cycleUp'),
     hintLine: typeof p.hintLine === 'boolean' ? p.hintLine : true,
     maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
     // A save from before this setting has no field, and reads as the size the

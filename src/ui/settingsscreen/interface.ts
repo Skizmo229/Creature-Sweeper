@@ -17,6 +17,7 @@ import {
   MIN_PREVIEW_SIZE,
   MIN_TEXT_SIZE,
   OFF,
+  type RightClick,
 } from '../presentation.js';
 import { type PresentationPatch, type ScreenContext, previewCell, typeName } from './context.js';
 import { hudCopy } from './look.js';
@@ -29,12 +30,35 @@ export function interfaceSection(ctx: ScreenContext): void {
   previewSizeRow(ctx, host);
   menuStripRow(ctx, host);
   clockRow(ctx, host);
+  rightClickRow(ctx, host);
   row(
     host,
     'Hint line',
     toggle(ctx.p.hintLine, (v) => ctx.settings.setPresentation({ hintLine: v })),
     'The line under the board saying what a click does now and which keys do what. The tutor ' +
       'and the lessons speak there whatever this says.',
+  );
+}
+
+/** What a right-click on a covered cell does. */
+function rightClickRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p, settings } = ctx;
+  wideRow(
+    host,
+    'Right-click',
+    'What a right-click, or a long press on a touch screen, does to a covered cell. An LV ' +
+      'button or a number key marks a tier outright either way.',
+    gallery(
+      [
+        { value: 'cycleUp', label: 'Cycles the mark up through the tiers' },
+        { value: 'cycleDown', label: 'Cycles it down' },
+        { value: 'cycleCounters', label: 'Cycles through the tiers still on the counters' },
+        { value: 'clear', label: 'Clears the mark' },
+      ],
+      p.rightClick,
+      (v) => settings.setPresentation({ rightClick: v as RightClick }),
+      true,
+    ),
   );
 }
 
