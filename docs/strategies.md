@@ -137,8 +137,8 @@ sprinkles say how many creatures share it, as a Census would. Each is worth at l
 biggest can be no more than the remainder less one for every other: a 3 over three sprinkles is
 three tier 1s, and a 5 over three is nothing above a 3.
 
-**The strongest one** (AUGUR). An Augur names the strongest creature around a number, so nothing
-hidden there is above it: at or below your level the whole ring is free, and above it no cell can
+**The strongest one** (AUGUR). An Augur names the strongest hidden creature around a number, so
+nothing there is above it: at or below your level the whole ring is free, and above it no cell can
 be more. Sum, count and strongest together pin most rings: a 7 over three cells with a strongest
 of 3 is 3, 3 and 1, or 3, 2 and 2. Aim it where a number is spread over many cells, since that is
 where the strongest is likeliest to be small.

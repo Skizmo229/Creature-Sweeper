@@ -117,7 +117,7 @@ export const SPELLS: Record<SpellId, Spell> = {
     cost: 20,
     targeted: true,
     blurb:
-      'The strongest creature around this cell: its tier. Nothing hidden there is above it, so at or below your level the whole ring is free.',
+      'The strongest hidden creature around this cell: its tier. At or below your level the whole ring is free.',
   },
 };
 

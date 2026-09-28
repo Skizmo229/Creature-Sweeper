@@ -300,13 +300,13 @@ describe('Augur', () => {
     expect(events.some((e) => e.type === 'spell' && e.detail === 'strongest 4')).toBe(true);
   });
 
-  it('counts an open creature too, since it is among the neighbours', () => {
+  it('leaves out an open creature, which the board already shows', () => {
     const game = Game.create(magicConfig({ hp: 20 }), 7);
     paint(game, ['........', '.4.1....', ...EMPTY8.slice(2)]);
     game.progression.level = 4;
     game.open(1, 1);
     game.cast('augur', 2, 2);
-    expect(game.grid[2]![2]!.augur).toBe(4);
+    expect(game.grid[2]![2]!.augur).toBe(1);
   });
 
   it('answers 0 where nothing is around, and says so', () => {

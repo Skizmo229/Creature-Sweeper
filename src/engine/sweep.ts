@@ -130,8 +130,9 @@ function provenByCensus(cell: Cell, facts: RingFacts, level: number): boolean {
 }
 
 /**
- * Proven by the strongest. An Augur names the highest tier among the neighbours, so no hidden
- * creature there is above it: at or below your level, the whole ring is free. A fact, like Census.
+ * Proven by the strongest. An Augur names the highest tier among the covered neighbours, so no
+ * hidden creature there is above it: at or below your level, the whole ring is free. A fact, like
+ * Census.
  */
 function provenByAugur(cell: Cell, level: number): boolean {
   return cell.augur !== null && cell.augur <= level;

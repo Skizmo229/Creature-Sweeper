@@ -51,8 +51,8 @@ export class App {
   private boardIndex = 1;
   private seed = 0;
   /**
-   * The Full Run in progress, if this is one. `game` is always the board on screen; `run` owns
-   * the HP pool and decides what happens when that board ends.
+   * The Full Run in progress, if this is one. `game` is the board being played, kept under the
+   * settings screen and dropped with `run` on leaving; `run` owns the HP pool and the board's end.
    */
   private run: FullRun | null = null;
 
@@ -240,6 +240,7 @@ export class App {
 
   private showTypes(): void {
     this.clearScreen();
+    this.game = this.run = null;
     this.root.append(
       buildLadderList({
         progress: this.progress,
@@ -275,7 +276,7 @@ export class App {
 
   private showBoards(typeId: string): void {
     this.clearScreen();
-    this.run = null;
+    this.game = this.run = null;
     // "Game type default" and the fonts follow the ladder you are looking at, so the type has to
     // be current before anything is drawn.
     this.typeId = typeId;

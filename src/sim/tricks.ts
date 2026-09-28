@@ -267,7 +267,7 @@ const censusRing: Trick = {
   },
 };
 
-// An Augur names the strongest tier around a number, so nothing hidden there is above it: at or
+// An Augur names the strongest hidden tier around a number, so nothing there is above it: at or
 // below the level the ring is free, and above it the pencil loses every tier past it.
 const augurCap: Trick = {
   grade: 1,
@@ -310,7 +310,8 @@ const loneDark: Trick = {
 };
 
 // Beside a lone open creature a covered cell is its partner or empty, and the creature's own
-// number is the partner's tier: what the pencil offers there, read only where the number shows.
+// number is the partner's tier, read only where the number shows. The pencil does not offer it
+// where the board hides it, so the reading is made here rather than through `noteCandidates`.
 const partnerNumber: Trick = {
   grade: 1,
   apply(v, m) {
@@ -319,7 +320,8 @@ const partnerNumber: Trick = {
     for (const cell of v.reading.unknown) {
       const creatures = v.game.neighboursOf(cell).filter(openCreature);
       if (creatures.length !== 1) continue;
-      settle(v, cell, v.game.noteCandidates(cell), m, by([], creatures));
+      const partner = noteBit(0) | noteBit(creatures[0]!.num);
+      settle(v, cell, v.game.noteCandidates(cell) & partner, m, by([], creatures));
     }
   },
 };

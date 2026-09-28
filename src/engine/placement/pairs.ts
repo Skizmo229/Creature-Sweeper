@@ -64,6 +64,7 @@ import {
   type Deal,
   NOTHING_EMPTIED,
   PLAIN_DISPLAY,
+  type PlacementDisplay,
   type PlacementRow,
   type PlacementRule,
   WHOLE_SUM,
@@ -214,18 +215,27 @@ export function ringIsFree(cell: Cell, ns: readonly Cell[], level: number): bool
  * touch the cell, because a creature standing there would have two creature
  * neighbours.
  *
+ * Where the board hides a beaten creature's number (`shown` false), the pencil
+ * may not read it either: striking every tier but the partner's would draw the
+ * hidden number on the palette (issue #10). There the lone creature says
+ * nothing, and only the two {0} readings, which the board does show, remain.
+ *
  * Sound in the only direction that matters: it may leave a tier in that the
  * numbers could rule out, but it never takes out the tier a cell really holds.
  * `test/pairs.test.ts` checks that on every covered cell of real boards played
  * part-way.
  */
-function pairCandidates(cell: Cell, neighboursOf: (c: Cell) => readonly Cell[]): number | null {
+function pairCandidates(
+  cell: Cell,
+  neighboursOf: (c: Cell) => readonly Cell[],
+  shown: boolean,
+): number | null {
   const mates = neighboursOf(cell).filter((n) => n.open && n.tier > 0);
   if (mates.length === 0) return null;
   if (mates.length > 1) return noteBit(0);
   const mate = mates[0]!;
   if (neighboursOf(mate).some((n) => n.open && n.tier > 0)) return noteBit(0);
-  return noteBit(0) | noteBit(mate.num);
+  return shown ? noteBit(0) | noteBit(mate.num) : null;
 }
 
 /**
@@ -299,6 +309,17 @@ function dealPairs(d: Deal): void {
   takeInOrder(d, new Map([['any', cells]]), ONE_POOL.forTier, shapeLeftTooFew(d.cfg));
 }
 
+/**
+ * A beaten creature's number is its partner's tier, and hovering does not show it, by request: a
+ * lone digit read as the creature's own level (decision 0012). The pencil follows the board and
+ * does not read it either; Sweep's partner proof still does.
+ */
+const PAIRS_DISPLAY: PlacementDisplay = {
+  ...PLAIN_DISPLAY,
+  bonds: 'every',
+  hoverShowsNumber: false,
+};
+
 export const PAIRS_RULE: PlacementRule = {
   id: 'pairs',
   validate: validatePairs,
@@ -306,15 +327,13 @@ export const PAIRS_RULE: PlacementRule = {
   deal: dealPairs,
   patrols: false,
   coveredCanBeEmpty: true,
-  candidates: (cell, view) => pairCandidates(cell, (c) => view.neighboursOf(c)),
+  candidates: (cell, view) =>
+    pairCandidates(cell, (c) => view.neighboursOf(c), PAIRS_DISPLAY.hoverShowsNumber),
   guessFree: false,
   cap: WHOLE_SUM,
   ringProof: (_view, level) => (cell, ring) => ringIsFree(cell, ring, level),
   emptied: NOTHING_EMPTIED,
-  // A beaten creature's number is its partner's tier, and hovering does not show it, by request:
-  // a lone digit read as the creature's own level (decision 0012). Sweep and the pencil still
-  // read it.
-  display: { ...PLAIN_DISPLAY, bonds: 'every', hoverShowsNumber: false },
+  display: PAIRS_DISPLAY,
   pools: ONE_POOL,
   groups: 'pairs',
   fault: (grid, cfg) => {

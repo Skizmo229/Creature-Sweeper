@@ -18121,7 +18121,7 @@
   "name": "AUGUR",
   "tint": "#c9a227",
   "axis": "Magic that tells, never shows",
-  "blurb": "ARCANE's boards with two spells that only answer: Census counts the creatures behind a number, Augur names the strongest. No spell ever opens a cell for you.",
+  "blurb": "ARCANE's boards with two spells that only answer: Census counts the creatures behind a number, Augur names the strongest hidden one. No spell ever opens a cell for you.",
   "archetype": "descending",
   "category": "magic",
   "search": false,

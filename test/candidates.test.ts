@@ -103,24 +103,32 @@ describe('pencil candidates', () => {
     }
   });
 
-  it('offer only empty ground or the partner beside a defeated PAIRS creature', () => {
-    let seen = 0;
+  it('offer only empty ground beside a PAIRS creature that has met its partner', () => {
+    let met = 0;
+    let lone = 0;
     for (const seed of SEEDS) {
       const game = Game.create(boardConfig(ladders, 'pairs', 5), seed);
+      const every = (1 << (game.config.tiers + 1)) - 1;
       for (const _ of walk(game, seed)) {
         for (const c of covered(game)) {
           const mates = game.neighboursOf(c).filter((n) => n.open && n.tier > 0);
           if (mates.length !== 1) continue;
           const mate = mates[0]!;
-          const met = game.neighboursOf(mate).some((n) => n.open && n.tier > 0);
-          // The partner's tier is the defeated creature's own number, and a
-          // creature that has already met its partner leaves only empty ground.
-          expect(noteTiers(game.noteCandidates(c))).toEqual(met ? [0] : [0, mate.num]);
-          seen++;
+          // A creature that has met its partner leaves only empty ground. A lone one's number
+          // is its partner's tier, which the board hides here, so the pencil refuses nothing
+          // (issue #10): striking every tier but one would draw the hidden number.
+          if (game.neighboursOf(mate).some((n) => n.open && n.tier > 0)) {
+            expect(noteTiers(game.noteCandidates(c))).toEqual([0]);
+            met++;
+          } else {
+            expect(game.noteCandidates(c)).toBe(every);
+            lone++;
+          }
         }
       }
     }
-    expect(seen).toBeGreaterThan(0);
+    expect(met).toBeGreaterThan(0);
+    expect(lone).toBeGreaterThan(0);
   });
 
   it('offer only empty ground or a tier the neighbouring pack has not shown', () => {
@@ -223,14 +231,14 @@ describe('pencil candidates', () => {
   });
 
   it('still let a candidate be taken off after the board has ruled it out', () => {
-    // A pair whose tier-1 half can be killed for free at LV1, and a covered
-    // cell beside it that is not the partner.
+    // A pair of tier 1s, both killed for free at LV1, and a covered cell
+    // beside it that is not the partner.
     for (const seed of SEEDS) {
       const game = Game.create(boardConfig(ladders, 'pairs', 1), seed);
       for (const c of covered(game)) {
         if (c.tier !== 1) continue;
         const partner = game.neighboursOf(c).find((n) => n.tier > 0)!;
-        if (partner.open) continue;
+        if (partner.open || partner.tier !== 1) continue;
         const x = game
           .neighboursOf(c)
           .find(
@@ -240,10 +248,11 @@ describe('pencil candidates', () => {
         if (!x) continue;
 
         // Pencilled while nothing ruled it out...
-        const stale = partner.tier === 1 ? 2 : 1;
+        const stale = 1;
         expect(game.toggleNote(x.x, x.y, stale).some((e) => e.type === 'noted')).toBe(true);
-        // ...then ruled out, by killing the creature beside it.
+        // ...then ruled out, by killing the pair beside it: met, it leaves only empty ground.
         game.open(c.x, c.y);
+        game.open(partner.x, partner.y);
         expect(hasNote(game.noteCandidates(x), stale)).toBe(false);
         // Taking it off is still allowed; putting it back is not.
         expect(game.toggleNote(x.x, x.y, stale).some((e) => e.type === 'noted')).toBe(true);
