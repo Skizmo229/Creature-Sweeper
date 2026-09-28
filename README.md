@@ -3,7 +3,8 @@
 A remix of [mamono sweeper](https://hojamaka.com/games/mamono_sweeper/) (itself a remix of
 Minesweeper) with heavy customisation, quality-of-life features, and a progression mode. Every
 cell's number is the **sum** of the neighbouring creatures' tiers, you level up by defeating them,
-and a fight below your level costs nothing. If this is ever released publicly it will be freeware.
+and a fight below your level costs nothing. It is free to play, and its code is free software
+(see [Licence](#licence)).
 
 ```bash
 npm install && npm run dev
@@ -28,7 +29,7 @@ Node 22 (`.nvmrc`); Python 3 only for the ladder generator.
 | `docs/human-tuning-plan.md` | Milestone 4, tuning for the human player: the instrument, the measurements, the retune |
 | `docs/teaching-plan.md` | Milestone 5, teaching the tricks in the game with a tutor, a school and a field guide: built, play-testing left |
 | `CONTRIBUTING.md` | setup, the check, and the rules for a change |
-| design reference | <https://claude.ai/artifact/8w8aAaG6MJ3LCnSbokJUXi> (built from `design/page.template.html`) |
+| `design/reference.html` | the design reference, a page to open in a browser: the original game's mechanics as verified, the ladders, the open questions (built from `design/page.template.html`) |
 
 ## Layout
 
@@ -36,7 +37,7 @@ Node 22 (`.nvmrc`); Python 3 only for the ladder generator.
 creature_sweeper/
 ├─ src/
 │  ├─ engine/     the rules engine: no DOM, no I/O, no timers; boards are pure (config, seed)
-│  ├─ ui/         the playable prototype: canvas board, HUD, settings, save, sound, effects
+│  ├─ ui/         the game in the browser: canvas board, HUD, settings, save, sound, effects
 │  ├─ sim/        headless measurement, all driving the real engine; cli/ holds the commands
 │  ├─ main.ts     browser entry
 │  └─ data.ts     Node-only loader for the ladder data

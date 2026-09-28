@@ -1,6 +1,6 @@
 # Contributing
 
-Creature Sweeper is a headless rules engine (`src/engine`), a canvas prototype around it
+Creature Sweeper is a headless rules engine (`src/engine`), the canvas game around it
 (`src/ui`), a set of measurement instruments that drive the engine (`src/sim`), and the Python
 ladder generator whose output tunes all of it (`design/`). `README.md` is the front door.
 `docs/refactoring-plan.md` is Milestone 3, the readability refactor, complete on 24 September

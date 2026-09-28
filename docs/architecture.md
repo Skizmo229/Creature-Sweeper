@@ -48,7 +48,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   replay.ts       a board as the moves made on it: replaying them, and a board's fingerprint
   settings.ts     the gameplay dials, their defaults and directions
   config.ts       reads ladders.json rows into BoardConfig; has each placement rule check its row
-src/ui/         the prototype
+src/ui/         the game in the browser
   app.ts          the router: screens, the cross-screen state, the keyboard, the actions
   teaching.ts     the tutor, the rules card, the field guide and the school's lessons, for app.ts
   dress.ts        the page in the presentation settings: the faces, the text size, the board's slice
