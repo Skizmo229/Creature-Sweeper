@@ -101,7 +101,7 @@ export class BoardEnding {
       const result = progress.recordClear(ladders, typeId, boardIndex, {
         perfect,
         seconds,
-        hinted: tutor.hints > 0,
+        hints: tutor.hints,
       });
       unlocked = result.unlockedBoard;
     }
@@ -159,7 +159,7 @@ export class BoardEnding {
           reachedBoard: boardIndex,
           hp: game.hp,
           seconds: clock.frozenSeconds!,
-          hinted: tutor.runHints > 0,
+          hints: tutor.runHints,
         });
       }
     }

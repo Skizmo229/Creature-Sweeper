@@ -87,7 +87,8 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   beaten creature a proof read has its number written on it, since hover is the only other way to
   see it. It opens nothing and trusts no mark. Each press shows the next lesson; any move on the
   board dismisses it; the dev handle's `sync` dismisses it too. Every press is a hint: the clear
-  card says how many, and a hinted board sets no best time (decision 0048). The button is a
+  card says how many, and a hinted board sets no best time (decision 0048); until one is set, its
+  tile shows the fewest hints a clear took instead (decision 0065). The button is a
   presentation setting (Gameplay section, "Tutor"), because it changes no rule and no record.
 - The field guide (`src/ui/screens/guide.ts`, its words in `src/ui/guide/entries.ts`;
   docs/teaching-plan.md, Part 3) is the catalogue in the game, for reading: an overlay that scrolls

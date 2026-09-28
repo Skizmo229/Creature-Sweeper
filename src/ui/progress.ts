@@ -18,6 +18,11 @@ export interface BoardRecord {
   perfect: boolean;
   /** Best clear time in seconds. */
   bestTime: number | null;
+  /**
+   * Fewest hints on a hinted clear, kept only while no clear without hints has set a best time
+   * (decision 0065). Absent in saves written before it, and on boards never cleared with hints.
+   */
+  fewestHints?: number;
 }
 
 export interface TypeRecord {
@@ -42,6 +47,8 @@ export interface FullRunRecord {
   bestHp: number | null;
   /** Best completed-run time in seconds. */
   bestTime: number | null;
+  /** Fewest hints on a completed hinted run, kept as a board's is (`BoardRecord.fewestHints`). */
+  fewestHints?: number;
   attempts: number;
 }
 
@@ -97,6 +104,23 @@ function ladderPrefix(typeId: string): string {
 
 function boardKey(typeId: string, board: number): string {
   return `${ladderPrefix(typeId)}${board}`;
+}
+
+/**
+ * A clear's best time and fewest hints, from the previous record's. A clear without hints races
+ * the clock, and its time retires the hint count. A hinted clear sets no best time; while there is
+ * none, it keeps the fewest hints instead (decision 0065).
+ */
+function bestOf(
+  prev: { bestTime: number | null; fewestHints?: number },
+  seconds: number,
+  hints: number,
+): { bestTime: number | null; fewestHints?: number } {
+  if (hints === 0) {
+    return { bestTime: prev.bestTime === null ? seconds : Math.min(prev.bestTime, seconds) };
+  }
+  if (prev.bestTime !== null) return { bestTime: prev.bestTime };
+  return { bestTime: null, fewestHints: Math.min(prev.fewestHints ?? hints, hints) };
 }
 
 export class Progress {
@@ -205,21 +229,21 @@ export class Progress {
       reachedBoard: number;
       hp: number;
       seconds: number;
-      hinted?: boolean;
+      /** Times the tutor was asked over the run. */
+      hints?: number;
     },
   ): void {
     const prev = this.runRecord(typeId);
+    // A run the tutor helped with is cleared and counts, but races nothing.
+    const { bestTime, fewestHints } = opts.completed
+      ? bestOf(prev, opts.seconds, opts.hints ?? 0)
+      : prev;
     this.data.runs[typeId] = {
       cleared: prev.cleared || opts.completed,
       bestBoard: Math.max(prev.bestBoard, opts.reachedBoard),
       bestHp: opts.completed ? Math.max(prev.bestHp ?? 0, opts.hp) : prev.bestHp,
-      // A run the tutor helped with is cleared and counts, but races nothing.
-      bestTime:
-        opts.completed && !opts.hinted
-          ? prev.bestTime === null
-            ? opts.seconds
-            : Math.min(prev.bestTime, opts.seconds)
-          : prev.bestTime,
+      bestTime,
+      ...(fewestHints === undefined ? {} : { fewestHints }),
       attempts: prev.attempts + 1,
     };
     this.save();
@@ -299,14 +323,15 @@ export class Progress {
 
   /**
    * Record a clear and advance the ladder. Returns the newly unlocked board. A board the tutor
-   * helped with (`hinted`) is cleared, unlocks the next and may be perfect, but sets no best time:
-   * the one cost of asking why (docs/teaching-plan.md, 4.4).
+   * helped with (`hints`) is cleared, unlocks the next and may be perfect, but sets no best time:
+   * the one cost of asking why (docs/teaching-plan.md, 4.4). Until a best time exists, it keeps
+   * the fewest hints instead (decision 0065).
    */
   recordClear(
     ladders: Ladders,
     typeId: string,
     board: number,
-    opts: { perfect: boolean; seconds: number; hinted?: boolean },
+    opts: { perfect: boolean; seconds: number; hints?: number },
   ): { unlockedBoard: number | null; clearedType: boolean } {
     const type = ladders.find((t) => t.id === typeId);
     const lastBoard = type?.boards.length ?? 10;
@@ -316,11 +341,7 @@ export class Progress {
     this.data.boards[key] = {
       cleared: true,
       perfect: prev.perfect || opts.perfect,
-      bestTime: opts.hinted
-        ? prev.bestTime
-        : prev.bestTime === null
-          ? opts.seconds
-          : Math.min(prev.bestTime, opts.seconds),
+      ...bestOf(prev, opts.seconds, opts.hints ?? 0),
     };
 
     const rec = this.typeRecord(typeId);
