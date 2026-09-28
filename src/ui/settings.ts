@@ -244,7 +244,7 @@ export interface PresentationSettings {
    */
   readonly customPitches: boolean;
   /**
-   * Whether the tutor is offered on a board: the "Why? [H]" button and the key
+   * Whether the tutor is offered on a board: the "[H]int" button and the key
    * (docs/teaching-plan.md). A presentation setting and not a gameplay dial, because it changes
    * nothing about the rules or the records: a hinted board sets no best time whether the button
    * is there or not, and a board without it is simply played without asking.

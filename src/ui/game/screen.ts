@@ -232,7 +232,7 @@ function buildPalette(
   // ladder, EASY included, where there is no Sweep to lean on (docs/teaching-plan.md).
   let whyBtn: HTMLButtonElement | null = null;
   if (tutor) {
-    whyBtn = el('button', 'sweep why', 'Why? [H]');
+    whyBtn = el('button', 'sweep why', '[H]int');
     whyBtn.title =
       'Points at the next provable move and says why. Opens nothing; a hinted board sets no ' +
       'best time.';
