@@ -31,7 +31,7 @@ import {
   type IconChoice,
   type TierColorChoice,
 } from '../presentation.js';
-import { MARK_COLOR, PIP_NAMES, PIP_SHAPES, pipName } from '../theme.js';
+import { OUT_OF_REACH_COLOR, PIP_NAMES, PIP_SHAPES, pipName } from '../theme.js';
 import { DEFAULT_TIERS, TIER_PRESETS, type TierPalette, tierColor } from '../tiercolors.js';
 import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
 import { SYMBOL_COUNT, isGlyphPip } from '../pipsymbols.js';
@@ -349,6 +349,18 @@ export function highlightColorRow(ctx: ScreenContext, host: HTMLElement): void {
       : () => el('div', 'picker-placeholder', 'Any colour, mixed from red, green and blue'),
     open: () =>
       openColorWindow(ctx.host, {
+        title: 'Custom highlight colour',
+        blurb:
+          'Mix a colour from red, green and blue, or type it in hex. Red is taken: it crosses ' +
+          'out a click that would do nothing.',
+        mixedLabel: 'A click that lands',
+        taken: [
+          {
+            color: OUT_OF_REACH_COLOR,
+            label: 'A click that would do nothing',
+            name: 'the red that crosses out a click that would do nothing',
+          },
+        ],
         current: settings.highlightColor(typeId),
         example: (color) => chip(color)(),
         onUse: pick,
@@ -364,7 +376,11 @@ export function highlightColorRow(ctx: ScreenContext, host: HTMLElement): void {
       (style ? '' : ' The highlight is off above, so none of this shows until it is on.'),
     gallery(
       [
-        { value: DEFAULT, label: 'Game type default — green', example: chip(MARK_COLOR) },
+        {
+          value: DEFAULT,
+          label: `Game type default — ${p.markColor === DEFAULT ? 'green' : 'the mark colour'}`,
+          example: chip(settings.markColor(typeId)),
+        },
         ...HIGHLIGHT_COLORS.map((c): Choice => ({
           value: c.color,
           label: c.name,

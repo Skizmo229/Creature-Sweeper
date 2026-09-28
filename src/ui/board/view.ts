@@ -75,6 +75,8 @@ export interface BoardDisplay {
   digitScale: number;
   /** Whether the cells the crawl rule keeps out of reach are shaded. */
   reachShading: boolean;
+  /** The colour of a mark, a pencil note (dimmed) and a wrapped board's seam. */
+  markColor: string;
   /** Whether every beaten creature shows the number under it, not only the hovered one. */
   beatenNumbers: boolean;
   /** The colour a creature of each tier is drawn in, and the halo of tiers 6 to 9. */
@@ -91,6 +93,7 @@ export const DEFAULT_DISPLAY: BoardDisplay = {
   beatenLook: 'dimStrike',
   digitScale: 1,
   reachShading: false,
+  markColor: MARK_COLOR,
   beatenNumbers: false,
   tierColors: DEFAULT_TIERS,
 };
@@ -459,6 +462,7 @@ export class BoardView implements InputHost {
       beatenLook: this.display.beatenLook,
       digitScale: this.display.digitScale,
       reachShading: this.display.reachShading,
+      markColor: this.display.markColor,
       hovered: this.hoveredCellValue,
       beatenNumbers: this.display.beatenNumbers,
       creaturesHidden: this.creaturesHidden,

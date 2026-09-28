@@ -14,10 +14,9 @@ import {
   AUGUR_COLOR,
   CENSUS_COLOR,
   GIVEN_COLOR,
-  MARK_COLOR,
   MARK_OUTLINE,
-  NOTE_COLOR,
   drawCreature,
+  noteColor,
 } from '../theme.js';
 import type { TypeTheme } from '../looktypes.js';
 import type { TierPalette } from '../tiercolors.js';
@@ -42,6 +41,8 @@ export interface Paint {
   readonly digitScale: number;
   /** Whether the cells the crawl rule keeps out of reach are shaded. */
   readonly reachShading: boolean;
+  /** The colour of a mark, a pencil note (dimmed) and a wrapped board's seam. */
+  readonly markColor: string;
   /** The cell under the cursor (or pinned), if any. */
   readonly hovered: Cell | null;
   /** Whether every beaten creature shows its number, as the hovered one does (decision 0067). */
@@ -158,7 +159,7 @@ export function drawAnnotation(p: Paint, cell: Cell, cx: number, cy: number): vo
     ctx.strokeText(String(cell.mark), cx, my);
     // A clue the board dealt and a claim the player made are different things, so they are
     // different colours. Same outline, because both have to survive whatever tile they land on.
-    ctx.fillStyle = cell.given ? GIVEN_COLOR : MARK_COLOR;
+    ctx.fillStyle = cell.given ? GIVEN_COLOR : p.markColor;
     ctx.fillText(String(cell.mark), cx, my);
     ctx.restore();
   } else if (cell.notes) {
@@ -210,7 +211,7 @@ function drawNotes(p: Paint, cell: Cell, cx: number, cy: number): void {
   ctx.lineJoin = 'round';
   ctx.lineWidth = Math.max(1.5, font * 0.3);
   ctx.strokeStyle = MARK_OUTLINE;
-  ctx.fillStyle = NOTE_COLOR;
+  ctx.fillStyle = noteColor(p.markColor);
   const at: { glyph: string; x: number; y: number }[] = [];
   for (let t = 0; t < slots; t++) {
     if (!hasNote(cell.notes, t)) continue;

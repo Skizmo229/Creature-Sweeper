@@ -11,6 +11,7 @@
  */
 
 import { setNumberFont } from './board/digits.js';
+import { rgbOf } from './colorspace.js';
 import type { GlyphPip, Pip, PipShape, SfxPackId, TypeTheme, VictoryId } from './looktypes.js';
 import { PIP_FAMILY, findSymbol, glyphChar, isGlyphPip } from './pipsymbols.js';
 import type { CreatureGlyph } from './presentation.js';
@@ -182,11 +183,17 @@ export const BOND_COLOR = 'rgba(255, 255, 255, 0.5)';
  */
 export const BOX_RULE = 'rgba(8, 4, 12, 0.92)';
 
-/** Pencil marks: the same green as a mark, dimmed. A note is a weaker form of
+/** How far a pencil note's ink is dimmed from the mark's, as an alpha. */
+const NOTE_ALPHA = 0.72;
+
+/** Pencil marks: the mark's own colour, dimmed. A note is a weaker form of
  *  the same claim, so it should read as the same ink lightly applied rather
  *  than as a different kind of annotation. It wears the mark's dark outline
  *  too, which is what carries it on a light tile — see `drawNotes`. */
-export const NOTE_COLOR = 'rgba(53, 224, 106, 0.72)';
+export function noteColor(markColor: string): string {
+  const [r, g, b] = rgbOf(markColor);
+  return `rgba(${r}, ${g}, ${b}, ${NOTE_ALPHA})`;
+}
 
 /** Which of the nine grid positions are lit, per die face. */
 const DIE_FACES: Record<number, readonly number[]> = {

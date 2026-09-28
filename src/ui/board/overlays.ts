@@ -14,7 +14,6 @@ import {
   BOARD_OUTLINE,
   BOND_COLOR,
   BOX_RULE,
-  MARK_COLOR,
   MARK_OUTLINE,
   OUT_OF_REACH_COLOR,
   TUTOR_COLOR,
@@ -281,7 +280,7 @@ export function drawSeams(p: Paint): void {
   const wrap = game.config.wrap;
   if (wrap === 'none') return;
   ctx.save();
-  ctx.strokeStyle = MARK_COLOR;
+  ctx.strokeStyle = p.markColor;
   ctx.globalAlpha = 0.45;
   ctx.lineWidth = 1;
   ctx.setLineDash([5, 4]);
@@ -476,11 +475,11 @@ export function drawLesson(p: Paint, lesson: Lesson): void {
   for (const cell of lesson.open) {
     const { cx, cy } = centreOf(layout, cell.x, cell.y);
     ctx.globalAlpha = 0.35;
-    ctx.fillStyle = MARK_COLOR;
+    ctx.fillStyle = p.markColor;
     tracePath(p, cx, cy, 2);
     ctx.fill();
     ctx.globalAlpha = 1;
-    ctx.strokeStyle = MARK_COLOR;
+    ctx.strokeStyle = p.markColor;
     ctx.stroke();
   }
 

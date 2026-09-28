@@ -7,13 +7,85 @@ import { el } from '../dom.js';
 import { reachSampleBoard, sampleBoard, samplePin } from '../preview.js';
 import {
   type CreatureGlyph,
+  DEFAULT,
   DEFAULT_DIGIT_SIZE,
+  MARK_COLORS,
   MAX_DIGIT_SIZE,
   MIN_DIGIT_SIZE,
 } from '../presentation.js';
+import {
+  AUGUR_COLOR,
+  CENSUS_COLOR,
+  GIVEN_COLOR,
+  MARK_COLOR,
+  OUT_OF_REACH_COLOR,
+  TUTOR_COLOR,
+} from '../theme.js';
 import type { ScreenContext } from './context.js';
+import { type TakenColor, openColorWindow } from './customcolor.js';
 import { renderPreview } from './render.js';
 import { type Choice, gallery, slider, wideRow } from './widgets.js';
+
+/** The colours the board already means something by, which a mark must stay clear of. */
+const TAKEN: readonly TakenColor[] = [
+  { color: GIVEN_COLOR, label: 'A given', name: 'the gold of a given' },
+  { color: CENSUS_COLOR, label: 'A Census', name: 'the blue of a Census' },
+  { color: AUGUR_COLOR, label: 'An Augur', name: 'the cream of an Augur' },
+  { color: TUTOR_COLOR, label: 'The tutor', name: 'the violet of the tutor' },
+  { color: OUT_OF_REACH_COLOR, label: 'A refused click', name: 'the red of a refused click' },
+];
+
+/**
+ * The mark's colour: the game's green, the presets, and any colour at all from the window behind
+ * the Custom tile, each on the standard example, which carries a mark.
+ */
+export function markColorRow(ctx: ScreenContext, host: HTMLElement): void {
+  const { p, settings, typeId, currentTheme } = ctx;
+  const chip = (markColor: string): (() => HTMLElement) =>
+    ctx.chipBoard(currentTheme, { markColor });
+  const pick = (color: string): void => ctx.pick({ markColor: color });
+  const preset = MARK_COLORS.some((c) => c.color === p.markColor);
+  const own = p.markColor === DEFAULT || preset ? null : p.markColor;
+  // Lit when a colour of the player's own is in force; clicking it opens the window either way.
+  const custom: Choice = {
+    value: own ?? '',
+    label: own ? `Custom — ${own}` : 'Custom — any colour',
+    example: own
+      ? chip(own)
+      : () => el('div', 'picker-placeholder', 'Any colour, mixed from red, green and blue'),
+    open: () =>
+      openColorWindow(ctx.host, {
+        title: 'Custom mark colour',
+        blurb:
+          'Mix a colour for your marks and pencil notes, or type it in hex. Gold, blue, cream, ' +
+          'violet and red are taken: each already means something on the board.',
+        mixedLabel: 'A mark',
+        taken: TAKEN,
+        current: settings.markColor(typeId),
+        example: (color) => chip(color)(),
+        onUse: pick,
+      }),
+  };
+  wideRow(
+    host,
+    'Mark colour',
+    'Your marks, your pencil notes dimmed, and the seam of a wrapped board. The cursor ' +
+      'highlight follows it unless it has a colour of its own.',
+    gallery(
+      [
+        { value: DEFAULT, label: 'Game type default — green', example: chip(MARK_COLOR) },
+        ...MARK_COLORS.map((c): Choice => ({
+          value: c.color,
+          label: c.name,
+          example: chip(c.color),
+        })),
+        custom,
+      ],
+      p.markColor,
+      pick,
+    ),
+  );
+}
 
 /**
  * The board's digit size. The standard example follows the thumb, redrawn in place, and the

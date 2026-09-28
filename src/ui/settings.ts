@@ -233,10 +233,17 @@ export class Settings {
     return TIER_PRESETS.find((t) => t.id === tierColors)?.palette ?? DEFAULT_TIERS;
   }
 
-  /** The colour the cursor lights a cell in when a click there would land. */
-  highlightColor(_typeId: string): string {
-    const choice = this.data.presentation.highlightColor;
-    // No ladder overrides this either, so every type's default is the green of a mark.
+  /** The colour of a mark, and so of a pencil note and a wrapped board's seam. */
+  markColor(_typeId: string): string {
+    const choice = this.data.presentation.markColor;
+    // No ladder overrides this, so every type's default is the green of the original's marks.
     return choice === DEFAULT ? MARK_COLOR : choice;
+  }
+
+  /** The colour the cursor lights a cell in when a click there would land. */
+  highlightColor(typeId: string): string {
+    const choice = this.data.presentation.highlightColor;
+    // No ladder overrides this either: every type's default is the mark's colour, whatever that is.
+    return choice === DEFAULT ? this.markColor(typeId) : choice;
   }
 }

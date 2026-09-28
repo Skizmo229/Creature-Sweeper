@@ -70,6 +70,23 @@ export const HIGHLIGHT_COLORS: readonly { readonly name: string; readonly color:
   { name: 'Magenta', color: '#ff4dff' },
 ];
 
+/** A colour as `#rrggbb` in lower case, or the game type's own, the mark green. */
+export type MarkColorChoice = typeof DEFAULT | string;
+
+/**
+ * The colours a mark is offered in besides the game's green, the Custom tile making any other. A
+ * mark shares the board with the other annotations, each a colour of its own (decision 0032), so
+ * every preset stands at least `NEAR_REFUSAL` from each of them: the red of a refused click, the
+ * gold of a given, the blue of a Census, the cream of an Augur and the violet of the tutor.
+ * Measured 28 Sep 2026 as the highlight's were: lime is 57 from the nearest, magenta 49 and
+ * blue 42, where white sits 23 from the cream, yellow 26 from the gold and cyan 17 from the blue.
+ */
+export const MARK_COLORS: readonly { readonly name: string; readonly color: string }[] = [
+  { name: 'Lime', color: '#b6ff3a' },
+  { name: 'Magenta', color: '#ff4dff' },
+  { name: 'Blue', color: '#3d6dff' },
+];
+
 /**
  * A colour written in hex, `#2ee6ff` or the short `#2ef`, with or without its '#' and in either
  * case, as the setting keeps it: `#rrggbb` in lower case. Null for anything else.
@@ -238,6 +255,12 @@ export interface PresentationSettings {
    * nothing is lit red whatever this is, because red is what says so (decision 0050).
    */
   readonly highlightColor: HighlightColorChoice;
+  /**
+   * The colour of the player's marks and, dimmed, their pencil notes, and of a wrapped board's
+   * seam; the cursor highlight follows it unless it has a colour of its own. The game's own is
+   * the green of the original.
+   */
+  readonly markColor: MarkColorChoice;
   /** How a beaten creature is drawn (`BeatenLook`). */
   readonly beatenLook: BeatenLook;
   /** Size of the board's numbers, marks and pencil notes, as a multiple. */
@@ -314,6 +337,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   victory: DEFAULT,
   highlight: DEFAULT,
   highlightColor: DEFAULT,
+  markColor: DEFAULT,
   beatenLook: 'dimStrike',
   digitSize: DEFAULT_DIGIT_SIZE,
   reachShading: false,
@@ -422,6 +446,7 @@ export function readPresentation(raw: unknown): PresentationSettings {
     // A save from before this setting, or one holding anything but a colour, reads as the green
     // the highlight was always drawn in.
     highlightColor: readHexColor(p.highlightColor) ?? DEFAULT,
+    markColor: readHexColor(p.markColor) ?? DEFAULT,
     // A save from before the look was a choice held only whether the stroke was on
     // (`strikeDefeated`); off, it reads as the dimmed glyph that was left, and on or absent as
     // the game's own look.
