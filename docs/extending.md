@@ -43,8 +43,9 @@ cell, feeds it to Sweep and draws it, as Census does, is every step.
 7. **Ladder data.** The `spells` list of each type that offers it, and the blurbs that name
    spells, in `design/ladder_types.toml`; then `python design/ladders.py`. Starting mana is "one
    Reveal exactly", so a spell cheaper than Reveal changes what the opening pool means. Price it by
-   measuring (`npm run sim:spells -- 40 <ladder>`) until its HP saved per mana matches Reveal's in
-   `docs/tuning.md`. If a ladder in `test/golden/` gains it, re-record with `npm run sim:golden`.
+   measuring: `npm run sim:spells -- 40` (every ladder) ends with the price at which each spell
+   saves as much HP per mana as Reveal, and `docs/tuning.md` holds Reveal's own figure. If a
+   ladder in `test/golden/` gains it, re-record with `npm run sim:golden`.
 8. **Tests and docs.** A block in `test/spells.test.ts`, whose shortcut test and `magicConfig`
    list every spell (the affordability test reads the data). The README's controls line and test
    count; `docs/glossary.md`: its entry, the Spells entry, and strict Sweep's list if it informs;

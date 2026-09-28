@@ -251,6 +251,32 @@ function printPolicyRow(typeName: string, policy: Policy, runs: Run[]): void {
   );
 }
 
+/** A measured policy's price and the HP it saved per mana spent. */
+interface PerMana {
+  policy: Policy;
+  cost: number;
+  value: number;
+}
+
+/**
+ * The price at which each measured spell saves as much HP per mana as Reveal as played: its own
+ * cost scaled by its value per mana over Reveal's, since what a cast saves is fixed and only the
+ * price moves (issue #8). A spell that saved nothing has no price that makes it pay.
+ */
+function printFairPrices(perMana: readonly PerMana[]): void {
+  const ref = perMana.find((p) => p.policy === 'reveal');
+  if (!ref || ref.value <= 0) return;
+  console.log(`\nequal value per mana with reveal at ${ref.cost} would price:`);
+  for (const p of perMana) {
+    if (p === ref) continue;
+    const fair = p.value > 0 ? (p.cost * p.value) / ref.value : null;
+    console.log(
+      `  ${p.policy.padEnd(12)} ${fair === null ? '  none' : fair.toFixed(1).padStart(6)}` +
+        `   (it costs ${p.cost})`,
+    );
+  }
+}
+
 /** Each spell against playing spell-less, on the ladders that offer it, and the fair price. */
 function printValueTable(totals: Map<Policy, Run[]>, baselines: Map<Policy, Run[]>): void {
   const mean = (rs: Run[], pick: (r: Run) => number) =>
@@ -261,7 +287,7 @@ function printValueTable(totals: Map<Policy, Run[]>, baselines: Map<Policy, Run[
 
   console.log('value against playing spell-less, on the ladders that offer each spell:\n');
   console.log('spell        cost   hp saved/cast   hp saved/mana   clear rate  +pts');
-  const perMana: Array<[SpellId, number, number]> = [];
+  const perMana: PerMana[] = [];
 
   for (const { policy, spell: id } of MEASURED) {
     const rs = totals.get(policy);
@@ -272,7 +298,7 @@ function printValueTable(totals: Map<Policy, Run[]>, baselines: Map<Policy, Run[
     const spent = mean(rs, (r) => r.manaSpent);
     const clear = mean(rs, (r) => (r.cleared ? 1 : 0));
     const baseClearHere = mean(against, (r) => (r.cleared ? 1 : 0));
-    perMana.push([id, SPELLS[id].cost, savedTotal / Math.max(0.001, spent)]);
+    perMana.push({ policy, cost: SPELLS[id].cost, value: savedTotal / Math.max(0.001, spent) });
     console.log(
       `${policy.padEnd(12)} ${String(SPELLS[id].cost).padStart(4)}   ` +
         `${(savedTotal / Math.max(0.001, casts)).toFixed(3).padStart(13)}   ` +
@@ -282,15 +308,7 @@ function printValueTable(totals: Map<Policy, Run[]>, baselines: Map<Policy, Run[
     );
   }
 
-  // Priced correctly when a point of mana buys the same certainty either way.
-  const [a, b] = perMana;
-  if (a && b && b[2] > 0) {
-    const fair = a[1] * (b[2] / a[2]);
-    console.log(
-      `\nequal value per mana would price ${b[0]} at ${fair.toFixed(1)} ` +
-        `against ${a[0]} at ${a[1]} (it costs ${b[1]})`,
-    );
-  }
+  printFairPrices(perMana);
   console.log(
     `\nspell-less baseline: ${baseHp.toFixed(2)} hp lost, ` +
       `${(100 * baseClear).toFixed(1)}% cleared`,
