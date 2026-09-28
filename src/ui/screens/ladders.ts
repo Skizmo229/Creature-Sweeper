@@ -2,7 +2,7 @@
  * The ladder list: every game type, locked or not, with what it takes to unlock it and how far
  * the player has got, in four columns by category (decision 0036). Each name wears the face its ladder's screens do, its own unless the player
  * chose one for the interface, so the list previews the ladders (decision 0021). The tools under
- * it reach the how-to, settings, the save backup and the reset.
+ * it reach the how-to, settings, the save backup, About and the reset.
  */
 
 import { LADDER_CATEGORIES, type LadderCategory } from '../../engine/config.js';
@@ -13,6 +13,7 @@ import { pausedGames } from '../paused.js';
 import type { Progress } from '../progress.js';
 import type { Settings } from '../settings.js';
 import { themeFor } from '../looks.js';
+import { VERSION } from '../version.js';
 
 export interface LadderListActions {
   progress: Progress;
@@ -27,6 +28,8 @@ export interface LadderListActions {
   school(): void;
   openSettings(): void;
   backup(): void;
+  /** Who made the game, its licence and its source (decision 0069). */
+  about(): void;
   /** Asks first; the list is rebuilt on confirmation. */
   resetProgress(): void;
   setUnlockAll(on: boolean): void;
@@ -52,7 +55,7 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
 
   const head = el('header', 'title-bar');
   head.append(el('h1', 'game-title', 'Creature Sweeper'));
-  head.append(el('p', 'sub', 'Prototype — Milestone 3'));
+  head.append(el('p', 'sub', `Version ${VERSION}`));
   // Boards cleared is a currency, so it is shown whether or not anything is waiting on it.
   head.append(el('p', 'sub boards-cleared', `${cleared} board${cleared === 1 ? '' : 's'} cleared`));
   // A player who left a dial easier than default a week ago should not have to open Settings
@@ -166,6 +169,10 @@ function buildTools(a: LadderListActions): HTMLElement {
   const backup = el('button', 'ghost', 'Back up / restore save');
   backup.addEventListener('click', a.backup);
   tools.append(backup);
+
+  const about = el('button', 'ghost', 'About');
+  about.addEventListener('click', a.about);
+  tools.append(about);
 
   const reset = el('button', 'ghost', 'Reset progress');
   reset.addEventListener('click', a.resetProgress);

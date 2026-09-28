@@ -739,6 +739,31 @@ button.board-card:hover:not(:disabled) {
 }
 
 /*
+ * The About card is prose too, ranged left in the ink. Its links are the only
+ * ones in the game, so they wear the ladder's accent and an underline, the two
+ * things that say "link" whatever the face.
+ */
+.overlay-card.about {
+  max-width: 520px;
+  text-align: left;
+}
+.overlay-card.about h2,
+.overlay-card.about .overlay-stats {
+  text-align: center;
+}
+.overlay-card.about .overlay-note {
+  margin-top: 10px;
+  color: var(--ink);
+  line-height: 1.5;
+}
+.overlay-card.about a {
+  color: var(--tint);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
+/*
  * The save backup card. The code is long and meaningless to read, so it sits
  * in a small monospace box that wraps anywhere; it is there to be selected,
  * not studied.

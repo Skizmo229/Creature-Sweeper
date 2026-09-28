@@ -28,7 +28,8 @@ Node 22 (`.nvmrc`); Python 3 only for the ladder generator.
 | `docs/strategies.md` | how a person clears a board: the tricks, graded, for players and for the graded player |
 | `docs/human-tuning-plan.md` | Milestone 4, tuning for the human player: the instrument, the measurements, the retune |
 | `docs/teaching-plan.md` | Milestone 5, teaching the tricks in the game with a tutor, a school and a field guide: built, play-testing left |
-| `CONTRIBUTING.md` | setup, the check, and the rules for a change |
+| `CONTRIBUTING.md` | setup, the check, the rules for a change, and how a release is cut |
+| `CHANGELOG.md` | what each version changed |
 | `design/reference.html` | the design reference, a page to open in a browser: the original game's mechanics as verified, the ladders, the open questions (built from `design/page.template.html`) |
 
 ## Layout
@@ -178,6 +179,9 @@ hojamaka's expression. Facts and formulas observed in any of it are free to use 
 in the design reference; expression is protected, and none of it has been taken.
 
 ## Licence
+
+Copyright © 2026 Skizmo229 and contributors. In the game, the About card on the list of game types
+says the same and links here.
 
 **Code** (everything under `src/` but the fonts below, `test/`, `scripts/` and `design/*.py`, plus
 the build and config files) is licensed under the **GNU General Public License, version 3 or (at

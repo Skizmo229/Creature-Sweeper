@@ -1,10 +1,11 @@
 /**
  * The one modal overlay a screen carries at a time: a question, the rules card, the save backup,
- * the field guide. Shown over the current screen, and closed by every rebuild (decision 0017).
- * While one is up it holds the keyboard: Escape closes it and every other key is swallowed
+ * the field guide, About. Shown over the current screen, and closed by every rebuild (decision
+ * 0017). While one is up it holds the keyboard: Escape closes it and every other key is swallowed
  * (docs/ui.md).
  */
 
+import { buildAbout } from '../screens/about.js';
 import { buildSaveBackup } from '../screens/backup.js';
 import { buildHowTo } from '../screens/howto.js';
 import { type AskOptions, buildAsk } from './ask.js';
@@ -71,6 +72,12 @@ export class Modal {
       onSchool,
     );
     if (!this.show(overlay, focus)) onClose?.();
+  }
+
+  /** Who made the game, its licence and its source (decision 0069). */
+  about(): void {
+    const { overlay, focus } = buildAbout(() => this.close());
+    this.show(overlay, focus);
   }
 
   saveBackup(draft = '', error = ''): void {

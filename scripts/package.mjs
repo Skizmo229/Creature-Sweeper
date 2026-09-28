@@ -6,7 +6,8 @@
  * needs no dependency and behaves the same on Windows, macOS and Linux —
  * `Compress-Archive`, `zip` and `tar -a` each exist on only some of those.
  *
- * Output: release/creature-sweeper-web-<date>-<commit>.zip
+ * Output: release/creature-sweeper-web-<version>-<date>-<commit>.zip, the version being
+ * package.json's (decision 0068).
  */
 
 import { execSync } from 'node:child_process';
@@ -122,7 +123,9 @@ try {
 const two = (n) => String(n).padStart(2, '0');
 const stamp = `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
 
+const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
+
 mkdirSync(OUT_DIR, { recursive: true });
-const out = join(OUT_DIR, `creature-sweeper-web-${stamp}-${commit}.zip`);
+const out = join(OUT_DIR, `creature-sweeper-web-${version}-${stamp}-${commit}.zip`);
 writeFileSync(out, Buffer.concat([...locals, ...centrals, end]));
 console.log(`${out}  (${centrals.length / 2} files, ${(statSync(out).size / 1024).toFixed(0)} KB)`);

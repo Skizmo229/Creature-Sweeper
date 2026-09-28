@@ -254,6 +254,7 @@ export class App {
         school: () => this.teaching.school(),
         openSettings: () => this.showSettings(() => this.showTypes()),
         backup: () => this.modal.saveBackup(),
+        about: () => this.modal.about(),
         resetProgress: () =>
           this.modal.eraseProgress(() => {
             this.progress.reset();

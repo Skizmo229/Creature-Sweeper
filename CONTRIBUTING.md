@@ -101,3 +101,13 @@ moved.
 - Nothing that pictures the original game goes in the repository. `design/original-reference/`,
   `game_types.pdn` and `design/screenshots/` are untracked on purpose; see the README's licence
   section for why.
+
+## Releases
+
+A release is numbered MAJOR.MINOR.PATCH (decision 0068), in `package.json` and nowhere else: 0.9.x
+while the game is play-tested, 1.0.0 for the public release. A patch fixes; a minor adds or retunes
+ladders, spells or settings; a major changes the save's format and brings its migration.
+
+To cut one: `npm version <x.y.z> --no-git-tag-version` (it raises the lockfile too), an entry at the
+top of `CHANGELOG.md`, `npm run check`, one commit, and `npm run package` for the itch.io zip,
+which is named after the version. The maintainer tags the merged commit `v<x.y.z>`.
