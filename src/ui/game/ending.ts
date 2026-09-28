@@ -118,7 +118,7 @@ export class BoardEnding {
       won,
       perfect,
       // The wait is for watching the clear effect, so with no effect to watch there is none.
-      hold: firstClear && plays ? settings.presentation.cardHold : 'none',
+      hold: firstClear && plays ? settings.presentationFor(typeId).cardHold : 'none',
       timeExpired: clock.timeExpired,
       seconds,
       fatal: this.fatalBattle,
@@ -148,8 +148,9 @@ export class BoardEnding {
    */
   private effectPlays(firstClear: boolean): boolean {
     const { settings } = this.h;
-    if (settings.victoryEffect(this.h.typeId()) === null) return false;
-    return settings.presentation.victoryWhen === 'every' || firstClear;
+    const typeId = this.h.typeId();
+    if (settings.victoryEffect(typeId) === null) return false;
+    return settings.presentationFor(typeId).victoryWhen === 'every' || firstClear;
   }
 
   private finishRunBoard(): void {
@@ -217,7 +218,7 @@ export class BoardEnding {
       effect,
       settings.victoryLook(typeId),
       this.h.view()?.victorySource(),
-      settings.presentation.effectSpeed,
+      settings.presentationFor(typeId).effectSpeed,
     );
   }
 }

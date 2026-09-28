@@ -76,6 +76,8 @@ src/ui/         the game in the browser
                   highlight), input.ts (pointer, wheel, pinch)
   presentation.ts  the presentation settings: each one's options, its default and its reader
                   (DOM-free)
+  ladderown.ts    a ladder's own presentation settings: which can be, and reading a save's
+                  (decision 0070)
   settings.ts     the settings store, and what each presentation setting resolves to on a ladder
   telemetry.ts    the play statistics: what each board cost, their code, and their reading (DOM-free)
   telemetrystore.ts  the play statistics in storage, their own key, never in the save code

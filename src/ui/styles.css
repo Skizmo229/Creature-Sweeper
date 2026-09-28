@@ -1271,6 +1271,25 @@ button.board-card:hover:not(:disabled) {
   min-width: 8ch;
   text-align: right;
 }
+/* The scope switch under the settings title: for every ladder, or this one alone. */
+.settings-scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.settings-scope button.active {
+  background: var(--tint);
+  color: var(--button-ink);
+  text-shadow: var(--button-ink-outline);
+  border-color: var(--tint);
+}
+.settings-scope-note {
+  margin-top: 10px;
+}
 /* A row of preset buttons, one bundle of settings each. */
 .settings-presets {
   display: flex;

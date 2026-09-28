@@ -32,6 +32,7 @@ import {
 } from '../engine/settings.js';
 import type { SfxPackId, TypeTheme, VictoryId } from './looktypes.js';
 import { lookFor, themeFor } from './looks.js';
+import { LADDER_SCOPED, type LadderOwn, readLadderOwn } from './ladderown.js';
 import {
   CUSTOM_TIERS,
   DEFAULT,
@@ -52,11 +53,18 @@ import type { VictoryLook } from './victory/play.js';
 interface SettingsData {
   version: 1;
   presentation: PresentationSettings;
+  /** Each ladder's own presentation settings, by id, over the ones for every ladder (0070). */
+  ladders: Record<string, LadderOwn>;
   gameplay: GameplaySettings;
 }
 
 function emptyData(): SettingsData {
-  return { version: 1, presentation: DEFAULT_PRESENTATION, gameplay: DEFAULT_GAMEPLAY };
+  return {
+    version: 1,
+    presentation: DEFAULT_PRESENTATION,
+    ladders: {},
+    gameplay: DEFAULT_GAMEPLAY,
+  };
 }
 
 const SWEEP_MODES: readonly SweepMode[] = ['on', 'off', 'charge', 'budget'];
@@ -109,6 +117,7 @@ export class Settings {
         return new Settings({
           version: 1,
           presentation: readPresentation(parsed.presentation),
+          ladders: readLadderOwn(parsed.ladders),
           gameplay: readGameplay(parsed.gameplay),
         });
       }
@@ -133,8 +142,44 @@ export class Settings {
     return () => this.listeners.delete(fn);
   }
 
+  /** The settings for every ladder. A ladder's own are over these in `presentationFor`. */
   get presentation(): PresentationSettings {
     return this.data.presentation;
+  }
+
+  /** The settings in force on a ladder: those for every ladder, under the ladder's own. */
+  presentationFor(typeId: string): PresentationSettings {
+    const own = this.data.ladders[typeId];
+    return own ? { ...this.data.presentation, ...own } : this.data.presentation;
+  }
+
+  /** Which settings a ladder has of its own. */
+  ownKeys(typeId: string): (keyof PresentationSettings)[] {
+    return Object.keys(this.data.ladders[typeId] ?? {}) as (keyof PresentationSettings)[];
+  }
+
+  /**
+   * Save settings for one ladder alone, or with null for every ladder. Only the settings a ladder
+   * can have of its own (`LADDER_SCOPED`) are kept as its; the rest of the patch is for all.
+   */
+  setPresentationFor(typeId: string | null, patch: Partial<PresentationSettings>): void {
+    if (typeId === null) return this.setPresentation(patch);
+    const own: Record<string, unknown> = { ...this.data.ladders[typeId] };
+    const shared: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(patch)) {
+      if ((LADDER_SCOPED as readonly string[]).includes(key)) own[key] = value;
+      else shared[key] = value;
+    }
+    this.data.ladders = { ...this.data.ladders, [typeId]: own as LadderOwn };
+    this.data.presentation = { ...this.data.presentation, ...shared };
+    this.persist();
+  }
+
+  /** Give a ladder up its own settings: the settings for every ladder are its again. */
+  clearLadder(typeId: string): void {
+    const { [typeId]: _gone, ...rest } = this.data.ladders;
+    this.data.ladders = rest;
+    this.persist();
   }
 
   get gameplay(): GameplaySettings {
@@ -151,8 +196,10 @@ export class Settings {
     this.persist();
   }
 
+  /** Every presentation setting back to the game's own, every ladder's own included. */
   resetPresentation(): void {
     this.data.presentation = DEFAULT_PRESENTATION;
+    this.data.ladders = {};
     this.persist();
   }
 
@@ -176,7 +223,7 @@ export class Settings {
    * should not also borrow its hexes, and the two were never one decision.
    */
   themeFor(typeId: string): TypeTheme {
-    const { palette, icons } = this.data.presentation;
+    const { palette, icons } = this.presentationFor(typeId);
     const base = themeFor(palette === DEFAULT ? typeId : palette);
     const pip = icons === DEFAULT ? themeFor(typeId).pip : icons;
     return { ...base, pip };
@@ -194,13 +241,13 @@ export class Settings {
 
   /** The face for this ladder's board: its numbers and marks. */
   boardFont(typeId: string): GameFont {
-    const choice = this.data.presentation.font;
+    const choice = this.presentationFor(typeId).font;
     return fontFor(choice === DEFAULT ? lookFor(typeId).font : choice);
   }
 
   /** The face for this ladder's HUD and menus, and everything else outside the board. */
   interfaceFont(typeId: string): GameFont {
-    const choice = this.data.presentation.interfaceFont;
+    const choice = this.presentationFor(typeId).interfaceFont;
     return fontFor(choice === DEFAULT ? lookFor(typeId).font : choice);
   }
 
@@ -213,14 +260,14 @@ export class Settings {
    */
   sfxPack(typeId: string): SfxPackId | null {
     if (this.data.presentation.muted) return null;
-    const choice = this.data.presentation.sfx;
+    const choice = this.presentationFor(typeId).sfx;
     if (choice === OFF) return null;
     return (choice === DEFAULT ? lookFor(typeId).sfx : choice) as SfxPackId;
   }
 
   /** What a board-clear effect draws the creatures in: this ladder's palette, the tier colours, the glyph. */
   victoryLook(typeId: string): VictoryLook {
-    const p = this.data.presentation;
+    const p = this.presentationFor(typeId);
     return {
       theme: this.themeFor(typeId),
       tierColors: this.tierColors(typeId),
@@ -230,14 +277,14 @@ export class Settings {
 
   /** The board-clear effect, or null for none. */
   victoryEffect(typeId: string): VictoryId | null {
-    const choice = this.data.presentation.victory;
+    const choice = this.presentationFor(typeId).victory;
     if (choice === OFF) return null;
     return (choice === DEFAULT ? lookFor(typeId).victory : choice) as VictoryId;
   }
 
   /** How the cursor lights the board, or null for no highlight at all. */
-  highlightStyle(_typeId: string): HighlightStyle | null {
-    const choice = this.data.presentation.highlight;
+  highlightStyle(typeId: string): HighlightStyle | null {
+    const choice = this.presentationFor(typeId).highlight;
     if (choice === OFF) return null;
     // No type currently overrides this, but resolving through `lookFor`'s
     // sibling would be the place to start if one ever wants to.
@@ -249,23 +296,23 @@ export class Settings {
   }
 
   /** The colour of each creature tier, and the halo of tiers 6 to 9. */
-  tierColors(_typeId: string): TierPalette {
-    const { tierColors, customTierColors } = this.data.presentation;
+  tierColors(typeId: string): TierPalette {
+    const { tierColors, customTierColors } = this.presentationFor(typeId);
     // No ladder has colours of its own for its tiers: a tier looks the same on every board.
     if (tierColors === CUSTOM_TIERS) return customTierColors ?? DEFAULT_TIERS;
     return TIER_PRESETS.find((t) => t.id === tierColors)?.palette ?? DEFAULT_TIERS;
   }
 
   /** The colour of a mark, and so of a pencil note and a wrapped board's seam. */
-  markColor(_typeId: string): string {
-    const choice = this.data.presentation.markColor;
+  markColor(typeId: string): string {
+    const choice = this.presentationFor(typeId).markColor;
     // No ladder overrides this, so every type's default is the green of the original's marks.
     return choice === DEFAULT ? MARK_COLOR : choice;
   }
 
   /** The colour the cursor lights a cell in when a click there would land. */
   highlightColor(typeId: string): string {
-    const choice = this.data.presentation.highlightColor;
+    const choice = this.presentationFor(typeId).highlightColor;
     // No ladder overrides this either: every type's default is the mark's colour, whatever that is.
     return choice === DEFAULT ? this.markColor(typeId) : choice;
   }

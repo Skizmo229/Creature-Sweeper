@@ -1,0 +1,155 @@
+// @vitest-environment happy-dom
+/**
+ * A ladder's own settings (decision 0070): the settings screen's scope switch, a pick in a
+ * ladder's scope kept as that ladder's alone and read there and nowhere else, a setting no ladder
+ * can own going to every ladder whatever the scope, the ladder's own given up, the save that
+ * carries them, and the sections that wait for the scope that can set them.
+ */
+
+import './setup.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { App } from '../../src/ui/app.js';
+import type { BoardDisplay } from '../../src/ui/board/view.js';
+import { themeFor } from '../../src/ui/looks.js';
+import { DEFAULT } from '../../src/ui/presentation.js';
+import type { Progress } from '../../src/ui/progress.js';
+import { SETTINGS_KEY } from '../../src/ui/savefile.js';
+import { Settings } from '../../src/ui/settings.js';
+import { FONTS } from '../../src/ui/typefaces.js';
+
+interface Driver {
+  play(typeId: string, board: number, seed?: number): void;
+  showBoards(typeId: string): void;
+  showSettings(back: () => void): void;
+  showTypes(): void;
+  readonly progress: Progress;
+  readonly settings: Settings;
+  readonly view: { readonly display: BoardDisplay; readonly theme: { tile: string } } | null;
+}
+
+let app: Driver;
+
+beforeEach(() => {
+  localStorage.clear();
+  document.body.innerHTML = '<div id="app"></div>';
+  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app.progress.setUnlockAll(true);
+});
+
+/** The settings screen opened from a ladder's boards, in the scope asked for. */
+function openSettings(typeId: string, ladderScope: boolean): void {
+  app.showBoards(typeId);
+  app.showSettings(() => app.showBoards(typeId));
+  const wanted = ladderScope ? `${typeId.toUpperCase()} only` : 'Every ladder';
+  const button = [...document.querySelectorAll<HTMLButtonElement>('.settings-scope button')].find(
+    (b) => b.textContent === wanted,
+  )!;
+  if (button.getAttribute('aria-pressed') !== 'true') button.click();
+}
+
+const row = (name: string): HTMLElement =>
+  [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
+    (r) => r.querySelector('.settings-name')?.textContent === name,
+  )!;
+
+describe('the store', () => {
+  it('keeps a ladder’s own settings over the ones for every ladder, and reads them there alone', () => {
+    app.settings.setPresentationFor('normal', { palette: 'star', font: 'bungee' });
+    expect(app.settings.presentation.palette).toBe(DEFAULT);
+    expect(app.settings.presentationFor('normal').palette).toBe('star');
+    expect(app.settings.presentationFor('easy').palette).toBe(DEFAULT);
+    expect(app.settings.themeFor('normal').tile).toBe(themeFor('star').tile);
+    expect(app.settings.themeFor('easy').tile).toBe(themeFor('easy').tile);
+    expect(app.settings.boardFont('normal')).toBe(FONTS.bungee);
+    expect(app.settings.ownKeys('normal').sort()).toEqual(['font', 'palette']);
+    // The settings for every ladder still show through where the ladder has nothing of its own.
+    app.settings.setPresentation({ icons: 'star' });
+    expect(app.settings.presentationFor('normal').icons).toBe('star');
+  });
+
+  it('gives a setting no ladder can own to every ladder, whatever the scope', () => {
+    app.settings.setPresentationFor('normal', { textSize: 1.5, palette: 'gear' });
+    expect(app.settings.presentation.textSize).toBe(1.5);
+    expect(app.settings.ownKeys('normal')).toEqual(['palette']);
+  });
+
+  it('gives a ladder’s own up, on request and on a reset', () => {
+    app.settings.setPresentationFor('normal', { palette: 'star' });
+    app.settings.clearLadder('normal');
+    expect(app.settings.ownKeys('normal')).toEqual([]);
+    app.settings.setPresentationFor('donut', { palette: 'star' });
+    app.settings.resetPresentation();
+    expect(app.settings.ownKeys('donut')).toEqual([]);
+  });
+
+  it('carries a ladder’s own through the save, keeping only what the save held', () => {
+    app.settings.setPresentationFor('normal', { palette: 'star' });
+    const loaded = Settings.load();
+    expect(loaded.ownKeys('normal')).toEqual(['palette']);
+    expect(loaded.presentationFor('normal').palette).toBe('star');
+    localStorage.setItem(
+      SETTINGS_KEY,
+      JSON.stringify({
+        version: 1,
+        presentation: {},
+        ladders: { hive: { font: 'anton', textSize: 2, glyph: 'x' }, easy: 'no', donut: {} },
+      }),
+    );
+    const read = Settings.load();
+    // A value the reader cannot read is the default, as it is for every ladder; a setting no
+    // ladder can own is dropped.
+    expect(read.ownKeys('hive').sort()).toEqual(['font', 'glyph']);
+    expect(read.presentationFor('hive').glyph).toBe('pips');
+    expect(read.ownKeys('easy')).toEqual([]);
+    expect(read.ownKeys('donut')).toEqual([]);
+  });
+});
+
+describe('the screen', () => {
+  it('picks for the ladder alone in its scope, and for every ladder otherwise', () => {
+    openSettings('normal', true);
+    expect(document.querySelector('.settings-scope-note')!.textContent).toContain('NORMAL alone');
+    row('Board palette').querySelectorAll<HTMLButtonElement>('.preview-chip')[1]!.click();
+    [...document.querySelectorAll<HTMLButtonElement>('.picker .preview-chip')]
+      .find((b) => b.textContent === 'STAR')!
+      .click();
+    expect(app.settings.ownKeys('normal')).toEqual(['palette']);
+    expect(app.settings.presentation.palette).toBe(DEFAULT);
+    expect(document.querySelector('.settings-scope-note')!.textContent).toContain('palette');
+
+    openSettings('normal', false);
+    row('Board palette').querySelectorAll<HTMLButtonElement>('.preview-chip')[1]!.click();
+    [...document.querySelectorAll<HTMLButtonElement>('.picker .preview-chip')]
+      .find((b) => b.textContent === 'GEAR')!
+      .click();
+    expect(app.settings.presentation.palette).toBe('gear');
+    expect(app.settings.presentationFor('normal').palette).toBe('star');
+    expect(app.settings.presentationFor('easy').palette).toBe('gear');
+  });
+
+  it('shows only what a ladder can own in its scope, and gives the ladder’s own up on request', () => {
+    app.settings.setPresentationFor('normal', { palette: 'star' });
+    openSettings('normal', true);
+    const names = [...document.querySelectorAll('.settings-name')].map((n) => n.textContent);
+    expect(names).toContain('Board palette');
+    expect(names).not.toContain('Text size');
+    expect(names).not.toContain('Player HP');
+    expect(document.body.textContent).toContain('are for every ladder');
+    [...document.querySelectorAll<HTMLButtonElement>('button')]
+      .find((b) => b.textContent === 'Give NORMAL the settings for every ladder')!
+      .click();
+    expect(app.settings.ownKeys('normal')).toEqual([]);
+    openSettings('normal', false);
+    expect([...document.querySelectorAll('.settings-name')].map((n) => n.textContent)).toContain(
+      'Text size',
+    );
+  });
+
+  it('draws the board on the ladder in its own settings', () => {
+    app.settings.setPresentationFor('normal', { palette: 'star', glyph: 'digit' });
+    app.play('normal', 1, 7);
+    expect(app.view!.display.glyph).toBe('digit');
+    app.play('easy', 1, 7);
+    expect(app.view!.display.glyph).toBe('pips');
+  });
+});

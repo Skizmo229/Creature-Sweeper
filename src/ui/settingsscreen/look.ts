@@ -427,7 +427,7 @@ export function beatenLookRow(ctx: ScreenContext, host: HTMLElement): void {
  * drag, and forty thumbnails a frame is not a slider.
  */
 export function zoomRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, settings, currentTheme } = ctx;
+  const { p, currentTheme } = ctx;
   const zoomBox = el('div', 'zoom-demo');
   const drawZoom = (cell: number): void => {
     zoomBox.replaceChildren(
@@ -447,7 +447,7 @@ export function zoomRow(ctx: ScreenContext, host: HTMLElement): void {
       (v) => {
         const cell = Math.round(v);
         drawZoom(cell);
-        settings.setPresentation({ maxZoom: cell });
+        ctx.set({ maxZoom: cell });
       },
       undefined,
       DEFAULT_MAX_ZOOM,

@@ -169,11 +169,11 @@ export function highlightWidthRow(ctx: ScreenContext, host: HTMLElement): void {
 
 /** Whether a board opens at the zoom ceiling rather than fitted to the stage. */
 export function startAtCeilingRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, settings } = ctx;
+  const { p } = ctx;
   row(
     host,
     'Start boards at the maximum zoom',
-    toggle(p.startAtCeiling, (v) => settings.setPresentation({ startAtCeiling: v })),
+    toggle(p.startAtCeiling, (v) => ctx.set({ startAtCeiling: v })),
     'Every board opens at the zoom ceiling above, panning when it does not fit, instead of ' +
       'shrunk to fit the screen. F fits it.',
   );

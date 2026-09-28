@@ -36,6 +36,7 @@ import {
 } from './look.js';
 import { CHIP_CELL } from './render.js';
 import { soundSection } from './sound.js';
+import { scopeBar } from './scope.js';
 import { section } from './widgets.js';
 
 export type { SettingsScreenOptions } from './context.js';
@@ -79,6 +80,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   };
 
   const ctx = makeContext(opts, wrap, rebuild);
+  scopeBar(ctx, head);
 
   const look = section(
     wrap,
@@ -105,9 +107,21 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   motionRow(ctx, look);
   clearEffectRow(ctx, look);
 
-  interfaceSection(ctx);
-  soundSection(ctx);
-  gameplaySection(ctx);
+  // What a ladder cannot have of its own waits for the scope that can set it.
+  if (ctx.ladderScope) {
+    wrap.append(
+      el(
+        'p',
+        'settings-blurb',
+        'The interface, the sound and the gameplay dials are for every ladder; switch to Every ' +
+          'ladder above to set them.',
+      ),
+    );
+  } else {
+    interfaceSection(ctx);
+    soundSection(ctx);
+    gameplaySection(ctx);
+  }
 
   const tools = el('div', 'tools');
   const resetLook = el('button', 'ghost', 'Reset presentation');

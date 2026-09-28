@@ -568,7 +568,7 @@ export class App {
     const game = this.game!;
     this.teaching.tutor.dismiss();
 
-    if (this.els) flashStage(this.els.stage, events, this.settings.presentation);
+    if (this.els) flashStage(this.els.stage, events, this.settings.presentationFor(this.typeId));
     if (this.sfx.enabled) {
       const sound = soundFor(events, (e) => this.sfx.plays(e));
       if (sound) this.sfx.play(sound);

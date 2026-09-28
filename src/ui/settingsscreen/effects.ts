@@ -49,7 +49,7 @@ export function stopSettingsDemo(): void {
 }
 
 export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, ident, settings } = ctx;
+  const { p, ident } = ctx;
   const check = el('button', 'ghost small soundcheck-open', 'Sound check');
   check.setAttribute('aria-haspopup', 'dialog');
   check.addEventListener('click', () => openSoundCheck(ctx));
@@ -66,7 +66,7 @@ export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
       ],
       p.sfx,
       (v) => {
-        settings.setPresentation({ sfx: v as SfxPackId | typeof DEFAULT | typeof OFF });
+        ctx.set({ sfx: v as SfxPackId | typeof DEFAULT | typeof OFF });
         // The store has already re-pointed the mixer, so this plays the pack just chosen.
         ctx.onPreview('levelup');
       },
@@ -106,7 +106,9 @@ export function fightRimRow(ctx: ScreenContext, host: HTMLElement): void {
   const acts = el('div', 'rim-demo-acts');
   const act = (label: string, events: GameEvent[]): void => {
     const btn = el('button', 'ghost small', label);
-    btn.addEventListener('click', () => flashStage(demo, events, settings.presentation));
+    btn.addEventListener('click', () =>
+      flashStage(demo, events, settings.presentationFor(ctx.typeId)),
+    );
     acts.append(btn);
   };
   act('Clean fight', [fought(0)]);
@@ -123,7 +125,7 @@ export function fightRimRow(ctx: ScreenContext, host: HTMLElement): void {
         { value: OFF, label: 'Off' },
       ],
       p.fightRim,
-      (v) => settings.setPresentation({ fightRim: v as FightRim }),
+      (v) => ctx.set({ fightRim: v as FightRim }),
       true,
     ),
     demo,
@@ -140,7 +142,7 @@ export function fightRimRow(ctx: ScreenContext, host: HTMLElement): void {
 
 /** The stage's own shake and glow, played by the glow row's buttons above under the option chosen. */
 export function motionRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, settings } = ctx;
+  const { p } = ctx;
   wideRow(
     host,
     'Motion after a fight',
@@ -153,7 +155,7 @@ export function motionRow(ctx: ScreenContext, host: HTMLElement): void {
         { value: 'none', label: 'Neither' },
       ],
       p.motion,
-      (v) => settings.setPresentation({ motion: v as Motion }),
+      (v) => ctx.set({ motion: v as Motion }),
       true,
     ),
   );
@@ -164,7 +166,7 @@ export function motionRow(ctx: ScreenContext, host: HTMLElement): void {
  * effect itself; the pace replays the demo, so it is heard as well as read.
  */
 function clearEffectOptions(ctx: ScreenContext, host: HTMLElement, replay: () => void): void {
-  const { p, settings } = ctx;
+  const { p } = ctx;
   wideRow(
     host,
     'Play the clear effect',
@@ -175,7 +177,7 @@ function clearEffectOptions(ctx: ScreenContext, host: HTMLElement, replay: () =>
         { value: 'first', label: 'On a board’s first clear only' },
       ],
       p.victoryWhen,
-      (v) => settings.setPresentation({ victoryWhen: v as VictoryWhen }),
+      (v) => ctx.set({ victoryWhen: v as VictoryWhen }),
       true,
     ),
   );
@@ -191,7 +193,7 @@ function clearEffectOptions(ctx: ScreenContext, host: HTMLElement, replay: () =>
         { value: 'none', label: 'At once' },
       ],
       p.cardHold,
-      (v) => settings.setPresentation({ cardHold: v as CardHold }),
+      (v) => ctx.set({ cardHold: v as CardHold }),
       true,
     ),
   );
@@ -205,7 +207,7 @@ function clearEffectOptions(ctx: ScreenContext, host: HTMLElement, replay: () =>
       0.05,
       p.effectSpeed,
       ratio,
-      (v) => settings.setPresentation({ effectSpeed: Math.round(v * 100) / 100 }),
+      (v) => ctx.set({ effectSpeed: Math.round(v * 100) / 100 }),
       replay,
       DEFAULT_EFFECT_SPEED,
     ),
@@ -245,7 +247,7 @@ export function clearEffectRow(ctx: ScreenContext, host: HTMLElement): void {
       effect,
       { ...settings.victoryLook(typeId), theme: currentTheme },
       demo.view.victorySource(),
-      settings.presentation.effectSpeed,
+      settings.presentationFor(typeId).effectSpeed,
     );
   };
 
@@ -278,7 +280,7 @@ export function clearEffectRow(ctx: ScreenContext, host: HTMLElement): void {
       ],
       p.victory,
       (v) => {
-        settings.setPresentation({ victory: v as VictoryId | typeof DEFAULT | typeof OFF });
+        ctx.set({ victory: v as VictoryId | typeof DEFAULT | typeof OFF });
         syncTest();
         // Replays over the SAME board, so the gallery stays a comparison between effects rather
         // than between effects and layouts. Test is the one that deals a new board.
