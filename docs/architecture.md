@@ -27,6 +27,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   spells.ts       the five spells, their prices, the mana economy, spellKey
   cast.ts         what each spell does, behind the SpellHost interface
   sweep.ts        Sweep's proof: safeCells and its named proofs; the Sudoku harvest
+  sweepgate.ts    how the dial gates Sweep: on, off, or charged by the cells opened by hand
   reach.ts        the crawl rule: withinReach and computeSealed
   patrol.ts       PATROL's walking creatures: routes, the step after every action, route marks
   placement/      the placement rules: one record per rule, and nobody else names one

@@ -16,6 +16,7 @@ import { mulberry32 } from './rng.js';
 import { SPELL_EFFECTS } from './cast.js';
 import { computeSealed, withinReach } from './reach.js';
 import { safeCells as provenSafe } from './sweep.js';
+import { SweepGate } from './sweepgate.js';
 import { type Grid, inBounds, neighbours } from './grid.js';
 import { dealOpening } from './opening.js';
 import { type LayoutOptions, readLayout, showDrawing } from './layout.js';
@@ -90,15 +91,8 @@ export class Game {
   /** Empty cells uncovered since the last mana the trickle paid out. */
   private exploreProgress = 0;
 
-  /**
-   * Cells opened BY HAND since the last sweep, for the charge gate.
-   *
-   * Only hand-opened cells count, which is what stops the meter feeding
-   * itself: a sweep that opened forty cells would otherwise bank four more
-   * sweeps and the gate would be no gate at all. A cascade is one click, so it
-   * is one charge, for the same reason.
-   */
-  private sweepCharge = 0;
+  /** How the dial gates Sweep, and what has been banked toward one (`sweepgate.ts`). */
+  private readonly gate: SweepGate;
   /** True while `sweep` is driving `open`, so those opens do not charge it. */
   private sweeping = false;
 
@@ -118,6 +112,7 @@ export class Game {
     this.seed = seed;
     this.grid = grid;
     this.settings = settings;
+    this.gate = new SweepGate(settings);
     this.maxHp = effectiveHp(config.hp, settings);
     this.hp = startHp;
     this.progression = new Progression(config.startLevel, config.exp);
@@ -267,7 +262,7 @@ export class Game {
       return [{ type: 'blocked', reason: 'note-guard' }];
     }
 
-    if (!this.sweeping) this.sweepCharge++;
+    if (!this.sweeping) this.gate.bank();
     const events: GameEvent[] = [];
     const revealed = this.reveal(cell);
     events.push({ type: 'revealed', cells: revealed });
@@ -438,18 +433,16 @@ export class Game {
 
   // ------------------------------------------------------------ sweep gating
   //
-  // The dial lives here rather than in the UI because the charge is earned by
-  // opening cells, which is a thing only the engine sees.
+  // The gate itself is `sweepgate.ts`; the ladder's own say, `hasSweep`, is here.
 
   /** Hand-opened cells banked toward the next sweep. */
   get charge(): number {
-    return this.sweepCharge;
+    return this.gate.banked;
   }
 
   /** Cells the charge mode wants banked, or 0 when it is not in play. */
   get chargeNeeded(): number {
-    if (!this.hasSweep) return 0;
-    return this.settings.sweep === 'charge' ? this.settings.sweepChargeClicks : 0;
+    return this.hasSweep ? this.gate.needed : 0;
   }
 
   /**
@@ -464,10 +457,7 @@ export class Game {
 
   /** Whether Sweep can be used at all right now, under the current dial. */
   get sweepAvailable(): boolean {
-    if (!this.hasSweep) return false;
-    if (this.settings.sweep === 'off') return false;
-    if (this.settings.sweep === 'charge') return this.sweepCharge >= this.chargeNeeded;
-    return true;
+    return this.hasSweep && this.gate.open;
   }
 
   /**
@@ -483,27 +473,38 @@ export class Game {
     if (this.status !== 'playing') return [{ type: 'blocked', reason: 'game-over' }];
     if (!this.sweepAvailable) return [{ type: 'blocked', reason: 'no-charge' }];
     const events: GameEvent[] = [];
-    // Opens driven from here must not charge the meter, or a sweep would bank
-    // the next one and the gate would be decorative.
+    for (let guard = 0; guard < this.config.width * this.config.height; guard++) {
+      const targets = this.safeCells(options);
+      if (targets.length === 0) break;
+      events.push(...this.openProven(targets));
+    }
+    return this.afterSweep(events);
+  }
+
+  /**
+   * Open proven cells as a sweep does: driven from here they must not charge the meter, or a
+   * sweep would bank the next one and the gate would be decorative.
+   */
+  private openProven(targets: readonly Cell[]): GameEvent[] {
+    const events: GameEvent[] = [];
     this.sweeping = true;
     try {
-      for (let guard = 0; guard < this.config.width * this.config.height; guard++) {
-        const targets = this.safeCells(options);
-        if (targets.length === 0) break;
-        for (const cell of targets) {
-          if (cell.open || this.status !== 'playing') continue;
-          events.push(...this.open(cell.x, cell.y));
-        }
+      for (const cell of targets) {
+        if (cell.open || this.status !== 'playing') continue;
+        events.push(...this.open(cell.x, cell.y));
       }
     } finally {
       this.sweeping = false;
     }
-    // Spent only if it did something. A sweep that found nothing is a misread,
-    // not a use, and charging for it would be charging for a disabled button.
-    if (events.length > 0 && this.settings.sweep === 'charge') {
-      this.sweepCharge -= this.chargeNeeded;
+    return events;
+  }
+
+  /** A sweep is paid for, and the creatures walk, only if it did something. */
+  private afterSweep(events: GameEvent[]): GameEvent[] {
+    if (events.length > 0) {
+      this.gate.spend();
+      events.push(...this.moveOn());
     }
-    if (events.length > 0) events.push(...this.moveOn());
     return events;
   }
 
