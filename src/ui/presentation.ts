@@ -150,11 +150,11 @@ export function beatenParts(look: BeatenLook): { dim: boolean; strike: boolean }
 /**
  * Which fights light the edge of the board. 'every' is green for a fight that cost nothing, blue
  * for one that levelled the player up and red for one that hurt; 'levelups' keeps the blue and
- * the red and leaves the green out, since clean fights are most of a board; 'off' is none. See
- * `game/flash.ts`.
+ * the red and leaves the green out, since clean fights are most of a board; 'hits' keeps the red
+ * alone, the one that says something went wrong; 'off' is none. See `game/flash.ts`.
  */
-export type FightRim = 'every' | 'levelups' | typeof OFF;
-const FIGHT_RIMS: readonly FightRim[] = ['every', 'levelups', OFF];
+export type FightRim = 'every' | 'levelups' | 'hits' | typeof OFF;
+const FIGHT_RIMS: readonly FightRim[] = ['every', 'levelups', 'hits', OFF];
 
 /**
  * What the stage does of its own accord after a fight: the shake when a fight cost HP and the

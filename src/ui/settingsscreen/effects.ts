@@ -109,6 +109,7 @@ export function fightRimRow(ctx: ScreenContext, host: HTMLElement): void {
       [
         { value: 'every', label: 'Every fight: green, blue for a level-up, red for a hit' },
         { value: 'levelups', label: 'Level-ups and damage only' },
+        { value: 'hits', label: 'Damage only' },
         { value: OFF, label: 'Off' },
       ],
       p.fightRim,

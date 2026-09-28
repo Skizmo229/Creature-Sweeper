@@ -35,8 +35,8 @@ function flashRim(host: HTMLElement, events: GameEvent[], rim: FlashSettings['fi
 
 /**
  * One rim per action, however many fights it resolved (a sweep can fight several): red if any of
- * them cost HP, else blue if the action levelled the player up, else green, which 'levelups'
- * leaves out.
+ * them cost HP, else blue if the action levelled the player up, which 'hits' leaves out, else
+ * green, which 'levelups' leaves out too.
  */
 function rimFor(
   events: GameEvent[],
@@ -45,6 +45,7 @@ function rimFor(
   const battles = events.filter((ev) => ev.type === 'battle');
   if (rim === 'off' || battles.length === 0) return null;
   if (battles.some((ev) => ev.damage > 0)) return 'hurt';
+  if (rim === 'hits') return null;
   if (events.some((ev) => ev.type === 'levelUp')) return 'levelup';
   return rim === 'levelups' ? null : 'clean';
 }
