@@ -46,6 +46,7 @@ export type TrickId =
   | 'residual-ring'
   | 'last-cell'
   | 'census-ring'
+  | 'augur-cap'
   | 'counters'
   | 'lone-dark'
   | 'partner-number'
@@ -262,6 +263,19 @@ const censusRing: Trick = {
       if (c.creatures === null || c.creatures > c.unknown.length) continue;
       if (c.creatures > 0 && c.residual - (c.creatures - 1) > v.level) continue;
       for (const n of c.unknown) open(m, n, by([c]));
+    }
+  },
+};
+
+// An Augur names the strongest tier around a number, so nothing hidden there is above it: at or
+// below the level the ring is free, and above it the pencil loses every tier past it.
+const augurCap: Trick = {
+  grade: 1,
+  apply(v, m) {
+    for (const c of v.reading.constraints) {
+      if (c.ceiling === null) continue;
+      if (c.ceiling <= v.level) for (const n of c.unknown) open(m, n, by([c]));
+      else for (const n of c.unknown) settle(v, n, tiersUpTo(c.ceiling), m, by([c]));
     }
   },
 };
@@ -569,6 +583,7 @@ export const TRICKS: Readonly<Record<TrickId, Trick>> = {
   'residual-ring': residualRing,
   'last-cell': lastCell,
   'census-ring': censusRing,
+  'augur-cap': augurCap,
   counters,
   'lone-dark': loneDark,
   'partner-number': partnerNumber,

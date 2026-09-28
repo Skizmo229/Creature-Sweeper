@@ -1,7 +1,7 @@
 /**
  * What the honest player can see and conclude: the constraints each open number sets, what they
  * name and prove safe (the placement rule's readings included), where the cheapest gamble is, and
- * where a Census is worth aiming. `honest.ts` plays with it.
+ * where a Census or an Augur is worth aiming. `honest.ts` plays with it.
  */
 
 import type { Game } from '../engine/game.js';
@@ -25,6 +25,8 @@ export interface Constraint {
   readonly unknown: Cell[];
   /** Creatures among `unknown`, if Census has been cast here. */
   readonly creatures: number | null;
+  /** The strongest tier any of `unknown` could be, if Augur has been cast here. */
+  readonly ceiling: number | null;
 }
 
 /**
@@ -72,6 +74,7 @@ function constraintsOf(game: Game): Constraint[] {
       residual: cell.num - known - markedSum,
       unknown,
       creatures: cell.census === null ? null : cell.census - openCreatures - markedCount,
+      ceiling: cell.augur,
     });
   }
   return out;
@@ -112,6 +115,8 @@ function subtractPairs(constraints: Constraint[]): Constraint[] {
         residual: b.residual - a.residual,
         unknown: rest,
         creatures: a.creatures !== null && b.creatures !== null ? b.creatures - a.creatures : null,
+        // The rest are among b's neighbours, so b's ceiling holds over them; a's says nothing.
+        ceiling: b.ceiling,
       });
     }
   }
@@ -322,7 +327,9 @@ function packCaps(game: Game): Map<Cell, number> {
  *                           only thing a Census count can do that the residual
  *                           could not already: a count of zero says the same
  *                           as a residual of zero, and anything short of the
- *                           full count says which cells only by luck.
+ *                           full count says which cells only by luck;
+ *   the Augur ceiling     — the strongest tier around the number, so at or
+ *                           under your level nothing behind it can hurt.
  */
 export function safeToOpen(game: Game, constraints: Constraint[]): Cell[] {
   const safe = new Set<Cell>();
@@ -342,6 +349,7 @@ export function safeToOpen(game: Game, constraints: Constraint[]): Cell[] {
     if (!proven && c.creatures !== null && c.creatures > 0 && level >= 1) {
       if (c.residual - (c.creatures - 1) <= level) proven = true;
     }
+    if (!proven && c.ceiling !== null && c.ceiling <= level) proven = true;
     if (proven) {
       for (const n of c.unknown) safe.add(n);
       continue;
@@ -409,8 +417,9 @@ export function bestGuess(
     const each = c.residual / c.unknown.length;
     for (const n of c.unknown) {
       // A player choosing where to gamble knows the colours too, so the cheap
-      // square on a checkerboard is often the one whose parity caps it low.
-      const cap = Math.min(counted, capOf(game, c, n));
+      // square on a checkerboard is often the one whose parity caps it low;
+      // and an Augur's answer caps every cell behind its number at once.
+      const cap = Math.min(counted, capOf(game, c, n), c.ceiling ?? Infinity);
       const seenCap = ceiling.get(n);
       if (seenCap === undefined || cap < seenCap) ceiling.set(n, cap);
       const seenEach = mean.get(n);
@@ -452,6 +461,59 @@ export function censusTarget(game: Game, constraints: Constraint[], guess: Cell)
     }
   }
   return best;
+}
+
+/**
+ * Whether an Augur on this number could free its ring: the residual is above the level, so the
+ * ring is not free already, yet small enough to be spread at or below the level over every cell.
+ * Where it could not, the answer can only cap a guess, and a player saves the mana.
+ */
+export function augurCouldFree(
+  c: { readonly cell: Cell; readonly residual: number; readonly unknown: readonly Cell[] },
+  level: number,
+): boolean {
+  return c.cell.augur === null && c.residual > level && c.residual <= level * c.unknown.length;
+}
+
+/**
+ * The open cell whose Augur would say most about the coming gamble: among the numbers over the
+ * guess whose ring an Augur could free, the one whose residual is spread thinnest, since that is
+ * where the strongest creature is likeliest to sit at or under the level. The opposite of
+ * `censusTarget`'s preference, and for the opposite reason: a count bites where much tier hides
+ * in few cells, a ceiling where little hides in many.
+ */
+export function augurTarget(game: Game, constraints: Constraint[], guess: Cell): Cell | null {
+  let best: Cell | null = null;
+  let bestScore = Infinity;
+
+  for (const c of constraints) {
+    if (!augurCouldFree(c, game.level) || !c.unknown.includes(guess)) continue;
+    const score = c.residual / c.unknown.length;
+    if (score < bestScore) {
+      best = c.cell;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+/**
+ * Where an Augur would actually pay, decided by looking, as `censusOracle` does for Census: an
+ * upper bound on what perfect aiming could be worth, so a weak result cannot be blamed on the aim.
+ */
+export function augurOracle(game: Game, guess: Cell): Cell | null {
+  for (const cell of game.grid.flat()) {
+    if (!cell.present || !cell.open || cell.augur !== null) continue;
+    if (Math.abs(cell.x - guess.x) > 2 || Math.abs(cell.y - guess.y) > 2) continue;
+    const ns = game.neighboursOf(cell);
+    if (!ns.some((n) => !n.open && n.mark === 0)) continue;
+
+    cell.augur = Math.max(0, ...ns.map((n) => n.tier));
+    const unlocked = safeToOpen(game, allConstraints(game)).some((c) => !c.open);
+    cell.augur = null;
+    if (unlocked) return cell;
+  }
+  return null;
 }
 
 /**

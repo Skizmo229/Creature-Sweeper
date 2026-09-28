@@ -22,6 +22,8 @@ ARCANE             10     5      10        3/3        0      10            -
 WORKOUT            10     5      10        3/3        0      10            -
 ORACLE              8     4      10        3/3        0       8            -
 DUNGEON            10     5      10        3/3        0      10            -
+SEER                1     0      10        3/3        0       1            -
+AUGUR              10     5      10        3/3        0      10            -
 HIVE               10     5      10        3/3        0      10            -
 PAIRS              10     5      10        3/3        0      10            -
 DOMINOES           10     5      10        3/3        0      10            -
@@ -34,7 +36,7 @@ PETRI DISH         10     5      10        3/3        0      10            -
 PATROL             10     5      10        3/3        0      10            -
 SPRINKLE DONUT     10     5      10        3/3        0      10            -
 
-33/33 full runs completed by every seed at full HP (3 runs each, 990 boards simulated).
+35/35 full runs completed by every seed at full HP (3 runs each, 1050 boards simulated).
 A full pool at the end means the heal was never needed — which is the zero-damage guarantee still holding ten boards deep.
 
 [exit 0]

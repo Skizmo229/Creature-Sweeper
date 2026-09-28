@@ -34,6 +34,8 @@ export interface Constraint {
    * shows every creature; null otherwise.
    */
   readonly creatures: number | null;
+  /** The strongest tier any of `unknown` could be, once an Augur has read this cell's ring. */
+  readonly ceiling: number | null;
 }
 
 /** The board as the graded player sees it on one pass. */
@@ -121,7 +123,7 @@ export function readBoard(game: Game, peek: boolean, options: ReadOptions = {}):
     if (!covered.length) continue;
     let creatures = cell.census === null ? null : cell.census - counted;
     if (shown) creatures = covered.filter((n) => n.tier > 0).length;
-    const c: Constraint = { cell, residual, unknown: covered, creatures };
+    const c: Constraint = { cell, residual, unknown: covered, creatures, ceiling: cell.augur };
     constraints.push(c);
     for (const n of covered) {
       const list = touching.get(n);

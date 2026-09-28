@@ -95,6 +95,13 @@ export const MARK_OUTLINE = 'rgba(8, 8, 4, 0.8)';
 export const CENSUS_COLOR = '#7ad9ff';
 
 /**
+ * Augur results: the opposite corner, in a cream that sits at least 117 RGB units from every
+ * other annotation colour and from every look's `hot` (measured 27 September 2026, decision 0032's
+ * rule), so no palette can make a beaten creature's number look like an Augur's answer.
+ */
+export const AUGUR_COLOR = '#ffffd2';
+
+/**
  * The tutor's pointing finger: the numbers a proof read and the rings they see.
  *
  * Violet, which no other annotation uses: green is a claim, blue a Census, gold a given, red a

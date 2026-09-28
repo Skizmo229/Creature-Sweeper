@@ -78,6 +78,12 @@ export interface Cell {
    * them. The number is their SUM, so sum plus count usually pins the layout.
    */
   census: number | null;
+  /**
+   * The strongest tier among this cell's neighbours, once Augur has read
+   * them. An upper bound on every hidden creature there, and nothing about
+   * where any of them stands.
+   */
+  augur: number | null;
 }
 
 /**

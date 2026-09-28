@@ -36,6 +36,7 @@ import {
   type View,
   noMoves,
 } from './tricks.js';
+import { augurCouldFree } from './deduce.js';
 import { dungeonScaffold } from './scaffold.js';
 
 export interface GradedOptions {
@@ -463,9 +464,10 @@ class Player {
 
   /**
    * Spend mana before HP (docs/strategies.md, section 8): at a stuck point, Reveal on the cell
-   * that would otherwise be gambled on, else Census on the number over it that a count would
-   * tighten most, else Beacon; at most `CASTS_AT_A_STUCK_POINT` information casts a stuck point,
-   * as the honest player allows itself. True when something was cast, so the board is re-read.
+   * that would otherwise be gambled on; else Augur on the number over it whose ring an Augur could
+   * free, the thinnest spread first; else Census on the number over it that a count would tighten
+   * most; else Beacon. At most `CASTS_AT_A_STUCK_POINT` information casts a stuck point, as the
+   * honest player allows itself. True when something was cast, so the board is re-read.
    */
   spend(): boolean {
     const { game } = this;
@@ -473,12 +475,17 @@ class Player {
     const gamble = this.pick(readBoard(game, this.options.peek ?? false));
     if (!gamble) return false;
     if (this.cast('reveal', gamble.cell)) return true;
+    const spread = (c: Constraint): number => c.residual / c.unknown.length;
+    let thinnest: Constraint | null = null;
+    for (const c of gamble.near) {
+      if (!augurCouldFree(c, game.level)) continue;
+      if (!thinnest || spread(c) < spread(thinnest)) thinnest = c;
+    }
+    if (thinnest && this.cast('augur', thinnest.cell)) return true;
     let target: Constraint | null = null;
     for (const c of gamble.near) {
       if (c.cell.census !== null) continue;
-      if (!target || c.residual / c.unknown.length > target.residual / target.unknown.length) {
-        target = c;
-      }
+      if (!target || spread(c) > spread(target)) target = c;
     }
     if (target && this.cast('census', target.cell)) return true;
     return this.cast('beacon');

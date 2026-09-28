@@ -68,8 +68,8 @@ npm run typecheck      # twice: the second pass compiles the engine, sims and te
 npm run lint           # ESLint, failing on any warning; the size warnings are the readability bar Milestone 3 set
 npm run knip           # unused files and exports
 npm run format         # Prettier (format:check to verify)
-npm test               # 662 tests, including the invariants
-npm run sim:golden:check   # re-run sixteen fixed-seed simulator runs and diff against test/golden/
+npm test               # 672 tests, including the invariants
+npm run sim:golden:check   # re-run seventeen fixed-seed simulator runs and diff against test/golden/
 npm run sim            # clear every one of the 884 boards headlessly (-- 200 for more seeds)
 npm run sim:run        # complete every type's Full Run
 npm run sim:spells -- 40 dungeon   # what each spell is worth on one ladder, board by board
@@ -97,8 +97,8 @@ DOMINOES) · right-click or a LV button to mark · number keys act on the cell u
 marking or pencilling according to the Entry mode · `N` switches that mode · `Shift`+digit does
 the other one for that keystroke · `S` sweeps what is proven safe · `D` also trusts your marks ·
 `H` asks the tutor for the next provable move and why · `G` opens the field guide there · a
-spell's bracketed letter casts it (`C`ensus, `R`eveal, `B`eacon, `E`xercise, offered cheapest
-first) · `W` waits a move on PATROL · scroll or `+`/`-` to zoom, `F` to reset · `Esc` backs out.
+spell's bracketed letter casts it (`C`ensus, `A`ugur, `R`eveal, `B`eacon, `E`xercise, offered
+cheapest first) · `W` waits a move on PATROL · scroll or `+`/`-` to zoom, `F` to reset · `Esc` backs out.
 
 **Settings** are two separate things. The presentation half (creature icons, board palette, board
 font, interface font, sound pack, glow after a fight, board-clear effect, text size, preview size,
@@ -116,8 +116,8 @@ creature, how Sweep is gated, Time Attack). Settings that make the game harder r
 anything easier than the tuned game records no clear, no unlock and no best time, and the game says
 so live.
 
-**Game types.** 33 ladders of ten tuned boards, each with a scaling continuation past board 10
-(884 boards in all) and a Full Run (all ten on one HP pool).
+**Game types.** 35 ladders of ten tuned boards, each with a scaling continuation past board 10
+(961 boards in all) and a Full Run (all ten on one HP pool).
 
 ```
 start       EASY -> NORMAL
@@ -127,8 +127,8 @@ boards      Normal     Shape          Magic     Special
   20        EXTREME    WRAPPED CROSS  WORKOUT   PAIRS
   25                   CROSS          ORACLE    DOMINOES
   30                   DIAMOND        DUNGEON   PACKS
-  35                   DONUT                    CHECKERBOARD
-  40                   RAGGED CAVE              CONGA LINE
+  35                   DONUT          SEER      CHECKERBOARD
+  40                   RAGGED CAVE    AUGUR     CONGA LINE
   45                   PYRAMID                  SUDOKU
   50                   GEAR                     ULTRA HIVE
   55                   CARD                     PETRI DISH
@@ -142,7 +142,9 @@ The menu shows the ladders in those four columns; Normal is the original game's 
 
 The cut-out shapes (DONUT, CROSS, WRAPPED CROSS, DIAMOND, RAGGED CAVE, PYRAMID, GEAR, CARD,
 VALENTINES, STAR, DUNGEON) carry ARCANE's loadout; DUNGEON also carries Exercise and the crawl rule,
-and PYRAMID starts with its bottom two rows face up. SPRINKLE DONUT is DONUT's ring with no spells
+and PYRAMID starts with its bottom two rows face up. SEER is BLIND with Reveal, Census and Beacon:
+one HP, no fighting, exploration the only income. AUGUR is ARCANE's boards with Census and Augur,
+the two spells that only answer questions. SPRINKLE DONUT is DONUT's ring with no spells
 and every creature shown, two to a sprinkle, so only their levels are hidden; it grows from one
 opening under PETRI DISH's rule. What each mode's rule is and what the engine deduces from it is
 in `docs/modes.md`.

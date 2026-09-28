@@ -125,7 +125,7 @@ function detailCells(rs: GradedRun[], f: Flags): string {
 
 function byBoard(seeds: number, type: LadderType, only: [number, number] | undefined, f: Flags) {
   console.log(
-    `${type.name}, board by board, ${seeds} seeds each, spell-less` +
+    `${type.name}, board by board, ${seeds} seeds each, ${spent(f)}` +
       `${f.peek ? ', reading hidden numbers' : ''}${f.solver ? ', complete deducer attached' : ''}.\n`,
   );
   console.log(
@@ -144,8 +144,11 @@ function byBoard(seeds: number, type: LadderType, only: [number, number] | undef
   }
 }
 
+/** Whether the runs spent mana, for a heading; the tables read differently if they did. */
+const spent = (f: Flags): string => (f.spells ? 'spending mana' : 'spell-less');
+
 function everyLadder(seeds: number, f: Flags): void {
-  console.log(`Every ladder, its ten tuned boards, ${seeds} seeds each, spell-less.\n`);
+  console.log(`Every ladder, its ten tuned boards, ${seeds} seeds each, ${spent(f)}.\n`);
   console.log(
     'ladder         | grade 2: stuck clear |' +
       ' grade 4: stuck guess lethal clear   hp | need>=2  >=3  >=4 | avail effort | unsound' +

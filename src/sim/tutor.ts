@@ -525,6 +525,16 @@ const CAPTIONS: Readonly<Record<TrickId, Captioner>> = {
       `at least 1, so none is above ${a.residual - k + 1}: at or below your level ${v.level}.`
     );
   },
+  'augur-cap': (t, v) => {
+    const a = first(t);
+    const top = a.ceiling ?? 0;
+    if (top <= v.level)
+      return (
+        `The strongest creature around the ${a.cell.num} is a ${top}, at or below your level ` +
+        `${v.level}, so ${cells(a)} safe.`
+      );
+    return `The strongest creature around the ${a.cell.num} is a ${top}, so nothing hidden there is above ${top}.`;
+  },
   counters: (t, v) =>
     v.reading.top <= v.level
       ? `The counters show nothing left above tier ${v.reading.top}, at or below your level ` +

@@ -6,10 +6,12 @@
  * The split the palettes keep: pip SHAPE carries ladder identity, pip COLOUR carries tier identity
  * and is global (`tiercolors.ts`), so a tier-4 creature looks the same everywhere.
  * Every face and effect here was checked on its own palette at a 16px cell before it was chosen;
- * two ladders may share a face (decision 0031).
+ * two ladders may share a face (decision 0031). The shape ladders' records are in
+ * `shapelooks.ts`, so neither file outgrows the size a reader can hold (Milestone 3's bar).
  */
 
 import type { LadderLook, TypeTheme } from './looktypes.js';
+import { SHAPE_LOOKS } from './shapelooks.js';
 
 const LOOKS: Record<string, LadderLook> = {
   easy: {
@@ -339,189 +341,7 @@ const LOOKS: Record<string, LadderLook> = {
     sfx: 'blip',
     victory: 'pop',
   },
-  wraparound: {
-    palette: {
-      tile: '#1d6a9e',
-      tileEdge: '#134a70',
-      floor: '#061622',
-      ink: '#c6e4f5',
-      hot: '#4fb8f0',
-      pip: 'circle',
-      accent: '#3b93c4',
-    },
-    // Digits drawn from loops, on a board that loops.
-    font: 'comfortaa',
-    sfx: 'chime',
-    victory: 'wipeRadial',
-  },
-  donut: {
-    // An unglazed cake donut: golden-brown crust for a covered tile, the dark fried dough under
-    // it for uncovered ground. `hot` is raspberry, 118 clear of the gold because Reveal writes
-    // givens here, 156 from `ink`, and 5.5:1 on the floor (decisions 0032 and 0047).
-    palette: {
-      tile: '#c98d4e',
-      tileEdge: '#95602c',
-      floor: '#2a190c',
-      ink: '#f5dfc0',
-      hot: '#ff5577',
-      pip: 'ring',
-      accent: '#e0a060',
-    },
-    // Doughy, like a bakery sign.
-    font: 'sniglet',
-    sfx: 'chime',
-    victory: 'ripple',
-  },
-  cross: {
-    palette: {
-      tile: '#4a8f3a',
-      tileEdge: '#316526',
-      floor: '#0c2108',
-      ink: '#d2eec7',
-      hot: '#8ce06a',
-      pip: 'square',
-      accent: '#6bb054',
-    },
-    // A crossroads, in the US highway-sign face.
-    font: 'overpass',
-    sfx: 'blip',
-    victory: 'wipe',
-  },
-  wrapped_cross: {
-    palette: {
-      tile: '#2f8f7e',
-      tileEdge: '#1f6356',
-      floor: '#08211c',
-      ink: '#c9eee4',
-      hot: '#4fe0b8',
-      pip: 'cross',
-      accent: '#4fb39c',
-    },
-    // Squared-off loops: halfway between its two parents.
-    font: 'exo-2',
-    sfx: 'chime',
-    victory: 'wipe',
-  },
-  diamond: {
-    palette: {
-      tile: '#8f3fa0',
-      tileEdge: '#652a73',
-      floor: '#210a26',
-      ink: '#f0cdf7',
-      hot: '#e072ff',
-      pip: 'diamond',
-      accent: '#b45cc4',
-    },
-    // Thick and hairline strokes, like cut facets.
-    font: 'abril-fatface',
-    sfx: 'glass',
-    victory: 'sparkle',
-  },
-  cave: {
-    palette: {
-      tile: '#8a7050',
-      tileEdge: '#5f4c36',
-      floor: '#1a1410',
-      ink: '#ecdfcd',
-      hot: '#ffb04f',
-      pip: 'circle',
-      accent: '#ad9270',
-    },
-    // Softened corners, like worn stone.
-    font: 'rubik',
-    sfx: 'thud',
-    victory: 'burn',
-  },
-  pyramid: {
-    // Sandstone, darkened until the green mark reads on it (2.6:1, EASY's olive was the warning),
-    // with a lapis `hot`: gold is out, because the base rows and Reveal both write givens here,
-    // and lavender sits 90 clear of Census's cyan and 103 of the nearest tier colour (decision 0032).
-    palette: {
-      tile: '#937232',
-      tileEdge: '#6a5223',
-      floor: '#1e1709',
-      ink: '#f4e6c4',
-      hot: '#a78bfa',
-      pip: 'triangle',
-      accent: '#c49a4a',
-    },
-    // Carved capitals, as on a monument.
-    font: 'cinzel',
-    // Stone set on stone, and blocks that tumble when it is done.
-    sfx: 'thud',
-    victory: 'tumble',
-  },
-  gear: {
-    // Gunmetal, with a `hot` of red-hot metal: DOMINOES's red, 83 clear of the tier-4 orange and 123
-    // of the gold that Reveal writes here, and 5.7:1 on the floor (decision 0032).
-    palette: {
-      tile: '#5a6470',
-      tileEdge: '#3d454e',
-      floor: '#111418',
-      ink: '#dde4ea',
-      hot: '#ff4d6d',
-      pip: 'gear',
-      accent: '#8a97a6',
-    },
-    // Machined corners.
-    font: 'chakra-petch',
-    sfx: 'thud',
-    // A ring turning out from the centre, like the gear itself.
-    victory: 'wipeRadial',
-  },
-  card: {
-    // A red card back on green baize, ivory ink. `hot` is lavender: gold is out because Reveal
-    // writes givens here, and it sits 90 clear of Census's cyan and 103 of the nearest tier colour
-    // (decision 0032). A mark on a covered tile is 4.2:1.
-    palette: {
-      tile: '#9e2a33',
-      tileEdge: '#6f1d24',
-      floor: '#0d1f16',
-      ink: '#f5ecd9',
-      hot: '#a78bfa',
-      pip: 'diamond',
-      accent: '#c9404b',
-    },
-    // A card's index is a bookish serif.
-    font: 'libre-baskerville',
-    sfx: 'chime',
-    // The creatures bounce off leaving trails: the card game everyone has watched finish.
-    victory: 'cascade',
-  },
-  valentines: {
-    // Deep rose on a wine floor. `hot` is lavender: gold is out because Reveal writes givens here,
-    // and it sits 90 clear of Census's cyan and 103 of the nearest tier colour (decision 0032).
-    palette: {
-      tile: '#b0254f',
-      tileEdge: '#7d1a38',
-      floor: '#22070f',
-      ink: '#fbd3df',
-      hot: '#a78bfa',
-      pip: 'heart',
-      accent: '#e0487a',
-    },
-    // Bouncy and warm, PAIRS's face, for another ladder about couples.
-    font: 'baloo-2',
-    sfx: 'chime',
-    victory: 'confetti',
-  },
-  star: {
-    // A night sky, with ORACLE's rose for `hot`: gold is out because Reveal writes givens here,
-    // and it sits 76 clear of the tier-5 pink and 124 of the gold (decision 0032).
-    palette: {
-      tile: '#3a55a0',
-      tileEdge: '#27396e',
-      floor: '#080c1c',
-      ink: '#dfe7ff',
-      hot: '#fa4f7a',
-      pip: 'star',
-      accent: '#6f8fe0',
-    },
-    // A theatre marquee: a name in lights.
-    font: 'bungee',
-    sfx: 'glass',
-    victory: 'sparkle',
-  },
+  ...SHAPE_LOOKS,
   dungeon: {
     palette: {
       tile: '#6a5088',
@@ -572,6 +392,45 @@ const LOOKS: Record<string, LadderLook> = {
     font: 'space-mono',
     sfx: 'thud',
     victory: 'wipeRadial',
+  },
+  seer: {
+    // Night indigo, for the search board that carries a spellbook. `hot` is a hot pink: 157
+    // from the pale `ink`, 134 clear of GIVEN_COLOR's gold (Reveal writes givens here) and 207
+    // of Census's cyan; 6.5:1 on the floor (decision 0032). The ring pip is BLIND's, since a
+    // SEER board is a BLIND board with mana.
+    palette: {
+      tile: '#3d4a8a',
+      tileEdge: '#28315e',
+      floor: '#0c0f22',
+      ink: '#dcdcf0',
+      hot: '#ff5aa0',
+      pip: 'ring',
+      accent: '#5b7bd5',
+    },
+    // A crystal-ball reading: soft and rounded, where BLIND's readout is an instrument.
+    font: 'comfortaa',
+    sfx: 'glass',
+    victory: 'wipeRadial',
+  },
+  augur: {
+    // Old parchment and bronze: a reading, not a fight. `hot` is a deep teal, 198 from the warm
+    // `ink`, 222 clear of GIVEN_COLOR's gold (the loadout writes no givens, but a palette is a
+    // player setting worn on ladders that do), 107 clear of Census's cyan and 219 of the Augur
+    // cream; 8.2:1 on the floor, and a mark on a covered tile 3.4:1, in NORMAL's range
+    // (decision 0032).
+    palette: {
+      tile: '#7a5f33',
+      tileEdge: '#52401f',
+      floor: '#1e1710',
+      ink: '#f1e4c6',
+      hot: '#2ec4b6',
+      pip: 'triangle',
+      accent: '#c9a227',
+    },
+    // A temple inscription, as ORACLE wears: the other reader of signs.
+    font: 'cinzel',
+    sfx: 'glass',
+    victory: 'ripple',
   },
   huge_blind: {
     palette: {

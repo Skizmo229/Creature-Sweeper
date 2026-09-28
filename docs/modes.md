@@ -6,7 +6,8 @@ and how it was tuned. Measurements are summarised; `docs/tuning.md` and the desi
 the full numbers.
 
 The plain ladders (EASY, NORMAL, HUGE, EXTREME, HUGE x EXTREME) differ only in schedule. The magic
-ladders (ARCANE, ORACLE) add spells. BLIND and HUGE x BLIND are search boards. The rest follow.
+ladders (ARCANE, ORACLE) add spells. BLIND and HUGE x BLIND are search boards, and SEER is a
+search board with spells. The rest follow.
 
 ## Topology and shape
 
@@ -309,3 +310,41 @@ Search boards: one HP, level 0, won by uncovering every empty cell, the creature
 the win uncovers them. BLIND climbs 5 to 7 tiers over its ladder. It opens at 70 boards cleared,
 one step after every other counted ladder (decision 0036), and its Full Run heal rounds down to nothing, so a run there is a
 single-mistake run.
+
+## SEER
+
+BLIND's boards with Reveal, Census and Beacon (`search: true` and a `spells` list together), on
+the Magic column at 35 boards cleared, so a player meets the one-mistake game with a net before
+BLIND takes it away. Nothing is ever killed, so exploration is the whole income: the starting 75
+plus about 100 mana on board 1 rising to 185 on board 10, which the affordability test in
+`test/spells.test.ts` counts honestly (kills pay nothing on a search board). Reveal on a creature
+writes a given, which the search counters subtract as a flag; Beacon and Reveal's ring both go
+through `checkSearchWin`, so a cast can finish the board. Exercise is left out on purpose: a level
+lent at level 0 would make a tier 1 a free kill on a board whose creatures are never fought, and
+that is the one way magic could break a search board.
+
+Runs denser than BLIND (19.4 to 21.4% against 16.5 to 19.7%) to sit on BLIND's target with the
+spells spent: a grade-4 graded player spending mana clears 80% of board 1 falling to 30% of board
+10 (40 seeds, 27 September 2026), where BLIND's own density with spells cleared 98% falling to 80%.
+The climb is flatter than BLIND's because the mana grows with the board. Every guess is lethal, as
+on BLIND, so the whole value of the spells is the guesses they replace (decision 0054).
+
+## AUGUR
+
+ARCANE's boards and schedule with Census and Augur, the two spells that only answer questions:
+neither opens a cell nor names one, so every guess stays the player's. Augur is Echo from the
+design reference, built under a name whose letter is free (decision 0006): the strongest tier among
+a cell's neighbours, open ones included, stored in `Cell.augur` and drawn as a cream badge in the
+top-right corner, the mirror of Census's. Sweep reads it as a proof (`provenByAugur`: at or below
+your level the ring is free), the graded player's `augur-cap` trick frees the ring or narrows the
+pencil to the tiers at or below it, and the honest player caps its guesses with it. What would
+silently break it: a proof that read the ceiling as a bound on the hidden *sum*, which it is not,
+or an Augur that skipped open neighbours, which would make it a different fact from the one the
+blurb states.
+
+Measured, the answer is rarely the one that frees a ring: the graded player, casting only where a
+ring could be all at or below its level, found it so in 1 of 67 casts (boards 4 to 10, 30 seeds,
+27 September 2026), so the spell's value as played is nil, exactly as Census's is, and its price is
+Echo's paper 6 on the tripled scale (decision 0055). Ships at ARCANE's schedule, at the density
+ceiling: a grade-2 graded player spending mana clears 100% of both ladders, so density cannot move
+it and the lock is the lever if it should bite (decision 0056).

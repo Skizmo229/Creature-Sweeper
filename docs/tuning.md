@@ -18,7 +18,7 @@ All in `src/sim/cli/`, all driving the real engine with fixed seeds, all determi
 | `npm run sim:human -- N [ladder] [a-b]` | The graded player, a person's tricks up to a grade (`docs/strategies.md`): what each board demands, grade by grade; stuck points, lethal guesses and clear rate at each grade; moves on offer when it had to look. `--profile` counts each trick's conclusions, `--peek` reads the numbers PAIRS hides, `--solver` attaches the complete deducer, `--spells` spends mana as the catalogue advises, `--attention=R` looks near the last action first and counts the scans. Its `unsound` column must be zero. |
 | `npm run sim:sudoku -- N [--sweep]` | SUDOKU build cost per givens count and the tightest round of each board. |
 | `npx tsx src/sim/cli/opening.ts`, `placement.ts`, `topology.ts` | The opening, placement and topology experiments; the first two write `design/data/*.json` for the reference page. |
-| `npm run sim:golden` / `sim:golden:check` | Records or diffs the text of sixteen small runs of the above: the behaviour-preservation harness. |
+| `npm run sim:golden` / `sim:golden:check` | Records or diffs the text of seventeen small runs of the above: the behaviour-preservation harness. |
 
 The **honest player** (`src/sim/honest.ts`) reads only what a player can see and deduces locally,
 so every "cornered" figure it gives is an upper bound. The **complete deducer**
@@ -59,7 +59,7 @@ retuned against it.
   (34.5%) and CHECKERBOARD (38.5%) sit past it for stated reasons (`docs/modes.md`).
 - Placement ceilings: PAIRS 26% (`PAIR` jams at 24.8 to 25.6%), PACKS 36%, CONGA LINE 34%,
   PATROL 8.6% (its routes never jammed at 8.5% in 300 seeds and jammed on 5 to 50% at 9%).
-- Spell prices 30 / 75 / 85 / 150 (Census, Reveal, Beacon, Exercise), one global table on purpose:
+- Spell prices 20 / 30 / 75 / 85 / 150 (Augur, Census, Reveal, Beacon, Exercise), one global table on purpose:
   income (pools span 150 to 1,233) and demand (forced guesses 0.1 to 6.0 a board) already carry the
   variation between ladders. Starting mana is 75 because it is "one Reveal exactly"; anything that
   changes Reveal's price has to move it.
@@ -83,6 +83,8 @@ ladder, each spell against playing spell-less on the ladders that offer it:
 | Census, where it demonstrably helps | 30 | 0.48 | 0.0158 | 0.8 |
 | Exercise | 150 | 0.90 | 0.0098 | 2.5 |
 | Beacon (ORACLE only, 80 seeds, 25 September) | 85 | 0.57 | 0.0067 | 5.9 |
+| Augur, as played (ARCANE with Augur added, 40 seeds, 27 September) | 20 | 0.000 | 0.0000 | 0.0 |
+| Augur, where it demonstrably helps | 20 | 2.29 | 0.1143 | 1.0 |
 
 - Beacon is priced where a mana of it saves what a mana of Reveal does on ORACLE, the one ladder
   that offers both (decision 0037). Measured there at 80 seeds a board, 25 September 2026, Reveal
@@ -93,6 +95,11 @@ ladder, each spell against playing spell-less on the ladders that offer it:
   where it demonstrably unlocks something it is worth more per mana than Reveal, but such a spot
   exists 0.1 to 0.3 times a board and a player hits it 2 to 9% of the time (an earlier
   measurement).
+- Augur is Census's twin in shape: unaimable as played (the strongest sat at or below the level
+  in 1 of 67 casts the graded player aimed at rings it could free), and worth more per cast than
+  Census where a spot exists (2.29 HP against 1.60), which is 0.05 times a board against 0.07.
+  Priced at Echo's paper 6 on the tripled scale rather than by value, as Census was (decision
+  0055).
 - Reveal's ring (the empty ground around its target) is 45% of the spell and gives nothing away.
   It cannot cascade off a creature, because every neighbour of a tier-N cell carries at least N.
 - Exercise is close to Reveal per cast and the worst per mana: it makes the unavoidable guess

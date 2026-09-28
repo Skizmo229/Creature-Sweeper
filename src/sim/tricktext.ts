@@ -69,6 +69,13 @@ export const TRICK_TEXT: Readonly<Record<TrickId, TrickText>> = {
       'When you know how many creatures share what is hidden, each is worth at least 1, so the ' +
       'biggest can be no more than the remainder less one for every other.',
   },
+  'augur-cap': {
+    name: 'The strongest one',
+    section: 3,
+    rule:
+      'An Augur names the strongest creature around a number, so nothing hidden there is above ' +
+      'it: at or below your level the whole ring is free, and above it no cell can be more.',
+  },
   counters: {
     name: 'The counters',
     section: 3,

@@ -46,6 +46,8 @@ const RUNS = {
   'spells-congo': ['src/sim/cli/spellvalue.ts', '4', 'congo'],
   'spells-workout': ['src/sim/cli/spellvalue.ts', '4', 'workout'],
   'spells-sprinkles': ['src/sim/cli/spellvalue.ts', '4', 'sprinkle_donut'],
+  'spells-seer': ['src/sim/cli/spellvalue.ts', '4', 'seer'],
+  'spells-augur': ['src/sim/cli/spellvalue.ts', '4', 'augur'],
   'forced-arcane': ['src/sim/cli/forced.ts', '3', 'arcane', '8-10'],
   'lethal-extreme': ['src/sim/cli/lethal.ts', '3', 'extreme'],
   'human-normal': ['src/sim/cli/human.ts', '3', 'normal'],

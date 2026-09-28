@@ -49,18 +49,22 @@ Reveal. Drawn gold, unerasable, and a fact rather than a claim. `Cell.given`.
 **Census.** The count of creatures among a cell's neighbours, once the Census spell has been cast
 on it. `Cell.census`. Sum plus count usually pins a layout.
 
+**Augur.** The strongest tier among a cell's neighbours, once the Augur spell has been cast on it.
+`Cell.augur`. A ceiling on every hidden creature there; at or below your level the ring is free.
+
 **Sweep.** Opens every cell the engine can prove safe. **Strict** Sweep uses only facts (numbers,
-open tiers, givens, Census, the placement proofs). **Assisted** Sweep also trusts the player's
+open tiers, givens, Census, Augur, the placement proofs). **Assisted** Sweep also trusts the player's
 marks. **Charged** Sweep (the default) is rationed: ten hand-opened cells buy one sweep.
 `Game.safeCells`, `Game.sweep`.
 
-**Spells.** Census (30 mana, counts a cell's creature neighbours), Reveal (75, tells you a cell's
-tier as a given and opens the empty ground around it), Beacon (85, opens the largest untouched
-zero-region), Exercise (150, lends a level to the next fight). `src/engine/spells.ts`. WORKOUT
+**Spells.** Augur (20 mana, names the strongest of a cell's creature neighbours), Census (30, counts
+them), Reveal (75, tells you a cell's tier as a given and opens the empty ground around it),
+Beacon (85, opens the largest untouched zero-region), Exercise (150, lends a level to the next
+fight). `src/engine/spells.ts`. WORKOUT
 prices Exercise by its own rule (`WorkoutRule`).
 
 **Search board.** A board won by uncovering every empty cell rather than by killing every
-creature (BLIND, HUGE x BLIND). No level economy.
+creature (BLIND, HUGE x BLIND, SEER). No level economy; on SEER, exploration is the only mana.
 
 **Patrol / move / route.** On PATROL every creature walks a square route, one cell per **move**
 (an open, a Sweep or a Wait), clockwise from its top-left corner; routes never share a cell. A

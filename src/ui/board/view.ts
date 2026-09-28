@@ -40,6 +40,7 @@ import {
 import {
   type Paint,
   drawAnnotation,
+  drawAugur,
   drawCensus,
   drawOccupied,
   drawOpen,
@@ -460,6 +461,7 @@ export class BoardView implements InputHost {
         const { cx, cy } = centreOf(p.layout, cell.x, cell.y);
         if (!cell.open && !cell.occupied) drawAnnotation(p, cell, cx, cy);
         if (cell.census !== null) drawCensus(p, cell, cx, cy);
+        if (cell.augur !== null) drawAugur(p, cell, cx, cy);
       }
     }
 

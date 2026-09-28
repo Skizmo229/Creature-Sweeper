@@ -26,8 +26,8 @@ import { shapeRule } from '../src/engine/shape/registry.js';
 import { placementRule } from '../src/engine/placement/registry.js';
 
 describe('ladder data', () => {
-  it('has thirty-three types of ten boards', () => {
-    expect(ladders).toHaveLength(33);
+  it('has thirty-five types of ten boards', () => {
+    expect(ladders).toHaveLength(35);
     for (const type of ladders) expect(type.boards).toHaveLength(10);
   });
 

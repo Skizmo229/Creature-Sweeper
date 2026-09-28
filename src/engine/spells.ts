@@ -34,7 +34,7 @@
  * movement means the zero-damage guarantee survives magic untouched.
  */
 
-export type SpellId = 'reveal' | 'census' | 'exercise' | 'beacon';
+export type SpellId = 'reveal' | 'census' | 'exercise' | 'beacon' | 'augur';
 
 export interface Spell {
   readonly id: SpellId;
@@ -108,6 +108,17 @@ export const SPELLS: Record<SpellId, Spell> = {
     targeted: false,
     blurb: 'Open the largest untouched blank region. The unstuck button.',
   },
+  augur: {
+    id: 'augur',
+    name: 'Augur',
+    // Echo's paper price of 6 on decision 0013's tripled scale, since, like Census, it cannot be
+    // priced by value as played: a bound is worth nothing until the layout it bounds is the one
+    // in doubt (decision 0055).
+    cost: 20,
+    targeted: true,
+    blurb:
+      'The strongest creature around this cell: its tier. Nothing hidden there is above it, so at or below your level the whole ring is free.',
+  },
 };
 
 /**
@@ -118,8 +129,8 @@ export const SPELLS: Record<SpellId, Spell> = {
  * brackets — [B]eacon — which is the whole explanation of the control.
  *
  * Deriving it does mean two spells could want the same letter, and two on
- * paper already do: Echo would collide with Exercise, and Scry with Sweep's
- * own `s`. A test asserts the built set stays distinct and clear of the keys
+ * paper already did: Echo would have collided with Exercise (it was built as
+ * Augur for that reason), and Scry would with Sweep's own `s`. A test asserts the built set stays distinct and clear of the keys
  * the board already uses, so that surfaces when a spell is added rather than
  * when a player presses a key and the wrong thing happens.
  */

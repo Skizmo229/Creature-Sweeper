@@ -909,6 +909,50 @@ spells = ["reveal", "census", "exercise"]
 start_mana = 75
 
 [[type]]
+id = "seer"
+name = "SEER"
+tint = "#5b7bd5"
+archetype = "descending"
+axis = "Search with a spellbook, 1 HP"
+blurb = """\
+  BLIND with a spellbook: 1 HP, no fighting, won by uncovering every empty cell. Exploring is \
+  the only income, and Reveal, Census and Beacon are the only shield. Denser than BLIND to match."""
+size = [[30, 16], [30, 16], [30, 16], [34, 18], [34, 18], [34, 18], [38, 20], [38, 20], [42, 22], [42, 22]]
+tiers = [5, 5, 5, 5, 5, 6, 6, 7, 7, 7]
+# BLIND's boards, denser, on BLIND's target: a grade-4 player spending mana clears about three
+# quarters of board 1 falling to a third of board 10. At BLIND's own density the spells lift
+# that to 98% falling to 80% (40 seeds, 27 September 2026), and the cliff past it is steep:
+# three points above BLIND clears 80% falling to 13%. The climb is flatter than BLIND's (2.0
+# points over the ladder against 3.2) because exploration is the only income and it grows with
+# the board, so the top boards fund more casts. Measured at 80, 80, 73, 60, 57, 55, 57, 53, 40
+# and 30% (decision 0054).
+density = [0.194, 0.196, 0.198, 0.201, 0.203, 0.205, 0.207, 0.21, 0.212, 0.214]
+hp = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+lock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+alpha0 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+search = true
+# Exercise is left out on purpose: a level lent at level 0 would make a tier 1 a free kill, and a
+# search board's creatures are never fought.
+spells = ["reveal", "census", "beacon"]
+start_mana = 75
+
+[[type]]
+id = "augur"
+name = "AUGUR"
+tint = "#c9a227"
+archetype = "descending"
+axis = "Magic that tells, never shows"
+blurb = """  ARCANE's boards with two spells that only answer questions: Census counts the creatures behind   a number and Augur names the strongest of them. Sum, count and strongest pin the layout; no   spell will ever open a cell for you."""
+size = [[30, 16], [30, 16], [30, 16], [32, 17], [32, 17], [34, 18], [34, 18], [36, 19], [36, 19], [38, 20]]
+tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+density = [0.265, 0.274, 0.283, 0.292, 0.301, 0.31, 0.319, 0.328, 0.337, 0.345]
+hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
+alpha0 = [0.32, 0.311, 0.302, 0.293, 0.284, 0.276, 0.267, 0.258, 0.249, 0.24]
+spells = ["census", "augur"]
+start_mana = 75
+
+[[type]]
 id = "blind"
 name = "BLIND"
 tint = "#8a8a8a"

@@ -189,6 +189,25 @@ export const LADDER_NOTES: readonly LadderNote[] = [
       'creature is death. Only the tricks that prove a cell empty apply: the remainder of 0, ' +
       'subtraction to 0, and the counting tricks. Marks are flags and the counters subtract them.',
   },
+  {
+    heading: 'SEER',
+    body:
+      'BLIND with Reveal, Census and Beacon, and denser for it. Nothing is killed, so exploring is ' +
+      'the only mana: one Reveal in hand at the start, about one more earned over board 1 and two ' +
+      'over board 10. Every guess is death, so the spend rule is absolute: never gamble with a ' +
+      'Reveal affordable. Reveal on the cell you would otherwise open blind; Census on a large ' +
+      'number over few cells; Beacon when the frontier has closed and blank ground is left ' +
+      'somewhere.',
+  },
+  {
+    heading: 'AUGUR',
+    body:
+      "ARCANE's boards with Census and Augur only: no spell will open a cell for you, so every " +
+      'guess is still yours. Augur where a number is spread over many cells and could be all at ' +
+      'or below your level, which frees the ring; Census where a large number sits over few. ' +
+      'Sum, count and strongest together pin most rings, and the pencil loses every tier above ' +
+      'the strongest.',
+  },
 ];
 
 /** The ladder names a heading lists: "ARCANE, ORACLE, and the shapes with magic" lists two. */

@@ -36,6 +36,8 @@ const KINDS = [
   'congo',
   'workout',
   'blind',
+  'seer',
+  'augur',
   'patrol',
   'pyramid',
   'petri',
