@@ -13,6 +13,7 @@ import { themeFor } from '../looks.js';
 import { sampleBoard } from '../preview.js';
 import { type SettingsScreenOptions, makeContext, previewCell, typeName } from './context.js';
 import { clearEffectRow, fightRimRow, motionRow, soundRow, stopSettingsDemo } from './effects.js';
+import { glyphRow } from './board.js';
 import { gameplaySection } from './gameplay.js';
 import { interfaceSection } from './interface.js';
 import {
@@ -78,6 +79,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
     'None of this touches a rule or a record. Every example is a real board drawn by the game.',
   );
   iconsRow(ctx, look);
+  glyphRow(ctx, look);
   tierColorsRow(ctx, look);
   paletteRow(ctx, look);
   boardFontRow(ctx, look);

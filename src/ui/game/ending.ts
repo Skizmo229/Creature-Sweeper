@@ -201,8 +201,7 @@ export class BoardEnding {
     this.stopVictory = playVictory(
       stage,
       effect,
-      settings.themeFor(typeId),
-      settings.tierColors(typeId),
+      settings.victoryLook(typeId),
       this.h.view()?.victorySource(),
     );
   }

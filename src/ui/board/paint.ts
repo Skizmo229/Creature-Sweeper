@@ -9,7 +9,7 @@ import { hasNote } from '../../engine/notes.js';
 import { placementRule } from '../../engine/placement/registry.js';
 import type { Cell } from '../../engine/types.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
-import { type BeatenLook, beatenParts } from '../presentation.js';
+import { type BeatenLook, type CreatureGlyph, beatenParts } from '../presentation.js';
 import {
   AUGUR_COLOR,
   CENSUS_COLOR,
@@ -34,6 +34,8 @@ export interface Paint {
   /** The colour of each tier, and the halo of tiers 6 to 9. */
   readonly tierColors: TierPalette;
   readonly font: GameFont;
+  /** What a creature is drawn as: its pips, its tier as a digit, or both. */
+  readonly glyph: CreatureGlyph;
   /** How a beaten creature is drawn: dimmed, struck through, both or neither. */
   readonly beatenLook: BeatenLook;
   /** The cell under the cursor (or pinned), if any. */
@@ -245,7 +247,10 @@ export function drawOpen(p: Paint, cell: Cell, cx: number, cy: number): void {
     const { dim, strike } = beatenParts(p.beatenLook);
     ctx.save();
     if (!cell.alive && dim) ctx.globalAlpha = BEATEN_ALPHA;
-    drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme, p.tierColors);
+    drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme, p.tierColors, {
+      glyph: p.glyph,
+      font: p.font,
+    });
     ctx.restore();
     // A struck-through corner reads as "dealt with" at a glance. Optional, because at small
     // cell sizes the stroke crosses the pips.

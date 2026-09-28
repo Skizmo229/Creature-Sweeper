@@ -87,6 +87,16 @@ export const CUSTOM_TIERS = 'custom';
 export type TierColorChoice = typeof DEFAULT | TierPresetId | typeof CUSTOM_TIERS;
 
 /**
+ * What a creature is drawn as: its pips, a die face of its tier, the game's own; its tier as a
+ * digit, which reads at a cell size where seven pips do not; or both, the pips with the digit in
+ * the corner. Only a beaten creature is ever drawn, so the digit tells nothing the pips did not.
+ * Decision 0012 retired a setting that wrote the tier over the glyph on hover, which could not
+ * share the cursor with the number; a glyph style is drawn always and shares nothing.
+ */
+export type CreatureGlyph = 'pips' | 'digit' | 'both';
+const CREATURE_GLYPHS: readonly CreatureGlyph[] = ['pips', 'digit', 'both'];
+
+/**
  * How a beaten creature is drawn: dimmed and struck through, which is how the game always drew
  * it; struck through at full strength; dimmed alone, which reads better at small cell sizes,
  * where the stroke crosses the pips; or plain, exactly as a live one would be, for a player who
@@ -189,6 +199,8 @@ export const DEFAULT_SFX_VOLUME = 1;
 
 export interface PresentationSettings {
   readonly icons: IconChoice;
+  /** What a creature is drawn as: its pips, its tier as a digit, or both (`CreatureGlyph`). */
+  readonly glyph: CreatureGlyph;
   /** The colour of each creature tier, wherever a tier is drawn: the board, the HUD, the LV buttons. */
   readonly tierColors: TierColorChoice;
   /**
@@ -274,6 +286,7 @@ export interface PresentationSettings {
 
 export const DEFAULT_PRESENTATION: PresentationSettings = {
   icons: DEFAULT,
+  glyph: 'pips',
   tierColors: DEFAULT,
   customTierColors: null,
   palette: DEFAULT,
@@ -370,6 +383,8 @@ export function readPresentation(raw: unknown): PresentationSettings {
     // through `drawCreature`'s own default, and rejecting it here would lose a
     // setting written by a newer build.
     icons: str('icons', DEFAULT) as IconChoice,
+    // A save from before this setting reads as the pips, the only glyph the game had.
+    glyph: oneOf(p.glyph, CREATURE_GLYPHS, 'pips'),
     // A save from before this setting reads as the game's own colours, and so does one choosing
     // its own colours without a whole palette of them. A preset this build does not know is kept,
     // as `icons` keeps an unknown pip, and resolves to the game's own.

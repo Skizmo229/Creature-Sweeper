@@ -9,15 +9,13 @@ import './setup.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../src/ui/app.js';
 import { BEATEN_ALPHA } from '../../src/ui/board/paint.js';
-import type { BoardDisplay } from '../../src/ui/board/view.js';
+import { type BoardDisplay, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { themeFor } from '../../src/ui/looks.js';
 import { type BeatenLook, beatenParts } from '../../src/ui/presentation.js';
 import { tierSampleBoard } from '../../src/ui/preview.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
-import { DEFAULT_TIERS } from '../../src/ui/tiercolors.js';
-import { FONTS } from '../../src/ui/typefaces.js';
 
 interface Driver {
   play(typeId: string, board: number, seed?: number): void;
@@ -74,13 +72,9 @@ describe('what the board draws', () => {
   afterEach(() => recording.stop());
 
   const display = (beatenLook: BeatenLook): BoardDisplay => ({
-    maxCell: 48,
-    font: FONTS['jetbrains-mono'],
+    ...DEFAULT_DISPLAY,
     highlight: null,
-    highlightColor: '#ffffff',
     beatenLook,
-    beatenNumbers: false,
-    tierColors: DEFAULT_TIERS,
   });
 
   // The creature colours' example: nine beaten creatures, and nothing else drawn in the ink.

@@ -26,13 +26,18 @@
  * Every effect is finite and removes itself. There is no idle loop.
  */
 
-import type { TierPalette } from '../tiercolors.js';
-import type { TypeTheme, VictoryId } from '../looktypes.js';
+import type { VictoryId } from '../looktypes.js';
 import { ambientPainter } from './ambient.js';
 import { iconPainter } from './icons.js';
-import { type Stage, type VictorySource, type VictorySprite, buildAtlas } from './stage.js';
+import {
+  type Stage,
+  type VictoryLook,
+  type VictorySource,
+  type VictorySprite,
+  buildAtlas,
+} from './stage.js';
 
-export type { VictorySource, VictorySprite } from './stage.js';
+export type { VictoryLook, VictorySource, VictorySprite } from './stage.js';
 
 /** The effects that animate the board's creatures rather than covering them. */
 const ICON_EFFECTS: ReadonlySet<string> = new Set<VictoryId>([
@@ -78,10 +83,10 @@ const DURATION: Record<VictoryId, number> = {
 export function playVictory(
   host: HTMLElement,
   effect: VictoryId,
-  theme: TypeTheme,
-  tierColors: TierPalette,
+  look: VictoryLook,
   source?: VictorySource,
 ): () => void {
+  const { theme, tierColors } = look;
   const layer = makeLayer(host);
   if (!layer) {
     return () => {
@@ -105,7 +110,7 @@ export function playVictory(
     tierColors,
     colors,
     sprites,
-    atlas: sprites.length ? buildAtlas(theme, tierColors, sprites) : new Map(),
+    atlas: sprites.length ? buildAtlas(look, sprites) : new Map(),
     seconds: duration / 1000,
   };
   const painter = ICON_EFFECTS.has(chosen)

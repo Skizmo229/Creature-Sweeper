@@ -86,6 +86,7 @@ export function makeContext(
   const display = (over: Partial<BoardDisplay> = {}): BoardDisplay => ({
     maxCell: p.maxZoom,
     font: settings.boardFont(typeId),
+    glyph: p.glyph,
     highlight: settings.highlightStyle(typeId),
     highlightColor: settings.highlightColor(typeId),
     beatenLook: p.beatenLook,

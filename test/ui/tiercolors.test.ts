@@ -10,7 +10,7 @@ import './setup.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../src/ui/app.js';
 import { BEATEN_ALPHA } from '../../src/ui/board/paint.js';
-import type { BoardDisplay } from '../../src/ui/board/view.js';
+import { type BoardDisplay, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { type Rgb, colorDifference, hexOf, rgbOf } from '../../src/ui/colorspace.js';
 import { LOOK_IDS, themeFor } from '../../src/ui/looks.js';
 import { tierSampleBoard } from '../../src/ui/preview.js';
@@ -25,7 +25,6 @@ import {
   type TierPalette,
   tierGilded,
 } from '../../src/ui/tiercolors.js';
-import { FONTS } from '../../src/ui/typefaces.js';
 
 interface Driver {
   play(typeId: string, board: number, seed?: number): void;
@@ -289,12 +288,10 @@ describe('what is drawn in them', () => {
 
   it('draws each tier’s creatures in its colour, and the halo round tiers 6 to 9', () => {
     const display: BoardDisplay = {
-      maxCell: 48,
-      font: FONTS['jetbrains-mono'],
+      ...DEFAULT_DISPLAY,
       highlight: null,
       highlightColor: '#ffffff',
       beatenLook: 'dim',
-      beatenNumbers: false,
       tierColors: MARKED,
     };
     renderPreview(tierSampleBoard(), themeFor('normal'), display, { cell: 26 });

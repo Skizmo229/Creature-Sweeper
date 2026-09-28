@@ -39,6 +39,7 @@ import { MARK_COLOR } from './theme.js';
 import { DEFAULT_TIERS, TIER_PRESETS, type TierPalette } from './tiercolors.js';
 import { type GameFont, TITLE_FONT, fontFor } from './typefaces.js';
 import { SETTINGS_KEY as KEY } from './savefile.js';
+import type { VictoryLook } from './victory/play.js';
 
 interface SettingsData {
   version: 1;
@@ -192,6 +193,16 @@ export class Settings {
     const choice = this.data.presentation.sfx;
     if (choice === OFF) return null;
     return (choice === DEFAULT ? lookFor(typeId).sfx : choice) as SfxPackId;
+  }
+
+  /** What a board-clear effect draws the creatures in: this ladder's palette, the tier colours, the glyph. */
+  victoryLook(typeId: string): VictoryLook {
+    const p = this.data.presentation;
+    return {
+      theme: this.themeFor(typeId),
+      tierColors: this.tierColors(typeId),
+      creature: { glyph: p.glyph, font: this.boardFont(typeId) },
+    };
   }
 
   /** The board-clear effect, or null for none. */

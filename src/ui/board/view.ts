@@ -9,7 +9,12 @@
 import type { Game } from '../../engine/game.js';
 import type { Cell } from '../../engine/types.js';
 import type { Lesson } from '../../sim/tutor.js';
-import { type BeatenLook, DEFAULT_MAX_ZOOM, type HighlightStyle } from '../presentation.js';
+import {
+  type BeatenLook,
+  type CreatureGlyph,
+  DEFAULT_MAX_ZOOM,
+  type HighlightStyle,
+} from '../presentation.js';
 import type { TypeTheme } from '../looktypes.js';
 import { PIP_FAMILY, glyphChar, isGlyphPip } from '../pipsymbols.js';
 import { MARK_COLOR } from '../theme.js';
@@ -55,8 +60,10 @@ import {
 export interface BoardDisplay {
   /** Ceiling for manual zoom, in CSS pixels per cell. */
   maxCell: number;
-  /** The face for every number, mark and pencil note on the board. */
+  /** The face for every number, mark and pencil note on the board, and a creature's digit. */
   font: GameFont;
+  /** What a creature is drawn as: its pips, its tier as a digit, or both. */
+  glyph: CreatureGlyph;
   /** How the cursor lights the board, or null for not at all. */
   highlight: HighlightStyle | null;
   /** The colour it lights a cell in when a click there would land; where one would not, red. */
@@ -69,9 +76,11 @@ export interface BoardDisplay {
   tierColors: TierPalette;
 }
 
-const DEFAULT_DISPLAY: BoardDisplay = {
+/** The renderer's own defaults, which the game's own settings resolve to; the tests start here. */
+export const DEFAULT_DISPLAY: BoardDisplay = {
   maxCell: DEFAULT_MAX_ZOOM,
   font: FONTS['jetbrains-mono'],
+  glyph: 'pips',
   highlight: 'neighbours',
   highlightColor: MARK_COLOR,
   beatenLook: 'dimStrike',
@@ -439,6 +448,7 @@ export class BoardView implements InputHost {
       theme,
       tierColors: this.display.tierColors,
       font: this.display.font,
+      glyph: this.display.glyph,
       beatenLook: this.display.beatenLook,
       hovered: this.hoveredCellValue,
       beatenNumbers: this.display.beatenNumbers,

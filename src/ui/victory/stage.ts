@@ -3,9 +3,16 @@
  * on, and the pre-rendered sprite atlas it copies them from.
  */
 
-import { drawCreature } from '../theme.js';
+import { type CreatureLook, drawCreature } from '../theme.js';
 import type { TypeTheme } from '../looktypes.js';
 import type { TierPalette } from '../tiercolors.js';
+
+/** What an effect draws the board's creatures in: the palette, the tier colours and the glyph style. */
+export interface VictoryLook {
+  readonly theme: TypeTheme;
+  readonly tierColors: TierPalette;
+  readonly creature: CreatureLook;
+}
 
 /** One creature glyph, as the board is currently drawing it. */
 export interface VictorySprite {
@@ -78,11 +85,8 @@ export interface Painter {
  * before bursting it, and an upscaled bitmap would go soft exactly at the
  * moment the player is looking at it.
  */
-export function buildAtlas(
-  theme: TypeTheme,
-  tierColors: TierPalette,
-  sprites: VictorySprite[],
-): Atlas {
+export function buildAtlas(look: VictoryLook, sprites: VictorySprite[]): Atlas {
+  const { theme, tierColors } = look;
   const atlas: Atlas = new Map();
   const base = Math.max(8, Math.round(sprites[0]?.size ?? 16));
   const px = base * 2;
@@ -92,7 +96,7 @@ export function buildAtlas(
     glyph.height = px;
     const gtx = glyph.getContext('2d');
     if (!gtx) continue;
-    drawCreature(gtx, 0, 0, px, tier, theme, tierColors);
+    drawCreature(gtx, 0, 0, px, tier, theme, tierColors, look.creature);
     atlas.set(tier, glyph);
   }
   return atlas;

@@ -31,6 +31,7 @@ export function boardDisplayFor(settings: Settings, typeId: string): BoardDispla
   return {
     maxCell: p.maxZoom,
     font: settings.boardFont(typeId),
+    glyph: p.glyph,
     highlight: settings.highlightStyle(typeId),
     highlightColor: settings.highlightColor(typeId),
     beatenLook: p.beatenLook,

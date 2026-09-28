@@ -26,11 +26,7 @@ export function flashStage(stage: HTMLElement, events: GameEvent[], p: FlashSett
  * Only one rim class is ever on the element: with two, the later CSS rule would win and the
  * other colour could never play.
  */
-export function flashRim(
-  host: HTMLElement,
-  events: GameEvent[],
-  rim: FlashSettings['fightRim'],
-): void {
+function flashRim(host: HTMLElement, events: GameEvent[], rim: FlashSettings['fightRim']): void {
   const outcome = rimFor(events, rim);
   if (!outcome) return;
   host.classList.remove('fight-clean', 'fight-levelup', 'fight-hurt');

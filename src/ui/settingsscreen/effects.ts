@@ -179,8 +179,7 @@ export function clearEffectRow(ctx: ScreenContext, host: HTMLElement): void {
     stopDemo = playVictory(
       demoBox,
       effect,
-      currentTheme,
-      ctx.display().tierColors,
+      { ...settings.victoryLook(typeId), theme: currentTheme },
       demo.view.victorySource(),
     );
   };
