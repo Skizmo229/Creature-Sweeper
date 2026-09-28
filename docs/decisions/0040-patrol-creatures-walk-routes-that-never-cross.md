@@ -1,6 +1,6 @@
 # 0040. PATROL: creatures walk square routes that never cross, one cell a move
 
-2026-09-25. Status: adopted.
+2026-09-25. Status: adopted. No Sweep on the ladder since 0063.
 
 ## Context
 The owner asked for a ladder whose creatures move: a tier-t creature walks right, down, left and

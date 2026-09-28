@@ -136,14 +136,14 @@ export const LADDER_NOTES: readonly LadderNote[] = [
     heading: 'PATROL',
     body:
       'The creatures walk: a tier-t creature paces the edge of a square t cells a side, one cell ' +
-      'per action, clockwise from its top-left corner. Every open, Sweep and Wait (W, free) is ' +
-      'an action; marking is not. The board is sparse, so most creatures walk in plain sight as ' +
-      'a ? on cleared ground. Read the numbers again after every move: they are the sums as the ' +
-      'board stands now. A ? that has walked one side of its square has told you its tier. When ' +
-      'nothing is proven, Wait rather than guess: it is free, and new numbers arrive. A mark is ' +
-      "a route, not a claim: marking tier t on a cell draws that creature's whole square from " +
-      'that corner and locks every covered cell of it, which is why Sweep reads no marks here, ' +
-      'and why a mark on the wrong corner locks ground that was safe.',
+      'per action, clockwise from its top-left corner. Every open and every Wait (W, free) is an ' +
+      'action; marking is not. There is no Sweep. The board is sparse, so most creatures walk in ' +
+      'plain sight as a ? on cleared ground. Read the numbers again after every move: they are ' +
+      'the sums as the board stands now. A ? that has walked one side of its square has told you ' +
+      'its tier. When nothing is proven, Wait rather than guess: it is free, and new numbers ' +
+      "arrive. A mark is a route, not a claim: marking tier t on a cell draws that creature's " +
+      'whole square from that corner and locks every covered cell of it, so a mark on the wrong ' +
+      'corner locks ground that was safe.',
   },
   {
     heading: 'WORKOUT',
