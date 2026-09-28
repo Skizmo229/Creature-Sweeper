@@ -106,12 +106,7 @@ export function buildBoardOutcome(o: BoardOutcome): HTMLElement {
   // Said here for the same reason: this is where the missing best time would look like a bug.
   if (won && o.recorded && o.hints > 0) {
     card.append(
-      el(
-        'p',
-        'overlay-note',
-        `Cleared with ${o.hints} hint${o.hints === 1 ? '' : 's'} — the clear counts, ` +
-          'and sets no best time.',
-      ),
+      el('p', 'overlay-note', `Cleared with ${o.hints} hint${o.hints === 1 ? '' : 's'}.`),
     );
   }
   if (o.unlocked !== null) {

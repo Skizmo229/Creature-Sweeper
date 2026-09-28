@@ -59,8 +59,8 @@ export function buildBoardList(typeId: string, a: BoardListActions): HTMLElement
     const badge = el('span', 'board-badge');
     if (!unlocked) badge.textContent = 'Locked';
     else if (paused) showPaused(card, badge, paused);
-    else if (rec.bestTime !== null) {
-      badge.textContent = `${rec.perfect ? '★ ' : ''}best ${rec.bestTime}s`;
+    else if (rec.bestTime !== null || rec.fewestHints !== undefined) {
+      badge.textContent = `${rec.perfect ? '★ ' : ''}best ${bestText(rec)}`;
     } else badge.textContent = 'Not cleared';
     card.append(badge);
 
@@ -71,6 +71,12 @@ export function buildBoardList(typeId: string, a: BoardListActions): HTMLElement
   grid.append(scalingCard(typeId, a));
   wrap.append(grid);
   return wrap;
+}
+
+/** A best time, or with none set, the fewest hints a clear took (decision 0065). */
+function bestText(rec: { bestTime: number | null; fewestHints?: number }): string {
+  if (rec.bestTime !== null) return `${rec.bestTime}s`;
+  return `${rec.fewestHints} hint${rec.fewestHints === 1 ? '' : 's'}`;
 }
 
 /** A tile with a game paused on it: where the game stands, and that a click carries it on. */
@@ -184,8 +190,9 @@ function fullRunCard(typeId: string, a: BoardListActions): HTMLElement {
   const badge = el('span', 'board-badge');
   if (!unlocked) badge.textContent = `Locked — clear ${last}`;
   else if (paused) showPaused(card, badge, paused);
-  else if (rec.cleared && rec.bestTime !== null) badge.textContent = `★ best ${rec.bestTime}s`;
-  else if (rec.attempts > 0) badge.textContent = `best: board ${rec.bestBoard}`;
+  else if (rec.cleared && (rec.bestTime !== null || rec.fewestHints !== undefined)) {
+    badge.textContent = `★ best ${bestText(rec)}`;
+  } else if (rec.attempts > 0) badge.textContent = `best: board ${rec.bestBoard}`;
   else badge.textContent = 'Not attempted';
   card.append(badge);
 
