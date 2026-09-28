@@ -131,7 +131,7 @@ export function gameplaySection(ctx: ScreenContext): void {
     play,
     'Tutor',
     toggle(settings.presentation.tutor, (v) => settings.setPresentation({ tutor: v })),
-    'Offers "Why? [H]" on every board: it points at the next provable move and says why, and ' +
+    'Offers "[H]int" on every board: it points at the next provable move and says why, and ' +
       'opens nothing. A hinted board clears and unlocks as usual but sets no best time.',
   );
 

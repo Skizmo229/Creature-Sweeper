@@ -197,7 +197,7 @@ function drawDiagram(d: Diagram, o: GuideOptions): HTMLElement {
   const { lesson } = pressDiagram(d);
   if (lesson) view.setLesson(within(lesson, picture.config.width));
   figure.append(canvas);
-  if (lesson) figure.append(el('figcaption', undefined, `Why? [H] says: ${lesson.caption}`));
+  if (lesson) figure.append(el('figcaption', undefined, `Hint says: ${lesson.caption}`));
   return figure;
 }
 

@@ -78,7 +78,7 @@ between `src/ui/settings.ts` (presentation) and `src/engine/settings.ts` (the ga
   a laptop.
 - The rules card leads with the sum rule and its proof (a number can exceed 8). Only EASY explains
   a death (`TEACHING_TYPE`); the loss note says "took your last N HP".
-- The tutor (`H`, the "Why? [H]" button beside Sweep; `src/ui/game/tutor.ts` is its face,
+- The tutor (`H`, the "[H]int" button beside Sweep; `src/ui/game/tutor.ts` is its face,
   `src/sim/tutor.ts` its reading; docs/teaching-plan.md) speaks in the hint line, in the ink
   rather than the hint's grey, and points on the board in violet (`TUTOR_COLOR`), which no other
   annotation uses: the numbers a proof read are ringed, the covered cells they see lit faintly, a

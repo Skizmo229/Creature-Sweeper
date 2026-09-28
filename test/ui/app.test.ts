@@ -213,7 +213,7 @@ describe('the app', () => {
   it('H asks the tutor, which speaks in the hint line, points at the board, and costs the best time', () => {
     app.play('normal', 1, 7);
     const game = app.current!;
-    expect(text('.sweep.why')).toBe('Why? [H]');
+    expect(text('.sweep.why')).toBe('[H]int');
     key('h');
     expect(text('.hint')).toMatch(/^Grade \d · /);
     expect(document.querySelector('.hint')!.classList.contains('tutoring')).toBe(true);
