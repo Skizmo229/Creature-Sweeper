@@ -313,7 +313,7 @@ is what calibrates the technique costs and the retune targets once the game has 
 | 4.3 | The baseline measurement, every ladder, grades 2 and 4 | done 25 September 2026, below |
 | 4.4 | The anchors: the Minesweeper board, the stars, the honest comparison | Minesweeper pending |
 | 4.5 | Decide the target per ladder with the owner | decided 26 September 2026, as proposed in section 7 |
-| 4.6 | Retune, one commit per ladder, decision record each | EXTREME and ORACLE done 26 September 2026; HUGE x EXTREME measured on target and left as is; BLIND and HUGE x BLIND done 26 September 2026; the plain ladders measured and left as they are, since only the lock reaches the target (9.1) |
+| 4.6 | Retune, one commit per ladder, decision record each | EXTREME and ORACLE done 26 September 2026; HUGE x EXTREME measured on target and left as is; BLIND and HUGE x BLIND done 26 September 2026; the plain ladders measured and left as they are, since only the lock reaches the target (9.1); the shapes and the placement ladders measured 27 September 2026 and left for the same reason (9.1, decision 0058). Every ladder has now been measured against its target |
 | 4.7 | Per-ladder tips and the tricks page | open |
 | 4.8 | Telemetry store and export | open |
 | 4.9 | Spending policies and attention in the graded player | spells and attention done 26 September 2026; deferral open |
@@ -407,6 +407,56 @@ What it says, read on the day it was recorded:
   HUGE) and the slips telemetry will measure. No plain ladder was moved. If the owner wants
   NORMAL, WRAPAROUND, HUGE or HIVE to bite at the top, the lever is the lock one deeper on the
   last three boards, and the price is the kind of hardness, not the amount.
+- **The shapes repeat the plain ladders' finding, all eleven of them.** Measured 27 September
+  2026 at 40 seeds on candidate files, the magic shapes spending mana (the table above is
+  spell-less; DONUT is decision 0045 and was not re-measured). At the shipped schedules a grade-2
+  player clears 93 to 100% of boards 8 to 10 on every shape. Density lifted to the 34% ceiling
+  (0.3 to 3.2 points, where a shape is not already past it) leaves every one at 93 to 100% and
+  only adds forced guesses: CARD from 1.6 to 4.0 a board, RAGGED CAVE from 2.7 to 4.4. The lock
+  one deeper on boards 8 to 10 is again the only dial that reaches the target, and it does so the
+  way it did on HIVE, with six to thirteen forced guesses a board and one of them lethal:
+
+  | shape | shipped, boards 8 / 9 / 10 | at the ceiling | lock 4 on 8 to 10 | guesses on 10 |
+  | --- | --- | --- | --- | ---: |
+  | CROSS | 100 / 100 / 100% | 100 / 98 / 100% | 90 / 85 / 80% | 2.2 to 9.6 |
+  | WRAPPED CROSS | 100 / 100 / 100% | past it | 100 / 95 / 88% | 1.1 to 8.4 |
+  | DIAMOND | 100 / 100 / 100% | 100 / 100 / 98% | 95 / 93 / 85% | 1.2 to 6.5 |
+  | RAGGED CAVE | 100 / 98 / 93% | 100 / 93 / 100% | 57 / 57 / 57% | 2.7 to 9.7 |
+  | GEAR | 100 / 100 / 98% | 100 / 100 / 100% | 83 / 78 / 57% | 1.9 to 12.5 |
+  | CARD | 100 / 98 / 100% | 98 / 98 / 95% | 75 / 70 / 70% | 1.6 to 13.0 |
+  | VALENTINES | 100 / 100 / 98% | past it | 95 / 93 / 90% | 1.6 to 9.7 |
+  | STAR | 98 / 98 / 100% | 100 / 100 / 93% | 83 / 75 / 60% | 2.3 to 10.1 |
+  | PYRAMID | 100 / 100 / 100% | past it | 100 / 100 / 100% | 0.0 to 1.6 |
+  | ULTRA HIVE | 100 / 100 / 95% | past it | 83 / 83 / 75% | 1.3 to 6.7 |
+  | PETRI DISH | 100 / 100 / 100% | past it | 95 / 93 / 83% | 1.2 to 10.2 |
+
+  PYRAMID's face-up base is immune even to the lock. RAGGED CAVE, GEAR, STAR and CARD fall
+  through the target to 57 to 70% because their guesses are dearer (a cavern, a tooth, a point,
+  a suit's edge is a guess with fewer neighbours to read), so a lock retune would need the
+  density stepped back as well, as HUGE x EXTREME's did. No shape was moved: the owner's ruling
+  on the plain ladders applies unchanged, that the lock buys guess-decided top boards, which is
+  a different kind of hardness and not the one these ladders are for. What a shape costs a person
+  is scanning, 5 to 11 moves on offer per pass (16 on PYRAMID), and the readings above are the
+  lever if that ruling changes (decision 0058).
+- **The placement ladders do not even have the lock as a lever.** Measured the same day, 40 seeds,
+  grade 2 with the rule's own reads, numbers hidden where the game hides them, WORKOUT spending
+  mana. At the shipped schedules boards 8 to 10 clear 95 to 100% on every one. Density has
+  nowhere to go: PAIRS and DOMINOES sit on their structural 25% cap, CHECKERBOARD is at 38.5%,
+  PATROL's routes jam past 8.5%, and PACKS lifted two points to 34% and CONGA LINE a point and a
+  half to its 33.5% cap clear 90% and 85% of board 10 at two to three forced guesses, which is
+  the target's board-10 figure only at the grade-4 player's expense (93% and 88%, under the 95%
+  the target holds it to). And the lock one deeper on boards 8 to 10 does nothing on a board
+  whose rule names the tiers for you: CHECKERBOARD 100 / 100 / 100%, PAIRS 100 / 100 / 98%,
+  DOMINOES 98 / 100 / 95%, CONGA LINE 95 / 100 / 95% and PACKS 93 / 98 / 90%, with forced guesses
+  on board 10 up by a third of one (PACKS by 1.2, from 1.3 to 2.5); PATROL is 100% and
+  guess-free either way. The one
+  exception is DUNGEON, a five-tier board with no tier rule, where the lock does what it does
+  everywhere else: 78 / 70 / 55%, six to nine forced guesses a board, one of them lethal. WORKOUT
+  already runs lock 4 from board 4 and Exercise carries a grade-2 player to 98 to 100% even at
+  34% density with six forced guesses on board 10. Nothing was moved. The placement ladders'
+  reward is understanding the rule, and the instrument says that once understood they are
+  clearable; what remains to measure is how often a person misreads the rule, which is
+  telemetry (4.8).
 - **The new ladders sit where their curves put them.** PYRAMID's face-up base rows make it as
   gentle as EASY; GEAR, CARD, VALENTINES and STAR, tuned onto ARCANE's curve, corner a grade-2
   player about as often as ARCANE does and STAR alone leans on grade 3 (14% of boards);
