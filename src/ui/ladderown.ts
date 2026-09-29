@@ -16,6 +16,10 @@ export const LADDER_SCOPED: readonly (keyof PresentationSettings)[] = [
   'icons',
   'glyph',
   'tierColors',
+  // The palette behind a 'custom' choice goes with it: a ladder's own mixed colours would
+  // otherwise overwrite the colours mixed for every ladder, and the reader would turn the
+  // ladder's saved 'custom' into the default for want of a palette beside it.
+  'customTierColors',
   'palette',
   'font',
   'interfaceFont',

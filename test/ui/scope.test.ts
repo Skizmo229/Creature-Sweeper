@@ -11,7 +11,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../src/ui/app.js';
 import type { BoardDisplay } from '../../src/ui/board/view.js';
 import { themeFor } from '../../src/ui/looks.js';
-import { DEFAULT } from '../../src/ui/presentation.js';
+import { CUSTOM_TIERS, DEFAULT } from '../../src/ui/presentation.js';
+import { TIER_PRESETS } from '../../src/ui/tiercolors.js';
 import type { Progress } from '../../src/ui/progress.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
@@ -71,6 +72,25 @@ describe('the store', () => {
     app.settings.setPresentationFor('normal', { textSize: 1.5, palette: 'gear' });
     expect(app.settings.presentation.textSize).toBe(1.5);
     expect(app.settings.ownKeys('normal')).toEqual(['palette']);
+  });
+
+  it('keeps a ladder’s own mixed creature colours to that ladder, and round-trips them', () => {
+    const [a, b] = TIER_PRESETS.map((t) => t.palette);
+    app.settings.setPresentation({ tierColors: CUSTOM_TIERS, customTierColors: a });
+    app.settings.setPresentationFor('donut', { tierColors: CUSTOM_TIERS, customTierColors: b });
+    // Every other ladder keeps palette A; giving DONUT up its own restores A there too.
+    expect(app.settings.presentation.customTierColors).toEqual(a);
+    expect(app.settings.presentationFor('cave').customTierColors).toEqual(a);
+    expect(app.settings.tierColors('cave')).toEqual(a);
+    expect(app.settings.tierColors('donut')).toEqual(b);
+    expect(app.settings.ownKeys('donut').sort()).toEqual(['customTierColors', 'tierColors']);
+    // The save carries the ladder's 'custom' choice with the palette that makes it readable.
+    const loaded = Settings.load();
+    expect(loaded.presentationFor('donut').tierColors).toBe(CUSTOM_TIERS);
+    expect(loaded.tierColors('donut')).toEqual(b);
+    expect(loaded.tierColors('cave')).toEqual(a);
+    loaded.clearLadder('donut');
+    expect(loaded.tierColors('donut')).toEqual(a);
   });
 
   it('gives a ladder’s own up, on request and on a reset', () => {
