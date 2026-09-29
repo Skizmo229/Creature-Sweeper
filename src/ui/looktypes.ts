@@ -17,7 +17,12 @@ export type PipShape =
   | 'triangle'
   | 'gear'
   | 'heart'
-  | 'star';
+  | 'star'
+  | 'bolt'
+  | 'crescent'
+  | 'drop'
+  | 'chevron'
+  | 'club';
 
 /**
  * A symbol drawn as the pip, by its code point, written as `U+2764`: the player's own choice from

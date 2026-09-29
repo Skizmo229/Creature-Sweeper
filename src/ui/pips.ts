@@ -24,6 +24,11 @@ export const PIP_SHAPES: readonly PipShape[] = [
   'gear',
   'heart',
   'star',
+  'bolt',
+  'crescent',
+  'drop',
+  'chevron',
+  'club',
 ];
 
 export const PIP_NAMES: Record<PipShape, string> = {
@@ -38,6 +43,11 @@ export const PIP_NAMES: Record<PipShape, string> = {
   gear: 'Gears',
   heart: 'Hearts',
   star: 'Stars',
+  bolt: 'Bolts',
+  crescent: 'Moons',
+  drop: 'Drops',
+  chevron: 'Chevrons',
+  club: 'Clubs',
 };
 
 type Tracer = (ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) => void;
@@ -110,6 +120,56 @@ const star: Tracer = (ctx, cx, cy, r) => {
   ctx.closePath();
 };
 
+/** The moon's bite: how far right of the disc the disc cut from it sits, as a share of the radius. */
+const BITE = 0.75;
+
+const crescent: Tracer = (ctx, cx, cy, r) => {
+  // The disc less a second disc of the same size, drawn as the two arcs that meet at the horns:
+  // round the outside from horn to horn, then back along the bite the other way.
+  const horn = Math.acos(BITE / 2);
+  ctx.arc(cx, cy, r, horn, Math.PI * 2 - horn);
+  ctx.arc(cx + r * BITE, cy, r, Math.PI + horn, Math.PI - horn, true);
+  ctx.closePath();
+};
+
+const drop: Tracer = (ctx, cx, cy, r) => {
+  // A point over a round bottom.
+  ctx.moveTo(cx, cy - r);
+  ctx.bezierCurveTo(
+    cx + r * 0.1,
+    cy - r * 0.5,
+    cx + r * 0.72,
+    cy - r * 0.1,
+    cx + r * 0.72,
+    cy + r * 0.3,
+  );
+  ctx.arc(cx, cy + r * 0.3, r * 0.72, 0, Math.PI);
+  ctx.bezierCurveTo(cx - r * 0.72, cy - r * 0.1, cx - r * 0.1, cy - r * 0.5, cx, cy - r);
+  ctx.closePath();
+};
+
+/** The club's three lobes, as (x, y) shares of the radius from the centre, and their size. */
+const CLUB_LOBES: ReadonlyArray<readonly [number, number]> = [
+  [0, -0.5],
+  [-0.5, 0.15],
+  [0.5, 0.15],
+];
+const CLUB_LOBE = 0.46;
+
+const club: Tracer = (ctx, cx, cy, r) => {
+  // Three lobes on a stem, every part drawn the same way round so a plain fill joins them.
+  for (const [x, y] of CLUB_LOBES) {
+    ctx.moveTo(cx + x * r + CLUB_LOBE * r, cy + y * r);
+    ctx.arc(cx + x * r, cy + y * r, CLUB_LOBE * r, 0, Math.PI * 2);
+  }
+  polygon([
+    [-0.14, 0.1],
+    [0.14, 0.1],
+    [0.4, 1],
+    [-0.4, 1],
+  ])(ctx, cx, cy, r);
+};
+
 const TRACERS: Record<PipShape, Tracer> = {
   circle: disc,
   ring: disc,
@@ -147,6 +207,28 @@ const TRACERS: Record<PipShape, Tracer> = {
   gear,
   heart,
   star,
+  // A zigzag band, wide enough to survive at a few pixels.
+  bolt: polygon([
+    [-0.1, -1],
+    [0.65, -1],
+    [0.15, -0.15],
+    [0.7, -0.15],
+    [-0.4, 1],
+    [0.05, 0.2],
+    [-0.7, 0.2],
+  ]),
+  crescent,
+  drop,
+  // A sergeant's stripe: a band bent to a point, pointing up.
+  chevron: polygon([
+    [-1, 0.1],
+    [0, -0.9],
+    [1, 0.1],
+    [1, 0.9],
+    [0, -0.1],
+    [-1, 0.9],
+  ]),
+  club,
 };
 
 /** Begin a path and trace `shape` on it. A shape this build does not know is drawn as a disc. */
