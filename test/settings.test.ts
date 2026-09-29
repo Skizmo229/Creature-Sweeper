@@ -383,6 +383,15 @@ describe('which settings keep a record', () => {
     expect(easierThanDefault(dials({ sweepChargeClicks: 1 }))).toEqual(['cells per sweep']);
   });
 
+  it('ignores a stale charge size once Sweep is off', () => {
+    // The "Cells per sweep" slider is only hidden when the mode leaves 'charge',
+    // so a player who lowered it and then turned Sweep off keeps the small
+    // value. The gate never reads it under 'off', so neither may the record rule.
+    const off = dials({ sweep: 'off', sweepChargeClicks: 1 });
+    expect(isAtLeastAsHard(off)).toBe(true);
+    expect(easierThanDefault(off)).toEqual([]);
+  });
+
   it('ranks a budget of sweeps below the charge, which it has no order against', () => {
     // A budget of three sweeps might be more or less than ten cells a sweep buys on a board,
     // so it cannot be called harder, and a dial that cannot be called harder records nothing.

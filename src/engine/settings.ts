@@ -145,7 +145,7 @@ export function isAtLeastAsHard(s: GameplaySettings): boolean {
     s.spellPriceRatio >= DEFAULT_GAMEPLAY.spellPriceRatio &&
     s.startManaRatio <= DEFAULT_GAMEPLAY.startManaRatio &&
     sweepRank(s) >= sweepRank(DEFAULT_GAMEPLAY) &&
-    s.sweepChargeClicks >= DEFAULT_GAMEPLAY.sweepChargeClicks
+    (s.sweep !== 'charge' || s.sweepChargeClicks >= DEFAULT_GAMEPLAY.sweepChargeClicks)
   );
 }
 
@@ -157,8 +157,10 @@ export function isAtLeastAsHard(s: GameplaySettings): boolean {
  * to it would otherwise be handed records and unlocks for a strictly easier
  * game. The charge size is the same argument in miniature: a
  * bank of 1 cell per sweep is nearly 'on' wearing a meter, so it has to be
- * compared rather than assumed finite-and-therefore-harder. A budget has no
- * order against the charge at all, so it ranks below it and records nothing
+ * compared rather than assumed finite-and-therefore-harder, and only while the
+ * mode is 'charge': the gate never reads it otherwise, so a stale value left
+ * behind the hidden slider must not count against an 'off' game. A budget has
+ * no order against the charge at all, so it ranks below it and records nothing
  * (decision 0072).
  */
 function sweepRank(s: GameplaySettings): number {
@@ -195,7 +197,8 @@ export function easierThanDefault(s: GameplaySettings): string[] {
   if (s.spellPriceRatio < DEFAULT_GAMEPLAY.spellPriceRatio) out.push('spell prices');
   if (s.startManaRatio > DEFAULT_GAMEPLAY.startManaRatio) out.push('starting mana');
   if (sweepRank(s) < sweepRank(DEFAULT_GAMEPLAY)) out.push('Sweep');
-  else if (s.sweepChargeClicks < DEFAULT_GAMEPLAY.sweepChargeClicks) out.push('cells per sweep');
+  else if (s.sweep === 'charge' && s.sweepChargeClicks < DEFAULT_GAMEPLAY.sweepChargeClicks)
+    out.push('cells per sweep');
   return out;
 }
 
