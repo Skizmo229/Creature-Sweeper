@@ -11,14 +11,14 @@ one structural change in the batch of settings added on 28 September 2026.
 ## Decision
 The settings screen carries a switch under its title: for every ladder, or for the ladder it
 was opened from. In a ladder's scope a pick of anything a board looks or sounds like
-(`LADDER_SCOPED` in `src/ui/presentation.ts`: icons, glyph, colours, palette, fonts, digit size,
-the beaten look, the mark colour, the highlight, reach shading, the zoom, the sound pack, the
-glows, the clear effect and its options) is kept as that ladder's own, over the settings for
-every ladder, and `Settings.presentationFor(typeId)` resolves it; every reader of a scoped
-setting goes through that. The interface, the volume, the sound check, the tutor and the ways of
-playing cannot be a ladder's own; in a ladder's scope their sections wait for the other scope,
-and a pick of one of them goes to every ladder. A line names what the ladder has of its own,
-with a button to give it up; Reset presentation clears every ladder's.
+(`LADDER_SCOPED` in `src/ui/ladderown.ts`: icons, glyph, colours and the palette mixed for
+them, palette, fonts, digit size, the beaten look, the mark colour, the highlight, reach shading,
+the zoom, the sound pack, the glows, the clear effect and its options) is kept as that ladder's
+own, over the settings for every ladder, and `Settings.presentationFor(typeId)` resolves it;
+every reader of a scoped setting goes through that. The interface, the volume, the sound check,
+the tutor and the ways of playing cannot be a ladder's own; in a ladder's scope their sections
+wait for the other scope, and a pick of one of them goes to every ladder. A line names what the
+ladder has of its own, with a button to give it up; Reset presentation clears every ladder's.
 
 ## Consequences
 The save carries each ladder's own under `ladders`, read as the presentation is read and kept
