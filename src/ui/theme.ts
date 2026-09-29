@@ -86,6 +86,7 @@ export const VICTORY_NAMES: Record<VictoryId, string> = {
   burst: 'Burst — rays from the centre',
   ripple: 'Ripple — expanding rings',
   sparkle: 'Sparkle — drifting motes',
+  fireworks: 'Fireworks — rockets burst one after another',
   tumble: 'Tumble — creatures drop and bounce',
   cascade: 'Cascade — they bounce off, leaving trails',
   pop: 'Pop — they swell and burst',

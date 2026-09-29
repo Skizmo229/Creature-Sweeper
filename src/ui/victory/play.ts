@@ -62,6 +62,7 @@ const DURATION: Record<VictoryId, number> = {
   burst: 2200,
   ripple: 2200,
   sparkle: 2200,
+  fireworks: 2600,
   tumble: 2600,
   cascade: 4200,
   pop: 2000,

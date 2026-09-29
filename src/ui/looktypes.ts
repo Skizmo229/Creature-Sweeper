@@ -82,7 +82,7 @@ export const SFX_EVENTS: readonly SfxEvent[] = [
 /**
  * Board-clear celebrations. See `victory/`.
  *
- * Two families. The first four are ambient — decoration drawn over the board,
+ * Two families. The first five are ambient — decoration drawn over the board,
  * knowing nothing about what is underneath. The rest animate the board's own
  * creature glyphs, which is why they need the renderer to hand those glyphs
  * over for the length of the animation.
@@ -92,6 +92,7 @@ export type VictoryId =
   | 'burst'
   | 'ripple'
   | 'sparkle'
+  | 'fireworks'
   | 'tumble'
   | 'cascade'
   | 'pop'
