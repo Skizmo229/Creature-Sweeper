@@ -34,6 +34,8 @@ interface Envelope {
   format: typeof FORMAT;
   version: 1;
   exported: string;
+  /** The game's version that wrote the code, from 0.10.0 on (decision 0080); absent before. */
+  game?: string;
   progress: unknown;
   settings: unknown;
 }
@@ -63,9 +65,10 @@ export function localDate(d: Date): string {
   return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`;
 }
 
-/** The stored strings as a pasteable code. Unparseable stored data is dropped
- *  rather than exported, so a corrupt save cannot be carried to a new device. */
-export function encodeSave(bundle: SaveBundle, now: Date = new Date()): string {
+/** The stored strings as a pasteable code, stamped with the game's version that wrote it.
+ *  Unparseable stored data is dropped rather than exported, so a corrupt save cannot be carried
+ *  to a new device. */
+export function encodeSave(bundle: SaveBundle, now: Date = new Date(), game?: string): string {
   const parse = (raw: string | null): unknown => {
     if (raw === null) return null;
     try {
@@ -78,6 +81,7 @@ export function encodeSave(bundle: SaveBundle, now: Date = new Date()): string {
     format: FORMAT,
     version: 1,
     exported: now.toISOString(),
+    ...(game === undefined ? {} : { game }),
     progress: parse(bundle.progress),
     settings: parse(bundle.settings),
   };
@@ -85,7 +89,8 @@ export function encodeSave(bundle: SaveBundle, now: Date = new Date()): string {
 }
 
 export type DecodeResult =
-  { ok: true; bundle: SaveBundle; exported: string | null } | { ok: false; error: string };
+  | { ok: true; bundle: SaveBundle; exported: string | null; game: string | null }
+  | { ok: false; error: string };
 
 /**
  * Read a code back, refusing anything that is not a save.
@@ -154,6 +159,7 @@ export function decodeSave(text: string): DecodeResult {
       typeof envelope.exported === 'string' && !Number.isNaN(Date.parse(envelope.exported))
         ? envelope.exported
         : null,
+    game: typeof envelope.game === 'string' ? envelope.game : null,
   };
 }
 

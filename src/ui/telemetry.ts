@@ -194,14 +194,28 @@ export function describeTelemetry(data: TelemetryData): string {
     : `${tuned}.`;
 }
 
-/** The statistics as a code the owner can paste: base64 behind a prefix, as the save code is. */
-export function encodeTelemetry(data: TelemetryData, now: Date = new Date()): string {
-  const envelope = { format: FORMAT, version: 1, exported: now.toISOString(), telemetry: data };
+/**
+ * The statistics as a code the owner can paste: base64 behind a prefix, as the save code is, and
+ * stamped like it with the game's version that wrote it (decision 0080).
+ */
+export function encodeTelemetry(
+  data: TelemetryData,
+  now: Date = new Date(),
+  game?: string,
+): string {
+  const envelope = {
+    format: FORMAT,
+    version: 1,
+    exported: now.toISOString(),
+    ...(game === undefined ? {} : { game }),
+    telemetry: data,
+  };
   return PREFIX + toBase64(JSON.stringify(envelope));
 }
 
 export type TelemetryDecode =
-  { ok: true; data: TelemetryData; exported: string | null } | { ok: false; error: string };
+  | { ok: true; data: TelemetryData; exported: string | null; game: string | null }
+  | { ok: false; error: string };
 
 /** A code read back, whitespace and the invisible characters chat apps add ignored. */
 export function decodeTelemetry(text: string): TelemetryDecode {
@@ -224,6 +238,7 @@ export function decodeTelemetry(text: string): TelemetryDecode {
     ok: true,
     data,
     exported: typeof exported === 'string' && !Number.isNaN(Date.parse(exported)) ? exported : null,
+    game: typeof envelope.game === 'string' ? envelope.game : null,
   };
 }
 

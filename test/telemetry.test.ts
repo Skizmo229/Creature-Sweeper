@@ -187,3 +187,13 @@ describe('the recorder', () => {
     expect(clock.timeExpired).toBe(false);
   });
 });
+
+describe('the game version in a code', () => {
+  it('is carried when the writer gives it, and null in a code from before it', () => {
+    const data = emptyTelemetry();
+    const stamped = decodeTelemetry(encodeTelemetry(data, new Date(), '0.10.0'));
+    expect(stamped.ok && stamped.game).toBe('0.10.0');
+    const bare = decodeTelemetry(encodeTelemetry(data));
+    expect(bare.ok && bare.game).toBeNull();
+  });
+});
