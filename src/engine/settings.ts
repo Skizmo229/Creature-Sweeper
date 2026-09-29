@@ -25,6 +25,8 @@
  * run silently rather than throwing.
  */
 
+import type { Tier } from './types.js';
+import { resolveBattle } from './combat.js';
 /** Empty cells you must uncover yourself to earn one mana, unmodified. */
 import { MANA_PER_EMPTY_CELLS } from './spells.js';
 
@@ -224,6 +226,15 @@ export function healPerBoard(poolHp: number, s: GameplaySettings): number {
  */
 export function biteFor(tier: number, s: GameplaySettings): number {
   return Math.max(0, Math.round(tier * s.enemyDamageRatio));
+}
+
+/**
+ * HP a fight against a tier-E creature would take at this level and HP, through the dial: the
+ * fight resolved blow by blow as `fight.ts` resolves it, so capped by death. For anything that
+ * quotes a fight's price to the player; `damageIfSurvived` states the unmodified rule alone.
+ */
+export function fightCostFor(level: number, hp: number, tier: Tier, s: GameplaySettings): number {
+  return resolveBattle(level, hp, tier, biteFor(tier, s)).damage;
 }
 
 /** Mana a defeated tier-E creature pays. Its EXP is never scaled. */

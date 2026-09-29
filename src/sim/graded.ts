@@ -21,9 +21,9 @@
 
 import type { Game } from '../engine/game.js';
 import type { Cell } from '../engine/types.js';
-import { damageIfSurvived } from '../engine/combat.js';
 import { hasNote, noteBit } from '../engine/notes.js';
 import { mulberry32 } from '../engine/rng.js';
+import { fightCostFor } from '../engine/settings.js';
 import type { SpellId } from '../engine/spells.js';
 import { type Constraint, type Reading, everyTier, highestTier, readBoard } from './reader.js';
 import {
@@ -427,7 +427,10 @@ class Player {
         ceiling = Math.min(ceiling, c.residual);
         mean = Math.min(mean, c.residual / c.unknown.length);
       }
-      const worst = ceiling <= game.level ? 0 : damageIfSurvived(game.level, ceiling);
+      // Priced as the fight would be, through the creature-damage dial, so a lethal guess is one
+      // that kills at the dial in force.
+      const worst =
+        ceiling <= game.level ? 0 : fightCostFor(game.level, game.hp, ceiling, game.settings);
       const key = [worst >= game.hp ? 1 : 0, ceiling, mean, -near.length];
       const order = best ? compare(key, best.key) : -1;
       if (order < 0) {
