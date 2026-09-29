@@ -52,7 +52,8 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   swept at a sweep's price, through `Game.sweepAt`, a move of its own (decision 0071). Off, the
   click is refused by the engine and sounds as one, as it always was.
 - Back, and Escape, pause a board with a move in it without asking while `backPauses` is on;
-  pausing loses nothing (decision 0057), so the question is only ever a chance to abandon.
+  pausing loses nothing (decision 0057), so the question is only ever a chance to abandon. The
+  board-clear card's Abandon run always asks, whatever `backPauses` says: it is not Back.
 - The hint line under the board can be switched off (`hintLine`); the tutor and a lesson speak
   there whatever it says, and the line hides again when they stop.
 - The board refits whenever its stage changes size (`ResizeObserver`), keeping a zoom the player
