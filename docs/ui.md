@@ -11,7 +11,9 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   and closes the modal, or a frame loop or a modal keeps running against detached nodes.
 - Confirmations go through `Modal.ask` (`src/ui/overlays/modal.ts`), an in-page overlay, never
   `window.confirm`: a suppressed dialog returns false instantly and the button silently dies.
-  While a question is up, Escape answers it and every other key is swallowed.
+  While a question is up, Escape answers it and every other key is swallowed. A question takes
+  the place of the overlay that asked it, so that overlay passes `onCancel` to come back when the
+  answer is no (the save backup card does, keeping the pasted code).
 - A board's keys reach it only while it is on screen (`App.onKey` checks the game screen is
   built), never under the settings screen or after the player has left it (issue #6). On the
   settings screen Escape is Back, to wherever it was opened from; a picker open over it takes the

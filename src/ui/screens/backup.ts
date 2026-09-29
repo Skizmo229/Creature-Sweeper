@@ -186,6 +186,8 @@ function appendRestore(
         `This replaces the save in this browser: ${describeSave(current)}`,
       confirmLabel: 'Replace my save',
       cancelLabel: 'Cancel',
+      // The question took the card's place; a change of mind gets the card back, code and all.
+      onCancel: () => a.reopen(input.value, ''),
       onConfirm: () => {
         // Reloading is the only way every store, progress, settings and the live board, picks
         // the restored save up at once.

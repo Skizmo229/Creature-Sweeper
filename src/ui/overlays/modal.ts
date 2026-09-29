@@ -16,6 +16,9 @@ export class Modal {
   /** The overlay up, if any. */
   private overlay: HTMLElement | null = null;
 
+  /** What Escape owes while a question is up: its "no" answer (`AskOptions.onCancel`), if any. */
+  private onEscape: (() => void) | null = null;
+
   constructor(private readonly root: HTMLElement) {}
 
   /** Show an overlay over the current screen, closing any other; false when there is no screen. */
@@ -32,6 +35,7 @@ export class Modal {
   close(): void {
     this.overlay?.remove();
     this.overlay = null;
+    this.onEscape = null;
   }
 
   /** A key, while an overlay is up: Escape answers "no", nothing else gets through. */
@@ -39,15 +43,25 @@ export class Modal {
     if (!this.overlay) return false;
     if (e.key === 'Escape') {
       e.preventDefault();
+      const answer = this.onEscape;
       this.close();
+      answer?.();
     }
     return true;
   }
 
-  /** Ask before doing something irreversible, in the page rather than in a browser dialog. */
+  /**
+   * Ask before doing something irreversible, in the page rather than in a browser dialog. The
+   * question takes the place of any overlay up; `opts.onCancel` is how that overlay comes back
+   * when the answer is no, by the button or by Escape.
+   */
   ask(opts: AskOptions): void {
     const { overlay, focus } = buildAsk(opts, () => this.close());
-    if (!this.show(overlay, focus)) opts.onConfirm();
+    if (!this.show(overlay, focus)) {
+      opts.onConfirm();
+      return;
+    }
+    this.onEscape = opts.onCancel ?? null;
   }
 
   /**
