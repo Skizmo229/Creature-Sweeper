@@ -20,7 +20,8 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
     cave.ts         the ragged cave generator
     floorplan.ts    the dungeon's floor plan: rooms, and one-cell hallways between them
     dungeon.ts      the dungeon map: the budget spent exactly, doorways and their pockets
-  generate.ts     dealing the creatures: shape, then placement rule, then numbers
+  generate.ts     dealing the creatures: shape, then placement rule, then numbers; dealGrid,
+                  which tries the next seed when a rule refuses one
   opening.ts      choosing the opening and dealing it (`dealOpening`)
   layout.ts       boards from drawings in the catalogue's notation (`Game.fromLayout`)
   notes.ts        pencil marks as a bitmask
@@ -177,7 +178,8 @@ ladder recorded. CI regenerates the JSON and fails on any difference.
 
 ## How a board is born
 
-`Game.create(config, seed)`:
+`Game.create(config, seed)`, through `dealGrid`, which tries the seed after if the placement rule
+refuses this one, up to five (decision 0081):
 
 1. `generateGrid` makes the cells, then cuts them with the shape (`ShapeRule.build`). Every shape
    but the cave and the dungeon is a per-cell predicate; those two are grown from the seed to an exact cell count that
