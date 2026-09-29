@@ -51,7 +51,8 @@ export type FontId =
   | 'libre-franklin'
   | 'space-mono'
   | 'big-shoulders'
-  | 'press-start-2p';
+  | 'press-start-2p'
+  | 'courier-prime';
 
 export interface GameFont {
   /** The face's own name, as the picker shows it. */
@@ -166,6 +167,8 @@ export const FONTS: Record<FontId, GameFont> = {
     weight: 400,
     blurb: 'an arcade cabinet',
   },
+  // A typewriter, the Courier a screenplay is typed in, with a real bold for the board.
+  'courier-prime': { name: 'Courier Prime', stack: `"Courier Prime", ${MONO}`, weight: 700 },
 };
 
 export const FONT_IDS = Object.keys(FONTS) as FontId[];
@@ -217,6 +220,7 @@ export const FONT_KINDS: Record<FontId, FontKind> = {
   'space-mono': 'mono',
   'big-shoulders': 'condensed',
   'press-start-2p': 'decorative',
+  'courier-prime': 'mono',
 };
 
 /**

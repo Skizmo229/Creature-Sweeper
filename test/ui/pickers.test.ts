@@ -165,6 +165,7 @@ describe('the font windows', () => {
       values: ['atkinson', 'libre-franklin', 'overpass', 'rubik'],
     });
     expect(style.groups.find((g) => g.heading === 'Monospaced')!.values).toEqual([
+      'courier-prime',
       'jetbrains-mono',
       'space-mono',
     ]);
