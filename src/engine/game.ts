@@ -19,7 +19,6 @@ import {
 } from './settings.js';
 import { hasNote, hasNotes, lowestNote, noteBit, toggleNote as toggleNoteBit } from './notes.js';
 import { placementRule } from './placement/registry.js';
-import { mulberry32 } from './rng.js';
 import { SPELL_EFFECTS } from './cast.js';
 import { computeSealed, withinReach } from './reach.js';
 import { safeCells as provenSafe } from './sweep.js';
@@ -28,7 +27,7 @@ import { type Grid, inBounds, neighbours } from './grid.js';
 import { dealOpening } from './opening.js';
 import { type LayoutOptions, readLayout, showDrawing } from './layout.js';
 import { Patrol } from './patrol.js';
-import { generateGrid } from './generate.js';
+import { dealGrid } from './generate.js';
 import { fight, revealAllCells, revealAllCreatures } from './fight.js';
 
 export interface GameOptions {
@@ -149,10 +148,14 @@ export class Game {
    * into the next. It never changes `maxHp` — the board is still the board —
    * and it cannot exceed it or start a board already dead.
    */
+  /**
+   * Deal a board from a seed, or from the nearest seed after it that the placement rule accepts
+   * (`dealGrid`, decision 0081). The board keeps the seed it was asked for, which it is still a
+   * function of, so a paused board or a replay deals the same board.
+   */
   static create(config: BoardConfig, seed: number, options: GameOptions = {}): Game {
     const settings = options.settings ?? DEFAULT_GAMEPLAY;
-    const rng = mulberry32(seed);
-    const grid = generateGrid(config, rng);
+    const grid = dealGrid(config, seed);
     const game = new Game(config, seed, grid, enteringHp(config, settings, options), settings);
     dealOpening(game);
     return game;
