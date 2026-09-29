@@ -114,10 +114,12 @@ export class Settings {
       const raw = localStorage.getItem(KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<SettingsData>;
+        const presentation = readPresentation(parsed.presentation);
         return new Settings({
           version: 1,
-          presentation: readPresentation(parsed.presentation),
-          ladders: readLadderOwn(parsed.ladders),
+          presentation,
+          // A ladder's own tier colours are read against the palette kept for every ladder.
+          ladders: readLadderOwn(parsed.ladders, presentation),
           gameplay: readGameplay(parsed.gameplay),
         });
       }

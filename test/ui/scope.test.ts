@@ -11,10 +11,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../src/ui/app.js';
 import type { BoardDisplay } from '../../src/ui/board/view.js';
 import { themeFor } from '../../src/ui/looks.js';
-import { DEFAULT } from '../../src/ui/presentation.js';
+import { CUSTOM_TIERS, DEFAULT } from '../../src/ui/presentation.js';
 import type { Progress } from '../../src/ui/progress.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
+import { DEFAULT_TIERS } from '../../src/ui/tiercolors.js';
 import { FONTS } from '../../src/ui/typefaces.js';
 
 interface Driver {
@@ -80,6 +81,32 @@ describe('the store', () => {
     app.settings.setPresentationFor('donut', { palette: 'star' });
     app.settings.resetPresentation();
     expect(app.settings.ownKeys('donut')).toEqual([]);
+  });
+
+  it('carries a ladder’s own custom tier colours through the save', () => {
+    // The palette is kept once, for every ladder; the ladder's own choice of it must still read
+    // as that choice against it after a reload.
+    const mine = {
+      colors: [
+        '#010203',
+        '#040506',
+        '#070809',
+        '#0a0b0c',
+        '#0d0e0f',
+        '#101112',
+        '#131415',
+        '#161718',
+        '#191a1b',
+      ],
+      halo: '#1c1d1e',
+    };
+    app.settings.setPresentationFor('donut', { tierColors: CUSTOM_TIERS, customTierColors: mine });
+    expect(app.settings.tierColors('donut')).toEqual(mine);
+    const loaded = Settings.load();
+    expect(loaded.ownKeys('donut')).toEqual(['tierColors']);
+    expect(loaded.presentationFor('donut').tierColors).toBe(CUSTOM_TIERS);
+    expect(loaded.tierColors('donut')).toEqual(mine);
+    expect(loaded.tierColors('easy')).toBe(DEFAULT_TIERS);
   });
 
   it('carries a ladder’s own through the save, keeping only what the save held', () => {
