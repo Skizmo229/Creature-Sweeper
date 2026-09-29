@@ -208,15 +208,17 @@ export class BoardActions {
   onKey(e: KeyboardEvent): void {
     const game = this.h.game();
     if (!game) return;
+    // A key with Ctrl, Cmd or Alt held is the browser's (Ctrl+H is its history, Cmd+U the page's
+    // source), never the board's (decision 0082).
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
 
     if (e.key === 'Escape') {
       if (this.h.mode.escape()) this.h.refresh();
       else this.h.leaveGame();
       return;
     }
-    // Looking, not a move, so it works on a board that has ended; left to the browser with a
-    // modifier held, where Ctrl+U and Cmd+U mean something of their own.
-    if (e.key.toLowerCase() === 'u' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    // Looking, not a move, so it works on a board that has ended.
+    if (e.key.toLowerCase() === 'u') {
       e.preventDefault();
       this.toggleBeatenNumbers();
       return;
