@@ -38,7 +38,8 @@ export const SHAPE_LOOKS: Record<string, LadderLook> = {
     },
     // Doughy, like a bakery sign.
     font: 'sniglet',
-    sfx: 'chime',
+    // The fryer bubbling.
+    sfx: 'bubble',
     victory: 'ripple',
   },
   cross: {
@@ -134,9 +135,9 @@ export const SHAPE_LOOKS: Record<string, LadderLook> = {
     },
     // Machined corners.
     font: 'chakra-petch',
-    sfx: 'thud',
-    // A ring turning out from the centre, like the gear itself.
-    victory: 'wipeRadial',
+    // Clockwork, and the whole board turning as the gear turns.
+    sfx: 'clock',
+    victory: 'spin',
   },
   card: {
     // A red card back on green baize, ivory ink. `hot` is lavender: gold is out because Reveal
@@ -148,7 +149,8 @@ export const SHAPE_LOOKS: Record<string, LadderLook> = {
       floor: '#0d1f16',
       ink: '#f5ecd9',
       hot: '#a78bfa',
-      pip: 'diamond',
+      // A suit, leaving the gems to DIAMOND.
+      pip: 'club',
       accent: '#c9404b',
     },
     // A card's index is a bookish serif.
@@ -171,8 +173,9 @@ export const SHAPE_LOOKS: Record<string, LadderLook> = {
     },
     // Bouncy and warm, PAIRS's face, for another ladder about couples.
     font: 'baloo-2',
-    sfx: 'chime',
-    victory: 'confetti',
+    // A serenade, and hearts let go like balloons.
+    sfx: 'pluck',
+    victory: 'float',
   },
   star: {
     // A night sky, with ORACLE's rose for `hot`: gold is out because Reveal writes givens here,
@@ -189,6 +192,7 @@ export const SHAPE_LOOKS: Record<string, LadderLook> = {
     // A theatre marquee: a name in lights.
     font: 'bungee',
     sfx: 'glass',
-    victory: 'sparkle',
+    // Fireworks in the night sky.
+    victory: 'fireworks',
   },
 };
