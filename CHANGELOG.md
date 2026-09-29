@@ -2,7 +2,7 @@
 
 What each version of Creature Sweeper changed, newest first (decision 0068).
 
-## 0.9.1 — 2026-09-29
+## 0.9.1 — 2026-09-28
 
 The settings, the looks and the pre-release fixes, for the next round of play-testing.
 

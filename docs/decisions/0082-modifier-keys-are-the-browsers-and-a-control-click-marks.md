@@ -1,6 +1,6 @@
 # 0082. Modifier keys are the browser's, and a Control-click marks
 
-2026-09-29. Status: adopted. Extends 0067's consequence to every key.
+2026-09-28. Status: adopted. Extends 0067's consequence to every key.
 
 ## Context
 The board's shortcuts read the key alone: Ctrl+H spent a hint where the browser meant its

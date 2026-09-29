@@ -1,6 +1,6 @@
 # 0080. The save survives a version it cannot read, and a code says which version wrote it
 
-2026-09-29. Status: adopted. Follows 0022 and 0060.
+2026-09-28. Status: adopted. Follows 0022 and 0060.
 
 ## Context
 `Progress.load` read a save it could not parse, or one whose version was not 1, as a fresh start,

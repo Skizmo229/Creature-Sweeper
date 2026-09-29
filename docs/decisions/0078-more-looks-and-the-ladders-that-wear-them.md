@@ -1,6 +1,6 @@
 # 0078. More looks, and the ladders that wear them
 
-2026-09-29. Status: adopted. Follows 0031 and 0070.
+2026-09-28. Status: adopted. Follows 0031 and 0070.
 
 ## Context
 Thirty-five ladders drew their looks from four sound packs (Thuds on twelve of them), eleven

@@ -1,6 +1,6 @@
 # 0081. The game does not die silently
 
-2026-09-29. Status: adopted.
+2026-09-28. Status: adopted.
 
 ## Context
 Two ways the page could stop dead, from the pre-release audit of 28 September 2026. SUDOKU's

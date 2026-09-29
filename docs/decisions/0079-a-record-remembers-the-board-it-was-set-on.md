@@ -1,6 +1,6 @@
 # 0079. A record remembers the board it was set on
 
-2026-09-29. Status: adopted.
+2026-09-28. Status: adopted.
 
 ## Context
 A board's record (its clear, its perfect, its best time or fewest hints) was keyed by ladder and
