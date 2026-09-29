@@ -1,6 +1,6 @@
 /*
- * The bundled faces, one per ladder plus Atkinson Hyperlegible Next, and the
- * title's own (Griffy, at the end).
+ * The bundled faces: the ladders' own, the faces no ladder wears (Atkinson
+ * Hyperlegible Next, Press Start 2P), and the title's own (Griffy, at the end).
  *
  * Generated from the Fontsource packages (Google Fonts' own files), Latin
  * subset only: the interface is English, and a glyph a face lacks (the arrows,
@@ -260,6 +260,14 @@
   font-weight: 100 900;
   font-display: swap;
   src: url('./fonts/big-shoulders.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/press-start-2p.woff2') format('woff2');
 }
 
 /* The title's face, which no ladder wears and the picker does not offer — see

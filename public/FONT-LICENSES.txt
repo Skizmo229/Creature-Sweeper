@@ -84,6 +84,9 @@ Space Mono
 Big Shoulders Display
   Copyright 2019 The Big Shoulders Project Authors (https://github.com/xotypeco/big_shoulders)
 
+Press Start 2P
+  Copyright 2012 The Press Start 2P Project Authors (cody@zone38.net), with Reserved Font Name "Press Start 2P"
+
 Griffy (the title)
   Copyright (c) 2012 by Font Diner, Inc DBA Neapolitan (diner@fontdiner.com) with Reseved Font Name "Griffy"
 

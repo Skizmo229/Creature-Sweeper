@@ -130,7 +130,14 @@ describe('the font windows', () => {
   it('open by ladder, each face under the first ladder in the list that wears it', () => {
     const window_ = openWindow('Board font');
     expect(pressed(window_)).toBe('Ladder');
-    expect(headings(window_)).toEqual(['Easiest to read', 'Normal', 'Shape', 'Magic', 'Special']);
+    expect(headings(window_)).toEqual([
+      'Easiest to read',
+      'Normal',
+      'Shape',
+      'Magic',
+      'Special',
+      'No ladder’s own',
+    ]);
     expect(captions(window_).slice(0, 2)).toEqual([
       `${FONTS.atkinson.name} — easiest to read`,
       'Fredoka — EASY',

@@ -9,8 +9,9 @@
  */
 
 /**
- * The fonts the player can choose between: one per ladder, and one more chosen
- * for nothing but legibility.
+ * The fonts the player can choose between: the ladders' own faces, and two more
+ * that no ladder wears, one chosen for nothing but legibility and one for the
+ * arcade.
  *
  * All bundled (`fonts.css`), because twenty-four distinct faces cannot come
  * from what happens to be installed — the system stacks this replaced looked
@@ -49,11 +50,17 @@ export type FontId =
   | 'pirata-one'
   | 'libre-franklin'
   | 'space-mono'
-  | 'big-shoulders';
+  | 'big-shoulders'
+  | 'press-start-2p';
 
 export interface GameFont {
   /** The face's own name, as the picker shows it. */
   name: string;
+  /**
+   * For a face no ladder wears: what it is for, after its name on its tile, where every other
+   * tile names the ladders that wear the face.
+   */
+  blurb?: string;
   /**
    * CSS font-family list: the bundled face, then system fonts for any glyph it
    * lacks. The bundled files are Latin only, so the arrows and the star in the
@@ -107,6 +114,7 @@ export const FONTS: Record<FontId, GameFont> = {
     name: 'Atkinson Hyperlegible Next',
     stack: `"Atkinson Hyperlegible Next", ${SANS}`,
     weight: 700,
+    blurb: 'easiest to read',
   },
   fredoka: { name: 'Fredoka', stack: `Fredoka, ${SANS}`, weight: 600 },
   'jetbrains-mono': { name: 'JetBrains Mono', stack: `"JetBrains Mono", ${MONO}`, weight: 700 },
@@ -149,6 +157,14 @@ export const FONTS: Record<FontId, GameFont> = {
     name: 'Big Shoulders Display',
     stack: `"Big Shoulders Display", ${SANS}`,
     weight: 800,
+  },
+  // The arcade cabinet's eight-by-eight pixels, every digit a full em wide. A look rather than a
+  // reading face, and no ladder's own: the widest digits here would crowd the smallest cells.
+  'press-start-2p': {
+    name: 'Press Start 2P',
+    stack: `"Press Start 2P", ${MONO}`,
+    weight: 400,
+    blurb: 'an arcade cabinet',
   },
 };
 
@@ -200,6 +216,7 @@ export const FONT_KINDS: Record<FontId, FontKind> = {
   'libre-franklin': 'sans',
   'space-mono': 'mono',
   'big-shoulders': 'condensed',
+  'press-start-2p': 'decorative',
 };
 
 /**

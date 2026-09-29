@@ -173,10 +173,12 @@ export function paletteRow(ctx: ScreenContext, host: HTMLElement): void {
 
 /**
  * Each tile names every ladder that wears the face, in the order the ladder list reads (two may
- * share one, decision 0031); "Pirata One" alone says nothing about why.
+ * share one, decision 0031); "Pirata One" alone says nothing about why. A face no ladder wears
+ * says what it is for instead.
  */
 function fontOwner(id: FontId): string {
-  if (id === LEGIBLE_FONT) return 'easiest to read';
+  const blurb = FONTS[id].blurb;
+  if (blurb) return blurb;
   return ladders
     .filter((t) => lookFor(t.id).font === id)
     .map((t) => t.name)
