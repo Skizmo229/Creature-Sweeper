@@ -97,6 +97,7 @@ export const VICTORY_NAMES: Record<VictoryId, string> = {
   flip: 'Flip — they turn over like chequers',
   spin: 'Spin — they whirl into the centre',
   scatter: 'Scatter — they fly out from the centre',
+  float: 'Float — they rise and drift away',
 };
 
 /** Marks are green, as in the original. Drawn with a dark outline so they

@@ -150,3 +150,40 @@ function offStage(stage: Stage, m: Mover): boolean {
   const s = m.sprite.size;
   return m.x < -s || m.x > stage.w + s || m.y < -s || m.y > stage.h + s;
 }
+
+/** How much a floating creature's rise quickens, in pixels a second each second: its buoyancy. */
+const FLOAT_LIFT = 90;
+
+/**
+ * Float — the creatures rise like balloons let go, the lowest first, each swaying as it climbs and
+ * rocking with the sway. Stepped by measured time, as `tumble` is.
+ */
+export function float(stage: Stage): Painter {
+  const items = movers(stage, (s) => 1 - s.y / Math.max(1, stage.h));
+  const phases = items.map(() => Math.random() * Math.PI * 2);
+  for (const m of items) {
+    m.delay = m.axis * 0.6 + Math.random() * 0.2;
+    m.vy = -(50 + Math.random() * 70);
+  }
+
+  const paint = (ctx: CanvasRenderingContext2D, t: number, dt: number): void => {
+    const elapsed = t * stage.seconds;
+    items.forEach((m, i) => {
+      if (m.gone) return;
+      if (elapsed >= m.delay) {
+        m.vy -= FLOAT_LIFT * dt;
+        m.y += m.vy * dt;
+        const sway = Math.sin((elapsed - m.delay) * 2.2 + phases[i]!);
+        m.x = m.sprite.x + sway * m.sprite.size * 0.5;
+        m.rot = sway * 0.2;
+      }
+      if (offStage(stage, m)) {
+        m.gone = true;
+        return;
+      }
+      blit(ctx, stage.atlas, m);
+    });
+  };
+
+  return { paint, accumulates: false };
+}

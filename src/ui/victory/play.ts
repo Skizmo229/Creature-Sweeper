@@ -51,6 +51,7 @@ const ICON_EFFECTS: ReadonlySet<string> = new Set<VictoryId>([
   'flip',
   'spin',
   'scatter',
+  'float',
 ]);
 
 /**
@@ -76,6 +77,7 @@ const DURATION: Record<VictoryId, number> = {
   flip: 2000,
   spin: 2400,
   scatter: 2200,
+  float: 2600,
 };
 
 /** How long an effect runs at a speed, in milliseconds: its own length divided by the speed. */
