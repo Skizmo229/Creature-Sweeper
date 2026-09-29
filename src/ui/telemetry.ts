@@ -153,6 +153,16 @@ function readBucket(v: unknown): Record<string, BoardStats> | null {
   return out;
 }
 
+/** Whether stored text is a record this build can read. Blank storage is: there is nothing to read. */
+export function telemetryReadable(raw: string | null): boolean {
+  if (!raw) return true;
+  try {
+    return parseTelemetry(JSON.parse(raw)) !== null;
+  } catch {
+    return false;
+  }
+}
+
 /** The stored JSON read back; anything unreadable is an empty record, never a crash. */
 export function readTelemetry(raw: string | null): TelemetryData {
   if (!raw) return emptyTelemetry();

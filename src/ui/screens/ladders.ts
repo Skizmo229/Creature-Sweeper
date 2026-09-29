@@ -71,6 +71,16 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
       ),
     );
   }
+  // A save this version could not read is kept, not erased, and says so until Reset progress.
+  if (progress.unreadableKept) {
+    head.append(
+      el(
+        'p',
+        'sub settings-warn',
+        'A save this version could not read is set aside, not erased. Reset progress clears it too.',
+      ),
+    );
+  }
   wrap.append(head);
 
   // One column per category, each in the data's order, which is the order its ladders open.

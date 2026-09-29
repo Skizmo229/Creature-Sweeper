@@ -90,6 +90,42 @@ export interface SaveData {
   ladderCards: string[];
 }
 
+/**
+ * Where a stored value this build could not read is kept, beside the fresh one that replaces it
+ * (decision 0080): a save from a newer version, or a damaged one, is set aside rather than
+ * written over, so a later build, or a person, can still get at it.
+ */
+export function keptKey(key: string): string {
+  return `${key}.unreadable`;
+}
+
+/** Set an unreadable stored value aside under its kept key. Storage that throws keeps nothing. */
+export function keepUnreadable(key: string, raw: string): void {
+  try {
+    localStorage.setItem(keptKey(key), raw);
+  } catch {
+    // Blocked storage: nothing could be read from it, and nothing can be written to it.
+  }
+}
+
+/** Whether something is kept aside under this key. */
+export function hasKept(key: string): boolean {
+  try {
+    return localStorage.getItem(keptKey(key)) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** Let what was kept aside under this key go, as Reset progress does. */
+export function dropKept(key: string): void {
+  try {
+    localStorage.removeItem(keptKey(key));
+  } catch {
+    // Nothing to do.
+  }
+}
+
 function emptySave(): SaveData {
   return {
     version: 1,
@@ -138,8 +174,9 @@ export class Progress {
   }
 
   static load(): Progress {
+    let raw: string | null = null;
     try {
-      const raw = localStorage.getItem(KEY);
+      raw = localStorage.getItem(KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as SaveData;
         if (parsed.version === 1) return new Progress({ ...emptySave(), ...parsed });
@@ -147,7 +184,15 @@ export class Progress {
     } catch {
       // Unreadable or blocked storage just means a fresh run.
     }
+    // A save this build cannot read, a newer version's or a damaged one, is set aside rather than
+    // written over by the fresh one (decision 0080). Blocked storage read nothing, and keeps nothing.
+    if (raw) keepUnreadable(KEY, raw);
     return new Progress();
+  }
+
+  /** Whether a save this build could not read is kept aside, which the ladder list says. */
+  get unreadableKept(): boolean {
+    return hasKept(KEY);
   }
 
   private save(): void {
@@ -380,5 +425,6 @@ export class Progress {
   reset(): void {
     this.data = emptySave();
     this.save();
+    dropKept(KEY);
   }
 }
