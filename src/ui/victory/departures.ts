@@ -187,3 +187,44 @@ export function float(stage: Stage): Painter {
 
   return { paint, accumulates: false };
 }
+
+/** Seconds a marching rank takes to cross the stage. */
+const MARCH_CROSSING = 1.2;
+/** Seconds inside which every rank has stepped off, however many there are. */
+const MARCH_MUSTER = 1;
+
+/** The rank a creature stands in: creatures within half a cell of each other in height share one. */
+function rankOf(m: Mover): number {
+  return Math.round(m.y / (m.sprite.size * 0.5));
+}
+
+/**
+ * March — the creatures leave in ranks: each row steps off to the right in turn, from the top,
+ * with a bob in its step. Stepped by measured time, as `tumble` is.
+ */
+export function march(stage: Stage): Painter {
+  const items = movers(stage);
+  const ranks = [...new Set(items.map(rankOf))].sort((a, b) => a - b);
+  const gap = Math.min(0.12, MARCH_MUSTER / Math.max(1, ranks.length));
+  const speed = Math.max(240, stage.w / MARCH_CROSSING);
+  for (const m of items) m.delay = ranks.indexOf(rankOf(m)) * gap;
+
+  const paint = (ctx: CanvasRenderingContext2D, t: number, dt: number): void => {
+    const elapsed = t * stage.seconds;
+    for (const m of items) {
+      if (m.gone) continue;
+      let bob = 0;
+      if (elapsed >= m.delay) {
+        m.x += speed * dt;
+        bob = Math.abs(Math.sin((elapsed - m.delay) * 10)) * m.sprite.size * 0.15;
+      }
+      if (offStage(stage, m)) {
+        m.gone = true;
+        continue;
+      }
+      blit(ctx, stage.atlas, m, { dy: -bob });
+    }
+  };
+
+  return { paint, accumulates: false };
+}
