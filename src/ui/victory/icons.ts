@@ -5,7 +5,7 @@
 
 import { tierColor } from '../tiercolors.js';
 import type { VictoryId } from '../looktypes.js';
-import { flip, spin } from './departures.js';
+import { flip, scatter, spin } from './departures.js';
 import { type Painter, type Stage, type VictorySprite, blit, movers } from './stage.js';
 
 export function iconPainter(effect: VictoryId, stage: Stage): Painter {
@@ -22,6 +22,8 @@ export function iconPainter(effect: VictoryId, stage: Stage): Painter {
       return flip(stage);
     case 'spin':
       return spin(stage);
+    case 'scatter':
+      return scatter(stage);
     default:
       return wipe(effect, stage);
   }

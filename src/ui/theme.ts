@@ -96,6 +96,7 @@ export const VICTORY_NAMES: Record<VictoryId, string> = {
   wipeRadial: 'Wipe out — a ring from the centre',
   flip: 'Flip — they turn over like chequers',
   spin: 'Spin — they whirl into the centre',
+  scatter: 'Scatter — they fly out from the centre',
 };
 
 /** Marks are green, as in the original. Drawn with a dark outline so they

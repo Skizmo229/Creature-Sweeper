@@ -95,3 +95,58 @@ export function spin(stage: Stage): Painter {
 
   return { paint, accumulates: false };
 }
+
+/** Air resistance on a flung creature, per second: how quickly the scatter slows. */
+const SCATTER_DRAG = 1.4;
+
+/**
+ * Scatter — every creature is flung out from the centre of the board, spinning, and slows in the
+ * air. Stepped by measured time, as `tumble` is: the fling has somewhere to be.
+ */
+export function scatter(stage: Stage): Painter {
+  const cx = stage.w / 2;
+  const cy = stage.h / 2;
+  const items = movers(stage);
+  for (const m of items) {
+    const dx = m.x - cx;
+    const dy = m.y - cy;
+    // Outward, with a little scatter of its own; a creature at the very centre goes anywhere.
+    const a =
+      Math.hypot(dx, dy) < 1
+        ? Math.random() * Math.PI * 2
+        : Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.5;
+    const speed = 320 + Math.random() * 360;
+    m.vx = Math.cos(a) * speed;
+    m.vy = Math.sin(a) * speed;
+    m.spin = (Math.random() - 0.5) * 12;
+    m.delay = Math.random() * 0.12;
+  }
+
+  const paint = (ctx: CanvasRenderingContext2D, t: number, dt: number): void => {
+    const elapsed = t * stage.seconds;
+    const drag = Math.exp(-SCATTER_DRAG * dt);
+    for (const m of items) {
+      if (m.gone) continue;
+      if (elapsed >= m.delay) {
+        m.vx *= drag;
+        m.vy *= drag;
+        m.x += m.vx * dt;
+        m.y += m.vy * dt;
+        m.rot += m.spin * dt;
+      }
+      if (offStage(stage, m)) {
+        m.gone = true;
+        continue;
+      }
+      blit(ctx, stage.atlas, m);
+    }
+  };
+
+  return { paint, accumulates: false };
+}
+
+/** True once a creature has left the stage entirely, with a glyph's width to spare. */
+function offStage(stage: Stage, m: Mover): boolean {
+  const s = m.sprite.size;
+  return m.x < -s || m.x > stage.w + s || m.y < -s || m.y > stage.h + s;
+}
