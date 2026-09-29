@@ -1,8 +1,8 @@
 /**
  * The one modal overlay a screen carries at a time: a question, the rules card, the save backup,
  * the field guide, About. Shown over the current screen, and closed by every rebuild (decision
- * 0017). While one is up it holds the keyboard: Escape closes it and every other key is swallowed
- * (docs/ui.md).
+ * 0017). While one is up it holds the keyboard: Escape closes it, or takes the overlay's own way out
+ * where it has one, and every other key is swallowed (docs/ui.md).
  */
 
 import type { FullRun } from '../../engine/run.js';
@@ -16,15 +16,22 @@ export class Modal {
   /** The overlay up, if any. */
   private overlay: HTMLElement | null = null;
 
+  /** What Escape does for the overlay up; null means close it. */
+  private onEscape: (() => void) | null = null;
+
   constructor(private readonly root: HTMLElement) {}
 
-  /** Show an overlay over the current screen, closing any other; false when there is no screen. */
-  show(overlay: HTMLElement, focus?: HTMLElement): boolean {
+  /**
+   * Show an overlay over the current screen, closing any other; false when there is no screen.
+   * `onEscape` is what Escape does instead of a plain close, for a card with one way on.
+   */
+  show(overlay: HTMLElement, focus?: HTMLElement, onEscape?: () => void): boolean {
     this.close();
     const screen = this.root.querySelector('.screen');
     if (!screen) return false;
     screen.append(overlay);
     this.overlay = overlay;
+    this.onEscape = onEscape ?? null;
     focus?.focus();
     return true;
   }
@@ -32,6 +39,7 @@ export class Modal {
   close(): void {
     this.overlay?.remove();
     this.overlay = null;
+    this.onEscape = null;
   }
 
   /** A key, while an overlay is up: Escape answers "no", nothing else gets through. */
@@ -39,7 +47,9 @@ export class Modal {
     if (!this.overlay) return false;
     if (e.key === 'Escape') {
       e.preventDefault();
-      this.close();
+      const escape = this.onEscape;
+      if (escape) escape();
+      else this.close();
     }
     return true;
   }
@@ -121,14 +131,17 @@ export class Modal {
 
   /**
    * An error nothing caught (decision 0081): what broke, where to report it, and the way back to
-   * the list. With no screen to show it on, the way back is taken at once.
+   * the list. Escape takes that way too, since a plain close would leave the player on the broken
+   * board with the clock stopped and the watch disarmed. With no screen to show it on, the way
+   * back is taken at once.
    */
   crashed(message: string, onBack: () => void): void {
-    const { overlay, focus } = buildCrash(message, () => {
+    const back = (): void => {
       this.close();
       onBack();
-    });
-    if (!this.show(overlay, focus)) onBack();
+    };
+    const { overlay, focus } = buildCrash(message, back);
+    if (!this.show(overlay, focus, back)) onBack();
   }
 
   saveBackup(draft = '', error = ''): void {
