@@ -109,7 +109,7 @@ export function keepUnreadable(key: string, raw: string): void {
 }
 
 /** Whether something is kept aside under this key. */
-export function hasKept(key: string): boolean {
+function hasKept(key: string): boolean {
   try {
     return localStorage.getItem(keptKey(key)) !== null;
   } catch {
