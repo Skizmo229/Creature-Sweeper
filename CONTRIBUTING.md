@@ -105,8 +105,9 @@ moved.
 ## Releases
 
 A release is numbered MAJOR.MINOR.PATCH (decision 0068), in `package.json` and nowhere else: 0.9.x
-while the game is play-tested, 1.0.0 for the public release. A patch fixes; a minor adds or retunes
-ladders, spells or settings; a major changes the save's format and brings its migration.
+while the game is play-tested, whatever a cut adds (decision 0083), and 1.0.0 for the public
+release. From 1.0.0, a patch fixes; a minor adds or retunes ladders, spells or settings; a major
+changes the save's format and brings its migration.
 
 To cut one: `npm version <x.y.z> --no-git-tag-version` (it raises the lockfile too), an entry at the
 top of `CHANGELOG.md`, `npm run check`, one commit, and `npm run package` for the itch.io zip,
