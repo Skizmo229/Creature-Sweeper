@@ -99,6 +99,7 @@ export const VICTORY_NAMES: Record<VictoryId, string> = {
   scatter: 'Scatter — they fly out from the centre',
   float: 'Float — they rise and drift away',
   march: 'March — they leave in ranks',
+  swarm: 'Swarm — they buzz about, then stream away',
 };
 
 /** Marks are green, as in the original. Drawn with a dark outline so they

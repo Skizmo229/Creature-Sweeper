@@ -104,7 +104,8 @@ export type VictoryId =
   | 'spin'
   | 'scatter'
   | 'float'
-  | 'march';
+  | 'march'
+  | 'swarm';
 
 /** A ladder's defaults. The player can override each; this is what "game type default" means. */
 export interface LadderLook {

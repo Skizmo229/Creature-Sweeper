@@ -53,6 +53,7 @@ const ICON_EFFECTS: ReadonlySet<string> = new Set<VictoryId>([
   'scatter',
   'float',
   'march',
+  'swarm',
 ]);
 
 /**
@@ -80,6 +81,7 @@ const DURATION: Record<VictoryId, number> = {
   scatter: 2200,
   float: 2600,
   march: 2200,
+  swarm: 2800,
 };
 
 /** How long an effect runs at a speed, in milliseconds: its own length divided by the speed. */

@@ -228,3 +228,43 @@ export function march(stage: Stage): Painter {
 
   return { paint, accumulates: false };
 }
+
+/** How fast a swarming creature buzzes about, in pixels a second. */
+const SWARM_BUZZ = 130;
+/** How fast the swarm streams off the top once it goes, in pixels a second. */
+const SWARM_LEAVE = 420;
+/** When the swarm starts to leave and when it is all going, as shares of the effect. */
+const SWARM_GOES = 0.35;
+const SWARM_GONE = 0.75;
+
+/**
+ * Swarm — the creatures wake one by one and buzz about, each on a random walk, then the whole
+ * swarm streams off the top of the board. Stepped by measured time, as `tumble` is.
+ */
+export function swarm(stage: Stage): Painter {
+  const items = movers(stage);
+  const headings = items.map(() => Math.random() * Math.PI * 2);
+  for (const m of items) m.delay = Math.random() * 0.5;
+
+  const paint = (ctx: CanvasRenderingContext2D, t: number, dt: number): void => {
+    const elapsed = t * stage.seconds;
+    const pull = Math.min(1, Math.max(0, (t - SWARM_GOES) / (SWARM_GONE - SWARM_GOES)));
+    items.forEach((m, i) => {
+      if (m.gone) return;
+      if (elapsed >= m.delay) {
+        headings[i] = headings[i]! + (Math.random() - 0.5) * 14 * dt;
+        m.vx = Math.cos(headings[i]!) * SWARM_BUZZ + pull * 60;
+        m.vy = Math.sin(headings[i]!) * SWARM_BUZZ - pull * SWARM_LEAVE;
+        m.x += m.vx * dt;
+        m.y += m.vy * dt;
+      }
+      if (offStage(stage, m)) {
+        m.gone = true;
+        return;
+      }
+      blit(ctx, stage.atlas, m);
+    });
+  };
+
+  return { paint, accumulates: false };
+}
