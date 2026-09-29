@@ -21,10 +21,17 @@ export class BoardClock {
   timeExpired = false;
   private rafId = 0;
 
-  /** A board has just been dealt: the clock starts now. */
+  /**
+   * A board has just been dealt: the clock starts now, counting up, with no countdown until `arm`
+   * sets one. The clock is one object across boards, so the limit the last board raced, or the
+   * expiry that ended it, would otherwise carry over to a board that never armed one, as a
+   * school lesson does not.
+   */
   begin(): void {
     this.startedAt = performance.now();
     this.frozenSeconds = null;
+    this.timeLimit = null;
+    this.timeExpired = false;
   }
 
   /**

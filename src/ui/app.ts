@@ -405,7 +405,7 @@ export class App {
     this.startClock();
   }
 
-  /** A school lesson's board, which `teaching` has begun: no records, and no best time. */
+  /** A school lesson's board, which `teaching` has begun: no records, no best time, no countdown. */
   private startLesson(game: Game): void {
     this.run = null;
     this.keeper.release();
