@@ -31,7 +31,8 @@ import {
   type IconChoice,
   type TierColorChoice,
 } from '../presentation.js';
-import { OUT_OF_REACH_COLOR, PIP_NAMES, PIP_SHAPES, pipName } from '../theme.js';
+import { PIP_NAMES, PIP_SHAPES } from '../pips.js';
+import { OUT_OF_REACH_COLOR, pipName } from '../theme.js';
 import { DEFAULT_TIERS, TIER_PRESETS, type TierPalette, tierColor } from '../tiercolors.js';
 import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
 import { SYMBOL_COUNT, isGlyphPip } from '../pipsymbols.js';
