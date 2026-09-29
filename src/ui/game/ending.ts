@@ -39,7 +39,8 @@ export interface EndingHost {
   startBoard(typeId: string, board: number, seed?: number): void;
   startFullRun(typeId: string, seed?: number): void;
   advanceRun(): void;
-  leaveGame(): void;
+  /** Ask whether to pause or abandon the run, whatever Back does. */
+  askToLeave(): void;
   /** Board select, with no run in progress. */
   showBoards(typeId: string): void;
 }
@@ -194,7 +195,7 @@ export class BoardEnding {
       onContinue: () => this.h.advanceRun(),
       onNewRun: () => this.h.startFullRun(typeId),
       onSameRun: () => this.h.startFullRun(typeId, run.seed),
-      onAbandon: () => this.h.leaveGame(),
+      onAbandon: () => this.h.askToLeave(),
       onList: () => this.h.showBoards(typeId),
     });
     this.h.root.querySelector('.screen')?.append(overlay);
