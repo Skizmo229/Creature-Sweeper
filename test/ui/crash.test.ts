@@ -46,6 +46,19 @@ describe('an error nothing caught', () => {
     expect(card()?.textContent).toContain('Error: later');
   });
 
+  it('takes Escape as Back to the list, so the watch re-arms and the screen is rebuilt', () => {
+    app.play('normal', 1, 7);
+    throwAt('error', { error: new Error('boom') });
+    expect(card()).not.toBeNull();
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(card()).toBeNull();
+    expect(document.querySelector('.type-groups')).not.toBeNull();
+
+    throwAt('error', { error: new Error('later') });
+    expect(card()?.textContent).toContain('Error: later');
+  });
+
   it('reads a rejection by its reason, and an error event with no error by its message', () => {
     throwAt('unhandledrejection', { reason: 'lost the thread' });
     expect(card()?.textContent).toContain('lost the thread');

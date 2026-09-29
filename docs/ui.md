@@ -23,7 +23,8 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   with the key in some browsers; the press marks and its lift opens nothing (decision 0082).
 - An error nothing caught shows a card rather than a dead page (`CrashWatch`,
   `overlays/crash.ts`): what broke in the error's own words, the version, where to report it and
-  Back to the list, once per breakage; Back rebuilds the screen and re-arms it (decision 0081).
+  Back to the list, once per breakage; Back, and Escape, rebuild the screen and re-arm it
+  (decision 0081).
 - `.overlay` is `position: fixed`, because only the game screen is exactly one viewport tall.
 - The LV palette is modal. Pencilling needs a mode *and* a tier, so entering pencil mode arms a
   tier (and hands it back on exit unless the player chose it); the toggle is labelled with the
