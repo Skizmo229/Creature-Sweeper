@@ -2,6 +2,27 @@
 
 What each version of Creature Sweeper changed, newest first (decision 0068).
 
+## 0.9.1 — 2026-09-29
+
+The settings, the looks and the pre-release fixes, for the next round of play-testing.
+
+- Thirty settings more, each visual one shown on a real board: a creature as its tier's digit,
+  digit size, the mark colour, reach shading on the crawl ladders, the clock, the hint line, what a
+  right-click does, a long press to mark on a touch screen, the glow and the motion after a fight,
+  when the clear effect plays, what holds its card and its speed, the tutor's style and grade,
+  which sounds play, and six gameplay dials (spell prices, starting mana, hidden counters, a sweep
+  budget, a chord, a time limit). Presets (Tuned, Relaxed, Brutal; Low vision), a fullscreen
+  button, and any of a board's look and sound chosen for one ladder alone.
+- Five sound packs, seven board-clear effects, five creature icons, three looks for a beaten
+  creature and two faces; seventeen ladders wear new defaults (decision 0078).
+- A record remembers the board it was set on, so a retune moves no best time; the backup and
+  statistics codes say which version wrote them; a save this version cannot read is set aside,
+  never written over.
+- A deal a seed refuses is dealt from the next seed, and an error nothing caught shows a card with
+  the message and a way back, not a dead page.
+- A key with Ctrl, Cmd or Alt held goes to the browser, and a Control-click marks, as on a Mac.
+- 0.9.x stays the play-testing line whatever a cut adds; minors count from 1.0.0 (decision 0083).
+
 ## 0.9.0 — 2026-09-28
 
 The first numbered version: the game as built through Milestone 5, for play-testing.

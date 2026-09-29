@@ -1,6 +1,7 @@
 # 0068. Releases are numbered, and milestones are plans
 
-2026-09-28. Status: adopted.
+2026-09-28. Status: adopted; while the game is play-tested every cut is 0.9.N whatever it adds, and
+the parts mean what is said here from 1.0.0 (0083).
 
 ## Context
 The work has been organised in milestones (3, the readability refactor; 4, tuning for the human
