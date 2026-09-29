@@ -13,6 +13,11 @@ export interface AskOptions {
   confirmLabel: string;
   cancelLabel: string;
   onConfirm: () => void;
+  /**
+   * What "no" owes, by the Cancel button or by Escape: the question replaces whatever overlay was
+   * up, so an overlay that asked it brings itself back here. Nothing, by default.
+   */
+  onCancel?: () => void;
   /** A third answer between the two, such as abandoning where the question is whether to pause. */
   alternate?: { label: string; onChoose: () => void };
 }
@@ -34,7 +39,10 @@ export function buildAsk(
     opts.onConfirm();
   });
   const no = el('button', 'ghost', opts.cancelLabel);
-  no.addEventListener('click', close);
+  no.addEventListener('click', () => {
+    close();
+    opts.onCancel?.();
+  });
   row.append(yes);
   if (opts.alternate) {
     const { label, onChoose } = opts.alternate;

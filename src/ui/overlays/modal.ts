@@ -54,10 +54,19 @@ export class Modal {
     return true;
   }
 
-  /** Ask before doing something irreversible, in the page rather than in a browser dialog. */
+  /**
+   * Ask before doing something irreversible, in the page rather than in a browser dialog. The
+   * question takes the place of any overlay up; `opts.onCancel` is how that overlay comes back
+   * when the answer is no, by the button or by Escape.
+   */
   ask(opts: AskOptions): void {
     const { overlay, focus } = buildAsk(opts, () => this.close());
-    if (!this.show(overlay, focus)) opts.onConfirm();
+    // Escape is the "no" button: the close, and then what "no" owes, where the asker set it.
+    const no = (): void => {
+      this.close();
+      opts.onCancel?.();
+    };
+    if (!this.show(overlay, focus, opts.onCancel ? no : undefined)) opts.onConfirm();
   }
 
   /**
