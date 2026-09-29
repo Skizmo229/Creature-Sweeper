@@ -132,20 +132,22 @@ const CREATURE_GLYPHS: readonly CreatureGlyph[] = ['pips', 'digit', 'both'];
 
 /**
  * How a beaten creature is drawn: dimmed and struck through, which is how the game always drew
- * it; struck through at full strength; dimmed alone, which reads better at small cell sizes,
- * where the stroke crosses the pips; or plain, exactly as a live one would be, for a player who
- * reads "beaten" from the open floor under it.
+ * it; struck through at full strength; crossed out, the stroke and its mirror, dimmed or not;
+ * dimmed alone, which reads better at small cell sizes, where a stroke crosses the pips and an X
+ * crosses them twice; greyed, dimmed and drawn in the ink with no colour, so the live creatures'
+ * colours stand out; or plain, exactly as a live one would be, for a player who reads "beaten"
+ * from the open floor under it.
  */
-export type BeatenLook = 'dimStrike' | 'strike' | 'dim' | 'plain';
-const BEATEN_LOOKS: readonly BeatenLook[] = ['dimStrike', 'strike', 'dim', 'plain'];
-
-/** A beaten look as its two parts: whether the glyph is dimmed, and whether it is struck. */
-export function beatenParts(look: BeatenLook): { dim: boolean; strike: boolean } {
-  return {
-    dim: look === 'dimStrike' || look === 'dim',
-    strike: look === 'dimStrike' || look === 'strike',
-  };
-}
+export type BeatenLook = 'dimStrike' | 'strike' | 'dimCross' | 'cross' | 'dim' | 'grey' | 'plain';
+const BEATEN_LOOKS: readonly BeatenLook[] = [
+  'dimStrike',
+  'strike',
+  'dimCross',
+  'cross',
+  'dim',
+  'grey',
+  'plain',
+];
 
 /**
  * Which fights light the edge of the board. 'every' is green for a fight that cost nothing, blue

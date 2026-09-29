@@ -407,13 +407,17 @@ export function beatenLookRow(ctx: ScreenContext, host: HTMLElement): void {
   wideRow(
     host,
     'Beaten creatures',
-    'How a beaten creature is drawn. Dimmed alone reads better at small cell sizes, where the ' +
-      'stroke crosses the pips; plain leaves the open floor under it to say it is beaten.',
+    'How a beaten creature is drawn. Dimmed or greyed reads better at small cell sizes, where a ' +
+      'stroke crosses the pips and an X crosses them twice; plain leaves the open floor under it ' +
+      'to say it is beaten.',
     gallery(
       [
         look('dimStrike', 'Dimmed and struck through'),
         look('strike', 'Struck through'),
+        look('dimCross', 'Dimmed and crossed out'),
+        look('cross', 'Crossed out'),
         look('dim', 'Dimmed'),
+        look('grey', 'Greyed'),
         look('plain', 'Plain'),
       ],
       p.beatenLook,
