@@ -100,7 +100,8 @@ export type VictoryId =
   | 'wipe'
   | 'wipeDown'
   | 'wipeRadial'
-  | 'flip';
+  | 'flip'
+  | 'spin';
 
 /** A ladder's defaults. The player can override each; this is what "game type default" means. */
 export interface LadderLook {

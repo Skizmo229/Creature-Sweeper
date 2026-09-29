@@ -61,3 +61,37 @@ function blitSqueezed(ctx: CanvasRenderingContext2D, stage: Stage, m: Mover, wid
   ctx.drawImage(glyph, -size / 2, -size / 2, size, size);
   ctx.restore();
 }
+
+/** How many turns the board makes on its way into the centre. */
+const SPIN_TURNS = 1.25;
+
+/**
+ * Spin — the whole board whirls into its centre, every creature turning with it and shrinking as
+ * it goes, as if down a drain. Rigid, one turn for all: a board spiralling in reads as one thing
+ * going, where creatures each on an orbit of their own read as noise.
+ */
+export function spin(stage: Stage): Painter {
+  const cx = stage.w / 2;
+  const cy = stage.h / 2;
+  const items = movers(stage);
+  const polar = items.map((m) => ({
+    r: Math.hypot(m.x - cx, m.y - cy),
+    a: Math.atan2(m.y - cy, m.x - cx),
+  }));
+
+  const paint = (ctx: CanvasRenderingContext2D, t: number): void => {
+    // Eased in: the drain takes hold slowly and finishes fast.
+    const u = t * t;
+    const turned = SPIN_TURNS * Math.PI * 2 * u;
+    items.forEach((m, i) => {
+      const { r, a } = polar[i]!;
+      const radius = r * (1 - u);
+      m.x = cx + Math.cos(a + turned) * radius;
+      m.y = cy + Math.sin(a + turned) * radius;
+      m.rot = turned;
+      blit(ctx, stage.atlas, m, { scale: Math.max(0.05, 1 - 0.9 * u) });
+    });
+  };
+
+  return { paint, accumulates: false };
+}
