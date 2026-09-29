@@ -13,7 +13,9 @@ import {
   boardKey,
   emptyTelemetry,
   readTelemetry,
+  telemetryReadable,
 } from './telemetry.js';
+import { dropKept, keepUnreadable } from './progress.js';
 
 export class TelemetryStore {
   private data: TelemetryData;
@@ -24,7 +26,10 @@ export class TelemetryStore {
 
   static load(): TelemetryStore {
     try {
-      return new TelemetryStore(readTelemetry(localStorage.getItem(TELEMETRY_KEY)));
+      const raw = localStorage.getItem(TELEMETRY_KEY);
+      // A record this build cannot read is set aside, never written over (decision 0080).
+      if (raw && !telemetryReadable(raw)) keepUnreadable(TELEMETRY_KEY, raw);
+      return new TelemetryStore(readTelemetry(raw));
     } catch {
       return new TelemetryStore();
     }
@@ -52,5 +57,6 @@ export class TelemetryStore {
   reset(): void {
     this.data = emptyTelemetry();
     this.save();
+    dropKept(TELEMETRY_KEY);
   }
 }

@@ -4,7 +4,8 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { Progress } from '../src/ui/progress.js';
+import { boardFingerprint, ladderFingerprint } from '../src/engine/config.js';
+import { Progress, type SaveData } from '../src/ui/progress.js';
 import { ladders } from './helpers.js';
 
 const TYPE = 'easy';
@@ -12,12 +13,12 @@ const BOARD = 1;
 
 function clear(progress: Progress, seconds: number, hints: number) {
   progress.recordClear(ladders, TYPE, BOARD, { perfect: false, seconds, hints });
-  return progress.boardRecord(TYPE, BOARD);
+  return progress.boardRecord(ladders, TYPE, BOARD);
 }
 
 function completeRun(progress: Progress, seconds: number, hints: number) {
-  progress.recordRun(TYPE, { completed: true, reachedBoard: 10, hp: 1, seconds, hints });
-  return progress.runRecord(TYPE);
+  progress.recordRun(ladders, TYPE, { completed: true, reachedBoard: 10, hp: 1, seconds, hints });
+  return progress.runRecord(ladders, TYPE);
 }
 
 describe('a board clear', () => {
@@ -61,8 +62,18 @@ describe('a Full Run', () => {
   it('that ends early keeps what the record had', () => {
     const progress = new Progress();
     completeRun(progress, 900, 4);
-    progress.recordRun(TYPE, { completed: false, reachedBoard: 3, hp: 0, seconds: 100, hints: 1 });
-    expect(progress.runRecord(TYPE)).toMatchObject({ bestTime: null, fewestHints: 4, attempts: 2 });
+    progress.recordRun(ladders, TYPE, {
+      completed: false,
+      reachedBoard: 3,
+      hp: 0,
+      seconds: 100,
+      hints: 1,
+    });
+    expect(progress.runRecord(ladders, TYPE)).toMatchObject({
+      bestTime: null,
+      fewestHints: 4,
+      attempts: 2,
+    });
   });
 
   it('completed without hints retires the hint count', () => {
@@ -71,5 +82,82 @@ describe('a Full Run', () => {
     const rec = completeRun(progress, 1200, 0);
     expect(rec.bestTime).toBe(1200);
     expect(rec.fewestHints).toBeUndefined();
+  });
+});
+
+describe('a record set on another tuning of the board (decision 0079)', () => {
+  const saved = (fingerprint: string): Progress => {
+    const data: SaveData = {
+      version: 1,
+      types: {},
+      boards: { 'easy#1': { cleared: true, perfect: true, bestTime: 50, fingerprint } },
+      runs: {
+        easy: { cleared: true, bestBoard: 10, bestHp: 3, bestTime: 900, attempts: 2, fingerprint },
+      },
+      scaling: {},
+      unlockAll: false,
+      seenHowTo: false,
+      lessons: [],
+      ladderCards: [],
+    };
+    return new Progress(data);
+  };
+
+  it('keeps the clear and offers no time and no perfect', () => {
+    expect(saved('stale').boardRecord(ladders, TYPE, BOARD)).toEqual({
+      cleared: true,
+      perfect: false,
+      bestTime: null,
+    });
+    expect(saved('stale').runRecord(ladders, TYPE)).toEqual({
+      cleared: true,
+      bestBoard: 10,
+      bestHp: null,
+      bestTime: null,
+      attempts: 2,
+    });
+  });
+
+  it('is written over by the next clear, the first on this tuning', () => {
+    const progress = saved('stale');
+    expect(clear(progress, 70, 0)).toEqual({
+      cleared: true,
+      perfect: false,
+      bestTime: 70,
+      fingerprint: boardFingerprint(ladders, TYPE, BOARD),
+    });
+    expect(completeRun(progress, 1000, 0)).toMatchObject({
+      bestTime: 1000,
+      bestHp: 1,
+      attempts: 3,
+      fingerprint: ladderFingerprint(ladders, TYPE),
+    });
+  });
+
+  it('is this tuning’s when it is stamped so, or from before stamps, which the next clear adds', () => {
+    const current = saved(boardFingerprint(ladders, TYPE, BOARD));
+    expect(current.boardRecord(ladders, TYPE, BOARD).bestTime).toBe(50);
+    const old = new Progress({
+      version: 1,
+      types: {},
+      boards: { 'easy#1': { cleared: true, perfect: false, bestTime: 50 } },
+      runs: {},
+      scaling: {},
+      unlockAll: false,
+      seenHowTo: false,
+      lessons: [],
+      ladderCards: [],
+    });
+    expect(old.boardRecord(ladders, TYPE, BOARD).bestTime).toBe(50);
+    expect(clear(old, 90, 0)).toMatchObject({
+      bestTime: 50,
+      fingerprint: boardFingerprint(ladders, TYPE, BOARD),
+    });
+  });
+
+  it('tells two boards, and two tunings of one, apart', () => {
+    expect(boardFingerprint(ladders, TYPE, 1)).toMatch(/^[0-9a-f]{8}$/);
+    expect(boardFingerprint(ladders, TYPE, 1)).not.toBe(boardFingerprint(ladders, TYPE, 2));
+    expect(boardFingerprint(ladders, TYPE, 1)).toBe(boardFingerprint(ladders, TYPE, 1));
   });
 });

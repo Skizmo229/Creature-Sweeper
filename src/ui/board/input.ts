@@ -58,6 +58,8 @@ export class BoardInput {
    * where the finger came down, so a finger that wanders is a drag or a tap and not a hold.
    */
   private press: { timer: ReturnType<typeof setTimeout>; x: number; y: number } | null = null;
+  /** True from a press that marked until it lifts, so the lift opens nothing. */
+  private marking = false;
 
   constructor(private readonly host: InputHost) {}
 
@@ -81,7 +83,10 @@ export class BoardInput {
     );
 
     c.addEventListener('pointerdown', (e) => {
-      if (e.button === 2) {
+      // A right click, or a click with Control held: a Mac's right click, which some browsers
+      // report as the left button with the key (decision 0082).
+      if (e.button === 2 || (e.button === 0 && e.ctrlKey)) {
+        this.marking = true;
         const cell = host.cellAtClient(e.clientX, e.clientY);
         if (cell) host.onCycleMark(cell.x, cell.y);
         return;
@@ -114,7 +119,11 @@ export class BoardInput {
     c.addEventListener('pointermove', (e) => this.onPointerMove(e));
 
     const endDrag = (e: PointerEvent) => {
-      if (e.button === 2) return; // right-click was handled on pointerdown
+      if (e.button === 2 || this.marking) {
+        // The mark was made when the button went down.
+        this.marking = false;
+        return;
+      }
       this.cancelPress();
       if (this.touches.delete(e.pointerId)) {
         if (this.touches.size < 2) this.pinch = null;
@@ -137,6 +146,7 @@ export class BoardInput {
     c.addEventListener('pointerup', endDrag);
     c.addEventListener('pointercancel', (e) => {
       this.dragging = false;
+      this.marking = false;
       this.cancelPress();
       this.touches.delete(e.pointerId);
       if (this.touches.size < 2) this.pinch = null;

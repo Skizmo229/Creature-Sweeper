@@ -231,8 +231,8 @@ describe('the app', () => {
     autoplayTierOrder(game);
     app.finish();
     expect(text('.overlay')).toContain('Cleared with 2 hints');
-    expect(app.progress.boardRecord('normal', 1).cleared).toBe(true);
-    expect(app.progress.boardRecord('normal', 1).bestTime).toBeNull();
+    expect(app.progress.boardRecord(ladders, 'normal', 1).cleared).toBe(true);
+    expect(app.progress.boardRecord(ladders, 'normal', 1).bestTime).toBeNull();
   });
 
   it('opens the field guide from the rules card, the ladder list and, at the lesson, a board', () => {
@@ -333,7 +333,7 @@ describe('the app', () => {
     autoplayTierOrder(app.current!);
     app.finish();
     expect(text('.overlay')).not.toContain('hint');
-    expect(app.progress.boardRecord('normal', 1).bestTime).not.toBeNull();
+    expect(app.progress.boardRecord(ladders, 'normal', 1).bestTime).not.toBeNull();
   });
 
   it('a cleared board shows the clear overlay, records it, and offers the next board', () => {
@@ -347,8 +347,8 @@ describe('the app', () => {
     expect(text('.overlay-stats')).toContain('NORMAL board 1');
     const buttons = [...document.querySelectorAll('.overlay button')].map((b) => b.textContent);
     expect(buttons).toContain('Next board');
-    expect(app.progress.boardRecord('normal', 1).cleared).toBe(true);
-    expect(app.progress.boardRecord('normal', 1).perfect).toBe(true);
+    expect(app.progress.boardRecord(ladders, 'normal', 1).cleared).toBe(true);
+    expect(app.progress.boardRecord(ladders, 'normal', 1).perfect).toBe(true);
   });
 
   it('judges a clear by the dials the board was dealt with, not the ones set since', () => {
@@ -357,7 +357,7 @@ describe('the app', () => {
     app.settings.resetGameplay();
     autoplayTierOrder(app.current!);
     app.finish();
-    expect(app.progress.boardRecord('normal', 1).cleared).toBe(false);
+    expect(app.progress.boardRecord(ladders, 'normal', 1).cleared).toBe(false);
     expect(text('.overlay')).toContain('HP');
   });
 
@@ -381,7 +381,7 @@ describe('the app', () => {
     app.settings.setPresentation({ victory: 'off' });
     app.play('normal', 2, 7);
     clear();
-    expect(app.progress.boardRecord('normal', 2).cleared).toBe(true);
+    expect(app.progress.boardRecord(ladders, 'normal', 2).cleared).toBe(true);
     expect(held()).toBe(false);
     app.settings.setPresentation({ victory: 'default' });
     // Never in a Full Run, even on a board the save has no clear of.
@@ -398,7 +398,7 @@ describe('the app', () => {
     expect(text('.overlay h2')).toBe('GAME OVER');
     const buttons = [...document.querySelectorAll('.overlay button')].map((b) => b.textContent);
     expect(buttons).toContain('Try again');
-    expect(app.progress.boardRecord('easy', 1).cleared).toBe(false);
+    expect(app.progress.boardRecord(ladders, 'easy', 1).cleared).toBe(false);
   });
 
   it('a Full Run carries on to the next board after a clear', () => {

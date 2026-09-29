@@ -46,6 +46,11 @@ if (!result.ok) {
   console.error(`cannot read that: ${result.error}`);
   process.exit(1);
 }
+const stamp = [
+  result.game && `version ${result.game}`,
+  result.exported && `exported ${result.exported.slice(0, 10)}`,
+].filter(Boolean);
+if (stamp.length) console.log(`A code from ${stamp.join(', ')}.`);
 console.log(`Play statistics${result.exported ? `, exported ${result.exported}` : ''}.`);
 table('Tuned dials', result.data.tuned);
 table('Modified dials', result.data.modified);

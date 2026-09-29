@@ -43,7 +43,7 @@ export function buildBoardList(typeId: string, a: BoardListActions): HTMLElement
   const grid = el('div', 'board-grid');
   for (const board of type.boards) {
     const unlocked = progress.isBoardUnlocked(ladders, typeId, board.n);
-    const rec = progress.boardRecord(typeId, board.n);
+    const rec = progress.boardRecord(ladders, typeId, board.n);
 
     const card = el('button', 'board-card');
     card.disabled = !unlocked;
@@ -130,7 +130,7 @@ function scalingCard(typeId: string, a: BoardListActions): HTMLElement {
     // An arrow that cannot move says so: the top of a continuation is a real place.
     down.disabled = !unlocked || board <= first;
     up.disabled = !unlocked || board >= last;
-    const rec = progress.boardRecord(typeId, board);
+    const rec = progress.boardRecord(ladders, typeId, board);
     card.classList.toggle('done', rec.cleared);
     card.classList.toggle('perfect', rec.perfect);
     badge.textContent = `Locked — clear ${type.boards.length}`;
@@ -162,7 +162,7 @@ function fullRunCard(typeId: string, a: BoardListActions): HTMLElement {
   const { progress } = a;
   const type = ladders.find((t) => t.id === typeId)!;
   const unlocked = progress.isFullRunUnlocked(ladders, typeId);
-  const rec = progress.runRecord(typeId);
+  const rec = progress.runRecord(ladders, typeId);
   const pool = type.run_hp;
   const heal = Math.floor(pool / 2);
   const last = type.boards.length;

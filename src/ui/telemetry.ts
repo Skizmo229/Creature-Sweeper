@@ -153,6 +153,16 @@ function readBucket(v: unknown): Record<string, BoardStats> | null {
   return out;
 }
 
+/** Whether stored text is a record this build can read. Blank storage is: there is nothing to read. */
+export function telemetryReadable(raw: string | null): boolean {
+  if (!raw) return true;
+  try {
+    return parseTelemetry(JSON.parse(raw)) !== null;
+  } catch {
+    return false;
+  }
+}
+
 /** The stored JSON read back; anything unreadable is an empty record, never a crash. */
 export function readTelemetry(raw: string | null): TelemetryData {
   if (!raw) return emptyTelemetry();
@@ -194,14 +204,28 @@ export function describeTelemetry(data: TelemetryData): string {
     : `${tuned}.`;
 }
 
-/** The statistics as a code the owner can paste: base64 behind a prefix, as the save code is. */
-export function encodeTelemetry(data: TelemetryData, now: Date = new Date()): string {
-  const envelope = { format: FORMAT, version: 1, exported: now.toISOString(), telemetry: data };
+/**
+ * The statistics as a code the owner can paste: base64 behind a prefix, as the save code is, and
+ * stamped like it with the game's version that wrote it (decision 0080).
+ */
+export function encodeTelemetry(
+  data: TelemetryData,
+  now: Date = new Date(),
+  game?: string,
+): string {
+  const envelope = {
+    format: FORMAT,
+    version: 1,
+    exported: now.toISOString(),
+    ...(game === undefined ? {} : { game }),
+    telemetry: data,
+  };
   return PREFIX + toBase64(JSON.stringify(envelope));
 }
 
 export type TelemetryDecode =
-  { ok: true; data: TelemetryData; exported: string | null } | { ok: false; error: string };
+  | { ok: true; data: TelemetryData; exported: string | null; game: string | null }
+  | { ok: false; error: string };
 
 /** A code read back, whitespace and the invisible characters chat apps add ignored. */
 export function decodeTelemetry(text: string): TelemetryDecode {
@@ -224,6 +248,7 @@ export function decodeTelemetry(text: string): TelemetryDecode {
     ok: true,
     data,
     exported: typeof exported === 'string' && !Number.isNaN(Date.parse(exported)) ? exported : null,
+    game: typeof envelope.game === 'string' ? envelope.game : null,
   };
 }
 

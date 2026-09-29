@@ -17,6 +17,13 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   settings screen Escape is Back, to wherever it was opened from; a picker open over it takes the
   first Escape itself. On a board, Escape backs out one thing at a time: the spell, the tier, then
   the board (a Full Run asks first).
+- A key with Ctrl, Cmd or Alt held never reaches the board: it is the browser's (Ctrl+H is its
+  history), and only Shift is the board's, inverting the entry mode for a keystroke. A click with
+  Control held marks as a right click does, since a Mac's Control-click arrives as the left button
+  with the key in some browsers; the press marks and its lift opens nothing (decision 0082).
+- An error nothing caught shows a card rather than a dead page (`CrashWatch`,
+  `overlays/crash.ts`): what broke in the error's own words, the version, where to report it and
+  Back to the list, once per breakage; Back rebuilds the screen and re-arms it (decision 0081).
 - `.overlay` is `position: fixed`, because only the game screen is exactly one viewport tall.
 - The LV palette is modal. Pencilling needs a mode *and* a tier, so entering pencil mode arms a
   tier (and hands it back on exit unless the player chose it); the toggle is labelled with the
@@ -383,6 +390,15 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   the wild. The settings reader ignores unknown keys, which is what lets a retired setting go
   without one. Each ladder's own presentation settings travel under `ladders`, kept only where
   the save held a value (decision 0070).
+- A stored save this build cannot read, a newer version's or a damaged one, is set aside under
+  its own key (`keptKey`) as it loads, before the first visit's write, and the ladder list says so
+  until Reset progress clears it with the rest; the play statistics are kept the same way
+  (decision 0080). Both codes carry `game`, the version that wrote them, which the restore
+  question and the statistics reader name.
+- A board's record is stamped with the board's fingerprint, a hash of the config it is dealt
+  from, and a Full Run's with the ladder's; a record stamped with another tuning's keeps its clear
+  and offers no time, so a retune moves no best time and locks nothing (`boardFingerprint`,
+  decision 0079). The readers take the ladders table for it.
 - The play statistics (decision 0060) are a third store, `creature-sweeper.telemetry.v1`, never
   inside the save code: per board, attempts and how they ended, opens and guesses, sweeps, casts,
   hints, HP lost, seconds and what dealt each death, tuned and modified dials apart. The backup

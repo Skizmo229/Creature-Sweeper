@@ -12,6 +12,7 @@ import type { Game } from '../../src/engine/game.js';
 import type { FullRun } from '../../src/engine/run.js';
 import { autoplayTierOrder } from '../../src/sim/autoplay.js';
 import { App } from '../../src/ui/app.js';
+import { ladders } from '../../src/ui/ladders.js';
 import type { BoardClock } from '../../src/ui/game/clock.js';
 import type { Tutor } from '../../src/ui/game/tutor.js';
 import { type Slot, pausedGames } from '../../src/ui/paused.js';
@@ -240,6 +241,6 @@ describe('a paused Full Run', () => {
     key('Escape');
     button('Abandon run').click();
     expect(pausedGames.get(slot)).toBeNull();
-    expect(app.progress.runRecord('easy').attempts).toBe(1);
+    expect(app.progress.runRecord(ladders, 'easy').attempts).toBe(1);
   });
 });

@@ -17,6 +17,7 @@ import {
   localDate,
 } from '../savefile.js';
 import { describeTelemetry, encodeTelemetry } from '../telemetry.js';
+import { VERSION } from '../version.js';
 import { TelemetryStore } from '../telemetrystore.js';
 
 /** The save exactly as stored. Blocked storage reads as no save at all. */
@@ -59,7 +60,7 @@ export interface SaveBackupActions {
 /** The backup overlay. The caller registers it as the modal so every rebuild closes it. */
 export function buildSaveBackup(draft: string, error: string, a: SaveBackupActions): HTMLElement {
   const current = readStoredSave();
-  const code = encodeSave(current);
+  const code = encodeSave(current, new Date(), VERSION);
 
   const overlay = el('div', 'overlay win');
   const card = el('div', 'overlay-card backup');
@@ -173,7 +174,11 @@ function appendRestore(
       err.textContent = result.error;
       return;
     }
-    const from = result.exported ? ` (saved ${localDate(new Date(result.exported))})` : '';
+    const stamp = [
+      result.exported && `saved ${localDate(new Date(result.exported))}`,
+      result.game && `version ${result.game}`,
+    ].filter(Boolean);
+    const from = stamp.length ? ` (${stamp.join(', ')})` : '';
     a.ask({
       title: 'REPLACE SAVE?',
       body:
@@ -221,7 +226,7 @@ function appendStatistics(card: HTMLElement): void {
   );
   const out = el('textarea', 'backup-code');
   out.readOnly = true;
-  out.value = encodeTelemetry(data);
+  out.value = encodeTelemetry(data, new Date(), VERSION);
   out.rows = 3;
   out.addEventListener('focus', () => out.select());
   card.append(out);

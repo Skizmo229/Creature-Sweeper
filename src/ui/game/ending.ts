@@ -94,7 +94,7 @@ export class BoardEnding {
     const type = ladders.find((t) => t.id === typeId)!;
     const recorded = isAtLeastAsHard(game.settings);
     // Read before the clear is written down, after which every clear would look like a repeat.
-    const firstClear = won && !progress.boardRecord(typeId, boardIndex).cleared;
+    const firstClear = won && !progress.boardRecord(ladders, typeId, boardIndex).cleared;
     const plays = won && this.effectPlays(firstClear);
     let unlocked: number | null = null;
     // A board cleared on settings easier than the tuned ones is not written down at all.
@@ -164,12 +164,13 @@ export class BoardEnding {
     const recorded = isAtLeastAsHard(game.settings);
     // A run's boards were all cleared before it opened, unless Unlock everything let it in.
     const plays =
-      game.status === 'won' && this.effectPlays(!progress.boardRecord(typeId, boardIndex).cleared);
+      game.status === 'won' &&
+      this.effectPlays(!progress.boardRecord(ladders, typeId, boardIndex).cleared);
 
     if (!midRun) {
       clock.freeze();
       if (recorded) {
-        progress.recordRun(typeId, {
+        progress.recordRun(ladders, typeId, {
           completed: run.status === 'won',
           reachedBoard: boardIndex,
           hp: game.hp,

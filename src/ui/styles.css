@@ -2216,3 +2216,9 @@ button.piano-key.pressed {
 .screen > .title-bar {
   padding-right: 44px;
 }
+
+/* The crash card's message is the error's own words, to be copied into a report. */
+.overlay-card.crash .overlay-stats {
+  user-select: text;
+  overflow-wrap: anywhere;
+}

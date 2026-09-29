@@ -9,7 +9,7 @@
  * data), so every access is guarded and the game works fine without it.
  */
 
-import type { Ladders } from '../engine/config.js';
+import { type Ladders, boardFingerprint, ladderFingerprint } from '../engine/config.js';
 import { PROGRESS_KEY as KEY } from './savefile.js';
 
 export interface BoardRecord {
@@ -23,6 +23,11 @@ export interface BoardRecord {
    * (decision 0065). Absent in saves written before it, and on boards never cleared with hints.
    */
   fewestHints?: number;
+  /**
+   * The board this record was set on, as `boardFingerprint` writes it (decision 0079). Absent in
+   * saves from before it, which are taken as set on the board as it is now.
+   */
+  fingerprint?: string;
 }
 
 export interface TypeRecord {
@@ -50,6 +55,8 @@ export interface FullRunRecord {
   /** Fewest hints on a completed hinted run, kept as a board's is (`BoardRecord.fewestHints`). */
   fewestHints?: number;
   attempts: number;
+  /** The ladder this record was set on, as `ladderFingerprint` writes it (decision 0079). */
+  fingerprint?: string;
 }
 
 export interface SaveData {
@@ -81,6 +88,42 @@ export interface SaveData {
   lessons: string[];
   /** Ladders whose first-visit card has been shown, by id. Absent in saves before the cards. */
   ladderCards: string[];
+}
+
+/**
+ * Where a stored value this build could not read is kept, beside the fresh one that replaces it
+ * (decision 0080): a save from a newer version, or a damaged one, is set aside rather than
+ * written over, so a later build, or a person, can still get at it.
+ */
+export function keptKey(key: string): string {
+  return `${key}.unreadable`;
+}
+
+/** Set an unreadable stored value aside under its kept key. Storage that throws keeps nothing. */
+export function keepUnreadable(key: string, raw: string): void {
+  try {
+    localStorage.setItem(keptKey(key), raw);
+  } catch {
+    // Blocked storage: nothing could be read from it, and nothing can be written to it.
+  }
+}
+
+/** Whether something is kept aside under this key. */
+function hasKept(key: string): boolean {
+  try {
+    return localStorage.getItem(keptKey(key)) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** Let what was kept aside under this key go, as Reset progress does. */
+export function dropKept(key: string): void {
+  try {
+    localStorage.removeItem(keptKey(key));
+  } catch {
+    // Nothing to do.
+  }
 }
 
 function emptySave(): SaveData {
@@ -131,8 +174,9 @@ export class Progress {
   }
 
   static load(): Progress {
+    let raw: string | null = null;
     try {
-      const raw = localStorage.getItem(KEY);
+      raw = localStorage.getItem(KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as SaveData;
         if (parsed.version === 1) return new Progress({ ...emptySave(), ...parsed });
@@ -140,7 +184,15 @@ export class Progress {
     } catch {
       // Unreadable or blocked storage just means a fresh run.
     }
+    // A save this build cannot read, a newer version's or a damaged one, is set aside rather than
+    // written over by the fresh one (decision 0080). Blocked storage read nothing, and keeps nothing.
+    if (raw) keepUnreadable(KEY, raw);
     return new Progress();
+  }
+
+  /** Whether a save this build could not read is kept aside, which the ladder list says. */
+  get unreadableKept(): boolean {
+    return hasKept(KEY);
   }
 
   private save(): void {
@@ -195,16 +247,19 @@ export class Progress {
     return this.data.types[typeId] ?? { highestBoard: 1, cleared: false };
   }
 
-  runRecord(typeId: string): FullRunRecord {
-    return (
-      this.data.runs[typeId] ?? {
-        cleared: false,
-        bestBoard: 0,
-        bestHp: null,
-        bestTime: null,
-        attempts: 0,
-      }
-    );
+  /**
+   * A ladder's Full Run record as it applies to the ladder as it is tuned now. A record set on
+   * another tuning (decision 0079) keeps its clear, how deep it reached and its attempts, and
+   * offers no time and no HP, which were another ladder's.
+   */
+  runRecord(ladders: Ladders, typeId: string): FullRunRecord {
+    const rec = this.data.runs[typeId];
+    if (!rec) return { cleared: false, bestBoard: 0, bestHp: null, bestTime: null, attempts: 0 };
+    if (rec.fingerprint !== undefined && rec.fingerprint !== ladderFingerprint(ladders, typeId)) {
+      const { cleared, bestBoard, attempts } = rec;
+      return { cleared, bestBoard, bestHp: null, bestTime: null, attempts };
+    }
+    return rec;
   }
 
   /**
@@ -223,6 +278,7 @@ export class Progress {
   /** Record how a run ended. Runs never advance the board ladder — every
    *  board of a run was already cleared, or the run would not have opened. */
   recordRun(
+    ladders: Ladders,
     typeId: string,
     opts: {
       completed: boolean;
@@ -233,7 +289,7 @@ export class Progress {
       hints?: number;
     },
   ): void {
-    const prev = this.runRecord(typeId);
+    const prev = this.runRecord(ladders, typeId);
     // A run the tutor helped with is cleared and counts, but races nothing.
     const { bestTime, fewestHints } = opts.completed
       ? bestOf(prev, opts.seconds, opts.hints ?? 0)
@@ -245,6 +301,7 @@ export class Progress {
       bestTime,
       ...(fewestHints === undefined ? {} : { fewestHints }),
       attempts: prev.attempts + 1,
+      fingerprint: ladderFingerprint(ladders, typeId),
     };
     this.save();
   }
@@ -273,14 +330,21 @@ export class Progress {
     this.save();
   }
 
-  boardRecord(typeId: string, board: number): BoardRecord {
-    return (
-      this.data.boards[boardKey(typeId, board)] ?? {
-        cleared: false,
-        perfect: false,
-        bestTime: null,
-      }
-    );
+  /**
+   * A board's record as it applies to the board as it is tuned now. A record set on another
+   * tuning of the board (decision 0079) keeps its clear, which unlocked what it unlocked, and
+   * offers no time and no perfect, which were another board's; the next clear writes over it.
+   */
+  boardRecord(ladders: Ladders, typeId: string, board: number): BoardRecord {
+    const rec = this.data.boards[boardKey(typeId, board)];
+    if (!rec) return { cleared: false, perfect: false, bestTime: null };
+    if (
+      rec.fingerprint !== undefined &&
+      rec.fingerprint !== boardFingerprint(ladders, typeId, board)
+    ) {
+      return { cleared: rec.cleared, perfect: false, bestTime: null };
+    }
+    return rec;
   }
 
   /**
@@ -337,11 +401,12 @@ export class Progress {
     const lastBoard = type?.boards.length ?? 10;
 
     const key = boardKey(typeId, board);
-    const prev = this.boardRecord(typeId, board);
+    const prev = this.boardRecord(ladders, typeId, board);
     this.data.boards[key] = {
       cleared: true,
       perfect: prev.perfect || opts.perfect,
       ...bestOf(prev, opts.seconds, opts.hints ?? 0),
+      fingerprint: boardFingerprint(ladders, typeId, board),
     };
 
     const rec = this.typeRecord(typeId);
@@ -360,5 +425,6 @@ export class Progress {
   reset(): void {
     this.data = emptySave();
     this.save();
+    dropKept(KEY);
   }
 }

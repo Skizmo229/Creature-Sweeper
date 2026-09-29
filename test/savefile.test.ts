@@ -97,3 +97,12 @@ describe('save codes', () => {
     expect(describeSave({ progress: null, settings: null })).toBe('No progress.');
   });
 });
+
+describe('the game version in a code', () => {
+  it('is carried when the writer gives it, and null in a code from before it', () => {
+    const stamped = decodeSave(encodeSave({ progress, settings }, new Date(), '0.10.0'));
+    expect(stamped.ok && stamped.game).toBe('0.10.0');
+    const bare = decodeSave(encodeSave({ progress, settings }));
+    expect(bare.ok && bare.game).toBeNull();
+  });
+});

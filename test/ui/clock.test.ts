@@ -65,7 +65,7 @@ describe('the clock setting', () => {
     // The clock is only hidden: the clear is timed as ever.
     autoplayTierOrder(app.current!);
     app.finish();
-    expect(app.progress.boardRecord('normal', 1).bestTime).toBeGreaterThanOrEqual(125);
+    expect(app.progress.boardRecord(ladders, 'normal', 1).bestTime).toBeGreaterThanOrEqual(125);
   });
 
   it('shows Time Attack’s countdown in the style too', () => {

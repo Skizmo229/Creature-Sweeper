@@ -3,7 +3,7 @@
  */
 
 import type { BoardConfig, Cell } from './types.js';
-import type { Rng } from './rng.js';
+import { type Rng, mulberry32 } from './rng.js';
 import { placementRule } from './placement/registry.js';
 import { type Grid, computeNumbers, makeCell, neighbours } from './grid.js';
 import { shapeRule } from './shape/registry.js';
@@ -50,4 +50,28 @@ export function generateGrid(cfg: BoardConfig, rng: Rng): Grid {
   });
   computeNumbers(grid, cfg.topology, cfg.wrap);
   return grid;
+}
+
+/** How many seeds a deal tries, the one asked for first, before a refusal is let through. */
+const DEAL_SEEDS = 5;
+
+/**
+ * The grid from a seed, or from the nearest seed after it that the placement rule accepts. A rule
+ * can refuse a seed, and SUDOKU's refuses one in a few hundred at the hard end of its ladder, so
+ * the seed after it is tried, and the one after, up to `DEAL_SEEDS` in all, before the refusal
+ * is let through (decision 0081). The seed asked for is tried untouched, so every board dealt
+ * before this existed is dealt the same; and the same seeds are tried in the same order, so a
+ * board is still a function of the seed it was asked for. `deal` is the dealer, for a test that
+ * refuses.
+ */
+export function dealGrid(cfg: BoardConfig, seed: number, deal = generateGrid): Grid {
+  let refused: unknown;
+  for (let k = 0; k < DEAL_SEEDS; k++) {
+    try {
+      return deal(cfg, mulberry32(k === 0 ? seed : (seed + k) >>> 0));
+    } catch (e) {
+      refused = e;
+    }
+  }
+  throw refused;
 }
