@@ -8,6 +8,7 @@ import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Game } from '../../src/engine/game.js';
 import { App } from '../../src/ui/app.js';
+import { ladders } from '../../src/ui/ladders.js';
 import { pausedGames } from '../../src/ui/paused.js';
 import type { Progress } from '../../src/ui/progress.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
@@ -72,7 +73,7 @@ describe('back pauses without asking', () => {
       .click();
     expect(document.querySelector('.overlay')).toBeNull();
     expect(pausedGames.get({ typeId: 'easy', run: true })).not.toBeNull();
-    expect(app.progress.runRecord('easy').attempts).toBe(0);
+    expect(app.progress.runRecord(ladders, 'easy').attempts).toBe(0);
   });
 
   it('is a toggle on the settings screen, and reads a save without it as off', () => {

@@ -358,6 +358,44 @@ export function boardConfig(
   };
 }
 
+const FINGERPRINTS = new WeakMap<Ladders, Map<string, string>>();
+
+/**
+ * A board's fingerprint: a short hash of the config it is dealt from, so a record can say which
+ * board it was set on. A retune that changes anything about a board, its size, its creatures,
+ * its HP, its thresholds or its rule, changes the fingerprint, and a best time set on the old
+ * board is not offered as the new one's (decision 0079). Cached per ladders table, since the
+ * board list asks for every board of a ladder at once.
+ */
+export function boardFingerprint(ladders: Ladders, typeId: string, board: number): string {
+  let byBoard = FINGERPRINTS.get(ladders);
+  if (!byBoard) FINGERPRINTS.set(ladders, (byBoard = new Map()));
+  const key = `${typeId}#${board}`;
+  let fingerprint = byBoard.get(key);
+  if (fingerprint === undefined) {
+    fingerprint = fnv1a(JSON.stringify(boardConfig(ladders, typeId, board)));
+    byBoard.set(key, fingerprint);
+  }
+  return fingerprint;
+}
+
+/** A ladder's fingerprint for its Full Run: its ten boards' fingerprints and the run's HP pool. */
+export function ladderFingerprint(ladders: Ladders, typeId: string): string {
+  const type = findType(ladders, typeId);
+  const boards = type.boards.map((b) => boardFingerprint(ladders, typeId, b.n));
+  return fnv1a(`${boards.join(',')}|${type.run_hp}`);
+}
+
+/** FNV-1a, 32 bits, as eight hex digits: short, stable, and enough to tell two tunings apart. */
+function fnv1a(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
+}
+
 /**
  * C_k — the total EXP available from every creature of tier <= k.
  *

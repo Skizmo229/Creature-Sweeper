@@ -353,7 +353,8 @@ export class App {
     this.keeper.begin();
     this.recorder.begin();
     this.clock.begin();
-    this.clock.arm(this.progress.boardRecord(typeId, board).bestTime, this.settings.gameplay);
+    const best = this.progress.boardRecord(ladders, typeId, board).bestTime;
+    this.clock.arm(best, this.settings.gameplay);
     this.buildGameScreen();
     this.startClock();
   }
@@ -379,7 +380,7 @@ export class App {
     this.game = this.run.game;
     this.recorder.begin();
     // A run races the run's own best, not board 1's, and a limit per board over all its boards.
-    const best = this.progress.runRecord(typeId).bestTime;
+    const best = this.progress.runRecord(ladders, typeId).bestTime;
     this.clock.arm(best, this.settings.gameplay, this.run.boardCount);
     this.buildGameScreen();
     this.startClock();
@@ -540,7 +541,7 @@ export class App {
     const run = this.run;
     // An abandoned run is neither won nor lost, but it did reach a board.
     if (run) {
-      this.progress.recordRun(this.typeId, {
+      this.progress.recordRun(ladders, this.typeId, {
         completed: false,
         reachedBoard: this.boardIndex,
         hp: run.hp,

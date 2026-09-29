@@ -116,7 +116,7 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
       const n = progress.boardsCleared(type.id);
       const boards = `${n} board${n === 1 ? '' : 's'}`;
       if (rec.cleared) {
-        const run = progress.runRecord(type.id);
+        const run = progress.runRecord(ladders, type.id);
         meta.textContent =
           `Cleared · ${boards}` + (run.cleared ? ' · ★ full run' : ' · full run open');
       } else {
