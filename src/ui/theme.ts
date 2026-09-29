@@ -94,6 +94,7 @@ export const VICTORY_NAMES: Record<VictoryId, string> = {
   wipe: 'Wipe across — a band carries them off',
   wipeDown: 'Wipe down — a band falls through them',
   wipeRadial: 'Wipe out — a ring from the centre',
+  flip: 'Flip — they turn over like chequers',
 };
 
 /** Marks are green, as in the original. Drawn with a dark outline so they

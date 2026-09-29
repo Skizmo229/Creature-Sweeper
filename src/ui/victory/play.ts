@@ -48,6 +48,7 @@ const ICON_EFFECTS: ReadonlySet<string> = new Set<VictoryId>([
   'wipe',
   'wipeDown',
   'wipeRadial',
+  'flip',
 ]);
 
 /**
@@ -70,6 +71,7 @@ const DURATION: Record<VictoryId, number> = {
   wipe: 1900,
   wipeDown: 1900,
   wipeRadial: 2000,
+  flip: 2000,
 };
 
 /** How long an effect runs at a speed, in milliseconds: its own length divided by the speed. */
