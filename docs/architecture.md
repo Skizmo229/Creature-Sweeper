@@ -58,7 +58,8 @@ src/ui/         the game in the browser
   ladders.ts      the ladder data, bundled into the build (src/data.ts is Node's loader)
   version.ts      the game's version, read from package.json (decision 0068)
   screens/        one builder per screen: ladders, boards, howto, backup, guide, school, about
-  overlays/       ask.ts: the in-page yes/no question (never window.confirm); modal.ts: the one
+  overlays/       ask.ts: the in-page yes/no question (never window.confirm); crash.ts: the card
+                  for an error nothing caught; modal.ts: the one
                   modal overlay up at a time, and the ones the menus open
   guide/          the field guide's words, in the catalogue's shape: entries.ts (the tricks, the diagrams,
                   guessing), ladders.ts (each ladder's note)

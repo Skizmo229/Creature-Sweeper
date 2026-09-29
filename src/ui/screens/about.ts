@@ -10,7 +10,7 @@ import { el } from '../dom.js';
 import { VERSION } from '../version.js';
 
 /** The repository: the source, the licence, and where bugs and ideas go. */
-const SOURCE_URL = 'https://github.com/Skizmo229/Creature-Sweeper';
+export const SOURCE_URL = 'https://github.com/Skizmo229/Creature-Sweeper';
 const LICENCE_URL = `${SOURCE_URL}/blob/main/LICENSE`;
 const ORIGINAL_URL = 'https://hojamaka.com/games/mamono_sweeper/';
 /** Shipped beside index.html in every build (`public/`), so it resolves on itch.io and in dev. */

@@ -25,6 +25,7 @@ import { type GameScreenElements, buildGameScreen } from './game/screen.js';
 import { soundFor } from './game/sound.js';
 import { ladders } from './ladders.js';
 import { buildSpeaker } from './mute.js';
+import { CrashWatch } from './overlays/crash.js';
 import { Modal } from './overlays/modal.js';
 import { type Slot, pausedGames } from './paused.js';
 import { Progress } from './progress.js';
@@ -172,6 +173,7 @@ export class App {
       play: (move) => this.keeper.move(move),
     });
     window.addEventListener('keydown', (e) => this.onKey(e));
+    new CrashWatch(this.modal, { stop: () => this.clock.stop(), back: () => this.showTypes() });
     // The clock is kept with the game, so it is written down as the page goes away.
     window.addEventListener('pagehide', () => this.keeper.save());
     document.addEventListener('visibilitychange', () => this.keeper.save());

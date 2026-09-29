@@ -10,6 +10,7 @@ import { buildAbout } from '../screens/about.js';
 import { buildSaveBackup } from '../screens/backup.js';
 import { buildHowTo } from '../screens/howto.js';
 import { type AskOptions, buildAsk } from './ask.js';
+import { buildCrash } from './crash.js';
 
 export class Modal {
   /** The overlay up, if any. */
@@ -116,6 +117,18 @@ export class Modal {
   about(): void {
     const { overlay, focus } = buildAbout(() => this.close());
     this.show(overlay, focus);
+  }
+
+  /**
+   * An error nothing caught (decision 0081): what broke, where to report it, and the way back to
+   * the list. With no screen to show it on, the way back is taken at once.
+   */
+  crashed(message: string, onBack: () => void): void {
+    const { overlay, focus } = buildCrash(message, () => {
+      this.close();
+      onBack();
+    });
+    if (!this.show(overlay, focus)) onBack();
   }
 
   saveBackup(draft = '', error = ''): void {
