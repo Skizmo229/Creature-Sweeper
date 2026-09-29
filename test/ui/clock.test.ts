@@ -25,6 +25,7 @@ interface Driver {
   readonly clock: BoardClock;
   readonly progress: Progress;
   readonly settings: Settings;
+  readonly teaching: { startLesson(index: number): void };
   showSettings(back: () => void): void;
   showTypes(): void;
 }
@@ -76,6 +77,33 @@ describe('the clock setting', () => {
     app.clock.resumeAt(65_000);
     app.updateClock();
     expect(readout().textContent).toBe('TIME 2:15 LEFT');
+  });
+
+  it('leaves a school lesson untimed after a timed board', () => {
+    app.settings.setGameplay({ timeLimit: 10 });
+    app.play('normal', 1, 7);
+    expect(app.clock.timeLimit).toBe(10);
+    app.teaching.startLesson(0);
+    expect(app.clock.timeLimit).toBeNull();
+    // As though the lesson had been studied for longer than the limit the last board had.
+    app.clock.resumeAt(11_000);
+    app.updateClock();
+    expect(readout().textContent).toBe('TIME 11');
+    expect(app.current!.status).toBe('playing');
+  });
+
+  it('leaves a school lesson untimed after a board that ran out of time', () => {
+    app.settings.setGameplay({ timeLimit: 10 });
+    app.play('normal', 1, 7);
+    app.clock.resumeAt(10_000);
+    app.updateClock();
+    expect(app.current!.status).toBe('lost');
+    expect(app.clock.timeExpired).toBe(true);
+    app.teaching.startLesson(0);
+    expect(app.clock.timeLimit).toBeNull();
+    expect(app.clock.timeExpired).toBe(false);
+    app.updateClock();
+    expect(readout().textContent).toBe('TIME 0');
   });
 
   it('is offered on the settings screen with a sample of each style', () => {
