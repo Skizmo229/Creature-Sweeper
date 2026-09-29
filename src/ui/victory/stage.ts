@@ -49,6 +49,22 @@ export interface Mover {
   gone: boolean;
 }
 
+/** One mover per sprite, at rest where the board drew it, measured along the effect's axis. */
+export function movers(stage: Stage, axisOf: (s: VictorySprite) => number = () => 0): Mover[] {
+  return stage.sprites.map((sprite) => ({
+    sprite,
+    x: sprite.x,
+    y: sprite.y,
+    vx: 0,
+    vy: 0,
+    rot: 0,
+    spin: 0,
+    delay: 0,
+    axis: axisOf(sprite),
+    gone: false,
+  }));
+}
+
 export type Atlas = Map<number, HTMLCanvasElement>;
 
 export interface Stage {
