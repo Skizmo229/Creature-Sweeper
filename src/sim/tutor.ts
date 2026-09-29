@@ -19,8 +19,9 @@
 
 import type { Game } from '../engine/game.js';
 import type { Cell } from '../engine/types.js';
-import { damageIfSurvived, expForTier } from '../engine/combat.js';
+import { expForTier } from '../engine/combat.js';
 import { noteBit } from '../engine/notes.js';
+import { fightCostFor } from '../engine/settings.js';
 import {
   type Constraint,
   type Reading,
@@ -345,7 +346,9 @@ function advise(game: Game, reading: Reading): Advice {
         `${average.toFixed(1)} each.${levels}`,
     };
   }
-  const cost = damageIfSurvived(level, ceiling);
+  // Priced as the fight would be, through the creature-damage dial and capped by death, so the
+  // number and the kill warning are the ones the player would meet.
+  const cost = ceiling <= level ? 0 : fightCostFor(level, hp, ceiling, game.settings);
   const worst =
     level <= 0
       ? `a tier ${ceiling}, and on this board every creature ends it`

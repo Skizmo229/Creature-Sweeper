@@ -11,10 +11,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../src/ui/app.js';
 import type { BoardDisplay } from '../../src/ui/board/view.js';
 import { themeFor } from '../../src/ui/looks.js';
-import { DEFAULT } from '../../src/ui/presentation.js';
+import { CUSTOM_TIERS, DEFAULT } from '../../src/ui/presentation.js';
 import type { Progress } from '../../src/ui/progress.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
+import { DEFAULT_TIERS, TIER_PRESETS } from '../../src/ui/tiercolors.js';
 import { FONTS } from '../../src/ui/typefaces.js';
 
 interface Driver {
@@ -73,6 +74,25 @@ describe('the store', () => {
     expect(app.settings.ownKeys('normal')).toEqual(['palette']);
   });
 
+  it('keeps a ladder’s own mixed creature colours to that ladder, and round-trips them', () => {
+    const [a, b] = TIER_PRESETS.map((t) => t.palette);
+    app.settings.setPresentation({ tierColors: CUSTOM_TIERS, customTierColors: a });
+    app.settings.setPresentationFor('donut', { tierColors: CUSTOM_TIERS, customTierColors: b });
+    // Every other ladder keeps palette A; giving DONUT up its own restores A there too.
+    expect(app.settings.presentation.customTierColors).toEqual(a);
+    expect(app.settings.presentationFor('cave').customTierColors).toEqual(a);
+    expect(app.settings.tierColors('cave')).toEqual(a);
+    expect(app.settings.tierColors('donut')).toEqual(b);
+    expect(app.settings.ownKeys('donut').sort()).toEqual(['customTierColors', 'tierColors']);
+    // The save carries the ladder's 'custom' choice with the palette that makes it readable.
+    const loaded = Settings.load();
+    expect(loaded.presentationFor('donut').tierColors).toBe(CUSTOM_TIERS);
+    expect(loaded.tierColors('donut')).toEqual(b);
+    expect(loaded.tierColors('cave')).toEqual(a);
+    loaded.clearLadder('donut');
+    expect(loaded.tierColors('donut')).toEqual(a);
+  });
+
   it('gives a ladder’s own up, on request and on a reset', () => {
     app.settings.setPresentationFor('normal', { palette: 'star' });
     app.settings.clearLadder('normal');
@@ -80,6 +100,34 @@ describe('the store', () => {
     app.settings.setPresentationFor('donut', { palette: 'star' });
     app.settings.resetPresentation();
     expect(app.settings.ownKeys('donut')).toEqual([]);
+  });
+
+  it('reads a ladder’s own custom choice saved without its palette against the shared one', () => {
+    // A save from before the palette went with the choice holds the ladder's 'custom' alone; it
+    // must still read as that choice, against the palette kept for every ladder, after a reload.
+    const mine = {
+      colors: [
+        '#010203',
+        '#040506',
+        '#070809',
+        '#0a0b0c',
+        '#0d0e0f',
+        '#101112',
+        '#131415',
+        '#161718',
+        '#191a1b',
+      ],
+      halo: '#1c1d1e',
+    };
+    app.settings.setPresentation({ tierColors: CUSTOM_TIERS, customTierColors: mine });
+    app.settings.setPresentationFor('donut', { tierColors: CUSTOM_TIERS });
+    expect(app.settings.tierColors('donut')).toEqual(mine);
+    const loaded = Settings.load();
+    expect(loaded.ownKeys('donut')).toEqual(['tierColors']);
+    expect(loaded.presentationFor('donut').tierColors).toBe(CUSTOM_TIERS);
+    expect(loaded.tierColors('donut')).toEqual(mine);
+    loaded.setPresentation({ tierColors: DEFAULT });
+    expect(loaded.tierColors('easy')).toBe(DEFAULT_TIERS);
   });
 
   it('carries a ladder’s own through the save, keeping only what the save held', () => {

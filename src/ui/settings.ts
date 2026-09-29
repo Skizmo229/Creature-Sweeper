@@ -114,10 +114,12 @@ export class Settings {
       const raw = localStorage.getItem(KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<SettingsData>;
+        const presentation = readPresentation(parsed.presentation);
         return new Settings({
           version: 1,
-          presentation: readPresentation(parsed.presentation),
-          ladders: readLadderOwn(parsed.ladders),
+          presentation,
+          // A ladder's own tier colours are read against the palette kept for every ladder.
+          ladders: readLadderOwn(parsed.ladders, presentation),
           gameplay: readGameplay(parsed.gameplay),
         });
       }
@@ -298,7 +300,8 @@ export class Settings {
   /** The colour of each creature tier, and the halo of tiers 6 to 9. */
   tierColors(typeId: string): TierPalette {
     const { tierColors, customTierColors } = this.presentationFor(typeId);
-    // No ladder has colours of its own for its tiers: a tier looks the same on every board.
+    // No ladder's data gives its tiers colours of their own: a tier looks the same on every board
+    // unless the player has chosen otherwise for that ladder (decision 0070).
     if (tierColors === CUSTOM_TIERS) return customTierColors ?? DEFAULT_TIERS;
     return TIER_PRESETS.find((t) => t.id === tierColors)?.palette ?? DEFAULT_TIERS;
   }

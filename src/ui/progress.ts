@@ -166,6 +166,35 @@ function bestOf(
   return { bestTime: null, fewestHints: Math.min(prev.fewestHints ?? hints, hints) };
 }
 
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/**
+ * A parsed version-1 save, read field by field: a field of the wrong shape (a null list, a
+ * string where a record should be) is the empty one, since a save that passes the version check
+ * but crashes the first read would crash every launch, with no way to the reset. Fields this
+ * build does not know are kept, so a newer build's survive a round trip through this one.
+ */
+function readSave(parsed: Record<string, unknown>): SaveData {
+  const empty = emptySave();
+  const record = <T extends object>(v: unknown, fallback: T): T =>
+    isRecord(v) ? (v as unknown as T) : fallback;
+  const names = (v: unknown): string[] =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+  return {
+    ...parsed,
+    version: 1,
+    types: record(parsed.types, empty.types),
+    boards: record(parsed.boards, empty.boards),
+    runs: record(parsed.runs, empty.runs),
+    scaling: record(parsed.scaling, empty.scaling),
+    unlockAll: parsed.unlockAll === true,
+    seenHowTo: parsed.seenHowTo === true,
+    lessons: names(parsed.lessons),
+    ladderCards: names(parsed.ladderCards),
+  };
+}
+
 export class Progress {
   private data: SaveData;
 
@@ -178,8 +207,8 @@ export class Progress {
     try {
       raw = localStorage.getItem(KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as SaveData;
-        if (parsed.version === 1) return new Progress({ ...emptySave(), ...parsed });
+        const parsed: unknown = JSON.parse(raw);
+        if (isRecord(parsed) && parsed.version === 1) return new Progress(readSave(parsed));
       }
     } catch {
       // Unreadable or blocked storage just means a fresh run.

@@ -147,7 +147,7 @@ export class App {
       startBoard: (typeId, board, seed) => this.startBoard(typeId, board, seed),
       startFullRun: (typeId, seed) => this.startFullRun(typeId, seed),
       advanceRun: () => this.advanceRun(),
-      leaveGame: () => this.leaveGame(),
+      askToLeave: () => this.leaveGame(false),
       showBoards: (typeId) => this.showBoards(typeId),
     });
     this.keeper = new BoardKeeper({
@@ -405,7 +405,7 @@ export class App {
     this.startClock();
   }
 
-  /** A school lesson's board, which `teaching` has begun: no records, and no best time. */
+  /** A school lesson's board, which `teaching` has begun: no records, no best time, no countdown. */
   private startLesson(game: Game): void {
     this.run = null;
     this.keeper.release();
@@ -521,18 +521,18 @@ export class App {
 
   /**
    * Back out to board select. A game with anything in it asks first whether to pause it or
-   * abandon it; a board with no move made yet has nothing to lose and needs no guard.
+   * abandon it, or pauses at once when Back pauses is on and `back` is how it was asked (the
+   * mid-run card's Abandon run is not Back); a board with no move made yet needs no guard.
    */
-  private leaveGame(): void {
+  private leaveGame(back = true): void {
     if (this.teaching.lesson) return this.teaching.school();
-    const run = this.run;
-    const playing = run ? run.status === 'playing' : this.game?.status === 'playing';
-    if (!playing || !(run || this.keeper.holding)) return this.showBoards(this.typeId);
-    if (this.settings.presentation.backPauses) return this.pause();
+    const playing = this.run ? this.run.status === 'playing' : this.game?.status === 'playing';
+    if (!playing || !(this.run || this.keeper.holding)) return this.showBoards(this.typeId);
+    if (back && this.settings.presentation.backPauses) return this.pause();
     this.modal.leaveGame({
       boardIndex: this.boardIndex,
       typeName: this.typeName(),
-      run,
+      run: this.run,
       onPause: () => this.pause(),
       onAbandon: () => this.abandon(),
     });

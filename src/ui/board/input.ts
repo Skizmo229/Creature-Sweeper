@@ -82,15 +82,37 @@ export class BoardInput {
       { passive: false },
     );
 
+    const capture = (id: number): void => {
+      try {
+        c.setPointerCapture(id);
+      } catch {
+        // Synthetic or already-released pointers cannot be captured; the click path still
+        // works without capture.
+      }
+    };
+    const release = (id: number): void => {
+      try {
+        if (c.hasPointerCapture(id)) c.releasePointerCapture(id);
+      } catch {
+        // Capture may already be gone; nothing to release.
+      }
+    };
+
     c.addEventListener('pointerdown', (e) => {
       // A right click, or a click with Control held: a Mac's right click, which some browsers
-      // report as the left button with the key (decision 0082).
+      // report as the left button with the key (decision 0082). The pointer is captured so the
+      // release reaches the canvas even off it; a mouse has no implicit capture, and a lift the
+      // canvas never saw would leave `marking` set to swallow the next click.
       if (e.button === 2 || (e.button === 0 && e.ctrlKey)) {
         this.marking = true;
+        capture(e.pointerId);
         const cell = host.cellAtClient(e.clientX, e.clientY);
         if (cell) host.onCycleMark(cell.x, cell.y);
         return;
       }
+      // A new press that is not marking means the marking one is over, whether or not its lift
+      // was seen.
+      this.marking = false;
       if (e.pointerType === 'touch') {
         if (!this.touches.size) this.gesture = false;
         this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -107,37 +129,30 @@ export class BoardInput {
       if (host.canPan) {
         this.dragging = true;
         this.dragStart = { x: e.clientX, y: e.clientY, ox: host.originX, oy: host.originY };
-        try {
-          c.setPointerCapture(e.pointerId);
-        } catch {
-          // Synthetic or already-released pointers cannot be captured; the click path below
-          // still works without capture.
-        }
+        capture(e.pointerId);
       }
     });
 
     c.addEventListener('pointermove', (e) => this.onPointerMove(e));
 
     const endDrag = (e: PointerEvent) => {
+      // The lift's bookkeeping comes first, whatever the lift means: a finger left behind in
+      // `touches` would make the next single finger a phantom pinch.
+      this.cancelPress();
+      const lifted = this.touches.delete(e.pointerId);
+      if (lifted && this.touches.size < 2) this.pinch = null;
       if (e.button === 2 || this.marking) {
         // The mark was made when the button went down.
         this.marking = false;
+        release(e.pointerId);
         return;
       }
-      this.cancelPress();
-      if (this.touches.delete(e.pointerId)) {
-        if (this.touches.size < 2) this.pinch = null;
-        // The lift that ends a pinch opens nothing, and nor does the last finger of it coming
-        // up later.
-        if (this.gesture) return;
-      }
+      // The lift that ends a pinch opens nothing, and nor does the last finger of it coming up
+      // later.
+      if (lifted && this.gesture) return;
       if (this.dragging) {
         this.dragging = false;
-        try {
-          if (c.hasPointerCapture(e.pointerId)) c.releasePointerCapture(e.pointerId);
-        } catch {
-          // Capture may already be gone; nothing to release.
-        }
+        release(e.pointerId);
       }
       if (this.dragMoved) return; // a pan, not a click
       const cell = host.cellAtClient(e.clientX, e.clientY);

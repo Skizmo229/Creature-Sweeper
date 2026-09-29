@@ -11,7 +11,9 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   and closes the modal, or a frame loop or a modal keeps running against detached nodes.
 - Confirmations go through `Modal.ask` (`src/ui/overlays/modal.ts`), an in-page overlay, never
   `window.confirm`: a suppressed dialog returns false instantly and the button silently dies.
-  While a question is up, Escape answers it and every other key is swallowed.
+  While a question is up, Escape answers it and every other key is swallowed. A question takes
+  the place of the overlay that asked it, so that overlay passes `onCancel` to come back when the
+  answer is no (the save backup card does, keeping the pasted code).
 - A board's keys reach it only while it is on screen (`App.onKey` checks the game screen is
   built), never under the settings screen or after the player has left it (issue #6). On the
   settings screen Escape is Back, to wherever it was opened from; a picker open over it takes the
@@ -23,7 +25,8 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   with the key in some browsers; the press marks and its lift opens nothing (decision 0082).
 - An error nothing caught shows a card rather than a dead page (`CrashWatch`,
   `overlays/crash.ts`): what broke in the error's own words, the version, where to report it and
-  Back to the list, once per breakage; Back rebuilds the screen and re-arms it (decision 0081).
+  Back to the list, once per breakage; Back, and Escape, rebuild the screen and re-arm it
+  (decision 0081).
 - `.overlay` is `position: fixed`, because only the game screen is exactly one viewport tall.
 - The LV palette is modal. Pencilling needs a mode *and* a tier, so entering pencil mode arms a
   tier (and hands it back on exit unless the player chose it); the toggle is labelled with the
@@ -52,7 +55,8 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   swept at a sweep's price, through `Game.sweepAt`, a move of its own (decision 0071). Off, the
   click is refused by the engine and sounds as one, as it always was.
 - Back, and Escape, pause a board with a move in it without asking while `backPauses` is on;
-  pausing loses nothing (decision 0057), so the question is only ever a chance to abandon.
+  pausing loses nothing (decision 0057), so the question is only ever a chance to abandon. The
+  board-clear card's Abandon run always asks, whatever `backPauses` says: it is not Back.
 - The hint line under the board can be switched off (`hintLine`); the tutor and a lesson speak
   there whatever it says, and the line hides again when they stop.
 - The board refits whenever its stage changes size (`ResizeObserver`), keeping a zoom the player

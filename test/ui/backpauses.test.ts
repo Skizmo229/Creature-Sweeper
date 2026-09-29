@@ -31,14 +31,19 @@ const key = (k: string): boolean =>
   window.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
 const onGame = (): boolean => document.querySelector('.screen.game') !== null;
 
-/** Open the lowest free cell through the board's own click, so the board has a move in it. */
-function freeMove(): void {
+/**
+ * Open the lowest free cell through the board's own click, so the board has a move in it. False
+ * when there is none left.
+ */
+function freeMove(): boolean {
   const game = app.current!;
   const cell = game.grid
     .flat()
-    .filter((c) => c.present && !c.open && c.tier <= game.level && game.inReach(c))
-    .sort((a, b) => a.tier - b.tier)[0]!;
+    .filter((c) => c.present && !c.open && c.mark === 0 && c.tier <= game.level && game.inReach(c))
+    .sort((a, b) => a.tier - b.tier)[0];
+  if (!cell) return false;
   app.actions.onCellPrimary(cell.x, cell.y);
+  return true;
 }
 
 beforeEach(() => {
@@ -74,6 +79,26 @@ describe('back pauses without asking', () => {
     expect(document.querySelector('.overlay')).toBeNull();
     expect(pausedGames.get({ typeId: 'easy', run: true })).not.toBeNull();
     expect(app.progress.runRecord(ladders, 'easy').attempts).toBe(0);
+  });
+
+  it('leaves the mid-run card Abandon run alone: that button asks, then abandons', () => {
+    app.settings.setPresentation({ backPauses: true });
+    app.runFull('easy', 7);
+    while (app.current!.status === 'playing' && freeMove());
+    expect(document.querySelector('.overlay h2')?.textContent).toBe('BOARD 1 CLEAR');
+    const abandon = (): HTMLButtonElement[] =>
+      [...document.querySelectorAll<HTMLButtonElement>('button')].filter(
+        (b) => b.textContent === 'Abandon run',
+      );
+    abandon()[0]!.click();
+    expect(onGame()).toBe(true);
+    expect([...document.querySelectorAll('.overlay h2')].map((h) => h.textContent)).toContain(
+      'LEAVE RUN?',
+    );
+    abandon().at(-1)!.click();
+    expect(onGame()).toBe(false);
+    expect(pausedGames.get({ typeId: 'easy', run: true })).toBeNull();
+    expect(app.progress.runRecord(ladders, 'easy').attempts).toBe(1);
   });
 
   it('is a toggle on the settings screen, and reads a save without it as off', () => {

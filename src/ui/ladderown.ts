@@ -16,6 +16,10 @@ export const LADDER_SCOPED: readonly (keyof PresentationSettings)[] = [
   'icons',
   'glyph',
   'tierColors',
+  // The palette behind a 'custom' choice goes with it: a ladder's own mixed colours would
+  // otherwise overwrite the colours mixed for every ladder, and the reader would turn the
+  // ladder's saved 'custom' into the default for want of a palette beside it.
+  'customTierColors',
   'palette',
   'font',
   'interfaceFont',
@@ -45,13 +49,22 @@ export type LadderOwn = Partial<PresentationSettings>;
  * save held the key, so that a ladder is not handed every default as its own; a value the reader
  * cannot read is the default, as it is for every ladder. Ladders this build's data lacks are
  * kept, as an unknown icon is.
+ *
+ * `shared` is the presentation for every ladder, already read. A ladder can choose its own tier
+ * colours but not own the palette they are mixed from: `customTierColors` is not in
+ * `LADDER_SCOPED`, so the store keeps the palette on the shared record alone. Read on its own, a
+ * ladder's `custom` would have no palette beside it and fall to the game's own colours; read
+ * against the shared palette it stays the choice the player made.
  */
-export function readLadderOwn(raw: unknown): Record<string, LadderOwn> {
+export function readLadderOwn(
+  raw: unknown,
+  shared: Pick<PresentationSettings, 'customTierColors'> = { customTierColors: null },
+): Record<string, LadderOwn> {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return {};
   const out: Record<string, LadderOwn> = {};
   for (const [typeId, saved] of Object.entries(raw as Record<string, unknown>)) {
     if (typeof saved !== 'object' || saved === null) continue;
-    const read = readPresentation(saved);
+    const read = readPresentation({ customTierColors: shared.customTierColors, ...saved });
     const own: Record<string, unknown> = {};
     for (const key of LADDER_SCOPED) if (key in saved) own[key] = read[key];
     if (Object.keys(own).length) out[typeId] = own as LadderOwn;

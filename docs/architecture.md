@@ -91,8 +91,9 @@ src/ui/         the game in the browser
                   symbols.ts is the custom creature icon's window of symbols, colormixer.ts the
                   sliders that mix a colour from red, green and blue, customcolor.ts the custom
                   highlight colour's window of them, customtiers.ts the custom creature colours'
-                  window, a swatch for each tier, sorts.ts the orders the palette and font
-                  windows offer
+                  window, a swatch for each tier, soundcheck.ts the sound check's window and
+                  pianoroll.ts its keyboard, sorts.ts the orders the palette and font windows
+                  offer
   preview.ts      the settings screen's example boards (no rendering, so tests can build them)
   looks.ts        one record per ladder: palette, face, sound pack, clear effect (DOM-free)
   shapelooks.ts   the shape ladders' records, spread into looks.ts's table; apart only for size
@@ -211,7 +212,7 @@ the click, or a key, means from the `EntryMode` (an armed tier, pencil mode, an 
 calls one engine method: `game.open`,
 `game.setMark`, `game.toggleNote`, `game.cast` or `game.sweep`. Every engine action returns the
 events it caused (`GameEvent[]`: revealed, battle, levelUp, marked, noted, blocked, won, lost,
-spell, exercised). `App.apply` hands them to the stage's flashes (`game/flash.ts`), the sound
+spell, exercised, moved). `App.apply` hands them to the stage's flashes (`game/flash.ts`), the sound
 (`game/sound.ts`), the celebration and the HUD (`game/hud.ts`); the renderer repaints from the
 grid. The engine holds no clock: the UI owns elapsed time, and Time Attack reports expiry back
 through `game.forfeit`.

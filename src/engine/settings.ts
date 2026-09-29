@@ -25,6 +25,8 @@
  * run silently rather than throwing.
  */
 
+import type { Tier } from './types.js';
+import { resolveBattle } from './combat.js';
 /** Empty cells you must uncover yourself to earn one mana, unmodified. */
 import { MANA_PER_EMPTY_CELLS } from './spells.js';
 
@@ -145,7 +147,7 @@ export function isAtLeastAsHard(s: GameplaySettings): boolean {
     s.spellPriceRatio >= DEFAULT_GAMEPLAY.spellPriceRatio &&
     s.startManaRatio <= DEFAULT_GAMEPLAY.startManaRatio &&
     sweepRank(s) >= sweepRank(DEFAULT_GAMEPLAY) &&
-    s.sweepChargeClicks >= DEFAULT_GAMEPLAY.sweepChargeClicks
+    (s.sweep !== 'charge' || s.sweepChargeClicks >= DEFAULT_GAMEPLAY.sweepChargeClicks)
   );
 }
 
@@ -157,8 +159,10 @@ export function isAtLeastAsHard(s: GameplaySettings): boolean {
  * to it would otherwise be handed records and unlocks for a strictly easier
  * game. The charge size is the same argument in miniature: a
  * bank of 1 cell per sweep is nearly 'on' wearing a meter, so it has to be
- * compared rather than assumed finite-and-therefore-harder. A budget has no
- * order against the charge at all, so it ranks below it and records nothing
+ * compared rather than assumed finite-and-therefore-harder, and only while the
+ * mode is 'charge': the gate never reads it otherwise, so a stale value left
+ * behind the hidden slider must not count against an 'off' game. A budget has
+ * no order against the charge at all, so it ranks below it and records nothing
  * (decision 0072).
  */
 function sweepRank(s: GameplaySettings): number {
@@ -195,7 +199,8 @@ export function easierThanDefault(s: GameplaySettings): string[] {
   if (s.spellPriceRatio < DEFAULT_GAMEPLAY.spellPriceRatio) out.push('spell prices');
   if (s.startManaRatio > DEFAULT_GAMEPLAY.startManaRatio) out.push('starting mana');
   if (sweepRank(s) < sweepRank(DEFAULT_GAMEPLAY)) out.push('Sweep');
-  else if (s.sweepChargeClicks < DEFAULT_GAMEPLAY.sweepChargeClicks) out.push('cells per sweep');
+  else if (s.sweep === 'charge' && s.sweepChargeClicks < DEFAULT_GAMEPLAY.sweepChargeClicks)
+    out.push('cells per sweep');
   return out;
 }
 
@@ -224,6 +229,15 @@ export function healPerBoard(poolHp: number, s: GameplaySettings): number {
  */
 export function biteFor(tier: number, s: GameplaySettings): number {
   return Math.max(0, Math.round(tier * s.enemyDamageRatio));
+}
+
+/**
+ * HP a fight against a tier-E creature would take at this level and HP, through the dial: the
+ * fight resolved blow by blow as `fight.ts` resolves it, so capped by death. For anything that
+ * quotes a fight's price to the player; `damageIfSurvived` states the unmodified rule alone.
+ */
+export function fightCostFor(level: number, hp: number, tier: Tier, s: GameplaySettings): number {
+  return resolveBattle(level, hp, tier, biteFor(tier, s)).damage;
 }
 
 /** Mana a defeated tier-E creature pays. Its EXP is never scaled. */

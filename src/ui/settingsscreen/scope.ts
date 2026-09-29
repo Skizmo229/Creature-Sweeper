@@ -28,6 +28,7 @@ const OWN_NAMES: Partial<Record<keyof PresentationSettings, string>> = {
   icons: 'icons',
   glyph: 'creature tiers',
   tierColors: 'creature colours',
+  customTierColors: 'its own mixed creature colours',
   palette: 'palette',
   font: 'board font',
   interfaceFont: 'interface font',

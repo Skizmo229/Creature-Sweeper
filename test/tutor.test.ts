@@ -5,10 +5,12 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { resolveBattle } from '../src/engine/combat.js';
 import { boardConfig } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
 import { hasNote } from '../src/engine/notes.js';
 import { mulberry32 } from '../src/engine/rng.js';
+import { DEFAULT_GAMEPLAY, biteFor } from '../src/engine/settings.js';
 import { readBoard } from '../src/sim/reader.js';
 import { TRICKS, TRICK_IDS, type TrickId } from '../src/sim/tricks.js';
 import { TRICK_TEXT } from '../src/sim/tricktext.js';
@@ -206,6 +208,28 @@ describe('the tutor', () => {
       }
     }
     expect(advised).toBeGreaterThan(3);
+  });
+
+  it('prices the worst case as the fight would, through the creature-damage dial', () => {
+    // A 4 touches two covered cells and nothing proves which hides the tier 4 (the 1, 2 and 3 at
+    // the far end keep the level at 2 and touch no number), so the tutor names the worst case. At
+    // level 2 the unmodified rule costs 4; at three times the damage the fight takes the whole
+    // 10 HP pool, and the advice must say so.
+    for (const ratio of [1, 3]) {
+      const settings = { ...DEFAULT_GAMEPLAY, enemyDamageRatio: ratio };
+      const game = Game.fromLayout(['4 . . . 1 2 3'], ['? 4 ? ? ? ? ?'], {
+        startLevel: 2,
+        settings,
+      });
+      expect(game.level).toBe(2);
+      expect(game.hp).toBe(10);
+      const { lessons, advice } = explain(game);
+      expect(lessons).toHaveLength(0);
+      expect(advice?.ceiling).toBe(4);
+      const cost = resolveBattle(2, 10, 4, biteFor(4, settings)).damage;
+      expect(advice!.text).toContain(`costing ${cost} of your 10 HP`);
+      expect(advice!.text.includes('which would kill you')).toBe(cost >= 10);
+    }
   });
 
   it('proves only what is true, at least what a press teaches, and more at a dearer grade', () => {
