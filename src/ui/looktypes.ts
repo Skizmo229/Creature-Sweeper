@@ -45,7 +45,8 @@ export interface TypeTheme {
 }
 
 /** Sound packs. See `sfx.ts` — each is a set of synthesis recipes, not files. */
-export type SfxPackId = 'chime' | 'blip' | 'thud' | 'glass';
+export type SfxPackId =
+  'chime' | 'blip' | 'thud' | 'glass' | 'wood' | 'pluck' | 'bubble' | 'clock' | 'organ';
 
 /** Everything the game can make a noise about; the recipes are in `sfx.ts`. */
 export type SfxEvent =

@@ -58,6 +58,11 @@ export const SFX_NAMES: Record<SfxPackId, string> = {
   blip: 'Blips — arcade square waves',
   thud: 'Thuds — low and dry',
   glass: 'Glass — bright and brittle',
+  wood: 'Wood — a marimba’s knock',
+  pluck: 'Pluck — a plucked string',
+  bubble: 'Bubbles — rising chirps',
+  clock: 'Clockwork — dry ticks',
+  organ: 'Organ — two voices held',
 };
 
 /** Every sound event, in the order the sound check lays them out. */
