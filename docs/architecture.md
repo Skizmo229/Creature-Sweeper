@@ -108,7 +108,7 @@ src/ui/         the game in the browser
   paused.ts       the paused games: one per board, one run per ladder, each its own storage key
   sfx.ts          synthesised sound packs
   victory/        the board-clear effects: play.ts runs one, stage.ts is what they share,
-                  ambient.ts paints over the board, icons.ts animates its creatures
+                  ambient.ts paints over the board, icons.ts and departures.ts animate its creatures
   pinch.ts, hexgeom.ts   arithmetic kept DOM-free so tests can reach it
 src/sim/        headless measurement, all driving the real engine (see docs/tuning.md)
   honest.ts       the honest player: sees what a player sees, deduces locally, guesses or casts

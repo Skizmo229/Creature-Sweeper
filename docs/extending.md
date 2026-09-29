@@ -203,3 +203,26 @@ The custom icon's symbols are a table, and the faces that draw them are cut from
    `test/pipsymbols.test.ts`, whose counts change with the table.
 5. Look at it drawn: a symbol is scaled by its measured ink, but a very wide or very fine one can
    still read poorly at a thumbnail's size, and the gold halo on tiers 6 to 9 strokes its holes.
+
+## Adding a sound pack, a clear effect, a pip shape or a face
+
+A look's ingredients are each one table, and a ladder wears one of each in `LOOKS`
+(`src/ui/looks.ts`); decision 0078 records the last batch and the ladders it went to.
+
+- **A sound pack**: its id in `SfxPackId` (`src/ui/looktypes.ts`), its twelve voices in `PACKS`
+  (`src/ui/sfx.ts`), no voice louder than 0.3 (the volume gate's assumption), and its name in
+  `SFX_NAMES` (`src/ui/theme.ts`). The sound check offers it from there.
+- **A clear effect**: its id in `VictoryId`, its name in `VICTORY_NAMES`, its length in `DURATION`
+  (`src/ui/victory/play.ts`) and, for one that animates the creatures, its id in `ICON_EFFECTS`
+  there and a painter in `victory/icons.ts` or `victory/departures.ts`, dispatched from
+  `iconPainter`; an ambient one goes in `victory/ambient.ts`. A painter with physics steps by the
+  measured `dt`, for the reason `tumble` gives.
+- **A pip shape**: its id in `PipShape`, and in `src/ui/pips.ts` its place in `PIP_SHAPES`, its
+  name in `PIP_NAMES` and its tracer in `TRACERS`, a polygon from its corners where it can be.
+  Check it on a palette at a 16 px cell: a pip is a few pixels across there, and only a
+  silhouette survives.
+- **A face**: the Latin woff2 from Fontsource in `src/ui/fonts/`, its `@font-face` in
+  `src/ui/fonts.css`, its entry in `FONTS` and `FONT_KINDS` (`src/ui/typefaces.ts`) at a weight it
+  really has, and its copyright line in `public/FONT-LICENSES.txt`. Check its figures are lining
+  and its OS/2 table honest (docs/ui.md, Fonts). A face no ladder wears carries a `blurb` for its
+  tile. `test/fonts.test.ts` holds the four together.

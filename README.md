@@ -200,7 +200,7 @@ under `docs/`, `design/page.template.html`, the generated `design/reference.html
 data under `design/data/`) is licensed under **Creative Commons Attribution-ShareAlike 4.0
 International**. See [`LICENSE-DOCS`](LICENSE-DOCS).
 
-**Fonts** under `src/ui/fonts/` and `src/ui/pipfont/` are not ours: twenty-six faces from Google
+**Fonts** under `src/ui/fonts/` and `src/ui/pipfont/` are not ours: twenty-eight faces from Google
 Fonts, and the four Noto faces the creature-icon symbols are cut from, each under the **SIL Open
 Font License 1.1**, with every copyright notice and the licence in
 [`public/FONT-LICENSES.txt`](public/FONT-LICENSES.txt), which ships beside them in every build.

@@ -79,8 +79,10 @@ store) and `src/engine/settings.ts` (the gameplay dials).
 - A beaten creature shows its number while hovered, and every one does while the game screen's
   Beaten toggle is on (`U`; decision 0067), which is how a touch screen sees them. Neither happens
   on PAIRS or DOMINOES, by request, nor on a search board, where nothing is beaten. How it is
-  drawn is a setting (`beatenLook`): dimmed and struck through, the game's own; struck; dimmed,
-  which reads better at small cells, where the stroke crosses the pips; or plain. A creature can
+  drawn is a setting (`beatenLook`): dimmed and struck through, the game's own; struck; crossed
+  out, the stroke and its mirror, dimmed or not; dimmed, which reads better at small cells, where
+  a stroke crosses the pips and an X crosses them twice; greyed, dimmed and drawn in the ink with
+  no colour, so the live creatures' colours stand out; or plain. A creature can
   be drawn as its tier's digit instead of its pips, or as both (`glyph`, decision 0074); the clear
   effects draw with the same look.
 - Sudoku boards get a translucent wash on alternate boxes and a box rule about twice a cell edge,
@@ -187,10 +189,11 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   name; and then by how the option looks. A palette sorts by colour, round the wheel by the
   covered tile's hue, with the greys last and lightest first. A face sorts by style, under its
   kind (`FONT_KINDS`), and by ladder is filed once, under the first ladder in the list that wears
-  it, after Atkinson Hyperlegible Next, which leads under "Easiest to read"; its tile names every
-  ladder that wears it. A sort moves the tiles already drawn. Each window reopens in the order it
-  last showed, as the symbol window reopens on its set; the icon window, with twelve tiles, has
-  no sorts.
+  it, after Atkinson Hyperlegible Next, which leads under "Easiest to read", and before any other
+  face no ladder wears, filed last under "No ladder’s own"; its tile names every ladder that wears
+  it, or, for a face none does, says what it is for (`blurb`). A sort moves the tiles already
+  drawn. Each window reopens in the order it last showed, as the symbol window reopens on its set;
+  the icon window, with seventeen tiles, has no sorts.
 - The icon picker's last tile, Custom, opens a window of symbols in place of the picker: all of
   Dingbats and Wingdings 1 to 3, a tab per set, each laid out as its font's code chart, sixteen to a
   row, with gaps where the font has nothing, so a symbol is where anyone who knows the font expects
@@ -266,8 +269,9 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   (everything in the DOM: the HUD, the menus, the settings screen, the ladder list's names). Each
   defaults to the ladder's own face, independently. Only a face chosen for the interface reaches
   the title, and a save from before the split reads its one font as both (decision 0033).
-- Every ladder has a bundled typeface (twenty-four, plus Atkinson Hyperlegible Next for anyone who
-  wants the easiest one, plus Griffy for the title alone). Latin woff2 files in `src/ui/fonts/`,
+- Every ladder has a bundled typeface (twenty-five, plus two that no ladder wears, Atkinson
+  Hyperlegible Next for anyone who wants the easiest one and Press Start 2P for the arcade, plus
+  Griffy for the title alone). Latin woff2 files in `src/ui/fonts/`,
   licences in `public/FONT-LICENSES.txt`, `@font-face` in `fonts.css`. `test/fonts.test.ts` checks
   all of it, and that every ladder names a bundled face, which two ladders may share (decision
   0031).
@@ -334,8 +338,9 @@ store) and `src/engine/settings.ts` (the gameplay dials).
 - A clear uncovers every cell still covered, by request (`revealAllCells`): the empty ground a
   battle board never needed opened shows its number, and a search board's creatures, never
   fought, show as a loss shows them. The clear effect plays over the uncovered board.
-- Two families of clear effect: ambient (confetti, burst, ripple, sparkle) and icon (tumble,
-  cascade, pop, burn, three wipes). Icon effects take the board's glyphs (`VictorySource`),
+- Two families of clear effect: ambient (confetti, burst, ripple, sparkle, fireworks) and icon
+  (tumble, cascade, pop, burn and three wipes in `victory/icons.ts`; flip, spin, scatter, float,
+  march and swarm in `victory/departures.ts`). Icon effects take the board's glyphs (`VictorySource`),
   pre-rendered per tier into an atlas at twice the cell size, and the board stops drawing them
   until the effect hands them back, even when cut short. Physics effects step by measured time
   clamped to 1/20 s; ambient ones keep a fixed step. Cascade never clears its canvas and fades the
