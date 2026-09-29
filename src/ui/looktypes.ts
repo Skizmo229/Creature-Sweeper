@@ -17,7 +17,12 @@ export type PipShape =
   | 'triangle'
   | 'gear'
   | 'heart'
-  | 'star';
+  | 'star'
+  | 'bolt'
+  | 'crescent'
+  | 'drop'
+  | 'chevron'
+  | 'club';
 
 /**
  * A symbol drawn as the pip, by its code point, written as `U+2764`: the player's own choice from
@@ -45,7 +50,8 @@ export interface TypeTheme {
 }
 
 /** Sound packs. See `sfx.ts` — each is a set of synthesis recipes, not files. */
-export type SfxPackId = 'chime' | 'blip' | 'thud' | 'glass';
+export type SfxPackId =
+  'chime' | 'blip' | 'thud' | 'glass' | 'wood' | 'pluck' | 'bubble' | 'clock' | 'organ';
 
 /** Everything the game can make a noise about; the recipes are in `sfx.ts`. */
 export type SfxEvent =
@@ -81,7 +87,7 @@ export const SFX_EVENTS: readonly SfxEvent[] = [
 /**
  * Board-clear celebrations. See `victory/`.
  *
- * Two families. The first four are ambient — decoration drawn over the board,
+ * Two families. The first five are ambient — decoration drawn over the board,
  * knowing nothing about what is underneath. The rest animate the board's own
  * creature glyphs, which is why they need the renderer to hand those glyphs
  * over for the length of the animation.
@@ -91,13 +97,20 @@ export type VictoryId =
   | 'burst'
   | 'ripple'
   | 'sparkle'
+  | 'fireworks'
   | 'tumble'
   | 'cascade'
   | 'pop'
   | 'burn'
   | 'wipe'
   | 'wipeDown'
-  | 'wipeRadial';
+  | 'wipeRadial'
+  | 'flip'
+  | 'spin'
+  | 'scatter'
+  | 'float'
+  | 'march'
+  | 'swarm';
 
 /** A ladder's defaults. The player can override each; this is what "game type default" means. */
 export interface LadderLook {

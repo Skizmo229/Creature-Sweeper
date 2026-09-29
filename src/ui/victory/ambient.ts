@@ -18,6 +18,7 @@ interface Particle {
 }
 
 export function ambientPainter(effect: VictoryId, stage: Stage): Painter {
+  if (effect === 'fireworks') return fireworks(stage);
   const { w, h, colors } = stage;
   const pick = () => colors[Math.floor(Math.random() * colors.length)]!;
   const particles: Particle[] = [];
@@ -115,6 +116,100 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, effect: Victor
     ctx.fill();
   }
   ctx.restore();
+}
+
+/** A rocket: when it bursts, as a share of the effect, where, and its sparks once it has. */
+interface Rocket {
+  at: number;
+  x: number;
+  y: number;
+  color: string;
+  sparks: Particle[];
+}
+
+const ROCKETS = 5;
+const SPARKS_PER_ROCKET = 48;
+/** How long a rocket's sparks last, as a share of the effect. */
+const SPARK_LIFE = 0.45;
+/** How long a rocket takes to rise to where it bursts, as a share of the effect. */
+const RISE = 0.1;
+
+/**
+ * Fireworks — rockets rise from the bottom edge and burst, one after another, each in one of the
+ * board's colours. The bursts are spread through the first two thirds, so the last has burst
+ * before the layer starts to fade, and each rocket is rising while the last one's sparks fall.
+ */
+function fireworks(stage: Stage): Painter {
+  const { w, h, colors } = stage;
+  const rockets: Rocket[] = [];
+  for (let i = 0; i < ROCKETS; i++) {
+    const x = w * (0.15 + Math.random() * 0.7);
+    const y = h * (0.12 + Math.random() * 0.45);
+    const color = colors[i % colors.length]!;
+    const sparks: Particle[] = [];
+    for (let k = 0; k < SPARKS_PER_ROCKET; k++) {
+      const a = (k / SPARKS_PER_ROCKET) * Math.PI * 2 + Math.random() * 0.12;
+      const speed = 110 + Math.random() * 160;
+      sparks.push({
+        x,
+        y,
+        vx: Math.cos(a) * speed,
+        vy: Math.sin(a) * speed,
+        spin: 0,
+        spinRate: 0,
+        size: 2 + Math.random() * 2,
+        color,
+      });
+    }
+    rockets.push({ at: RISE + (i / ROCKETS) * 0.6 + Math.random() * 0.05, x, y, color, sparks });
+  }
+
+  const paint = (ctx: CanvasRenderingContext2D, t: number): void => {
+    // A fixed step, as the other ambient effects take: a spark has nowhere to be.
+    const dt = 1 / 60;
+    for (const r of rockets) {
+      const rise = (t - (r.at - RISE)) / RISE;
+      if (rise > 0 && rise < 1) {
+        // A streak climbing from the bottom edge to where it will burst.
+        const ry = h - (h - r.y) * rise;
+        ctx.save();
+        ctx.globalAlpha *= 0.8;
+        ctx.strokeStyle = r.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(r.x, ry + 14);
+        ctx.lineTo(r.x, ry);
+        ctx.stroke();
+        ctx.restore();
+        continue;
+      }
+      const life = (t - r.at) / SPARK_LIFE;
+      if (life <= 0 || life >= 1) continue;
+      ctx.save();
+      ctx.globalAlpha *= 1 - life;
+      if (life < 0.08) {
+        // The flash of the burst itself, before the sparks have gone anywhere.
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, 6 + 30 * (life / 0.08), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = r.color;
+      for (const p of r.sparks) {
+        p.vy += 180 * dt;
+        p.vx *= 0.975;
+        p.vy *= 0.975;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  };
+
+  return { paint, accumulates: false };
 }
 
 /** Three rings leaving the centre, staggered so they read as a sequence. */

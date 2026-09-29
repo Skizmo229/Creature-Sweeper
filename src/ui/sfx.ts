@@ -134,6 +134,186 @@ const PACKS: Record<SfxPackId, Pack> = {
     ],
     lose: [{ wave: 'square', from: 660, to: 110, dur: 0.75, gain: 0.2 }],
   },
+  // A marimba: a struck bar rings at one pitch and stops almost at once, so every voice here
+  // is flat and short, and the stings are runs up the bars.
+  wood: {
+    open: [{ wave: 'triangle', from: 523, to: 523, dur: 0.05, gain: 0.18 }],
+    cascade: [{ wave: 'triangle', from: 392, to: 784, dur: 0.14, gain: 0.15 }],
+    mark: [{ wave: 'triangle', from: 659, to: 659, dur: 0.045, gain: 0.14 }],
+    note: [{ wave: 'triangle', from: 880, to: 880, dur: 0.035, gain: 0.09 }],
+    battle: [{ wave: 'triangle', from: 196, to: 110, dur: 0.18, gain: 0.28 }],
+    kill: [
+      { wave: 'triangle', from: 330, to: 330, dur: 0.06, gain: 0.2 },
+      { wave: 'triangle', from: 494, to: 494, dur: 0.1, gain: 0.2, delay: 0.06 },
+    ],
+    levelup: [
+      { wave: 'triangle', from: 392, to: 392, dur: 0.08, gain: 0.22 },
+      { wave: 'triangle', from: 523, to: 523, dur: 0.08, gain: 0.22, delay: 0.08 },
+      { wave: 'triangle', from: 659, to: 659, dur: 0.2, gain: 0.22, delay: 0.16 },
+    ],
+    spell: [{ wave: 'triangle', from: 440, to: 880, dur: 0.22, gain: 0.18 }],
+    sweep: [{ wave: 'triangle', from: 349, to: 1047, dur: 0.2, gain: 0.15 }],
+    blocked: [{ wave: 'triangle', from: 147, to: 131, dur: 0.09, gain: 0.2 }],
+    win: [
+      { wave: 'triangle', from: 523, to: 523, dur: 0.1, gain: 0.24 },
+      { wave: 'triangle', from: 659, to: 659, dur: 0.1, gain: 0.24, delay: 0.1 },
+      { wave: 'triangle', from: 784, to: 784, dur: 0.1, gain: 0.24, delay: 0.2 },
+      { wave: 'triangle', from: 1047, to: 1047, dur: 0.32, gain: 0.24, delay: 0.3 },
+    ],
+    lose: [{ wave: 'triangle', from: 262, to: 65, dur: 0.75, gain: 0.26 }],
+  },
+  // A plucked string: bright at the start and gone quickly, so a sawtooth at a low gain over a
+  // short envelope, and the stings are strums, one string after another.
+  pluck: {
+    open: [{ wave: 'sawtooth', from: 660, to: 660, dur: 0.09, gain: 0.1 }],
+    cascade: [{ wave: 'sawtooth', from: 440, to: 1320, dur: 0.16, gain: 0.09 }],
+    mark: [{ wave: 'sawtooth', from: 880, to: 880, dur: 0.07, gain: 0.09 }],
+    note: [{ wave: 'sawtooth', from: 1320, to: 1320, dur: 0.05, gain: 0.06 }],
+    battle: [{ wave: 'sawtooth', from: 220, to: 110, dur: 0.2, gain: 0.18 }],
+    kill: [
+      { wave: 'sawtooth', from: 523, to: 523, dur: 0.1, gain: 0.12 },
+      { wave: 'sawtooth', from: 784, to: 784, dur: 0.14, gain: 0.12, delay: 0.06 },
+    ],
+    levelup: [
+      { wave: 'sawtooth', from: 523, to: 523, dur: 0.14, gain: 0.12 },
+      { wave: 'sawtooth', from: 659, to: 659, dur: 0.14, gain: 0.12, delay: 0.07 },
+      { wave: 'sawtooth', from: 784, to: 784, dur: 0.14, gain: 0.12, delay: 0.14 },
+      { wave: 'sawtooth', from: 1047, to: 1047, dur: 0.24, gain: 0.12, delay: 0.21 },
+    ],
+    spell: [{ wave: 'sawtooth', from: 392, to: 1568, dur: 0.3, gain: 0.1 }],
+    sweep: [
+      { wave: 'sawtooth', from: 440, to: 440, dur: 0.1, gain: 0.1 },
+      { wave: 'sawtooth', from: 554, to: 554, dur: 0.1, gain: 0.1, delay: 0.05 },
+      { wave: 'sawtooth', from: 659, to: 659, dur: 0.1, gain: 0.1, delay: 0.1 },
+      { wave: 'sawtooth', from: 880, to: 880, dur: 0.16, gain: 0.1, delay: 0.15 },
+    ],
+    blocked: [{ wave: 'sawtooth', from: 196, to: 185, dur: 0.1, gain: 0.12 }],
+    win: [
+      { wave: 'sawtooth', from: 523, to: 523, dur: 0.18, gain: 0.13 },
+      { wave: 'sawtooth', from: 659, to: 659, dur: 0.18, gain: 0.13, delay: 0.08 },
+      { wave: 'sawtooth', from: 784, to: 784, dur: 0.18, gain: 0.13, delay: 0.16 },
+      { wave: 'sawtooth', from: 1047, to: 1047, dur: 0.18, gain: 0.13, delay: 0.24 },
+      { wave: 'sawtooth', from: 1319, to: 1319, dur: 0.4, gain: 0.13, delay: 0.32 },
+    ],
+    lose: [{ wave: 'sawtooth', from: 330, to: 82, dur: 0.8, gain: 0.16 }],
+  },
+  // Bubbles: every sound is a sine sliding upward, as a bubble's pitch rises as it shrinks; a
+  // hit is a gulp the other way, and the loss is three of them sinking.
+  bubble: {
+    open: [{ wave: 'sine', from: 500, to: 900, dur: 0.06, gain: 0.14 }],
+    cascade: [{ wave: 'sine', from: 400, to: 1600, dur: 0.18, gain: 0.12 }],
+    mark: [{ wave: 'sine', from: 700, to: 1200, dur: 0.05, gain: 0.12 }],
+    note: [{ wave: 'sine', from: 900, to: 1500, dur: 0.04, gain: 0.08 }],
+    battle: [{ wave: 'sine', from: 400, to: 150, dur: 0.2, gain: 0.24 }],
+    kill: [{ wave: 'sine', from: 300, to: 1200, dur: 0.14, gain: 0.18 }],
+    levelup: [
+      { wave: 'sine', from: 400, to: 800, dur: 0.12, gain: 0.18 },
+      { wave: 'sine', from: 600, to: 1200, dur: 0.12, gain: 0.18, delay: 0.1 },
+      { wave: 'sine', from: 800, to: 1600, dur: 0.2, gain: 0.18, delay: 0.2 },
+    ],
+    spell: [{ wave: 'sine', from: 300, to: 2400, dur: 0.32, gain: 0.16 }],
+    sweep: [{ wave: 'sine', from: 250, to: 1800, dur: 0.24, gain: 0.14 }],
+    blocked: [{ wave: 'sine', from: 260, to: 200, dur: 0.1, gain: 0.14 }],
+    win: [
+      { wave: 'sine', from: 500, to: 1000, dur: 0.14, gain: 0.2 },
+      { wave: 'sine', from: 750, to: 1500, dur: 0.14, gain: 0.2, delay: 0.12 },
+      { wave: 'sine', from: 1000, to: 2000, dur: 0.4, gain: 0.2, delay: 0.24 },
+    ],
+    lose: [
+      { wave: 'sine', from: 600, to: 150, dur: 0.35, gain: 0.22 },
+      { wave: 'sine', from: 450, to: 120, dur: 0.35, gain: 0.2, delay: 0.3 },
+      { wave: 'sine', from: 300, to: 90, dur: 0.4, gain: 0.18, delay: 0.6 },
+    ],
+  },
+  // Clockwork: dry ticks, a square wave a few milliseconds long; a hit is a ratchet slipping, a
+  // level-up and a win are a clock striking, and the loss is the ticks spacing out and stopping.
+  clock: {
+    open: [{ wave: 'square', from: 1800, to: 1800, dur: 0.018, gain: 0.1 }],
+    cascade: [{ wave: 'square', from: 1200, to: 2400, dur: 0.1, gain: 0.09 }],
+    mark: [{ wave: 'square', from: 900, to: 900, dur: 0.02, gain: 0.1 }],
+    note: [{ wave: 'square', from: 2400, to: 2400, dur: 0.014, gain: 0.06 }],
+    battle: [
+      { wave: 'square', from: 220, to: 220, dur: 0.03, gain: 0.2 },
+      { wave: 'square', from: 180, to: 180, dur: 0.03, gain: 0.2, delay: 0.05 },
+      { wave: 'square', from: 140, to: 140, dur: 0.06, gain: 0.2, delay: 0.1 },
+    ],
+    kill: [
+      { wave: 'square', from: 600, to: 600, dur: 0.025, gain: 0.14 },
+      { wave: 'triangle', from: 1200, to: 1200, dur: 0.08, gain: 0.12, delay: 0.04 },
+    ],
+    levelup: [
+      { wave: 'triangle', from: 880, to: 880, dur: 0.12, gain: 0.18 },
+      { wave: 'triangle', from: 1320, to: 1320, dur: 0.25, gain: 0.18, delay: 0.1 },
+    ],
+    spell: [{ wave: 'square', from: 400, to: 3200, dur: 0.2, gain: 0.1 }],
+    sweep: [{ wave: 'square', from: 300, to: 1200, dur: 0.15, gain: 0.1 }],
+    blocked: [{ wave: 'square', from: 120, to: 120, dur: 0.04, gain: 0.16 }],
+    win: [
+      { wave: 'triangle', from: 1047, to: 1047, dur: 0.14, gain: 0.2 },
+      { wave: 'triangle', from: 1319, to: 1319, dur: 0.14, gain: 0.2, delay: 0.12 },
+      { wave: 'triangle', from: 1568, to: 1568, dur: 0.5, gain: 0.2, delay: 0.24 },
+    ],
+    lose: [
+      { wave: 'square', from: 300, to: 300, dur: 0.05, gain: 0.16 },
+      { wave: 'square', from: 220, to: 220, dur: 0.06, gain: 0.16, delay: 0.15 },
+      { wave: 'square', from: 150, to: 150, dur: 0.08, gain: 0.16, delay: 0.33 },
+      { wave: 'square', from: 90, to: 90, dur: 0.12, gain: 0.16, delay: 0.56 },
+    ],
+  },
+  // An organ: two voices at once, a square and a sawtooth a fifth or an octave apart, held a
+  // little longer than the other packs hold anything; the stings are chords.
+  organ: {
+    open: [
+      { wave: 'square', from: 330, to: 330, dur: 0.08, gain: 0.09 },
+      { wave: 'sawtooth', from: 660, to: 660, dur: 0.08, gain: 0.07 },
+    ],
+    cascade: [
+      { wave: 'square', from: 262, to: 523, dur: 0.2, gain: 0.08 },
+      { wave: 'sawtooth', from: 392, to: 784, dur: 0.2, gain: 0.06 },
+    ],
+    mark: [
+      { wave: 'square', from: 440, to: 440, dur: 0.06, gain: 0.08 },
+      { wave: 'square', from: 660, to: 660, dur: 0.06, gain: 0.06 },
+    ],
+    note: [{ wave: 'square', from: 880, to: 880, dur: 0.05, gain: 0.07 }],
+    battle: [
+      { wave: 'sawtooth', from: 110, to: 55, dur: 0.3, gain: 0.2 },
+      { wave: 'square', from: 165, to: 82, dur: 0.3, gain: 0.12 },
+    ],
+    kill: [
+      { wave: 'square', from: 262, to: 262, dur: 0.16, gain: 0.12 },
+      { wave: 'square', from: 392, to: 392, dur: 0.16, gain: 0.1 },
+      { wave: 'square', from: 523, to: 523, dur: 0.2, gain: 0.12, delay: 0.1 },
+    ],
+    levelup: [
+      { wave: 'square', from: 262, to: 262, dur: 0.24, gain: 0.1 },
+      { wave: 'square', from: 330, to: 330, dur: 0.24, gain: 0.1 },
+      { wave: 'square', from: 392, to: 392, dur: 0.24, gain: 0.1 },
+      { wave: 'sawtooth', from: 523, to: 523, dur: 0.3, gain: 0.1, delay: 0.12 },
+    ],
+    spell: [
+      { wave: 'sawtooth', from: 220, to: 880, dur: 0.32, gain: 0.09 },
+      { wave: 'square', from: 330, to: 1320, dur: 0.32, gain: 0.08 },
+    ],
+    sweep: [
+      { wave: 'square', from: 196, to: 784, dur: 0.26, gain: 0.1 },
+      { wave: 'sawtooth', from: 294, to: 1176, dur: 0.26, gain: 0.07 },
+    ],
+    blocked: [
+      { wave: 'square', from: 98, to: 92, dur: 0.14, gain: 0.16 },
+      { wave: 'sawtooth', from: 147, to: 138, dur: 0.14, gain: 0.1 },
+    ],
+    win: [
+      { wave: 'square', from: 262, to: 262, dur: 0.5, gain: 0.1 },
+      { wave: 'square', from: 330, to: 330, dur: 0.5, gain: 0.1 },
+      { wave: 'square', from: 392, to: 392, dur: 0.5, gain: 0.1 },
+      { wave: 'sawtooth', from: 523, to: 523, dur: 0.6, gain: 0.12, delay: 0.2 },
+    ],
+    lose: [
+      { wave: 'sawtooth', from: 196, to: 49, dur: 1, gain: 0.2 },
+      { wave: 'square', from: 294, to: 73, dur: 1, gain: 0.12 },
+    ],
+  },
 };
 
 /** How a sound is named where one is stored: the sound check's keys and pitches. */

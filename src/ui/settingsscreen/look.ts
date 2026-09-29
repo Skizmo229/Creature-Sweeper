@@ -31,7 +31,8 @@ import {
   type IconChoice,
   type TierColorChoice,
 } from '../presentation.js';
-import { OUT_OF_REACH_COLOR, PIP_NAMES, PIP_SHAPES, pipName } from '../theme.js';
+import { PIP_NAMES, PIP_SHAPES } from '../pips.js';
+import { OUT_OF_REACH_COLOR, pipName } from '../theme.js';
 import { DEFAULT_TIERS, TIER_PRESETS, type TierPalette, tierColor } from '../tiercolors.js';
 import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
 import { SYMBOL_COUNT, isGlyphPip } from '../pipsymbols.js';
@@ -172,10 +173,12 @@ export function paletteRow(ctx: ScreenContext, host: HTMLElement): void {
 
 /**
  * Each tile names every ladder that wears the face, in the order the ladder list reads (two may
- * share one, decision 0031); "Pirata One" alone says nothing about why.
+ * share one, decision 0031); "Pirata One" alone says nothing about why. A face no ladder wears
+ * says what it is for instead.
  */
 function fontOwner(id: FontId): string {
-  if (id === LEGIBLE_FONT) return 'easiest to read';
+  const blurb = FONTS[id].blurb;
+  if (blurb) return blurb;
   return ladders
     .filter((t) => lookFor(t.id).font === id)
     .map((t) => t.name)
@@ -406,13 +409,17 @@ export function beatenLookRow(ctx: ScreenContext, host: HTMLElement): void {
   wideRow(
     host,
     'Beaten creatures',
-    'How a beaten creature is drawn. Dimmed alone reads better at small cell sizes, where the ' +
-      'stroke crosses the pips; plain leaves the open floor under it to say it is beaten.',
+    'How a beaten creature is drawn. Dimmed or greyed reads better at small cell sizes, where a ' +
+      'stroke crosses the pips and an X crosses them twice; plain leaves the open floor under it ' +
+      'to say it is beaten.',
     gallery(
       [
         look('dimStrike', 'Dimmed and struck through'),
         look('strike', 'Struck through'),
+        look('dimCross', 'Dimmed and crossed out'),
+        look('cross', 'Crossed out'),
         look('dim', 'Dimmed'),
+        look('grey', 'Greyed'),
         look('plain', 'Plain'),
       ],
       p.beatenLook,

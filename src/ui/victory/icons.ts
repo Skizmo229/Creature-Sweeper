@@ -5,7 +5,8 @@
 
 import { tierColor } from '../tiercolors.js';
 import type { VictoryId } from '../looktypes.js';
-import { type Mover, type Painter, type Stage, type VictorySprite, blit } from './stage.js';
+import { flip, float, march, scatter, spin, swarm } from './departures.js';
+import { type Painter, type Stage, type VictorySprite, blit, movers } from './stage.js';
 
 export function iconPainter(effect: VictoryId, stage: Stage): Painter {
   switch (effect) {
@@ -17,24 +18,21 @@ export function iconPainter(effect: VictoryId, stage: Stage): Painter {
       return pop(stage);
     case 'burn':
       return burn(stage);
+    case 'flip':
+      return flip(stage);
+    case 'spin':
+      return spin(stage);
+    case 'scatter':
+      return scatter(stage);
+    case 'float':
+      return float(stage);
+    case 'march':
+      return march(stage);
+    case 'swarm':
+      return swarm(stage);
     default:
       return wipe(effect, stage);
   }
-}
-
-function movers(stage: Stage, axisOf: (s: VictorySprite) => number = () => 0): Mover[] {
-  return stage.sprites.map((sprite) => ({
-    sprite,
-    x: sprite.x,
-    y: sprite.y,
-    vx: 0,
-    vy: 0,
-    rot: 0,
-    spin: 0,
-    delay: 0,
-    axis: axisOf(sprite),
-    gone: false,
-  }));
 }
 
 /**

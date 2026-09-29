@@ -48,6 +48,12 @@ const ICON_EFFECTS: ReadonlySet<string> = new Set<VictoryId>([
   'wipe',
   'wipeDown',
   'wipeRadial',
+  'flip',
+  'spin',
+  'scatter',
+  'float',
+  'march',
+  'swarm',
 ]);
 
 /**
@@ -62,6 +68,7 @@ const DURATION: Record<VictoryId, number> = {
   burst: 2200,
   ripple: 2200,
   sparkle: 2200,
+  fireworks: 2600,
   tumble: 2600,
   cascade: 4200,
   pop: 2000,
@@ -69,6 +76,12 @@ const DURATION: Record<VictoryId, number> = {
   wipe: 1900,
   wipeDown: 1900,
   wipeRadial: 2000,
+  flip: 2000,
+  spin: 2400,
+  scatter: 2200,
+  float: 2600,
+  march: 2200,
+  swarm: 2800,
 };
 
 /** How long an effect runs at a speed, in milliseconds: its own length divided by the speed. */

@@ -53,13 +53,15 @@ const LOOKS: Record<string, LadderLook> = {
       floor: '#0e0a2e',
       ink: '#d4cdf7',
       hot: '#ff5da8',
-      pip: 'diamond',
+      // A bolt of lightning.
+      pip: 'bolt',
       accent: '#7b6bff',
     },
     // Clipped corners: aggressive without losing a digit's shape.
     font: 'chakra-petch',
     sfx: 'blip',
-    victory: 'burst',
+    // Blown apart from the middle.
+    victory: 'scatter',
   },
   huge: {
     palette: {
@@ -89,7 +91,8 @@ const LOOKS: Record<string, LadderLook> = {
     // The heaviest face here, and condensed like HUGE's.
     font: 'anton',
     sfx: 'thud',
-    victory: 'cascade',
+    // Blown apart, as EXTREME is.
+    victory: 'scatter',
   },
   arcane: {
     palette: {
@@ -115,12 +118,14 @@ const LOOKS: Record<string, LadderLook> = {
       floor: '#140b26',
       ink: '#dcd0f5',
       hot: '#fa4f7a',
-      pip: 'diamond',
+      // A moon, for the reader of the night's signs.
+      pip: 'crescent',
       accent: '#7e5bd6',
     },
     // A temple inscription: Delphi.
     font: 'cinzel',
-    sfx: 'glass',
+    // The temple's organ.
+    sfx: 'organ',
     victory: 'pop',
   },
   checker: {
@@ -136,7 +141,8 @@ const LOOKS: Record<string, LadderLook> = {
     // A chess-book serif.
     font: 'libre-baskerville',
     sfx: 'chime',
-    victory: 'wipe',
+    // Chequers turned over.
+    victory: 'flip',
   },
   pairs: {
     // `hot` is amber, far from the pale `ink` and better against the floor. A beaten
@@ -180,9 +186,9 @@ const LOOKS: Record<string, LadderLook> = {
     },
     // A heavy slab: numbers stamped on a games-parlour table.
     font: 'alfa-slab-one',
-    // Thud is the clack of a tile set down. Cascade is the one clear effect in
+    // Wood is the clack of a bone tile set down on the table. Cascade is the one clear effect in
     // the game that is already a row of things falling over in sequence.
-    sfx: 'thud',
+    sfx: 'wood',
     victory: 'cascade',
   },
   workout: {
@@ -243,9 +249,9 @@ const LOOKS: Record<string, LadderLook> = {
     },
     // A carnival marquee.
     font: 'bungee',
-    // One after another, in order: the effect that is already a line of things
-    // going by in sequence.
-    sfx: 'chime',
+    // Wood blocks and a marimba: a conga line is percussion. One after another, in order: the
+    // effect that is already a line of things going by in sequence.
+    sfx: 'wood',
     victory: 'cascade',
   },
   ultra_hive: {
@@ -260,10 +266,10 @@ const LOOKS: Record<string, LadderLook> = {
       pip: 'hex',
       accent: '#d49a1e',
     },
-    // HIVE's own face and sound: the same comb, grown.
+    // HIVE's own face, sound and swarm: the same comb, grown.
     font: 'gluten',
     sfx: 'blip',
-    victory: 'burst',
+    victory: 'swarm',
   },
   petri: {
     // Agar green, with crystal violet for `hot`, the stain that shows a colony up. No spells here;
@@ -275,12 +281,14 @@ const LOOKS: Record<string, LadderLook> = {
       floor: '#08140e',
       ink: '#d8f3e3',
       hot: '#a78bfa',
-      pip: 'circle',
+      // A drop of culture on the agar.
+      pip: 'drop',
       accent: '#6fbf94',
     },
-    // A laboratory instrument's readout, and glassware.
+    // A laboratory instrument's readout.
     font: 'space-mono',
-    sfx: 'glass',
+    // The culture bubbling.
+    sfx: 'bubble',
     // Rings spreading outward, as a colony does.
     victory: 'ripple',
   },
@@ -294,14 +302,15 @@ const LOOKS: Record<string, LadderLook> = {
       floor: '#13150e',
       ink: '#e9edc9',
       hot: '#ff4d6d',
-      pip: 'cross',
+      // A sergeant's stripe.
+      pip: 'chevron',
       accent: '#8a9170',
     },
-    // Stencilled, like a sentry post's sign.
-    font: 'black-ops-one',
-    // Boots, and a band that marches them off.
-    sfx: 'thud',
-    victory: 'wipe',
+    // Typed, like the sentry post's log.
+    font: 'courier-prime',
+    // The sentry's watch ticking, and the ranks marched off.
+    sfx: 'clock',
+    victory: 'march',
   },
   sprinkle_donut: {
     // Vanilla icing over the dough: a covered tile is the glaze, uncovered ground the warm dough
@@ -318,9 +327,9 @@ const LOOKS: Record<string, LadderLook> = {
       pip: 'ring',
       accent: '#ff79ad',
     },
-    // DONUT's bakery-sign face (decision 0031).
+    // DONUT's bakery-sign face (decision 0031), and its fryer.
     font: 'sniglet',
-    sfx: 'chime',
+    sfx: 'bubble',
     // Falling chips, as sprinkles fall.
     victory: 'confetti',
   },
@@ -339,7 +348,8 @@ const LOOKS: Record<string, LadderLook> = {
     // Soft and gooey, like honey.
     font: 'gluten',
     sfx: 'blip',
-    victory: 'pop',
+    // The hive swarms.
+    victory: 'swarm',
   },
   ...SHAPE_LOOKS,
   dungeon: {
@@ -354,7 +364,8 @@ const LOOKS: Record<string, LadderLook> = {
     },
     // Gothic for a crawl, with digits that stay plain where blackletter's do not.
     font: 'pirata-one',
-    sfx: 'thud',
+    // A crypt's organ.
+    sfx: 'organ',
     victory: 'burn',
   },
   sudoku: {
@@ -371,7 +382,8 @@ const LOOKS: Record<string, LadderLook> = {
     },
     // The newspaper puzzle page.
     font: 'libre-franklin',
-    sfx: 'glass',
+    // A pencil ticking against the clock.
+    sfx: 'clock',
     victory: 'wipeDown',
   },
   blind: {
@@ -429,7 +441,8 @@ const LOOKS: Record<string, LadderLook> = {
     },
     // A temple inscription, as ORACLE wears: the other reader of signs.
     font: 'cinzel',
-    sfx: 'glass',
+    // A lyre at the temple door.
+    sfx: 'pluck',
     victory: 'ripple',
   },
   huge_blind: {

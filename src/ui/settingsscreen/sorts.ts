@@ -61,7 +61,7 @@ export function paletteSorts(): PickerSort[] {
 
 /**
  * Faces under the ladder list's column heads, each filed once, under the first ladder in the list
- * that wears it, and led by the one face no ladder wears.
+ * that wears it; led by the legible face, and ending with any other face no ladder wears.
  */
 function facesByLadder(): SortGroup[] {
   const filed = new Set<FontId>([LEGIBLE_FONT]);
@@ -75,9 +75,11 @@ function facesByLadder(): SortGroup[] {
     }
     return { heading: column.heading, values: faces };
   });
+  const unworn = FONT_IDS.filter((id) => !filed.has(id));
   return [
     { heading: 'Easiest to read', values: [LEGIBLE_FONT] },
     ...columns.filter((c) => c.values.length > 0),
+    ...(unworn.length ? [{ heading: 'No ladder’s own', values: unworn }] : []),
   ];
 }
 

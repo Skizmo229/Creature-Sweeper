@@ -9,7 +9,7 @@ import { hasNote } from '../../engine/notes.js';
 import { placementRule } from '../../engine/placement/registry.js';
 import type { Cell } from '../../engine/types.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
-import { type BeatenLook, type CreatureGlyph, beatenParts } from '../presentation.js';
+import type { BeatenLook, CreatureGlyph } from '../presentation.js';
 import {
   AUGUR_COLOR,
   CENSUS_COLOR,
@@ -19,7 +19,7 @@ import {
   noteColor,
 } from '../theme.js';
 import type { TypeTheme } from '../looktypes.js';
-import type { TierPalette } from '../tiercolors.js';
+import { TIER_COUNT, type TierPalette } from '../tiercolors.js';
 import type { GameFont } from '../typefaces.js';
 import { setNumberFont } from './digits.js';
 import { type Layout, contentBox } from './geometry.js';
@@ -86,6 +86,38 @@ export const TILE_INSET = 1;
  * overlay, which left defeated creatures almost invisible.
  */
 export const BEATEN_ALPHA = 0.55;
+/** The strike through a beaten creature: faint enough that the pips read through it. */
+export const STRIKE_ALPHA = 0.3;
+
+/**
+ * A beaten look as its parts: whether the glyph is dimmed, struck through, struck both ways, and
+ * drawn colourless (`BeatenLook`, `presentation.ts`).
+ */
+export function beatenParts(look: BeatenLook): {
+  dim: boolean;
+  strike: boolean;
+  cross: boolean;
+  grey: boolean;
+} {
+  const cross = look === 'dimCross' || look === 'cross';
+  return {
+    dim: look === 'dimStrike' || look === 'dimCross' || look === 'dim' || look === 'grey',
+    strike: look === 'dimStrike' || look === 'strike' || cross,
+    cross,
+    grey: look === 'grey',
+  };
+}
+
+/** The tier colours of a greyed beaten creature, per ink: every tier, and the halo, in the ink. */
+const GREY_TIERS = new Map<string, TierPalette>();
+function greyTiers(ink: string): TierPalette {
+  let palette = GREY_TIERS.get(ink);
+  if (!palette) {
+    palette = { colors: new Array<string>(TIER_COUNT).fill(ink), halo: ink };
+    GREY_TIERS.set(ink, palette);
+  }
+  return palette;
+}
 
 /** Trace a cell's outline, by default the tile's own (`TILE_INSET`). */
 export function tracePath(p: Paint, cx: number, cy: number, inset = TILE_INSET): void {
@@ -249,25 +281,33 @@ export function drawOpen(p: Paint, cell: Cell, cx: number, cy: number): void {
 
   if (cell.tier > 0 && !beatenNumber) {
     if (p.creaturesHidden) return;
-    const { dim, strike } = beatenParts(p.beatenLook);
+    const { dim, strike, cross, grey } = beatenParts(p.beatenLook);
+    const beaten = !cell.alive;
     ctx.save();
-    if (!cell.alive && dim) ctx.globalAlpha = BEATEN_ALPHA;
-    drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme, p.tierColors, {
+    if (beaten && dim) ctx.globalAlpha = BEATEN_ALPHA;
+    const tiers = beaten && grey ? greyTiers(theme.ink) : p.tierColors;
+    drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme, tiers, {
       glyph: p.glyph,
       font: p.font,
     });
     ctx.restore();
     // A struck-through corner reads as "dealt with" at a glance. Optional, because at small
-    // cell sizes the stroke crosses the pips.
-    if (!cell.alive && strike) {
+    // cell sizes the stroke crosses the pips, and an X crosses them twice.
+    if (beaten && strike) {
       ctx.save();
       ctx.strokeStyle = theme.ink;
-      ctx.globalAlpha = 0.3;
+      ctx.globalAlpha = STRIKE_ALPHA;
       ctx.lineWidth = Math.max(1, box.size / 16);
       ctx.beginPath();
       ctx.moveTo(box.x + box.size * 0.18, box.y + box.size * 0.82);
       ctx.lineTo(box.x + box.size * 0.82, box.y + box.size * 0.18);
       ctx.stroke();
+      if (cross) {
+        ctx.beginPath();
+        ctx.moveTo(box.x + box.size * 0.18, box.y + box.size * 0.18);
+        ctx.lineTo(box.x + box.size * 0.82, box.y + box.size * 0.82);
+        ctx.stroke();
+      }
       ctx.restore();
     }
     return;
