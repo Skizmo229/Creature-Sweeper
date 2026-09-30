@@ -7,9 +7,11 @@
  */
 
 import './setup.js';
+import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../src/ui/app.js';
 import { encodeSave } from '../../src/ui/savefile.js';
+import { PLAYTEST_REPORT_URL } from '../../src/ui/screens/backup.js';
 
 const progress = JSON.stringify({
   version: 1,
@@ -75,5 +77,27 @@ describe('cancelling REPLACE SAVE?', () => {
     button(card()!, 'Close').click();
     expect(card()).toBeNull();
     expect(document.querySelector('.overlay')).toBeNull();
+  });
+});
+
+/**
+ * The play statistics' code goes into a play-test report on GitHub (decision 0085): the card
+ * links the repository's issue form, whose required field is where the code is pasted.
+ */
+describe('the play statistics', () => {
+  it('link the play-test report, in a tab of its own, whose form asks for the code', () => {
+    openBackup();
+    const report = [...card()!.querySelectorAll('a')].find(
+      (a) => a.textContent === 'play-test report',
+    )!;
+    expect(report.getAttribute('href')).toBe(PLAYTEST_REPORT_URL);
+    expect(PLAYTEST_REPORT_URL).toBe(
+      'https://github.com/Skizmo229/Creature-Sweeper/issues/new?template=playtest.yml',
+    );
+    expect(report.target).toBe('_blank');
+    expect(report.rel.split(' ')).toContain('noopener');
+    const form = readFileSync('.github/ISSUE_TEMPLATE/playtest.yml', 'utf8');
+    expect(form).toMatch(/- type: textarea\n {4}id: statistics\n/);
+    expect(form).toContain('required: true');
   });
 });

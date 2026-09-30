@@ -17,7 +17,7 @@ const ORIGINAL_URL = 'https://hojamaka.com/games/mamono_sweeper/';
 const FONT_LICENCES = './FONT-LICENSES.txt';
 
 /** A link that leaves the game in a tab of its own. */
-function link(href: string, text: string): HTMLAnchorElement {
+export function link(href: string, text: string): HTMLAnchorElement {
   const a = el('a', undefined, text);
   a.href = href;
   a.target = '_blank';

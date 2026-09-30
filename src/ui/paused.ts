@@ -32,6 +32,8 @@ export interface PausedGame {
   moves: MoveCode[];
   /** `boardDigest` of the board the moves reached. */
   digest: string;
+  /** The digest's version (`DIGEST_VERSION`); absent on a game paused by 0.9.1 or before, version 1. */
+  digestVersion?: number;
   /** The clock, which stands still while the game is paused. */
   elapsedMs: number;
   /** Time Attack's countdown, in seconds, or null. */
@@ -68,6 +70,7 @@ function readGame(raw: string | null): PausedGame | null {
       g.gameplay !== null &&
       Array.isArray(g.moves) &&
       typeof g.digest === 'string' &&
+      (g.digestVersion === undefined || whole(g.digestVersion)) &&
       typeof g.elapsedMs === 'number' &&
       (g.timeLimit === null || typeof g.timeLimit === 'number') &&
       whole(g.hints) &&

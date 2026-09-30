@@ -142,16 +142,11 @@ export class Game {
   }
 
   /**
-   * Build a board and apply its opening rule. Same inputs, same board.
-   *
-   * `startHp` exists for Full Run, which carries a damaged pool from one board
-   * into the next. It never changes `maxHp` — the board is still the board —
-   * and it cannot exceed it or start a board already dead.
-   */
-  /**
    * Deal a board from a seed, or from the nearest seed after it that the placement rule accepts
-   * (`dealGrid`, decision 0081). The board keeps the seed it was asked for, which it is still a
-   * function of, so a paused board or a replay deals the same board.
+   * (`dealGrid`, decision 0081), and apply its opening rule. Same inputs, same board: it keeps the
+   * seed it was asked for, which it is still a function of, so a paused board or a replay deals
+   * the same board. `startHp` is for a Full Run, which carries a damaged pool into the next board;
+   * it never changes `maxHp`, and it cannot exceed it or start a board already dead.
    */
   static create(config: BoardConfig, seed: number, options: GameOptions = {}): Game {
     const settings = options.settings ?? DEFAULT_GAMEPLAY;
@@ -348,6 +343,11 @@ export class Game {
     if (this.status !== 'playing') return [{ type: 'blocked', reason: 'game-over' }];
     const cell = this.cellAt(x, y);
     if (!cell) return [{ type: 'blocked', reason: 'out-of-bounds' }];
+    // A mark names one of the board's tiers, or none. A paused game's stored moves are played
+    // through here, and stored data is never trusted.
+    if (!Number.isInteger(mark) || mark < 0 || mark > this.config.tiers) {
+      return [{ type: 'blocked', reason: 'out-of-bounds' }];
+    }
     // On PATROL a mark is a route drawn from this cell as its corner, which may be uncovered.
     if (this.patrol) return this.patrol.mark(this, cell, mark);
     if (cell.open) return [{ type: 'blocked', reason: 'already-open' }];

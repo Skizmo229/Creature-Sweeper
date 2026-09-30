@@ -41,6 +41,18 @@ export function boardSize(layout: Layout): { w: number; h: number } {
   return layout.hex ? hexBoardSize(cols, rows, cellPx) : { w: cellPx * cols, h: cellPx * rows };
 }
 
+/**
+ * How far the board repeats along each axis when its edges are joined, which is where the ghost
+ * band draws the far edge. On squares that is the board's size. On hex it is the lattice's period,
+ * `cols` hexes across and `rows` row steps down, which is less than the drawn size by the odd rows'
+ * half-cell overhang and by a point's height; the rows keep alternating across the seam because
+ * config lets a hex board wrap top to bottom only on an even height.
+ */
+export function wrapPeriod(layout: Layout): { w: number; h: number } {
+  const { cols, rows, cellPx } = layout;
+  return { w: cellPx * cols, h: (layout.hex ? hexRowStep(cellPx) : cellPx) * rows };
+}
+
 /** Centre of a cell, in canvas pixels. */
 export function centreOf(layout: Layout, col: number, row: number): { cx: number; cy: number } {
   const { cellPx, originX, originY } = layout;
@@ -99,7 +111,7 @@ export function fittedCellFor(game: Game, availW: number, availH: number): numbe
   const padY = game.config.wrap === 'both' ? 2 * GHOST_CELLS : 0;
   const byW = hex ? availW / (game.config.width + padX + 0.5) : availW / (game.config.width + padX);
   const byH = hex
-    ? availH / (hexRowStep(1) * (game.config.height - 1) + 2 * hexRadius(1))
+    ? availH / (hexRowStep(1) * (game.config.height - 1 + padY) + 2 * hexRadius(1))
     : availH / (game.config.height + padY);
   return Math.floor(Math.min(byW, byH));
 }

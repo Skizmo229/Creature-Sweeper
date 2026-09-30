@@ -317,7 +317,7 @@ This is what calibrates the technique costs and the retune targets once the game
 | 4.5 | Decide the target per ladder with the owner | decided 26 September 2026, as proposed in section 7 |
 | 4.6 | Retune, one commit per ladder, decision record each | EXTREME and ORACLE done 26 September 2026; HUGE x EXTREME measured on target and left as is; BLIND and HUGE x BLIND done 26 September 2026; the plain ladders measured and left as they are, since only the lock reaches the target (9.1); the shapes and the placement ladders measured 27 September 2026 and left for the same reason (9.1, decision 0058). Every ladder has now been measured against its target |
 | 4.7 | Per-ladder tips and the tricks page | open |
-| 4.8 | Telemetry store and export | done 27 September 2026 (decision 0060): the play statistics, kept per board on the device, exported from the backup screen as a `CST1:` code and read by `npm run telemetry` |
+| 4.8 | Telemetry store and export | done 27 September 2026 (decision 0060): the play statistics, kept per board on the device, exported from the backup screen as a `CST1:` code and read by `npm run telemetry`; since 30 September 2026 the screen links a play-test report on GitHub for the code (decision 0085) |
 | 4.9 | Spending policies and attention in the graded player | spells and attention done 26 September 2026; deferral open |
 | 4.10 | Re-measure against telemetry; revise the costs | after release |
 

@@ -19,6 +19,10 @@ import {
 import { describeTelemetry, encodeTelemetry } from '../telemetry.js';
 import { VERSION } from '../version.js';
 import { TelemetryStore } from '../telemetrystore.js';
+import { SOURCE_URL, link } from './about.js';
+
+/** Where a play-tester sends the statistics: the repository's play-test report (decision 0085). */
+export const PLAYTEST_REPORT_URL = `${SOURCE_URL}/issues/new?template=playtest.yml`;
 
 /** The save exactly as stored. Blocked storage reads as no save at all. */
 function readStoredSave(): SaveBundle {
@@ -211,21 +215,21 @@ function appendRestore(
 }
 
 /**
- * The play statistics (`src/ui/telemetry.ts`), as a code to paste to the owner. Read straight
- * from storage, as the save is; they leave this device only this way, and never inside the save
- * code. Cleared with the progress, from the ladder list.
+ * The play statistics (`src/ui/telemetry.ts`), as a code to paste into a play-test report. Read
+ * straight from storage, as the save is; they leave this device only this way, pasted by the
+ * player, and never inside the save code. Cleared with the progress, from the ladder list.
  */
 function appendStatistics(card: HTMLElement): void {
   const data = TelemetryStore.load().current;
   card.append(el('p', 'backup-label', `Play statistics — ${describeTelemetry(data)}`));
-  card.append(
-    el(
-      'p',
-      'overlay-note',
-      'What each board cost you: attempts, guesses, HP, time. Kept on this device only; paste ' +
-        'the code to the developer to help tune the game.',
-    ),
+  const note = el(
+    'p',
+    'overlay-note',
+    'What each board cost you: attempts, guesses, HP, time. Kept on this device only; to help ' +
+      'tune the game, paste the code into a ',
   );
+  note.append(link(PLAYTEST_REPORT_URL, 'play-test report'), '.');
+  card.append(note);
   const out = el('textarea', 'backup-code');
   out.readOnly = true;
   out.value = encodeTelemetry(data, new Date(), VERSION);

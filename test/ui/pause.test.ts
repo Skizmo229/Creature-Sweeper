@@ -9,6 +9,7 @@
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Game } from '../../src/engine/game.js';
+import { DIGEST_VERSION, boardDigest } from '../../src/engine/replay.js';
 import type { FullRun } from '../../src/engine/run.js';
 import { autoplayTierOrder } from '../../src/sim/autoplay.js';
 import { App } from '../../src/ui/app.js';
@@ -186,6 +187,21 @@ describe('a paused board', () => {
     button('Start again').click();
     expect(onGame()).toBe(true);
     expect(app.current!.status).toBe('playing');
+  });
+
+  it('paused by 0.9.1, before the digest had a version, is taken up by that version', () => {
+    app.play('normal', 3, 7);
+    freeMoves(4);
+    const before = seen(app.current!);
+    const digest = boardDigest(app.current!, 1);
+    key('p');
+    const { digestVersion, ...kept } = pausedGames.get(slot)!;
+    expect(digestVersion).toBe(DIGEST_VERSION);
+    expect(kept.digest).not.toBe(digest);
+    pausedGames.put(slot, { ...kept, digest }, true);
+    tiles()[2]!.click();
+    expect(onGame()).toBe(true);
+    expect(seen(app.current!)).toBe(before);
   });
 
   it('is never kept on a school lesson, which has no Pause', () => {

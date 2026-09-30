@@ -28,6 +28,9 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   Back to the list, once per breakage; Back, and Escape, rebuild the screen and re-arm it
   (decision 0081).
 - `.overlay` is `position: fixed`, because only the game screen is exactly one viewport tall.
+- An overlay that closes hands the focus back to the control that had it when the overlay went up,
+  if that control is still on the page (`keepFocus`, used by `Modal` and by the settings screen's
+  windows), so a keyboard player goes on from where they were rather than from the top.
 - The LV palette is modal. Pencilling needs a mode *and* a tier, so entering pencil mode arms a
   tier (and hands it back on exit unless the player chose it); the toggle is labelled with the
   mode it is in (`Entry: Mark` / `Entry: Pencil`); pencil mode never falls through to opening;
@@ -162,13 +165,15 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   its own tricks marked in its colour; `G` on a board leads with the board's ladder the same way.
 - The school (`src/ui/screens/school.ts`, the lessons in `src/ui/school/`; docs/teaching-plan.md,
   Part 2) is offered from the ladder list and the rules card ("Take the lessons") and required by
-  nothing. A lesson is played on the game screen, labelled with its title and without Sweep: its
-  step speaks in the hint line, in the ink, the tutor's violet points at the step's proof, and
-  Next (or Enter) moves on where the step waits to be told. A click nothing has proven is refused
-  before the engine sees it, the reason in the danger colour ahead of the step (a cell proven above
-  the level says what the fight would cost), except in lesson 8, where guessing is the lesson. `H`
-  and `G` work as on any board. A lesson's end is written down (the save's `lessons`) and offers
-  the next; nothing a lesson does touches a ladder's record.
+  nothing. A lesson is played on the game screen at the tuned dials, whatever the settings say,
+  since its words are written for them; it is labelled with its title and has no Sweep. Its step
+  speaks in the hint line, in the ink, the tutor's violet points at the step's proof, and Next (or
+  Enter) moves on where the step waits to be told. A click nothing has proven is refused before
+  the engine sees it, the reason in the danger colour ahead of the step (a cell proven above the
+  level says what the fight would cost, priced as the tutor prices a guess, or that it would
+  kill), except in lesson 8, where guessing is the lesson. `H` and `G` work as on any board. A
+  lesson's end is written down (the save's `lessons`) and offers the next; nothing a lesson does
+  touches a ladder's record.
 - Pausing (decision 0057): a Pause button in the HUD and `P`; not on a school lesson. Back (and
   Escape) asks Pause, Abandon or Keep playing on a game with a move in it, or any run; a board
   with no move made is left without a question. A tile with a game paused on it is dashed in the
@@ -406,4 +411,5 @@ store) and `src/engine/settings.ts` (the gameplay dials).
 - The play statistics (decision 0060) are a third store, `creature-sweeper.telemetry.v1`, never
   inside the save code: per board, attempts and how they ended, opens and guesses, sweeps, casts,
   hints, HP lost, seconds and what dealt each death, tuned and modified dials apart. The backup
-  screen shows them as a `CST1:` code to copy; Reset progress clears them with the rest.
+  screen shows them as a `CST1:` code to copy, and links the play-test report on GitHub whose
+  required field takes it (decision 0085); Reset progress clears them with the rest.

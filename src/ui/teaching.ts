@@ -53,6 +53,8 @@ export class Teaching {
   private lessonIndex = 0;
   /** Why the last click on a lesson board was refused, until the next move. */
   private refused: string | null = null;
+  /** Whether the lesson's end has had its card, which it has once however the board goes on. */
+  private endShown = false;
 
   constructor(private readonly host: TeachingHost) {}
 
@@ -113,11 +115,16 @@ export class Teaching {
     if (modal.show(overlay, focus)) show(target);
   }
 
-  /** Begin one of the nine lessons, on its own board. */
+  /**
+   * Begin one of the nine lessons, on its own board, at the tuned dials whatever the settings say:
+   * the lessons are written for that game (the guessing lesson prices its guess in HP, the last
+   * reads the counters), and a hard mode chosen for the ladders is not what a lesson teaches.
+   */
   startLesson(index: number): void {
     this.lessonIndex = index;
     this.refused = null;
-    this.lesson = new LessonRun(LESSONS[index]!, { settings: this.host.settings.gameplay });
+    this.endShown = false;
+    this.lesson = new LessonRun(LESSONS[index]!);
     this.host.play(this.lesson.game);
   }
 
@@ -157,10 +164,15 @@ export class Teaching {
     this.ended();
   }
 
-  /** Once a lesson's last step is behind the player: it is written down, and a card offers more. */
+  /**
+   * Once a lesson's last step is behind the player: it is written down, and a card offers more.
+   * Asked after every move and every Next, so the card is shown once: a board still clicked after
+   * the card is put away does not bring it back.
+   */
   ended(): void {
     const run = this.lesson;
-    if (!run?.finished) return;
+    if (!run?.finished || this.endShown) return;
+    this.endShown = true;
     this.host.progress.markLessonDone(run.lesson.id);
     const next = this.lessonIndex + 1 < LESSONS.length ? this.lessonIndex + 1 : null;
     const { overlay, focus } = buildLessonDone(

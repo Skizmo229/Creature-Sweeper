@@ -1,6 +1,6 @@
 # 0057. A paused game is its moves, kept live, one per board and one run per ladder
 
-2026-09-27. Status: adopted.
+2026-09-27. Status: adopted. Its fingerprint carries a version since 0084.
 
 ## Context
 The owner asked for a way to pause a board and come back to it at any time. Before this, leaving

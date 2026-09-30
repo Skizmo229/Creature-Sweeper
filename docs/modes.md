@@ -15,8 +15,10 @@ search board with spells. The rest follow.
 is harder than a rectangle, because edges are free information. (`'horizontal'`, a cylinder, is
 the gentler version no ladder currently uses.) Measured, it is nonetheless the
 gentlest counted ladder at NORMAL's schedule (cornered 0.0 to 0.6 times a board). A wrapped axis
-must be at least 3 cells, or a cell is its own neighbour. The seam is drawn dashed, per present
-cell.
+must be at least 3 cells, or a cell is its own neighbour; and a hex grid wraps top to bottom only
+on an even height, since its rows alternate their offset and an odd one leaves two unindented
+rows either side of the seam, whose diagonals miss each other. The seam is drawn dashed, per
+present cell.
 
 **HIVE** is a hex grid: six neighbours, so every number is lower and blank regions are commoner,
 and it runs denser (35%) to compensate.
@@ -132,7 +134,7 @@ walks, and the honest player is limited in what it may open and gamble on.
 
 A wall stops information dead, so every room is its own puzzle and the number of forced guesses is
 set by how many rooms there are. The empty scaffold of hallways and doorways then makes each guess
-cheap. The schedule (12.8 to 26.4%) is the only one derived from a play measurement rather than
+cheap. The schedule (13 to 26.5%) is the only one derived from a play measurement rather than
 inherited, and it has been re-derived every time the mode changed. `ROOM_COUNT` moves the guesses
 and barely the danger; HP is the lever for deadliness.
 

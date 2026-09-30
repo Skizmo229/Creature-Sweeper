@@ -8,6 +8,7 @@
 import { boardConfig } from '../../engine/config.js';
 import { Game } from '../../engine/game.js';
 import {
+  DIGEST_VERSION,
   type Move,
   boardDigest,
   decodeMove,
@@ -101,6 +102,7 @@ export class BoardKeeper {
       ...(run ? { legs: run.legs.map((leg) => ({ ...leg })) } : {}),
       moves: this.moves.map(encodeMove),
       digest: boardDigest(game),
+      digestVersion: DIGEST_VERSION,
       elapsedMs: this.h.clock.elapsedMs(),
       timeLimit: this.h.clock.timeLimit,
       hints: this.h.tutor.hints,
@@ -155,7 +157,8 @@ export function takeUp(slot: Slot): TakenUp | 'changed' | null {
     replayMoves(game, moves);
     // A game that ended was never left in its slot, so one that replays to an end has changed.
     const playing = run ? run.status === 'playing' : game.status === 'playing';
-    if (!playing || boardDigest(game) !== paused.digest) throw new Error('changed');
+    const digest = boardDigest(game, paused.digestVersion ?? 1);
+    if (!playing || digest !== paused.digest) throw new Error('changed');
     return { game, run, moves, paused };
   } catch {
     pausedGames.drop(slot);

@@ -7,6 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { noteBit } from '../src/engine/notes.js';
+import { DEFAULT_GAMEPLAY, fightCostFor } from '../src/engine/settings.js';
 import type { Cell } from '../src/engine/types.js';
 import { type Grade, TRICKS } from '../src/sim/tricks.js';
 import { TRICK_TEXT } from '../src/sim/tricktext.js';
@@ -131,5 +132,27 @@ describe('the school', () => {
       }
     }
     expect(refused).toBeGreaterThan(10);
+  });
+
+  it('prices a proven creature as the fight would go, through the dials, and says when it kills', () => {
+    const lesson = LESSONS.find((l) => l.id === 'last-cell')!;
+    const harder = { ...DEFAULT_GAMEPLAY, enemyDamageRatio: 2, hpRatio: 0.5 };
+    const said: string[] = [];
+    for (const settings of [DEFAULT_GAMEPLAY, harder]) {
+      const run = new LessonRun(lesson, { settings });
+      const { game } = run;
+      for (const [cell, tier] of provable(game).mark) {
+        if (cell.open || tier <= game.level) continue;
+        const cost = fightCostFor(game.level, game.hp, tier, settings);
+        const why = run.refusal(cell)!;
+        expect(why, `${tier} at ${game.hp} HP`).toContain(
+          cost >= game.hp ? 'the fight would kill you' : `the fight would cost ${cost} HP`,
+        );
+        said.push(why);
+      }
+    }
+    // Both kinds are met: a fight the player survives, and one that kills.
+    expect(said.some((s) => s.includes('would cost'))).toBe(true);
+    expect(said.some((s) => s.includes('would kill you'))).toBe(true);
   });
 });
