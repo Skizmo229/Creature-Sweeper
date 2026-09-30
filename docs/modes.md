@@ -15,8 +15,10 @@ search board with spells. The rest follow.
 is harder than a rectangle, because edges are free information. (`'horizontal'`, a cylinder, is
 the gentler version no ladder currently uses.) Measured, it is nonetheless the
 gentlest counted ladder at NORMAL's schedule (cornered 0.0 to 0.6 times a board). A wrapped axis
-must be at least 3 cells, or a cell is its own neighbour. The seam is drawn dashed, per present
-cell.
+must be at least 3 cells, or a cell is its own neighbour; and a hex grid wraps top to bottom only
+on an even height, since its rows alternate their offset and an odd one leaves two unindented
+rows either side of the seam, whose diagonals miss each other. The seam is drawn dashed, per
+present cell.
 
 **HIVE** is a hex grid: six neighbours, so every number is lower and blank regions are commoner,
 and it runs denser (35%) to compensate.

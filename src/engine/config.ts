@@ -177,8 +177,12 @@ function readWorkout(type: LadderType, spells: readonly string[]): WorkoutRule |
 }
 
 /** Wrapping needs at least 3 cells across the joined axis, or a cell would
- *  end up adjacent to itself. Caught here rather than producing a silent
- *  miscount deep in the number calculation. */
+ *  end up adjacent to itself. A hex board wraps top to bottom only on an even
+ *  height: its rows alternate their offset, and on an odd height the bottom
+ *  row and the top are both unindented, so the seam's diagonals miss each
+ *  other and a cell counts a neighbour that does not count it back. Caught
+ *  here rather than producing a silent miscount deep in the number
+ *  calculation. */
 function readWrap(type: LadderType, row: LadderBoard): 'none' | 'horizontal' | 'both' {
   const raw = type.wrap ?? 'none';
   if (raw !== 'none' && raw !== 'horizontal' && raw !== 'both') {
@@ -189,6 +193,11 @@ function readWrap(type: LadderType, row: LadderBoard): 'none' | 'horizontal' | '
   }
   if (raw === 'both' && row.h < 3) {
     throw new Error(`${type.id}#${row.n}: board is ${row.h} tall, too short to wrap vertically`);
+  }
+  if (raw === 'both' && type.topology === 'hex' && row.h % 2 === 1) {
+    throw new Error(
+      `${type.id}#${row.n}: a hex board ${row.h} tall cannot wrap vertically; it needs an even height`,
+    );
   }
   return raw;
 }

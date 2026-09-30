@@ -891,6 +891,29 @@ describe('topology', () => {
   });
 
   /**
+   * No ladder wraps a hex board, so this is the config guard alone: hex rows alternate their
+   * offset, and only an even height puts an indented row across the seam from an unindented one.
+   */
+  it('wraps a hex board top to bottom only on an even height, where adjacency stays mutual', () => {
+    const hive = ladders.find((t) => t.id === 'hive')!;
+    const wrapped = { ...hive, wrap: 'both' };
+    const odd = hive.boards.find((row) => row.h % 2 === 1)!;
+    const even = hive.boards.find((row) => row.h % 2 === 0)!;
+    expect(() => boardConfig([wrapped], hive.id, odd.n)).toThrow(/needs an even height/);
+    const game = Game.create(boardConfig([wrapped], hive.id, even.n), 0xbeef);
+    for (const row of game.grid) {
+      for (const cell of row) {
+        for (const n of game.neighboursOf(cell)) {
+          expect(
+            game.neighboursOf(n),
+            `asymmetric (${cell.x},${cell.y}) -> (${n.x},${n.y})`,
+          ).toContain(cell);
+        }
+      }
+    }
+  });
+
+  /**
    * WRAPPED CROSS is the first board that is both shaped and wrapped, and the
    * combination is the only thing about it that is new: a joined edge made
    * almost entirely of holes, with the arm's tip the one strip of it that is
