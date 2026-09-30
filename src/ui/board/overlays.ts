@@ -24,10 +24,10 @@ import {
   GHOST_CELLS,
   HEX_EDGE_DIRS,
   SQUARE_EDGE_DIRS,
-  boardSize,
   centreOf,
   contentBox,
   squareCorners,
+  wrapPeriod,
 } from './geometry.js';
 import {
   type Paint,
@@ -56,13 +56,13 @@ export function drawGhostBand(p: Paint): void {
 
   const w = game.config.width;
   const h = game.config.height;
-  const size = boardSize(layout);
+  const period = wrapPeriod(layout);
   ctx.save();
   ctx.globalAlpha = 0.3;
 
   for (const [ox, oy] of offsets) {
-    const dx = ox * size.w;
-    const dy = oy * size.h;
+    const dx = ox * period.w;
+    const dy = oy * period.h;
     for (const row of game.grid) {
       for (const cell of row) {
         // Only the strip that will actually land next to the seam.

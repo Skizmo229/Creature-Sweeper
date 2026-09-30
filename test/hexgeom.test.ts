@@ -7,7 +7,17 @@ import {
   hexRadius,
   hexRowStep,
 } from '../src/ui/hexgeom.js';
+import {
+  GHOST_CELLS,
+  type Layout,
+  centreOf,
+  fittedCellFor,
+  wrapPeriod,
+} from '../src/ui/board/geometry.js';
+import { boardConfig } from '../src/engine/config.js';
+import { Game } from '../src/engine/game.js';
 import { neighbours, makeCell, type Grid } from '../src/engine/grid.js';
+import { ladders } from './helpers.js';
 
 const SIZES = [8, 13, 21, 32, 48];
 const COLS = 30;
@@ -134,5 +144,48 @@ describe('drawn geometry agrees with engine adjacency', () => {
         expect(ranked, `mismatch at (${col},${row})`).toEqual(engine);
       }
     }
+  });
+});
+
+/**
+ * No ladder wraps a hex board yet, but config allows it, and the band beyond a joined edge is what
+ * a click on the repeat resolves through: drawn at the drawn size rather than the lattice's period,
+ * it sat half a hex to the side of the cells it showed.
+ */
+describe('the repeat beyond a wrapped edge', () => {
+  const offsets: Array<[number, number]> = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+    [-1, -1],
+    [1, 1],
+  ];
+
+  it('draws each ghost cell where the lattice puts the cell across the seam', () => {
+    for (const hex of [false, true]) {
+      const layout: Layout = { hex, cellPx: 32, originX: 5, originY: 7, cols: COLS, rows: ROWS };
+      const period = wrapPeriod(layout);
+      for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLS; col++) {
+          const shown = centreOf(layout, col, row);
+          for (const [ox, oy] of offsets) {
+            const across = centreOf(layout, col + ox * COLS, row + oy * ROWS);
+            const where = `${hex ? 'hex' : 'square'} (${col},${row}) by (${ox},${oy})`;
+            expect(shown.cx + ox * period.w, where).toBeCloseTo(across.cx);
+            expect(shown.cy + oy * period.h, where).toBeCloseTo(across.cy);
+          }
+        }
+      }
+    }
+  });
+
+  it('leaves room for the band above and below a hex board wrapped top to bottom', () => {
+    const hive = ladders.find((t) => t.id === 'hive')!;
+    const game = Game.create(boardConfig([{ ...hive, wrap: 'both' }], hive.id, 1), 1);
+    const availH = 600;
+    const cellPx = fittedCellFor(game, 4000, availH);
+    const rows = game.config.height + 2 * GHOST_CELLS;
+    expect(hexBoardSize(game.config.width, rows, cellPx).h).toBeLessThanOrEqual(availH);
   });
 });
