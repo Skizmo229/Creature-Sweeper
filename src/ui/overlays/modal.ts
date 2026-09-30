@@ -12,12 +12,28 @@ import { buildHowTo } from '../screens/howto.js';
 import { type AskOptions, buildAsk } from './ask.js';
 import { buildCrash } from './crash.js';
 
+/**
+ * Note where the focus is, as an overlay is about to take it; the function returned hands it back
+ * when the overlay closes, if that element is still on the page. Without it a keyboard player is
+ * left at the top of the document whenever a card or a window closes.
+ */
+export function keepFocus(): () => void {
+  const active = document.activeElement;
+  const back = active instanceof HTMLElement && active !== document.body ? active : null;
+  return () => {
+    if (back?.isConnected) back.focus({ preventScroll: true });
+  };
+}
+
 export class Modal {
   /** The overlay up, if any. */
   private overlay: HTMLElement | null = null;
 
   /** What Escape does for the overlay up; null means close it. */
   private onEscape: (() => void) | null = null;
+
+  /** Hands the focus back to where it was before the overlay up took it. */
+  private giveFocusBack: (() => void) | null = null;
 
   constructor(private readonly root: HTMLElement) {}
 
@@ -29,6 +45,7 @@ export class Modal {
     this.close();
     const screen = this.root.querySelector('.screen');
     if (!screen) return false;
+    this.giveFocusBack = keepFocus();
     screen.append(overlay);
     this.overlay = overlay;
     this.onEscape = onEscape ?? null;
@@ -36,10 +53,14 @@ export class Modal {
     return true;
   }
 
+  /** Take the overlay down, and the focus back where it was when it went up. */
   close(): void {
     this.overlay?.remove();
     this.overlay = null;
     this.onEscape = null;
+    const giveBack = this.giveFocusBack;
+    this.giveFocusBack = null;
+    giveBack?.();
   }
 
   /** A key, while an overlay is up: Escape answers "no", nothing else gets through. */

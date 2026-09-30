@@ -5,6 +5,7 @@
  */
 
 import { el } from '../dom.js';
+import { keepFocus } from '../overlays/modal.js';
 import { DEFAULT } from '../presentation.js';
 import type { GameFont } from '../typefaces.js';
 
@@ -129,9 +130,11 @@ export function settingsWindow(
   const close = el('button', 'ghost small', 'Close (Esc)');
   head.append(el('h2', undefined, title), close);
 
+  const giveFocusBack = keepFocus();
   const dismiss = (): void => {
     overlay.remove();
     window.removeEventListener('keydown', onKey, true);
+    giveFocusBack();
   };
   const onKey = (e: KeyboardEvent): void => {
     if (!overlay.isConnected) {

@@ -28,6 +28,9 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   Back to the list, once per breakage; Back, and Escape, rebuild the screen and re-arm it
   (decision 0081).
 - `.overlay` is `position: fixed`, because only the game screen is exactly one viewport tall.
+- An overlay that closes hands the focus back to the control that had it when the overlay went up,
+  if that control is still on the page (`keepFocus`, used by `Modal` and by the settings screen's
+  windows), so a keyboard player goes on from where they were rather than from the top.
 - The LV palette is modal. Pencilling needs a mode *and* a tier, so entering pencil mode arms a
   tier (and hands it back on exit unless the player chose it); the toggle is labelled with the
   mode it is in (`Entry: Mark` / `Entry: Pencil`); pencil mode never falls through to opening;
