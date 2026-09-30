@@ -18,6 +18,7 @@ import {
 } from '../src/engine/replay.js';
 import { type Rng, mulberry32 } from '../src/engine/rng.js';
 import { FullRun } from '../src/engine/run.js';
+import { DEFAULT_GAMEPLAY } from '../src/engine/settings.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';
 import { SEEDS, boardsOf, ladders } from './helpers.js';
 
@@ -43,6 +44,39 @@ const stateOf = (game: Game): string =>
 
 const pickOf = <T>(rng: Rng, items: readonly T[]): T | undefined =>
   items[Math.floor(rng() * items.length)];
+
+/**
+ * The digest as 0.9.1 and every build before it took it, copied here so that version 1 can never
+ * drift from what the games paused by them hold (decision 0084).
+ */
+function digestOf091(game: Game): string {
+  const cells = game.grid
+    .flat()
+    .map(
+      (c) =>
+        `${c.tier},${c.num},${+c.open},${+c.alive},${+c.occupied},${+c.present},` +
+        `${c.mark},${+c.given},${c.notes}`,
+    );
+  const standing = [
+    game.status,
+    game.hp,
+    game.maxHp,
+    game.level,
+    game.ex,
+    game.mana,
+    game.exerciseCharge,
+    game.exerciseSurcharge,
+    game.charge,
+    game.moves,
+  ];
+  const text = `${JSON.stringify(game.config)}|${standing.join(',')}|${cells.join(';')}`;
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
 
 /**
  * A move of every kind the player has, mostly ones that get somewhere: free kills and empty ground
@@ -104,6 +138,7 @@ describe('a board replayed from its moves', () => {
           });
           expect(stateOf(replayed)).toBe(stateOf(played));
           expect(boardDigest(replayed)).toBe(boardDigest(played));
+          expect(boardDigest(played, 1)).toBe(digestOf091(played));
         }
       }
     });
@@ -150,6 +185,42 @@ describe('a board replayed from its moves', () => {
     const covered = a.grid.flat().find((c) => c.present && !c.open)!;
     a.toggleNote(covered.x, covered.y, 0);
     expect(boardDigest(a)).not.toBe(before);
+  });
+
+  /**
+   * What version 1 missed, each changed as an update to a rule would change it: the same board and
+   * the same moves, and one answer different. Version 2 sees each; version 1 is kept only to check
+   * a game paused under it.
+   */
+  it('fingerprints what the spells said, a sprinkle’s partner and the sweeps left, from version 2', () => {
+    const changes = (game: Game, change: () => void): void => {
+      const [first, full] = [boardDigest(game, 1), boardDigest(game)];
+      change();
+      expect(boardDigest(game, 1)).toBe(first);
+      expect(boardDigest(game)).not.toBe(full);
+    };
+
+    const augur = Game.create(boardsOf('augur')[0]!, SEEDS[0]!);
+    const ring = augur.grid
+      .flat()
+      .find((c) => c.open && augur.neighboursOf(c).some((n) => !n.open))!;
+    augur.cast('census', ring.x, ring.y);
+    augur.cast('augur', ring.x, ring.y);
+    expect(ring.census).not.toBeNull();
+    expect(ring.augur).not.toBeNull();
+    changes(augur, () => (ring.census = ring.census! + 1));
+    changes(augur, () => (ring.augur = ring.augur! + 1));
+
+    const sprinkles = Game.create(boardsOf('sprinkle_donut')[0]!, SEEDS[0]!);
+    const half = sprinkles.grid.flat().find((c) => c.partner)!;
+    changes(sprinkles, () => (half.partner = { x: half.x, y: half.y }));
+
+    const budget = (sweepBudget: number): Game =>
+      Game.create(boardsOf('normal')[2]!, SEEDS[0]!, {
+        settings: { ...DEFAULT_GAMEPLAY, sweep: 'budget', sweepBudget },
+      });
+    expect(boardDigest(budget(3), 1)).toBe(boardDigest(budget(5), 1));
+    expect(boardDigest(budget(3))).not.toBe(boardDigest(budget(5)));
   });
 });
 

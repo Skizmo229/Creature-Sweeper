@@ -105,18 +105,30 @@ export function decodeMove(code: unknown): Move | null {
 }
 
 /**
+ * Which reading of a board `boardDigest` takes, kept beside each paused game, which is checked by
+ * the reading it was paused under. So the digest can learn more about a board without refusing
+ * every game paused before it (decision 0084). Version 1, written by 0.9.1 and every build before
+ * it, left out a cell's Census count, its Augur answer and its sprinkle partner, and the sweeps
+ * left of a budget.
+ */
+export const DIGEST_VERSION = 2;
+
+/**
  * A fingerprint of everything a board is: its config, every cell, and the player's standing. Two
  * boards with the same fingerprint are, to every rule and to the player, the same board. FNV-1a
- * over a canonical string; it guards against an update, not against an adversary.
+ * over a canonical string; it guards against an update, not against an adversary. An older
+ * `version` is only for checking a game paused under it.
  */
-export function boardDigest(game: Game): string {
-  const cells = game.grid
-    .flat()
-    .map(
-      (c) =>
-        `${c.tier},${c.num},${+c.open},${+c.alive},${+c.occupied},${+c.present},` +
-        `${c.mark},${+c.given},${c.notes}`,
-    );
+export function boardDigest(game: Game, version = DIGEST_VERSION): string {
+  const full = version >= 2;
+  const cells = game.grid.flat().map((c) => {
+    const first =
+      `${c.tier},${c.num},${+c.open},${+c.alive},${+c.occupied},${+c.present},` +
+      `${c.mark},${+c.given},${c.notes}`;
+    if (!full) return first;
+    const partner = c.partner ? `${c.partner.x}:${c.partner.y}` : '';
+    return `${first},${c.census ?? ''},${c.augur ?? ''},${partner}`;
+  });
   const standing = [
     game.status,
     game.hp,
@@ -128,6 +140,7 @@ export function boardDigest(game: Game): string {
     game.exerciseSurcharge,
     game.charge,
     game.moves,
+    ...(full ? [game.sweepsLeft] : []),
   ];
   const text = `${JSON.stringify(game.config)}|${standing.join(',')}|${cells.join(';')}`;
   let hash = 0x811c9dc5;
