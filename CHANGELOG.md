@@ -2,6 +2,26 @@
 
 What each version of Creature Sweeper changed, newest first (decision 0068).
 
+## 0.9.2 — 2026-09-30
+
+Fixes for the next round of play-testing, and a place to send what it finds.
+
+- Play statistics have somewhere to go: the backup screen links a play-test report on GitHub, a
+  form with a box for the code (decision 0085).
+- The school: a lesson is untimed and played at the tuned dials, whatever the settings say, so
+  its words hold; a refused click prices the fight as it would go, and says when it would kill;
+  a lesson's card is shown once.
+- A paused game's check also covers what Census and Augur said, a sprinkle's partner and the
+  sweeps left, and a game paused on 0.9.1 still resumes (decision 0084).
+- A save with one field of the wrong shape loads the rest instead of failing at every start, and
+  cancelling REPLACE SAVE? brings the pasted code back.
+- A clear with Sweep off counts, whatever the charge slider says, and a ladder's own creature
+  colours survive a reload and stay that ladder's.
+- A right button let go off the board no longer swallows the next click, a pinch that loses a
+  finger no longer jumps the zoom, and a card or window that closes gives the focus back.
+- Escape on the crash card goes back to the list, Abandon run on the board-clear card asks first,
+  and the tutor prices a guess through the creature-damage dial.
+
 ## 0.9.1 — 2026-09-28
 
 The settings, the looks and the pre-release fixes, for the next round of play-testing.
