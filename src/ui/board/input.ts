@@ -139,8 +139,7 @@ export class BoardInput {
       // The lift's bookkeeping comes first, whatever the lift means: a finger left behind in
       // `touches` would make the next single finger a phantom pinch.
       this.cancelPress();
-      const lifted = this.touches.delete(e.pointerId);
-      if (lifted && this.touches.size < 2) this.pinch = null;
+      const lifted = this.fingerUp(e.pointerId);
       if (e.button === 2 || this.marking) {
         // The mark was made when the button went down.
         this.marking = false;
@@ -163,8 +162,7 @@ export class BoardInput {
       this.dragging = false;
       this.marking = false;
       this.cancelPress();
-      this.touches.delete(e.pointerId);
-      if (this.touches.size < 2) this.pinch = null;
+      this.fingerUp(e.pointerId);
     });
 
     c.addEventListener('pointerleave', () => host.leave());
@@ -223,6 +221,19 @@ export class BoardInput {
         /* already released */
       }
     }
+  }
+
+  /**
+   * A finger has left the board; false if it was not one being tracked. With two or more still
+   * down the pinch goes on, measured afresh from where they are, because the pair it was measured
+   * from may have lost the finger that lifted and the next move would jump the zoom; with fewer
+   * it is over.
+   */
+  private fingerUp(id: number): boolean {
+    const lifted = this.touches.delete(id);
+    if (lifted && this.touches.size >= 2) this.beginPinch();
+    else if (lifted) this.pinch = null;
+    return lifted;
   }
 
   /**
