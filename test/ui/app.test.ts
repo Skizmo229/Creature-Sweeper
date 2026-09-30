@@ -296,6 +296,26 @@ describe('the app', () => {
     expect(text('.board-card.done')).toContain('Subtract what you can see');
   });
 
+  it('shows a lesson’s card once: a move or Enter after it is put away does not bring it back', () => {
+    [...document.querySelectorAll<HTMLButtonElement>('button')]
+      .find((b) => b.textContent === 'Take the lessons')!
+      .click();
+    document.querySelectorAll<HTMLButtonElement>('.board-card')[2]!.click();
+    key('Enter');
+    app.actions.onCellPrimary(0, 0);
+    app.actions.onCellPrimary(1, 0);
+    key('Enter');
+    expect(text('.overlay h2')).toBe('LESSON TAKEN');
+    key('Escape');
+    expect(document.querySelector('.overlay')).toBeNull();
+    // The board is still up: an open cell clicked, a covered one marked, and Enter.
+    app.actions.onCellPrimary(0, 0);
+    app.actions.pickTier(1);
+    app.actions.onCellPrimary(3, 0);
+    key('Enter');
+    expect(document.querySelector('.overlay')).toBeNull();
+  });
+
   it('shows a ladder whose rules add a trick its card the first time it is opened, and once', () => {
     app.progress.setUnlockAll(true);
     const boards = (id: string): void =>
