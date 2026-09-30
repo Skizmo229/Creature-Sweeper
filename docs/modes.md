@@ -134,7 +134,7 @@ walks, and the honest player is limited in what it may open and gamble on.
 
 A wall stops information dead, so every room is its own puzzle and the number of forced guesses is
 set by how many rooms there are. The empty scaffold of hallways and doorways then makes each guess
-cheap. The schedule (12.8 to 26.4%) is the only one derived from a play measurement rather than
+cheap. The schedule (13 to 26.5%) is the only one derived from a play measurement rather than
 inherited, and it has been re-derived every time the mode changed. `ROOM_COUNT` moves the guesses
 and barely the danger; HP is the lever for deadliness.
 

@@ -890,7 +890,7 @@ alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
 # when the crawl rule landed: having to gamble on what is in front of
 # you rather than on the cheapest square anywhere costs far more HP per
 # forced guess, so the density a deductive player can still get through
-# dropped by about a third. 18% is a little past board 10, which leaves
+# dropped by about a third. 27% is a little past board 10, which leaves
 # the continuation somewhere to go without walking it off the cliff.
 ceiling = { density_cap = 0.27 }
 shape = "dungeon"
