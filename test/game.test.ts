@@ -337,6 +337,22 @@ describe('marks', () => {
     expect(game.setMark(0, 0, 0)[0]).toMatchObject({ type: 'marked', from: 2, to: 0 });
   });
 
+  it('refuses a mark that is not one of the board’s tiers, on PATROL too', () => {
+    for (const game of [
+      Game.create(testConfig(), 7),
+      Game.create(boardConfig(ladders, 'patrol', 1), 7),
+    ]) {
+      const tiers = game.config.tiers;
+      for (const mark of [-1, 2.5, tiers + 1, Number.NaN]) {
+        expect(game.setMark(0, 0, mark), `${game.config.typeId} ${mark}`).toEqual([
+          { type: 'blocked', reason: 'out-of-bounds' },
+        ]);
+      }
+      expect(game.grid[0]![0]!.mark).toBe(0);
+      expect(game.marksPlaced).toHaveLength(tiers);
+    }
+  });
+
   it('blocks clicks on a cell marked above your level', () => {
     const game = Game.create(testConfig(), 7);
     paint(game, [

@@ -343,6 +343,11 @@ export class Game {
     if (this.status !== 'playing') return [{ type: 'blocked', reason: 'game-over' }];
     const cell = this.cellAt(x, y);
     if (!cell) return [{ type: 'blocked', reason: 'out-of-bounds' }];
+    // A mark names one of the board's tiers, or none. A paused game's stored moves are played
+    // through here, and stored data is never trusted.
+    if (!Number.isInteger(mark) || mark < 0 || mark > this.config.tiers) {
+      return [{ type: 'blocked', reason: 'out-of-bounds' }];
+    }
     // On PATROL a mark is a route drawn from this cell as its corner, which may be uncovered.
     if (this.patrol) return this.patrol.mark(this, cell, mark);
     if (cell.open) return [{ type: 'blocked', reason: 'already-open' }];
