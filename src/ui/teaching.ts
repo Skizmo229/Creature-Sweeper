@@ -113,11 +113,15 @@ export class Teaching {
     if (modal.show(overlay, focus)) show(target);
   }
 
-  /** Begin one of the nine lessons, on its own board. */
+  /**
+   * Begin one of the nine lessons, on its own board, at the tuned dials whatever the settings say:
+   * the lessons are written for that game (the guessing lesson prices its guess in HP, the last
+   * reads the counters), and a hard mode chosen for the ladders is not what a lesson teaches.
+   */
   startLesson(index: number): void {
     this.lessonIndex = index;
     this.refused = null;
-    this.lesson = new LessonRun(LESSONS[index]!, { settings: this.host.settings.gameplay });
+    this.lesson = new LessonRun(LESSONS[index]!);
     this.host.play(this.lesson.game);
   }
 

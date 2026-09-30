@@ -162,14 +162,15 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   its own tricks marked in its colour; `G` on a board leads with the board's ladder the same way.
 - The school (`src/ui/screens/school.ts`, the lessons in `src/ui/school/`; docs/teaching-plan.md,
   Part 2) is offered from the ladder list and the rules card ("Take the lessons") and required by
-  nothing. A lesson is played on the game screen, labelled with its title and without Sweep: its
-  step speaks in the hint line, in the ink, the tutor's violet points at the step's proof, and
-  Next (or Enter) moves on where the step waits to be told. A click nothing has proven is refused
-  before the engine sees it, the reason in the danger colour ahead of the step (a cell proven above
-  the level says what the fight would cost, priced as the tutor prices a guess, or that it would
-  kill), except in lesson 8, where guessing is the lesson. `H`
-  and `G` work as on any board. A lesson's end is written down (the save's `lessons`) and offers
-  the next; nothing a lesson does touches a ladder's record.
+  nothing. A lesson is played on the game screen at the tuned dials, whatever the settings say,
+  since its words are written for them; it is labelled with its title and has no Sweep. Its step
+  speaks in the hint line, in the ink, the tutor's violet points at the step's proof, and Next (or
+  Enter) moves on where the step waits to be told. A click nothing has proven is refused before
+  the engine sees it, the reason in the danger colour ahead of the step (a cell proven above the
+  level says what the fight would cost, priced as the tutor prices a guess, or that it would
+  kill), except in lesson 8, where guessing is the lesson. `H` and `G` work as on any board. A
+  lesson's end is written down (the save's `lessons`) and offers the next; nothing a lesson does
+  touches a ladder's record.
 - Pausing (decision 0057): a Pause button in the HUD and `P`; not on a school lesson. Back (and
   Escape) asks Pause, Abandon or Keep playing on a game with a move in it, or any run; a board
   with no move made is left without a question. A tile with a game paused on it is dashed in the
