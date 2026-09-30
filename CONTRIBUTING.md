@@ -11,8 +11,10 @@ ladder generator whose output tunes all of it (`design/`). `README.md` is the fr
 Bug reports, ideas and pull requests are all welcome on GitHub. A bug report helps most when it
 names the ladder and board and says what you did and what happened; the code from **Back up /
 restore save** on the list of game types carries the whole save, so a problem that depends on
-progress can be reproduced exactly. The maintainer reviews every pull request and merges it; the
-rules below are what a review asks of one.
+progress can be reproduced exactly. A play-tester's statistics go into a **Play-test report**, the
+issue form the same screen links, whose required field takes the `CST1:` code; the maintainer
+reads one with `npm run telemetry -- CODE`. The maintainer reviews every pull request and merges
+it; the rules below are what a review asks of one.
 
 By contributing you agree to license your contribution under the project's licences: code under
 GPL-3.0-or-later, documentation and design research under CC BY-SA 4.0. The README's licence

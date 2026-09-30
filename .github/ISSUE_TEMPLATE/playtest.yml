@@ -1,0 +1,31 @@
+# The play-test report the game's backup screen links to (docs/ui.md). Its statistics field is
+# read with `npm run telemetry -- CODE`.
+name: Play-test report
+description: Send your play statistics, and what you noticed while playing.
+title: 'Play-test: '
+labels: ['play-test']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for playing. Issues here are public.
+
+        Your play statistics are on the list of game types, under **Back up / restore save**: press **Copy** under *Play statistics* and paste the code below. It holds what each board cost you (attempts, guesses, HP lost, time), the game's version and when you copied it, and nothing else.
+  - type: textarea
+    id: statistics
+    attributes:
+      label: Play statistics code
+      description: 'The code that starts with CST1:'
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: What you noticed
+      description: A board that felt too hard or too easy, anything unclear, anything that broke. Name the ladder and board where you can.
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: Windows laptop, Chrome

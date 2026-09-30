@@ -411,4 +411,5 @@ store) and `src/engine/settings.ts` (the gameplay dials).
 - The play statistics (decision 0060) are a third store, `creature-sweeper.telemetry.v1`, never
   inside the save code: per board, attempts and how they ended, opens and guesses, sweeps, casts,
   hints, HP lost, seconds and what dealt each death, tuned and modified dials apart. The backup
-  screen shows them as a `CST1:` code to copy; Reset progress clears them with the rest.
+  screen shows them as a `CST1:` code to copy, and links the play-test report on GitHub whose
+  required field takes it (decision 0085); Reset progress clears them with the rest.
