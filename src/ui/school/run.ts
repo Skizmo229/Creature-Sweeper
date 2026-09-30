@@ -10,9 +10,9 @@
  * proven. The refusal is the UI's; the engine never sees the click.
  */
 
-import { damageIfSurvived } from '../../engine/combat.js';
 import { Game, type GameOptions } from '../../engine/game.js';
 import { hasNotes, lowestNote, noteBit } from '../../engine/notes.js';
+import { fightCostFor } from '../../engine/settings.js';
 import type { Cell } from '../../engine/types.js';
 import { type Lesson, merge, provable } from '../../sim/tutor.js';
 import type { SchoolLesson, Spot, Step, Wait } from './lessons.js';
@@ -84,7 +84,8 @@ export class LessonRun {
    * Why a click may not open this cell, or null when it may: a cell the tricks have proven safe,
    * anything at all where guessing is the lesson, or a cell the engine will refuse itself (open, or
    * locked by a mark or the pencil). A cell proven to be a creature above the level is refused with
-   * its cost, and any other with the number to look at.
+   * what the fight would take, priced as the tutor prices a guess (through the damage dial, and
+   * death where it would kill), and any other with the number to look at.
    */
   refusal(cell: Cell): string | null {
     const { game } = this;
@@ -95,10 +96,9 @@ export class LessonRun {
     if (proven.open.has(cell)) return null;
     const tier = proven.mark.get(cell);
     if (tier !== undefined) {
-      return (
-        `That cell is a ${tier}, above your level ${game.level}: the fight would cost ` +
-        `${damageIfSurvived(game.level, tier)} HP. Mark it and come back.`
-      );
+      const cost = fightCostFor(game.level, game.hp, tier, game.settings);
+      const fight = cost >= game.hp ? 'would kill you' : `would cost ${cost} HP`;
+      return `That cell is a ${tier}, above your level ${game.level}: the fight ${fight}. Mark it and come back.`;
     }
     const look = (this.pointer() ?? proven.proofs.find((l) => l.open.length))?.why.constraints[0];
     return `Nothing proves that cell yet${look ? `; look at the ${look.cell.num}` : ''}.`;

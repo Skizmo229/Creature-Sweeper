@@ -166,7 +166,8 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   step speaks in the hint line, in the ink, the tutor's violet points at the step's proof, and
   Next (or Enter) moves on where the step waits to be told. A click nothing has proven is refused
   before the engine sees it, the reason in the danger colour ahead of the step (a cell proven above
-  the level says what the fight would cost), except in lesson 8, where guessing is the lesson. `H`
+  the level says what the fight would cost, priced as the tutor prices a guess, or that it would
+  kill), except in lesson 8, where guessing is the lesson. `H`
   and `G` work as on any board. A lesson's end is written down (the save's `lessons`) and offers
   the next; nothing a lesson does touches a ladder's record.
 - Pausing (decision 0057): a Pause button in the HUD and `P`; not on a school lesson. Back (and
