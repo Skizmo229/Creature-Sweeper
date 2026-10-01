@@ -481,7 +481,7 @@ export function censusTarget(game: Game, constraints: Constraint[], guess: Cell)
  * ring is not free already, yet small enough to be spread at or below the level over every cell.
  * Where it could not, the answer can only cap a guess, and a player saves the mana.
  */
-export function augurCouldFree(
+function augurCouldFree(
   c: { readonly cell: Cell; readonly residual: number; readonly unknown: readonly Cell[] },
   level: number,
 ): boolean {
