@@ -21,6 +21,7 @@ import type { Game } from '../engine/game.js';
 import type { Cell } from '../engine/types.js';
 import { hasNote, noteBit } from '../engine/notes.js';
 import { placementRule } from '../engine/placement/registry.js';
+import { augurNow } from '../engine/augur.js';
 
 /** One visible number, less everything on show around it. */
 export interface Constraint {
@@ -36,6 +37,8 @@ export interface Constraint {
   readonly creatures: number | null;
   /** The strongest tier any of `unknown` could be, once an Augur has read this cell's ring. */
   readonly ceiling: number | null;
+  /** The tiers of the creatures among `unknown`, strongest first, once an Augur has read the ring. */
+  readonly tiers: readonly number[] | null;
 }
 
 /** The board as the graded player sees it on one pass. */
@@ -111,19 +114,26 @@ export function readBoard(game: Game, peek: boolean, options: ReadOptions = {}):
     let residual = cell.num;
     let counted = 0;
     const covered: Cell[] = [];
-    for (const n of game.neighboursOf(cell)) {
+    const ring = game.neighboursOf(cell);
+    // An Augur lists the marked creatures too: each believed mark takes its tier out of the list.
+    const tiers = augurNow(cell, ring);
+    for (const n of ring) {
       if (n.open) {
         residual -= n.tier;
         if (n.tier > 0) counted++;
       } else if (believed(n)) {
         residual -= n.mark;
         counted++;
+        const at = tiers?.indexOf(n.mark) ?? -1;
+        if (at >= 0) tiers!.splice(at, 1);
       } else covered.push(n);
     }
     if (!covered.length) continue;
     let creatures = cell.census === null ? null : cell.census - counted;
+    if (tiers) creatures = tiers.length;
     if (shown) creatures = covered.filter((n) => n.tier > 0).length;
-    const c: Constraint = { cell, residual, unknown: covered, creatures, ceiling: cell.augur };
+    const ceiling = tiers ? (tiers[0] ?? 0) : null;
+    const c: Constraint = { cell, residual, unknown: covered, creatures, ceiling, tiers };
     constraints.push(c);
     for (const n of covered) {
       const list = touching.get(n);

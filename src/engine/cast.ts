@@ -8,6 +8,7 @@
 import { EXERCISE_LEVELS, type SpellId } from './spells.js';
 import type { BlockReason, BoardConfig, Cell, GameEvent } from './types.js';
 import { findBestOpening } from './opening.js';
+import { hiddenTiers } from './augur.js';
 import type { Grid } from './grid.js';
 
 /** The engine operations a spell may perform. `Game` satisfies it. */
@@ -74,23 +75,15 @@ function censusSpell(host: SpellHost, cell: Cell): SpellOutcome {
 }
 
 /**
- * Augur: the strongest tier among the cell's covered neighbours. Every hidden creature there is at
- * or below it, which is what Sweep reads (`provenByAugur`); with Census's count and the number's
- * sum it often pins the layout. It says nothing about WHERE, so it exposes no cell.
+ * Augur: the tiers of the creatures among the cell's covered neighbours, strongest first. The
+ * strongest bounds every one, which is what Sweep reads (`provenByAugur`), and the list says how
+ * many hide and how strong each is (decision 0087). It says nothing about WHERE, so it exposes no
+ * cell.
  */
 function augurSpell(host: SpellHost, cell: Cell): SpellOutcome {
   if (cell.augur !== null) return { blocked: 'no-effect' };
-  cell.augur = strongestHidden(host.neighboursOf(cell));
-  return { events: [], detail: cell.augur ? `strongest ${cell.augur}` : 'no creatures' };
-}
-
-/**
- * An Augur's answer over a ring: the strongest covered tier, 0 if none. Open neighbours are left
- * out because the board already shows them, and an answer they set would bound nothing hidden
- * (decision 0062). It stays true as the ring opens, since opening only takes cells away.
- */
-export function strongestHidden(ring: readonly Cell[]): number {
-  return Math.max(0, ...ring.filter((n) => !n.open).map((n) => n.tier));
+  cell.augur = hiddenTiers(host.neighboursOf(cell));
+  return { events: [], detail: cell.augur.length ? cell.augur.join(' ') : 'no creatures' };
 }
 
 /** Exercise: the next fight is fought a level higher. One charge at a time. */

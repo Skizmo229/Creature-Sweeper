@@ -49,9 +49,9 @@ Reveal. Drawn gold, unerasable, and a fact rather than a claim. `Cell.given`.
 **Census.** The count of creatures among a cell's neighbours, once the Census spell has been cast
 on it. `Cell.census`. Sum plus count usually pins a layout.
 
-**Augur.** The strongest tier among a cell's covered neighbours, once the Augur spell has been cast
-on it. `Cell.augur`. A ceiling on every hidden creature there; at or below your level the ring is
-free.
+**Augur.** The tiers of the creatures among a cell's covered neighbours, strongest first, once the
+Augur spell has been cast on it: `Cell.augur` as cast, `augurNow` as the ring stands. Every hidden
+creature and how strong, never where; at or below your level the ring is free.
 
 **Sweep.** Opens every cell the engine can prove safe. **Strict** Sweep uses only facts (numbers,
 open tiers, givens, Census, Augur, the placement proofs). **Assisted** Sweep also trusts the player's
@@ -59,8 +59,8 @@ marks. **Charged** Sweep (the default) is rationed: ten hand-opened cells buy on
 is so many sweeps a board (decision 0072). A **chord** sweeps one open cell's ring at a sweep's
 price (decision 0071). `Game.safeCells`, `Game.sweep`, `Game.sweepAt`.
 
-**Spells.** Augur (20 mana, names the strongest of a cell's hidden creatures), Census (30, counts
-them), Reveal (75, tells you a cell's tier as a given and opens the empty ground around it),
+**Spells.** Census (30 mana, counts a cell's neighbouring creatures), Augur (50, lists the tier of
+each one hidden), Reveal (75, tells you a cell's tier as a given and opens the empty ground around it),
 Beacon (85, opens the largest untouched zero-region), Exercise (150, lends a level to the next
 fight). `src/engine/spells.ts`. WORKOUT
 prices Exercise by its own rule (`WorkoutRule`).

@@ -267,15 +267,28 @@ const censusRing: Trick = {
   },
 };
 
-// An Augur names the strongest hidden tier around a number, so nothing there is above it: at or
-// below the level the ring is free, and above it the pencil loses every tier past it.
+// An Augur lists the tiers hidden around a number, strongest first, but not where. Nothing there
+// is above the strongest, so at or below the level the ring is free. Above it each cell is empty
+// or a listed tier, none is empty where the list fills the ring, and a tier listed k times that
+// only k cells can still hold is in each of them.
 const augurCap: Trick = {
   grade: 1,
   apply(v, m) {
     for (const c of v.reading.constraints) {
-      if (c.ceiling === null) continue;
-      if (c.ceiling <= v.level) for (const n of c.unknown) open(m, n, by([c]));
-      else for (const n of c.unknown) settle(v, n, tiersUpTo(c.ceiling), m, by([c]));
+      if (c.tiers === null) continue;
+      const why = by([c]);
+      if ((c.tiers[0] ?? 0) <= v.level) {
+        for (const n of c.unknown) open(m, n, why);
+        continue;
+      }
+      let listed = c.tiers.length < c.unknown.length ? noteBit(0) : 0;
+      for (const t of c.tiers) listed |= noteBit(t);
+      for (const n of c.unknown) settle(v, n, listed, m, why);
+      for (const t of new Set(c.tiers)) {
+        const times = c.tiers.filter((x) => x === t).length;
+        const room = c.unknown.filter((n) => v.domain(n) & listed & noteBit(t));
+        if (room.length === times) for (const n of room) settle(v, n, noteBit(t), m, why);
+      }
     }
   },
 };

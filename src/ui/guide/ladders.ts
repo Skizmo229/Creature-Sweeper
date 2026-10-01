@@ -188,9 +188,8 @@ export const LADDER_NOTES: readonly LadderNote[] = [
     heading: 'AUGUR',
     body:
       "ARCANE's boards with Census and Augur: no spell opens a cell, so every guess is yours. " +
-      'Augur where a number is spread over many cells and could all be at or below your level; ' +
-      'Census where a large number sits over few. The pencil loses every tier above the ' +
-      'strongest.',
+      'Augur over the cell you would guess: every tier around a number, with your pencil, often ' +
+      'settles it. Census is the cheap half, the count alone.',
   },
 ];
 

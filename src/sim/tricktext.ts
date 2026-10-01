@@ -70,11 +70,11 @@ export const TRICK_TEXT: Readonly<Record<TrickId, TrickText>> = {
       'biggest is at most the amount less one for every other.',
   },
   'augur-cap': {
-    name: 'The strongest one',
+    name: 'The hidden tiers',
     section: 3,
     rule:
-      'An Augur names the strongest hidden creature around a number: at or below your level the ' +
-      'ring is free, and above it no cell can be more.',
+      'An Augur lists the tier of every creature hidden around a number, but not where: at or ' +
+      'below your level the ring is free, and above it each cell is empty or a listed tier.',
   },
   counters: {
     name: 'The counters',

@@ -137,11 +137,13 @@ sprinkles say how many creatures share it, as a Census would. Each is worth at l
 biggest can be no more than the remainder less one for every other: a 3 over three sprinkles is
 three tier 1s, and a 5 over three is nothing above a 3.
 
-**The strongest one** (AUGUR). An Augur names the strongest hidden creature around a number, so
-nothing there is above it: at or below your level the whole ring is free, and above it no cell can
-be more. Sum, count and strongest together pin most rings: a 7 over three cells with a strongest
-of 3 is 3, 3 and 1, or 3, 2 and 2. Aim it where a number is spread over many cells, since that is
-where the strongest is likeliest to be small.
+**The hidden tiers** (AUGUR). An Augur lists the tier of every creature hidden around a number,
+strongest first, but not where any of them stands. Nothing there is above the first, so at or below
+your level the whole ring is free. Above it, each cell is empty or one of the listed tiers; none is
+empty where the list is as long as the ring; and a tier listed k times that only k cells can still
+hold is in each of them. A 7 over three cells listing 4 and 3, with one of the three already
+pencilled as at most 2, is empty there, and the 4 and the 3 are in the other two. Aim it over the
+cell you would otherwise guess.
 
 ## 4. Grade 2: two numbers
 
@@ -348,9 +350,9 @@ exactly this hunt: the top thresholds are met by killing every creature of a tie
   Reveal affordable. Reveal on the cell you would otherwise open blind; Census on a large number
   over few cells; Beacon when the frontier has closed and blank ground is left somewhere.
 - **AUGUR.** ARCANE's boards with Census and Augur only: no spell will open a cell for you, so
-  every guess is still yours. Augur where a number is spread over many cells and could be all at
-  or below your level, which frees the ring; Census where a large number sits over few. Sum, count
-  and strongest together pin most rings, and the pencil loses every tier above the strongest.
+  every guess is still yours. Augur over a number touching the cell you would guess: the list of
+  every tier hidden there, with your pencil marks, often settles the cell. Census is the cheap
+  half, the count alone, and worth it where a large number sits over few cells.
 
 ## 8. Guessing well
 
@@ -399,7 +401,7 @@ You will be forced to guess, and the hard ladders' top boards force it on everyo
 
 Each trick is one technique of the graded player, `src/sim/tricks.ts`, at the grade this page
 gives it. The engine's Sweep (`src/engine/sweep.ts`) performs the raw ring, the subtraction of
-open tiers, the Census bound, the Augur ceiling, the lone dark square and the colour caps, the pairing ring and the
+open tiers, the Census bound, the Augur's list, the lone dark square and the colour caps, the pairing ring and the
 pack ring, and the conga proofs, at the press of a key, so on a ladder with Sweep those are free
 effort for a player; it does not subtract numbers from each other, name a last cell, or count.
 
@@ -420,7 +422,7 @@ with the trick the diagram sits under, at that trick's grade, on the cells the b
 | the lone dark square | `lone-dark` | 1 |
 | the partner's tier | `partner-number` | 1 |
 | count the sprinkles | read by `census-ring`: the board shows the count a Census gives | 1 |
-| the strongest one | `augur-cap` | 1 |
+| the hidden tiers | `augur-cap` | 1 |
 | the whole pack | read by `residual-ring`: a finished pack's numbers all leave 0 | 1 |
 | subtraction, the 1-2-1 | `subtract` | 2 |
 | overlap | `overlap` | 2 |

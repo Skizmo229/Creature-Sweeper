@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { paint, testConfig, EMPTY8 } from './helpers.js';
 import { Game } from '../src/engine/game.js';
+import { augurNow } from '../src/engine/augur.js';
 import {
   EXERCISE_LEVELS,
   MANA_PER_EMPTY_CELLS,
@@ -289,15 +290,26 @@ describe('Census', () => {
 });
 
 describe('Augur', () => {
-  it('names the strongest tier where the number sums them', () => {
+  it('lists every hidden tier, strongest first, where the number sums them', () => {
     const game = Game.create(magicConfig(), 7);
     // Three creatures adjacent to (2,2): tier 1, 1 and 4.
     paint(game, ['........', '.1.1....', '........', '.4......', ...EMPTY8.slice(4)]);
     const mid = game.grid[2]![2]!;
     expect(mid.num).toBe(6);
     const events = game.cast('augur', 2, 2);
-    expect(mid.augur).toBe(4);
-    expect(events.some((e) => e.type === 'spell' && e.detail === 'strongest 4')).toBe(true);
+    expect(mid.augur).toEqual([4, 1, 1]);
+    expect(events.some((e) => e.type === 'spell' && e.detail === '4 1 1')).toBe(true);
+  });
+
+  it('drops a creature from the answer once it is opened, and says nothing new', () => {
+    const game = Game.create(magicConfig({ hp: 20 }), 7);
+    paint(game, ['........', '.1.1....', '........', '.4......', ...EMPTY8.slice(4)]);
+    const mid = game.grid[2]![2]!;
+    game.cast('augur', 2, 2);
+    game.progression.level = 1;
+    game.open(1, 1);
+    expect(augurNow(mid, game.neighboursOf(mid))).toEqual([4, 1]);
+    expect(mid.augur).toEqual([4, 1, 1]);
   });
 
   it('leaves out an open creature, which the board already shows', () => {
@@ -306,14 +318,14 @@ describe('Augur', () => {
     game.progression.level = 4;
     game.open(1, 1);
     game.cast('augur', 2, 2);
-    expect(game.grid[2]![2]!.augur).toBe(1);
+    expect(game.grid[2]![2]!.augur).toEqual([1]);
   });
 
   it('answers 0 where nothing is around, and says so', () => {
     const game = Game.create(magicConfig(), 7);
     paint(game, EMPTY8);
     const events = game.cast('augur', 3, 3);
-    expect(game.grid[3]![3]!.augur).toBe(0);
+    expect(game.grid[3]![3]!.augur).toEqual([]);
     expect(events.some((e) => e.type === 'spell' && e.detail === 'no creatures')).toBe(true);
   });
 
@@ -451,10 +463,10 @@ describe('spell shortcuts', () => {
   const RESERVED = ['s', 'd', 'f', 'w', 'p', 'h', 'g', 'u'];
 
   it('gives every spell the letter its name starts with', () => {
-    expect(SPELL_ORDER.map((id) => spellKey(id))).toEqual(['a', 'c', 'r', 'b', 'e']);
+    expect(SPELL_ORDER.map((id) => spellKey(id))).toEqual(['c', 'a', 'r', 'b', 'e']);
     expect(SPELL_ORDER.map((id) => spellLabel(id))).toEqual([
-      '[A]ugur',
       '[C]ensus',
+      '[A]ugur',
       '[R]eveal',
       '[B]eacon',
       '[E]xercise',

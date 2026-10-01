@@ -346,20 +346,24 @@ on BLIND, so the whole value of the spells is the guesses they replace (decision
 
 ARCANE's boards and schedule with Census and Augur, the two spells that only answer questions:
 neither opens a cell nor names one, so every guess stays the player's. Augur is Echo from the
-design reference, built under a name whose letter is free (decision 0006): the strongest tier among
-a cell's covered neighbours (decision 0062), stored in `Cell.augur` and drawn as a cream badge in
-the top-right corner, the mirror of Census's. Sweep reads it as a proof (`provenByAugur`: at or below
-your level the ring is free), the graded player's `augur-cap` trick frees the ring or narrows the
-pencil to the tiers at or below it, and the honest player caps its guesses with it. What would
-silently break it: a proof that read the ceiling as a bound on the hidden *sum*, which it is not,
-or an answer that counted open neighbours again, which would bound nothing hidden and make it a
-different fact from the one the blurb states.
+design reference, built under a name whose letter is free (decision 0006): the tier of every
+creature among a cell's covered neighbours, strongest first (decisions 0062 and 0087), drawn as a
+cream column down the cell's right-hand edge, the mirror of Census's corner. It is read off the ring
+as it stands (`augurNow`): the answer as cast less each creature opened since, which the board
+already shows, so a creature killed leaves the list. Sweep reads the first as a proof
+(`provenByAugur`: at or below your level the ring is free); the graded player's `augur-cap` trick
+also leaves each cell only the listed tiers, rules out empty ground where the list fills the ring,
+and places a tier where only as many cells can hold it as the list names; the readers take the
+count from it as they take Census's, and the honest player caps its guesses with the first. What
+would silently break it: an answer that counted open neighbours, which would list creatures already
+on show and make the count wrong, or one stored as cast and never read afresh, which would keep a
+beaten creature in it.
 
-Measured, the answer is rarely the one that frees a ring: the graded player, casting only where a
-ring could be all at or below its level, found it so in 1 of 67 casts (boards 4 to 10, 30 seeds,
-27 September 2026), so the spell's value as played is nil, exactly as Census's is, and its price is
-Echo's paper 6 on the tripled scale (decision 0055). Leaving open neighbours out of the answer
-(decision 0062) changed none of 181 casts: a beaten creature is almost always within the level, so
-it never sets an answer above it. Ships at ARCANE's schedule, at the density
+Measured with a scratch tool at the graded player's stuck points on AUGUR (60 seeds a board, 30
+September 2026): one cast of the list over the best number in hindsight freed a cell at 93% of them,
+and over the number where it was likeliest to free one, at 25%, against 20% for the strongest alone
+and 17% for the count. It costs 50, Census and the old Augur together (decision 0087). The old
+figure, 1 cast in 67 freeing a ring (decision 0055), measured a player that cast only where a whole
+ring could come free, not the answer. Ships at ARCANE's schedule, at the density
 ceiling: a grade-2 graded player spending mana clears 100% of both ladders, so density cannot move
 it and the lock is the lever if it should bite (decision 0056).

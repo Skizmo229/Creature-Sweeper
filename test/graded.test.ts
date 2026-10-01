@@ -9,6 +9,7 @@ import { boardConfig } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
 import type { Cell } from '../src/engine/types.js';
 import { mulberry32 } from '../src/engine/rng.js';
+import { SPELLS } from '../src/engine/spells.js';
 import { shapeRule } from '../src/engine/shape/registry.js';
 import { placementRule } from '../src/engine/placement/registry.js';
 import { type GradedRun, play } from '../src/sim/graded.js';
@@ -122,10 +123,8 @@ describe('the graded player', () => {
     }
     const silent = TRICK_IDS.filter((t) => fires[t] + pencils[t] === 0);
     // The line's ends, which the cheaper reads nearly always pre-empt, has a direct test below;
-    // so has the Census bound, which fires here on SPRINKLE DONUT, where the board shows the count,
-    // and so has the Augur ceiling, whose answer sat at or below the level in 1 of 67 casts aimed
-    // where it could (decision 0055).
-    expect(silent.sort()).toEqual(['augur-cap', 'line-reach']);
+    // so has the Census bound, which fires here on SPRINKLE DONUT, where the board shows the count.
+    expect(silent.sort()).toEqual(['line-reach']);
     const concluded = TRICK_IDS.filter((t) => fires[t] > 0);
     expect(concluded).toEqual(expect.arrayContaining(['subtract', 'overlap', 'bounds', 'what-if']));
     expect(concluded).toEqual(expect.arrayContaining(['accounted', 'last-of-tier', 'corridor']));
@@ -366,11 +365,12 @@ describe('the graded player', () => {
     expect(asked).toBeGreaterThan(0);
   });
 
-  it('reads an Augur ceiling as Sweep does, freeing the ring or narrowing the pencil', () => {
+  it("reads an Augur's list as Sweep does, freeing the ring or narrowing the pencil", () => {
     // Cast where the strongest sits at or below the level and the remainder alone does not prove
     // the ring, and the trick opens it all; cast where the strongest is above the level but below
-    // the remainder, and the trick rules out every tier past it. The test may read tiers to
-    // choose the cell; the trick reads only the answer.
+    // the remainder, and the trick leaves each cell only the listed tiers, and empty ground while
+    // the list is shorter than the ring, naming or opening it where that settles it. The test may
+    // read tiers to choose the cell and to check the trick; the trick reads only the answer.
     const cfg = boardConfig(ladders, 'augur', 3);
     let freed = 0;
     let narrowed = 0;
@@ -385,10 +385,11 @@ describe('the graded player', () => {
           const covered = ring.filter((n) => !n.open && n.mark === 0);
           if (covered.length < 2) continue;
           const hidden = cell.num - ring.filter((n) => n.open).reduce((a, n) => a + n.tier, 0);
-          const strongest = Math.max(0, ...ring.map((n) => n.tier));
+          const strongest = Math.max(0, ...ring.filter((n) => !n.open).map((n) => n.tier));
           if (hidden <= level || strongest >= hidden) continue;
           const frees = strongest <= level;
           if ((frees && freed > 0) || (!frees && narrowed > 0)) continue;
+          game.mana += SPELLS.augur.cost;
           expect(game.cast('augur', cell.x, cell.y).some((b) => b.type === 'blocked')).toBe(false);
           const view: View = {
             game,
@@ -404,11 +405,15 @@ describe('the graded player', () => {
             if (frees) {
               expect(moves.open.has(n), `(${n.x},${n.y})`).toBe(true);
               expect(n.tier).toBeLessThanOrEqual(level);
+            } else if (moves.open.has(n)) {
+              expect(n.tier).toBeLessThanOrEqual(level);
+            } else if (moves.mark.has(n)) {
+              expect(moves.mark.get(n), `(${n.x},${n.y})`).toBe(n.tier);
             } else {
-              expect(moves.narrow.get(n), `(${n.x},${n.y})`).toBe(
-                everyTier(cfg.tiers) & ((1 << (strongest + 1)) - 1),
-              );
-              expect(n.tier).toBeLessThanOrEqual(strongest);
+              const mask = moves.narrow.get(n);
+              expect(mask, `(${n.x},${n.y})`).toBeDefined();
+              expect(mask! & (1 << n.tier)).not.toBe(0);
+              expect(mask! >> (strongest + 1)).toBe(0);
             }
           }
           if (frees) freed++;

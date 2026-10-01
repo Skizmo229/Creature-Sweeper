@@ -336,12 +336,39 @@ export function drawCensus(p: Paint, cell: Cell, cx: number, cy: number): void {
   drawCornerBadge(p, cx, cy, String(cell.census), CENSUS_COLOR, 'left');
 }
 
+/** An Augur's digit against its content box, and its line height against the digit's ascent. */
+const AUGUR_DIGIT = 0.28;
+const AUGUR_LINE = 1.25;
+
 /**
- * Augur sits in the top-right corner, the mirror of Census, so the two answers a cell can carry
- * never overlap and each is told by its corner as much as by its colour.
+ * Augur runs down the right-hand edge from the top corner, the mirror of Census, so the two
+ * answers a cell can carry never overlap and each is told by its side as much as by its colour.
+ * Its tiers are stacked strongest first, shrinking to fit when a ring hides many; a ring hiding
+ * none says 0 in the corner, as Census does.
  */
-export function drawAugur(p: Paint, cell: Cell, cx: number, cy: number): void {
-  drawCornerBadge(p, cx, cy, String(cell.augur), AUGUR_COLOR, 'right');
+export function drawAugur(p: Paint, answer: readonly number[], cx: number, cy: number): void {
+  if (!answer.length) {
+    drawCornerBadge(p, cx, cy, '0', AUGUR_COLOR, 'right');
+    return;
+  }
+  const { ctx } = p;
+  const box = contentBox(p.layout, cx, cy);
+  const size = box.size;
+  const px = Math.min(size * AUGUR_DIGIT, (size * 0.96) / (answer.length * AUGUR_LINE));
+  ctx.save();
+  const { ascent } = setNumberFont(ctx, p.font, px);
+  const line = ascent * AUGUR_LINE;
+  const width = Math.max(...answer.map((t) => ctx.measureText(String(t)).width));
+  const pad = Math.max(1, size * 0.04);
+  const right = box.x + size;
+  ctx.fillStyle = 'rgba(6, 12, 18, 0.85)';
+  ctx.fillRect(right - width - pad * 2, box.y, width + pad * 2, line * answer.length + pad * 2);
+  ctx.fillStyle = AUGUR_COLOR;
+  ctx.textAlign = 'center';
+  answer.forEach((t, i) => {
+    ctx.fillText(String(t), right - pad - width / 2, box.y + pad + ascent + line * i);
+  });
+  ctx.restore();
 }
 
 /** A small digit on a dark triangle in a top corner of the cell's content box. */
