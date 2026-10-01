@@ -27,7 +27,7 @@
 #   topology, wrap     "hex"; "horizontal" or "both"
 #   shape, shape_param a board shape (src/engine/shape/registry.ts) and its size in cells
 #   cells              the seeded shapes: schedule of exact cell counts
-#   reach              the crawl rule's radius (DUNGEON, PETRI DISH)
+#   reach              the crawl rule's radius (DUNGEON, PETRI DISH, SPRINKLE DONUT, PYRAMID)
 #   reach_marks        true where a mark touching uncovered ground counts as uncovered for reach
 #   opening            how the board is opened: "base" deals its bottom two rows face up
 #                      (PYRAMID); absent is the placement rule's own, usually the largest blank area
@@ -721,8 +721,9 @@ tint = "#b8924a"
 archetype = "descending"
 axis = "Two rows start face up"
 blurb = """\
-  A stepped pyramid. The bottom two rows start face up: empty ground open and every creature \
-  there shown with its tier. Carries Reveal and Census."""
+  A stepped pyramid, climbed from its base. The bottom two rows start face up, and you may only \
+  open a cell touching ground you have uncovered, or a mark you made beside it. Carries Reveal \
+  and Census."""
 # The box is kept exactly twice as wide as it is tall, which is the shape
 # the pyramid fills; a row n cells down is 2n + 2 wide, so the board holds
 # h(h + 1) cells. The counts follow ARCANE's, 506 to 756 against its 480
@@ -740,6 +741,12 @@ lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
 alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
 shape = "pyramid"
 opening = "base"
+# PETRI DISH's crawl rule, so the pyramid is climbed from its base. It
+# moves no measure: every cell the base proves already touches open
+# ground, so the graded player's figures were identical with and without
+# it (40 seeds, 30 September 2026). Decision 0086.
+reach = 1
+reach_marks = true
 spells = ["reveal", "census"]
 start_mana = 75
 

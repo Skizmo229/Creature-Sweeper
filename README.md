@@ -157,7 +157,7 @@ The menu shows the ladders in those four columns; Normal is the original game's 
 
 The cut-out shapes (DONUT, CROSS, WRAPPED CROSS, DIAMOND, RAGGED CAVE, PYRAMID, GEAR, CARD,
 VALENTINES, STAR, DUNGEON) carry ARCANE's loadout; DUNGEON also carries Exercise and the crawl rule,
-and PYRAMID starts with its bottom two rows face up. SEER is BLIND with Reveal, Census and Beacon:
+and PYRAMID starts with its bottom two rows face up and is climbed by PETRI DISH's crawl rule. SEER is BLIND with Reveal, Census and Beacon:
 one HP, no fighting, exploration the only income. AUGUR is ARCANE's boards with Census and Augur,
 the two spells that only answer questions. SPRINKLE DONUT is DONUT's ring with no spells
 and every creature shown, two to a sprinkle, so only their levels are hidden; it grows from one

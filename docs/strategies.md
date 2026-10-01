@@ -279,7 +279,9 @@ exactly this hunt: the top thresholds are met by killing every creature of a tie
   there shown with its tier, in gold, alive and waiting. A shown creature is a mark the board
   wrote for you, so subtract it from every number it touches from the first click, and take it
   as a free kill the moment your level reaches it; the base is your level-up larder. Work up
-  the steps, each row a cell narrower on either side, so every row's ends are corners.
+  the steps, each row a cell narrower on either side, so every row's ends are corners. You may
+  only open a cell touching ground you have uncovered, so the pyramid is climbed, never
+  parachuted into; it costs nothing, since every cell the base proves is already beside you.
 - **ULTRA HIVE.** HIVE's hexagons on a board that is itself a hexagon: six straight edges to
   read in from, and every number still the sum of six neighbours at most. Play it as HIVE with
   the rim's help.

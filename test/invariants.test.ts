@@ -193,12 +193,12 @@ describe('the auto-opening', () => {
  * most: that a board with one can still be cleared without paying HP.
  */
 describe('the crawl rule on the real ladders', () => {
-  it('is carried by DUNGEON, PETRI DISH and SPRINKLE DONUT, and by nothing else', () => {
+  it('is carried by PYRAMID, DUNGEON, PETRI DISH and SPRINKLE DONUT, and by nothing else', () => {
     const crawling = ladders.filter((t) => (t.reach ?? 0) > 0).map((t) => t.id);
-    expect(crawling).toEqual(['dungeon', 'petri', 'sprinkle_donut']);
+    expect(crawling).toEqual(['pyramid', 'dungeon', 'petri', 'sprinkle_donut']);
     expect(boardConfig(ladders, 'dungeon', 1)).toMatchObject({ reach: 2 });
     expect(boardConfig(ladders, 'dungeon', 1).marksExtendReach).toBeUndefined();
-    for (const id of ['petri', 'sprinkle_donut']) {
+    for (const id of ['pyramid', 'petri', 'sprinkle_donut']) {
       expect(boardConfig(ladders, id, 1)).toMatchObject({ reach: 1, marksExtendReach: true });
     }
   });
@@ -234,7 +234,7 @@ describe('the crawl rule on the real ladders', () => {
    * rather than only in the simulator.
    */
   it('never costs a board its zero-damage clear', () => {
-    for (const id of ['dungeon', 'petri', 'sprinkle_donut']) {
+    for (const id of ['pyramid', 'dungeon', 'petri', 'sprinkle_donut']) {
       for (const board of findType(ladders, id).boards) {
         const cfg = boardConfig(ladders, id, board.n);
         for (const seed of SEEDS) {

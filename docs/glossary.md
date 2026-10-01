@@ -73,9 +73,9 @@ creature (BLIND, HUGE x BLIND, SEER). No level economy; on SEER, exploration is 
 creature standing on uncovered ground covers it and shows as a ?; a mark there draws a route.
 `src/engine/patrol.ts`, `Game.wait`, `Game.moves`.
 
-**Reach / the crawl rule.** On DUNGEON and PETRI DISH, a cell may only be opened, or targeted by a
+**Reach / the crawl rule.** On DUNGEON, PETRI DISH, SPRINKLE DONUT and PYRAMID, a cell may only be opened, or targeted by a
 spell, within `reach` steps of already-open ground, counted as a walk through `neighbours()`.
-Marking and pencilling are exempt. On PETRI DISH a mark touching open ground counts as open
+Marking and pencilling are exempt. On the one-step ladders a mark touching open ground counts as open
 ground too (`marksExtendReach`). `Game.inReach`; the exception is `Game.sealedIn`.
 
 ## Boards and ladders

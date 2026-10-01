@@ -73,6 +73,14 @@ stuck and 100% cleared, fifteen more (41.5 to 49.5%) 14.6 and 99%. No density a 
 puts it on ARCANE's curve, so it ships at ARCANE's schedule as a ladder decided by deduction, the
 way SUDOKU is (decision 0038).
 
+It is climbed by PETRI DISH's crawl rule, a single step that marks extend (decision 0086): you
+may open only a cell touching ground you have uncovered. The rule is the theme and moves no
+measure, and that was measured too: every cell the base proves already touches open ground, so
+the graded player's figures were identical with and without it, at one step and at two (40 seeds,
+30 September 2026). What would make the climb bite is less of the base: dealing only the middle
+fifth of the bottom row face up put the board on ARCANE's curve (16.9 stuck over the ladder for
+the honest player against ARCANE's 22.3), with or without the crawl rule.
+
 **GEAR** is a gear, a per-cell mask in a square box: eight square teeth, one pointing straight up,
 about as wide as they are deep, round a hole three tenths of the radius across. The teeth point
 straight out, so the diagonal four step on a square grid; the owner chose that over upright blocks.
