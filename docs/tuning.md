@@ -60,7 +60,7 @@ retuned against it.
   (34.5%) and CHECKERBOARD (38.5%) sit past it for stated reasons (`docs/modes.md`).
 - Placement ceilings: PAIRS 26% (`PAIR` jams at 24.8 to 25.6%), PACKS 36%, CONGA LINE 34%,
   PATROL 8.6% (its routes never jammed at 8.5% in 300 seeds and jammed on 5 to 50% at 9%).
-- Spell prices 20 / 30 / 75 / 85 / 150 (Augur, Census, Reveal, Beacon, Exercise), one global table on purpose:
+- Spell prices 30 / 50 / 75 / 85 / 150 (Census, Augur, Reveal, Beacon, Exercise), one global table on purpose:
   income (pools span 150 to 1,233) and demand (forced guesses 0.1 to 6.0 a board) already carry the
   variation between ladders. Starting mana is 75 because it is "one Reveal exactly"; anything that
   changes Reveal's price has to move it.
@@ -96,11 +96,12 @@ ladder, each spell against playing spell-less on the ladders that offer it:
   where it demonstrably unlocks something it is worth more per mana than Reveal, but such a spot
   exists 0.1 to 0.3 times a board and a player hits it 2 to 9% of the time (an earlier
   measurement).
-- Augur is Census's twin in shape: unaimable as played (the strongest sat at or below the level
-  in 1 of 67 casts the graded player aimed at rings it could free), and worth more per cast than
-  Census where a spot exists (2.29 HP against 1.60), which is 0.05 times a board against 0.07.
-  Priced at Echo's paper 6 on the tripled scale rather than by value, as Census was (decision
-  0055).
+- Augur lists every hidden tier around a number since decision 0087, and costs what Census and
+  the old strongest-only Augur did together (50), since a scratch measure found it as useful as
+  both: at the graded player's stuck points on AUGUR, the list cast over the best number in
+  hindsight freed a cell at 93% of them, and cast where it was likeliest to free one, at 25% (the
+  strongest alone 20%, the count 17%; 60 seeds a board, 30 September 2026). The old figure, 1 cast in 67 freeing a
+  ring, measured a player that cast only where a whole ring could come free.
 - Reveal's ring (the empty ground around its target) is 45% of the spell and gives nothing away.
   It cannot cascade off a creature, because every neighbour of a tier-N cell carries at least N.
 - Exercise is close to Reveal per cast and the worst per mana: it makes the unavoidable guess

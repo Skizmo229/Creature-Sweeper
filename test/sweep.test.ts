@@ -102,13 +102,13 @@ describe('Augur', () => {
     // of them is a 2, nothing there can hurt.
     const game = drawn(['1..', '._.', '..2']);
     expect(swept(view(game, 2))).toEqual([]);
-    game.grid[1]![1]!.augur = 2;
+    game.grid[1]![1]!.augur = [2, 1];
     expect(swept(view(game, 2))).toEqual(ringOf(game, 1, 1));
   });
 
   it('frees nothing while the strongest is above the level', () => {
     const game = drawn(['1..', '._.', '..3']);
-    game.grid[1]![1]!.augur = 3;
+    game.grid[1]![1]!.augur = [3, 1];
     expect(swept(view(game, 2))).toEqual([]);
   });
 });

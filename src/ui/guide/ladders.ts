@@ -76,7 +76,7 @@ export const LADDER_NOTES: readonly LadderNote[] = [
       'The bottom two rows start face up: empty ground open, every creature shown with its tier, ' +
       'in gold, alive. A shown creature is a mark the board wrote for you: subtract it from every ' +
       'number it touches, and kill it free when your level reaches it. Work up the steps; every ' +
-      "row's ends are corners.",
+      "row's ends are corners. You climb it: only a cell touching your ground can be opened.",
   },
   {
     heading: 'ULTRA HIVE',
@@ -188,9 +188,8 @@ export const LADDER_NOTES: readonly LadderNote[] = [
     heading: 'AUGUR',
     body:
       "ARCANE's boards with Census and Augur: no spell opens a cell, so every guess is yours. " +
-      'Augur where a number is spread over many cells and could all be at or below your level; ' +
-      'Census where a large number sits over few. The pencil loses every tier above the ' +
-      'strongest.',
+      'Augur over the cell you would guess: every tier around a number, with your pencil, often ' +
+      'settles it. Census is the cheap half, the count alone.',
   },
 ];
 

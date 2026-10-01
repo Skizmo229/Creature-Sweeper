@@ -6,6 +6,7 @@
  * Turn-based, so it redraws on change rather than every frame.
  */
 
+import { augurNow } from '../../engine/augur.js';
 import type { Game } from '../../engine/game.js';
 import type { Cell } from '../../engine/types.js';
 import type { Lesson } from '../../sim/tutor.js';
@@ -502,7 +503,8 @@ export class BoardView implements InputHost {
         const { cx, cy } = centreOf(p.layout, cell.x, cell.y);
         if (!cell.open && !cell.occupied) drawAnnotation(p, cell, cx, cy);
         if (cell.census !== null) drawCensus(p, cell, cx, cy);
-        if (cell.augur !== null) drawAugur(p, cell, cx, cy);
+        const augur = augurNow(cell, game.neighboursOf(cell));
+        if (augur) drawAugur(p, augur, cx, cy);
       }
     }
 

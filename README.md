@@ -132,7 +132,7 @@ game harder record normally; anything easier than the tuned game records no clea
 no best time, and the game says so live.
 
 **Game types.** 35 ladders of ten tuned boards, each with a scaling continuation past board 10
-(961 boards in all) and a Full Run (all ten on one HP pool).
+(960 boards in all) and a Full Run (all ten on one HP pool).
 
 ```
 start       EASY -> NORMAL
@@ -157,9 +157,10 @@ The menu shows the ladders in those four columns; Normal is the original game's 
 
 The cut-out shapes (DONUT, CROSS, WRAPPED CROSS, DIAMOND, RAGGED CAVE, PYRAMID, GEAR, CARD,
 VALENTINES, STAR, DUNGEON) carry ARCANE's loadout; DUNGEON also carries Exercise and the crawl rule,
-and PYRAMID starts with its bottom two rows face up. SEER is BLIND with Reveal, Census and Beacon:
-one HP, no fighting, exploration the only income. AUGUR is ARCANE's boards with Census and Augur,
-the two spells that only answer questions. SPRINKLE DONUT is DONUT's ring with no spells
+and PYRAMID starts with its bottom two rows face up and is climbed by PETRI DISH's crawl rule.
+SEER is BLIND with Reveal, Census and Beacon: one HP, no fighting, exploration the only income.
+AUGUR is ARCANE's boards with Census and Augur, the two spells that only answer questions, a lock
+deeper and HP falling from 10 to 8. SPRINKLE DONUT is DONUT's ring with no spells
 and every creature shown, two to a sprinkle, so only their levels are hidden; it grows from one
 opening under PETRI DISH's rule. What each mode's rule is and what the engine deduces from it is
 in `docs/modes.md`.

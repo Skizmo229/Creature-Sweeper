@@ -27,7 +27,7 @@
 #   topology, wrap     "hex"; "horizontal" or "both"
 #   shape, shape_param a board shape (src/engine/shape/registry.ts) and its size in cells
 #   cells              the seeded shapes: schedule of exact cell counts
-#   reach              the crawl rule's radius (DUNGEON, PETRI DISH)
+#   reach              the crawl rule's radius (DUNGEON, PETRI DISH, SPRINKLE DONUT, PYRAMID)
 #   reach_marks        true where a mark touching uncovered ground counts as uncovered for reach
 #   opening            how the board is opened: "base" deals its bottom two rows face up
 #                      (PYRAMID); absent is the placement rule's own, usually the largest blank area
@@ -721,8 +721,9 @@ tint = "#b8924a"
 archetype = "descending"
 axis = "Two rows start face up"
 blurb = """\
-  A stepped pyramid. The bottom two rows start face up: empty ground open and every creature \
-  there shown with its tier. Carries Reveal and Census."""
+  A stepped pyramid, climbed from its base. The bottom two rows start face up, and you may only \
+  open a cell touching ground you have uncovered, or a mark you made beside it. Carries Reveal \
+  and Census."""
 # The box is kept exactly twice as wide as it is tall, which is the shape
 # the pyramid fills; a row n cells down is 2n + 2 wide, so the board holds
 # h(h + 1) cells. The counts follow ARCANE's, 506 to 756 against its 480
@@ -740,6 +741,12 @@ lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
 alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
 shape = "pyramid"
 opening = "base"
+# PETRI DISH's crawl rule, so the pyramid is climbed from its base. It
+# moves no measure: every cell the base proves already touches open
+# ground, so the graded player's figures were identical with and without
+# it (40 seeds, 30 September 2026). Decision 0086.
+reach = 1
+reach_marks = true
 spells = ["reveal", "census"]
 start_mana = 75
 
@@ -940,12 +947,19 @@ archetype = "descending"
 axis = "Magic that tells, never shows"
 blurb = """\
   ARCANE's boards with two spells that only answer: Census counts the creatures behind a number, \
-  Augur names the strongest hidden one. No spell ever opens a cell for you."""
+  Augur lists the tier of each hidden one. No spell ever opens a cell for you, and HP falls from \
+  10 to 8."""
 size = [[30, 16], [30, 16], [30, 16], [32, 17], [32, 17], [34, 18], [34, 18], [36, 19], [36, 19], [38, 20]]
 tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
 density = [0.265, 0.274, 0.283, 0.292, 0.301, 0.31, 0.319, 0.328, 0.337, 0.345]
-hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
-lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
+# A lock deeper than ARCANE's and EXTREME's HP, so the player is stuck often and a guess can
+# kill, which is what an answering spell is for. At ARCANE's lock and HP the graded player at
+# grade 4 was stuck 0.6 times a board and cleared every board. Here, spending mana, it clears
+# 100% falling to 88% of board 9 and 61% of board 10, on the hard ladders' target of 60 to 70%
+# for the top boards; without spells 80% and 57% (80 seeds, 30 September 2026). Lock 5 measured
+# the same as lock 4, and HP 7 the same as 8. Decision 0088.
+hp = [10, 10, 10, 10, 9, 9, 9, 8, 8, 8]
+lock = [3, 3, 3, 4, 4, 4, 4, 4, 4, 4]
 alpha0 = [0.32, 0.311, 0.302, 0.293, 0.284, 0.276, 0.267, 0.258, 0.249, 0.24]
 spells = ["census", "augur"]
 start_mana = 75

@@ -112,7 +112,7 @@ store) and `src/engine/settings.ts` (the gameplay dials).
 - The board's numbers, marks and pencil notes are sized to one measured height times the digit
   size setting (`digitSize`, `Paint.digitScale`); a creature's digit and the corner badges keep
   their own sizes.
-- On DUNGEON and PETRI DISH the cells the crawl rule keeps out of reach can be shaded
+- On the crawl ladders (DUNGEON, PETRI DISH, SPRINKLE DONUT, PYRAMID) the cells the crawl rule keeps out of reach can be shaded
   (`reachShading`, `drawReach`), off by default: the rule made visible where the cursor shows it
   one cell at a time. It reads nothing but the geometry the rule reads, and a sealed-in board,
   entirely in reach, draws no shade.

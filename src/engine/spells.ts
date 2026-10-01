@@ -111,13 +111,12 @@ export const SPELLS: Record<SpellId, Spell> = {
   augur: {
     id: 'augur',
     name: 'Augur',
-    // Echo's paper price of 6 on decision 0013's tripled scale, since, like Census, it cannot be
-    // priced by value as played: a bound is worth nothing until the layout it bounds is the one
-    // in doubt (decision 0055).
-    cost: 20,
+    // Census and the old strongest-only Augur together, since it answers what both did and was
+    // measured as useful as casting both (decision 0087).
+    cost: 50,
     targeted: true,
     blurb:
-      'The strongest hidden creature around this cell: its tier. At or below your level the whole ring is free.',
+      'The tier of every creature hidden around this cell, strongest first, but not where. At or below your level the whole ring is free.',
   },
 };
 

@@ -279,15 +279,14 @@ export const GUIDE: readonly GuideSection[] = [
         ],
       },
       {
-        heading: 'The strongest one',
+        heading: 'The hidden tiers',
         trick: 'augur-cap',
         on: augur,
         body: [
-          'An Augur names the strongest hidden creature around a number: at or below your level the ' +
-            'ring is free, and above it no cell can be more. Sum, count and strongest together ' +
-            'pin most rings: a 7 over three cells with a strongest of 3 is 3, 3 and 1, or 3, 2 ' +
-            'and 2. Aim it at a number spread over many cells, where the strongest is likeliest ' +
-            'small.',
+          'An Augur lists the tier of every creature hidden around a number, strongest first, but ' +
+            'not where. At or below your level the ring is free. Above it, each cell is empty or a ' +
+            'listed tier, none is empty if the list fills the ring, and a tier listed twice that ' +
+            'only two cells can hold is in both. Aim it where your guess would be.',
         ],
       },
     ],

@@ -79,11 +79,11 @@ export interface Cell {
    */
   census: number | null;
   /**
-   * The strongest tier among this cell's covered neighbours, once Augur has
-   * read them. An upper bound on every hidden creature there, and nothing
-   * about where any of them stands.
+   * The tiers of the creatures among this cell's covered neighbours, strongest
+   * first, once Augur has read them; empty where none hides. Every hidden
+   * creature there and how strong, and nothing about where any of them stands.
    */
-  augur: number | null;
+  augur: readonly number[] | null;
 }
 
 /**

@@ -18,6 +18,7 @@ import {
 } from '../src/engine/replay.js';
 import { type Rng, mulberry32 } from '../src/engine/rng.js';
 import { FullRun } from '../src/engine/run.js';
+import { SPELLS } from '../src/engine/spells.js';
 import { DEFAULT_GAMEPLAY } from '../src/engine/settings.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';
 import { SEEDS, boardsOf, ladders } from './helpers.js';
@@ -204,12 +205,14 @@ describe('a board replayed from its moves', () => {
     const ring = augur.grid
       .flat()
       .find((c) => c.open && augur.neighboursOf(c).some((n) => !n.open))!;
+    // Both together cost more than the ladder starts with.
+    augur.mana += SPELLS.augur.cost;
     augur.cast('census', ring.x, ring.y);
     augur.cast('augur', ring.x, ring.y);
     expect(ring.census).not.toBeNull();
     expect(ring.augur).not.toBeNull();
     changes(augur, () => (ring.census = ring.census! + 1));
-    changes(augur, () => (ring.augur = ring.augur! + 1));
+    changes(augur, () => (ring.augur = [...ring.augur!, 9]));
 
     const sprinkles = Game.create(boardsOf('sprinkle_donut')[0]!, SEEDS[0]!);
     const half = sprinkles.grid.flat().find((c) => c.partner)!;

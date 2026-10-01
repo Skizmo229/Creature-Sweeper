@@ -27,6 +27,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   notes.ts        pencil marks as a bitmask
   spells.ts       the five spells, their prices, the mana economy, spellKey
   cast.ts         what each spell does, behind the SpellHost interface
+  augur.ts        Augur's answer: hiddenTiers, and augurNow, which reads it off the ring as it stands
   sweep.ts        Sweep's proof: safeCells and its named proofs; the Sudoku harvest
   sweepgate.ts    how the dial gates Sweep: on, off, or charged by the cells opened by hand
   reach.ts        the crawl rule: withinReach and computeSealed
@@ -123,6 +124,7 @@ src/sim/        headless measurement, all driving the real engine (see docs/tuni
                   what each board demanded (Milestone 4, docs/human-tuning-plan.md)
   reader.ts       what the graded player can see, and the sum arithmetic its tricks share
   tricks.ts       the tricks: one technique per entry of docs/strategies.md, at its grade
+  aim.ts          where the graded player casts Augur: the number whose answer likeliest frees a cell
   tricktext.ts    what each trick is called and what it says, for the tutor, the school and the guide
   tutor.ts        the tutor: the next provable move on the board as it stands, and why
   diagrams.ts     the catalogue's diagrams as boards, for its test and the field guide

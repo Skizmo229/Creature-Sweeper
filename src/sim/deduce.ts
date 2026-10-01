@@ -4,7 +4,7 @@
  * where a Census or an Augur is worth aiming. `honest.ts` plays with it.
  */
 
-import { strongestHidden } from '../engine/cast.js';
+import { augurNow, hiddenTiers } from '../engine/augur.js';
 import type { Game } from '../engine/game.js';
 import type { Cell } from '../engine/types.js';
 import { ringIsFree } from '../engine/placement/pairs.js';
@@ -24,7 +24,7 @@ export interface Constraint {
   readonly residual: number;
   /** Covered, unmarked neighbours — the cells the residual is spread over. */
   readonly unknown: Cell[];
-  /** Creatures among `unknown`, if Census has been cast here. */
+  /** Creatures among `unknown`, if Census or Augur has been cast here. */
   readonly creatures: number | null;
   /** The strongest tier any of `unknown` could be, if Augur has been cast here. */
   readonly ceiling: number | null;
@@ -70,12 +70,16 @@ function constraintsOf(game: Game): Constraint[] {
     }
     if (!unknown.length) continue;
 
+    // An Augur lists every covered creature, the marked ones too, so their count is taken off.
+    const augur = augurNow(cell, ns);
+    let creatures = cell.census === null ? null : cell.census - openCreatures - markedCount;
+    if (augur) creatures = augur.length - markedCount;
     out.push({
       cell,
       residual: cell.num - known - markedSum,
       unknown,
-      creatures: cell.census === null ? null : cell.census - openCreatures - markedCount,
-      ceiling: cell.augur,
+      creatures,
+      ceiling: augur ? (augur[0] ?? 0) : null,
     });
   }
   return out;
@@ -477,7 +481,7 @@ export function censusTarget(game: Game, constraints: Constraint[], guess: Cell)
  * ring is not free already, yet small enough to be spread at or below the level over every cell.
  * Where it could not, the answer can only cap a guess, and a player saves the mana.
  */
-export function augurCouldFree(
+function augurCouldFree(
   c: { readonly cell: Cell; readonly residual: number; readonly unknown: readonly Cell[] },
   level: number,
 ): boolean {
@@ -517,7 +521,7 @@ export function augurOracle(game: Game, guess: Cell): Cell | null {
     const ns = game.neighboursOf(cell);
     if (!ns.some((n) => !n.open && n.mark === 0)) continue;
 
-    cell.augur = strongestHidden(ns);
+    cell.augur = hiddenTiers(ns);
     const unlocked = safeToOpen(game, allConstraints(game)).some((c) => !c.open);
     cell.augur = null;
     if (unlocked) return cell;
