@@ -1,12 +1,12 @@
 /**
  * The ladder list: every game type, locked or not, with what it takes to unlock it and how far
- * the player has got, in four columns by category (decision 0036). Each name wears the face its ladder's screens do, its own unless the player
- * chose one for the interface, so the list previews the ladders (decision 0021). The tools under
- * it reach the how-to, settings, the save backup, About and the reset.
+ * the player has got, in four columns by category (decision 0036). Each name wears the face its
+ * ladder's screens do, its own unless the player chose one for the interface, so the list
+ * previews the ladders (decision 0021). The tools under it reach the how-to, settings, the save
+ * backup, About and the reset.
  */
 
-import { LADDER_CATEGORIES, type LadderCategory } from '../../engine/config.js';
-import { easierThanDefault } from '../../engine/settings.js';
+import { LADDER_CATEGORIES, type LadderCategory, type LadderType } from '../../engine/config.js';
 import { el } from '../dom.js';
 import { CATEGORY_NAMES, ladderName, ladders } from '../ladders.js';
 import { pausedGames } from '../paused.js';
@@ -14,7 +14,7 @@ import type { Progress } from '../progress.js';
 import type { Settings } from '../settings.js';
 import { themeFor } from '../looks.js';
 import { VERSION } from '../version.js';
-import { plural } from '../words.js';
+import { easierSentence, plural } from '../words.js';
 
 /** What the ladder list reads, and where its cards and tools go. */
 export interface LadderListActions {
@@ -39,41 +39,11 @@ export interface LadderListActions {
 
 /** The ladder list: the title and its notices, a card per ladder in its column, and the tools. */
 export function buildLadderList(a: LadderListActions): HTMLElement {
-  const { progress, settings } = a;
   const wrap = el('div', 'screen');
-
   // One count for the whole screen: every locked type measures itself against the same number.
-  const cleared = progress.boardsCleared();
+  const cleared = a.progress.boardsCleared();
 
-  const head = el('header', 'title-bar');
-  head.append(el('h1', 'game-title', 'Creature Sweeper'));
-  head.append(el('p', 'sub', `Version ${VERSION}`));
-  // Boards cleared is a currency, so it is shown whether or not anything is waiting on it.
-  head.append(el('p', 'sub boards-cleared', `${plural(cleared, 'board')} cleared`));
-  // A player who left a dial easier than default a week ago should not have to open Settings
-  // to find out why nothing is unlocking.
-  if (!a.recordsCount) {
-    const easier = easierThanDefault(settings.gameplay);
-    head.append(
-      el(
-        'p',
-        'sub settings-warn',
-        `Nothing is being recorded: ${easier.join(', ')} ` +
-          `${easier.length === 1 ? 'is' : 'are'} set easier than the tuned game.`,
-      ),
-    );
-  }
-  // A save this version could not read is kept, not erased, and says so until Reset progress.
-  if (progress.unreadableKept) {
-    head.append(
-      el(
-        'p',
-        'sub settings-warn',
-        'A save this version could not read is set aside, not erased. Reset progress clears it too.',
-      ),
-    );
-  }
-  wrap.append(head);
+  wrap.append(buildTitleBar(a, cleared));
 
   // One column per category, each in the data's order, which is the order its ladders open.
   const groups = el('div', 'type-groups');
@@ -87,49 +57,7 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
     lists.set(category, list);
   }
   for (const type of ladders) {
-    const unlocked = progress.isTypeUnlocked(ladders, type.id);
-    const rec = progress.typeRecord(type.id);
-    const theme = themeFor(type.id);
-
-    const card = el('button', `type-card strip-${settings.presentation.menuStrip}`);
-    card.disabled = !unlocked;
-    card.style.setProperty('--tint', theme.accent);
-
-    const face = settings.interfaceFont(type.id);
-    const name = el('span', 'type-name', type.name);
-    name.style.fontFamily = face.stack;
-    if (face.capHeightFix) name.style.setProperty('--cap-fix', String(face.capHeightFix));
-    card.append(name);
-    const meta = el('span', 'type-meta');
-    if (!unlocked) {
-      // Both gates, and the count one shows progress: "41 / 45 boards" is a thing to go and do.
-      const needs: string[] = [];
-      if (type.requires.length) {
-        needs.push(`clear ${type.requires.map((r) => ladderName(r)).join(' + ')}`);
-      }
-      if (type.requires_boards > cleared) {
-        needs.push(`${cleared} / ${type.requires_boards} boards cleared`);
-      }
-      meta.textContent = `Locked — ${needs.join(' · ')}`;
-    } else {
-      // Counted, scaling boards included, rather than the board you are on: the card is a record.
-      const n = progress.boardsCleared(type.id);
-      const boards = plural(n, 'board');
-      if (rec.cleared) {
-        const run = progress.runRecord(ladders, type.id);
-        meta.textContent =
-          `Cleared · ${boards}` + (run.cleared ? ' · ★ full run' : ' · full run open');
-      } else {
-        meta.textContent = `${boards} cleared`;
-      }
-    }
-    // A game waiting on this ladder is worth finding from here, whatever else the card says.
-    const paused = unlocked ? pausedGames.countOn(type.id) : 0;
-    if (paused > 0) meta.textContent += ` · ${paused} paused`;
-    card.append(meta);
-    card.append(el('span', 'type-axis', type.axis));
-    card.addEventListener('click', () => a.pickType(type.id));
-    lists.get(type.category)!.append(card);
+    lists.get(type.category)!.append(buildLadderCard(type, a, cleared));
   }
   wrap.append(groups);
   fitNames(groups);
@@ -137,6 +65,84 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
   wrap.append(buildTools(a));
 
   return wrap;
+}
+
+/**
+ * The title bar: the game, its version and the boards cleared, and a warning while clears are
+ * not being recorded or a save this version could not read is kept aside.
+ */
+function buildTitleBar(a: LadderListActions, cleared: number): HTMLElement {
+  const { progress, settings } = a;
+  const head = el('header', 'title-bar');
+  head.append(el('h1', 'game-title', 'Creature Sweeper'));
+  head.append(el('p', 'sub', `Version ${VERSION}`));
+  // Boards cleared is a currency, so it is shown whether or not anything is waiting on it.
+  head.append(el('p', 'sub boards-cleared', `${plural(cleared, 'board')} cleared`));
+  // A player who left a dial easier than default a week ago should not have to open Settings
+  // to find out why nothing is unlocking.
+  if (!a.recordsCount) {
+    const easier = easierSentence(settings.gameplay);
+    head.append(el('p', 'sub settings-warn', `Nothing is being recorded: ${easier}`));
+  }
+  // A save this version could not read is kept, not erased, and says so until Reset progress.
+  if (progress.unreadableKept) {
+    head.append(
+      el(
+        'p',
+        'sub settings-warn',
+        'A save this version could not read is set aside, not erased. Reset progress clears it too.',
+      ),
+    );
+  }
+  return head;
+}
+
+/** A ladder's card: its name in its face, what unlocks it or how far it has gone, and its axis. */
+function buildLadderCard(type: LadderType, a: LadderListActions, cleared: number): HTMLElement {
+  const { progress, settings } = a;
+  const unlocked = progress.isTypeUnlocked(ladders, type.id);
+  const rec = progress.typeRecord(type.id);
+  const theme = themeFor(type.id);
+
+  const card = el('button', `type-card strip-${settings.presentation.menuStrip}`);
+  card.disabled = !unlocked;
+  card.style.setProperty('--tint', theme.accent);
+
+  const face = settings.interfaceFont(type.id);
+  const name = el('span', 'type-name', type.name);
+  name.style.fontFamily = face.stack;
+  if (face.capHeightFix) name.style.setProperty('--cap-fix', String(face.capHeightFix));
+  card.append(name);
+  const meta = el('span', 'type-meta');
+  if (!unlocked) {
+    // Both gates, and the count one shows progress: "41 / 45 boards" is a thing to go and do.
+    const needs: string[] = [];
+    if (type.requires.length) {
+      needs.push(`clear ${type.requires.map((r) => ladderName(r)).join(' + ')}`);
+    }
+    if (type.requires_boards > cleared) {
+      needs.push(`${cleared} / ${type.requires_boards} boards cleared`);
+    }
+    meta.textContent = `Locked — ${needs.join(' · ')}`;
+  } else {
+    // Counted, scaling boards included, rather than the board you are on: the card is a record.
+    const n = progress.boardsCleared(type.id);
+    const boards = plural(n, 'board');
+    if (rec.cleared) {
+      const run = progress.runRecord(ladders, type.id);
+      meta.textContent =
+        `Cleared · ${boards}` + (run.cleared ? ' · ★ full run' : ' · full run open');
+    } else {
+      meta.textContent = `${boards} cleared`;
+    }
+  }
+  // A game waiting on this ladder is worth finding from here, whatever else the card says.
+  const paused = unlocked ? pausedGames.countOn(type.id) : 0;
+  if (paused > 0) meta.textContent += ` · ${paused} paused`;
+  card.append(meta);
+  card.append(el('span', 'type-axis', type.axis));
+  card.addEventListener('click', () => a.pickType(type.id));
+  return card;
 }
 
 /** The tools under the list: unlock everything, the rules, settings, the save backup, the reset. */

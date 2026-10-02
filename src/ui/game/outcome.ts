@@ -6,10 +6,10 @@
 
 import type { Game } from '../../engine/game.js';
 import type { FullRun } from '../../engine/run.js';
-import { type GameplaySettings, easierThanDefault } from '../../engine/settings.js';
+import type { GameplaySettings } from '../../engine/settings.js';
 import { el } from '../dom.js';
 import type { CardHold } from '../presentation.js';
-import { plural } from '../words.js';
+import { easierSentence, plural } from '../words.js';
 
 /**
  * The ladder that teaches, and so the only one that explains a death. A claim about the ladder's
@@ -20,13 +20,7 @@ const TEACHING_TYPE = 'easy';
 
 /** The one-line explanation of why a clear was not written down. */
 function modifiedNote(gameplay: GameplaySettings): HTMLElement {
-  const easier = easierThanDefault(gameplay);
-  return el(
-    'p',
-    'overlay-note modified',
-    `Not recorded: ${easier.join(', ')} ${easier.length === 1 ? 'is' : 'are'} ` +
-      'set easier than the tuned game.',
-  );
+  return el('p', 'overlay-note modified', `Not recorded: ${easierSentence(gameplay)}`);
 }
 
 /**
