@@ -235,12 +235,17 @@ def shape_cells(shape, param, w, h):
                if shape_present(shape, param, w, h, x, y))
 
 
-def carved_cells(w, h, share=.40):
+# The share of its bounding box a seeded mask is asked to fill on the continuation: what the
+# tuned ten hold (RAGGED CAVE's and DUNGEON's `cells` notes in ladder_types.toml).
+CARVED_SHARE = .40
+
+
+def carved_cells(w, h):
     """How many cells a seeded mask is asked for on a board of this size.
 
     Chosen rather than measured, which is the whole point -- see shape_cells.
     """
-    return min(round(share * w * h), carved_room(w, h))
+    return min(round(CARVED_SHARE * w * h), carved_room(w, h))
 
 
 def carved_room(w, h):
@@ -485,6 +490,11 @@ def _density_cap(t):
     return max(t["density"][-1], t.get("ceiling", {}).get("density_cap", default))
 
 
+# The width-to-height ratio a domino board's continuation is sized to, near that of DOMINOES's own
+# landscape boards.
+DOMINO_ASPECT = 1.75
+
+
 def _domino_box(t, T, i, density, max_w, max_h):
     """Step i of a domino ladder's continuation: its board size and its number of sets, or None
     once a set no longer fits the largest board."""
@@ -504,7 +514,7 @@ def _domino_box(t, T, i, density, max_w, max_h):
     # natural shape stops fitting does the height go to the ceiling to buy
     # width.
     cells = creatures / density
-    h = min(max_h, max(1, round(math.sqrt(cells / 1.75))))
+    h = min(max_h, max(1, round(math.sqrt(cells / DOMINO_ASPECT))))
     w = math.ceil(creatures / (density * h))
     if w > max_w:
         h = max_h
@@ -580,9 +590,9 @@ def extend(t):
                 break
             row["size"], row["sets"] = box
         if t.get("shape") in SEEDED_SHAPES:
-            # A carved shape's count is chosen, never measured - same 40% of
-            # the bounding box the tuned ten hold, and still inside the margin
-            # the generator needs.
+            # A carved shape's count is chosen, never measured - the same
+            # CARVED_SHARE of the bounding box the tuned ten hold, and still
+            # inside the margin the generator needs.
             w, h = row["size"]
             row["cells"] = carved_cells(w, h)
         rows.append(row)
