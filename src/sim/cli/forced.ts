@@ -36,7 +36,7 @@ import { Game } from '../../engine/game.js';
 import { placementRule } from '../../engine/placement/registry.js';
 import { play, type HonestRun } from '../honest.js';
 import { solve } from '../solver.js';
-import { boardRange, mean, pct, seedAt } from '../tables.js';
+import { boardRange, mean, pct, seedAt, seedCount } from '../tables.js';
 
 interface Row {
   honest: HonestRun[];
@@ -139,7 +139,7 @@ function everyLadder(seeds: number): void {
   }
 }
 
-const seeds = Number(process.argv[2] ?? 30);
+const seeds = seedCount(process.argv[2], 30, 'npm run sim:forced -- [seeds] [ladder] [a-b]');
 // A board range, for the ladders slow enough that running all ten to look at
 // two is most of the cost: `7-10`, or a single board.
 const only = boardRange(process.argv[4]);

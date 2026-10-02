@@ -36,7 +36,7 @@ import { boardConfig } from '../../engine/config.js';
 import { Game } from '../../engine/game.js';
 import { SPELLS, type SpellId } from '../../engine/spells.js';
 import { type Policy, type HonestRun, SPELL_POLICIES, play } from '../honest.js';
-import { seedAt } from '../tables.js';
+import { seedAt, seedCount } from '../tables.js';
 
 /** Every measured policy with the spell it casts, in the order the tables print them. */
 const MEASURED: ReadonlyArray<{ policy: Policy; spell: SpellId }> = (
@@ -159,7 +159,7 @@ function byBoard(seeds: number, typeId: string): void {
 }
 
 function main(): void {
-  const seeds = Number(process.argv[2] ?? 40);
+  const seeds = seedCount(process.argv[2], 40, 'npm run sim:spells -- [seeds] [ladder]');
   if (process.argv[3]) {
     byBoard(seeds, process.argv[3]);
     return;

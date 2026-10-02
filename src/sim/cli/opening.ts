@@ -14,8 +14,9 @@ import { fileURLToPath } from 'node:url';
 import { loadLadders } from '../../data.js';
 import { boardConfig } from '../../engine/config.js';
 import { Game } from '../../engine/game.js';
+import { seedCount } from '../tables.js';
 
-const TRIALS = Number(process.argv[2] ?? 300);
+const TRIALS = seedCount(process.argv[2], 300, 'npx tsx src/sim/cli/opening.ts [trials]');
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(HERE, '..', '..', '..', 'design', 'data', 'opening.json');
 

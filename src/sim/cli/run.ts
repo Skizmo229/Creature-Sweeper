@@ -23,8 +23,9 @@ import { loadLadders } from '../../data.js';
 import { FullRun } from '../../engine/run.js';
 import { DEFAULT_GAMEPLAY, healPerBoard } from '../../engine/settings.js';
 import { autoplaySearch, autoplayTierOrder } from '../autoplay.js';
+import { seedCount } from '../tables.js';
 
-const runs = Number(process.argv[2] ?? 20);
+const runs = seedCount(process.argv[2], 20, 'npm run sim:run -- [runs]');
 const ladders = loadLadders();
 
 interface TypeResult {

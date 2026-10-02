@@ -37,8 +37,9 @@ import { type Grid, computeNumbers, makeCell } from '../../engine/grid.js';
 import { findBestOpening } from '../../engine/opening.js';
 import { generateGrid } from '../../engine/generate.js';
 import { type Placement, placementRule } from '../../engine/placement/registry.js';
+import { seedCount } from '../tables.js';
 
-const TRIALS = Number(process.argv[2] ?? 240);
+const TRIALS = seedCount(process.argv[2], 240, 'npx tsx src/sim/cli/placement.ts [trials]');
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DATA = resolve(HERE, '..', '..', '..', 'design', 'data');
 const rng: Rng = mulberry32(31415);

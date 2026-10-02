@@ -38,7 +38,7 @@ import { Game } from '../../engine/game.js';
 import { placementRule } from '../../engine/placement/registry.js';
 import { type GradedOptions, type GradedRun, play } from '../graded.js';
 import { solve } from '../solver.js';
-import { boardRange, mean, pct, seedAt } from '../tables.js';
+import { boardRange, mean, pct, seedAt, seedCount } from '../tables.js';
 import { type Grade, TRICK_IDS, TRICKS } from '../tricks.js';
 
 interface Flags {
@@ -225,7 +225,12 @@ const flags: Flags = {
   solver: args.includes('--solver'),
 };
 const words = args.filter((a) => !a.startsWith('--'));
-const seeds = Number(words[0] ?? 30);
+const seeds = seedCount(
+  words[0],
+  30,
+  'npm run sim:human -- [seeds] [ladder] [a-b] [--profile] [--peek] [--solver] [--spells] ' +
+    '[--attention=R]',
+);
 const only = boardRange(words[2]);
 if (words[1] && flags.profile) profile(seeds, findLadder(words[1]), only, flags);
 else if (words[1]) byBoard(seeds, findLadder(words[1]), only, flags);

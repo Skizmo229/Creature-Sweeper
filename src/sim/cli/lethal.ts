@@ -31,7 +31,7 @@ import { biteFor } from '../../engine/settings.js';
 import type { Cell } from '../../engine/types.js';
 import { honestGuess, play, type HonestRun } from '../honest.js';
 import { solve } from '../solver.js';
-import { mean, pct, seedAt } from '../tables.js';
+import { mean, pct, seedAt, seedCount } from '../tables.js';
 
 interface Board {
   run: HonestRun;
@@ -118,7 +118,7 @@ function byBoard(type: LadderType, seeds: number): void {
   }
 }
 
-const seeds = Number(process.argv[2] ?? 30);
+const seeds = seedCount(process.argv[2], 30, 'npm run sim:lethal -- [seeds] [ladder,ladder,...]');
 const wanted = (process.argv[3] ?? 'extreme,huge_extreme,oracle').split(',');
 const ladders = loadLadders();
 for (const id of wanted) {

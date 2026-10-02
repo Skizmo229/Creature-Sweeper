@@ -33,8 +33,9 @@ import {
   sudokuDeduction,
   sudokuSolution,
 } from '../../engine/placement/sudoku.js';
+import { seedCount } from '../tables.js';
 
-const perRung = Number(process.argv[2] ?? 20);
+const perRung = seedCount(process.argv[2], 20, 'npm run sim:sudoku -- [boards-per-rung [--sweep]]');
 const ladders = loadLadders();
 const type = findType(ladders, 'sudoku');
 

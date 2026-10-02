@@ -1,7 +1,20 @@
 /**
- * What the measurements in `cli/` share to print their tables: the seed of each board, the
- * average over runs, a share as a percentage, and the board range a command line names.
+ * What the measurements in `cli/` share to read their command lines and print their tables: how
+ * many seeds a command asks for, the seed of each board, the average over runs, a share as a
+ * percentage, and the board range a command line names.
  */
+
+/**
+ * How many seeds (boards, runs or trials) a command line asks for: `arg`, or `fallback` when it
+ * names none. A table of averages over no boards measures nothing, so anything but a whole
+ * number from 1 stops the command with its `usage` line and exit code 2.
+ */
+export function seedCount(arg: string | undefined, fallback: number, usage: string): number {
+  const n = arg === undefined ? fallback : Number(arg);
+  if (Number.isInteger(n) && n >= 1) return n;
+  console.error(`usage: ${usage}`);
+  return process.exit(2);
+}
 
 /** The seed of a measurement's `s`-th board, the same in every command so their rows line up. */
 export const seedAt = (s: number): number => s * 2654435761 + 11;

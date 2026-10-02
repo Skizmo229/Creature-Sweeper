@@ -11,8 +11,9 @@
 
 import { Game } from '../../engine/game.js';
 import type { BoardConfig, Topology, Wrap } from '../../engine/types.js';
+import { seedCount } from '../tables.js';
 
-const TRIALS = Number(process.argv[2] ?? 120);
+const TRIALS = seedCount(process.argv[2], 120, 'npx tsx src/sim/cli/topology.ts [trials]');
 
 /** A descending tier spread, the shape most ladders use. */
 function quantityFor(cells: number, density: number, tiers = 5): number[] {
