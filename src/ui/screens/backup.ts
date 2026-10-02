@@ -5,7 +5,7 @@
  * loading it; both routes exist because the embed can block either one (decision 0022).
  */
 
-import { el } from '../dom.js';
+import { el, link } from '../dom.js';
 import type { AskOptions } from '../overlays/ask.js';
 import {
   PROGRESS_KEY,
@@ -19,7 +19,7 @@ import {
 import { describeTelemetry, encodeTelemetry } from '../telemetry.js';
 import { VERSION } from '../version.js';
 import { TelemetryStore } from '../telemetrystore.js';
-import { SOURCE_URL, link } from './about.js';
+import { SOURCE_URL } from './about.js';
 
 /** Where a play-tester sends the statistics: the repository's play-test report (decision 0085). */
 export const PLAYTEST_REPORT_URL = `${SOURCE_URL}/issues/new?template=playtest.yml`;

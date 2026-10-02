@@ -4,8 +4,8 @@
  * since the board it happened on can no longer be trusted.
  */
 
-import { type OverlayCard, el } from '../dom.js';
-import { SOURCE_URL } from '../screens/about.js';
+import { type OverlayCard, el, link } from '../dom.js';
+import { SOURCE_LABEL, SOURCE_URL } from '../screens/about.js';
 import { VERSION } from '../version.js';
 import type { Modal } from './modal.js';
 
@@ -23,11 +23,10 @@ export function buildCrash(message: string, onBack: () => void): OverlayCard {
   );
   card.append(el('p', 'overlay-stats', message));
   const report = el('p', 'overlay-note');
-  const link = el('a', undefined, 'github.com/Skizmo229/Creature-Sweeper');
-  link.href = `${SOURCE_URL}/issues`;
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  report.append(`Version ${VERSION}. To report it, with the message above: `, link);
+  report.append(
+    `Version ${VERSION}. To report it, with the message above: `,
+    link(`${SOURCE_URL}/issues`, SOURCE_LABEL),
+  );
   card.append(report);
 
   const row = el('div', 'overlay-actions');
