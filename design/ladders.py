@@ -222,6 +222,19 @@ def shape_cells(shape, param, w, h):
     return sum(1 for y in range(h) for x in range(w)
                if shape_present(shape, param, w, h, x, y))
 
+
+def carved_cells(shape, w, h, share=.40):
+    """How many cells a seeded mask is asked for on a board of this size.
+
+    Chosen rather than measured, which is the whole point -- see shape_cells.
+    """
+    return min(round(share * w * h), (w - 2) * (h - 2))
+
+
+def carved_room(shape, w, h):
+    """The most cells a seeded mask can hold on a board of this size."""
+    return (w - 2) * (h - 2)
+
 # ---------- shape archetypes -------------------------------------------------
 
 def shape_descending(T, boss=0):
@@ -555,6 +568,28 @@ def extend(t):
 
 
 # ---------- unlocks ----------------------------------------------------------
+# The menu's four categories, and the order within each. Every type is in
+# exactly one. A ladder sits where its main idea is, not where its rules
+# happen to be implemented: DUNGEON is a shape in the engine but a spell
+# ladder to play, and HIVE is a topology that plays as a special rule.
+#
+#   normal   the original game's seven modes
+#   shape    the board's outline or its edges are the point
+#   magic    the spells are the point
+#   special  everything else, mostly a placement rule
+#
+# Within a category the order is the order its gates open, so the menu reads
+# the way a player meets it.
+CATEGORIES = {
+    "normal": ["easy", "normal", "huge", "extreme", "huge_extreme", "blind", "huge_blind"],
+    "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave", "pyramid",
+              "gear", "card", "valentines", "star"],
+    "magic": ["arcane", "workout", "oracle", "dungeon", "seer", "augur"],
+    "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku",
+                "ultra_hive", "petri", "patrol", "sprinkle_donut"],
+}
+CATEGORY = {tid: cat for cat, ids in CATEGORIES.items() for tid in ids}
+
 # Two kinds of gate, and they mean different things.
 #
 # A TYPE gate ("clear EASY") is a statement about readiness: this ladder
@@ -626,42 +661,8 @@ def unlock_boards():
     return gates
 
 
-# The menu's four categories, and the order within each. Every type is in
-# exactly one. A ladder sits where its main idea is, not where its rules
-# happen to be implemented: DUNGEON is a shape in the engine but a spell
-# ladder to play, and HIVE is a topology that plays as a special rule.
-#
-#   normal   the original game's seven modes
-#   shape    the board's outline or its edges are the point
-#   magic    the spells are the point
-#   special  everything else, mostly a placement rule
-#
-# Within a category the order is the order its gates open, so the menu reads
-# the way a player meets it.
-CATEGORIES = {
-    "normal": ["easy", "normal", "huge", "extreme", "huge_extreme", "blind", "huge_blind"],
-    "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave", "pyramid",
-              "gear", "card", "valentines", "star"],
-    "magic": ["arcane", "workout", "oracle", "dungeon", "seer", "augur"],
-    "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku",
-                "ultra_hive", "petri", "patrol", "sprinkle_donut"],
-}
-CATEGORY = {tid: cat for cat, ids in CATEGORIES.items() for tid in ids}
 UNLOCK_BOARDS = unlock_boards()
 POSTGAME = ["blind", "huge_blind"]
-
-
-def carved_cells(shape, w, h, share=.40):
-    """How many cells a seeded mask is asked for on a board of this size.
-
-    Chosen rather than measured, which is the whole point -- see shape_cells.
-    """
-    return min(round(share * w * h), (w - 2) * (h - 2))
-
-
-def carved_room(shape, w, h):
-    """The most cells a seeded mask can hold on a board of this size."""
-    return (w - 2) * (h - 2)
 
 
 @dataclass(frozen=True)
