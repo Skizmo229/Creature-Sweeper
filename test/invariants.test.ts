@@ -1,8 +1,16 @@
 /**
- * The findings from the design research, as executable specifications.
+ * The four load-bearing facts (`docs/invariants.md`) on the real ladder data, so a schedule in
+ * `design/ladder_types.toml` that breaks one fails here rather than on a board that cannot be won.
  *
- * These run against the real generated ladder data, so if a schedule in
- * `design/ladders.py` changes in a way that breaks the tuning, this fails.
+ * 1. The tuning identity: `ladder data`, and `board shapes`, whose cell counts C_k is built on
+ *    (`cave.test.ts` and `dungeon.test.ts` hold the seeded shapes to theirs).
+ * 2. The zero-damage guarantee: `the zero-damage guarantee`, `the crawl rule on the real ladders`
+ *    and `sweep`.
+ * 3. EXP is always collected: `the zero-damage guarantee`, which reaches max level exactly.
+ * 4. A number is the sum of its neighbours' tiers: `topology.test.ts`, on every adjacency.
+ *
+ * `boards from drawings` holds a drawn board to facts 1 to 3. The rest is what every board leans
+ * on: an opening, a search board's win, cascades. `settings.test.ts` keeps the dials off all four.
  */
 
 import { describe, expect, it } from 'vitest';
