@@ -7,27 +7,19 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
-import type { Sfx } from '../../src/ui/sfx.js';
+import { type AppDriver, mountApp, settingsRow } from './driver.js';
 
-interface Driver {
-  showSettings(back: () => void): void;
-  showTypes(): void;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 /** What the game's mixer is asked to play, as [event, volume] pairs. */
 function listen(): [string, number][] {
-  const sfx = (app as unknown as { sfx: Sfx }).sfx;
+  const sfx = app.sfx;
   const heard: [string, number][] = [];
   // happy-dom has no audio, so the real `sound` would mark the mixer dead.
   Object.assign(sfx, {
@@ -42,9 +34,7 @@ describe('the sound effects volume', () => {
     expect(Settings.load().presentation.sfxVolume).toBe(1);
     app.showSettings(() => app.showTypes());
     const heard = listen();
-    const setting = [...document.querySelectorAll('.settings-row')].find((r) =>
-      r.textContent?.startsWith('Sound effects volume'),
-    )!;
+    const setting = settingsRow('Sound effects volume');
     const range = setting.querySelector<HTMLInputElement>('input[type=range]')!;
     range.value = '2.35';
     range.dispatchEvent(new Event('input'));
@@ -81,9 +71,7 @@ describe('the sound effects volume', () => {
 
   it('keeps the speaker and the settings screen showing the same volume', () => {
     app.showSettings(() => app.showTypes());
-    const setting = [...document.querySelectorAll('.settings-row')].find((r) =>
-      r.textContent?.startsWith('Sound effects volume'),
-    )!;
+    const setting = settingsRow('Sound effects volume');
     const screen = setting.querySelector<HTMLInputElement>('input[type=range]')!;
     const corner = document.querySelector<HTMLInputElement>('.speaker .volume-pop input')!;
 

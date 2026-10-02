@@ -8,21 +8,12 @@
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_GAMEPLAY } from '../../src/engine/settings.js';
-import { App } from '../../src/ui/app.js';
-import type { Settings } from '../../src/ui/settings.js';
+import { type AppDriver, mountApp, settingsRow } from './driver.js';
 
-interface Driver {
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  readonly settings: Settings;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
   app.showSettings(() => app.showTypes());
 });
 
@@ -33,9 +24,7 @@ function sliderRow(name: string): {
   reset: HTMLButtonElement;
   status: () => string;
 } {
-  const row = [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
-    (r) => r.querySelector('.settings-name')?.textContent === name,
-  )!;
+  const row = settingsRow(name);
   return {
     input: row.querySelector<HTMLInputElement>('input[type=range]')!,
     readout: row.querySelector<HTMLElement>('.settings-value')!,
