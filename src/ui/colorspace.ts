@@ -1,6 +1,7 @@
 /**
- * A colour's numbers: its red, green and blue, and where it sits in CIELAB, the space in which a
- * distance is how different two colours look. DOM-free, so the tests can measure with it.
+ * A colour's numbers: the hex a setting keeps, its red, green and blue, and where it sits in
+ * CIELAB, the space in which a distance is how different two colours look. DOM-free, so the tests
+ * can measure with it.
  */
 
 /** A colour as its red, green and blue, each from 0 to `CHANNEL_MAX`. */
@@ -18,6 +19,17 @@ export function rgbOf(color: string): Rgb {
 /** Red, green and blue as a `#rrggbb` colour in lower case. */
 export function hexOf(rgb: Rgb): string {
   return `#${rgb.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
+/**
+ * A colour written in hex, `#2ee6ff` or the short `#2ef`, with or without its '#' and in either
+ * case, as a setting keeps it: `#rrggbb` in lower case. Null for anything else.
+ */
+export function readHexColor(text: unknown): string | null {
+  if (typeof text !== 'string') return null;
+  const digits = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(text.trim())?.[1]?.toLowerCase();
+  if (!digits) return null;
+  return `#${digits.length === 3 ? [...digits].map((d) => d + d).join('') : digits}`;
 }
 
 /** A `#rrggbb` colour in CIELAB, from sRGB under the D65 white, as the CIE defines it. */

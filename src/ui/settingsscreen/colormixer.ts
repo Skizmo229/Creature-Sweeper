@@ -6,9 +6,8 @@
  * `colorForm` makes for both.
  */
 
-import { CHANNEL_MAX, type Rgb, hexOf, rgbOf } from '../colorspace.js';
+import { CHANNEL_MAX, type Rgb, hexOf, readHexColor, rgbOf } from '../colorspace.js';
 import { el } from '../dom.js';
-import { readHexColor } from '../presentation.js';
 
 const CHANNEL_NAMES = ['Red', 'Green', 'Blue'] as const;
 

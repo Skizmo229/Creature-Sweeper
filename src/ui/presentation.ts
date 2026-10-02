@@ -14,6 +14,7 @@
  */
 
 import { snapRatio } from '../engine/settings.js';
+import { readHexColor } from './colorspace.js';
 import {
   type Pip,
   SFX_EVENTS,
@@ -100,17 +101,6 @@ export const MARK_COLORS: readonly { readonly name: string; readonly color: stri
   { name: 'Magenta', color: '#ff4dff' },
   { name: 'Blue', color: '#3d6dff' },
 ];
-
-/**
- * A colour written in hex, `#2ee6ff` or the short `#2ef`, with or without its '#' and in either
- * case, as the setting keeps it: `#rrggbb` in lower case. Null for anything else.
- */
-export function readHexColor(text: unknown): string | null {
-  if (typeof text !== 'string') return null;
-  const digits = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(text.trim())?.[1]?.toLowerCase();
-  if (!digits) return null;
-  return `#${digits.length === 3 ? [...digits].map((d) => d + d).join('') : digits}`;
-}
 
 /** The player's own tier colours, mixed in the custom window and kept in `customTierColors`. */
 export const CUSTOM_TIERS = 'custom';
