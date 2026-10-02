@@ -5,7 +5,7 @@ chooses a red gives up only its colour, and the drawing the consequences below a
 
 ## Context
 The cursor highlight was always drawn in the mark green where a click would land and in
-`OUT_OF_REACH_COLOR`, a red, where it would not: past the crawl rule's reach or a spell's, and on
+`REFUSAL_COLOR`, a red, where it would not: past the crawl rule's reach or a spell's, and on
 a given or a ruled-out note while a tier is armed. A setting was asked for to change its colour,
 with presets and a custom colour mixed from red, green and blue.
 
@@ -33,12 +33,12 @@ yellow for contrast, cyan for a bright colour apart from the red under deuterano
 which reads by its hue rather than its brightness and is the furthest from the red under every
 vision measured. None is red, and none is violet, the tutor's colour, whose rings are drawn the
 same way. The default stays the green the game always had. A custom colour within ΔE 40 of the
-red (`NEAR_REFUSAL`) is warned about in its window, not refused: pure red is 38 from it, a light
+red (`NEAR_TAKEN`) is warned about in its window, not refused: pure red is 38 from it, a light
 red 37 and a red-orange 35, where orange is 46 and hot pink 45.
 
 ## Consequences
 A player who chooses a red gives up the refusal on their own boards, knowingly.
 `test/ui/highlightcolor.test.ts` holds every preset clear of the red. If the red ever changes,
-measure the presets and `NEAR_REFUSAL` against it again. The green default is still a poor pair
+measure the presets and `NEAR_TAKEN` against it again. The green default is still a poor pair
 with the red under deuteranopia; a refusal drawn differently as well as in a different colour
 (dashed, say) would settle that for every player, and would be a decision of its own.

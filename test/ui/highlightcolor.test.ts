@@ -18,9 +18,9 @@ import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { readHexColor } from '../../src/ui/colorspace.js';
 import { DEFAULT, HIGHLIGHT_COLORS, OFF } from '../../src/ui/presentation.js';
 import { Settings } from '../../src/ui/settings.js';
-import { NEAR_REFUSAL } from '../../src/ui/settingsscreen/customcolor.js';
+import { NEAR_TAKEN } from '../../src/ui/settingsscreen/customcolor.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
-import { MARK_COLOR, OUT_OF_REACH_COLOR } from '../../src/ui/theme.js';
+import { MARK_COLOR, REFUSAL_COLOR } from '../../src/ui/theme.js';
 
 interface Driver {
   play(typeId: string, board: number, seed?: number): void;
@@ -141,7 +141,7 @@ describe('the board', () => {
     );
     view.setGame(highlightSampleBoard('square'), themeFor('normal'), display('#2ee6ff'));
     view.pinHover(HIGHLIGHT_PIN.x, HIGHLIGHT_PIN.y);
-    expect(strokedIn(OUT_OF_REACH_COLOR)).toBe(RING);
+    expect(strokedIn(REFUSAL_COLOR)).toBe(RING);
     expect(strokedIn('#2ee6ff')).toBe(0);
   });
 
@@ -162,9 +162,9 @@ describe('the presets', () => {
 
   it('stay clear of the red of a click that would do nothing', () => {
     for (const { name, color } of HIGHLIGHT_COLORS) {
-      expect(colorDifference(color, OUT_OF_REACH_COLOR), name).toBeGreaterThanOrEqual(NEAR_REFUSAL);
+      expect(colorDifference(color, REFUSAL_COLOR), name).toBeGreaterThanOrEqual(NEAR_TAKEN);
     }
-    expect(colorDifference(MARK_COLOR, OUT_OF_REACH_COLOR)).toBeGreaterThanOrEqual(NEAR_REFUSAL);
+    expect(colorDifference(MARK_COLOR, REFUSAL_COLOR)).toBeGreaterThanOrEqual(NEAR_TAKEN);
   });
 
   it('are measured against a threshold that parts the reds from their neighbours', () => {
@@ -172,10 +172,10 @@ describe('the presets', () => {
     expect(colorDifference('#1e90ff', '#1e90ff')).toBe(0);
     // Pure red, a light red and a red-orange fall inside it; orange and hot pink do not.
     for (const red of ['#ff0000', '#ffa0a0', '#ff7f2a']) {
-      expect(colorDifference(red, OUT_OF_REACH_COLOR), red).toBeLessThan(NEAR_REFUSAL);
+      expect(colorDifference(red, REFUSAL_COLOR), red).toBeLessThan(NEAR_TAKEN);
     }
     for (const near of ['#ff9d3a', '#ff3399']) {
-      expect(colorDifference(near, OUT_OF_REACH_COLOR), near).toBeGreaterThan(NEAR_REFUSAL);
+      expect(colorDifference(near, REFUSAL_COLOR), near).toBeGreaterThan(NEAR_TAKEN);
     }
   });
 });

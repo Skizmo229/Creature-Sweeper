@@ -11,7 +11,7 @@ a refused click. A player asking for another mark colour would be choosing again
 ## Decision
 `markColor` is a presentation setting: the green, three presets, or any colour from the custom
 window. The presets were measured on 28 September 2026 by the method of 0050 against the five
-annotation colours, and each stands at least `NEAR_REFUSAL` from every one: lime is 57 from the
+annotation colours, and each stands at least `NEAR_TAKEN` from every one: lime is 57 from the
 nearest, magenta 49 and blue 42, where white sits 23 from the cream, yellow 26 from the gold and
 cyan 17 from the blue, so those three are not offered. The custom window, generalised to take
 its legend and the colours it warns near from the setting that opens it, says which of the five

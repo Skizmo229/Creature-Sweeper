@@ -91,7 +91,7 @@ export type MarkColorChoice = typeof DEFAULT | string;
 /**
  * The colours a mark is offered in besides the game's green, the Custom tile making any other. A
  * mark shares the board with the other annotations, each a colour of its own (decision 0032), so
- * every preset stands at least `NEAR_REFUSAL` from each of them: the red of a refused click, the
+ * every preset stands at least `NEAR_TAKEN` from each of them: the red of a refused click, the
  * gold of a given, the blue of a Census, the cream of an Augur and the violet of the tutor.
  * Measured 28 Sep 2026 as the highlight's were: lime is 57 from the nearest, magenta 49 and
  * blue 42, where white sits 23 from the cream, yellow 26 from the gold and cyan 17 from the blue.

@@ -22,7 +22,7 @@ import { type Choice, gallery, settingsWindow, wideRow } from './widgets.js';
  * refused click: pure red is 38 from it, a light red 37 and a red-orange 35, where orange is 46
  * and hot pink 45; every preset is 81 or more.
  */
-export const NEAR_REFUSAL = 40;
+export const NEAR_TAKEN = 40;
 
 /** A colour the board already means something by, as the legend names it and the warning does. */
 export interface TakenColor {
@@ -72,7 +72,7 @@ function openColorWindow(screen: HTMLElement, spec: ColorWindowSpec): void {
   const example = el('div', 'color-example');
   const mixer = colorMixer((color) => {
     swatches.mixed.style.background = color;
-    const near = spec.taken.find((t) => colorDifference(color, t.color) < NEAR_REFUSAL);
+    const near = spec.taken.find((t) => colorDifference(color, t.color) < NEAR_TAKEN);
     warn.hidden = near === undefined;
     warn.textContent = near ? `Close to ${near.name}.` : '';
     example.replaceChildren(spec.example(color));

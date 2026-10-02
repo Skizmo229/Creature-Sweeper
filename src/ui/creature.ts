@@ -12,7 +12,7 @@ import type { Pip, SymbolPip } from './looktypes.js';
 import { PIP_FAMILY, isSymbolPip, symbolChar } from './pipsymbols.js';
 import { pipPath } from './pips.js';
 import type { CreatureGlyph } from './presentation.js';
-import { MARK_OUTLINE } from './theme.js';
+import { ANNOTATION_OUTLINE } from './theme.js';
 import { TIER_COUNT, type TierPalette, tierColor, tierGilded } from './tiercolors.js';
 import { FONTS, type GameFont } from './typefaces.js';
 
@@ -99,7 +99,7 @@ function drawTierDigit(
   ctx.textAlign = 'center';
   ctx.lineJoin = 'round';
   ctx.lineWidth = Math.max(2, px * 0.18);
-  ctx.strokeStyle = MARK_OUTLINE;
+  ctx.strokeStyle = ANNOTATION_OUTLINE;
   ctx.strokeText(text, cx, cy + centre);
   if (halo) {
     ctx.lineWidth = Math.max(1, px * 0.09);

@@ -24,7 +24,7 @@ import {
   CENSUS_COLOR,
   GIVEN_COLOR,
   MARK_COLOR,
-  OUT_OF_REACH_COLOR,
+  REFUSAL_COLOR,
   TUTOR_COLOR,
 } from '../theme.js';
 import type { ScreenContext } from './context.js';
@@ -39,7 +39,7 @@ const TAKEN: readonly TakenColor[] = [
   { color: CENSUS_COLOR, label: 'A Census', name: 'the blue of a Census' },
   { color: AUGUR_COLOR, label: 'An Augur', name: 'the cream of an Augur' },
   { color: TUTOR_COLOR, label: 'The tutor', name: 'the violet of the tutor' },
-  { color: OUT_OF_REACH_COLOR, label: 'A refused click', name: 'the red of a refused click' },
+  { color: REFUSAL_COLOR, label: 'A refused click', name: 'the red of a refused click' },
 ];
 
 /**

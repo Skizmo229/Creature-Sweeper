@@ -14,7 +14,7 @@ import { themeFor } from '../../src/ui/looks.js';
 import { HIGHLIGHT_NAMES, type HighlightStyle } from '../../src/ui/presentation.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
-import { MARK_COLOR, OUT_OF_REACH_COLOR } from '../../src/ui/theme.js';
+import { MARK_COLOR, REFUSAL_COLOR } from '../../src/ui/theme.js';
 
 /** Every `stroke()` on a canvas made while this runs: its colour and its width. */
 function recordStrokes(): { strokes: { color: string; width: number }[]; stop: () => void } {
@@ -74,7 +74,7 @@ function lit(
   const boxes = recording.strokes.filter((s) => s.color === MARK_COLOR);
   return {
     boxes: boxes.length,
-    crosses: recording.strokes.filter((s) => s.color === OUT_OF_REACH_COLOR).length,
+    crosses: recording.strokes.filter((s) => s.color === REFUSAL_COLOR).length,
     widths: [...new Set(boxes.map((s) => s.width))],
   };
 }

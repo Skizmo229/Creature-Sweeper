@@ -19,7 +19,7 @@ import { themeFor } from '../../src/ui/looks.js';
 import { HIGHLIGHT_PIN, highlightSampleBoard, highlightSampleLands } from '../../src/ui/preview.js';
 import { HIGHLIGHT_COLORS, type HighlightStyle } from '../../src/ui/presentation.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
-import { MARK_COLOR, MARK_OUTLINE, OUT_OF_REACH_COLOR } from '../../src/ui/theme.js';
+import { ANNOTATION_OUTLINE, MARK_COLOR, REFUSAL_COLOR } from '../../src/ui/theme.js';
 
 type Point = readonly [number, number];
 
@@ -198,7 +198,7 @@ describe('a cell a click would not land on', () => {
     expect(asCross(landing[0]!)).toBeNull();
 
     const refused = highlightStrokes(game, HIGHLIGHT_PIN, refuseAll).strokes;
-    expect(refused.map((s) => s.style)).toEqual([MARK_OUTLINE, OUT_OF_REACH_COLOR]);
+    expect(refused.map((s) => s.style)).toEqual([ANNOTATION_OUTLINE, REFUSAL_COLOR]);
     // The outline is the same cross, wider, so the red has a dark edge on either side.
     expect(refused[0]!.lines).toEqual(refused[1]!.lines);
     expect(refused[0]!.width).toBeGreaterThan(refused[1]!.width);
@@ -209,9 +209,9 @@ describe('a cell a click would not land on', () => {
   it('still says no to a player whose highlight colour is the red itself', () => {
     const game = highlightSampleBoard('square');
     const geometry = (strokes: Stroke[]) => strokes.map((s) => s.lines);
-    const landing = highlightStrokes(game, HIGHLIGHT_PIN, landAll, { color: OUT_OF_REACH_COLOR });
-    const refused = highlightStrokes(game, HIGHLIGHT_PIN, refuseAll, { color: OUT_OF_REACH_COLOR });
-    expect(landing.strokes.map((s) => s.style)).toEqual([OUT_OF_REACH_COLOR]);
+    const landing = highlightStrokes(game, HIGHLIGHT_PIN, landAll, { color: REFUSAL_COLOR });
+    const refused = highlightStrokes(game, HIGHLIGHT_PIN, refuseAll, { color: REFUSAL_COLOR });
+    expect(landing.strokes.map((s) => s.style)).toEqual([REFUSAL_COLOR]);
     expect(geometry(refused.strokes)).not.toContainEqual(geometry(landing.strokes)[0]);
   });
 
@@ -286,7 +286,7 @@ describe('the highlight examples on the settings screen', () => {
         pin: HIGHLIGHT_PIN,
         lands: highlightSampleLands,
       });
-      const inRed = recording.strokes.filter((s) => s.style === OUT_OF_REACH_COLOR);
+      const inRed = recording.strokes.filter((s) => s.style === REFUSAL_COLOR);
       const inColor = recording.strokes.filter((s) => s.style === MARK_COLOR);
       expect(inRed).toHaveLength(refused.length);
       for (const s of inRed) expect(asCross(s)).not.toBeNull();
@@ -298,7 +298,7 @@ describe('the highlight examples on the settings screen', () => {
     const app = new App(document.getElementById('app')!) as unknown as Driver;
     recording.strokes.length = 0;
     app.showSettings(() => app.showTypes());
-    const inRed = recording.strokes.filter((s) => s.style === OUT_OF_REACH_COLOR);
+    const inRed = recording.strokes.filter((s) => s.style === REFUSAL_COLOR);
     // At least the game type's green and every preset in the colour row, each crossing out the
     // covered cells right of its lit one.
     const perTile = highlightSampleBoard('square')
@@ -326,7 +326,7 @@ describe('the edge of reach on a board in play', () => {
     recording.strokes.length = 0;
     app.view!.pinHover(edge.x, edge.y);
     const color = app.view!.display.highlightColor;
-    const inRed = recording.strokes.filter((s) => s.style === OUT_OF_REACH_COLOR);
+    const inRed = recording.strokes.filter((s) => s.style === REFUSAL_COLOR);
     const inColor = recording.strokes.filter((s) => s.style === color);
     expect(inRed).toHaveLength(outOfReach);
     for (const s of inRed) expect(asCross(s)).not.toBeNull();

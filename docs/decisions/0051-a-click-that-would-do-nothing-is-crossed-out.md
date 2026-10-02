@@ -4,7 +4,7 @@
 
 ## Context
 The cursor boxed every cell it lit: in the player's highlight colour where a click would land,
-in `OUT_OF_REACH_COLOR`, a red, where it would not (past the crawl rule's reach or a spell's, or
+in `REFUSAL_COLOR`, a red, where it would not (past the crawl rule's reach or a spell's, or
 a given or a ruled-out note while a tier is armed). So the refusal was said by colour alone.
 Decision 0050 measured the default green only ΔE 11 from that red under deuteranopia, and left a
 refusal drawn differently for a decision of its own. The red was itself the second drawing: the
@@ -40,9 +40,9 @@ open".
 ## Decision
 A cell a click would not land on is crossed out instead of boxed: two diagonals from corner to
 corner of its tile, stopping on the tile's own outline (on a hex, where a line at 45 degrees
-meets its sides), in the red, over the dark outline a mark wears (`MARK_OUTLINE`, a pixel either
-side). A cell that lands is boxed as before. Over its outline the red measures at least 3.88:1
-against every palette's tile (median 5.66:1); the ring is drawn at 40% as it always was.
+meets its sides), in the red, over the dark outline a mark wears (`ANNOTATION_OUTLINE`, a pixel
+either side). A cell that lands is boxed as before. Over its outline the red measures at least
+3.88:1 against every palette's tile (median 5.66:1); the ring is drawn at 40% as it always was.
 
 ## Consequences
 The refusal reads by its shape: under red–green colour blindness, in grayscale, on DONUT's tile,

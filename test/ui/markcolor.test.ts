@@ -16,14 +16,14 @@ import { DEFAULT, MARK_COLORS } from '../../src/ui/presentation.js';
 import { sampleBoard } from '../../src/ui/preview.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
-import { NEAR_REFUSAL } from '../../src/ui/settingsscreen/customcolor.js';
+import { NEAR_TAKEN } from '../../src/ui/settingsscreen/customcolor.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
 import {
   AUGUR_COLOR,
   CENSUS_COLOR,
   GIVEN_COLOR,
   MARK_COLOR,
-  OUT_OF_REACH_COLOR,
+  REFUSAL_COLOR,
   TUTOR_COLOR,
   noteColor,
 } from '../../src/ui/theme.js';
@@ -44,7 +44,7 @@ beforeEach(() => {
   app = new App(document.getElementById('app')!) as unknown as Driver;
 });
 
-const TAKEN = [OUT_OF_REACH_COLOR, GIVEN_COLOR, CENSUS_COLOR, AUGUR_COLOR, TUTOR_COLOR];
+const TAKEN = [REFUSAL_COLOR, GIVEN_COLOR, CENSUS_COLOR, AUGUR_COLOR, TUTOR_COLOR];
 
 describe('the mark colour setting', () => {
   it('is saved, resolves to the green until one is chosen, and the highlight follows it', () => {
@@ -81,7 +81,7 @@ describe('the presets', () => {
     for (const { name, color } of [...MARK_COLORS, { name: 'green', color: MARK_COLOR }]) {
       for (const taken of TAKEN) {
         expect(colorDifference(color, taken), `${name} against ${taken}`).toBeGreaterThanOrEqual(
-          NEAR_REFUSAL,
+          NEAR_TAKEN,
         );
       }
     }

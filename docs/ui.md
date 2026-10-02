@@ -254,7 +254,7 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   track showing the colours its slider reaches from where the others stand, with a number to type
   beside each and the hex; the example redraws in place as they move, and only "Use this colour"
   (or Enter in a field) saves and rebuilds. The colour is shown beside the red of a click that
-  would do nothing, with a warning within `NEAR_REFUSAL` of it. Both galleries, and the window's
+  would do nothing, with a warning within `NEAR_TAKEN` of it. Both galleries, and the window's
   example, show a refusal as well: the covered cells right of the lit one are out of reach
   (`highlightSampleLands`), so where the highlight lights a ring they are crossed out beside the
   boxes (decision 0051).

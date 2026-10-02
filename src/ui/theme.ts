@@ -70,7 +70,11 @@ export const VICTORY_NAMES: Record<VictoryId, string> = {
 /** Marks are green, as in the original. Drawn with a dark outline so they
  *  survive light tiles like EASY's olive, where green alone disappeared. */
 export const MARK_COLOR = '#35e06a';
-export const MARK_OUTLINE = 'rgba(8, 8, 4, 0.8)';
+/**
+ * The dark outline under what is written or drawn on a cell (a mark, a creature's tier digit, the
+ * cross of a refused click), so it reads on a light tile as well as a dark one.
+ */
+export const ANNOTATION_OUTLINE = 'rgba(8, 8, 4, 0.8)';
 
 /** Census results: a corner badge, deliberately unlike the centred number. */
 export const CENSUS_COLOR = '#7ad9ff';
@@ -107,7 +111,8 @@ export const TUTOR_COLOR = '#d29cff';
 export const BOARD_OUTLINE = '#ffffff';
 
 /**
- * The cursor over ground the crawl rule will not let you touch.
+ * The cursor over a cell a click would not land on: past the crawl rule's reach or a spell's,
+ * or a given or a ruled-out note while a tier is armed.
  *
  * Red, and the only red in the annotation palette, because it is the one
  * highlight that means "this click will do nothing" rather than telling you
@@ -116,7 +121,7 @@ export const BOARD_OUTLINE = '#ffffff';
  * Colour is not all it says: a cell the click would not land on is crossed out
  * where one it would is boxed (decision 0051).
  */
-export const OUT_OF_REACH_COLOR = '#ff5a5a';
+export const REFUSAL_COLOR = '#ff5a5a';
 
 /**
  * A Sudoku given: gold, against the green of a mark the player made.

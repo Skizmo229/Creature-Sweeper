@@ -11,7 +11,7 @@ import type { Cell } from '../../engine/types.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
 import type { BeatenLook, CreatureGlyph } from '../presentation.js';
 import { drawCreature } from '../creature.js';
-import { AUGUR_COLOR, CENSUS_COLOR, GIVEN_COLOR, MARK_OUTLINE, noteColor } from '../theme.js';
+import { ANNOTATION_OUTLINE, AUGUR_COLOR, CENSUS_COLOR, GIVEN_COLOR, noteColor } from '../theme.js';
 import type { TypeTheme } from '../looktypes.js';
 import { TIER_COUNT, type TierPalette } from '../tiercolors.js';
 import type { GameFont } from '../typefaces.js';
@@ -192,7 +192,7 @@ export function writeOnCell(
   ctx.textAlign = 'center';
   ctx.lineJoin = 'round';
   ctx.lineWidth = Math.max(2, box.size * 0.16);
-  ctx.strokeStyle = MARK_OUTLINE;
+  ctx.strokeStyle = ANNOTATION_OUTLINE;
   ctx.strokeText(text, cx, cy + centre);
   ctx.fillStyle = color;
   ctx.fillText(text, cx, cy + centre);
@@ -256,7 +256,7 @@ function drawNotes(p: Paint, cell: Cell, cx: number, cy: number): void {
   ctx.textAlign = 'center';
   ctx.lineJoin = 'round';
   ctx.lineWidth = Math.max(1.5, font * 0.3);
-  ctx.strokeStyle = MARK_OUTLINE;
+  ctx.strokeStyle = ANNOTATION_OUTLINE;
   ctx.fillStyle = noteColor(p.markColor);
   const at: { glyph: string; x: number; y: number }[] = [];
   for (let t = 0; t < slots; t++) {

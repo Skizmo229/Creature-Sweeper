@@ -13,11 +13,11 @@ import type { Lesson } from '../../sim/tutor.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
 import { DEFAULT_HIGHLIGHT_WIDTH, type HighlightStyle } from '../presentation.js';
 import {
+  ANNOTATION_OUTLINE,
   BOARD_OUTLINE,
   BOND_COLOR,
   BOX_RULE,
-  MARK_OUTLINE,
-  OUT_OF_REACH_COLOR,
+  REFUSAL_COLOR,
   TUTOR_COLOR,
 } from '../theme.js';
 import { tierColor } from '../tiercolors.js';
@@ -369,10 +369,10 @@ function crossOut(p: Paint, cx: number, cy: number, width: number): void {
   ctx.lineTo(cx + reach, cy + reach);
   ctx.moveTo(cx + reach, cy - reach);
   ctx.lineTo(cx - reach, cy + reach);
-  ctx.strokeStyle = MARK_OUTLINE;
+  ctx.strokeStyle = ANNOTATION_OUTLINE;
   ctx.lineWidth = width + 2 * CROSS_OUTLINE;
   ctx.stroke();
-  ctx.strokeStyle = OUT_OF_REACH_COLOR;
+  ctx.strokeStyle = REFUSAL_COLOR;
   ctx.lineWidth = width;
   ctx.stroke();
 }

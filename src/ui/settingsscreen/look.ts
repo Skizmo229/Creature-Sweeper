@@ -33,7 +33,7 @@ import {
   type TierColorChoice,
 } from '../presentation.js';
 import { PIP_NAMES, PIP_SHAPES } from '../pips.js';
-import { OUT_OF_REACH_COLOR, pipName } from '../theme.js';
+import { REFUSAL_COLOR, pipName } from '../theme.js';
 import { DEFAULT_TIERS, TIER_PRESETS, type TierPalette, tierColor } from '../tiercolors.js';
 import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
 import { SYMBOL_COUNT, isSymbolPip } from '../pipsymbols.js';
@@ -366,7 +366,7 @@ export function highlightColorRow(ctx: ScreenContext, host: HTMLElement): void {
       mixedLabel: 'A click that lands',
       taken: [
         {
-          color: OUT_OF_REACH_COLOR,
+          color: REFUSAL_COLOR,
           label: 'A click that would do nothing',
           name: 'the red that crosses out a click that would do nothing',
         },
