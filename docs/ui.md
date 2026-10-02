@@ -18,7 +18,8 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   built), never under the settings screen or after the player has left it (issue #6). On the
   settings screen Escape is Back, to wherever it was opened from; a picker open over it takes the
   first Escape itself. On a board, Escape backs out one thing at a time: the spell, the tier, then
-  the board (a Full Run asks first).
+  the board, which asks first whether to pause or abandon a game with a move in it, or any Full Run,
+  unless `backPauses` is on (see Pausing below).
 - A key with Ctrl, Cmd or Alt held never reaches the board: it is the browser's (Ctrl+H is its
   history), and only Shift is the board's, inverting the entry mode for a keystroke. A click with
   Control held marks as a right click does, since a Mac's Control-click arrives as the left button
@@ -70,16 +71,16 @@ store) and `src/engine/settings.ts` (the gameplay dials).
 - The ladder list is four columns, one per category (Normal, Shape, Magic, Special), each in the
   order its ladders open; they fall to two and then one as the screen narrows (decision 0036).
   Under the title it says the game's version, read from `package.json` (decision 0068).
-- The ladder list's names are 1.5rem, by request, and never wider than their card. Each records its
-  longest word in ems once its face has arrived (`fitNames`), and the stylesheet caps its size by
-  the card's width, so CHECKERBOARD comes down a little at laptop width, and any long word at a
-  large text size. A name with a space in it breaks there first.
-- The menus' cards have heavy edges, by request: a 2px border on a game-type card, with an 8px strip
-  of the ladder's colour down its left, and a 3px warm-grey edge on a board tile (a 1px border
-  inside a 2px outline of the same colour, because a tile's border carries its state). A hover
-  turns a card's whole edge the ladder's colour, a tile's outline included, and darkens a game-type
-  card's strip so it still stands apart. Where the strip goes is a setting (`menuStrip`): the left
-  edge by default, both vertical edges, all four, or none.
+- The ladder list's names are 1.5rem and never wider than their card. Each records its longest word
+  in ems once its face has arrived (`fitNames`), and the stylesheet caps its size by the card's
+  width, so CHECKERBOARD comes down a little at laptop width, and any long word at a large text
+  size. A name with a space in it breaks there first.
+- The menus' cards have heavy edges: a 2px border on a game-type card, with an 8px strip of the
+  ladder's colour down its left, and a 3px warm-grey edge on a board tile (a 1px border inside a 2px
+  outline of the same colour, because a tile's border carries its state). A hover turns a card's
+  whole edge the ladder's colour, a tile's outline included, and darkens a game-type card's strip so
+  it still stands apart. Where the strip goes is a setting (`menuStrip`): the left edge by default,
+  both vertical edges, all four, or none.
 - The settings screen's Back button is pinned to the top of the window, so the way out is always
   in reach however far down the screen is scrolled.
 
@@ -92,13 +93,13 @@ store) and `src/engine/settings.ts` (the gameplay dials).
 - Absent cells and revealed empty floor must look different.
 - A beaten creature shows its number while hovered, and every one does while the game screen's
   Beaten toggle is on (`U`; decision 0067), which is how a touch screen sees them. Neither happens
-  on PAIRS or DOMINOES, by request, nor on a search board, where nothing is beaten. How it is
+  on PAIRS or DOMINOES (decision 0012), nor on a search board, where nothing is beaten. How it is
   drawn is a setting (`beatenLook`): dimmed and struck through, the game's own; struck; crossed
   out, the stroke and its mirror, dimmed or not; dimmed, which reads better at small cells, where
   a stroke crosses the pips and an X crosses them twice; greyed, dimmed and drawn in the ink with
-  no colour, so the live creatures' colours stand out; or plain. A creature can
-  be drawn as its tier's digit instead of its pips, or as both (`glyph`, decision 0074); the clear
-  effects draw with the same look.
+  no colour, so the live creatures' colours stand out; or plain. A creature can be drawn as its
+  tier's digit instead of its pips, or as both (`glyph`, decision 0074); the clear effects draw with
+  the same look.
 - Sudoku boards get a translucent wash on alternate boxes and a box rule about twice a cell edge,
   drawn in one pass; givens are gold (`GIVEN_COLOR`), player marks the mark colour: the green of
   the original unless the player chose another, from presets measured clear of every annotation
@@ -112,10 +113,10 @@ store) and `src/engine/settings.ts` (the gameplay dials).
 - The board's numbers, marks and pencil notes are sized to one measured height times the digit
   size setting (`digitSize`, `Paint.digitScale`); a creature's digit and the corner badges keep
   their own sizes.
-- On the crawl ladders (DUNGEON, PETRI DISH, SPRINKLE DONUT, PYRAMID) the cells the crawl rule keeps out of reach can be shaded
-  (`reachShading`, `drawReach`), off by default: the rule made visible where the cursor shows it
-  one cell at a time. It reads nothing but the geometry the rule reads, and a sealed-in board,
-  entirely in reach, draws no shade.
+- On the crawl ladders (DUNGEON, PETRI DISH, SPRINKLE DONUT, PYRAMID) the cells the crawl rule keeps
+  out of reach can be shaded (`reachShading`, `drawReach`), off by default: the rule made visible
+  where the cursor shows it one cell at a time. It reads nothing but the geometry the rule reads,
+  and a sealed-in board, entirely in reach, draws no shade.
 - The cursor highlight has a fourth shape, 'seen': over a covered cell the open numbers and beaten
   creatures beside it, the setup of every subtraction; over an open cell what it sees. Its line's
   thickness is a setting (`highlightWidth`), and the cross over a refused cell is drawn with it.
@@ -124,10 +125,10 @@ store) and `src/engine/settings.ts` (the gameplay dials).
 - The HUD says words (`Level`, `Next Level`, `TIME 12 LEFT`), no zero padding. The clock reads
   in seconds, in minutes and seconds, or not at all (`clock`), running underneath whatever it
   shows. The LV buttons hide their counts under the hidden-counters dial (decision 0073), and
-  Sweep's button says how many of a budget are left. The level number
-  and the LV buttons wear the tier's creature colour (`tierColor`), with the halo, gold unless the
-  player's own colours say otherwise, as a stroke or border for tiers 6 to 9. Readouts are 1.9rem (1.7 on a phone), by request, so the HUD takes two rows on
-  a laptop.
+  Sweep's button says how many of a budget are left. The level number and the LV buttons wear the
+  tier's creature colour (`tierColor`), with the halo, gold unless the player's own colours say
+  otherwise, as a stroke or border for tiers 6 to 9. Readouts are 1.9rem (1.7 on a phone), so the
+  HUD takes two rows on a laptop.
 - The rules card leads with the sum rule and its proof (a number can exceed 8). Only EASY explains
   a death (`TEACHING_TYPE`); the loss note says "took your last N HP".
 - The About card (the list of game types, `src/ui/screens/about.ts`; decision 0069) says the
@@ -153,16 +154,16 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   docs/teaching-plan.md, Part 3) is the catalogue in the game, for reading: an overlay that scrolls
   inside itself with its head and Close pinned, a section per catalogue section and a row of jumps
   to them. Its shape is the catalogue's, held to it by `test/guide.test.ts`; its words are the
-  game's own, shorter (decision 0059). Each diagram is the
-  catalogue's board drawn by a non-interactive `BoardView` in the look of the ladder the player is
-  on, with the tutor's own lesson for it laid over and what the tutor says there beneath, in the
-  tutor's violet; the damage table is the engine's formula, the costs that kill from 10 HP in the
-  danger colour. It opens from the rules card, the ladder list, and on a board from `G` or the
-  "more [G]" at the end of what the tutor says, at the entry for the trick it is showing (at a
-  guess, Guessing well), marked in violet down its left. Escape closes it and leaves the lesson.
-  A ladder's board list has "How to play" it, which opens the guide led by the catalogue's note on
-  that ladder (section 7, `src/ui/guide/ladders.ts`; its blurb where the catalogue has none) and
-  its own tricks marked in its colour; `G` on a board leads with the board's ladder the same way.
+  game's own, shorter (decision 0059). Each diagram is the catalogue's board drawn by a
+  non-interactive `BoardView` in the look of the ladder the player is on, with the tutor's own
+  lesson for it laid over and what the tutor says there beneath, in the tutor's violet; the damage
+  table is the engine's formula, the costs that kill from 10 HP in the danger colour. It opens from
+  the rules card, the ladder list, and on a board from `G` or the "more [G]" at the end of what the
+  tutor says, at the entry for the trick it is showing (at a guess, Guessing well), marked in violet
+  down its left. Escape closes it and leaves the lesson. A ladder's board list has "How to play" it,
+  which opens the guide led by the catalogue's note on that ladder (section 7,
+  `src/ui/guide/ladders.ts`; its blurb where the catalogue has none) and its own tricks marked in
+  its colour; `G` on a board leads with the board's ladder the same way.
 - The school (`src/ui/screens/school.ts`, the lessons in `src/ui/school/`; docs/teaching-plan.md,
   Part 2) is offered from the ladder list and the rules card ("Take the lessons") and required by
   nothing. A lesson is played on the game screen at the tuned dials, whatever the settings say,
@@ -232,11 +233,11 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   `src/ui/looks.ts`, read through `lookFor`).
 - Text size scales the interface (root font size, everything in rem) and not the board, applied
   on release with a HUD copy following the thumb.
-- Preview size (50% to 300%) scales every example board on the screen and in its windows, by
-  request: the thumbnails, the glow and clear-effect demos and the custom icon's example. Not the
-  zoom example, which is drawn at the size it sets. Cells are rounded to whole pixels. Like text
-  size it applies on release, holding the row under the pointer, with one thumbnail following the
-  thumb; tiles and the symbol window's side panel grow with it (`--chip-w`).
+- Preview size (50% to 300%) scales every example board on the screen and in its windows: the
+  thumbnails, the glow and clear-effect demos and the custom icon's example. Not the zoom example,
+  which is drawn at the size it sets. Cells are rounded to whole pixels. Like text size it applies
+  on release, holding the row under the pointer, with one thumbnail following the thumb; tiles and
+  the symbol window's side panel grow with it (`--chip-w`).
 - The creature colours' gallery draws one beaten creature of every tier, 1 to 5 over 6 to 9
   (`tierSampleBoard`), as dimmed and struck as they are in play: the game's own five hues, the
   presets chosen by measurement (decision 0053), and a Custom tile, lit while the player's own
@@ -260,10 +261,9 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   boxes (decision 0051).
 - Settings that make the game easier than the tuned default record nothing (no clear, no unlock,
   no best time), and the screen, the ladder list and the clear overlay all say so.
-- Each gameplay slider is shaded by how far it sits from the tuned default, by request: toward
-  white as it gets easier (pure white at the easiest end), toward black as it gets harder (pure
-  black at the hardest). The readout beside it keeps the accent, since black text would vanish on
-  the dark panel.
+- Each gameplay slider is shaded by how far it sits from the tuned default: toward white as it gets
+  easier (pure white at the easiest end), toward black as it gets harder (pure black at the
+  hardest). The readout beside it keeps the accent, since black text would vanish on the dark panel.
 - The screen is four sections: Presentation (what a board looks and sounds like), Interface (the
   page around it), Sound (the volume, which sounds play, the custom pitches) and Gameplay (the
   dials, the chord, the tutor). Under the title a switch says whom the choices are for: every
@@ -292,9 +292,10 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   all of it, and that every ladder names a bundled face, which two ladders may share (decision
   0031).
 - One more family is bundled for the creature icons, not for text: `Pip Symbols`, four faces cut
-  from open Noto fonts to the 782 symbols the custom icon offers (`src/ui/pipfont/`, their
-  `@font-face` in `pipfont/pipfont.css`, licences in the same file). `test/pipsymbols.test.ts`
-  checks them as `test/fonts.test.ts` checks the rest; see the creature-icon bullet below.
+  from open Noto fonts (Noto Sans Symbols 2, Noto Sans Symbols, Noto Emoji and Noto Sans) to the 782
+  symbols the custom icon offers (`src/ui/pipfont/`, their `@font-face` in `pipfont/pipfont.css`,
+  licences in the same file). `test/pipsymbols.test.ts` checks them as `test/fonts.test.ts` checks
+  the rest; see the creature-icon bullet below.
 - Every face is filed under a kind in `FONT_KINDS` (`src/ui/typefaces.ts`), for the font windows'
   Style order: sans serif, rounded, squared, condensed, serif (slabs included), monospaced or
   decorative. It is a judgement by eye, and a new face cannot typecheck without one.
@@ -333,11 +334,11 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   sound, no sound per cell, or results only, and the sound check a box per sound. The mixer passes
   over a silenced event in play and auditions it still, and an action whose loudest sound is
   silenced makes its next loudest (`game/sound.ts`), so silencing the kill leaves the click.
-- The speaker carries the Sound effects volume (the same setting, not a second one), hidden, by
-  request, until the speaker is hovered or reached by Tab, and held open while its thumb is held.
-  It drops beneath the speaker, because beside it the pointer would cross it on the way to the
-  HUD's Settings and Back. Moving it unmutes: reaching for the volume is reaching to hear it. The
-  settings screen's own slider follows it while that screen is open.
+- The speaker carries the Sound effects volume (the same setting, not a second one), hidden until
+  the speaker is hovered or reached by Tab, and held open while its thumb is held. It drops beneath
+  the speaker, because beside it the pointer would cross it on the way to the HUD's Settings and
+  Back. Moving it unmutes: reaching for the volume is reaching to hear it. The settings screen's own
+  slider follows it while that screen is open.
 - The sound check (a button under the Sound effects gallery) plays any pack's sound through
   `Sfx.audition`, which ignores the chosen pack and the throttle but not mute. Keys assigned there
   play only while its window is open. Its keyboard (C2 to C7, equal temperament) retunes the last
@@ -345,35 +346,35 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   the chosen note and the rest keep their intervals. Keys and pitches are saved in the
   presentation settings (`soundCheck`, sounds named `pack:event`), so a backup code carries them
   and Reset presentation clears them. The pitches reach the game's own mixer (`Sfx.setPitches`,
-  from `applyPresentation`) only while "Custom pitches in play" is on, which it is not by default. Clicking the keyboard hands the computer's keys to it (A to
-  K the white keys, the row above the black, Z and X the octave); Shift pressed and released alone
-  swaps between that and the assigned keys, and Escape steps back one mode before it closes the
-  window. Its volume slider (0 to 300% of each sound's level) is saved beside them and is passed
-  to `Sfx.audition` alone, so the game's own sounds never hear it. Note names are green, apart
-  from the ladder's accent.
-- A clear uncovers every cell still covered, by request (`revealAllCells`): the empty ground a
-  battle board never needed opened shows its number, and a search board's creatures, never
-  fought, show as a loss shows them. The clear effect plays over the uncovered board.
+  from `applyPresentation`) only while "Custom pitches in play" is on, which it is not by default.
+  Clicking the keyboard hands the computer's keys to it (A to K the white keys, the row above the
+  black, Z and X the octave); Shift pressed and released alone swaps between that and the assigned
+  keys, and Escape steps back one mode before it closes the window. Its volume slider (0 to 300% of
+  each sound's level) is saved beside them and is passed to `Sfx.audition` alone, so the game's own
+  sounds never hear it. Note names are green, apart from the ladder's accent.
+- A clear uncovers every cell still covered (`revealAllCells`): the empty ground a battle board
+  never needed opened shows its number, and a search board's creatures, never fought, show as a loss
+  shows them. The clear effect plays over the uncovered board.
 - Two families of clear effect: ambient (confetti, burst, ripple, sparkle, fireworks) and icon
   (tumble, cascade, pop, burn and three wipes in `victory/icons.ts`; flip, spin, scatter, float,
-  march and swarm in `victory/departures.ts`). Icon effects take the board's glyphs (`VictorySource`),
-  pre-rendered per tier into an atlas at twice the cell size, and the board stops drawing them
-  until the effect hands them back, even when cut short. Physics effects step by measured time
-  clamped to 1/20 s; ambient ones keep a fixed step. Cascade never clears its canvas and fades the
-  element instead. Sprites include creatures never fought, for the search boards. Burn clips the real
-  glyph. Effects draw on their own layer, stacked inside the stage (`isolation: isolate`), so the
-  clear card covers the effect, by request, rather than the effect's glyphs flying across the
+  march and swarm in `victory/departures.ts`). Icon effects take the board's glyphs
+  (`VictorySource`), pre-rendered per tier into an atlas at twice the cell size, and the board stops
+  drawing them until the effect hands them back, even when cut short. Physics effects step by
+  measured time clamped to 1/20 s; ambient ones keep a fixed step. Cascade never clears its canvas
+  and fades the element instead. Sprites include creatures never fought, for the search boards. Burn
+  clips the real glyph. Effects draw on their own layer, stacked inside the stage (`isolation:
+  isolate`), so the clear card covers the effect rather than the effect's glyphs flying across the
   card's buttons.
-- The first clear of a board holds its card back for two and a half seconds, by request, so the
-  clear effect plays over the board itself, undimmed and with no card in the middle of it
-  (`.overlay.held`). Until then the overlay is clear but still takes the pointer, so the board
-  cannot be zoomed or panned out from under the effect and no hidden button can be pressed;
-  Escape still leaves. A first clear is one the save had never recorded. A replay, a loss and a
-  clear with the effect off (nothing to watch) show the card at once. A Full Run never holds one:
-  its boards were all cleared before it opened, and between boards its clock is still running.
-  What holds the card (the effect's length, a click anywhere, or nothing), whether the effect plays
-  on every clear or a board's first only, and its speed, which scales a physics effect's step as
-  well as its length, are settings (decision 0075).
+- The first clear of a board holds its card back for two and a half seconds, so the clear effect
+  plays over the board itself, undimmed and with no card in the middle of it (`.overlay.held`).
+  Until then the overlay is clear but still takes the pointer, so the board cannot be zoomed or
+  panned out from under the effect and no hidden button can be pressed; Escape still leaves. A first
+  clear is one the save had never recorded. A replay, a loss and a clear with the effect off
+  (nothing to watch) show the card at once. A Full Run never holds one: its boards were all cleared
+  before it opened, and between boards its clock is still running. What holds the card (the effect's
+  length, a click anywhere, or nothing), whether the effect plays on every clear or a board's first
+  only, and its speed, which scales a physics effect's step as well as its length, are settings
+  (decision 0075).
 - A fight that costs HP shakes the stage, and a level-up glows inside it. They are the stage's own
   animations, one slot each in its `animation` list, filled by the `shake` and `levelup` classes.
   Two rules setting `animation` would let one displace the other, and a class left on after its
@@ -384,12 +385,11 @@ store) and `src/engine/settings.ts` (the gameplay dials).
   the player up, red when it cost HP. One rim per action, since a sweep can fight several: red if
   any fight in it hurt, else blue if it levelled up, else green. The player can keep it for every
   fight, for level-ups and damage only (blue and red, no green), for damage only, or turn it off
-  (`fightRim`); the
-  shake and the level-up glow ignore it. The blue is deeper than the cyan of a spell's targeting
-  outline, which sits in the same place. It is `.stage::after`, over the canvas so it shows
-  however much of the stage the board covers, and deaf to the pointer. Only one of the three rim
-  classes is on the stage at a time, or the later rule would keep its colour for good. It stays
-  on under reduced motion, which drops the shake and the glow.
+  (`fightRim`); the shake and the level-up glow ignore it. The blue is deeper than the cyan of a
+  spell's targeting outline, which sits in the same place. It is `.stage::after`, over the canvas so
+  it shows however much of the stage the board covers, and deaf to the pointer. Only one of the
+  three rim classes is on the stage at a time, or the later rule would keep its colour for good. It
+  stays on under reduced motion, which drops the shake and the glow.
 
 ## Saves
 
