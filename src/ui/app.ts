@@ -433,13 +433,7 @@ export class App {
     this.seed = paused.seed;
     this.boardIndex = run?.boardIndex ?? paused.board;
     this.resetBoardState();
-    this.teaching.tutor.hints = paused.hints;
-    this.teaching.tutor.runHints = paused.runHints;
-    this.clock.resumeAt(paused.elapsedMs);
-    this.clock.timeLimit = paused.timeLimit;
-    this.clock.timeExpired = false;
-    this.keeper.begin(moves);
-    this.keeper.save();
+    this.keeper.resume(paused, moves);
     this.recorder.begin();
     if (run?.boardWon) this.advanceRun();
     else this.showGame();

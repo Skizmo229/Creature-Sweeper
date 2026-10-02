@@ -63,6 +63,21 @@ export class BoardKeeper {
     this.written = false;
   }
 
+  /**
+   * A paused game taken up again (`takeUp`): the hints asked and the clock as they stood, the
+   * clock to the millisecond and with the limit it was racing, and the game kept from here on.
+   */
+  resume(paused: PausedGame, moves: readonly Move[]): void {
+    const { tutor, clock } = this.host;
+    tutor.hints = paused.hints;
+    tutor.runHints = paused.runHints;
+    clock.resumeAt(paused.elapsedMs);
+    clock.timeLimit = paused.timeLimit;
+    clock.timeExpired = false;
+    this.begin(moves);
+    this.save();
+  }
+
   /** A run has gone on to its next board: the run is still this game, the moves start again. */
   nextBoard(): void {
     this.moves = [];
