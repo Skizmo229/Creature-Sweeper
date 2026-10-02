@@ -6,10 +6,16 @@
 
 import type { SpellId } from '../../engine/spells.js';
 
+/**
+ * No tier armed. Not 0, because tier 0 is a real choice: the pencil's "might be empty ground"
+ * (decision 0009).
+ */
+const NO_TIER = -1;
+
 /** The palette's state: the armed tier, pencil or mark, and the armed spell, kept exclusive. */
 export class EntryMode {
-  /** Palette selection: -1 is none. 0 is a real choice (empty ground), which is why "none" cannot be 0. */
-  markMode = -1;
+  /** The armed tier, or `NO_TIER`. */
+  markMode = NO_TIER;
   /** When on, the LV palette pencils candidates instead of writing marks. */
   notesMode = false;
   /** True when pencil mode armed the tier itself, so it can hand it back. */
@@ -19,7 +25,7 @@ export class EntryMode {
 
   /** Per-board state. Never touches the clock; a run outlives a board. */
   reset(): void {
-    this.markMode = -1;
+    this.markMode = NO_TIER;
     this.notesMode = false;
     this.tierArmedByPencil = false;
     this.pendingSpell = null;
@@ -27,7 +33,7 @@ export class EntryMode {
 
   /** Select a palette tier, or clear the selection by picking it again. */
   pickTier(tier: number): void {
-    this.markMode = this.markMode === tier ? -1 : tier;
+    this.markMode = this.markMode === tier ? NO_TIER : tier;
     this.tierArmedByPencil = false;
     this.pendingSpell = null;
   }
@@ -35,7 +41,7 @@ export class EntryMode {
   /** Arm a targeted spell; picking the armed spell again disarms it. */
   armSpell(id: SpellId): void {
     this.pendingSpell = this.pendingSpell === id ? null : id;
-    this.markMode = -1; // the two targeting modes are mutually exclusive
+    this.markMode = NO_TIER; // the two targeting modes are mutually exclusive
   }
 
   cancelSpell(): void {
@@ -52,7 +58,7 @@ export class EntryMode {
       return true;
     }
     if (this.markMode >= 0) {
-      this.markMode = -1;
+      this.markMode = NO_TIER;
       return true;
     }
     return false;
@@ -72,8 +78,8 @@ export class EntryMode {
       this.pendingSpell = null;
     }
     if (!this.notesMode) {
-      if (this.tierArmedByPencil) this.markMode = -1;
-      if (this.markMode === 0) this.markMode = -1;
+      if (this.tierArmedByPencil) this.markMode = NO_TIER;
+      if (this.markMode === 0) this.markMode = NO_TIER;
       this.tierArmedByPencil = false;
     }
   }
