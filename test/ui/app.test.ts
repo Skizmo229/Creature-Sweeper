@@ -191,6 +191,12 @@ describe('the app', () => {
     expect(app.progress.boardRecord(ladders, 'normal', 1).bestTime).toBeNull();
   });
 
+  it('promises Sweep on the rules card only where a ladder has it, since the first has none', () => {
+    const card = document.querySelector('.overlay-card.howto')!.textContent!;
+    expect(ladders[0]!.sweep).toBe(false);
+    expect(card).toContain('S opens what is provably safe on a ladder with Sweep.');
+  });
+
   it('opens the field guide from the rules card, the ladder list and, at the lesson, a board', () => {
     const click = (label: string): void =>
       [...document.querySelectorAll<HTMLButtonElement>('button')]

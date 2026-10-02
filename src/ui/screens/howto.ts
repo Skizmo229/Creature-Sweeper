@@ -51,7 +51,8 @@ export function buildHowTo(
     el(
       'p',
       'overlay-note',
-      'Click to open · right-click, or a LV button, to mark · S opens what is provably safe.',
+      'Click to open · right-click, or a LV button, to mark · ' +
+        'S opens what is provably safe on a ladder with Sweep.',
     ),
   );
 
