@@ -223,15 +223,15 @@ def shape_cells(shape, param, w, h):
                if shape_present(shape, param, w, h, x, y))
 
 
-def carved_cells(shape, w, h, share=.40):
+def carved_cells(w, h, share=.40):
     """How many cells a seeded mask is asked for on a board of this size.
 
     Chosen rather than measured, which is the whole point -- see shape_cells.
     """
-    return min(round(share * w * h), (w - 2) * (h - 2))
+    return min(round(share * w * h), carved_room(w, h))
 
 
-def carved_room(shape, w, h):
+def carved_room(w, h):
     """The most cells a seeded mask can hold on a board of this size."""
     return (w - 2) * (h - 2)
 
@@ -562,7 +562,7 @@ def extend(t):
             # the bounding box the tuned ten hold, and still inside the margin
             # the generator needs.
             w, h = row["size"]
-            row["cells"] = carved_cells(t.get("shape"), w, h)
+            row["cells"] = carved_cells(w, h)
         rows.append(row)
     return rows
 
@@ -709,7 +709,7 @@ def board_row(t, d):
         # The generator keeps a one-cell margin all round and cannot carve
         # more than what is inside it. Caught here, where the schedule is
         # written, rather than on the board.
-        room = carved_room(shape, W, H)
+        room = carved_room(W, H)
         if cells > room:
             raise ValueError(
                 f"{t['id']}#{n}: {cells} cells asked of a {W}x{H} box "
