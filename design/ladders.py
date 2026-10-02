@@ -214,10 +214,15 @@ def shape_present(shape, param, w, h, x, y):
     return True
 
 
+# The shapes grown from the seed to a count the ladder chooses, its `cells` schedule, rather than
+# read off a predicate: see shape_cells.
+SEEDED_SHAPES = ("cave", "dungeon")
+
+
 def shape_cells(shape, param, w, h):
     if shape == "rect":
         return w * h
-    if shape in ("cave", "dungeon"):
+    if shape in SEEDED_SHAPES:
         # These two invert the relationship every other shape has with this file.
         # A ragged cave has no closed form to count, and its silhouette moves
         # with the seed, while C_k needs the cell count fixed before the board
@@ -388,6 +393,9 @@ def load_types(path=HERE / "ladder_types.toml"):
         unknown = [k for k in t if k not in REQUIRED + OPTIONAL]
         if missing or unknown:
             raise ValueError(f"{where}: missing {missing}, unknown {unknown}")
+        if (t.get("shape") in SEEDED_SHAPES) != ("cells" in t):
+            raise ValueError(f"{where}: a `cells` schedule goes with a seeded shape "
+                             f"({', '.join(SEEDED_SHAPES)}), and only with one")
         for k in SCHEDULES:
             if k in t and len(t[k]) != 10:
                 raise ValueError(f"{where}: {k} has {len(t[k])} entries, one per board is 10")
@@ -564,7 +572,7 @@ def extend(t):
             if box is None:
                 break
             row["size"], row["sets"] = box
-        if t.get("cells") is not None:
+        if t.get("shape") in SEEDED_SHAPES:
             # A carved shape's count is chosen, never measured - same 40% of
             # the bounding box the tuned ten hold, and still inside the margin
             # the generator needs.
@@ -711,7 +719,7 @@ def board_row(t, d):
         d.lock, d.alpha0, d.hp, d.density, d.boss, d.givens, d.sets)
     shape = t.get("shape", "rect")
     shape_param = t.get("shape_param", 0)
-    if shape in ("cave", "dungeon"):
+    if shape in SEEDED_SHAPES:
         cells = d.cells
         # The generator keeps a one-cell margin all round and cannot carve
         # more than what is inside it. Caught here, where the schedule is

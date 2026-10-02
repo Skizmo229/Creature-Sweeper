@@ -59,6 +59,20 @@ class TheSchema(unittest.TestCase):
             r"normal: lock has 3 entries",
         )
 
+    def test_a_cell_count_on_a_shape_that_is_not_seeded(self):
+        cells = "cells = [" + ", ".join(["400"] * 10) + "]"
+        self.refuses(
+            lambda s: s.replace('id = "normal"', f'id = "normal"\n{cells}', 1),
+            r"normal: a `cells` schedule goes with a seeded shape",
+        )
+
+    def test_a_seeded_shape_without_a_cell_count(self):
+        cells = "cells = [290, 305, 320, 355, 370, 405, 420, 460, 480, 525]\n"
+        self.refuses(
+            lambda s: s.replace(cells, "", 1),
+            r"cave: a `cells` schedule goes with a seeded shape",
+        )
+
 
 class Apportioning(unittest.TestCase):
     def test_distribute_lands_the_total_and_leaves_no_tier_empty(self):
