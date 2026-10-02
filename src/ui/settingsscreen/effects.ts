@@ -217,29 +217,58 @@ function clearEffectOptions(ctx: ScreenContext, host: HTMLElement, replay: () =>
   );
 }
 
+/** The clear effect's tiles: the game type's own, every effect, and none, each played as picked. */
+function effectGallery(ctx: ScreenContext, onPick: () => void): HTMLElement {
+  return gallery(
+    [
+      { value: DEFAULT, label: `Game type default — ${VICTORY_NAMES[ctx.ownLook.victory]}` },
+      ...(Object.keys(VICTORY_NAMES) as VictoryId[]).map((id): Choice => ({
+        value: id,
+        label: VICTORY_NAMES[id],
+      })),
+      { value: OFF, label: 'Off — no effect' },
+    ],
+    ctx.p.victory,
+    (v) => {
+      ctx.set({ victory: v as VictoryId | typeof DEFAULT | typeof OFF });
+      onPick();
+    },
+    true,
+  );
+}
+
+/** The Test button, live only while there is an effect to play; `sync` relights it after a pick. */
+function testButton(
+  ctx: ScreenContext,
+  onTest: () => void,
+): { button: HTMLButtonElement; sync: () => void } {
+  const button = el('button', 'primary small', 'Test on a new board');
+  const sync = (): void => {
+    const effect = ctx.settings.victoryEffect(ctx.typeId);
+    button.disabled = effect === null;
+    button.title =
+      effect === null
+        ? 'The clear effect is off, so there is nothing to play.'
+        : 'Clear a freshly generated board and play the effect over it.';
+  };
+  sync();
+  button.addEventListener('click', onTest);
+  return { button, sync };
+}
+
 /**
- * The demo board is kept rather than rebuilt per play, because half these effects animate its
- * creatures and need to borrow the glyphs off the view that is drawing them. It carries one of
- * every tier the real board uses and none above.
+ * The board-clear effect, played over a won board, with its option rows above it. The demo board
+ * is kept rather than rebuilt per play, because half these effects animate its creatures and need
+ * to borrow the glyphs off the view that is drawing them. It carries one of every tier the real
+ * board uses and none above.
  */
 export function clearEffectRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, ownLook, settings, typeId, tiers, currentTheme } = ctx;
+  const { settings, typeId, tiers, currentTheme } = ctx;
   const demo = renderPreview(clearedBoard(demoSeed, tiers), currentTheme, ctx.display(), {
     cell: ctx.demoCell,
   });
   const demoBox = el('div', 'clear-demo');
   demoBox.append(demo.canvas);
-
-  const testBtn = el('button', 'primary small', 'Test on a new board');
-
-  const syncTest = (): void => {
-    const effect = settings.victoryEffect(typeId);
-    testBtn.disabled = effect === null;
-    testBtn.title =
-      effect === null
-        ? 'The clear effect is off, so there is nothing to play.'
-        : 'Clear a freshly generated board and play the effect over it.';
-  };
 
   const runDemo = (): void => {
     stopSettingsDemo();
@@ -266,33 +295,18 @@ export function clearEffectRow(ctx: ScreenContext, host: HTMLElement): void {
     demo.view.setGame(clearedBoard(demoSeed, tiers), currentTheme, ctx.display());
     runDemo();
   };
-
-  syncTest();
-  testBtn.addEventListener('click', freshDemo);
+  const test = testButton(ctx, freshDemo);
 
   const demoWrap = el('div', 'settings-stack');
   demoWrap.append(
-    gallery(
-      [
-        { value: DEFAULT, label: `Game type default — ${VICTORY_NAMES[ownLook.victory]}` },
-        ...(Object.keys(VICTORY_NAMES) as VictoryId[]).map((id): Choice => ({
-          value: id,
-          label: VICTORY_NAMES[id],
-        })),
-        { value: OFF, label: 'Off — no effect' },
-      ],
-      p.victory,
-      (v) => {
-        ctx.set({ victory: v as VictoryId | typeof DEFAULT | typeof OFF });
-        syncTest();
-        // Replays over the SAME board, so the gallery stays a comparison between effects rather
-        // than between effects and layouts. Test is the one that deals a new board.
-        runDemo();
-      },
-      true,
-    ),
+    effectGallery(ctx, () => {
+      test.sync();
+      // Replays over the SAME board, so the gallery stays a comparison between effects rather
+      // than between effects and layouts. Test is the one that deals a new board.
+      runDemo();
+    }),
     demoBox,
-    testBtn,
+    test.button,
   );
 
   clearEffectOptions(ctx, host, runDemo);
