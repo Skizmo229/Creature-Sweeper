@@ -22,7 +22,7 @@ import { BoardActions } from './game/actions.js';
 import { BoardRecorder } from './game/recorder.js';
 import { flashStage } from './game/flash.js';
 import { type GameScreenElements, buildGameScreen } from './game/screen.js';
-import { soundFor } from './game/sound.js';
+import { soundAction } from './game/sound.js';
 import { ladderName, ladders } from './ladders.js';
 import { buildSpeaker } from './mute.js';
 import { CrashWatch } from './overlays/crash.js';
@@ -570,10 +570,7 @@ export class App {
     this.teaching.tutor.dismiss();
 
     if (this.els) flashStage(this.els.stage, events, this.settings.presentationFor(this.typeId));
-    if (this.sfx.enabled) {
-      const sound = soundFor(events, (e) => this.sfx.plays(e));
-      if (sound) this.sfx.play(sound);
-    }
+    soundAction(this.sfx, events);
 
     this.ending.noteFatal(game, events);
 
