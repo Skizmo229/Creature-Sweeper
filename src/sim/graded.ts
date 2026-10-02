@@ -25,14 +25,8 @@ import { hasNote, noteBit } from '../engine/notes.js';
 import { mulberry32 } from '../engine/rng.js';
 import { fightCostFor } from '../engine/settings.js';
 import type { SpellId } from '../engine/spells.js';
-import {
-  type Constraint,
-  type Reading,
-  everyTier,
-  highestTier,
-  readBoard,
-  touchingOf,
-} from './reader.js';
+import { everyTier, highestTier } from './masks.js';
+import { type Constraint, type Reading, readBoard, touchingOf } from './reader.js';
 import {
   GRADES,
   type Grade,

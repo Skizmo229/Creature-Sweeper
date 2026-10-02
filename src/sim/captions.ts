@@ -6,7 +6,8 @@
 
 import { noteTiers } from '../engine/notes.js';
 import type { Cell } from '../engine/types.js';
-import { type Constraint, highestTier } from './reader.js';
+import { highestTier } from './masks.js';
+import type { Constraint } from './reader.js';
 import type { TrickId, View, Why } from './tricks.js';
 import { TRICK_TEXT } from './tricktext.js';
 

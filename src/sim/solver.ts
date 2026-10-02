@@ -40,15 +40,8 @@
 import type { Game } from '../engine/game.js';
 import type { Cell } from '../engine/types.js';
 import { placementRule } from '../engine/placement/registry.js';
-import {
-  type ExactSum,
-  type Model,
-  type Problem,
-  Search,
-  type Sum,
-  highest,
-  lowest,
-} from './search.js';
+import { everyTier, highestTier, lowestTier, tiersUpTo } from './masks.js';
+import { type ExactSum, type Model, type Problem, Search, type Sum } from './search.js';
 
 /** What `solve` is asked: its search budget, the joint search's size, and the tier to prove. */
 export interface SolveOptions {
@@ -223,8 +216,8 @@ function localWindow(model: Model, v: number, radius: number, d: ArrayLike<numbe
     for (const w of vs) {
       if (inside.has(w)) own.push(w);
       else {
-        oLo += lowest(d[w]!);
-        oHi += highest(d[w]!);
+        oLo += lowestTier(d[w]!);
+        oHi += highestTier(d[w]!);
       }
     }
     sums.push({ vars: own, lo: target - oHi, hi: target - oLo });
@@ -313,8 +306,7 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
   const { tiers, vars, dom } = model;
   const n = vars.length;
   const level = opts.threshold ?? game.level;
-  const every = (1 << (tiers + 1)) - 1;
-  const above = level >= tiers ? 0 : every & ~((1 << (level + 1)) - 1);
+  const above = everyTier(tiers) & ~tiersUpTo(level);
   const joint = n <= jointVars;
   const search = new Search(
     model,

@@ -223,31 +223,8 @@ function countHiding(
 
 // ------------------------------------------------------------- candidate sets
 
-/** The mask of every tier from 0 to `tiers`. */
-export function everyTier(tiers: number): number {
-  return (1 << (tiers + 1)) - 1;
-}
-
-/** The highest candidate in a mask, -1 for an empty one. */
-export function highestTier(mask: number): number {
-  return 31 - Math.clz32(mask);
-}
-
-/** The lowest candidate in a mask, -1 for an empty one. */
-export function lowestTier(mask: number): number {
-  return mask === 0 ? -1 : 31 - Math.clz32(mask & -mask);
-}
-
-/**
- * Every tier at or below `max`, as a mask. A remainder can run to hundreds on a fresh board,
- * far past what a mask can hold, so anything beyond the widest mask is the widest mask: every
- * tier there is, which caps nothing, and is what a remainder that large means.
- */
-export function tiersUpTo(max: number): number {
-  if (max < 0) return 0;
-  if (max >= 30) return 0x7fffffff;
-  return (1 << (max + 1)) - 1;
-}
+// src/ui/game/tutor.ts reads this from here.
+export { tiersUpTo } from './masks.js';
 
 /**
  * Which values of each cell can take part in a sum landing in [lo, hi].

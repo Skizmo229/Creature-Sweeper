@@ -6,6 +6,7 @@
 
 import type { Cell } from '../engine/types.js';
 import type { Pools } from '../engine/placement/rule.js';
+import { highestTier, isSingle, lowestTier } from './masks.js';
 
 /** One open number as a sum: the variables behind it (indices into `Model.vars`) make `target`. */
 export interface ExactSum {
@@ -32,11 +33,6 @@ export interface Model {
   readonly interiorDom: number[];
 }
 
-/** The lowest tier in a mask; -1 for an empty one. */
-export const lowest = (m: number): number => 31 - Math.clz32(m & -m);
-/** The highest tier in a mask; -1 for an empty one. */
-export const highest = (m: number): number => 31 - Math.clz32(m);
-
 /**
  * A sum over some cells that must land in [lo, hi]. Exact on the board. A range
  * once the cells outside a local window are summarised by what they could
@@ -55,8 +51,6 @@ export interface Problem {
   readonly members: number[];
   readonly sums: Sum[];
 }
-
-const single = (d: number): boolean => (d & (d - 1)) === 0;
 
 /**
  * The search state every question asked of one board shares, and the search itself: bounds
@@ -181,7 +175,7 @@ export class Search {
     for (const w of p.members) seen[w]! |= cur[w]!;
     if (!this.joint) return;
     counts.fill(0);
-    for (const w of p.members) if (cur[w]! > 1) counts[lowest(cur[w]!)]!++;
+    for (const w of p.members) if (cur[w]! > 1) counts[lowestTier(cur[w]!)]!++;
     for (let t = 1; t <= this.model.tiers; t++)
       if (this.leftover(t) > 0) this.interiorSeen |= 1 << t;
   }
@@ -253,8 +247,8 @@ export class Search {
       let lo = 0;
       let hi = 0;
       for (const w of s.vars) {
-        lo += lowest(cur[w]!);
-        hi += highest(cur[w]!);
+        lo += lowestTier(cur[w]!);
+        hi += highestTier(cur[w]!);
       }
       if (s.hi < lo || s.lo > hi) {
         this.flush();
@@ -262,9 +256,9 @@ export class Search {
       }
       for (const w of s.vars) {
         const m = cur[w]!;
-        if (single(m)) continue;
-        const wl = lowest(m);
-        const wh = highest(m);
+        if (isSingle(m)) continue;
+        const wl = lowestTier(m);
+        const wh = highestTier(m);
         const min = s.lo - (hi - wh);
         const max = s.hi - (lo - wl);
         if (min <= wl && max >= wh) continue;
@@ -283,7 +277,7 @@ export class Search {
     this.counts.fill(0);
     for (const w of this.members) {
       const m = this.cur[w]!;
-      if (single(m) && m > 1) this.counts[lowest(m)]!++;
+      if (isSingle(m) && m > 1) this.counts[lowestTier(m)]!++;
     }
   }
 
@@ -301,7 +295,7 @@ export class Search {
     if (!spent) return true;
     for (const w of this.members) {
       const m = cur[w]!;
-      if (single(m) || !(m & spent)) continue;
+      if (isSingle(m) || !(m & spent)) continue;
       const nd = m & ~spent;
       if (!nd) return false;
       this.narrow(w, nd);
@@ -343,7 +337,7 @@ export class Search {
   private dfs(from: number): boolean | null {
     const { order, cur } = this;
     let i = from;
-    while (i < order.length && single(cur[order[i]!]!)) i++;
+    while (i < order.length && isSingle(cur[order[i]!]!)) i++;
     if (i === order.length) {
       if (!this.leaf) return true;
       this.countAll();

@@ -125,6 +125,7 @@ src/sim/        headless measurement, all driving the real engine (see docs/tuni
   graded.ts       the graded player: a person's tricks up to a grade, one pass at a time, and
                   what each board demanded (Milestone 4, docs/human-tuning-plan.md)
   reader.ts       what the graded player can see, and the sum arithmetic its tricks share
+  masks.ts        tiers as masks, as the instruments hold a cell's candidates
   tricks.ts       the tricks: one technique per entry of docs/strategies.md, at its grade
   aim.ts          where the graded player casts Augur: the number whose answer likeliest frees a cell
   tricktext.ts    what each trick is called and what it says, for the tutor, the school and the guide

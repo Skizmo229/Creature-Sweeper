@@ -22,17 +22,14 @@ import type { Cell } from '../engine/types.js';
 import { hasNote, noteBit } from '../engine/notes.js';
 import { missingFrom } from '../engine/placement/packs.js';
 import { placementRule } from '../engine/placement/registry.js';
+import { everyTier, highestTier, isSingle, lowestTier, tiersUpTo } from './masks.js';
 import {
   type Constraint,
   type Reading,
-  everyTier,
-  highestTier,
-  lowestTier,
   openPiece,
   reachable,
   soleCoveredRim,
   supported,
-  tiersUpTo,
 } from './reader.js';
 
 /** How much has to be held in the head at once; `docs/strategies.md` says what each means. */
@@ -135,7 +132,7 @@ function settle(view: View, cell: Cell, mask: number, moves: Moves, why: Why): v
   const dom = before & mask;
   if (dom === 0) return;
   if (highestTier(dom) <= view.level) moves.open.add(cell);
-  else if ((dom & (dom - 1)) === 0) moves.mark.set(cell, lowestTier(dom));
+  else if (isSingle(dom)) moves.mark.set(cell, lowestTier(dom));
   else if (dom !== before) moves.narrow.set(cell, dom);
   else return;
   if (!moves.because.has(cell)) moves.because.set(cell, why);
@@ -496,7 +493,7 @@ const whatIf: Trick = {
     const { touching } = v.reading;
     for (const cell of v.reading.unknown) {
       const dom = v.domain(cell);
-      if ((dom & (dom - 1)) === 0) continue;
+      if (isSingle(dom)) continue;
       const near = touching.get(cell);
       if (!near) continue;
       const window = new Set<Constraint>(near);

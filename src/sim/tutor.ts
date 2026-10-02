@@ -23,7 +23,8 @@ import { expForTier } from '../engine/combat.js';
 import { noteBit } from '../engine/notes.js';
 import { fightCostFor } from '../engine/settings.js';
 import { caption } from './captions.js';
-import { type Constraint, type Reading, everyTier, readBoard, tiersUpTo } from './reader.js';
+import { everyTier, tiersUpTo } from './masks.js';
+import { type Constraint, type Reading, readBoard } from './reader.js';
 import { dungeonScaffold } from './scaffold.js';
 import {
   GRADES,
