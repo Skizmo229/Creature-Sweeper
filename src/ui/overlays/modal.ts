@@ -159,8 +159,8 @@ export class Modal {
   /**
    * An error nothing caught (decision 0081): what broke, where to report it, and the way back to
    * the list. Escape takes that way too, since a plain close would leave the player on the broken
-   * board with the clock stopped and the watch disarmed. With no screen to show it on, the way
-   * back is taken at once.
+   * board with its clock no longer ticking and the watch disarmed. With no screen to show it on,
+   * the way back is taken at once.
    */
   crashed(message: string, onBack: () => void): void {
     const back = (): void => {

@@ -174,7 +174,7 @@ export class App {
       play: (move) => this.keeper.move(move),
     });
     window.addEventListener('keydown', (e) => this.onKey(e));
-    new CrashWatch(this.modal, { stop: () => this.clock.stop(), back: () => this.showTypes() });
+    new CrashWatch(this.modal, this.clock, () => this.showTypes());
     // The clock is kept with the game, so it is written down as the page goes away.
     window.addEventListener('pagehide', () => this.keeper.save());
     document.addEventListener('visibilitychange', () => this.keeper.save());
@@ -222,7 +222,7 @@ export class App {
 
   /** Every screen begins here: nothing from the last one may survive. */
   private clearScreen(): void {
-    this.clock.stop();
+    this.clock.stopTicking();
     this.ending.endVictory();
     this.modal.close();
     this.root.replaceChildren();
@@ -358,7 +358,7 @@ export class App {
     const best = this.progress.boardRecord(ladders, typeId, board).bestTime;
     this.clock.arm(best, this.settings.gameplay);
     this.buildGameScreen();
-    this.startClock();
+    this.startTicking();
   }
 
   /**
@@ -385,7 +385,7 @@ export class App {
     const best = this.progress.runRecord(ladders, typeId).bestTime;
     this.clock.arm(best, this.settings.gameplay, this.run.boardCount);
     this.buildGameScreen();
-    this.startClock();
+    this.startTicking();
   }
 
   /**
@@ -402,7 +402,7 @@ export class App {
     this.keeper.nextBoard();
     this.recorder.begin();
     this.buildGameScreen();
-    this.startClock();
+    this.startTicking();
   }
 
   /** A school lesson's board, which `teaching` has begun: no records, no best time, no countdown. */
@@ -413,7 +413,7 @@ export class App {
     this.game = game;
     this.clock.begin();
     this.buildGameScreen();
-    this.startClock();
+    this.startTicking();
   }
 
   /**
@@ -449,7 +449,7 @@ export class App {
       this.advanceRun();
     } else {
       this.buildGameScreen();
-      this.startClock();
+      this.startTicking();
     }
     return true;
   }
@@ -479,7 +479,7 @@ export class App {
         openSettings: () =>
           this.showSettings(() => {
             this.buildGameScreen();
-            this.startClock();
+            this.startTicking();
           }),
         leave: () => this.leaveGame(),
         pause: () => this.pause(),
@@ -631,8 +631,8 @@ export class App {
     }
   }
 
-  private startClock(): void {
-    this.clock.start(() => this.updateClock());
+  private startTicking(): void {
+    this.clock.startTicking(() => this.updateClock());
   }
 
   // ----------------------------------------------------------------- result

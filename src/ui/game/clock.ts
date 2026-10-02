@@ -96,12 +96,16 @@ export class BoardClock {
   /** The board has ended: hold the elapsed time and stop ticking. */
   freeze(): void {
     this.frozenSeconds = this.elapsedSeconds();
-    this.stop();
+    this.stopTicking();
   }
 
-  /** Tick every frame. A hidden tab stops ticking, and expiry registers on its next frame. */
-  start(tick: () => void): void {
-    this.stop();
+  /**
+   * Call `tick` every frame, for the HUD's readout and Time Attack's expiry, until `stopTicking`.
+   * Only the repaint: the time runs from `begin` whether or not anything ticks. A hidden tab stops
+   * ticking, and expiry registers on its next frame.
+   */
+  startTicking(tick: () => void): void {
+    this.stopTicking();
     const loop = () => {
       tick();
       this.rafId = requestAnimationFrame(loop);
@@ -109,7 +113,8 @@ export class BoardClock {
     this.rafId = requestAnimationFrame(loop);
   }
 
-  stop(): void {
+  /** Stop the frame loop. The time runs on; `freeze` is what holds it. */
+  stopTicking(): void {
     if (this.rafId) cancelAnimationFrame(this.rafId);
     this.rafId = 0;
   }

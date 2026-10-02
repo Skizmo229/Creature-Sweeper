@@ -44,8 +44,8 @@ export function buildCrash(
 
 /**
  * The watch: installs the window's error listeners once, shows the card once per breakage, since
- * a broken screen can throw on every frame, and re-arms when the player goes back. `stop` is what
- * to halt when the game breaks (the clock); `back` is the way home (the ladder list), which
+ * a broken screen can throw on every frame, and re-arms when the player goes back. The board's
+ * `clock` stops ticking when the game breaks; `back` is the way home (the ladder list), which
  * rebuilds the screen. Its own class rather than the app's, which is at the size a file may run
  * to.
  */
@@ -54,7 +54,8 @@ export class CrashWatch {
 
   constructor(
     private readonly modal: Modal,
-    private readonly host: { stop(): void; back(): void },
+    private readonly clock: { stopTicking(): void },
+    private readonly back: () => void,
   ) {
     window.addEventListener('error', (e) => this.crashed(e.error ?? e.message));
     window.addEventListener('unhandledrejection', (e) => this.crashed(e.reason));
@@ -63,11 +64,11 @@ export class CrashWatch {
   private crashed(thrown: unknown): void {
     if (this.crashing) return;
     this.crashing = true;
-    this.host.stop();
+    this.clock.stopTicking();
     const message = thrown instanceof Error ? `${thrown.name}: ${thrown.message}` : String(thrown);
     this.modal.crashed(message.slice(0, 300), () => {
       this.crashing = false;
-      this.host.back();
+      this.back();
     });
   }
 }
