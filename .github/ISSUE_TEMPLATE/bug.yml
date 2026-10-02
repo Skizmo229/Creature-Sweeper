@@ -1,0 +1,53 @@
+# A bug report (CONTRIBUTING.md, "Issues and pull requests"). The backup code it asks for carries
+# the whole save, so a problem that depends on progress can be reproduced exactly.
+name: Bug report
+description: Something in the game does not work as it should.
+title: 'Bug: '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting it. Issues here are public.
+  - type: input
+    id: ladder
+    attributes:
+      label: Ladder
+      description: The game type it happened on, if it was on a board.
+      placeholder: DUNGEON
+  - type: input
+    id: board
+    attributes:
+      label: Board
+      description: The board's number, or Full Run.
+      placeholder: '4'
+  - type: textarea
+    id: steps
+    attributes:
+      label: What you did
+      description: The steps that lead to it, as exactly as you can.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: What happened, and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: save
+    attributes:
+      label: Backup code (optional)
+      description: 'From Back up / restore save on the list of game types: the code that starts with CS1:. It holds your whole save, progress and settings.'
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: Game version
+      description: Under the title on the list of game types, or on the About card.
+      placeholder: 1.0.0
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: Windows laptop, Chrome
