@@ -309,6 +309,11 @@ export class Progress {
    * first meets a board.
    */
   isFullRunUnlocked(ladders: Ladders, typeId: string): boolean {
+    return this.ladderFinished(ladders, typeId);
+  }
+
+  /** Whether a ladder is open and its last tuned board cleared, or everything is unlocked. */
+  private ladderFinished(ladders: Ladders, typeId: string): boolean {
     if (this.data.unlockAll) return true;
     if (!this.isTypeUnlocked(ladders, typeId)) return false;
     return this.typeRecord(typeId).cleared;
@@ -353,9 +358,7 @@ export class Progress {
    * ladder out of order.
    */
   isScalingUnlocked(ladders: Ladders, typeId: string): boolean {
-    if (this.data.unlockAll) return true;
-    if (!this.isTypeUnlocked(ladders, typeId)) return false;
-    return this.typeRecord(typeId).cleared;
+    return this.ladderFinished(ladders, typeId);
   }
 
   /** The scaling board this type is pointed at. Never below the first one. */
