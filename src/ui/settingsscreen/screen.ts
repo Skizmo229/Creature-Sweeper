@@ -11,7 +11,12 @@
 import { el } from '../dom.js';
 import { themeFor } from '../looks.js';
 import { sampleBoard } from '../preview.js';
-import { type SettingsScreenOptions, makeContext, previewCell, typeName } from './context.js';
+import {
+  type ScreenContext,
+  type SettingsScreenOptions,
+  makeContext,
+  typeName,
+} from './context.js';
 import { clearEffectRow, fightRimRow, motionRow, soundRow, stopSettingsDemo } from './effects.js';
 import {
   digitSizeRow,
@@ -34,30 +39,37 @@ import {
   tierColorsRow,
   zoomRow,
 } from './look.js';
-import { CHIP_CELL } from './render.js';
 import { soundSection } from './sound.js';
 import { scopeBar } from './scope.js';
 import { section } from './widgets.js';
 
 export type { SettingsScreenOptions } from './context.js';
 
-/** The settings screen, built detached and handed back; it rebuilds itself in place. */
-export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
-  const { typeId, onBack } = opts;
+/** The Presentation section's rows, top to bottom. */
+const PRESENTATION_ROWS: readonly ((ctx: ScreenContext, host: HTMLElement) => void)[] = [
+  iconsRow,
+  glyphRow,
+  tierColorsRow,
+  paletteRow,
+  boardFontRow,
+  digitSizeRow,
+  interfaceFontRow,
+  markColorRow,
+  highlightRow,
+  highlightColorRow,
+  highlightWidthRow,
+  beatenLookRow,
+  reachShadingRow,
+  zoomRow,
+  startAtCeilingRow,
+  soundRow,
+  fightRimRow,
+  motionRow,
+  clearEffectRow,
+];
 
-  stopSettingsDemo();
-
-  const wrap = el('div', 'screen settings-screen');
-  wrap.style.setProperty('--tint', themeFor(typeId).accent);
-  // A tile with no board in it is sized like one with, so a row of tiles stands level.
-  const { width, height } = sampleBoard().config;
-  const cell = previewCell(CHIP_CELL, opts.settings.presentation.previewSize);
-  wrap.style.setProperty('--chip-w', `${width * cell}px`);
-  wrap.style.setProperty('--chip-h', `${height * cell}px`);
-
-  const back = el('button', 'ghost sticky-back', '← Back');
-  back.addEventListener('click', onBack);
-  wrap.append(back);
+/** The screen's title, and the line naming the ladder whose defaults it shows. */
+function titleBar(typeId: string): HTMLElement {
   const head = el('header', 'title-bar');
   head.append(el('h1', undefined, 'Settings'));
   head.append(
@@ -67,20 +79,53 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
       `“Game type default” follows whichever ladder you are on — shown here for ${typeName(typeId)}.`,
     ),
   );
-  wrap.append(head);
+  return head;
+}
 
-  /**
-   * Rebuild in place. A reset moves every control at once and the galleries describe each other,
-   * so rebuilding from the store cannot drift from what was saved.
-   */
+/** The two resets at the foot of the screen, each rebuilding it from the store. */
+function resetTools(ctx: ScreenContext, rebuild: () => void): HTMLElement {
+  const tools = el('div', 'tools');
+  const resetLook = el('button', 'ghost', 'Reset presentation');
+  resetLook.addEventListener('click', () => {
+    ctx.settings.resetPresentation();
+    rebuild();
+  });
+  const resetPlay = el('button', 'ghost', 'Reset gameplay');
+  resetPlay.addEventListener('click', () => {
+    ctx.settings.resetGameplay();
+    rebuild();
+  });
+  tools.append(resetLook, resetPlay);
+  return tools;
+}
+
+/** The settings screen, built detached and handed back; it rebuilds itself in place. */
+export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
+  const { typeId, onBack } = opts;
+
+  stopSettingsDemo();
+
+  const wrap = el('div', 'screen settings-screen');
+  // Rebuild in place. A reset moves every control at once and the galleries describe each other,
+  // so rebuilding from the store cannot drift from what was saved.
   const rebuild = (): void => {
     const y = window.scrollY;
     const fresh = buildSettingsScreen(opts);
     wrap.replaceWith(fresh);
     window.scrollTo({ top: y });
   };
-
   const ctx = makeContext(opts, wrap, rebuild);
+
+  wrap.style.setProperty('--tint', themeFor(typeId).accent);
+  // A tile with no board in it is sized like one with, so a row of tiles stands level.
+  const { width, height } = sampleBoard().config;
+  wrap.style.setProperty('--chip-w', `${width * ctx.chipCell}px`);
+  wrap.style.setProperty('--chip-h', `${height * ctx.chipCell}px`);
+
+  const back = el('button', 'ghost sticky-back', '← Back');
+  back.addEventListener('click', onBack);
+  const head = titleBar(typeId);
+  wrap.append(back, head);
   scopeBar(ctx, head);
 
   const look = section(
@@ -88,25 +133,7 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
     'Presentation',
     'None of this touches a rule or a record. Every example is a real board drawn by the game.',
   );
-  iconsRow(ctx, look);
-  glyphRow(ctx, look);
-  tierColorsRow(ctx, look);
-  paletteRow(ctx, look);
-  boardFontRow(ctx, look);
-  digitSizeRow(ctx, look);
-  interfaceFontRow(ctx, look);
-  markColorRow(ctx, look);
-  highlightRow(ctx, look);
-  highlightColorRow(ctx, look);
-  highlightWidthRow(ctx, look);
-  beatenLookRow(ctx, look);
-  reachShadingRow(ctx, look);
-  zoomRow(ctx, look);
-  startAtCeilingRow(ctx, look);
-  soundRow(ctx, look);
-  fightRimRow(ctx, look);
-  motionRow(ctx, look);
-  clearEffectRow(ctx, look);
+  for (const row of PRESENTATION_ROWS) row(ctx, look);
 
   // What a ladder cannot have of its own waits for the scope that can set it.
   if (ctx.ladderScope) {
@@ -124,19 +151,6 @@ export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
     gameplaySection(ctx);
   }
 
-  const tools = el('div', 'tools');
-  const resetLook = el('button', 'ghost', 'Reset presentation');
-  resetLook.addEventListener('click', () => {
-    ctx.settings.resetPresentation();
-    rebuild();
-  });
-  const resetPlay = el('button', 'ghost', 'Reset gameplay');
-  resetPlay.addEventListener('click', () => {
-    ctx.settings.resetGameplay();
-    rebuild();
-  });
-  tools.append(resetLook, resetPlay);
-  wrap.append(tools);
-
+  wrap.append(resetTools(ctx, rebuild));
   return wrap;
 }
