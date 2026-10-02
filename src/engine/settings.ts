@@ -27,7 +27,6 @@
 
 import type { Tier } from './types.js';
 import { resolveBattle } from './combat.js';
-/** Empty cells you must uncover yourself to earn one mana, unmodified. */
 import { MANA_PER_EMPTY_CELLS } from './spells.js';
 
 /** How the Sweep buttons are gated. */

@@ -44,7 +44,7 @@ export interface GameOptions {
   settings?: GameplaySettings;
 }
 
-/** The HP a board is entered with: `options.startHp`, checked, or the full pool after the HP dial. */
+/** HP to enter a board with: `options.startHp`, checked, or the full pool after the HP dial. */
 function enteringHp(config: BoardConfig, settings: GameplaySettings, options: GameOptions): number {
   // The ceiling is the dialled one, not the schedule's: entering at the
   // board's own hp with the dial at 0.5 would start you at double the pool.

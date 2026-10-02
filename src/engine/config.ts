@@ -69,7 +69,7 @@ export interface LadderType {
   reach_marks?: boolean;
   /** A key of the placement registry (`src/engine/placement/registry.ts`). Absent is uniform. */
   placement?: string;
-  /** How the board is opened, where the ladder chooses: an `OpeningRule`. Absent is the placement's. */
+  /** The ladder's own `OpeningRule`, where it chooses one. Absent is the placement's. */
   opening?: string;
   /**
    * The HP pool a Full Run gets for all ten boards, taken from board 1.

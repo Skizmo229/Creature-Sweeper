@@ -149,10 +149,10 @@ function claimedByMarks(facts: RingFacts, level: number): boolean {
 }
 
 /**
- * Sweep on a guess-free (Sudoku) board: harvest the cells whose tier is written down and within your level.
- * Givens under the strict button (the board talking), the player's marks under the assisted one.
- * Measured, the neighbour-sum proof finds nothing at this density, and this cannot run away,
- * because marks are player-authored and nothing regenerates them.
+ * Sweep on a guess-free (Sudoku) board: harvest the cells whose tier is written down and within
+ * your level. Givens under the strict button (the board talking), the player's marks under the
+ * assisted one. Measured, the neighbour-sum proof finds nothing at this density, and this cannot
+ * run away, because marks are player-authored and nothing regenerates them.
  */
 function markedSafe(game: SweepView, useMarks: boolean): Cell[] {
   const out: Cell[] = [];

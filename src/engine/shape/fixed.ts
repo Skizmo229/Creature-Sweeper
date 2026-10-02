@@ -271,7 +271,7 @@ export const STAR_SHAPE = predicateShape('star', (_param, w, h, x, y) => {
   return inside;
 });
 
-/** An odd-r offset column as an axial one: odd rows sit half a hex right (`HEX_DIRS` in grid.ts). */
+/** An odd-r offset column as an axial one; odd rows sit half a hex right (grid.ts's `HEX_DIRS`). */
 const axialColumn = (col: number, row: number): number => col - (row - (row & 1)) / 2;
 
 /**

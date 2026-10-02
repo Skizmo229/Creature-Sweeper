@@ -118,7 +118,7 @@ export interface PlacementRule {
   /** What the renderer draws for the rule. */
   readonly display: PlacementDisplay;
 
-  /** Where each tier may stand by position alone, for a reader that counts capacity (the solver). */
+  /** Where each tier may stand by position alone, for a reader counting capacity (the solver). */
   readonly pools: Pools;
   /**
    * The groups the rule's creatures stand in, for a reader that reasons about a group beyond the

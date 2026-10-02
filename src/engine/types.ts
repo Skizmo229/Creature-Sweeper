@@ -12,7 +12,7 @@ export interface Cell {
   readonly y: number;
   /** 0 for empty ground, otherwise the creature's tier. */
   tier: Tier;
-  /** Sum of the eight neighbours' tiers — NOT a count of creatures. */
+  /** Sum of the neighbours' tiers — NOT a count of creatures. */
   num: number;
   open: boolean;
   /** True while a creature here is undefeated. Always false for empty ground. */
@@ -74,7 +74,7 @@ export interface Cell {
    */
   notes: number;
   /**
-   * Creatures among this cell's eight neighbours, once Census has counted
+   * Creatures among this cell's neighbours, once Census has counted
    * them. The number is their SUM, so sum plus count usually pins the layout.
    */
   census: number | null;

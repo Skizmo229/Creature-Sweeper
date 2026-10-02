@@ -218,7 +218,7 @@ function dealDominoes(d: Deal): void {
   placeDealt(d, dealTiles(pairs, cfg.tiers, sets, d.rng));
 }
 
-/** The pairing rule, then the set: the tiles read back off the grid are exactly the board's sets. */
+/** The pairing rule, then the sets: the tiles read back off the grid are exactly the board's. */
 function dominoBoardFault(grid: Grid, cfg: BoardConfig): string | null {
   const paired = PAIRS_RULE.fault(grid, cfg);
   if (paired !== null) return paired;
