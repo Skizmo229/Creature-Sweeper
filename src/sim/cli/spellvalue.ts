@@ -13,14 +13,17 @@
  * correctly priced relative to each other when a point of mana buys the same
  * amount of certainty through either one.
  *
- * The deduction here is deliberately the game's own — the bound Sweep proves,
- * plus exact tiers from Reveal's marks, plus the Census count and the Augur
- * ceiling, which Sweep reads as well (`provenByCensus` and `provenByAugur` in
- * `engine/sweep.ts`). A spell whose answer the game cannot act on is worth
- * less than the same answer in a form it can.
+ * The deduction is the honest player's (`deduce.ts`): one number at a time and
+ * pairs of numbers subtracted, the placement rules' readings, exact tiers from
+ * Reveal's marks, and the Census count and the Augur's count and ceiling, which
+ * Sweep reads as well (`provenByCensus` and `provenByAugur` in
+ * `engine/sweep.ts`). A spell whose answer the game cannot act on is worth less
+ * than the same answer in a form it can.
  *
  *   npx tsx src/sim/cli/spellvalue.ts [seeds]          every magic ladder
  *   npx tsx src/sim/cli/spellvalue.ts [seeds] arcane   one ladder, board by board
+ *   POLICY=gym npx tsx src/sim/cli/spellvalue.ts [seeds] workout
+ *                                   WORKOUT with Exercise spent on free kills too
  *
  * The per-board view answers a different question from the per-ladder one: not
  * what a spell is worth, but whether there is anything for it to be worth. A
@@ -180,13 +183,9 @@ function main(): void {
   const totals = new Map<Policy, Run[]>();
   /**
    * The spell-less runs each policy is judged against — only over the ladders
-   * that actually offer that spell.
-   *
-   * One baseline for everything was fine while every magic ladder carried
-   * every spell being measured. Exercise is not on every ladder, so a single
-   * baseline would compare its runs on the ladders that have it against
-   * spell-less runs on ladders that do not, and the difference would be a fact
-   * about which boards those are rather than about the spell.
+   * that actually offer that spell. Not every ladder offers every spell, so one
+   * baseline for all would set a spell's runs beside spell-less runs on boards
+   * it never sees, and the difference would be about the boards, not the spell.
    */
   const baselines = new Map<Policy, Run[]>();
 
