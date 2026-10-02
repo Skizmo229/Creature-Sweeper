@@ -69,7 +69,7 @@ src/ui/         the game in the browser
   school/         the school: lessons.ts (the nine lessons, as data), run.ts (one being taken)
   game/           the game screen: screen.ts (furniture), hud.ts (filling it in), mode.ts
                   (what a click will do: tier, pencil, spell), actions.ts (what the player's
-                  clicks and keys do), hint.ts, sound.ts, flash.ts (the shake, the rim and the
+                  clicks and keys do), hintline.ts, sound.ts, flash.ts (the shake, the rim and the
                   level-up glow), clock.ts, keeper.ts (the board kept as a paused game, move by move, and taken up again),
                   recorder.ts (what the board is costing, tallied move by move: opens, guesses, HP),
                   ending.ts (how a board ends: the record, the overlay, the clear effect), outcome.ts

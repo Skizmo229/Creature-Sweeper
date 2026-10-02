@@ -13,7 +13,7 @@ import type { Cell } from '../../engine/types.js';
 import { el } from '../dom.js';
 import type { ClockStyle } from '../presentation.js';
 import { type TierPalette, tierColor, tierGilded } from '../tiercolors.js';
-import { hintLineText } from './hint.js';
+import { hintLineText } from './hintline.js';
 import type { EntryMode } from './mode.js';
 import type { GameScreenElements } from './screen.js';
 import type { LessonLine } from '../teaching.js';
