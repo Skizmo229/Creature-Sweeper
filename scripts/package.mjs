@@ -55,11 +55,12 @@ const now = new Date();
 const dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
 const dosDate = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
 
+const files = walk(DIST).sort();
 const locals = [];
 const centrals = [];
 let offset = 0;
 
-for (const path of walk(DIST).sort()) {
+for (const path of files) {
   const name = Buffer.from(relative(DIST, path).split(sep).join('/'), 'utf8');
   const data = readFileSync(path);
   const packed = deflateRawSync(data, { level: 9 });
@@ -76,22 +77,22 @@ for (const path of walk(DIST).sort()) {
   local.writeUInt32LE(packed.length, 18);
   local.writeUInt32LE(data.length, 22);
   local.writeUInt16LE(name.length, 26);
-  local.writeUInt16LE(0, 28);
+  local.writeUInt16LE(0, 28); // extra field length
   locals.push(local, name, packed);
 
   const central = Buffer.alloc(46);
   central.writeUInt32LE(0x02014b50, 0);
   central.writeUInt16LE(20, 4); // version made by
-  central.writeUInt16LE(20, 6);
-  central.writeUInt16LE(0x0800, 8);
-  central.writeUInt16LE(8, 10);
+  central.writeUInt16LE(20, 6); // version needed
+  central.writeUInt16LE(0x0800, 8); // UTF-8 names
+  central.writeUInt16LE(8, 10); // deflate
   central.writeUInt16LE(dosTime, 12);
   central.writeUInt16LE(dosDate, 14);
   central.writeUInt32LE(crc, 16);
   central.writeUInt32LE(packed.length, 20);
   central.writeUInt32LE(data.length, 24);
   central.writeUInt16LE(name.length, 28);
-  central.writeUInt32LE(offset, 42);
+  central.writeUInt32LE(offset, 42); // where its local header starts
   centrals.push(central, name);
 
   offset += local.length + name.length + packed.length;
@@ -100,10 +101,10 @@ for (const path of walk(DIST).sort()) {
 const centralSize = centrals.reduce((n, b) => n + b.length, 0);
 const end = Buffer.alloc(22);
 end.writeUInt32LE(0x06054b50, 0);
-end.writeUInt16LE(centrals.length / 2, 8);
-end.writeUInt16LE(centrals.length / 2, 10);
+end.writeUInt16LE(files.length, 8); // entries on this disk
+end.writeUInt16LE(files.length, 10); // entries in all
 end.writeUInt32LE(centralSize, 12);
-end.writeUInt32LE(offset, 16);
+end.writeUInt32LE(offset, 16); // where the central directory starts
 
 let commit = 'nogit';
 try {
@@ -128,4 +129,4 @@ const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
 mkdirSync(OUT_DIR, { recursive: true });
 const out = join(OUT_DIR, `creature-sweeper-web-${version}-${stamp}-${commit}.zip`);
 writeFileSync(out, Buffer.concat([...locals, ...centrals, end]));
-console.log(`${out}  (${centrals.length / 2} files, ${(statSync(out).size / 1024).toFixed(0)} KB)`);
+console.log(`${out}  (${files.length} files, ${(statSync(out).size / 1024).toFixed(0)} KB)`);
