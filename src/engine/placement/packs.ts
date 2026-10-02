@@ -65,6 +65,7 @@ import {
   type RuleView,
   WHOLE_SUM,
   boardName,
+  refuseDensity,
 } from './rule.js';
 
 /**
@@ -339,14 +340,12 @@ function validatePacks(row: PlacementRow): void {
         `a pack is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
     );
   }
-  const share = row.monsters / row.cells;
-  if (share > PACK_MAX_DENSITY) {
-    throw new Error(
-      `${where}: ${row.monsters} creatures on ${row.cells} cells is ` +
-        `${(100 * share).toFixed(1)}%, past the ${(100 * PACK_MAX_DENSITY).toFixed(0)}% ` +
-        `non-touching packs can be laid down reliably`,
-    );
-  }
+  refuseDensity(
+    row,
+    row.monsters,
+    PACK_MAX_DENSITY,
+    'non-touching packs can be laid down reliably',
+  );
 }
 
 /**

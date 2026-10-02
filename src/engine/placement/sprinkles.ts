@@ -36,6 +36,8 @@ import {
   type PlacementRule,
   type RuleView,
   boardName,
+  refuseDensity,
+  refuseOddTotal,
 } from './rule.js';
 
 /**
@@ -163,23 +165,13 @@ function shownCandidates(cell: Cell, view: RuleView): number {
  * a sprinkle drawn a board apart.
  */
 function validateSprinkles(row: PlacementRow): void {
-  const where = boardName(row);
   const total = row.quantity.reduce((a, b) => a + b, 0);
-  if (total % 2 !== 0) {
-    throw new Error(
-      `${where}: ${total} creatures cannot pair up — every creature has a partner, ` +
-        `so the total must be even`,
-    );
-  }
-  const share = total / row.cells;
-  if (share > SPRINKLE_MAX_DENSITY) {
-    throw new Error(
-      `${where}: ${total} creatures on ${row.cells} cells is ${(100 * share).toFixed(1)}%, ` +
-        `past the ${(100 * SPRINKLE_MAX_DENSITY).toFixed(0)}% the pairs are laid down reliably at`,
-    );
-  }
+  refuseOddTotal(row, total, 'every creature has a partner');
+  refuseDensity(row, total, SPRINKLE_MAX_DENSITY, 'the pairs are laid down reliably at');
   if (row.wrap !== undefined && row.wrap !== 'none') {
-    throw new Error(`${where}: a pair across a wrapped seam would be a sprinkle a board apart`);
+    throw new Error(
+      `${boardName(row)}: a pair across a wrapped seam would be a sprinkle a board apart`,
+    );
   }
 }
 

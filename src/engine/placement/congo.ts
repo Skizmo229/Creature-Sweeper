@@ -57,7 +57,13 @@ import type { Cell } from '../types.js';
 import { ORTHO } from '../grid.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
 import { placeDealt, readDealt } from './deal.js';
-import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
+import {
+  type Deal,
+  type PlacementRow,
+  type PlacementRule,
+  boardName,
+  refuseDensity,
+} from './rule.js';
 import { PACKS_RULE, packPoolAndCount, packsIn } from './packs.js';
 
 /** Restarts allowed before a board is refused. PACKS's argument. */
@@ -452,14 +458,12 @@ function validateCongo(row: PlacementRow): void {
         `a line is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
     );
   }
-  const share = row.monsters / row.cells;
-  if (share > CONGO_MAX_DENSITY) {
-    throw new Error(
-      `${where}: ${row.monsters} creatures on ${row.cells} cells is ` +
-        `${(100 * share).toFixed(1)}%, past the ${(100 * CONGO_MAX_DENSITY).toFixed(0)}% ` +
-        `non-touching lines can be laid down reliably`,
-    );
-  }
+  refuseDensity(
+    row,
+    row.monsters,
+    CONGO_MAX_DENSITY,
+    'non-touching lines can be laid down reliably',
+  );
 }
 
 /** Lines come back leader first, so the deal can put the strongest tier at the front. */

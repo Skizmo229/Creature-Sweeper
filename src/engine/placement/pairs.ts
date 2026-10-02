@@ -68,7 +68,8 @@ import {
   type PlacementRow,
   type PlacementRule,
   WHOLE_SUM,
-  boardName,
+  refuseDensity,
+  refuseOddTotal,
 } from './rule.js';
 
 /**
@@ -270,22 +271,14 @@ export function pairingFault(
  * the rest.
  */
 function validatePairs(row: PlacementRow): void {
-  const where = boardName(row);
   const total = row.quantity.reduce((a, b) => a + b, 0);
-  if (total % 2 !== 0) {
-    throw new Error(
-      `${where}: ${total} creatures cannot pair up — every creature has ` +
-        `exactly one partner, so the total must be even`,
-    );
-  }
-  const share = total / row.cells;
-  if (share > PAIR_MAX_DENSITY) {
-    throw new Error(
-      `${where}: ${total} creatures on ${row.cells} cells is ` +
-        `${(100 * share).toFixed(1)}%, past the ${(100 * PAIR_MAX_DENSITY).toFixed(0)}% ` +
-        `a non-touching domino packing can be laid down reliably`,
-    );
-  }
+  refuseOddTotal(row, total, 'every creature has exactly one partner');
+  refuseDensity(
+    row,
+    total,
+    PAIR_MAX_DENSITY,
+    'a non-touching domino packing can be laid down reliably',
+  );
 }
 
 /**

@@ -194,3 +194,36 @@ export const WHOLE_SUM = (_cell: Cell, hidden: number): number => hidden;
 export function boardName(row: PlacementRow): string {
   return `${row.typeId}#${row.n}`;
 }
+
+/**
+ * Refuse a row asking for `creatures` on its cells at a density past `ceiling`, the share the
+ * rule's lay-down lands reliably: the quota must land exactly, because C_k assumed it. The message
+ * names the board, the density and the ceiling, to `digits` decimals, and ends with `what`.
+ */
+export function refuseDensity(
+  row: PlacementRow,
+  creatures: number,
+  ceiling: number,
+  what: string,
+  digits = 0,
+): void {
+  const share = creatures / row.cells;
+  if (share > ceiling) {
+    throw new Error(
+      `${boardName(row)}: ${creatures} creatures on ${row.cells} cells is ` +
+        `${(100 * share).toFixed(1)}%, past the ${(100 * ceiling).toFixed(digits)}% ${what}`,
+    );
+  }
+}
+
+/**
+ * Refuse a row of `total` creatures that cannot pair up, on a rule where every creature has a
+ * partner. `why` is the message's reason that the total must be even.
+ */
+export function refuseOddTotal(row: PlacementRow, total: number, why: string): void {
+  if (total % 2 !== 0) {
+    throw new Error(
+      `${boardName(row)}: ${total} creatures cannot pair up — ${why}, so the total must be even`,
+    );
+  }
+}
