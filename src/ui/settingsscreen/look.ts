@@ -2,9 +2,9 @@
  * The Presentation section's drawn settings: creature icons (the window of symbols behind the
  * custom tile is in `symbols.ts`) and colours (the custom colours' window is in `customtiers.ts`),
  * the board palette, the board's font and the interface's, the cursor highlight and its colour
- * (the custom colour's window is in `customcolor.ts`), how a beaten creature is drawn and the
- * zoom ceiling; the section's other rows are in `board.ts` and `effects.ts`. Every example is a
- * real board, or for the interface font a copy of the HUD (decision 0025).
+ * (a colour's row and its custom window are in `customcolor.ts`), how a beaten creature is drawn
+ * and the zoom ceiling; the section's other rows are in `board.ts` and `effects.ts`. Every
+ * example is a real board, or for the interface font a copy of the HUD (decision 0025).
  */
 
 import type { BoardDisplay } from '../board/view.js';
@@ -38,7 +38,7 @@ import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
 import { SYMBOL_COUNT, isGlyphPip } from '../pipsymbols.js';
 import { FONTS, FONT_IDS, type FontId, type GameFont, LEGIBLE_FONT } from '../typefaces.js';
 import { type ScreenContext, typeName } from './context.js';
-import { openColorWindow } from './customcolor.js';
+import { colorRow } from './customcolor.js';
 import { openTierWindow } from './customtiers.js';
 import { renderPreview } from './render.js';
 import { fontSorts, paletteSorts } from './sorts.js';
@@ -345,61 +345,38 @@ export function highlightColorRow(ctx: ScreenContext, host: HTMLElement): void {
   const style = settings.highlightStyle(typeId);
   const chip = (color: string): (() => HTMLElement) =>
     highlightChip(ctx, { highlight: style ?? 'neighbours', highlightColor: color });
-  const pick = (color: string): void => ctx.pick({ highlightColor: color });
-  const preset = HIGHLIGHT_COLORS.some((c) => c.color === p.highlightColor);
-  const own = p.highlightColor === DEFAULT || preset ? null : p.highlightColor;
-  // Lit when a colour of the player's own is in force; clicking it opens the window either way.
-  const custom: Choice = {
-    value: own ?? '',
-    label: own ? `Custom — ${own}` : 'Custom — any colour',
-    example: own
-      ? chip(own)
-      : () => el('div', 'picker-placeholder', 'Any colour, mixed from red, green and blue'),
-    open: () =>
-      openColorWindow(ctx.host, {
-        title: 'Custom highlight colour',
-        blurb:
-          'Mix a colour from red, green and blue, or type it in hex. Red is taken: it crosses ' +
-          'out a click that would do nothing.',
-        mixedLabel: 'A click that lands',
-        taken: [
-          {
-            color: OUT_OF_REACH_COLOR,
-            label: 'A click that would do nothing',
-            name: 'the red that crosses out a click that would do nothing',
-          },
-        ],
-        current: settings.highlightColor(typeId),
-        example: (color) => chip(color)(),
-        onUse: pick,
-      }),
-  };
-
-  wideRow(
-    host,
-    'Cursor highlight colour',
-    'The box round the cell under the cursor when a click would land. A click that would do ' +
+  colorRow(ctx.host, host, {
+    label: 'Cursor highlight colour',
+    hint:
+      'The box round the cell under the cursor when a click would land. A click that would do ' +
       'nothing is crossed out in red whatever this is; under red–green colour blindness magenta ' +
       'is the easiest to tell from that red.' +
       (style ? '' : ' The highlight is off above, so none of this shows until it is on.'),
-    gallery(
-      [
+    current: p.highlightColor,
+    fallback: {
+      value: DEFAULT,
+      label: `Game type default — ${p.markColor === DEFAULT ? 'green' : 'the mark colour'}`,
+      example: chip(settings.markColor(typeId)),
+    },
+    presets: HIGHLIGHT_COLORS,
+    chip,
+    window: {
+      title: 'Custom highlight colour',
+      blurb:
+        'Mix a colour from red, green and blue, or type it in hex. Red is taken: it crosses ' +
+        'out a click that would do nothing.',
+      mixedLabel: 'A click that lands',
+      taken: [
         {
-          value: DEFAULT,
-          label: `Game type default — ${p.markColor === DEFAULT ? 'green' : 'the mark colour'}`,
-          example: chip(settings.markColor(typeId)),
+          color: OUT_OF_REACH_COLOR,
+          label: 'A click that would do nothing',
+          name: 'the red that crosses out a click that would do nothing',
         },
-        ...HIGHLIGHT_COLORS.map((c): Choice => ({
-          value: c.color,
-          label: c.name,
-          example: chip(c.color),
-        })),
-        custom,
       ],
-      p.highlightColor,
-      pick,
-    ),
-  );
+      current: settings.highlightColor(typeId),
+    },
+    onPick: (color) => ctx.pick({ highlightColor: color }),
+  });
 }
 
 /** How a beaten creature is drawn, each look on the standard example. */

@@ -2,7 +2,8 @@
  * Mixing a colour: a slider for each of red, green and blue, the same three numbers to type, and
  * the colour in hex, which always say the same colour. Each slider's track runs through the
  * colours it reaches from where the other two stand. The windows that choose a colour lay these
- * lines out beside an example of their own (`customcolor.ts`).
+ * lines out beside an example of their own (`customcolor.ts`, `customtiers.ts`), in the form
+ * `colorForm` makes for both.
  */
 
 import { CHANNEL_MAX, type Rgb, hexOf, rgbOf } from '../colorspace.js';
@@ -121,4 +122,40 @@ export function colorMixer(onChange: (color: string) => void): ColorMixer {
     },
     focus: () => channels[0]!.range.focus(),
   };
+}
+
+/** What a colour window's body is made of (`colorForm`). */
+export interface ColorFormSpec {
+  /** What the window is for, under its title. */
+  readonly blurb: string;
+  /** The example board's box, beside the form. */
+  readonly example: HTMLElement;
+  /** The form's lines, above the button that saves. */
+  readonly controls: readonly HTMLElement[];
+  /** The button's words. */
+  readonly use: string;
+  /** Close the window. */
+  readonly dismiss: () => void;
+  /** Save what was mixed. */
+  readonly onUse: () => void;
+}
+
+/**
+ * A colour window's body, appended to its card: the blurb, then the example beside a form of
+ * controls ending in the button that saves. Submitting, by the button or by Enter in a field,
+ * closes the window and then saves.
+ */
+export function colorForm(card: HTMLElement, spec: ColorFormSpec): void {
+  const use = el('button', 'primary color-use', spec.use);
+  use.type = 'submit';
+  const form = el('form', 'color-controls');
+  form.append(...spec.controls, use);
+  const body = el('div', 'color-body');
+  body.append(spec.example, form);
+  card.append(el('p', 'settings-blurb', spec.blurb), body);
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    spec.dismiss();
+    spec.onUse();
+  });
 }

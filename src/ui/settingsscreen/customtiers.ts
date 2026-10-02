@@ -8,7 +8,7 @@
 
 import { el } from '../dom.js';
 import { TIER_COUNT, type TierPalette } from '../tiercolors.js';
-import { colorMixer } from './colormixer.js';
+import { colorForm, colorMixer } from './colormixer.js';
 import { settingsWindow } from './widgets.js';
 
 /** The swatches' order: the nine tiers, then the halo. */
@@ -90,25 +90,15 @@ export function openTierWindow(screen: HTMLElement, spec: TierWindowSpec): void 
 
   const row = el('div', 'tier-swatches');
   row.append(...swatches);
-  const use = el('button', 'primary color-use', 'Use these colours');
-  use.type = 'submit';
-  const form = el('form', 'color-controls');
-  form.append(starts, row, editing, ...mixer.lines, use);
-  const body = el('div', 'color-body');
-  body.append(example, form);
-  card.append(
-    el(
-      'p',
-      'settings-blurb',
+  colorForm(card, {
+    blurb:
       'Choose a tier, then mix its colour or type it in hex. The halo on tiers 6 to 9 has a ' +
-        'swatch of its own.',
-    ),
-    body,
-  );
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    dismiss();
-    spec.onUse({ colors: colors.slice(0, TIER_COUNT), halo: colors[HALO]! });
+      'swatch of its own.',
+    example,
+    controls: [starts, row, editing, ...mixer.lines],
+    use: 'Use these colours',
+    dismiss,
+    onUse: () => spec.onUse({ colors: colors.slice(0, TIER_COUNT), halo: colors[HALO]! }),
   });
 
   mixer.set(colors[chosen]!);

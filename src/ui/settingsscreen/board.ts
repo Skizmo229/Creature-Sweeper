@@ -28,7 +28,7 @@ import {
   TUTOR_COLOR,
 } from '../theme.js';
 import type { ScreenContext } from './context.js';
-import { type TakenColor, openColorWindow } from './customcolor.js';
+import { type TakenColor, colorRow } from './customcolor.js';
 import { highlightChip } from './look.js';
 import { renderPreview } from './render.js';
 import { type Choice, gallery, percent, row, slider, toggle, wideRow } from './widgets.js';
@@ -50,48 +50,26 @@ export function markColorRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, settings, typeId, currentTheme } = ctx;
   const chip = (markColor: string): (() => HTMLElement) =>
     ctx.chipBoard(currentTheme, { markColor });
-  const pick = (color: string): void => ctx.pick({ markColor: color });
-  const preset = MARK_COLORS.some((c) => c.color === p.markColor);
-  const own = p.markColor === DEFAULT || preset ? null : p.markColor;
-  // Lit when a colour of the player's own is in force; clicking it opens the window either way.
-  const custom: Choice = {
-    value: own ?? '',
-    label: own ? `Custom — ${own}` : 'Custom — any colour',
-    example: own
-      ? chip(own)
-      : () => el('div', 'picker-placeholder', 'Any colour, mixed from red, green and blue'),
-    open: () =>
-      openColorWindow(ctx.host, {
-        title: 'Custom mark colour',
-        blurb:
-          'Mix a colour for your marks and pencil notes, or type it in hex. Gold, blue, cream, ' +
-          'violet and red are taken: each already means something on the board.',
-        mixedLabel: 'A mark',
-        taken: TAKEN,
-        current: settings.markColor(typeId),
-        example: (color) => chip(color)(),
-        onUse: pick,
-      }),
-  };
-  wideRow(
-    host,
-    'Mark colour',
-    'Your marks, your pencil notes dimmed, and the seam of a wrapped board. The cursor ' +
+  colorRow(ctx.host, host, {
+    label: 'Mark colour',
+    hint:
+      'Your marks, your pencil notes dimmed, and the seam of a wrapped board. The cursor ' +
       'highlight follows it unless it has a colour of its own.',
-    gallery(
-      [
-        { value: DEFAULT, label: 'Game type default — green', example: chip(MARK_COLOR) },
-        ...MARK_COLORS.map((c): Choice => ({
-          value: c.color,
-          label: c.name,
-          example: chip(c.color),
-        })),
-        custom,
-      ],
-      p.markColor,
-      pick,
-    ),
-  );
+    current: p.markColor,
+    fallback: { value: DEFAULT, label: 'Game type default — green', example: chip(MARK_COLOR) },
+    presets: MARK_COLORS,
+    chip,
+    window: {
+      title: 'Custom mark colour',
+      blurb:
+        'Mix a colour for your marks and pencil notes, or type it in hex. Gold, blue, cream, ' +
+        'violet and red are taken: each already means something on the board.',
+      mixedLabel: 'A mark',
+      taken: TAKEN,
+      current: settings.markColor(typeId),
+    },
+    onPick: (color) => ctx.pick({ markColor: color }),
+  });
 }
 
 /**
