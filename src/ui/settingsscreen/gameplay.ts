@@ -6,10 +6,15 @@
 
 import {
   DEFAULT_GAMEPLAY,
+  MAX_HP_REGEN_RATIO,
+  MAX_RATIO,
   MAX_SWEEP_BUDGET,
+  MAX_SWEEP_CHARGE_CLICKS,
   MAX_TIME_LIMIT,
   MIN_SWEEP_BUDGET,
+  MIN_SWEEP_CHARGE_CLICKS,
   MIN_TIME_ATTACK_RATIO,
+  RATIO_STEP,
   type SweepMode,
   easierThanDefault,
   isAtLeastAsHard,
@@ -29,9 +34,6 @@ type RatioKey =
   | 'manaRewardRatio'
   | 'spellPriceRatio'
   | 'startManaRatio';
-
-const MIN_CHARGE_CLICKS = 1;
-const MAX_CHARGE_CLICKS = 50;
 
 /** The time limit's slider moves in half minutes, and the setting is kept in seconds. */
 const LIMIT_STEP = 30;
@@ -127,7 +129,7 @@ function dialRows({ ctx, host, refreshStatus }: Play): void {
         slider(
           0,
           max,
-          0.05,
+          RATIO_STEP,
           settings.gameplay[key],
           ratio,
           (v) => {
@@ -144,42 +146,42 @@ function dialRows({ ctx, host, refreshStatus }: Play): void {
       hint,
     );
   };
-  dial('Player HP', 'hpRatio', 3, 'Scales the board’s HP pool, never below 1.');
+  dial('Player HP', 'hpRatio', MAX_RATIO, 'Scales the board’s HP pool, never below 1.');
   dial(
     'Full run HP regen',
     'hpRegenRatio',
-    1,
+    MAX_HP_REGEN_RATIO,
     'Share of the pool healed after each Full Run board, rounded down. Nothing heals inside a ' +
       'board. Default ×0.50.',
   );
   dial(
     'Creature damage',
     'enemyDamageRatio',
-    3,
+    MAX_RATIO,
     'Scales what a creature’s retaliation costs. A fight at or below your level stays free.',
   );
   dial(
     'Mana regen',
     'manaRegenRatio',
-    3,
+    MAX_RATIO,
     'Scales the mana earned per empty cell you uncover. ×0 switches it off.',
   );
   dial(
     'Mana per creature',
     'manaRewardRatio',
-    3,
+    MAX_RATIO,
     'Scales the mana a defeated creature pays. EXP is never scaled.',
   );
   dial(
     'Spell prices',
     'spellPriceRatio',
-    3,
+    MAX_RATIO,
     'Scales what every spell costs, WORKOUT’s own price included. ×0 makes them free.',
   );
   dial(
     'Starting mana',
     'startManaRatio',
-    3,
+    MAX_RATIO,
     'Scales the mana a board opens with: one Reveal exactly on the magic ladders.',
   );
 }
@@ -249,8 +251,8 @@ function sweepControl({ ctx, refreshStatus }: Play): HTMLElement {
     'Cells per sweep',
     shadeByDifficulty(
       slider(
-        MIN_CHARGE_CLICKS,
-        MAX_CHARGE_CLICKS,
+        MIN_SWEEP_CHARGE_CLICKS,
+        MAX_SWEEP_CHARGE_CLICKS,
         1,
         g().sweepChargeClicks,
         (v) => `${Math.round(v)} cells`,
@@ -262,8 +264,8 @@ function sweepControl({ ctx, refreshStatus }: Play): HTMLElement {
         DEFAULT_GAMEPLAY.sweepChargeClicks,
       ),
       DEFAULT_GAMEPLAY.sweepChargeClicks,
-      MIN_CHARGE_CLICKS,
-      MAX_CHARGE_CLICKS,
+      MIN_SWEEP_CHARGE_CLICKS,
+      MAX_SWEEP_CHARGE_CLICKS,
     ),
     () => g().sweep === 'charge',
   );
@@ -308,7 +310,7 @@ function timeRows({ ctx, host, refreshStatus }: Play): void {
     slider(
       MIN_TIME_ATTACK_RATIO,
       1,
-      0.05,
+      RATIO_STEP,
       g().timeAttackRatio,
       ratio,
       (v) => settings.setGameplay({ timeAttackRatio: Math.round(v * 100) / 100 }),

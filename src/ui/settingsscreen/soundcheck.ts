@@ -11,6 +11,7 @@
  * settings screen can mean leaving it.
  */
 
+import { RATIO_STEP } from '../../engine/settings.js';
 import { el } from '../dom.js';
 import { SFX_EVENTS, type SfxEvent, type SfxPackId } from '../looktypes.js';
 import { DEFAULT_SOUND_CHECK_VOLUME, MAX_SOUND_CHECK_VOLUME } from '../presentation.js';
@@ -348,7 +349,7 @@ class SoundCheck {
       slider(
         0,
         MAX_SOUND_CHECK_VOLUME,
-        0.05,
+        RATIO_STEP,
         volume,
         (v) => `${Math.round(v * 100)}%`,
         (v) => {

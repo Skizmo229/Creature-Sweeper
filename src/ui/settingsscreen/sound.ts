@@ -3,6 +3,7 @@
  * at once. The pack a ladder speaks in is chosen with its look, in the Presentation section.
  */
 
+import { RATIO_STEP } from '../../engine/settings.js';
 import { SFX_EVENTS, type SfxEvent } from '../looktypes.js';
 import { DEFAULT_SFX_VOLUME, MAX_SFX_VOLUME } from '../presentation.js';
 import type { ScreenContext } from './context.js';
@@ -84,7 +85,7 @@ export function soundSection(ctx: ScreenContext): void {
   const volume = slider(
     0,
     MAX_SFX_VOLUME,
-    0.05,
+    RATIO_STEP,
     p.sfxVolume,
     percent,
     (v) => settings.setPresentation({ sfxVolume: v }),

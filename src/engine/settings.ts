@@ -127,7 +127,13 @@ export const DEFAULT_GAMEPLAY: GameplaySettings = {
 };
 
 /** The step every ratio slider moves in. */
-const RATIO_STEP = 0.05;
+export const RATIO_STEP = 0.05;
+/** The most a ratio dial can be set to, and Full Run's HP regen, a share of the pool. */
+export const MAX_RATIO = 3;
+export const MAX_HP_REGEN_RATIO = 1;
+/** The fewest and the most cells by hand a Sweep charge can cost. */
+export const MIN_SWEEP_CHARGE_CLICKS = 1;
+export const MAX_SWEEP_CHARGE_CLICKS = 50;
 
 /**
  * True when nothing here makes the game easier than the tuned default.

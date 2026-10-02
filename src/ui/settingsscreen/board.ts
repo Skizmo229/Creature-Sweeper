@@ -5,6 +5,7 @@
  * (decision 0025).
  */
 
+import { RATIO_STEP } from '../../engine/settings.js';
 import { el } from '../dom.js';
 import { reachSampleBoard, sampleBoard, samplePin } from '../preview.js';
 import {
@@ -119,7 +120,7 @@ export function digitSizeRow(ctx: ScreenContext, host: HTMLElement): void {
     slider(
       MIN_DIGIT_SIZE,
       MAX_DIGIT_SIZE,
-      0.05,
+      RATIO_STEP,
       p.digitSize,
       (v) => `${Math.round(v * 100)}%`,
       drawSample,

@@ -5,6 +5,7 @@
  * what a right-click and a long press do, whether Back asks, the play statistics and the hint line.
  */
 
+import { RATIO_STEP } from '../../engine/settings.js';
 import { el } from '../dom.js';
 import { clockText } from '../game/hud.js';
 import { sampleBoard, samplePin } from '../preview.js';
@@ -203,7 +204,7 @@ function textSizeRow(ctx: ScreenContext, host: HTMLElement): void {
     slider(
       MIN_TEXT_SIZE,
       MAX_TEXT_SIZE,
-      0.05,
+      RATIO_STEP,
       p.textSize,
       (v) => `${Math.round(v * 100)}%`,
       showTextSize,
@@ -245,7 +246,7 @@ function previewSizeRow(ctx: ScreenContext, host: HTMLElement): void {
     slider(
       MIN_PREVIEW_SIZE,
       MAX_PREVIEW_SIZE,
-      0.05,
+      RATIO_STEP,
       p.previewSize,
       (v) => `${Math.round(v * 100)}%`,
       drawSample,

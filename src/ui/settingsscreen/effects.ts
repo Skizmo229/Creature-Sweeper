@@ -6,6 +6,7 @@
  */
 
 import { randomSeed } from '../../engine/rng.js';
+import { RATIO_STEP } from '../../engine/settings.js';
 import type { GameEvent } from '../../engine/types.js';
 import { el } from '../dom.js';
 import { flashStage } from '../game/flash.js';
@@ -206,7 +207,7 @@ function clearEffectOptions(ctx: ScreenContext, host: HTMLElement, replay: () =>
     slider(
       MIN_EFFECT_SPEED,
       MAX_EFFECT_SPEED,
-      0.05,
+      RATIO_STEP,
       p.effectSpeed,
       ratio,
       (v) => ctx.set({ effectSpeed: Math.round(v * 100) / 100 }),
