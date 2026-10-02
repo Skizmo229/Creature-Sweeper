@@ -321,9 +321,9 @@ export const REACH_SHADE = 'rgba(0, 0, 0, 0.45)';
 
 /**
  * Darken every covered cell the crawl rule keeps out of reach, on a ladder with a crawl rule, when
- * the player has asked: the rule made visible, where the cursor shows it one cell at a time. It reads
- * nothing but the geometry the rule reads, so it exposes nothing; a sealed-in board is entirely in
- * reach and draws no shade.
+ * the player has asked: the rule made visible, where the cursor shows it one cell at a time. It
+ * reads nothing but the geometry the rule reads, so it exposes nothing; a sealed-in board is
+ * entirely in reach and draws no shade.
  */
 export function drawReach(p: Paint): void {
   const { ctx, game, layout } = p;

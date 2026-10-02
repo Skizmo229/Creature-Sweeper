@@ -72,7 +72,7 @@ export function ladderPrefix(typeId: string): string {
   return `${typeId}#`;
 }
 
-/** A board's key in the save's records and in the play statistics', so the two read side by side. */
+/** A board's key in the save's records, and in the statistics', so the two read side by side. */
 export function boardKey(typeId: string, board: number): string {
   return `${ladderPrefix(typeId)}${board}`;
 }
