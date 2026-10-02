@@ -20,16 +20,9 @@
  */
 
 import type { Game } from '../engine/game.js';
-import { type Mask, blankMask } from '../engine/grid.js';
+import { type Mask, ORTHO, blankMask } from '../engine/grid.js';
 import { shapeRule } from '../engine/shape/registry.js';
 import type { Cell } from '../engine/types.js';
-
-const ORTHO: ReadonlyArray<readonly [number, number]> = [
-  [1, 0],
-  [-1, 0],
-  [0, 1],
-  [0, -1],
-];
 
 /** Whether the map has a cell at (x, y); false off its edges. */
 type Present = (x: number, y: number) => boolean;
