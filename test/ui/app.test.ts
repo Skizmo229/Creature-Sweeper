@@ -1,8 +1,9 @@
 // @vitest-environment happy-dom
 /**
- * A smoke test of the screens: boots the app in a DOM, starts boards, drives the keyboard and
- * the mode toggles, and reads the HUD and hint back. It exists so the app.ts split (and anything
- * after it) can be checked against what the screens say, not only against the engine.
+ * The screens as a player meets them: the ladder list, a board's HUD and hint line, the keys and
+ * entry modes, the stage's rim after a fight, the tutor, the field guide and the school, the clear
+ * and game-over cards, a Full Run, the settings screen and the way back, Escape on every screen,
+ * and the board and interface fonts. A setting with more to it has a test file of its own here.
  */
 
 import './setup.js';
