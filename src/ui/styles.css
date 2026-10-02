@@ -24,7 +24,10 @@
   --muted: #948f7b;
   --tint: #d99a34;
   --danger: #e8735e;
-  /* The interface's face on this ladder, set from app.ts. This is only what
+  /* The tutor's violet, `TUTOR_COLOR` in theme.ts: the colour its pointing
+     finger draws in on the board. */
+  --tutor: #d29cff;
+  /* The interface's face on this ladder, set from dress.ts. This is only what
      shows before it is. */
   --font: 'JetBrains Mono', ui-monospace, monospace;
   /* Where every face's lowercase stands, as a share of the em — see body. */
@@ -55,7 +58,7 @@ body {
      The board is a canvas, which ignores this; it does its own sizing.
      The browser takes a face's x-height from its file rather than its letters,
      and Aladin's file is wrong, so `--ex-fix` (`GameFont.exHeightFix`, set
-     from app.ts) corrects it. This inherits as a finished NUMBER, fix
+     from dress.ts) corrects it. This inherits as a finished NUMBER, fix
      included, so any element that wears a different face from its parent
      must declare its own — the title, the font captions and the interface
      font's examples do. */
@@ -93,7 +96,7 @@ body {
   max-width: 60ch;
 }
 /* The game's own name, in its own face unless the player chooses one for the
-   interface. Set from app.ts (`Settings.titleFont`); the fallback only covers
+   interface. Set from dress.ts (`Settings.titleFont`); the fallback only covers
    the first frame. */
 .title-bar h1.game-title {
   font-family: var(--title-font, var(--font));
@@ -181,10 +184,11 @@ button.small {
   /* The name's size is capped by the card's width (100cqi, below). */
   container-type: inline-size;
 }
-/* Each name wears its own ladder's face (app.ts), and every name is capitals,
-   so the body's ex-height rule sizes them by a letter they do not contain:
-   caps ran from 8.3px in Bungee to 12.8px in Aladin. Capital height instead,
-   pinned where NORMAL's JetBrains Mono already stood under the old rule.
+/* Each name wears its own ladder's face (screens/ladders.ts), and every name
+   is capitals, so the body's ex-height rule sizes them by a letter they do not
+   contain: caps ran from 8.3px in Bungee to 12.8px in Aladin. Capital height
+   instead, pinned where NORMAL's JetBrains Mono already stood under the old
+   rule.
    `--cap-fix` corrects a face whose file misstates its capital height
    (`GameFont.capHeightFix`).
    Half as large again as that, by request, but never wider than the card.
@@ -366,9 +370,9 @@ button.board-card:hover:not(:disabled) {
   color: #ff4d4d;
   font-weight: 700;
 }
-/* The level's number wears its tier's creature colour (set from app.ts), and
-   tiers 6+ the gold halo their pips carry: a stroke painted under the fill,
-   so it shows as an outline and the hue stays whole. */
+/* The level's number wears its tier's creature colour (set from game/hud.ts),
+   and tiers 6+ the gold halo their pips carry: a stroke painted under the
+   fill, so it shows as an outline and the hue stays whole. */
 .hud-level-num.gilded {
   -webkit-text-stroke: 0.08em var(--halo);
   paint-order: stroke fill;
@@ -556,10 +560,11 @@ button.board-card:hover:not(:disabled) {
   border-color: var(--tint);
   font-weight: 700;
 }
-/* A tier's counter wears that tier's creature colour (`--tier`, from app.ts),
-   and armed it fills with it rather than with the ladder's accent. Tiers 6+
-   carry the gold ring their pips do, as the border — a stroke on text this
-   small reads as smudge. The tier-0 pencil slot has no tier and keeps ink. */
+/* A tier's counter wears that tier's creature colour (`--tier`, from
+   game/screen.ts), and armed it fills with it rather than with the ladder's
+   accent. Tiers 6+ carry the gold ring their pips do, as the border — a stroke
+   on text this small reads as smudge. The tier-0 pencil slot has no tier and
+   keeps ink. */
 .counter[data-tier] {
   color: var(--tier, var(--ink));
 }
@@ -626,15 +631,15 @@ button.board-card:hover:not(:disabled) {
   color: var(--ink);
   font-size: 0.8rem;
 }
-/* The tutor's button wears its own violet (TUTOR_COLOR in theme.ts), the colour its pointing
+/* The tutor's button wears its own violet (`--tutor`), the colour its pointing
    finger draws in on the board, so the button and what it does on the board read as one thing. */
 .sweep.why {
   margin-left: 0;
-  color: #d29cff;
-  border-color: #d29cff;
+  color: var(--tutor);
+  border-color: var(--tutor);
 }
 .sweep.why:hover:not(:disabled) {
-  background: #d29cff;
+  background: var(--tutor);
   color: var(--button-ink);
   text-shadow: var(--button-ink-outline);
 }
@@ -848,7 +853,7 @@ button.board-card:hover:not(:disabled) {
  * for its tables and scrolling inside itself so the screen underneath keeps its place. Its head
  * stays at the top of the card as it scrolls, so Close is always in reach, and a jump lands its
  * target below the head. Above the corner speaker, as the picker is. The tutor's violet
- * (TUTOR_COLOR in theme.ts) marks what the tutor says under a diagram and the entry the tutor sent
+ * (`--tutor`) marks what the tutor says under a diagram and the entry the tutor sent
  * the player to.
  */
 .overlay.guide {
@@ -919,7 +924,7 @@ button.board-card:hover:not(:disabled) {
   border-left: 3px solid transparent;
 }
 .guide-entry.guide-here {
-  border-left-color: #d29cff;
+  border-left-color: var(--tutor);
 }
 /* A trick that belongs to the ladder the guide was opened for, in that ladder's colour. */
 .guide-entry.guide-own {
@@ -957,7 +962,7 @@ button.board-card:hover:not(:disabled) {
 .guide-figure figcaption {
   font-size: 0.72rem;
   line-height: 1.4;
-  color: #d29cff;
+  color: var(--tutor);
 }
 .guide-table {
   margin: 4px 0 12px;
@@ -998,7 +1003,7 @@ button.board-card:hover:not(:disabled) {
   margin-left: 4px;
   padding: 0 6px;
   font-size: 0.72rem;
-  color: #d29cff;
+  color: var(--tutor);
   background: transparent;
   border: 1px solid currentColor;
   border-radius: 3px;
