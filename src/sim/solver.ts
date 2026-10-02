@@ -250,12 +250,12 @@ function settleInWindows(
   for (const radius of WINDOW_RADII) {
     const local = localWindow(model, v, radius, d);
     if (local.members.length >= piece.members.length) break;
-    const r = search.feasible(local, d, v, null, true, limit);
+    const r = search.feasible(local, d, v, null, { bold: true, limit });
     if (r === false) return 'safe';
     if (r !== true) continue;
     const fixed = d.slice();
     for (const w of local.members) fixed[w] = search.cur[w]!;
-    if (search.feasible(piece, fixed, v, leaf, false, limit) === true) {
+    if (search.feasible(piece, fixed, v, leaf, { limit }) === true) {
       search.record(piece);
       return 'witnessed';
     }

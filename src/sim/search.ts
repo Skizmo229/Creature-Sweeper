@@ -144,23 +144,23 @@ export class Search {
 
   /**
    * Is there a layout of `p` within domains `d`? True leaves it in `cur`; null
-   * means the budget ran out first. `bold` has each cell not yet shown
-   * dangerous try its dangerous values first, so one layout settles as many as
-   * it can — worth it in a small window, ruinous across a whole piece, where
-   * the ordinary lowest-first order finds a layout far faster.
+   * means the budget (`limit`, the whole budget by default) ran out first.
+   * `bold` has each cell not yet shown dangerous try its dangerous values
+   * first, so one layout settles as many as it can — worth it in a small
+   * window, ruinous across a whole piece, where the ordinary lowest-first
+   * order finds a layout far faster.
    */
   feasible(
     p: Problem,
     d: ArrayLike<number>,
     start: number,
     leaf: (() => boolean) | null,
-    bold = false,
-    limit = this.budget,
+    options: { readonly bold?: boolean; readonly limit?: number } = {},
   ): boolean | null {
     this.prepare(p, d);
     this.leaf = leaf;
-    this.bold = bold;
-    this.limit = limit;
+    this.bold = options.bold ?? false;
+    this.limit = options.limit ?? this.budget;
     for (let i = 0; i < this.sums.length; i++) this.enqueue(i);
     if (!this.settle()) return false;
     if (!this.members.length) {
