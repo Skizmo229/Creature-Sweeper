@@ -50,5 +50,3 @@ export function lowestNote(mask: number): number {
   for (let t = 0; mask >>> t; t++) if (hasNote(mask, t)) return t;
   return -1;
 }
-
-/** Exactly one candidate left, which is a claim in all but name. */

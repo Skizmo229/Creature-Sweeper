@@ -271,6 +271,9 @@ export const STAR_SHAPE = predicateShape('star', (_param, w, h, x, y) => {
   return inside;
 });
 
+/** An odd-r offset column as an axial one: odd rows sit half a hex right (`HEX_DIRS` in grid.ts). */
+const axialColumn = (col: number, row: number): number => col - (row - (row & 1)) / 2;
+
 /**
  * A regular hexagon of hex cells: every cell within `R` steps of the box's centre, counted as a
  * hex grid counts them, `R` being as large as the box allows, so a box `2R + 1` square holds
@@ -278,9 +281,6 @@ export const STAR_SHAPE = predicateShape('star', (_param, w, h, x, y) => {
  * distance is taken in axial coordinates, whole numbers throughout. It means nothing on a square
  * grid, and a wrapped one would join its empty corners, so both are refused.
  */
-/** An odd-r offset column as an axial one: odd rows sit half a hex right (`HEX_DIRS` in grid.ts). */
-const axialColumn = (col: number, row: number): number => col - (row - (row & 1)) / 2;
-
 export const HEXAGON_SHAPE: ShapeRule = {
   ...predicateShape('hexagon', (_param, w, h, x, y) => {
     const radius = Math.floor((Math.min(w, h) - 1) / 2);

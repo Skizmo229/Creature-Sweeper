@@ -218,7 +218,7 @@ export function dealLines(
 
 /**
  * Covered cells a congo board has proven to be empty ground, from what is
- * open. The three proofs in the header; each holds at any level.
+ * open. The four proofs in the header; each holds at any level.
  *
  * Reads only open cells, so it is exactly as strong as what the player can
  * see — and a covered cell it names is never a creature, whatever the
