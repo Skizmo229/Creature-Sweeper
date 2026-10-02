@@ -19,23 +19,23 @@ import {
   TUTOR_COLOR,
 } from '../theme.js';
 import { tierColor } from '../tiercolors.js';
-import { setNumberFont } from './digits.js';
 import {
   GHOST_CELLS,
   HEX_EDGE_DIRS,
   SQUARE_EDGE_DIRS,
   centreOf,
-  contentBox,
   squareCorners,
   wrapPeriod,
 } from './geometry.js';
 import {
+  MARK_SCALE,
   type Paint,
   TILE_INSET,
   drawCovered,
   drawOpen,
   showsBeatenNumber,
   tracePath,
+  writeOnCell,
 } from './paint.js';
 
 /**
@@ -478,7 +478,7 @@ export function drawPointer(p: Paint, pointer: Lesson): void {
   for (const c of pointer.why.constraints) {
     if (c.cell.tier > 0 && !showsBeatenNumber(p, c.cell)) {
       const { cx, cy } = centreOf(layout, c.cell.x, c.cell.y);
-      writeOnCell(p, cx, cy, String(c.cell.num), TUTOR_COLOR, 0.5);
+      writeSolid(p, cx, cy, String(c.cell.num), TUTOR_COLOR, 0.5);
     }
   }
 
@@ -499,7 +499,7 @@ export function drawPointer(p: Paint, pointer: Lesson): void {
     ctx.strokeStyle = tierColor(p.tierColors, tier);
     tracePath(p, cx, cy, 2);
     ctx.stroke();
-    writeOnCell(p, cx, cy, String(tier), tierColor(p.tierColors, tier), 0.58);
+    writeSolid(p, cx, cy, String(tier), tierColor(p.tierColors, tier), MARK_SCALE);
   }
 
   ctx.setLineDash([4, 3]);
@@ -513,24 +513,22 @@ export function drawPointer(p: Paint, pointer: Lesson): void {
     // Candidates running from empty up to a ceiling are the ceiling, which is what a bound says.
     const capped = (mask & (mask + 1)) === 0 && tiers.length > 2;
     const label = capped ? `\u2264${tiers.length - 1}` : tiers.join('');
-    writeOnCell(p, cx, cy, label, TUTOR_COLOR, label.length > 2 ? 0.3 : 0.42);
+    writeSolid(p, cx, cy, label, TUTOR_COLOR, label.length > 2 ? 0.3 : 0.42);
   }
   ctx.restore();
 }
 
-/** Text centred on a cell, outlined as a mark is so it survives any tile. */
-function writeOnCell(p: Paint, cx: number, cy: number, text: string, color: string, scale: number) {
-  const { ctx } = p;
-  const box = contentBox(p.layout, cx, cy);
-  ctx.save();
-  ctx.setLineDash([]);
-  const { centre } = setNumberFont(ctx, p.font, box.size * scale);
-  ctx.textAlign = 'center';
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = Math.max(2, box.size * 0.16);
-  ctx.strokeStyle = MARK_OUTLINE;
-  ctx.strokeText(text, cx, cy + centre);
-  ctx.fillStyle = color;
-  ctx.fillText(text, cx, cy + centre);
-  ctx.restore();
+/** `writeOnCell` in solid strokes, whatever dash the ring round the cell was drawn with. */
+function writeSolid(
+  p: Paint,
+  cx: number,
+  cy: number,
+  text: string,
+  color: string,
+  scale: number,
+): void {
+  p.ctx.save();
+  p.ctx.setLineDash([]);
+  writeOnCell(p, cx, cy, text, color, scale);
+  p.ctx.restore();
 }
