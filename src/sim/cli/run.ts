@@ -12,8 +12,8 @@
  *
  * That is the economy only, exactly as `npm run sim` is. Whether a human can
  * *deduce* their way through ten boards on one pool is the other question, and
- * the one the mode exists to ask — a deductive player's odds are the product
- * of ten boards' clear rates, so this reports the honest expectation too.
+ * the one the mode exists to ask: a deductive player's odds are the product of
+ * ten boards' clear rates, which `sim:spells` and `sim:human` measure.
  *
  * Exits non-zero if any run cannot be completed at full HP, so it is a
  * regression gate on the run rules the same way `sim` is on the ladders.
@@ -30,7 +30,7 @@ interface TypeResult {
   completed: number;
   hpLost: number;
   worstBoard: number;
-  /** Distinct start-of-board HP values seen, to show the pool never moved. */
+  /** The lowest start-of-board HP seen, to show the pool never moved. */
   minHpSeen: number;
 }
 
