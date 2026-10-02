@@ -25,7 +25,7 @@ import {
 } from '../presentation.js';
 import { type PresentationPatch, type ScreenContext, previewCell, typeName } from './context.js';
 import { hudCopy } from './look.js';
-import { fullscreenRow, lowVisionRow } from './presets.js';
+import { lowVisionRow } from './presets.js';
 import { CHIP_CELL, renderPreview } from './render.js';
 import { gallery, row, section, slider, toggle, wideRow } from './widgets.js';
 
@@ -33,7 +33,7 @@ import { gallery, row, section, slider, toggle, wideRow } from './widgets.js';
 export function interfaceSection(ctx: ScreenContext): void {
   const host = section(ctx.host, 'Interface', 'The page around the board, on every ladder.');
   lowVisionRow(ctx, host);
-  fullscreenRow(ctx, host);
+  fullscreenRow(host);
   textSizeRow(ctx, host);
   previewSizeRow(ctx, host);
   menuStripRow(ctx, host);
@@ -75,6 +75,46 @@ export function interfaceSection(ctx: ScreenContext): void {
     toggle(ctx.p.hintLine, (v) => ctx.settings.setPresentation({ hintLine: v })),
     'The line under the board saying what a click does now and which keys do what. The tutor ' +
       'and the lessons speak there whatever this says.',
+  );
+}
+
+/**
+ * Fullscreen, as a button rather than a setting: a browser lets a page go fullscreen only from a
+ * click, so it cannot be kept and applied on arrival. Not every browser offers it, and the
+ * itch.io frame is small, which is what this is for.
+ */
+function fullscreenRow(host: HTMLElement): void {
+  const page = document.documentElement;
+  const offered = typeof page.requestFullscreen === 'function';
+  const button = el('button', 'ghost small');
+  const paint = (): void => {
+    button.textContent = document.fullscreenElement ? 'Leave fullscreen' : 'Fullscreen';
+  };
+  button.disabled = !offered;
+  button.addEventListener('click', () => {
+    if (document.fullscreenElement) void document.exitFullscreen?.();
+    else void page.requestFullscreen?.();
+  });
+  const unhook = (): void => {
+    if (!button.isConnected) document.removeEventListener('fullscreenchange', onChange);
+  };
+  const onChange = (): void => {
+    paint();
+    unhook();
+  };
+  document.addEventListener('fullscreenchange', onChange);
+  paint();
+  // In the presets' box, so the button is its own width rather than the column's.
+  const box = el('div', 'settings-presets');
+  box.append(button);
+  row(
+    host,
+    'Fullscreen',
+    box,
+    offered
+      ? 'The whole screen, until Escape or the button. A browser allows it from a click only, so ' +
+          'it is not kept between visits.'
+      : 'This browser does not offer it.',
   );
 }
 
