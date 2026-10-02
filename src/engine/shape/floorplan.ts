@@ -6,8 +6,7 @@
  */
 
 import { type Rng, randInt } from '../rng.js';
-
-export type Mask = boolean[][];
+import { type Mask, ORTHO } from '../grid.js';
 
 /**
  * How many rooms a floor plan aims for, whatever size the board is.
@@ -61,31 +60,6 @@ export interface Room {
   w: number;
   h: number;
 }
-
-export function blank(w: number, h: number): Mask {
-  return Array.from({ length: h }, () => new Array<boolean>(w).fill(false));
-}
-
-export function count(mask: Mask): number {
-  let n = 0;
-  for (const row of mask) for (const on of row) if (on) n++;
-  return n;
-}
-
-/** The four orthogonal steps, in the order the generators try them. */
-export const ORTHO: ReadonlyArray<readonly [number, number]> = [
-  [1, 0],
-  [-1, 0],
-  [0, 1],
-  [0, -1],
-];
-/** The four diagonal steps. */
-export const DIAG: ReadonlyArray<readonly [number, number]> = [
-  [1, 1],
-  [1, -1],
-  [-1, 1],
-  [-1, -1],
-];
 
 /** The cells a room covers, plus the wall around it. */
 function halo(room: Room): { x0: number; y0: number; x1: number; y1: number } {
@@ -317,8 +291,15 @@ export function thinHalls(hall: Mask, rooms: Room[], bw: number, bh: number): vo
   }
 }
 
-/** Is everything the predicate calls solid reachable from the first of it? */
-function connectedWith(solid: (x: number, y: number) => boolean, bw: number, bh: number): boolean {
+/**
+ * Is everything the predicate calls solid, inside a `bw` x `bh` box, reachable from the first of
+ * it in reading order, walking orthogonally? False when nothing is solid.
+ */
+export function connectedWith(
+  solid: (x: number, y: number) => boolean,
+  bw: number,
+  bh: number,
+): boolean {
   let start: [number, number] | null = null;
   let total = 0;
   for (let y = 0; y < bh; y++) {

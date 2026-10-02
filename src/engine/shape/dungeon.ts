@@ -34,16 +34,13 @@
  */
 
 import { type Rng, randInt, shuffle } from '../rng.js';
+import { DIAG, type Mask, ORTHO, blankMask, countPresent } from '../grid.js';
 import { type ShapeRule, refuseHexAndWrap } from './rule.js';
 import {
-  DIAG,
-  type Mask,
-  ORTHO,
   ROOM_MIN,
   type Room,
-  blank,
   carveHalls,
-  count,
+  connectedWith,
   inAnyHalo,
   inAnyRoom,
   placeRooms,
@@ -198,38 +195,6 @@ function alcove(present: Mask, bw: number, bh: number, rng: Rng): boolean {
   return true;
 }
 
-/** Every present cell reachable from the first, walking orthogonally. */
-function connected(present: Mask, bw: number, bh: number): boolean {
-  let start = -1;
-  let total = 0;
-  for (let y = 0; y < bh; y++) {
-    for (let x = 0; x < bw; x++) {
-      if (!present[y]![x]) continue;
-      total++;
-      if (start < 0) start = y * bw + x;
-    }
-  }
-  if (start < 0) return false;
-
-  const seen = new Set([start]);
-  const queue = [start];
-  for (let head = 0; head < queue.length; head++) {
-    const at = queue[head]!;
-    const x = at % bw;
-    const y = (at - x) / bw;
-    for (const [dx, dy] of ORTHO) {
-      const nx = x + dx;
-      const ny = y + dy;
-      if (nx < 0 || ny < 0 || nx >= bw || ny >= bh || !present[ny]![nx]) continue;
-      const next = ny * bw + nx;
-      if (seen.has(next)) continue;
-      seen.add(next);
-      queue.push(next);
-    }
-  }
-  return seen.size === total;
-}
-
 /** One floor plan, at one guess for how much of the budget rooms should take. */
 function attempt(
   bw: number,
@@ -245,14 +210,14 @@ function attempt(
   const rooms = placeRooms(bw, bh, Math.round(target * share), rng);
   if (rooms.length < 2) throw new Error(`only ${rooms.length} room(s) fit`);
 
-  const present = blank(bw, bh);
+  const present = blankMask(bw, bh);
   for (const room of rooms) {
     for (let y = room.y; y < room.y + room.h; y++) {
       for (let x = room.x; x < room.x + room.w; x++) present[y]![x] = true;
     }
   }
 
-  const hall = blank(bw, bh);
+  const hall = blankMask(bw, bh);
   carveHalls(hall, rooms, rng);
   // A hallway cell inside a room is room; only the part outside is hallway.
   for (let y = 0; y < bh; y++) {
@@ -263,7 +228,7 @@ function attempt(
     for (let x = 0; x < bw; x++) if (hall[y]![x]) present[y]![x] = true;
   }
 
-  let laid = count(present);
+  let laid = countPresent(present, bw, bh);
   if (laid > target) throw new Error(`hallways overshot: ${laid} of ${target} cells`);
 
   for (let tries = 0; laid < target && tries < SPEND_TRIES; tries++) {
@@ -277,7 +242,7 @@ function attempt(
   }
 
   if (laid !== target) throw new Error(`landed on ${laid} of ${target} cells`);
-  if (!connected(present, bw, bh)) throw new Error('floor plan is in pieces');
+  if (!connectedWith((x, y) => present[y]![x]!, bw, bh)) throw new Error('floor plan is in pieces');
   // Checked at the end and answered by throwing the plan away, rather than by
   // repairing it: a repair costs a cell, and the budget has already been spent
   // to the last one by this point. A pinch is uncommon, so a retry is cheaper
@@ -302,8 +267,8 @@ function attempt(
  * nothing.
  */
 function spawnableCells(present: Mask, hall: Mask, bw: number, bh: number): Mask {
-  const out = blank(bw, bh);
-  const door = blank(bw, bh);
+  const out = blankMask(bw, bh);
+  const door = blankMask(bw, bh);
   for (let y = 0; y < bh; y++) {
     for (let x = 0; x < bw; x++) {
       if (!present[y]![x] || hall[y]![x]) continue;
@@ -372,15 +337,15 @@ export function dungeonMap(w: number, h: number, target: number, rng: Rng): Dung
       try {
         const { present, hall } = attempt(bw, bh, target, share, rng);
         const spawnable = spawnableCells(present, hall, bw, bh);
-        const room = count(spawnable);
+        const room = countPresent(spawnable, bw, bh);
         if (room < target * MIN_SPAWN_SHARE) {
           throw new Error(`only ${room} of ${target} cells can hold a creature`);
         }
 
         const out: DungeonMap = {
-          present: blank(w, h),
-          spawnable: blank(w, h),
-          hall: blank(w, h),
+          present: blankMask(w, h),
+          spawnable: blankMask(w, h),
+          hall: blankMask(w, h),
         };
         for (let y = 0; y < bh; y++) {
           for (let x = 0; x < bw; x++) {

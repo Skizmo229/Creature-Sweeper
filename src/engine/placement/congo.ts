@@ -54,6 +54,7 @@
  */
 
 import type { Cell } from '../types.js';
+import { ORTHO } from '../grid.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
 import { placeDealt, readDealt } from './deal.js';
 import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
@@ -70,13 +71,6 @@ const CONGO_ATTEMPTS = 60;
  * ceiling, so the scaling boards stop at the same place either way.
  */
 export const CONGO_MAX_DENSITY = 0.34;
-
-const ORTHO: ReadonlyArray<readonly [number, number]> = [
-  [1, 0],
-  [-1, 0],
-  [0, 1],
-  [0, -1],
-];
 
 /**
  * The orthogonal neighbours of a flat index on a plain `width` x `height`

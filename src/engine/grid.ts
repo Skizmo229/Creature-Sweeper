@@ -89,6 +89,26 @@ export function countPresent(mask: Mask, w: number, h: number): number {
   return n;
 }
 
+/**
+ * The four orthogonal steps on a plain square grid, for the generators that walk a mask or a
+ * square board directly rather than through `neighbours()`. In the order they try them, which
+ * their random draws depend on.
+ */
+export const ORTHO: ReadonlyArray<readonly [number, number]> = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+];
+
+/** The four diagonal steps, for the same generators. */
+export const DIAG: ReadonlyArray<readonly [number, number]> = [
+  [1, 1],
+  [1, -1],
+  [-1, 1],
+  [-1, -1],
+];
+
 /** Is (x, y) inside the board's bounding box? A hole is still in bounds. */
 export function inBounds(cfg: BoardConfig, x: number, y: number): boolean {
   return x >= 0 && y >= 0 && x < cfg.width && y < cfg.height;
