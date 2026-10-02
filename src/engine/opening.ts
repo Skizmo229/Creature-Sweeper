@@ -65,7 +65,7 @@ function zeroRegions(grid: Grid, coveredOnly: boolean, topology: Topology, wrap:
       // Beacon wants a region nobody has touched yet, not the one you started on.
       if (coveredOnly && start.open) continue;
 
-      // Flood the 8-connected component of zero cells, collecting its fringe.
+      // Flood the zero cells connected through `neighbours()`, collecting their fringe.
       const region: Cell[] = [];
       const revealed = new Set<Cell>();
       const stack: Cell[] = [start];
@@ -99,10 +99,10 @@ function baseCells(grid: Grid, rows: number): Cell[] {
 }
 
 /**
- * Fallback for boards with no zero-region at all — unreachable at ladder
- * densities (28,000 simulated boards, zero failures) but possible in Free mode
- * once density climbs past roughly 40%. Pick the safest single cell: lowest
- * number, then most empty neighbours.
+ * The opening for a board with no zero-region at all: the safest single cell, lowest number
+ * first, then most empty neighbours. Rare, but dealt: SPRINKLE DONUT had no zero-region on 23 of
+ * 1,000 deals (100 seeds a board), and every other ladder on none of 200 (20 seeds a board;
+ * measured 1 October 2026).
  */
 function findFallbackOpening(
   grid: Grid,
