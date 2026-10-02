@@ -8,7 +8,7 @@
 import { LADDER_CATEGORIES, type LadderCategory } from '../../engine/config.js';
 import { easierThanDefault } from '../../engine/settings.js';
 import { el } from '../dom.js';
-import { ladderName, ladders } from '../ladders.js';
+import { CATEGORY_NAMES, ladderName, ladders } from '../ladders.js';
 import { pausedGames } from '../paused.js';
 import type { Progress } from '../progress.js';
 import type { Settings } from '../settings.js';
@@ -36,17 +36,6 @@ export interface LadderListActions {
   resetProgress(): void;
   setUnlockAll(on: boolean): void;
 }
-
-/**
- * Each column's heading, and the palette and font windows' when they sort by ladder. Normal is
- * the original game's seven modes; the rest say what a ladder is about.
- */
-export const CATEGORY_NAMES: Record<LadderCategory, string> = {
-  normal: 'Normal',
-  shape: 'Shape',
-  magic: 'Magic',
-  special: 'Special',
-};
 
 /** The ladder list: the title and its notices, a card per ladder in its column, and the tools. */
 export function buildLadderList(a: LadderListActions): HTMLElement {
