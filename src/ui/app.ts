@@ -67,6 +67,7 @@ export class App {
     mode: this.mode,
     sfx: this.sfx,
     settings: this.settings,
+    // A move goes BoardActions -> BoardRecorder.move -> BoardKeeper.move -> playMove (replay.ts).
     move: (move) => this.recorder.move(move),
     apply: (events) => this.apply(events),
     refresh: () => this.refresh(),

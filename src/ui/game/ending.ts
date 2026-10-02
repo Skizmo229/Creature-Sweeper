@@ -55,7 +55,7 @@ export class BoardEnding {
   /** The blow that ended a lost board, kept for the overlay. */
   private fatalBattle: { tier: number; damage: number } | null = null;
 
-  constructor(private readonly h: EndingHost) {}
+  constructor(private readonly host: EndingHost) {}
 
   /** A new board: no blow has ended it. */
   resetBoard(): void {
@@ -84,14 +84,14 @@ export class BoardEnding {
 
   /** The board on screen has been won or lost. */
   finish(): void {
-    if (this.h.run()) {
+    if (this.host.run()) {
       this.finishRunBoard();
       return;
     }
-    const { progress, settings, clock, tutor } = this.h;
-    const game = this.h.game();
-    const typeId = this.h.typeId();
-    const boardIndex = this.h.boardIndex();
+    const { progress, settings, clock, tutor } = this.host;
+    const game = this.host.game();
+    const typeId = this.host.typeId();
+    const boardIndex = this.host.boardIndex();
     clock.freeze();
     const seconds = clock.frozenSeconds!;
     const won = game.status === 'won';
@@ -112,9 +112,9 @@ export class BoardEnding {
         hints: tutor.hints,
       });
     }
-    this.h.sfx.play(won ? 'win' : 'lose');
+    this.host.sfx.play(won ? 'win' : 'lose');
 
-    const seed = this.h.seed();
+    const seed = this.host.seed();
     const overlay = buildBoardOutcome({
       game,
       typeId,
@@ -137,14 +137,14 @@ export class BoardEnding {
       onNext: () => {
         const to = boardIndex + 1;
         if (to > type.boards.length) progress.setScalingBoard(typeId, to);
-        this.h.startBoard(typeId, to);
+        this.host.startBoard(typeId, to);
       },
-      onReplay: () => this.h.startBoard(typeId, boardIndex),
-      onSame: () => this.h.startBoard(typeId, boardIndex, seed),
-      onList: () => this.h.showBoards(typeId),
+      onReplay: () => this.host.startBoard(typeId, boardIndex),
+      onSame: () => this.host.startBoard(typeId, boardIndex, seed),
+      onList: () => this.host.showBoards(typeId),
     });
-    this.h.root.querySelector('.screen')?.append(overlay);
-    this.h.view()?.render();
+    this.host.root.querySelector('.screen')?.append(overlay);
+    this.host.view()?.render();
     if (plays) this.celebrate();
   }
 
@@ -153,18 +153,18 @@ export class BoardEnding {
    * this is the board's first.
    */
   private effectPlays(firstClear: boolean): boolean {
-    const { settings } = this.h;
-    const typeId = this.h.typeId();
+    const { settings } = this.host;
+    const typeId = this.host.typeId();
     if (settings.victoryEffect(typeId) === null) return false;
     return settings.presentationFor(typeId).victoryWhen === 'every' || firstClear;
   }
 
   private finishRunBoard(): void {
-    const { progress, clock, tutor } = this.h;
-    const run = this.h.run()!;
-    const game = this.h.game();
-    const typeId = this.h.typeId();
-    const boardIndex = this.h.boardIndex();
+    const { progress, clock, tutor } = this.host;
+    const run = this.host.run()!;
+    const game = this.host.game();
+    const typeId = this.host.typeId();
+    const boardIndex = this.host.boardIndex();
     const type = ladders.find((t) => t.id === typeId)!;
     const midRun = game.status === 'won' && !run.isLastBoard;
     const recorded = isAtLeastAsHard(game.settings);
@@ -185,7 +185,7 @@ export class BoardEnding {
         });
       }
     }
-    this.h.sfx.play(game.status === 'lost' ? 'lose' : 'win');
+    this.host.sfx.play(game.status === 'lost' ? 'lose' : 'win');
 
     const overlay = buildRunOutcome({
       game,
@@ -197,14 +197,14 @@ export class BoardEnding {
       hints: tutor.hints,
       runHints: tutor.runHints,
       gameplay: game.settings,
-      onContinue: () => this.h.advanceRun(),
-      onNewRun: () => this.h.startFullRun(typeId),
-      onSameRun: () => this.h.startFullRun(typeId, run.seed),
-      onAbandon: () => this.h.askToLeave(),
-      onList: () => this.h.showBoards(typeId),
+      onContinue: () => this.host.advanceRun(),
+      onNewRun: () => this.host.startFullRun(typeId),
+      onSameRun: () => this.host.startFullRun(typeId, run.seed),
+      onAbandon: () => this.host.askToLeave(),
+      onList: () => this.host.showBoards(typeId),
     });
-    this.h.root.querySelector('.screen')?.append(overlay);
-    this.h.view()?.render();
+    this.host.root.querySelector('.screen')?.append(overlay);
+    this.host.view()?.render();
     if (plays) this.celebrate();
   }
 
@@ -213,18 +213,18 @@ export class BoardEnding {
    * that was just cleared. Drawn on its own layer so the board's renderer stays turn-based.
    */
   private celebrate(): void {
-    const { settings } = this.h;
-    const typeId = this.h.typeId();
+    const { settings } = this.host;
+    const typeId = this.host.typeId();
     const effect = settings.victoryEffect(typeId);
     if (!effect) return;
-    const stage = this.h.stage();
+    const stage = this.host.stage();
     if (!stage) return;
     this.endVictory();
     this.stopVictory = playVictory(
       stage,
       effect,
       settings.victoryLook(typeId),
-      this.h.view()?.victorySource(),
+      this.host.view()?.victorySource(),
       settings.presentationFor(typeId).effectSpeed,
     );
   }

@@ -44,14 +44,16 @@ export class BoardKeeper {
   /** Whether the slot has been written yet: the first write claims it. */
   private written = false;
 
-  constructor(private readonly h: KeeperHost) {}
+  constructor(private readonly host: KeeperHost) {}
 
   /**
    * Whether there is a game worth pausing: one being kept, with a move made on it or, in a run,
    * a board already behind it. A board just dealt has nothing to lose and is not kept until then.
    */
   get holding(): boolean {
-    return this.token !== null && (this.moves.length > 0 || (this.h.run()?.legs.length ?? 0) > 0);
+    return (
+      this.token !== null && (this.moves.length > 0 || (this.host.run()?.legs.length ?? 0) > 0)
+    );
   }
 
   /** A board has been dealt, or a paused one taken up after these moves: keep it from now on. */
@@ -81,7 +83,7 @@ export class BoardKeeper {
 
   /** Make a move on the board on screen, and keep it. */
   move(move: Move): GameEvent[] {
-    const events = playMove(this.h.game()!, move);
+    const events = playMove(this.host.game()!, move);
     if (this.token) {
       this.moves.push(move);
       this.save();
@@ -95,22 +97,22 @@ export class BoardKeeper {
    * copy stops being kept rather than writing over it.
    */
   save(): void {
-    const game = this.h.game();
+    const game = this.host.game();
     if (!game || !this.token || !this.holding) return;
-    const run = this.h.run();
+    const run = this.host.run();
     const record: PausedGame = {
-      typeId: this.h.typeId(),
-      board: this.h.boardIndex(),
+      typeId: this.host.typeId(),
+      board: this.host.boardIndex(),
       seed: run?.seed ?? game.seed,
       gameplay: game.settings,
       ...(run ? { legs: run.legs.map((leg) => ({ ...leg })) } : {}),
       moves: this.moves.map(encodeMove),
       digest: boardDigest(game),
       digestVersion: DIGEST_VERSION,
-      elapsedMs: this.h.clock.elapsedMs(),
-      timeLimit: this.h.clock.timeLimit,
-      hints: this.h.tutor.hints,
-      runHints: this.h.tutor.runHints,
+      elapsedMs: this.host.clock.elapsedMs(),
+      timeLimit: this.host.clock.timeLimit,
+      hints: this.host.tutor.hints,
+      runHints: this.host.tutor.runHints,
       hp: game.hp,
       maxHp: run?.maxHp ?? game.maxHp,
       token: this.token,
@@ -120,8 +122,8 @@ export class BoardKeeper {
   }
 
   private slot(): Slot {
-    const typeId = this.h.typeId();
-    return this.h.run() ? { typeId, run: true } : { typeId, board: this.h.boardIndex() };
+    const typeId = this.host.typeId();
+    return this.host.run() ? { typeId, run: true } : { typeId, board: this.host.boardIndex() };
   }
 }
 
