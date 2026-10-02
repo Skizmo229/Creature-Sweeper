@@ -311,15 +311,24 @@ class Player {
   private narrow(id: TrickId, found: Moves): number {
     let n = 0;
     for (const [cell, mask] of found.narrow) {
-      const before = this.domain(cell);
-      const after = before & mask;
-      if (after === before || after === 0) continue;
-      this.domains.set(cell, after);
-      this.run.pencils[id]++;
-      if (!hasNote(after, cell.tier)) this.alarm(id, cell, `narrowed to ${after.toString(2)}`);
-      n++;
+      if (this.pencil(id, cell, mask, (after) => `narrowed to ${after.toString(2)}`)) n++;
     }
     return n;
+  }
+
+  /**
+   * Narrow one cell's pencil to `mask` for a trick, count it, and sound the alarm if the truth
+   * was struck off (`what` says how, for the alarm). False when it would change nothing, or
+   * leave nothing.
+   */
+  private pencil(id: TrickId, cell: Cell, mask: number, what: (after: number) => string): boolean {
+    const before = this.domain(cell);
+    const after = before & mask;
+    if (after === before || after === 0) return false;
+    this.domains.set(cell, after);
+    this.run.pencils[id]++;
+    if (!hasNote(after, cell.tier)) this.alarm(id, cell, what(after));
+    return true;
   }
 
   /**
@@ -354,12 +363,7 @@ class Player {
     // there), so on such a board a name goes into the pencil instead, until the next step.
     if (!this.game.marksAreClaims) {
       for (const [cell, tier] of found.mark) {
-        const before = this.domain(cell);
-        const after = before & noteBit(tier);
-        if (cell.open || after === 0 || after === before) continue;
-        this.domains.set(cell, after);
-        this.run.pencils[id]++;
-        if (!hasNote(after, cell.tier)) this.alarm(id, cell, `named ${tier} in the pencil`);
+        if (!cell.open) this.pencil(id, cell, noteBit(tier), () => `named ${tier} in the pencil`);
       }
       return;
     }
