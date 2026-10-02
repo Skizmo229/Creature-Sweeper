@@ -1,9 +1,9 @@
 /**
- * The school's lessons (docs/teaching-plan.md, section 5): nine short lessons, one trick each, on
+ * The school's lessons (docs/teaching-plan.md, section 5): short lessons, one trick each, on
  * boards drawn so that the trick is the move. A lesson is a board and a list of steps, and a step
  * says something, points with the tutor, and waits for one thing. Data, DOM-free: where a trick is
  * taught the words are the trick text's, so a change to that sentence reaches the school too.
- * `run.ts` takes one lesson; `test/school.test.ts` takes all nine with the tricks at each lesson's
+ * `run.ts` takes one lesson; `test/school.test.ts` takes them all with the tricks at each lesson's
  * grade, and holds the grade below to failing where the lesson's trick is needed.
  *
  * Where a board needs weak creatures kept out of the lesson (every threshold is `C_k`, so the level

@@ -25,7 +25,7 @@ export interface LadderListActions {
   howTo(): void;
   /** The field guide: the catalogue of tricks. */
   guide(): void;
-  /** The school: nine lessons, one trick each. */
+  /** The school: the lessons, one trick each. */
   school(): void;
   openSettings(): void;
   backup(): void;

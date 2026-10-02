@@ -1,5 +1,5 @@
 /**
- * The school (docs/teaching-plan.md, section 5.4): the nine lessons as cards, each with the trick it
+ * The school (docs/teaching-plan.md, section 5.4): the lessons as cards, each with the trick it
  * teaches and its grade and whether it has been taken to its end, and the card that closes a
  * lesson. Offered, never required: nothing waits on a lesson (principle 7).
  */

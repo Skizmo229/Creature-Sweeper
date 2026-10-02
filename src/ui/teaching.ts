@@ -53,7 +53,7 @@ export interface TeachingHost {
 export class Teaching {
   /** The tutor on the board being played: what it last found, and the hints asked. */
   readonly tutor = new Tutor();
-  /** The school's lesson, when the board on screen is one; and which of the nine it is. */
+  /** The school's lesson, when the board on screen is one; and which of `LESSONS` it is. */
   lesson: LessonRun | null = null;
   private lessonIndex = 0;
   /** Why the last click on a lesson board was refused, until the next move. */
@@ -88,7 +88,7 @@ export class Teaching {
     modal.show(overlay, focus);
   }
 
-  /** The school: its nine lessons, and whether each has been taken. */
+  /** The school: its lessons, and whether each has been taken. */
   school(): void {
     this.leaveLesson();
     this.host.show(
@@ -121,7 +121,7 @@ export class Teaching {
   }
 
   /**
-   * Begin one of the nine lessons, on its own board, at the tuned dials whatever the settings say:
+   * Begin one of the lessons, on its own board, at the tuned dials whatever the settings say:
    * the lessons are written for that game (the guessing lesson prices its guess in HP, the last
    * reads the counters), and a hard mode chosen for the ladders is not what a lesson teaches.
    */
