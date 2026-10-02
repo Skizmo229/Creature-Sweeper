@@ -5,6 +5,7 @@
 import type { BoardConfig, Cell, Topology, Wrap } from './types.js';
 import { type Grid, neighbours } from './grid.js';
 
+/** A zero-region, as what opening it would uncover. */
 export interface Opening {
   /** Every cell the cascade would uncover: the zero-region plus its fringe. */
   cells: Cell[];

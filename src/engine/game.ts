@@ -1,5 +1,5 @@
 /**
- * The rules engine.
+ * The state machine of one board: open, mark, note, sweep, cast, wait, forfeit.
  *
  * Pure state plus transitions — no rendering, no timers, no storage. Every
  * action returns the events it caused, so a renderer can animate them and a
@@ -30,6 +30,7 @@ import { Patrol } from './patrol.js';
 import { dealGrid } from './generate.js';
 import { fight, revealAllCells, revealAllCreatures } from './fight.js';
 
+/** How a board is entered, beyond its config and seed. */
 export interface GameOptions {
   /**
    * HP to enter the board with, when that is not a full pool. Defaults to the

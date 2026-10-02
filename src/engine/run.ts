@@ -41,6 +41,7 @@ import { Game } from './game.js';
 import { boardConfig, findType, type BoardOptions, type Ladders } from './config.js';
 import { DEFAULT_GAMEPLAY, type GameplaySettings, effectiveHp, healPerBoard } from './settings.js';
 
+/** Whether a run is still being played, or how it ended. */
 export type FullRunStatus = 'playing' | 'won' | 'lost';
 
 /** What one cleared board cost and gave back. */
@@ -54,6 +55,7 @@ export interface FullRunLeg {
   hpAfter: number;
 }
 
+/** How a run's boards are dealt and played. */
 export interface FullRunOptions extends Pick<BoardOptions, 'opening'> {
   /**
    * The player's gameplay dials, applied to every board of the run.
@@ -66,6 +68,7 @@ export interface FullRunOptions extends Pick<BoardOptions, 'opening'> {
   settings?: GameplaySettings;
 }
 
+/** A Full Run in progress: the ladder's boards in turn on one HP pool, the live one in `game`. */
 export class FullRun {
   readonly ladders: Ladders;
   readonly typeId: string;

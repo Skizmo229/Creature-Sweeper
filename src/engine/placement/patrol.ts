@@ -136,6 +136,7 @@ function patrolFault(grid: Grid, cfg: BoardConfig): string | null {
   return null;
 }
 
+/** The patrol placement: square routes that never share a cell, laid biggest first. */
 export const PATROL_RULE: PlacementRule = {
   id: 'patrol',
   validate: validatePatrols,

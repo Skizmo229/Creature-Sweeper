@@ -26,6 +26,10 @@ export interface FightHost {
   creaturesLeft(): number;
 }
 
+/**
+ * Fight the creature on a cell the player has just opened, and return what happened: Exercise,
+ * the battle, a level-up, the board won or lost. Changes the host's HP, mana, EXP and status.
+ */
 export function fight(host: FightHost, cell: Cell): GameEvent[] {
   const events: GameEvent[] = [];
 

@@ -48,6 +48,10 @@ export const MIN_TIME_ATTACK_RATIO = 0.5;
 /** The longest a board's time limit can be, in seconds: half an hour. */
 export const MAX_TIME_LIMIT = 1800;
 
+/**
+ * The player's gameplay dials. None reaches EXP, a threshold, or whether a creature dies and pays
+ * out; the header says why that is the rule.
+ */
 export interface GameplaySettings {
   /** Scales the board's HP pool. 0 still leaves 1 HP — a board you enter
    *  already dead is not a board. */
@@ -103,6 +107,7 @@ export interface GameplaySettings {
   readonly timeLimit: number;
 }
 
+/** The tuned game: every dial where the ladders were measured. */
 export const DEFAULT_GAMEPLAY: GameplaySettings = {
   hpRatio: 1,
   hpRegenRatio: 0.5,

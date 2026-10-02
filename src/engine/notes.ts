@@ -26,10 +26,12 @@ export function hasNotes(mask: number): boolean {
   return mask !== 0;
 }
 
+/** Is this tier one of the mask's candidates? */
 export function hasNote(mask: number, tier: number): boolean {
   return (mask & noteBit(tier)) !== 0;
 }
 
+/** The mask with this tier added if it was absent, or taken out if it was there. */
 export function toggleNote(mask: number, tier: number): number {
   return mask ^ noteBit(tier);
 }

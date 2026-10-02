@@ -94,6 +94,7 @@ const MIN_SPAWN_SHARE = 0.55;
 /** Tries at spending the remaining budget before the attempt is abandoned. */
 const SPEND_TRIES = 600;
 
+/** A dungeon's map, as masks over the bounding box. */
 export interface DungeonMap {
   /** Which cells of the bounding box exist. */
   present: Mask;

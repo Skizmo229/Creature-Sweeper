@@ -25,6 +25,7 @@ export interface SpellHost {
   applyMark(cell: Cell, mark: number): void;
 }
 
+/** What a cast did: refused, with the reason, or the events it caused and what it told you. */
 export type SpellOutcome = { blocked: BlockReason } | { events: GameEvent[]; detail: string };
 
 /** The effects, keyed by spell. Targeted spells receive the cell; the others receive null. */

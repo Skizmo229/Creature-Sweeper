@@ -36,6 +36,7 @@
 
 export type SpellId = 'reveal' | 'census' | 'exercise' | 'beacon' | 'augur';
 
+/** One spell's entry in the table: its name, price, whether it takes a target, its tooltip. */
 export interface Spell {
   readonly id: SpellId;
   readonly name: string;
@@ -76,6 +77,7 @@ export const EXERCISE_LEVELS = 1;
  */
 export const MANA_PER_EMPTY_CELLS = 4;
 
+/** The spell table, one global price list (the header says why). */
 export const SPELLS: Record<SpellId, Spell> = {
   reveal: {
     id: 'reveal',
@@ -162,6 +164,7 @@ export function orderSpells(ids: readonly SpellId[]): SpellId[] {
   return SPELL_ORDER.filter((id) => ids.includes(id));
 }
 
+/** Is this ladder-data name a spell? */
 export function isSpellId(value: string): value is SpellId {
   return value in SPELLS;
 }

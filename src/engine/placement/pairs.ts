@@ -319,6 +319,7 @@ const PAIRS_DISPLAY: PlacementDisplay = {
   hoverShowsNumber: false,
 };
 
+/** The pairing placement: every creature has exactly one creature neighbour. */
 export const PAIRS_RULE: PlacementRule = {
   id: 'pairs',
   validate: validatePairs,

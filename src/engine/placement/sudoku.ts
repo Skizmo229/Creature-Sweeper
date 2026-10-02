@@ -39,6 +39,7 @@ import {
   boardName,
 } from './rule.js';
 
+/** A Sudoku board's side, and how many digits it uses: 0 to 8. */
 export const SUDOKU_SIZE = 9;
 const SUDOKU_BOX = 3;
 const DIGITS = SUDOKU_SIZE;
@@ -370,6 +371,7 @@ export function sudokuCeiling(mask: number): number {
   return highestBit(mask);
 }
 
+/** A generated Sudoku board: the solution, and the cells the player is told. */
 export interface SudokuBoard {
   grid: SudokuGrid;
   /** Flat indices of the cells whose tier the player is told up front. */
@@ -515,6 +517,7 @@ function sudokuFault(grid: Grid): string | null {
   return null;
 }
 
+/** The Sudoku placement: a guess-free Sudoku solution over tiers 0 to 8, with givens. */
 export const SUDOKU_RULE: PlacementRule = {
   id: 'sudoku',
   validate: validateSudoku,

@@ -9,6 +9,7 @@
 
 import type { GameplaySettings } from './settings.js';
 
+/** One board's Sweep gate under the dial: what is banked, and whether a sweep may go now. */
 export class SweepGate {
   /**
    * Cells opened BY HAND since the last sweep. Only those count, which is what stops the meter

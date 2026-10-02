@@ -7,6 +7,10 @@ import type { SpellId } from './spells.js';
 /** 0 = empty ground; 1..tiers = a creature of that power level. */
 export type Tier = number;
 
+/**
+ * One cell of a board: what stands on it, what the player sees and has written on it, and whether
+ * it exists at all. Engine state: only the engine changes it, and everything else reads it.
+ */
 export interface Cell {
   readonly x: number;
   readonly y: number;
@@ -177,6 +181,11 @@ export type OpeningRule =
 
 export type { Placement };
 
+/**
+ * Everything a board is dealt from: its size, creatures, thresholds and HP, and the rules it is
+ * played by. Read off a ladder row by `boardConfig`, or counted off a drawing by `readLayout`; a
+ * board is a pure function of this and its seed.
+ */
 export interface BoardConfig {
   /** Game type id, e.g. "normal". */
   readonly typeId: string;
@@ -273,8 +282,13 @@ export interface WorkoutRule {
   readonly expMultiplier: number;
 }
 
+/** Whether a board is still being played, or how it ended. */
 export type GameStatus = 'playing' | 'won' | 'lost';
 
+/**
+ * What an engine action caused, in order. Every action returns these, so a renderer can animate
+ * them and a test can assert on them.
+ */
 export type GameEvent =
   /** Cells uncovered, including everything a cascade reached. */
   | { type: 'revealed'; cells: ReadonlyArray<{ x: number; y: number }> }
@@ -295,6 +309,7 @@ export type GameEvent =
   /** PATROL's creatures each took a step; `moves` is how many actions the board has seen. */
   | { type: 'moved'; moves: number };
 
+/** Why an action did nothing, carried by a `blocked` event. */
 export type BlockReason =
   /** The cell is marked above your level — the guard that protects you. */
   | 'mark-guard'
@@ -338,6 +353,7 @@ export type BlockReason =
    */
   | 'out-of-reach';
 
+/** How a sweep reads the board. */
 export interface SweepOptions {
   /**
    * Subtract the player's marks from a cell's number when deciding what is

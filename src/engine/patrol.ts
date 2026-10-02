@@ -63,6 +63,10 @@ interface Walker {
   at: Cell;
 }
 
+/**
+ * One PATROL board's walking creatures, read off the board as dealt, and the routes the player
+ * has marked for them.
+ */
 export class Patrol {
   /** Actions taken, which is how far round its route every creature has walked. */
   moves = 0;

@@ -42,6 +42,7 @@ export function isFreeKill(level: number, tier: Tier): boolean {
   return level > 0 && tier <= level;
 }
 
+/** How one fight came out. */
 export interface BattleResult {
   defeated: boolean;
   /** Player HP after the exchange; 0 or less means dead. */

@@ -213,6 +213,7 @@ function sprinkleFault(grid: Grid, cfg: BoardConfig): string | null {
   return null;
 }
 
+/** The sprinkle placement: pairs free to touch, every creature's place shown. */
 export const SPRINKLES_RULE: PlacementRule = {
   id: 'sprinkles',
   validate: validateSprinkles,

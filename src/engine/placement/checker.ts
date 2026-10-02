@@ -60,6 +60,7 @@ function shadeAt(x: number, y: number): Shade {
   return (x + y) % 2 === 0 ? 'light' : 'dark';
 }
 
+/** The colour of the square a cell stands on. */
 export function shadeOf(cell: Cell): Shade {
   return shadeAt(cell.x, cell.y);
 }
@@ -186,6 +187,7 @@ function validateChecker(row: PlacementRow): void {
 /** One pool per colour: a tier is dealt only onto squares of its own parity. */
 const COLOURS: Pools = { of: shadeAt, forTier: shadeForTier };
 
+/** The checkerboard placement: a tier stands only on squares of its own parity. */
 export const CHECKER_RULE: PlacementRule = {
   id: 'checker',
   validate: validateChecker,

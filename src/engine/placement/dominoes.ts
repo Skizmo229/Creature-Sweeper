@@ -233,6 +233,7 @@ function dominoBoardFault(grid: Grid, cfg: BoardConfig): string | null {
   return dominoFault(tiles, cfg.tiers, sets);
 }
 
+/** The domino placement: a pairing board whose pairs are whole domino sets. */
 export const DOMINOES_RULE: PlacementRule = {
   id: 'dominoes',
   validate: validateDominoes,

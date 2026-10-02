@@ -387,6 +387,7 @@ function dealPackBoard(d: Deal): void {
   placeDealt(d, dealPacks(packs, d.cfg.tiers, d.rng));
 }
 
+/** The pack placement: non-touching packs of one of every tier. */
 export const PACKS_RULE: PlacementRule = {
   id: 'packs',
   validate: validatePacks,

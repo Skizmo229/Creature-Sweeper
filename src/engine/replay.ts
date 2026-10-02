@@ -56,6 +56,7 @@ export function replayMoves(game: Game, moves: readonly Move[]): void {
  */
 export type MoveCode = readonly (string | number)[];
 
+/** A move as it is stored, the inverse of `decodeMove`. */
 export function encodeMove(move: Move): MoveCode {
   switch (move.kind) {
     case 'open':

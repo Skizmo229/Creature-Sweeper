@@ -18,6 +18,7 @@ export interface ShapeType {
   readonly wrap: string | undefined;
 }
 
+/** A board shape: everything the generator and its readers ask of one. */
 export interface ShapeRule {
   readonly id: BoardShape;
   /**

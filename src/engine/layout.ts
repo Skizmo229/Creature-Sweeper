@@ -25,6 +25,7 @@ import type { GameOptions } from './game.js';
  */
 const DRAWN_HP = 10;
 
+/** How a drawing is read into a board, beyond the drawing itself. */
 export interface LayoutOptions extends GameOptions {
   /**
    * The player's level. Defaults to the level the beaten creatures' EXP buys, which is 1 on a

@@ -54,6 +54,7 @@ const ROOM_MISSES = 60;
  */
 const LOOP_SHARE = 0.35;
 
+/** A room's rectangle on the floor plan, in cells. */
 export interface Room {
   x: number;
   y: number;
@@ -71,12 +72,14 @@ export function count(mask: Mask): number {
   return n;
 }
 
+/** The four orthogonal steps, in the order the generators try them. */
 export const ORTHO: ReadonlyArray<readonly [number, number]> = [
   [1, 0],
   [-1, 0],
   [0, 1],
   [0, -1],
 ];
+/** The four diagonal steps. */
 export const DIAG: ReadonlyArray<readonly [number, number]> = [
   [1, 1],
   [1, -1],
@@ -98,10 +101,12 @@ function roomSide(mean: number, rng: Rng): number {
   return Math.max(ROOM_MIN, Math.round(mean * (1 + (rng() * 2 - 1) * ROOM_VARIETY)));
 }
 
+/** Is (x, y) on any room's floor? */
 export function inAnyRoom(rooms: Room[], x: number, y: number): boolean {
   return rooms.some((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
 }
 
+/** Is (x, y) in any room's halo, its floor and the wall round it, leaving out room `except`? */
 export function inAnyHalo(rooms: Room[], except: number, x: number, y: number): boolean {
   for (let i = 0; i < rooms.length; i++) {
     if (i === except) continue;

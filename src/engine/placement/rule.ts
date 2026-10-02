@@ -56,6 +56,7 @@ export interface Pools {
   forTier(tier: number): string;
 }
 
+/** A placement rule: everything the engine, the renderer and the instruments ask of one. */
 export interface PlacementRule {
   readonly id: Placement;
   /**
@@ -181,9 +182,10 @@ export type RingProof = (cell: Cell, ring: readonly Cell[]) => boolean;
 /** The rules whose pencil offers every tier on every cell: they say nothing about a cell. */
 export const NO_CANDIDATES = (): null => null;
 
-/** The rules with no whole-ring proof and nothing proven empty. */
+/** The rules with no whole-ring proof. */
 export const NO_RING_PROOF = (): null => null;
 const NONE: ReadonlySet<Cell> = new Set();
+/** The rules that prove no covered cell empty. */
 export const NOTHING_EMPTIED = (): ReadonlySet<Cell> => NONE;
 /** The cap without a rule that bounds one cell: the whole hidden sum. */
 export const WHOLE_SUM = (_cell: Cell, hidden: number): number => hidden;

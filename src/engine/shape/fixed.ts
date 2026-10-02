@@ -9,6 +9,7 @@
 
 import { type ShapeRule, predicateShape } from './rule.js';
 
+/** The plain rectangle: every cell of the box. */
 export const RECT_SHAPE = predicateShape('rect', () => true);
 
 /**
@@ -21,6 +22,7 @@ export const CROSS_SHAPE = predicateShape(
     Math.abs(x - (w - 1) / 2) <= param / 2 || Math.abs(y - (h - 1) / 2) <= param / 2,
 );
 
+/** A diamond whose corners touch the middle of each side of the box. */
 export const DIAMOND_SHAPE = predicateShape(
   'diamond',
   (_param, w, h, x, y) =>
@@ -80,6 +82,7 @@ const GEAR_TEETH: ReadonlyArray<readonly [number, number]> = [
   [-Math.SQRT1_2, -Math.SQRT1_2],
 ];
 
+/** A gear filling a square box, by `GEAR`'s proportions. */
 export const GEAR_SHAPE = predicateShape('gear', (_param, w, h, x, y) => {
   const { dx, dy } = fromCentre(w, h, x, y);
   const tip = Math.min(w, h) / 2;
@@ -191,6 +194,7 @@ function inSuit(
   return (flipped ? art[rows - 1 - j]![cols - 1 - i] : art[j]![i]) === '#';
 }
 
+/** A playing card with a Four's suits cut out of it, laid out by `CARD`. */
 export const CARD_SHAPE = predicateShape('card', (_param, w, h, x, y) => {
   const xc = x + 0.5;
   const yc = y + 0.5;
@@ -215,6 +219,7 @@ function inHeartCurve(x: number, y: number): boolean {
  */
 const HEART = { halfWidth: 1.135, halfHeight: 1.118, lift: 0.118 };
 
+/** A heart filling the box, point down, by `HEART`'s proportions. */
 export const HEART_SHAPE = predicateShape('heart', (_param, w, h, x, y) => {
   const { dx, dy } = fromCentre(w, h, x, y);
   return inHeartCurve(
@@ -251,6 +256,7 @@ const STAR_CORNERS: ReadonlyArray<readonly [number, number]> = [
   [-STAR.cos54, -STAR.sin54],
 ];
 
+/** A five-pointed star, point up, by `STAR`'s proportions. */
 export const STAR_SHAPE = predicateShape('star', (_param, w, h, x, y) => {
   // The star is 2 cos 18 of its radius across and 1 + sin 54 tall, its centre below the box's.
   const radius = Math.min(w / (2 * STAR.cos18), h / (1 + STAR.sin54));

@@ -477,6 +477,7 @@ function dealCongo(d: Deal): void {
   placeDealt(d, dealLines(lines, cfg.tiers, d.rng));
 }
 
+/** The congo placement: packs strung out as orthogonal lines, each led by the top tier. */
 export const CONGO_RULE: PlacementRule = {
   id: 'congo',
   validate: validateCongo,

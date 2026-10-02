@@ -32,6 +32,7 @@ export interface LadderBoard {
 
 /** The menu's four groups, in the order it shows them. `CATEGORIES` in `ladders.py` fills them. */
 export const LADDER_CATEGORIES = ['normal', 'shape', 'magic', 'special'] as const;
+/** One of the menu's groups. */
 export type LadderCategory = (typeof LADDER_CATEGORIES)[number];
 
 /** One game type's ladder as `ladders.py` emits it. */
@@ -113,8 +114,10 @@ export interface LadderType {
   extended: LadderBoard[];
 }
 
+/** The whole ladder data, every game type, as `ladders.json` holds it. */
 export type Ladders = LadderType[];
 
+/** What a caller may change about a board when its config is built. */
 export interface BoardOptions {
   opening?: OpeningRule;
   /**
@@ -304,6 +307,7 @@ export function boardRow(ladders: Ladders, typeId: string, board: number): Ladde
     : type.extended[board - type.boards.length - 1];
 }
 
+/** A game type's ladder by its id. Throws, naming the ids there are, for one that is not there. */
 export function findType(ladders: Ladders, typeId: string): LadderType {
   const type = ladders.find((t) => t.id === typeId);
   if (!type) {
