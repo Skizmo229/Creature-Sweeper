@@ -22,6 +22,7 @@ import {
 } from '../../engine/settings.js';
 import { el } from '../dom.js';
 import { MAX_TUTOR_GRADE, MIN_TUTOR_GRADE, type TutorStyle } from '../presentation.js';
+import { plural } from '../words.js';
 import type { ScreenContext } from './context.js';
 import { gameplayPresetsRow } from './presets.js';
 import { gallery, row, section, slider, times, toggle } from './widgets.js';
@@ -274,7 +275,7 @@ function sweepControl({ ctx, refreshStatus }: Play): HTMLElement {
       max: MAX_SWEEP_BUDGET,
       step: 1,
       value: g().sweepBudget,
-      format: (v) => `${Math.round(v)} sweep${Math.round(v) === 1 ? '' : 's'}`,
+      format: (v) => plural(Math.round(v), 'sweep'),
       onInput: (v) => settings.setGameplay({ sweepBudget: Math.round(v) }),
       resetTo: DEFAULT_GAMEPLAY.sweepBudget,
     }),
