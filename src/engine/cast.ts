@@ -20,7 +20,7 @@ export interface SpellHost {
   /** Uncover a cell, cascading through blanks; the cells opened. */
   reveal(start: Cell): Array<{ x: number; y: number }>;
   /** Open one cell without cascading; false if it was already open. */
-  markOpen(cell: Cell): boolean;
+  uncover(cell: Cell): boolean;
   /** Write a mark, keeping the per-tier counters honest. */
   applyMark(cell: Cell, mark: number): void;
 }
@@ -100,7 +100,7 @@ function beaconSpell(host: SpellHost): SpellOutcome {
   if (!region) return { blocked: 'no-effect' };
   const opened: Array<{ x: number; y: number }> = [];
   for (const cell of region.cells) {
-    if (host.markOpen(cell)) opened.push({ x: cell.x, y: cell.y });
+    if (host.uncover(cell)) opened.push({ x: cell.x, y: cell.y });
   }
   if (opened.length === 0) return { blocked: 'no-effect' };
   return { events: [{ type: 'revealed', cells: opened }], detail: `${opened.length} cells` };

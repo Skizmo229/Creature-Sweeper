@@ -66,7 +66,7 @@ export interface Drawing {
 export interface DrawingHost {
   readonly remaining: number[];
   readonly progression: Progression;
-  markOpen(cell: Cell): boolean;
+  uncover(cell: Cell): boolean;
   applyMark(cell: Cell, mark: number): void;
 }
 
@@ -253,7 +253,7 @@ export function readLayout(
  */
 export function showDrawing(host: DrawingHost, drawing: Drawing): void {
   for (const cell of drawing.opened) {
-    host.markOpen(cell);
+    host.uncover(cell);
     if (cell.tier === 0) continue;
     cell.alive = false;
     host.remaining[cell.tier - 1]!--;

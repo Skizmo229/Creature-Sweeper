@@ -129,7 +129,7 @@ export interface OpeningHost {
   readonly grid: Grid;
   readonly config: BoardConfig;
   /** Open one cell without cascading; false if it was already open. */
-  markOpen(cell: Cell): boolean;
+  uncover(cell: Cell): boolean;
   /** Uncover a cell, cascading through blanks; the cells opened. */
   reveal(start: Cell): Array<{ x: number; y: number }>;
   /** Write a mark, keeping the per-tier counters honest. */
@@ -164,7 +164,7 @@ function openLargest(host: OpeningHost): void {
   const { grid, config } = host;
   const best = findBestOpening(grid, false, config.topology, config.wrap);
   if (best) {
-    for (const cell of best.cells) host.markOpen(cell);
+    for (const cell of best.cells) host.uncover(cell);
     return;
   }
   const fallback = findFallbackOpening(grid, config.topology, config.wrap);
@@ -181,7 +181,7 @@ function openLargest(host: OpeningHost): void {
 function openEveryEmpty(host: OpeningHost): void {
   for (const row of host.grid) {
     for (const cell of row) {
-      if (cell.present && cell.tier === 0) host.markOpen(cell);
+      if (cell.present && cell.tier === 0) host.uncover(cell);
     }
   }
 }
@@ -197,7 +197,7 @@ function openIslands(host: OpeningHost): void {
     openLargest(host);
     return;
   }
-  for (const island of islands) for (const cell of island.cells) host.markOpen(cell);
+  for (const island of islands) for (const cell of island.cells) host.uncover(cell);
 }
 
 /**

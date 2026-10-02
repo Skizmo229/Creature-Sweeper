@@ -627,8 +627,8 @@ export class Game {
 
   // ---------------------------------------------------------------- internals
 
-  /** Open one cell without cascading. Engine-internal, for `cast.ts`. */
-  markOpen(cell: Cell): boolean {
+  /** Open one cell without cascading; false if it was open. For openings, drawings and spells. */
+  uncover(cell: Cell): boolean {
     if (cell.open) return false;
     cell.open = true;
     // A creature standing on uncovered ground, opened: it is fought where it stands.
@@ -650,7 +650,7 @@ export class Game {
 
     while (stack.length) {
       const cell = stack.pop()!;
-      if (!this.markOpen(cell)) continue;
+      if (!this.uncover(cell)) continue;
       revealed.push({ x: cell.x, y: cell.y });
       if (cell.num === 0) {
         for (const n of this.neighboursOf(cell)) {
