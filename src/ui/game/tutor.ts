@@ -9,7 +9,7 @@ import type { Game } from '../../engine/game.js';
 import type { Cell } from '../../engine/types.js';
 import { TRICK_TEXT } from '../../sim/tricktext.js';
 import { GRADES, type Grade, TRICKS, type TrickId } from '../../sim/tricks.js';
-import { tiersUpTo } from '../../sim/reader.js';
+import { tiersUpTo } from '../../sim/masks.js';
 import { type Advice, type Explanation, type Lesson, explain } from '../../sim/tutor.js';
 import type { TutorStyle } from '../presentation.js';
 

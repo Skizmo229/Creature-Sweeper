@@ -223,9 +223,6 @@ export function soleCoveredRim(game: Game, piece: readonly Cell[]): Cell | null 
 
 // ------------------------------------------------------------- candidate sets
 
-// src/ui/game/tutor.ts reads this from here.
-export { tiersUpTo } from './masks.js';
-
 /**
  * Which values of each cell can take part in a sum landing in [lo, hi].
  *
