@@ -4,6 +4,7 @@
  *
  *   npm run sim:golden          # record test/golden/*.txt
  *   npm run sim:golden:check    # re-run every simulator and diff; non-zero on any difference
+ *   npm run sim:golden:check -- spells-augur    # only the runs named (keys of RUNS below)
  *
  * Every board is a pure function of (config, seed) and every simulator uses fixed seeds, so the
  * text a simulator prints is a fingerprint of the engine's behaviour over hundreds of boards. A
