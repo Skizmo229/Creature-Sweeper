@@ -31,8 +31,12 @@ export default tseslint.config(
     },
   },
   {
-    // A test file is one long describe; its length is not the measure.
+    // A describe is one long function, so its length is not the measure. A file's is, more
+    // loosely than the source's: a test file this long holds several subjects and splits by them.
     files: ['test/**/*.ts'],
-    rules: { 'max-lines-per-function': 'off', 'max-lines': 'off' },
+    rules: {
+      'max-lines-per-function': 'off',
+      'max-lines': ['warn', { max: 900, skipBlankLines: true }],
+    },
   },
 );
