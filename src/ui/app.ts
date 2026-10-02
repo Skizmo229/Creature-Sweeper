@@ -486,14 +486,16 @@ export class App {
         sweep: (useMarks) => this.actions.doSweep(useMarks),
         wait: () => this.actions.doWait(),
         hint: () => this.askHint(),
-        tutor: this.settings.presentation.tutor,
-        tierColors: this.settings.tierColors(this.typeId),
         guide: () => this.teaching.guideFromBoard(),
         next: () => this.teaching.next(),
         pickSpell: (id) => this.actions.pickSpell(id),
         cancelSpell: () => this.actions.cancelSpell(),
       },
-      this.teaching.lessonTitle(),
+      {
+        tutor: this.settings.presentation.tutor,
+        tierColors: this.settings.tierColors(this.typeId),
+        lessonTitle: this.teaching.lessonTitle(),
+      },
     );
     this.els = els;
     this.root.append(els.root);

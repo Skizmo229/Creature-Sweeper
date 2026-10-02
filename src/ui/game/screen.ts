@@ -14,7 +14,7 @@ import { ladders } from '../ladders.js';
 import { type TierPalette, tierColor, tierGilded } from '../tiercolors.js';
 import { themeFor } from '../looks.js';
 
-/** What the game screen's controls report to, and the two settings its furniture is built from. */
+/** What the game screen's controls report to. */
 export interface GameScreenActions {
   openSettings(): void;
   /** Leave the board, asking first whether to pause or abandon a game with anything in it. */
@@ -30,11 +30,8 @@ export interface GameScreenActions {
   sweep(useMarks: boolean): void;
   /** PATROL's Wait: the creatures take a step and nothing else happens. */
   wait(): void;
-  /** The tutor: point at the next provable move, and why; and whether it is offered at all. */
+  /** The tutor: point at the next provable move, and why. */
   hint(): void;
-  readonly tutor: boolean;
-  /** The colour of each tier, which its LV button wears. */
-  readonly tierColors: TierPalette;
   /** The field guide, at what the tutor is saying. */
   guide(): void;
   /** On a lesson board: go on to the next step. */
@@ -55,6 +52,16 @@ export interface HudReadouts {
   mp: HTMLElement | null;
   run: HTMLElement | null;
   t: HTMLElement;
+}
+
+/** What the game screen is built from besides the game and its controls' actions. */
+export interface GameScreenOptions {
+  /** Whether the tutor is offered: without it, the board has no Hint button. */
+  readonly tutor: boolean;
+  /** The colour of each tier, which its LV button wears. */
+  readonly tierColors: TierPalette;
+  /** A school lesson's title, shown in place of the board's label; null on a ladder's board. */
+  readonly lessonTitle: string | null;
 }
 
 /** The elements the refresh writes into. */
@@ -82,15 +89,19 @@ export interface GameScreenElements {
   next: HTMLButtonElement;
 }
 
-/** `lessonTitle` is a school lesson's title, shown in place of the board's label. */
+/**
+ * The game screen for `game`, board `boardIndex` of ladder `typeId` (in `run`, if one), with every
+ * control reporting to `a`. The caller puts it on the page and draws the board on its canvas.
+ */
 export function buildGameScreen(
   game: Game,
   typeId: string,
   boardIndex: number,
   run: FullRun | null,
   a: GameScreenActions,
-  lessonTitle: string | null = null,
+  o: GameScreenOptions,
 ): GameScreenElements {
+  const { lessonTitle } = o;
   const type = findType(ladders, typeId);
   const wrap = el('div', 'screen game');
   // The board wears the chosen palette; the screen around it keeps the ladder's own accent, so
@@ -110,7 +121,7 @@ export function buildGameScreen(
   stage.append(canvas);
   wrap.append(stage);
 
-  const { palette, ...controls } = buildPalette(game, a, a.tutor);
+  const { palette, ...controls } = buildPalette(game, a, o);
   wrap.append(palette);
   const { row, spellBtns } = buildSpellRow(game, a);
   if (row) wrap.append(row);
@@ -189,33 +200,38 @@ function boardLabel(
   return label;
 }
 
-/** The LV palette, which doubles as the per-tier counter, with the pencil and Sweep. */
+/** The LV palette, which doubles as the per-tier counter, with the pencil, Sweep and the tutor. */
 function buildPalette(
   game: Game,
   a: GameScreenActions,
-  tutor: boolean,
-): Pick<
-  GameScreenElements,
-  | 'counters'
-  | 'emptyNoteBtn'
-  | 'notesBtn'
-  | 'numbersBtn'
-  | 'sweepSafeBtn'
-  | 'sweepMarkBtn'
-  | 'waitBtn'
-  | 'hintBtn'
-> & { palette: HTMLElement } {
+  o: GameScreenOptions,
+): ReturnType<typeof buildTierCounters> &
+  ReturnType<typeof buildBoardButtons> & { palette: HTMLElement } {
   const palette = el('div', 'palette');
+  return {
+    palette,
+    ...buildTierCounters(palette, game, a, o.tierColors),
+    ...buildBoardButtons(palette, game, a, o.tutor),
+  };
+}
+
+/** A button per tier in its colour, then the empty pencil, each appended to `palette`. */
+function buildTierCounters(
+  palette: HTMLElement,
+  game: Game,
+  a: GameScreenActions,
+  tierColors: TierPalette,
+): Pick<GameScreenElements, 'counters' | 'emptyNoteBtn'> {
   const counters: HTMLButtonElement[] = [];
   for (let tier = 1; tier <= game.config.tiers; tier++) {
     const btn = el('button', 'counter');
     btn.dataset.tier = String(tier);
     // Its tier's creature colour, as the HUD's level number wears it; tiers past five get the
     // halo their pips are ringed with, as the border.
-    btn.style.setProperty('--tier', tierColor(a.tierColors, tier));
+    btn.style.setProperty('--tier', tierColor(tierColors, tier));
     if (tierGilded(tier)) {
       btn.classList.add('gilded');
-      btn.style.setProperty('--halo', a.tierColors.halo);
+      btn.style.setProperty('--halo', tierColors.halo);
     }
     btn.addEventListener('click', () => a.pickTier(tier));
     counters.push(btn);
@@ -227,7 +243,22 @@ function buildPalette(
   emptyNoteBtn.title = 'Pencil "might be empty ground".';
   emptyNoteBtn.addEventListener('click', a.pencilEmpty);
   palette.append(emptyNoteBtn);
+  return { counters, emptyNoteBtn };
+}
 
+/**
+ * The entry toggle, then where the board has each the Beaten toggle, Sweep and Sweep + marks,
+ * PATROL's Wait and the tutor's Hint, each appended to `palette`.
+ */
+function buildBoardButtons(
+  palette: HTMLElement,
+  game: Game,
+  a: GameScreenActions,
+  tutor: boolean,
+): Pick<
+  GameScreenElements,
+  'notesBtn' | 'numbersBtn' | 'sweepSafeBtn' | 'sweepMarkBtn' | 'waitBtn' | 'hintBtn'
+> {
   // Labelled with the mode it is IN, not the mode it switches to (decision 0008).
   const notesBtn = el('button', 'ghost small', 'Entry: Mark');
   notesBtn.addEventListener('click', a.toggleNotes);
@@ -277,17 +308,7 @@ function buildPalette(
     hintBtn.addEventListener('click', a.hint);
     palette.append(hintBtn);
   }
-  return {
-    palette,
-    counters,
-    emptyNoteBtn,
-    notesBtn,
-    numbersBtn,
-    sweepSafeBtn,
-    sweepMarkBtn,
-    waitBtn,
-    hintBtn,
-  };
+  return { notesBtn, numbersBtn, sweepSafeBtn, sweepMarkBtn, waitBtn, hintBtn };
 }
 
 /** The spell row, on a ladder that offers any: one button per spell, and Cancel. */
