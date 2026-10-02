@@ -278,6 +278,8 @@ export interface SoundCheckSettings {
 
 /** Loud enough to hear a quiet sound clearly, short of drowning the room. */
 export const MAX_SOUND_CHECK_VOLUME = 3;
+/** Every sound at the level it plays at in a game. */
+export const DEFAULT_SOUND_CHECK_VOLUME = 1;
 
 /**
  * Three times the level each pack was voiced at, as loud as the sound check goes. Past 1, the
@@ -472,7 +474,7 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
   textSize: DEFAULT_TEXT_SIZE,
   previewSize: DEFAULT_PREVIEW_SIZE,
   muted: false,
-  soundCheck: { keys: {}, pitches: {}, volume: 1 },
+  soundCheck: { keys: {}, pitches: {}, volume: DEFAULT_SOUND_CHECK_VOLUME },
   silenced: [],
   customPitches: false,
   tutor: true,
@@ -484,9 +486,9 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
 
 // -------------------------------------------------------------- sanitising
 //
-// A saved value is untrusted input; see the header. `oneOf` and `num` read one
-// value each, falling back rather than throwing, and the gameplay reader in
-// `settings.ts` borrows them.
+// A saved value is untrusted input; see the header. `oneOf`, `num` and `bool`
+// read one value each, falling back rather than throwing, and the gameplay
+// reader in `settings.ts` borrows them.
 
 /** A saved value if it is one of `allowed`, else the fallback. */
 export function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
@@ -500,6 +502,11 @@ export function num(value: unknown, min: number, max: number, fallback: number):
   return typeof value === 'number' && Number.isFinite(value)
     ? snapRatio(value, min, max)
     : fallback;
+}
+
+/** A saved flag, else the fallback. */
+export function bool(value: unknown, fallback: boolean): boolean {
+  return typeof value === 'boolean' ? value : fallback;
 }
 
 /** The highest note MIDI numbers, which the sound check's pitches are written in. */
@@ -523,8 +530,7 @@ function readSoundCheck(raw: unknown): SoundCheckSettings {
   return {
     keys: Object.fromEntries(keys),
     pitches: Object.fromEntries(pitches),
-    // A save from before the volume was kept reads as the level every sound plays at.
-    volume: num(s.volume, 0, MAX_SOUND_CHECK_VOLUME, 1),
+    volume: num(s.volume, 0, MAX_SOUND_CHECK_VOLUME, DEFAULT_SOUND_CHECK_VOLUME),
   };
 }
 
@@ -541,95 +547,80 @@ function readTierPalette(raw: unknown): TierPalette | null {
 
 /**
  * A saved presentation read back: each setting the save holds and this build can read, and the
- * default for every other. Never throws, whatever it is handed.
+ * default for every other, so a save from before a setting existed reads as its default. Never
+ * throws, whatever it is handed.
  */
 export function readPresentation(raw: unknown): PresentationSettings {
   const p = (raw ?? {}) as Record<string, unknown>;
+  const d = DEFAULT_PRESENTATION;
   const str = (k: string, fallback: string): string =>
     typeof p[k] === 'string' ? (p[k] as string) : fallback;
-  // Retired ids map to their successors — see `migrateFontChoice`. An id this
-  // build does not know is kept, like `icons`, and resolves to the baseline
-  // face until a build that knows it reads the save.
-  const font = migrateFontChoice(str('font', DEFAULT)) as FontChoice;
+  // Retired ids map to their successors (`migrateFontChoice`). An id this build does not know is
+  // kept, like `icons`, and resolves to the baseline face until a build that knows it reads the save.
+  const font = migrateFontChoice(str('font', d.font)) as FontChoice;
   const customTierColors = readTierPalette(p.customTierColors);
-  const tierColors = str('tierColors', DEFAULT) as TierColorChoice;
+  const tierColors = str('tierColors', d.tierColors) as TierColorChoice;
   return {
-    // Not validated against the shape list on purpose: an unknown pip falls
-    // through `drawCreature`'s own default, and rejecting it here would lose a
-    // setting written by a newer build.
-    icons: str('icons', DEFAULT) as IconChoice,
-    // A save from before this setting reads as the pips, the only glyph the game had.
-    glyph: oneOf(p.glyph, CREATURE_GLYPHS, 'pips'),
-    // A save from before this setting reads as the game's own colours, and so does one choosing
-    // its own colours without a whole palette of them. A preset this build does not know is kept,
-    // as `icons` keeps an unknown pip, and resolves to the game's own.
-    tierColors: tierColors === CUSTOM_TIERS && !customTierColors ? DEFAULT : tierColors,
+    // Not validated against the shape list on purpose: an unknown pip falls through
+    // `drawCreature`'s own default, and rejecting it here would lose a setting a newer build wrote.
+    icons: str('icons', d.icons) as IconChoice,
+    glyph: oneOf(p.glyph, CREATURE_GLYPHS, d.glyph),
+    // A choice of the player's own colours without a whole palette of them reads as the game's
+    // own. A preset this build does not know is kept, as an unknown pip is, and resolves to the
+    // game's own.
+    tierColors: tierColors === CUSTOM_TIERS && !customTierColors ? d.tierColors : tierColors,
     customTierColors,
-    palette: str('palette', DEFAULT),
+    palette: str('palette', d.palette),
     font,
-    // A save from before this setting had one font for the board and the
-    // interface both, so it reads as that font here too (decision 0033).
+    // A save from before this setting had one font for the board and the interface both, so it
+    // reads as that font here too (decision 0033).
     interfaceFont: migrateFontChoice(str('interfaceFont', font)) as FontChoice,
-    sfx: str('sfx', DEFAULT) as SfxChoice,
-    // A save from before this setting reads as full volume, the only level the game had.
-    sfxVolume: num(p.sfxVolume, 0, MAX_SFX_VOLUME, DEFAULT_SFX_VOLUME),
-    victory: str('victory', DEFAULT) as VictoryChoice,
-    // A save from before these reads as the effect on every clear, the card held while it plays
-    // on a first clear, at its own pace: how the effect always played.
-    victoryWhen: oneOf(p.victoryWhen, VICTORY_WHENS, 'every'),
-    cardHold: oneOf(p.cardHold, CARD_HOLDS, 'effect'),
-    effectSpeed: num(p.effectSpeed, MIN_EFFECT_SPEED, MAX_EFFECT_SPEED, DEFAULT_EFFECT_SPEED),
-    highlight: str('highlight', DEFAULT) as HighlightChoice,
-    // A save from before this setting, or one holding anything but a colour, reads as the green
-    // the highlight was always drawn in.
-    highlightColor: readHexColor(p.highlightColor) ?? DEFAULT,
-    markColor: readHexColor(p.markColor) ?? DEFAULT,
+    sfx: str('sfx', d.sfx) as SfxChoice,
+    sfxVolume: num(p.sfxVolume, 0, MAX_SFX_VOLUME, d.sfxVolume),
+    victory: str('victory', d.victory) as VictoryChoice,
+    victoryWhen: oneOf(p.victoryWhen, VICTORY_WHENS, d.victoryWhen),
+    cardHold: oneOf(p.cardHold, CARD_HOLDS, d.cardHold),
+    effectSpeed: num(p.effectSpeed, MIN_EFFECT_SPEED, MAX_EFFECT_SPEED, d.effectSpeed),
+    highlight: str('highlight', d.highlight) as HighlightChoice,
+    highlightColor: readHexColor(p.highlightColor) ?? d.highlightColor,
+    markColor: readHexColor(p.markColor) ?? d.markColor,
     highlightWidth: Math.round(
-      num(p.highlightWidth, MIN_HIGHLIGHT_WIDTH, MAX_HIGHLIGHT_WIDTH, DEFAULT_HIGHLIGHT_WIDTH),
+      num(p.highlightWidth, MIN_HIGHLIGHT_WIDTH, MAX_HIGHLIGHT_WIDTH, d.highlightWidth),
     ),
     // A save from before the look was a choice held only whether the stroke was on
-    // (`strikeDefeated`); off, it reads as the dimmed glyph that was left, and on or absent as
-    // the game's own look.
-    beatenLook: oneOf(p.beatenLook, BEATEN_LOOKS, p.strikeDefeated === false ? 'dim' : 'dimStrike'),
-    // A save from before this setting reads as the size the board's digits were always drawn at.
-    digitSize: num(p.digitSize, MIN_DIGIT_SIZE, MAX_DIGIT_SIZE, DEFAULT_DIGIT_SIZE),
-    reachShading: typeof p.reachShading === 'boolean' ? p.reachShading : false,
-    // A save from before this setting reads as every fight, which is how the glow first shipped.
-    fightRim: oneOf(p.fightRim, FIGHT_RIMS, 'every'),
-    // A save from before this setting reads as both, which the stage always did.
-    motion: oneOf(p.motion, MOTIONS, 'full'),
-    menuStrip: oneOf(p.menuStrip, MENU_STRIPS, 'left'),
-    // A save from before this setting reads as seconds, which the clock always counted in.
-    clock: oneOf(p.clock, CLOCK_STYLES, 'seconds'),
-    rightClick: oneOf(p.rightClick, RIGHT_CLICKS, 'cycleUp'),
-    longPress: Math.round(num(p.longPress, MIN_LONG_PRESS, MAX_LONG_PRESS, DEFAULT_LONG_PRESS)),
-    backPauses: typeof p.backPauses === 'boolean' ? p.backPauses : false,
-    keepStats: typeof p.keepStats === 'boolean' ? p.keepStats : true,
-    hintLine: typeof p.hintLine === 'boolean' ? p.hintLine : true,
-    maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, DEFAULT_MAX_ZOOM)),
-    startAtCeiling: typeof p.startAtCeiling === 'boolean' ? p.startAtCeiling : false,
-    // A save from before this setting has no field, and reads as the size the
-    // game always had.
-    textSize: num(p.textSize, MIN_TEXT_SIZE, MAX_TEXT_SIZE, DEFAULT_TEXT_SIZE),
-    // A save from before this setting reads as the size the examples were always drawn at.
-    previewSize: num(p.previewSize, MIN_PREVIEW_SIZE, MAX_PREVIEW_SIZE, DEFAULT_PREVIEW_SIZE),
-    // Defaults to unmuted, so a save written before the speaker existed opens
-    // with sound on — which is the state that save was actually played in.
-    muted: typeof p.muted === 'boolean' ? p.muted : false,
+    // (`strikeDefeated`); off, it reads as the dimmed glyph that was left.
+    beatenLook: oneOf(
+      p.beatenLook,
+      BEATEN_LOOKS,
+      p.strikeDefeated === false ? 'dim' : d.beatenLook,
+    ),
+    digitSize: num(p.digitSize, MIN_DIGIT_SIZE, MAX_DIGIT_SIZE, d.digitSize),
+    reachShading: bool(p.reachShading, d.reachShading),
+    fightRim: oneOf(p.fightRim, FIGHT_RIMS, d.fightRim),
+    motion: oneOf(p.motion, MOTIONS, d.motion),
+    menuStrip: oneOf(p.menuStrip, MENU_STRIPS, d.menuStrip),
+    clock: oneOf(p.clock, CLOCK_STYLES, d.clock),
+    rightClick: oneOf(p.rightClick, RIGHT_CLICKS, d.rightClick),
+    longPress: Math.round(num(p.longPress, MIN_LONG_PRESS, MAX_LONG_PRESS, d.longPress)),
+    backPauses: bool(p.backPauses, d.backPauses),
+    keepStats: bool(p.keepStats, d.keepStats),
+    hintLine: bool(p.hintLine, d.hintLine),
+    maxZoom: Math.round(num(p.maxZoom, MIN_MAX_ZOOM, MAX_MAX_ZOOM, d.maxZoom)),
+    startAtCeiling: bool(p.startAtCeiling, d.startAtCeiling),
+    textSize: num(p.textSize, MIN_TEXT_SIZE, MAX_TEXT_SIZE, d.textSize),
+    previewSize: num(p.previewSize, MIN_PREVIEW_SIZE, MAX_PREVIEW_SIZE, d.previewSize),
+    muted: bool(p.muted, d.muted),
     soundCheck: readSoundCheck(p.soundCheck),
-    // Events this build does not know are dropped: the list is read by name, and a save from
-    // before it, or one holding anything else, silences nothing.
+    // Events this build does not know are dropped: the list is read by name, and anything but a
+    // list silences nothing.
     silenced: Array.isArray(p.silenced)
       ? SFX_EVENTS.filter((e) => (p.silenced as unknown[]).includes(e))
       : [],
-    customPitches: typeof p.customPitches === 'boolean' ? p.customPitches : false,
-    // A save from before the tutor existed reads as offering it, as a new player's does.
-    tutor: typeof p.tutor === 'boolean' ? p.tutor : true,
-    // A save from before these reads as the whole lesson at every grade, as the tutor always was.
-    tutorStyle: oneOf(p.tutorStyle, TUTOR_STYLES, 'full'),
-    tutorGrade: Math.round(num(p.tutorGrade, MIN_TUTOR_GRADE, MAX_TUTOR_GRADE, MAX_TUTOR_GRADE)),
-    // A save from before the toggle reads as off: beaten creatures drawn as the game drew them.
-    beatenNumbers: typeof p.beatenNumbers === 'boolean' ? p.beatenNumbers : false,
-    chord: typeof p.chord === 'boolean' ? p.chord : false,
+    customPitches: bool(p.customPitches, d.customPitches),
+    tutor: bool(p.tutor, d.tutor),
+    tutorStyle: oneOf(p.tutorStyle, TUTOR_STYLES, d.tutorStyle),
+    tutorGrade: Math.round(num(p.tutorGrade, MIN_TUTOR_GRADE, MAX_TUTOR_GRADE, d.tutorGrade)),
+    beatenNumbers: bool(p.beatenNumbers, d.beatenNumbers),
+    chord: bool(p.chord, d.chord),
   };
 }

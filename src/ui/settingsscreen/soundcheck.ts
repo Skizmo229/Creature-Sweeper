@@ -13,7 +13,7 @@
 
 import { el } from '../dom.js';
 import { SFX_EVENTS, type SfxEvent, type SfxPackId } from '../looktypes.js';
-import { DEFAULT_PRESENTATION, MAX_SOUND_CHECK_VOLUME } from '../presentation.js';
+import { DEFAULT_SOUND_CHECK_VOLUME, MAX_SOUND_CHECK_VOLUME } from '../presentation.js';
 import type { Settings } from '../settings.js';
 import { sfxPitch, sfxRatio, sfxSoundId } from '../sfx.js';
 import { SFX_EVENT_NAMES, SFX_NAMES } from '../theme.js';
@@ -64,7 +64,7 @@ function save(settings: Settings): void {
 }
 
 /** The sound check's own volume (`SoundCheckSettings.volume`), kept like the keys. */
-let volume = 1;
+let volume = DEFAULT_SOUND_CHECK_VOLUME;
 
 /**
  * Keys that keep their own job in the window: Escape closes it, Tab moves the focus, Shift swaps
@@ -359,7 +359,7 @@ class SoundCheck {
           save(this.ctx.settings);
           if (this.tuning) this.play(this.tuning);
         },
-        DEFAULT_PRESENTATION.soundCheck.volume,
+        DEFAULT_SOUND_CHECK_VOLUME,
       ),
     );
     tools.append(this.assignBtn, this.clearBtn, loudness, this.status);

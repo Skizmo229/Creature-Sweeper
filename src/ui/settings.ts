@@ -38,6 +38,7 @@ import {
   OFF,
   type PresentationSettings,
   DEFAULT_PRESENTATION,
+  bool,
   num,
   oneOf,
   readPresentation,
@@ -73,9 +74,6 @@ function whole(value: unknown, min: number, max: number, fallback: number): numb
     ? Math.min(max, Math.max(min, Math.round(value)))
     : fallback;
 }
-
-const bool = (value: unknown, fallback: boolean): boolean =>
-  typeof value === 'boolean' ? value : fallback;
 
 /** A saved set of dials. Every dial from before a setting reads as the tuned game's. */
 function readGameplay(raw: unknown): GameplaySettings {
