@@ -279,8 +279,8 @@ function attempt(
   if (!connected(present, bw, bh)) throw new Error('floor plan is in pieces');
   // Checked at the end and answered by throwing the plan away, rather than by
   // repairing it: a repair costs a cell, and the budget has already been spent
-  // to the last one by this point. Measured, about one plan in twenty-five has
-  // a pinch in it, so a retry is cheaper than carrying the cell around.
+  // to the last one by this point. A pinch is uncommon, so a retry is cheaper
+  // than carrying the cell around.
   for (let y = 0; y < bh; y++) {
     for (let x = 0; x < bw; x++) {
       if (present[y]![x] && pinches(present, bw, bh, x, y)) {

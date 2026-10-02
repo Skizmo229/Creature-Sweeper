@@ -641,7 +641,7 @@ export class Game {
   /**
    * Uncover a cell, cascading through blanks. A cell with number 0 has no
    * creature neighbours by definition, so a cascade never uncovers one.
-   * Iterative rather than recursive: the biggest boards are 2048 cells.
+   * Iterative rather than recursive: the biggest boards are a few thousand cells.
    */
   reveal(start: Cell): Array<{ x: number; y: number }> {
     const revealed: Array<{ x: number; y: number }> = [];

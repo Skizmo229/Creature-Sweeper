@@ -43,13 +43,12 @@
  *
  * AND WHAT IT COSTS — the opposite of PAIRS. Pairing spreads creatures evenly
  * and gives the game its smallest openings. Packs of six are big clusters, and
- * clustering is what makes empty ground: measured on 30x16 at 25% density,
- * cells with nothing around them rise from 9.4% on a uniform board to 23.3%,
- * and the largest opening from 7.3% of the board to 19.8%. So this ladder has
- * to run dense to be a puzzle at all. The packing ceiling is not what binds it
- * the way it bound PAIRS: groups of six have far less rim per creature than
- * dominoes do, and with restarts a lay-down lands 36% on every seed measured,
- * against PAIRS's 26%.
+ * clustering is what makes empty ground: at the same density, cells with
+ * nothing around them and the opening both more than double against a
+ * uniform board (measured in the design reference). So this ladder has to run
+ * dense to be a puzzle at all. The packing ceiling is not what binds it the
+ * way it bound PAIRS: groups of six have far less rim per creature than
+ * dominoes do, so `PACK_MAX_DENSITY` sits well above PAIRS's ceiling.
  */
 
 import type { Cell } from '../types.js';
@@ -125,13 +124,11 @@ const PACK_ATTEMPTS = 60;
 /**
  * The most creatures a pack board may be asked for, as a share of the cells
  * they may stand on — where a random lay-down stops landing the quota
- * reliably. Measured with 40 seeds a point: 36% places on every seed from 24x14
- * to 44x24; 37% starts losing seeds on the biggest board and 38% loses half of
- * them there. The tuned ladder sits well under it — see `ladders.py` — because
- * what limits this mode is where a board stops being a puzzle, not the
- * packing. A hand-edited schedule past it fails at the config boundary with the
- * arithmetic in the message, rather than as an occasional seed that cannot be
- * placed.
+ * reliably (measured in the design reference). The tuned ladder sits well
+ * under it — see `ladders.py` — because what limits this mode is where a board
+ * stops being a puzzle, not the packing. A hand-edited schedule past it fails
+ * at the config boundary with the arithmetic in the message, rather than as an
+ * occasional seed that cannot be placed.
  */
 export const PACK_MAX_DENSITY = 0.36;
 

@@ -21,11 +21,11 @@
  * One consequence worth keeping in view: this is a single global table, and it
  * should stay one — with one deliberate exception, WORKOUT, whose Exercise runs
  * on a price of its own (`WorkoutRule` in types.ts, read by `Game.spellCost`)
- * because the rising price IS that mode rather than a tuning of it. The variation between ladders is already carried twice over
- * by income (a board's pool spans 150 to 1,233) and by demand (forced guesses
- * span 0.1 to 6.0 a board). A per-ladder price would be a third axis saying
- * what those two already say, and it would stop "Reveal costs 75" being a fact
- * the player learns once.
+ * because the rising price IS that mode rather than a tuning of it. The
+ * variation between ladders is already carried twice over, by income and by
+ * demand (both measured in `docs/tuning.md`). A per-ladder price would be a
+ * third axis saying what those two already say, and it would stop "Reveal
+ * costs 75" being a fact the player learns once.
  *
  * NOTE: not one of these removes a creature. That is deliberate. The upper
  * level thresholds are C_k, the TOTAL exp available from tiers at or below k,
@@ -64,15 +64,15 @@ export const EXERCISE_LEVELS = 1;
  * Kills stay the primary income because that total is exact and known at
  * design time, and because it scales WITH difficulty: a denser board carries
  * more creatures and so more mana. Paying per cell instead would scale against
- * difficulty — measured across the ladders, cells outnumber kill-mana by 3.7x
- * on the sparsest board and only 0.6x on the densest, so sparse easy boards
- * would end up the mana-rich ones.
+ * difficulty: cells outnumber kill-mana several times over on the sparsest
+ * board and fall short of it on the densest, so sparse easy boards would end
+ * up the mana-rich ones.
  *
- * So exploration is a trickle rather than a wage. At this rate it contributes
- * roughly 15-38% of income on the magic ladders, and it does three things
- * kills cannot: it pays before the first kill lands, it keeps paying while you
- * are stuck on a frontier, and it is the ONLY income in search modes, where
- * nothing can be killed at all.
+ * So exploration is a trickle rather than a wage, a minority of income on the
+ * magic ladders (both measured in the design reference), and it does three
+ * things kills cannot: it pays before the first kill lands, it keeps paying
+ * while you are stuck on a frontier, and it is the ONLY income in search
+ * modes, where nothing can be killed at all.
  */
 export const MANA_PER_EMPTY_CELLS = 4;
 

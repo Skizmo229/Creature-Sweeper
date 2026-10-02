@@ -63,12 +63,11 @@ import { PACKS_RULE, packPoolAndCount, packsIn } from './packs.js';
 const CONGO_ATTEMPTS = 60;
 
 /**
- * The most creatures a congo board may be asked for, as a share of its cells.
- * Measured with 40 seeds a point: 34% lands on every seed from 30x16 to 60x30;
- * 35% starts losing seeds on 60x30 and 37% loses nearly all of them on 44x24.
- * A line has more rim per member than a compact pack, which is why it jams a
- * little before PACKS's 36%. It is also the battle ceiling, so the scaling
- * boards stop at the same place either way.
+ * The most creatures a congo board may be asked for, as a share of its cells:
+ * where a random lay-down stops landing the quota reliably (measured in the
+ * design reference). A line has more rim per member than a compact pack, which
+ * is why it jams a little before `PACK_MAX_DENSITY`. It is also the battle
+ * ceiling, so the scaling boards stop at the same place either way.
  */
 export const CONGO_MAX_DENSITY = 0.34;
 

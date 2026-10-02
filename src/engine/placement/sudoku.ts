@@ -12,9 +12,10 @@
  *
  * With 1-9 there is no empty ground at all, so anything the board pre-reveals
  * is a pre-KILLED creature — and a removed creature must still pay its full
- * EXP or the `C_k` gates become unreachable. Thirty random pre-kills grant
- * about 1,700 EXP, past C_7, which would hand the player level 8 before their
- * first click. 0-8 removes that problem rather than managing it.
+ * EXP or the `C_k` gates become unreachable, while a few dozen random
+ * pre-kills would pay enough to hand the player a high level before their
+ * first click (the design reference works it through). 0-8 removes that
+ * problem rather than managing it.
  *
  * The quantities are fixed by the rule — nine of each tier — so `C_k` is
  * identical on every board of the ladder and density, tier count and
