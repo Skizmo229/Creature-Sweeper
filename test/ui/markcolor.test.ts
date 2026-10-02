@@ -8,8 +8,7 @@
 
 import './setup.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
-import { type BoardDisplay, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
+import { DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { colorDifference } from '../../src/ui/colorspace.js';
 import { themeFor } from '../../src/ui/looks.js';
 import { DEFAULT, MARK_COLORS } from '../../src/ui/presentation.js';
@@ -27,21 +26,12 @@ import {
   TUTOR_COLOR,
   noteColor,
 } from '../../src/ui/theme.js';
+import { type AppDriver, mountApp, settingsRow, tileLabel, tiles } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  readonly settings: Settings;
-  readonly view: { readonly display: BoardDisplay } | null;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 const TAKEN = [REFUSAL_COLOR, GIVEN_COLOR, CENSUS_COLOR, AUGUR_COLOR, TUTOR_COLOR];
@@ -153,20 +143,13 @@ describe('the board', () => {
 /** The settings row for the mark's colour, on a freshly built screen. */
 function colorRow(): HTMLElement {
   app.showSettings(() => app.showTypes());
-  return [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
-    (r) => r.querySelector('.settings-name')?.textContent === 'Mark colour',
-  )!;
+  return settingsRow('Mark colour');
 }
-
-const tiles = (row: HTMLElement): HTMLButtonElement[] => [
-  ...row.querySelectorAll<HTMLButtonElement>('.preview-chip'),
-];
-const label = (tile: Element): string => tile.querySelector('.chip-label')!.textContent!;
 
 describe('the settings row', () => {
   it('offers the green, the presets and a custom colour, each drawn on a board', () => {
     const row = colorRow();
-    expect(tiles(row).map(label)).toEqual([
+    expect(tiles(row).map(tileLabel)).toEqual([
       'Game type default — green',
       ...MARK_COLORS.map((c) => c.name),
       'Custom — any colour',
@@ -176,13 +159,11 @@ describe('the settings row', () => {
 
   it('saves a preset when it is picked, and the highlight row says it follows', () => {
     tiles(colorRow())
-      .find((t) => label(t) === 'Lime')!
+      .find((t) => tileLabel(t) === 'Lime')!
       .click();
     expect(Settings.load().presentation.markColor).toBe('#b6ff3a');
-    const highlight = [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Cursor highlight colour',
-    )!;
-    expect(label(tiles(highlight)[0]!)).toBe('Game type default — the mark colour');
+    const highlight = settingsRow('Cursor highlight colour');
+    expect(tileLabel(tiles(highlight)[0]!)).toBe('Game type default — the mark colour');
   });
 
   it('opens a window that warns near a taken colour, and saves on "Use this colour"', () => {

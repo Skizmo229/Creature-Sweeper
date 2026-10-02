@@ -8,19 +8,10 @@ import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { boardConfig } from '../../src/engine/config.js';
 import { Game } from '../../src/engine/game.js';
-import { App } from '../../src/ui/app.js';
 import { BoardView, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { ladders } from '../../src/ui/ladders.js';
 import { themeFor } from '../../src/ui/looks.js';
-
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  readonly current: Game | null;
-}
-
-const key = (k: string, held: KeyboardEventInit = {}): void => {
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, ...held }));
-};
+import { key, startApp } from './driver.js';
 
 beforeEach(() => {
   localStorage.clear();
@@ -29,7 +20,7 @@ beforeEach(() => {
 
 describe('a shortcut with a modifier held', () => {
   it('is left to the browser', () => {
-    const app = new App(document.getElementById('app')!) as unknown as Driver;
+    const app = startApp();
     app.play('normal', 1, 7);
     for (const held of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }]) {
       key('p', held);

@@ -6,28 +6,17 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
+import { type AppDriver, mountApp, settingsRow, tiles } from './driver.js';
 
-interface Driver {
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  settings: Settings;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
-const iconsRow = (): HTMLElement =>
-  [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
-    (r) => r.querySelector('.settings-name')?.textContent === 'Creature icons',
-  )!;
+const iconsRow = (): HTMLElement => settingsRow('Creature icons');
 
 /**
  * Settings, the icon picker behind the "User choice" tile, then its last tile, Custom, and one set's
@@ -35,7 +24,7 @@ const iconsRow = (): HTMLElement =>
  */
 const openSymbols = (set = 'Dingbats'): HTMLElement => {
   app.showSettings(() => app.showTypes());
-  iconsRow().querySelectorAll<HTMLButtonElement>('.preview-chip')[1]!.click();
+  tiles(iconsRow())[1]!.click();
   [...document.querySelectorAll<HTMLButtonElement>('.picker .preview-chip')].at(-1)!.click();
   const window_ = document.querySelector<HTMLElement>('.symbol-card')!;
   [...window_.querySelectorAll<HTMLButtonElement>('.symbol-tab')]
@@ -89,7 +78,7 @@ describe('the custom creature icon', () => {
   it('reopens on the symbol in use, lit in the picker', () => {
     app.settings.setPresentation({ icons: 'U+1F571' });
     app.showSettings(() => app.showTypes());
-    iconsRow().querySelectorAll<HTMLButtonElement>('.preview-chip')[1]!.click();
+    tiles(iconsRow())[1]!.click();
     const custom = [...document.querySelectorAll<HTMLButtonElement>('.picker .preview-chip')].at(
       -1,
     )!;

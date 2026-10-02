@@ -7,34 +7,22 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
 import { LOOK_IDS } from '../../src/ui/looks.js';
-import type { Settings } from '../../src/ui/settings.js';
 import { fontSorts, paletteSorts } from '../../src/ui/settingsscreen/sorts.js';
 import type { PickerSort } from '../../src/ui/settingsscreen/widgets.js';
 import { FONTS, FONT_IDS, FONT_KIND_NAMES } from '../../src/ui/typefaces.js';
+import { type AppDriver, mountApp, settingsRow, tiles } from './driver.js';
 
-interface Driver {
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  settings: Settings;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 /** Settings, and the window behind a row's "User choice" tile. */
 const openWindow = (row: string): HTMLElement => {
   app.showSettings(() => app.showTypes());
-  const line = [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
-    (r) => r.querySelector('.settings-name')?.textContent === row,
-  )!;
-  line.querySelectorAll<HTMLButtonElement>('.preview-chip')[1]!.click();
+  tiles(settingsRow(row))[1]!.click();
   return document.querySelector<HTMLElement>('.picker-card')!;
 };
 
