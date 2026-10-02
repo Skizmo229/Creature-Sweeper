@@ -73,7 +73,7 @@ export class App {
     addSeconds: (seconds) => this.clock.addSeconds(seconds),
     leaveGame: () => this.leaveGame(),
     pause: () => this.pause(),
-    explain: () => this.explainBoard(),
+    hint: () => this.askHint(),
     guide: () => this.teaching.guideFromBoard(),
     refuse: (x, y) => this.teaching.refuse(this.game?.cellAt(x, y) ?? null),
     next: () => this.teaching.next(),
@@ -488,7 +488,7 @@ export class App {
         toggleBeatenNumbers: () => this.actions.toggleBeatenNumbers(),
         sweep: (useMarks) => this.actions.doSweep(useMarks),
         wait: () => this.actions.doWait(),
-        explain: () => this.explainBoard(),
+        hint: () => this.askHint(),
         tutor: this.settings.presentation.tutor,
         tierColors: this.settings.tierColors(this.typeId),
         guide: () => this.teaching.guideFromBoard(),
@@ -607,8 +607,8 @@ export class App {
   // ------------------------------------------------------------------ tutor
 
   /** The tutor's press: a hint, pointed at the board and said in the hint line. It opens nothing. */
-  private explainBoard(): void {
-    if (this.game && this.els?.whyBtn) {
+  private askHint(): void {
+    if (this.game && this.els?.hintBtn) {
       const near = this.view?.hoveredCell ?? null;
       this.teaching.tutor.press(this.game, near, this.settings.presentation);
       this.keeper.save();

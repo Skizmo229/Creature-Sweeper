@@ -13,7 +13,7 @@ import type { Cell } from '../../engine/types.js';
 import { el } from '../dom.js';
 import type { ClockStyle } from '../presentation.js';
 import { type TierPalette, tierColor, tierGilded } from '../tiercolors.js';
-import { hintText } from './hint.js';
+import { hintLineText } from './hint.js';
 import type { EntryMode } from './mode.js';
 import type { GameScreenElements } from './screen.js';
 import type { LessonLine } from '../teaching.js';
@@ -166,7 +166,7 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
   gatePalette(els, game, mode, s.hovered);
   // The tutor speaks where the hint does, and in the ink rather than the hint's grey: it is the
   // thing the player just asked for.
-  els.hint.textContent = s.tutor ?? s.lesson?.say ?? hintText(game, mode);
+  els.hint.textContent = s.tutor ?? s.lesson?.say ?? hintLineText(game, mode);
   els.hint.hidden = !s.hintLine && s.tutor === null && s.lesson === null;
   els.hint.classList.toggle('tutoring', s.tutor !== null);
   els.hint.classList.toggle('teaching', s.tutor === null && s.lesson !== null);
@@ -175,7 +175,7 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
     if (s.lesson.refused) els.hint.prepend(el('span', 'refused', `${s.lesson.refused} `));
     if (s.lesson.next) els.hint.append(' ', els.next);
   }
-  if (els.whyBtn) els.whyBtn.disabled = game.status !== 'playing';
+  if (els.hintBtn) els.hintBtn.disabled = game.status !== 'playing';
 
   if (els.hud.mp) {
     els.hud.mp.textContent = `MP ${game.mana}`;

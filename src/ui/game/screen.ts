@@ -30,7 +30,7 @@ export interface GameScreenActions {
   /** PATROL's Wait: the creatures take a step and nothing else happens. */
   wait(): void;
   /** The tutor: point at the next provable move, and why; and whether it is offered at all. */
-  explain(): void;
+  hint(): void;
   readonly tutor: boolean;
   /** The colour of each tier, which its LV button wears. */
   readonly tierColors: TierPalette;
@@ -58,7 +58,7 @@ export interface GameScreenElements {
   /** PATROL's Wait, which also shows how many moves the board has seen. */
   waitBtn: HTMLButtonElement | null;
   /** The tutor's button; null where the setting has switched the tutor off. */
-  whyBtn: HTMLButtonElement | null;
+  hintBtn: HTMLButtonElement | null;
   spellBtns: HTMLButtonElement[];
   hint: HTMLParagraphElement;
   /** Shown at the end of the hint line while the tutor speaks: the guide's entry for it. */
@@ -189,7 +189,7 @@ function buildPalette(
   | 'sweepSafeBtn'
   | 'sweepMarkBtn'
   | 'waitBtn'
-  | 'whyBtn'
+  | 'hintBtn'
 > & { palette: HTMLElement } {
   const palette = el('div', 'palette');
   const counters: HTMLButtonElement[] = [];
@@ -254,14 +254,14 @@ function buildPalette(
   }
   // The tutor is the opposite of Sweep: it opens nothing and says why a cell could be. On every
   // ladder, EASY included, where there is no Sweep to lean on (docs/teaching-plan.md).
-  let whyBtn: HTMLButtonElement | null = null;
+  let hintBtn: HTMLButtonElement | null = null;
   if (tutor) {
-    whyBtn = el('button', 'sweep why', '[H]int');
-    whyBtn.title =
+    hintBtn = el('button', 'sweep why', '[H]int');
+    hintBtn.title =
       'Points at the next provable move and says why. Opens nothing; a hinted board sets no ' +
       'best time.';
-    whyBtn.addEventListener('click', a.explain);
-    palette.append(whyBtn);
+    hintBtn.addEventListener('click', a.hint);
+    palette.append(hintBtn);
   }
   return {
     palette,
@@ -272,7 +272,7 @@ function buildPalette(
     sweepSafeBtn,
     sweepMarkBtn,
     waitBtn,
-    whyBtn,
+    hintBtn,
   };
 }
 

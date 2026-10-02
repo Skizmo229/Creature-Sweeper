@@ -38,8 +38,8 @@ export interface BoardActionsHost {
   leaveGame(): void;
   /** Pause the game: it waits on the board list, its clock stopped. */
   pause(): void;
-  /** The tutor: point at the next provable move, or the next lesson if one is already showing. */
-  explain(): void;
+  /** A hint: the tutor points at the next provable move, or the next it found if one is showing. */
+  hint(): void;
   /** The field guide, at what the tutor is showing, if anything. */
   guide(): void;
   /** Whether opening this cell is refused (a lesson board's rule), said to the player if so. */
@@ -255,7 +255,7 @@ export class BoardActions {
     }
     if (key === 'h') {
       e.preventDefault();
-      this.h.explain();
+      this.h.hint();
       return;
     }
     if (key === 'g') {

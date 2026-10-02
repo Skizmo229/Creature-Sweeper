@@ -9,7 +9,7 @@ import { SPELLS } from '../../engine/spells.js';
 import type { EntryMode } from './mode.js';
 
 /** What the hint line says a click does in `mode` on `game`, with the keys that apply there. */
-export function hintText(game: Game | null, mode: EntryMode): string {
+export function hintLineText(game: Game | null, mode: EntryMode): string {
   const tier = mode.markMode;
   const spell = 'a spell’s bracketed letter casts it · scroll or +/- to zoom, F to reset';
 

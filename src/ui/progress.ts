@@ -430,8 +430,8 @@ export class Progress {
   /**
    * Record a clear and advance the ladder. Returns the board it unlocked, or null. A board the
    * tutor helped with (`hints`) is cleared, unlocks the next and may be perfect, but sets no best
-   * time: the one cost of asking why (docs/teaching-plan.md, 4.4). Until a best time exists, it
-   * keeps the fewest hints instead (decision 0065).
+   * time: the one cost of asking for a hint (docs/teaching-plan.md, 4.4). Until a best time
+   * exists, it keeps the fewest hints instead (decision 0065).
    */
   recordClear(
     ladders: Ladders,
