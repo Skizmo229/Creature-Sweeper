@@ -89,30 +89,48 @@ function packCandidates(
   neighboursOf: (c: Cell) => readonly Cell[],
   tiers: number,
 ): number | null {
-  const known = (c: Cell): boolean => c.present && c.open && c.tier > 0;
   const seen = new Set<Cell>();
   let shown = 0;
   let touched = false;
   for (const n of neighboursOf(cell)) {
-    if (!known(n) || seen.has(n)) continue;
+    if (!isOpenCreature(n) || seen.has(n)) continue;
     touched = true;
-    const piece = [n];
-    seen.add(n);
     let mask = 0;
-    for (let i = 0; i < piece.length; i++) {
-      const p = piece[i]!;
-      mask |= noteBit(p.tier);
-      for (const m of neighboursOf(p))
-        if (known(m) && !seen.has(m)) {
-          seen.add(m);
-          piece.push(m);
-        }
-    }
+    for (const p of openPiece(n, neighboursOf, seen)) mask |= noteBit(p.tier);
     if (shown & mask) return noteBit(0);
     shown |= mask;
   }
   if (!touched) return null;
   return (allNotes(tiers) & ~shown) | noteBit(0);
+}
+
+/** A creature the player can see: present, uncovered, and not empty ground. */
+function isOpenCreature(c: Cell): boolean {
+  return c.present && c.open && c.tier > 0;
+}
+
+/**
+ * The open creatures joined to `seed` through `neighboursOf`, `seed` first, in the order a
+ * breadth-first walk meets them: a pack, or a line, as far as the player can see it. Each is added
+ * to `done` and none already there is taken, so one `done` shared across calls splits a board
+ * into its pieces.
+ */
+export function openPiece(
+  seed: Cell,
+  neighboursOf: (c: Cell) => readonly Cell[],
+  done: Set<Cell>,
+): Cell[] {
+  const piece = [seed];
+  done.add(seed);
+  for (let i = 0; i < piece.length; i++) {
+    for (const n of neighboursOf(piece[i]!)) {
+      if (isOpenCreature(n) && !done.has(n)) {
+        done.add(n);
+        piece.push(n);
+      }
+    }
+  }
+  return piece;
 }
 
 /**
@@ -266,20 +284,9 @@ export function missingFrom(
   tiers: number,
 ): Map<Cell, number> {
   const out = new Map<Cell, number>();
-  const known = (c: Cell): boolean => c.present && c.open && c.tier > 0;
-
   for (const seed of cells) {
-    if (!known(seed) || out.has(seed)) continue;
-    const piece: Cell[] = [seed];
-    const seen = new Set<Cell>(piece);
-    for (let i = 0; i < piece.length; i++) {
-      for (const n of neighboursOf(piece[i]!)) {
-        if (known(n) && !seen.has(n)) {
-          seen.add(n);
-          piece.push(n);
-        }
-      }
-    }
+    if (!isOpenCreature(seed) || out.has(seed)) continue;
+    const piece = openPiece(seed, neighboursOf, new Set());
     const found = new Set(piece.map((c) => c.tier));
     let top = 0;
     for (let t = tiers; t >= 1; t--)
