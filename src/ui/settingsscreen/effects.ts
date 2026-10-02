@@ -52,7 +52,7 @@ export function stopSettingsDemo(): void {
 
 /** The sound pack: a tile per pack, each played as it is picked, and the sound check's button. */
 export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, ident } = ctx;
+  const { p, ownLook } = ctx;
   const check = el('button', 'ghost small soundcheck-open', 'Sound check');
   check.setAttribute('aria-haspopup', 'dialog');
   check.addEventListener('click', () => openSoundCheck(ctx));
@@ -60,7 +60,7 @@ export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
   stack.append(
     gallery(
       [
-        { value: DEFAULT, label: `Game type default — ${SFX_NAMES[ident.sfx]}` },
+        { value: DEFAULT, label: `Game type default — ${SFX_NAMES[ownLook.sfx]}` },
         ...(Object.keys(SFX_NAMES) as SfxPackId[]).map((id): Choice => ({
           value: id,
           label: SFX_NAMES[id],
@@ -223,7 +223,7 @@ function clearEffectOptions(ctx: ScreenContext, host: HTMLElement, replay: () =>
  * every tier the real board uses and none above.
  */
 export function clearEffectRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, ident, settings, typeId, tiers, currentTheme } = ctx;
+  const { p, ownLook, settings, typeId, tiers, currentTheme } = ctx;
   const demo = renderPreview(clearedBoard(demoSeed, tiers), currentTheme, ctx.display(), {
     cell: ctx.demoCell,
   });
@@ -274,7 +274,7 @@ export function clearEffectRow(ctx: ScreenContext, host: HTMLElement): void {
   demoWrap.append(
     gallery(
       [
-        { value: DEFAULT, label: `Game type default — ${VICTORY_NAMES[ident.victory]}` },
+        { value: DEFAULT, label: `Game type default — ${VICTORY_NAMES[ownLook.victory]}` },
         ...(Object.keys(VICTORY_NAMES) as VictoryId[]).map((id): Choice => ({
           value: id,
           label: VICTORY_NAMES[id],

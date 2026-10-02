@@ -8,12 +8,18 @@ import type { BoardDisplay } from '../board/view.js';
 import { boardDisplayFor } from '../dress.js';
 import { ladders } from '../ladders.js';
 import { sampleBoard, samplePin } from '../preview.js';
-import { DEFAULT, type PresentationSettings } from '../presentation.js';
+import type { PresentationSettings } from '../presentation.js';
 import type { Settings } from '../settings.js';
-import type { LadderLook, Pip, SfxEvent, SfxPackId, TypeTheme } from '../looktypes.js';
-import { lookFor, themeFor } from '../looks.js';
+import type { LadderLook, SfxEvent, SfxPackId, TypeTheme } from '../looktypes.js';
+import { lookFor } from '../looks.js';
 import { CHIP_CELL, DEMO_CELL, renderPreview } from './render.js';
 import { inLadderScope } from './scope.js';
+
+/**
+ * Play one event from a given pack, for the sound check, transposed by `ratio` and scaled by
+ * `volume`; silent while muted.
+ */
+type Audition = (pack: SfxPackId, event: SfxEvent, ratio?: number, volume?: number) => void;
 
 /** What the app hands the settings screen. */
 export interface SettingsScreenOptions {
@@ -28,11 +34,7 @@ export interface SettingsScreenOptions {
   onBack: () => void;
   /** Play a sound so a pack can be heard while it is being chosen. */
   onPreview: (event: SfxEvent) => void;
-  /**
-   * Play one event from a given pack, for the sound check, transposed by `ratio` and scaled by
-   * `volume`; silent while muted.
-   */
-  onAudition: (pack: SfxPackId, event: SfxEvent, ratio?: number, volume?: number) => void;
+  onAudition: Audition;
 }
 
 /** A visual patch to the presentation settings. */
@@ -47,17 +49,19 @@ export interface ScreenContext {
   readonly typeId: string;
   readonly tiers: number;
   readonly onPreview: (event: SfxEvent) => void;
-  readonly onAudition: (pack: SfxPackId, event: SfxEvent, ratio?: number, volume?: number) => void;
+  readonly onAudition: Audition;
   /** The screen element: sections append to it, and the picker overlay lives inside it. */
   readonly host: HTMLElement;
   /** The presentation settings in force on this ladder: those for every ladder under its own. */
   readonly p: PresentationSettings;
   /** Whether a pick is for this ladder alone (decision 0070). */
   readonly ladderScope: boolean;
-  readonly ident: LadderLook;
-  /** This ladder's icon as things currently stand, which a palette tile wears. */
-  readonly currentPip: Pip;
-  /** This ladder's palette as things currently stand, which an icon tile wears. */
+  /** This ladder's own look: what "game type default" resolves to. */
+  readonly ownLook: LadderLook;
+  /**
+   * This ladder's palette and icon as things currently stand: an icon tile wears the palette, and
+   * a palette tile the icon (`pip`).
+   */
   readonly currentTheme: TypeTheme;
   /** A thumbnail's cell size, at the preview size the player chose. */
   readonly chipCell: number;
@@ -117,8 +121,7 @@ export function makeContext(
     host,
     p,
     ladderScope,
-    ident: lookFor(typeId),
-    currentPip: p.icons === DEFAULT ? themeFor(typeId).pip : p.icons,
+    ownLook: lookFor(typeId),
     currentTheme,
     chipCell,
     demoCell: previewCell(DEMO_CELL, p.previewSize),

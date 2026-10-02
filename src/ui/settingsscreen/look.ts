@@ -47,7 +47,7 @@ import { type Choice, choiceRow, gallery, slider, wideRow } from './widgets.js';
 
 /** The creature icons: the ladder's own, every drawn shape, or any symbol. */
 export function iconsRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, typeId, currentTheme, currentPip } = ctx;
+  const { p, typeId, currentTheme } = ctx;
   const own = themeFor(typeId).pip;
   const symbol = isGlyphPip(p.icons) ? p.icons : null;
   const pick = (v: string): void => ctx.pick({ icons: v as IconChoice });
@@ -59,7 +59,7 @@ export function iconsRow(ctx: ScreenContext, host: HTMLElement): void {
       ? ctx.chipBoard({ ...currentTheme, pip: symbol })
       : () =>
           el('div', 'picker-placeholder', `${SYMBOL_COUNT} symbols from Dingbats and Wingdings`),
-    open: () => openSymbolWindow(ctx, currentPip, pick),
+    open: () => openSymbolWindow(ctx, currentTheme.pip, pick),
   };
   choiceRow(ctx.host, host, {
     label: 'Creature icons',
@@ -152,7 +152,8 @@ export function tierColorsRow(ctx: ScreenContext, host: HTMLElement): void {
 
 /** The board palette: the ladder's own or any other ladder's, each in the icon in force. */
 export function paletteRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, typeId, currentPip } = ctx;
+  const { p, typeId } = ctx;
+  const { pip } = ctx.currentTheme;
   choiceRow(ctx.host, host, {
     label: 'Board palette',
     hint: 'Borrow another ladder’s colours for the board. The menus keep this ladder’s own accent.',
@@ -161,12 +162,12 @@ export function paletteRow(ctx: ScreenContext, host: HTMLElement): void {
     fallback: {
       value: DEFAULT,
       label: `Default — ${typeName(typeId)}`,
-      example: ctx.chipBoard({ ...themeFor(typeId), pip: currentPip }),
+      example: ctx.chipBoard({ ...themeFor(typeId), pip }),
     },
     options: LOOK_IDS.map((id): Choice => ({
       value: id,
       label: typeName(id),
-      example: ctx.chipBoard({ ...themeFor(id), pip: currentPip }),
+      example: ctx.chipBoard({ ...themeFor(id), pip }),
     })),
     sorts: paletteSorts(),
     onPick: (v) => ctx.pick({ palette: v }),
@@ -189,7 +190,7 @@ function fontOwner(id: FontId): string {
 
 /** The board's font: the ladder's own or any bundled face, each on the standard example. */
 export function boardFontRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, ident, currentTheme } = ctx;
+  const { p, ownLook, currentTheme } = ctx;
   choiceRow(ctx.host, host, {
     label: 'Board font',
     hint:
@@ -199,9 +200,9 @@ export function boardFontRow(ctx: ScreenContext, host: HTMLElement): void {
     current: p.font,
     fallback: {
       value: DEFAULT,
-      label: `Default — ${FONTS[ident.font].name}`,
-      example: ctx.chipBoard(currentTheme, { font: FONTS[ident.font] }),
-      labelFont: FONTS[ident.font],
+      label: `Default — ${FONTS[ownLook.font].name}`,
+      example: ctx.chipBoard(currentTheme, { font: FONTS[ownLook.font] }),
+      labelFont: FONTS[ownLook.font],
     },
     options: FONT_IDS.map((id): Choice => ({
       value: id,
@@ -260,7 +261,7 @@ function hudInFace(face: GameFont, tierColors: TierPalette): () => HTMLElement {
 
 /** A face picked here dresses this screen at once, so the page is an example as well as the tiles. */
 export function interfaceFontRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, ident } = ctx;
+  const { p, ownLook } = ctx;
   choiceRow(ctx.host, host, {
     label: 'Interface font',
     hint: 'The HUD, the menus and this screen. The title keeps its own face unless you choose one here.',
@@ -268,9 +269,9 @@ export function interfaceFontRow(ctx: ScreenContext, host: HTMLElement): void {
     current: p.interfaceFont,
     fallback: {
       value: DEFAULT,
-      label: `Default — ${FONTS[ident.font].name}`,
-      example: hudInFace(FONTS[ident.font], ctx.display().tierColors),
-      labelFont: FONTS[ident.font],
+      label: `Default — ${FONTS[ownLook.font].name}`,
+      example: hudInFace(FONTS[ownLook.font], ctx.display().tierColors),
+      labelFont: FONTS[ownLook.font],
     },
     options: FONT_IDS.map((id): Choice => ({
       value: id,
