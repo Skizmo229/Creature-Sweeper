@@ -89,6 +89,18 @@ function constraintsOf(game: Game): Constraint[] {
   return out;
 }
 
+/** The most covered cells a number may hide and still be subtracted from another's. */
+const MOST_SUBTRACTED_CELLS = 6;
+
+/** The most tiers any ladder has: a name is never above it. */
+const TOP_TIER = 9;
+
+/**
+ * A cell no number touches is reckoned to hide up to this many times the board's average tier a
+ * covered cell, when choosing where to gamble.
+ */
+const UNTOUCHED_CEILING = 2;
+
 /**
  * Pairs of numbers, subtracted.
  *
@@ -112,7 +124,7 @@ function subtractPairs(constraints: Constraint[]): Constraint[] {
   const over = touchingOf(constraints);
 
   for (const a of constraints) {
-    if (a.unknown.length > 6) continue;
+    if (a.unknown.length > MOST_SUBTRACTED_CELLS) continue;
     for (const b of over.get(a.unknown[0]!)!) {
       if (a === b) continue;
       if (a.unknown.length >= b.unknown.length) continue;
@@ -184,11 +196,13 @@ export function nameWhatIsCertain(game: Game): boolean {
     if (c.unknown.length !== 1) continue;
     const cell = c.unknown[0]!;
     if (cell.mark > 0 || cell.open || c.residual === 0) continue;
-    name(game, cell, Math.min(9, c.residual));
+    name(game, cell, Math.min(TOP_TIER, c.residual));
     learned = true;
   }
+  // The pairing reading and the pack reading both run, in that order; a board has one rule at most.
   const paired = namePairs(game);
-  return namePacks(game) || paired || learned;
+  const packed = namePacks(game);
+  return learned || paired || packed;
 }
 
 /**
@@ -234,7 +248,7 @@ function namePairs(game: Game): boolean {
     // Still out there, so it is one of the covered cells — and if that is the
     // only one left, it is named without a guess.
     if (covered.length === 1 && covered[0]!.mark === 0 && cell.num > 0) {
-      name(game, covered[0]!, Math.min(9, cell.num));
+      name(game, covered[0]!, Math.min(TOP_TIER, cell.num));
       learned = true;
     }
   }
@@ -438,7 +452,10 @@ export function bestGuess(
   let best: Cell | null = null;
   let bestKey: [number, number] = [Infinity, Infinity];
   for (const cell of field) {
-    const key: [number, number] = [ceiling.get(cell) ?? loose * 2, mean.get(cell) ?? loose];
+    const key: [number, number] = [
+      ceiling.get(cell) ?? loose * UNTOUCHED_CEILING,
+      mean.get(cell) ?? loose,
+    ];
     if (key[0] < bestKey[0] || (key[0] === bestKey[0] && key[1] < bestKey[1])) {
       best = cell;
       bestKey = key;
