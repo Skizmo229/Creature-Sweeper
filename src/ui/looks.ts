@@ -1,6 +1,6 @@
 /**
  * What each ladder looks and sounds like by default: one record per ladder, so a new ladder is one
- * entry. Kept DOM-free, apart from `theme.ts` and its canvas drawing, so the tests can hold every
+ * entry. Kept DOM-free, apart from `creature.ts` and its canvas drawing, so the tests can hold every
  * ladder to its record (`test/fonts.test.ts`).
  *
  * The split the palettes keep: pip SHAPE carries ladder identity, pip COLOUR carries tier identity
