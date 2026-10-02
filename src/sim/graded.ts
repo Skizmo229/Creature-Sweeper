@@ -39,7 +39,7 @@ import {
   runTrick,
 } from './tricks.js';
 import { augurAnswer, expectedFreed } from './aim.js';
-import { CASTS_AT_A_STUCK_POINT, waitBudget } from './honest.js';
+import { StuckPoint, waitBudget } from './honest.js';
 import { dungeonScaffold } from './scaffold.js';
 
 /** How the graded player plays: its grade, and what it may read, spend and fall back on. */
@@ -174,7 +174,7 @@ export function play(game: Game, options: GradedOptions): GradedRun {
     }
     if (player.pass()) {
       waited = 0;
-      player.castsHere = 0;
+      player.stuck.moved();
       continue;
     }
     if (waited < patience) {
@@ -186,8 +186,8 @@ export function play(game: Game, options: GradedOptions): GradedRun {
     run.stuckPoints++;
     waited = 0;
     if (player.spend()) continue;
-    if (player.rescue()) continue;
-    player.guess();
+    if (!player.rescue()) player.guess();
+    player.stuck.moved();
   }
   run.cleared = game.status === 'won';
   run.hpLost = startHp - game.hp;
@@ -199,8 +199,8 @@ class Player {
   private readonly scaffold: ReadonlySet<Cell>;
   private readonly draw: () => number;
   private readonly all: number;
-  /** Information casts at the current stuck point. */
-  castsHere = 0;
+  /** The stuck point it is at and the information casts spent there, as the honest player keeps. */
+  readonly stuck = new StuckPoint();
   /** Where the player last acted, which is where it looks first when attention is bounded. */
   private focus: Cell | null = null;
 
@@ -480,12 +480,13 @@ class Player {
    * Spend mana before HP (docs/strategies.md, section 8): at a stuck point, Reveal on the cell
    * that would otherwise be gambled on; else Augur on the number whose list is likeliest to free a
    * cell (`expectedFreed`); else Census on the number over the gamble that a count would tighten
-   * most; else Beacon. At most `CASTS_AT_A_STUCK_POINT` information casts a stuck point, as the
-   * honest player allows itself. True when something was cast, so the board is re-read.
+   * most; else Beacon. At most `CASTS_AT_A_STUCK_POINT` information casts a stuck point, counted
+   * by the `StuckPoint` the honest player keeps too. True when something was cast, so the board
+   * is re-read.
    */
   spend(): boolean {
     const { game } = this;
-    if (!this.options.spells || this.castsHere >= CASTS_AT_A_STUCK_POINT) return false;
+    if (!this.options.spells || !this.stuck.mayCast) return false;
     const gamble = this.pick(readBoard(game, this.peek));
     if (!gamble) return false;
     if (this.cast('reveal', gamble.cell)) return true;
@@ -527,7 +528,7 @@ class Player {
     if (events.some((e) => e.type === 'blocked')) return false;
     run.casts++;
     run.manaSpent += before - game.mana;
-    if (id !== 'exercise') this.castsHere++;
+    if (id !== 'exercise') this.stuck.cast();
     return true;
   }
 }

@@ -90,6 +90,31 @@ export function waitBudget(game: Game): number {
  */
 export const CASTS_AT_A_STUCK_POINT = 2;
 
+/**
+ * The stuck point a player is at, and the information casts spent there, held to
+ * `CASTS_AT_A_STUCK_POINT`. Both players keep one, so they cannot disagree on when the budget is
+ * whole again: at the player's next move, whatever it was (a deduction, a stronger deducer's free
+ * cell, a guess). A cast is not a move, so the casts before one share the budget.
+ */
+export class StuckPoint {
+  private casts = 0;
+
+  /** Whether another information cast is allowed here. */
+  get mayCast(): boolean {
+    return this.casts < CASTS_AT_A_STUCK_POINT;
+  }
+
+  /** Count an information cast spent here. */
+  cast(): void {
+    this.casts++;
+  }
+
+  /** The player moved: whatever stuck point it was at is over. */
+  moved(): void {
+    this.casts = 0;
+  }
+}
+
 /** Passes of the play loop a board is allowed, per cell and per wait, before the player stops. */
 const PASSES_PER_CELL = 4;
 
@@ -199,7 +224,7 @@ export function play(
   const freeMoves = (): Cell[] =>
     options.rescue ? options.rescue(game).filter((c) => !c.open && game.inReach(c)) : [];
   const startHp = game.hp;
-  let castsHere = 0;
+  const stuck = new StuckPoint();
   // Where the creatures walk, the player waits out stuck points, so the loop runs longer.
   const patience = waitBudget(game);
   let guard = game.config.width * game.config.height * PASSES_PER_CELL * (1 + patience);
@@ -215,7 +240,7 @@ export function play(
     // Everything free first: name what is certain, then take what is proven,
     // and only call it stuck when neither has anything left to give.
     if (nameWhatIsCertain(game)) {
-      castsHere = 0;
+      stuck.moved();
       continue;
     }
 
@@ -226,11 +251,14 @@ export function play(
       (c) => c.mark <= game.level && game.inReach(c),
     );
 
-    if (workoutMove(game, policy, safe.length > 0, run)) continue;
+    if (workoutMove(game, policy, safe.length > 0, run)) {
+      stuck.moved();
+      continue;
+    }
 
     if (safe.length) {
       openProven(game, safe);
-      castsHere = 0;
+      stuck.moved();
       waited = 0;
       continue;
     }
@@ -239,7 +267,7 @@ export function play(
       const found = freeMoves();
       if (found.length) {
         takeRescue(game, found, run);
-        castsHere = 0;
+        stuck.moved();
         continue;
       }
     }
@@ -260,16 +288,13 @@ export function play(
     if (options.rescue && options.observe && freeMoves().length) run.couldRescue++;
 
     exerciseBeforeGuess(game, policy, run);
-    if (
-      castsHere < CASTS_AT_A_STUCK_POINT &&
-      spendAtStuckPoint(game, policy, spellId, guess, constraints, run)
-    ) {
-      castsHere++;
+    if (stuck.mayCast && spendAtStuckPoint(game, policy, spellId, guess, constraints, run)) {
+      stuck.cast();
       continue;
     }
 
     run.guesses++;
-    castsHere = 0;
+    stuck.moved();
     const opened = game.open(guess.x, guess.y);
     // A cast counts as useful when the fight says so. `spared` is the engine's
     // own arithmetic for what the borrowed level took off the damage, so a
