@@ -32,7 +32,9 @@
 #   opening            how the board is opened: "base" deals its bottom two rows face up
 #                      (PYRAMID); absent is the placement rule's own, usually the largest blank area
 #   search             true on a search ladder: level 0, won by uncovering every empty cell
-#   ceiling            this ladder's own caps on the continuation past board 10
+#   ceiling            this ladder's own caps on the continuation past board 10, in place of
+#                      ladders.py's: max_w and max_h (the largest box), density_cap, hp_floor
+#                      (the lowest HP) and givens_floor (the fewest SUDOKU givens)
 
 [[type]]
 id = "easy"

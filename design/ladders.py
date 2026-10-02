@@ -380,6 +380,8 @@ OPTIONAL = ("boss", "sweep", "spells", "start_mana", "workout", "placement", "se
             "opening", "reach_marks")
 # The fields that are one value per board.
 SCHEDULES = ("size", "tiers", "density", "hp", "lock", "alpha0", "boss", "sets", "givens", "cells")
+# What a ladder's own `ceiling` may set, in place of the continuation's own caps (see extend).
+CEILING_KEYS = ("max_w", "max_h", "density_cap", "hp_floor", "givens_floor")
 
 
 def load_types(path=HERE / "ladder_types.toml"):
@@ -393,6 +395,9 @@ def load_types(path=HERE / "ladder_types.toml"):
         unknown = [k for k in t if k not in REQUIRED + OPTIONAL]
         if missing or unknown:
             raise ValueError(f"{where}: missing {missing}, unknown {unknown}")
+        unknown = [k for k in t.get("ceiling", {}) if k not in CEILING_KEYS]
+        if unknown:
+            raise ValueError(f"{where}: unknown ceiling {unknown}")
         if (t.get("shape") in SEEDED_SHAPES) != ("cells" in t):
             raise ValueError(f"{where}: a `cells` schedule goes with a seeded shape "
                              f"({', '.join(SEEDED_SHAPES)}), and only with one")

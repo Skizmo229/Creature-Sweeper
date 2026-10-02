@@ -59,6 +59,12 @@ class TheSchema(unittest.TestCase):
             r"normal: lock has 3 entries",
         )
 
+    def test_an_unknown_ceiling(self):
+        self.refuses(
+            lambda s: s.replace("{ density_cap = 0.27 }", "{ density_cap = 0.27, hp_flor = 8 }", 1),
+            r"dungeon: unknown ceiling \['hp_flor'\]",
+        )
+
     def test_a_cell_count_on_a_shape_that_is_not_seeded(self):
         cells = "cells = [" + ", ".join(["400"] * 10) + "]"
         self.refuses(
