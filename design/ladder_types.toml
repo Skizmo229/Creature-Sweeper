@@ -861,12 +861,6 @@ name = "CHECKERBOARD"
 tint = "#4f5d75"
 archetype = "descending"
 axis = "Tiers split by square colour"
-# Six tiers rather than five, and that is the one structural choice
-# here. The parity split has to be even for the balance promise to
-# leave the distribution alone: at five tiers three of them are odd and
-# two are even, so the even pair would carry half the board between
-# them and the curve would buckle. At six it is three against three and
-# the archetype's own shape survives nearly intact.
 blurb = """\
   Even tiers stand on light squares, odd tiers on dark; empty ground anywhere. Light neighbours \
   add up to an even number, so a number's parity comes from its dark neighbours alone."""
@@ -874,29 +868,12 @@ placement = "checker"
 # Even cell counts throughout, or one colour gets a square more than
 # the other. Every width here is even, which is enough on its own.
 size = [[30, 16], [30, 16], [30, 16], [32, 17], [32, 17], [34, 18], [34, 18], [36, 19], [36, 19], [38, 20]]
+# Six tiers, three odd and three even, so the parity split leaves the archetype's curve intact; at
+# five the two even tiers would carry half the board between them and the curve would buckle.
 tiers = [6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
-# Measured, not inherited, and the one number here that had to be.
-# The colour rule is a large, constant, free read -- so at NORMAL's own
-# schedule (25.0-33.0%) the honest player from `sim:spells` was cornered
-# 0.0 times on board 1 and 0.6 on board 10 and cleared every board of
-# the ladder, which is a ladder with nothing in it. Walking the density
-# up until the curve matched HIVE's, the other variant that compensates
-# for an easier board by packing it, lands here: 0.3 forced guesses
-# rising to 2.9, against HIVE's 0.3 to 2.8 and CROSS's 0.3 to 2.4.
-#
-# It runs past the 34% the rest of the game treats as the point a board
-# stops being a puzzle, and that ceiling is the reason this is the only
-# dial that moved. 34% was measured on boards where a covered cell
-# could be ANY tier; here its colour has already ruled out half of them,
-# so the same density carries about half the ambiguity. HIVE (35%) and
-# ARCANE (34.5%) already sit past it for smaller versions of the same
-# reason.
-#
-# One difference from HIVE is worth keeping: the clear rate falls much
-# more slowly -- 92% of board 10 against HIVE's 80% -- because a guess
-# on this board is a guess whose parity you already know, so it is
-# cheaper. More guesses, each worth less. That is DUNGEON's doorway
-# finding again, arrived at from a completely different direction.
+# On HIVE's forced-guess curve, and past the 34% ceiling: a square's colour has already ruled out
+# half the tiers, so the same density carries about half the ambiguity (the honest player, by
+# 20 September 2026; docs/modes.md, CHECKERBOARD, has the figures).
 density = [0.275, 0.287, 0.299, 0.312, 0.324, 0.336, 0.348, 0.361, 0.373, 0.385]
 hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
 lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]

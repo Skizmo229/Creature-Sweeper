@@ -216,9 +216,17 @@ half of the budget, `config.ts` refuses halves that differ by more than one, the
 tiers (three odd, three even), and the board must have an even number of cells. The pencil refuses
 the wrong parity for a square (`noteCandidates`); marks do not, by decision.
 
-Tuned to HIVE's forced-guess curve at 27.5 to 38.5%, past the 34% ceiling because a cell's colour
-has already ruled out half the tiers. Its clear rate falls much more slowly than its guess count
-rises: a guess whose parity you know is a cheap guess.
+Tuned to HIVE's forced-guess curve at 27.5 to 38.5%, the one dial that had to be measured rather
+than inherited (the honest player from `sim:spells`, by 20 September 2026). The colour rule is a
+large, constant, free read: at NORMAL's schedule of the time (25.0 to 33.0%) the player was cornered
+0.0 times on board 1 and 0.6 on board 10 and cleared every board, a ladder with nothing in it.
+Walked up until the curve matched HIVE's, the other ladder that packs an easier board, it gives 0.3
+forced guesses rising to 2.9, against HIVE's 0.3 to 2.8 and CROSS's 0.3 to 2.4. It runs past the
+34% ceiling because that was measured on boards where a covered cell could be any tier; here its
+colour has already ruled out half of them, so the same density carries about half the ambiguity
+(HIVE at 35% and ARCANE at 34.5% sit past it for smaller versions of the same reason). Its clear
+rate falls much more slowly than its guess count rises, 92% of board 10 against HIVE's 80%: a guess
+whose parity you know is a cheap guess, DUNGEON's doorway finding from another direction.
 
 ## PAIRS and DOMINOES
 
