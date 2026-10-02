@@ -7,6 +7,7 @@
 
 import type { TrickId } from './tricks.js';
 
+/** A trick's words: its name, where the catalogue has it, and its rule. */
 export interface TrickText {
   /** The catalogue's heading for the trick, as sections 2 to 6 of `docs/strategies.md` bold it. */
   readonly name: string;
@@ -16,6 +17,7 @@ export interface TrickText {
   readonly rule: string;
 }
 
+/** Every trick's words, keyed by id, so a new trick cannot be added without them. */
 export const TRICK_TEXT: Readonly<Record<TrickId, TrickText>> = {
   'raw-ring': {
     name: 'The raw ring',

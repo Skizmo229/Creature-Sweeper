@@ -62,6 +62,7 @@ export interface Lesson {
   readonly caption: string;
 }
 
+/** What a press of the tutor may read, where it looks first, and how dear a trick it tries. */
 export interface TutorOptions {
   /** Read a beaten creature's number even where the game hides it. */
   peek?: boolean;

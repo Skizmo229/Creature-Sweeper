@@ -71,6 +71,7 @@ function numberVisible(game: Game, cell: Cell, peek: boolean): boolean {
   return !cell.alive && placementRule(game.config.placement).display.hoverShowsNumber;
 }
 
+/** Which of the player's marks a reading believes. */
 export interface ReadOptions {
   /**
    * Whether a mark is believed. The graded player writes only proven marks and believes them

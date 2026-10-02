@@ -35,8 +35,10 @@ import {
 
 /** How much has to be held in the head at once; `docs/strategies.md` says what each means. */
 export type Grade = 0 | 1 | 2 | 3 | 4;
+/** Every grade, cheapest first: the order the tricks are tried in. */
 export const GRADES: readonly Grade[] = [0, 1, 2, 3, 4];
 
+/** Every trick's id; docs/strategies.md section 10 maps each to its entry. */
 export type TrickId =
   | 'raw-ring'
   | 'named-kill'
@@ -96,11 +98,13 @@ export interface Moves {
   readonly because: Map<Cell, Why>;
 }
 
+/** A technique at its grade: `apply` adds what it proves on the view to `moves`, and never acts. */
 export interface Trick {
   readonly grade: Grade;
   apply(view: View, moves: Moves): void;
 }
 
+/** No moves yet, for a trick to fill. */
 export function noMoves(): Moves {
   return { open: new Set(), mark: new Map(), narrow: new Map(), because: new Map() };
 }
@@ -620,4 +624,5 @@ export const TRICKS: Readonly<Record<TrickId, Trick>> = {
   'last-of-tier': lastOfTier,
 };
 
+/** Every trick id, in `TRICKS`'s order, which is the order the tricks of a grade run in. */
 export const TRICK_IDS = Object.keys(TRICKS) as TrickId[];

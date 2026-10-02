@@ -7,11 +7,13 @@
 import type { Cell } from '../engine/types.js';
 import type { Pools } from '../engine/placement/rule.js';
 
+/** One open number as a sum: the variables behind it (indices into `Model.vars`) make `target`. */
 export interface Constraint {
   readonly vars: number[];
   readonly target: number;
 }
 
+/** What is on screen, as a system of sums over the covered cells; `solver.ts` builds it. */
 export interface Model {
   readonly tiers: number;
   /** Covered cells some number touches. */
@@ -26,7 +28,9 @@ export interface Model {
   readonly interiorDom: number[];
 }
 
+/** The lowest tier in a mask; -1 for an empty one. */
 export const lowest = (m: number): number => 31 - Math.clz32(m & -m);
+/** The highest tier in a mask; -1 for an empty one. */
 export const highest = (m: number): number => 31 - Math.clz32(m);
 
 /**
@@ -42,6 +46,7 @@ export interface Sum {
   readonly hi: number;
 }
 
+/** One question's variables and the sums over them: a piece of the frontier, or a window. */
 export interface Problem {
   readonly members: number[];
   readonly sums: Sum[];
@@ -56,7 +61,8 @@ const single = (d: number): boolean => (d & (d - 1)) === 0;
 export class Search {
   /** Each variable's current domain, as a tier mask. */
   readonly cur: Int32Array;
-  readonly counts: Int32Array;
+  /** Creatures of each tier the layout in hand places. */
+  private readonly counts: Int32Array;
   /** Every value a layout found so far has given each variable. */
   readonly seen: Int32Array;
   /** Tiers some layout of the frontier has left over for the interior. */
@@ -112,10 +118,12 @@ export class Search {
     this.need = new Array<number>(poolIds.size);
   }
 
+  /** Creatures of tier `t` the layout in hand does not place, so left for the interior. */
   leftover(t: number): number {
     return this.model.remaining[t]! - this.counts[t]!;
   }
 
+  /** Whether the interior has room, pool by pool, for every creature the layout leaves over. */
   interiorFits(): boolean {
     const { need, tierPool, capacity } = this;
     need.fill(0);
@@ -160,6 +168,10 @@ export class Search {
     return this.dfs(0);
   }
 
+  /**
+   * Keep the layout `feasible` just found for `p` as a witness: every value it gave each variable,
+   * and in a joint search the tiers it leaves for the interior.
+   */
   record(p: Problem): void {
     const { cur, seen, counts } = this;
     for (const w of p.members) seen[w]! |= cur[w]!;

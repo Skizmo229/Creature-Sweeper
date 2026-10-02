@@ -50,6 +50,7 @@ import {
   lowest,
 } from './search.js';
 
+/** What `solve` is asked: its search budget, the joint search's size, and the tier to prove. */
 export interface SolveOptions {
   /** Search nodes one question may use before it is left undecided. */
   budget?: number;
@@ -65,6 +66,7 @@ export interface SolveOptions {
   threshold?: number;
 }
 
+/** What the screen proves: the free cells, and the alarms that say whether to believe it. */
 export interface Solution {
   /** Covered cells at or below your level in every consistent layout. */
   safe: Cell[];

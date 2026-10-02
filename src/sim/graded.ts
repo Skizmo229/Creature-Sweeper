@@ -39,6 +39,7 @@ import {
 import { augurAnswer, expectedFreed } from './aim.js';
 import { dungeonScaffold } from './scaffold.js';
 
+/** How the graded player plays: its grade, and what it may read, spend and fall back on. */
 export interface GradedOptions {
   /** The highest grade of trick the player uses. */
   grade: Grade;
@@ -57,6 +58,10 @@ export interface GradedOptions {
   attention?: number;
 }
 
+/**
+ * What one board demanded of the graded player and what it cost. The alarms (`unsound`,
+ * `trickDamage`, `rescueDamage`) must stay 0.
+ */
 export interface GradedRun {
   cleared: boolean;
   hpLost: number;
@@ -119,6 +124,10 @@ const SCAN_COST = 4;
 /** Information casts allowed at one stuck point before the gamble is taken. */
 const CASTS_AT_A_STUCK_POINT = 2;
 
+/**
+ * Play one board as the graded player, a pass at a time, until it is won or lost; with nothing
+ * left to gamble on, it forfeits. Mutates the game; returns what the board demanded and cost.
+ */
 export function play(game: Game, options: GradedOptions): GradedRun {
   const run: GradedRun = {
     cleared: false,

@@ -87,6 +87,7 @@ function forgetNames(game: Game): void {
   }
 }
 
+/** What one board cost the honest player: how it ended, its guesses and stuck points, its casts. */
 export interface Run {
   cleared: boolean;
   hpLost: number;
@@ -163,6 +164,10 @@ function freshRun(): Run {
   };
 }
 
+/**
+ * Play one board as the honest player, spending as `policy` says on `spellId` (null for none),
+ * until the board is over or nothing is left to guess. Mutates the game; returns what it cost.
+ */
 export function play(
   game: Game,
   policy: Policy,
