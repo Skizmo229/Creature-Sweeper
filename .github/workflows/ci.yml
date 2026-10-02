@@ -9,7 +9,7 @@ on:
 
 jobs:
   check:
-    name: typecheck, lint, tests, golden sims
+    name: npm run check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
