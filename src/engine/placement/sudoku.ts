@@ -26,6 +26,7 @@
 import type { Rng } from '../rng.js';
 import type { Grid } from '../grid.js';
 import { expForTier } from '../combat.js';
+import { allNotes, hasNote, lowestNote, noteBit } from '../notes.js';
 import { ONE_POOL } from './deal.js';
 import {
   type Deal,
@@ -43,7 +44,8 @@ import {
 export const SUDOKU_SIZE = 9;
 const SUDOKU_BOX = 3;
 const DIGITS = SUDOKU_SIZE;
-const ALL = (1 << DIGITS) - 1;
+/** Every digit still a candidate. A candidate mask is a note mask: bit `d` is digit `d`. */
+const ALL = allNotes(DIGITS - 1);
 
 /** A solution grid, indexed [y][x], holding tiers 0..8. */
 export type SudokuGrid = number[][];
@@ -100,21 +102,17 @@ const SUDOKU_NBRS: ReadonlyArray<ReadonlyArray<number>> = (() => {
   return out;
 })();
 
-function bit(digit: number): number {
-  return 1 << digit;
-}
-
-function lowestBit(mask: number): number {
-  for (let d = 0; mask >>> d; d++) if (mask & bit(d)) return d;
-  return -1;
-}
-
+/**
+ * The strongest digit a candidate mask still admits, -1 for an empty one. The generator's bound,
+ * on candidates it has proven; a player's pencil is never read this way (docs/invariants.md).
+ */
 function highestBit(mask: number): number {
   let hi = -1;
-  for (let d = 0; mask >>> d; d++) if (mask & bit(d)) hi = d;
+  for (let d = 0; mask >>> d; d++) if (hasNote(mask, d)) hi = d;
   return hi;
 }
 
+/** How many candidates a mask holds. */
 function popCount(mask: number): number {
   let n = 0;
   for (let m = mask; m; m >>>= 1) n += m & 1;
@@ -202,10 +200,10 @@ function propagate(cand: number[], open: boolean[], nums: number[]): boolean {
 
     for (let i = 0; i < 81; i++) {
       if (popCount(cand[i]!) !== 1) continue;
-      const d = lowestBit(cand[i]!);
+      const d = lowestNote(cand[i]!);
       for (const p of SUDOKU_PEERS[i]!) {
-        if (cand[p]! & bit(d)) {
-          cand[p] = cand[p]! & ~bit(d);
+        if (cand[p]! & noteBit(d)) {
+          cand[p] = cand[p]! & ~noteBit(d);
           if (!cand[p]) return false;
           changed = true;
         }
@@ -217,14 +215,14 @@ function propagate(cand: number[], open: boolean[], nums: number[]): boolean {
         let home = -1;
         let count = 0;
         for (const c of unit) {
-          if (cand[c]! & bit(d)) {
+          if (cand[c]! & noteBit(d)) {
             home = c;
             count++;
           }
         }
         if (count === 0) return false;
         if (count === 1 && popCount(cand[home]!) > 1) {
-          cand[home] = bit(d);
+          cand[home] = noteBit(d);
           changed = true;
         }
       }
@@ -236,19 +234,19 @@ function propagate(cand: number[], open: boolean[], nums: number[]): boolean {
       let lo = 0;
       let hi = 0;
       for (const n of ns) {
-        lo += lowestBit(cand[n]!);
+        lo += lowestNote(cand[n]!);
         hi += highestBit(cand[n]!);
       }
       const target = nums[i]!;
       if (target < lo || target > hi) return false;
       for (const n of ns) {
-        const othersLo = lo - lowestBit(cand[n]!);
+        const othersLo = lo - lowestNote(cand[n]!);
         const othersHi = hi - highestBit(cand[n]!);
         let keep = 0;
         for (let d = 0; d < DIGITS; d++) {
-          if (!(cand[n]! & bit(d))) continue;
+          if (!(cand[n]! & noteBit(d))) continue;
           const rest = target - d;
-          if (rest >= othersLo && rest <= othersHi) keep |= bit(d);
+          if (rest >= othersLo && rest <= othersHi) keep |= noteBit(d);
         }
         if (!keep) return false;
         if (keep !== cand[n]) {
@@ -291,13 +289,13 @@ export function clearableWithoutGuessing(
   const cand: number[] = new Array(81).fill(ALL);
   const open: boolean[] = new Array(81).fill(false);
 
-  for (const g of givens) cand[g] = bit(flat[g]!);
+  for (const g of givens) cand[g] = noteBit(flat[g]!);
   // The opening: every empty cell, free and by construction.
   let openCount = 0;
   for (let i = 0; i < 81; i++) {
     if (flat[i] === 0) {
       open[i] = true;
-      cand[i] = bit(0);
+      cand[i] = noteBit(0);
       openCount++;
     }
   }
@@ -322,7 +320,7 @@ export function clearableWithoutGuessing(
       if (highestBit(cand[i]!) > level) continue;
       open[i] = true;
       openCount++;
-      cand[i] = bit(flat[i]!);
+      cand[i] = noteBit(flat[i]!);
       if (flat[i]! > 0) exp += expForTier(flat[i]!);
       progressed = true;
     }
@@ -356,9 +354,9 @@ export function sudokuDeduction(
     const tier = openTiers[i];
     if (tier !== null && tier !== undefined) {
       open[i] = true;
-      cand[i] = bit(tier);
+      cand[i] = noteBit(tier);
     } else if (marks[i]) {
-      cand[i] = bit(marks[i]!);
+      cand[i] = noteBit(marks[i]!);
     }
   }
   return propagate(cand, open, nums as number[]) ? cand : null;

@@ -14,7 +14,7 @@
  */
 
 import type { BoardConfig, Cell, GameStatus, SweepOptions } from './types.js';
-import { hasNotes, lowestNote } from './notes.js';
+import { notesGuard } from './notes.js';
 import { placementRule } from './placement/registry.js';
 import { augurNow } from './augur.js';
 import type { Grid } from './grid.js';
@@ -64,7 +64,7 @@ export function safeCells(game: SweepView, options: SweepOptions = {}): Cell[] {
         if (n.open || seen.has(n)) continue;
         // The player's own lock always wins, written as a value or as a set.
         if (n.mark > level) continue;
-        if (hasNotes(n.notes) && lowestNote(n.notes) > level) continue;
+        if (notesGuard(n.notes, level)) continue;
         if (!proven && !cellProof(n)) {
           // Only the mark-assisted bound is left, and it covers only the UNMARKED neighbours:
           // the marked ones are the assumption that produced it, never a conclusion from it.

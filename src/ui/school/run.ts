@@ -11,7 +11,7 @@
  */
 
 import { Game, type GameOptions } from '../../engine/game.js';
-import { hasNotes, lowestNote, noteBit } from '../../engine/notes.js';
+import { noteBit, notesGuard } from '../../engine/notes.js';
 import { fightCostFor } from '../../engine/settings.js';
 import type { Cell } from '../../engine/types.js';
 import { type Lesson, merge, provable } from '../../sim/tutor.js';
@@ -91,7 +91,7 @@ export class LessonRun {
     const { game } = this;
     if (this.lesson.grade === null || cell.open || game.status !== 'playing') return null;
     if (cell.mark > game.level) return null;
-    if (hasNotes(cell.notes) && lowestNote(cell.notes) > game.level) return null;
+    if (notesGuard(cell.notes, game.level)) return null;
     const proven = provable(game);
     if (proven.open.has(cell)) return null;
     const tier = proven.mark.get(cell);

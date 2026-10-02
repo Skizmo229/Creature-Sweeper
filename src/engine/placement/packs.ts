@@ -52,7 +52,7 @@
  */
 
 import type { Cell } from '../types.js';
-import { noteBit } from '../notes.js';
+import { allNotes, noteBit } from '../notes.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
 import { ONE_POOL, placeDealt, readDealt, shuffledPool } from './deal.js';
 import {
@@ -100,7 +100,7 @@ function packCandidates(
     let mask = 0;
     for (let i = 0; i < piece.length; i++) {
       const p = piece[i]!;
-      mask |= 1 << p.tier;
+      mask |= noteBit(p.tier);
       for (const m of neighboursOf(p))
         if (known(m) && !seen.has(m)) {
           seen.add(m);
@@ -111,7 +111,7 @@ function packCandidates(
     shown |= mask;
   }
   if (!touched) return null;
-  return (((1 << (tiers + 1)) - 1) & ~shown) | noteBit(0);
+  return (allNotes(tiers) & ~shown) | noteBit(0);
 }
 
 /**

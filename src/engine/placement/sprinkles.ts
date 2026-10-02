@@ -25,7 +25,7 @@
 
 import type { BoardConfig, Cell } from '../types.js';
 import type { Grid } from '../grid.js';
-import { noteBit } from '../notes.js';
+import { allNotes, noteBit } from '../notes.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
 import { ONE_POOL, readDealt, shapeLeftTooFew, shuffledPool, takeInOrder } from './deal.js';
 import {
@@ -154,8 +154,7 @@ function plainGround(view: RuleView): ReadonlySet<Cell> {
  * the rule refuses these, because the board has drawn the answer.
  */
 function shownCandidates(cell: Cell, view: RuleView): number {
-  const everyTier = (1 << (view.config.tiers + 1)) - 1;
-  return cell.tier === 0 ? noteBit(0) : everyTier & ~noteBit(0);
+  return cell.tier === 0 ? noteBit(0) : allNotes(view.config.tiers) & ~noteBit(0);
 }
 
 /**

@@ -17,7 +17,7 @@ import {
   spellPriceFor,
   startManaFor,
 } from './settings.js';
-import { hasNote, hasNotes, lowestNote, noteBit, toggleNote as toggleNoteBit } from './notes.js';
+import { allNotes, hasNote, noteBit, notesGuard, toggleNote as toggleNoteBit } from './notes.js';
 import { placementRule } from './placement/registry.js';
 import { SPELL_EFFECTS } from './cast.js';
 import { computeSealed, withinReach } from './reach.js';
@@ -264,7 +264,7 @@ export class Game {
     // The same guard read off a set: refuse only when EVERY candidate is out
     // of reach, because a set containing anything survivable is a cell the
     // player may legitimately want to gamble on. Exercise counts here too.
-    if (hasNotes(cell.notes) && lowestNote(cell.notes) > this.level + this.exerciseCharge) {
+    if (notesGuard(cell.notes, this.level + this.exerciseCharge)) {
       return [{ type: 'blocked', reason: 'note-guard' }];
     }
 
@@ -415,7 +415,7 @@ export class Game {
    */
   noteCandidates(cell: Cell): number {
     const rule = placementRule(this.config.placement);
-    let mask = (1 << (this.config.tiers + 1)) - 1;
+    let mask = allNotes(this.config.tiers);
     if (!rule.coveredCanBeEmpty) mask &= ~noteBit(0);
     const allowed = rule.candidates(cell, this);
     if (allowed !== null) mask &= allowed;

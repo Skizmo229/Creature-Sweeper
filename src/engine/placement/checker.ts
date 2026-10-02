@@ -36,6 +36,7 @@
  */
 
 import type { Cell } from '../types.js';
+import { noteBit } from '../notes.js';
 import { dealByPool } from './deal.js';
 import {
   NOTHING_EMPTIED,
@@ -203,7 +204,8 @@ export const CHECKER_RULE: PlacementRule = {
   // The square's colour: the pencil refuses the other parity. Marks are not refused, by decision.
   candidates: (cell, view) => {
     let mask = 0;
-    for (let t = 0; t <= view.config.tiers; t++) if (allowsTier(cell.x, cell.y, t)) mask |= 1 << t;
+    for (let t = 0; t <= view.config.tiers; t++)
+      if (allowsTier(cell.x, cell.y, t)) mask |= noteBit(t);
     return mask;
   },
   guessFree: false,
