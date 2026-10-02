@@ -26,6 +26,7 @@ const LADDERS_PATH = process.env.CS_LADDERS
 
 let cached: Ladders | null = null;
 
+/** The ladder data from `LADDERS_PATH`, read once per process and shared after. */
 export function loadLadders(): Ladders {
   if (!cached) cached = JSON.parse(readFileSync(LADDERS_PATH, 'utf8')) as Ladders;
   return cached;

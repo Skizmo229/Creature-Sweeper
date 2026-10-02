@@ -51,8 +51,10 @@ function dirsFor(topology: Topology, y: number): ReadonlyArray<readonly [number,
   return topology === 'hex' ? HEX_DIRS[y & 1]! : DIRS;
 }
 
+/** A board's cells, indexed [y][x], holes included. */
 export type Grid = Cell[][];
 
+/** A fresh cell at (x, y): empty ground, covered, present, with nothing written on it. */
 export function makeCell(x: number, y: number): Cell {
   return {
     x,
@@ -75,16 +77,39 @@ export function makeCell(x: number, y: number): Cell {
 /** A boolean grid over the bounding box: which cells exist, or may hold a creature. */
 export type Mask = boolean[][];
 
+/** A `w` x `h` mask with every cell false. */
 export function blankMask(w: number, h: number): Mask {
   return Array.from({ length: h }, () => new Array<boolean>(w).fill(false));
 }
 
+/** How many cells of a `w` x `h` mask are true. */
 export function countPresent(mask: Mask, w: number, h: number): number {
   let n = 0;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (mask[y]![x]) n++;
   return n;
 }
 
+/**
+ * The four orthogonal steps on a plain square grid, for the generators that walk a mask or a
+ * square board directly rather than through `neighbours()`. In the order they try them, which
+ * their random draws depend on.
+ */
+export const ORTHO: ReadonlyArray<readonly [number, number]> = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+];
+
+/** The four diagonal steps, for the same generators. */
+export const DIAG: ReadonlyArray<readonly [number, number]> = [
+  [1, 1],
+  [1, -1],
+  [-1, 1],
+  [-1, -1],
+];
+
+/** Is (x, y) inside the board's bounding box? A hole is still in bounds. */
 export function inBounds(cfg: BoardConfig, x: number, y: number): boolean {
   return x >= 0 && y >= 0 && x < cfg.width && y < cfg.height;
 }
@@ -109,9 +134,8 @@ export function neighbours(
   // A hole neighbours nothing, in either direction. The other half of this is
   // below; without this half adjacency is asymmetric, because a hole beside an
   // arm would list the arm while the arm rightly refuses to list the hole.
-  // Only ever visible on a shaped board, and it went unnoticed until one was
-  // also wrapped — nothing asks a hole for its neighbours during play, since
-  // `cellAt` will not hand one out.
+  // Easy to miss: only a shaped board has holes, and nothing asks a hole for
+  // its neighbours during play, since `cellAt` will not hand one out.
   if (grid[y]?.[x]?.present === false) return out;
   const wrapX = wrap !== 'none';
   const wrapY = wrap === 'both';

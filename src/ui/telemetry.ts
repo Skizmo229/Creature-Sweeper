@@ -10,8 +10,10 @@
  * compile without a DOM. `telemetrystore.ts` keeps it in storage; `game/recorder.ts` tallies it.
  */
 
-import { fromBase64, toBase64 } from './savefile.js';
+import { compactCode, fromBase64, isRecord, stampOf, wrapCode } from './savefile.js';
+import { plural } from './words.js';
 
+/** Where the play statistics are stored: their own key, beside the save's. */
 export const TELEMETRY_KEY = 'creature-sweeper.telemetry.v1';
 
 const PREFIX = 'CST1:';
@@ -51,6 +53,7 @@ export interface Attempt {
   seconds: number;
 }
 
+/** The play statistics as stored and as coded: every board's totals, tuned and modified apart. */
 export interface TelemetryData {
   version: 1;
   /** Boards played on dials at least as hard as the tuned game, by `boardKey`. */
@@ -59,6 +62,7 @@ export interface TelemetryData {
   modified: Record<string, BoardStats>;
 }
 
+/** Statistics with nothing played. */
 export function emptyTelemetry(): TelemetryData {
   return { version: 1, tuned: {}, modified: {} };
 }
@@ -78,11 +82,6 @@ function emptyStats(): BoardStats {
     hints: 0,
     seconds: 0,
   };
-}
-
-/** The same key the progress store uses for a board, so the two can be read side by side. */
-export function boardKey(typeId: string, board: number): string {
-  return `${typeId}#${board}`;
 }
 
 /** Add an attempt to its board's totals, in the bucket its dials belong to. */
@@ -109,8 +108,6 @@ export function addAttempt(
   bucket[key] = stats;
 }
 
-const isRecord = (v: unknown): v is Record<string, unknown> =>
-  typeof v === 'object' && v !== null && !Array.isArray(v);
 const whole = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && v >= 0;
 
 const COUNTS = [
@@ -197,7 +194,6 @@ export function describeTelemetry(data: TelemetryData): string {
   const t = totals(data.tuned);
   const m = totals(data.modified);
   if (t.attempts + m.attempts === 0) return 'Nothing played yet.';
-  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
   const tuned = `${plural(t.attempts, 'attempt')} on ${plural(t.boards, 'board')}`;
   return m.attempts
     ? `${tuned}, and ${plural(m.attempts, 'attempt')} on modified dials.`
@@ -220,16 +216,17 @@ export function encodeTelemetry(
     ...(game === undefined ? {} : { game }),
     telemetry: data,
   };
-  return PREFIX + toBase64(JSON.stringify(envelope));
+  return wrapCode(PREFIX, envelope);
 }
 
+/** A statistics code read back: the data, when and by which version, or why it was refused. */
 export type TelemetryDecode =
   | { ok: true; data: TelemetryData; exported: string | null; game: string | null }
   | { ok: false; error: string };
 
 /** A code read back, whitespace and the invisible characters chat apps add ignored. */
 export function decodeTelemetry(text: string): TelemetryDecode {
-  const compact = text.trim().replace(/[\s\u00ad\u200b-\u200d\u2060]+/g, '');
+  const compact = compactCode(text);
   if (!compact.startsWith(PREFIX)) return { ok: false, error: 'not a play statistics code' };
   let envelope: unknown;
   try {
@@ -243,13 +240,7 @@ export function decodeTelemetry(text: string): TelemetryDecode {
   if (envelope.version !== 1) return { ok: false, error: 'from a newer version of the game' };
   const data = parseTelemetry(envelope.telemetry);
   if (!data) return { ok: false, error: 'the code holds no readable statistics' };
-  const exported = envelope.exported;
-  return {
-    ok: true,
-    data,
-    exported: typeof exported === 'string' && !Number.isNaN(Date.parse(exported)) ? exported : null,
-    game: typeof envelope.game === 'string' ? envelope.game : null,
-  };
+  return { ok: true, data, ...stampOf(envelope) };
 }
 
 /** One board's totals as per-attempt figures, for a table. */
@@ -264,7 +255,7 @@ export interface StatsRow {
   hints: number;
   hpLost: number;
   seconds: number;
-  /** "5:2, time:1", the deaths by what dealt them. */
+  /** "5:2 time:1", the deaths by what dealt them. */
   deaths: string;
 }
 

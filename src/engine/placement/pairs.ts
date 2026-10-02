@@ -47,9 +47,9 @@
  * AND WHAT IT COSTS. The packing has a hard ceiling: the densest legal
  * arrangement is two cells of every six (dominoes on every other row, two
  * columns in three), which is 33.3%, and a random lay-down jams well below
- * that — measured at 24.8-25.6% over 200 seeds on the board sizes this ladder
- * uses. That is why `choosePairs` restarts instead of backtracking, and why
- * the schedule stops at 25%: the quota must be hit EXACTLY, because C_k
+ * that (measured in `docs/tuning.md`). That is why `choosePairs` restarts
+ * instead of backtracking, and why the schedule stops under
+ * `PAIR_MAX_DENSITY`: the quota must be hit EXACTLY, because C_k
  * assumed it. A board two creatures light would not throw. It would simply
  * have its top gate one kill out of reach, on that seed only. Same failure
  * shape as the ragged cave's cell count, and the same answer — land on the
@@ -68,7 +68,8 @@ import {
   type PlacementRow,
   type PlacementRule,
   WHOLE_SUM,
-  boardName,
+  refuseDensity,
+  refuseOddTotal,
 } from './rule.js';
 
 /**
@@ -77,12 +78,11 @@ import {
  * A restart rather than a backtrack, because the failure is a jam rather than
  * a dead end: a greedy lay-down that ends short has usually spent its early
  * dominoes badly all over the board, and unwinding the last few would not
- * reach the ones that cost it. Measured on 30x16, 200 seeds a point: 40
- * restarts place an exact quota on every seed up to 26% density and on one
- * seed in four at 28%. Sixty buys margin on the bigger boards without being a
- * number anyone waits for — a board that needs more than this is a board the
- * schedule should not have asked for, and the ceiling below is where that is
- * said.
+ * reach the ones that cost it. Fewer restarts than this already place an
+ * exact quota on every seed up to the ceiling below (measured in the design
+ * reference); the rest is margin on the bigger boards without being a number
+ * anyone waits for. A board that needs more than this is a board the schedule
+ * should not have asked for, and the ceiling below is where that is said.
  */
 const PAIR_ATTEMPTS = 60;
 
@@ -271,22 +271,14 @@ export function pairingFault(
  * the rest.
  */
 function validatePairs(row: PlacementRow): void {
-  const where = boardName(row);
   const total = row.quantity.reduce((a, b) => a + b, 0);
-  if (total % 2 !== 0) {
-    throw new Error(
-      `${where}: ${total} creatures cannot pair up — every creature has ` +
-        `exactly one partner, so the total must be even`,
-    );
-  }
-  const share = total / row.cells;
-  if (share > PAIR_MAX_DENSITY) {
-    throw new Error(
-      `${where}: ${total} creatures on ${row.cells} cells is ` +
-        `${(100 * share).toFixed(1)}%, past the ${(100 * PAIR_MAX_DENSITY).toFixed(0)}% ` +
-        `a non-touching domino packing can be laid down reliably`,
-    );
-  }
+  refuseOddTotal(row, total, 'every creature has exactly one partner');
+  refuseDensity(
+    row,
+    total,
+    PAIR_MAX_DENSITY,
+    'a non-touching domino packing can be laid down reliably',
+  );
 }
 
 /**
@@ -310,9 +302,9 @@ function dealPairs(d: Deal): void {
 }
 
 /**
- * A beaten creature's number is its partner's tier, and hovering does not show it, by request: a
- * lone digit read as the creature's own level (decision 0012). The pencil follows the board and
- * does not read it either; Sweep's partner proof still does.
+ * A beaten creature's number is its partner's tier, and hovering does not show it: a lone digit
+ * read as the creature's own level (decision 0012). The pencil follows the board and does not
+ * read it either; Sweep's partner proof still does.
  */
 const PAIRS_DISPLAY: PlacementDisplay = {
   ...PLAIN_DISPLAY,
@@ -320,6 +312,7 @@ const PAIRS_DISPLAY: PlacementDisplay = {
   hoverShowsNumber: false,
 };
 
+/** The pairing placement: every creature has exactly one creature neighbour. */
 export const PAIRS_RULE: PlacementRule = {
   id: 'pairs',
   validate: validatePairs,

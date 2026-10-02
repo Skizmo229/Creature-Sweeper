@@ -10,13 +10,13 @@ import {
   TELEMETRY_KEY,
   type TelemetryData,
   addAttempt,
-  boardKey,
   emptyTelemetry,
   readTelemetry,
   telemetryReadable,
 } from './telemetry.js';
-import { dropKept, keepUnreadable } from './progress.js';
+import { boardKey, dropKept, keepUnreadable } from './savefile.js';
 
+/** The play statistics on this device, read from storage and written back after every attempt. */
 export class TelemetryStore {
   private data: TelemetryData;
 

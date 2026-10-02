@@ -1,8 +1,9 @@
 # Tuning: the instruments, the method, and the open questions
 
 Every density, lock depth and HP value in the game is a schedule in `design/ladder_types.toml`,
-derived into boards by `design/ladders.py`, and checked by simulation. This page is how that is done and what is still unsettled. The full derivations
-and the per-ladder findings are in the design reference (`design/reference.html`).
+derived into boards by `design/ladders.py`, and checked by simulation. This page is how that is
+done and what is still unsettled. The full derivations and the per-ladder findings are in the
+design reference (`design/reference.html`).
 
 ## The instruments
 
@@ -12,14 +13,14 @@ All in `src/sim/cli/`, all driving the real engine with fixed seeds, all determi
 | --- | --- |
 | `npm run sim [-- seeds]` | Clears every board of every ladder with the omniscient tier-order player. Reports the opening and HP lost; exits non-zero if any board cannot be cleared at full HP. The regression gate for `ladders.py`. |
 | `npm run sim:run` | Completes every type's Full Run ten boards deep on one HP pool. |
-| `npm run sim:spells -- N [ladder]` | The honest player, spell-less and with each spell policy: forced guesses, HP lost, clear rate, HP saved per cast and per mana. `POLICY=gym` plays WORKOUT as a farmer. |
+| `npm run sim:spells -- N [ladder]` | The honest player, spell-less and with each spell policy: forced guesses, HP lost, clear rate, HP saved per cast and per mana. `POLICY=gym` plays WORKOUT as a farmer (on WORKOUT alone). |
 | `npm run sim:forced -- N [ladder] [a-b]` | The honest player beside a player that also takes the complete deducer's free moves, on the same seeds: what share of stuck points had a free move, how often a perfect deducer is still cornered, what share of boards is guess-free. Its `bad` and `hurt` columns must be zero. |
 | `npm run sim:lethal -- N ladders` | The perfect deducer guessing the cell with the lowest proven worst case: could any forced guess kill? |
 | `npm run sim:human -- N [ladder] [a-b]` | The graded player, a person's tricks up to a grade (`docs/strategies.md`): what each board demands, grade by grade; stuck points, lethal guesses and clear rate at each grade; moves on offer when it had to look. `--profile` counts each trick's conclusions, `--peek` reads the numbers PAIRS hides, `--solver` attaches the complete deducer, `--spells` spends mana as the catalogue advises, `--attention=R` looks near the last action first and counts the scans. Its `unsound` column must be zero. |
 | `npm run sim:sudoku -- N [--sweep]` | SUDOKU build cost per givens count and the tightest round of each board. |
 | `npx tsx src/sim/cli/opening.ts`, `placement.ts`, `topology.ts` | The opening, placement and topology experiments; the first two write `design/data/*.json` for the reference page. |
 | `npm run telemetry -- CODE-or-file` | A player's play statistics, pasted from the backup screen (`CST1:` code): per board, attempts and clears, opens and guesses, sweeps, casts, hints, HP lost, seconds and deaths by tier, tuned and modified dials apart. Read beside `sim:human`'s row for the same board. |
-| `npm run sim:golden` / `sim:golden:check` | Records or diffs the text of small fixed-seed runs of the above (the list is `RUNS` in `scripts/golden.mjs`): the behaviour-preservation harness. |
+| `npm run sim:golden` / `sim:golden:check` | Records or diffs the text of small fixed-seed runs of the above (the list is `RUNS` in `scripts/golden.mjs`): the behaviour-preservation harness; `npm run sim:golden:check -- <run>` checks one. |
 
 The **honest player** (`src/sim/honest.ts`) reads only what a player can see and deduces locally,
 so every "cornered" figure it gives is an upper bound. The **complete deducer**
@@ -33,8 +34,10 @@ The **graded player** (`src/sim/graded.ts`) is the instrument of Milestone 4
 (`docs/human-tuning-plan.md`): it plays with a person's tricks up to a chosen grade, one pass at a
 time, reads a beaten creature's number only where the game draws it, and reports the hardest
 grade a board demanded, how often each grade was needed, and how many moves were on offer when it
-had to look. Neither of the two above measures any of that, which is why the ladders are being
-retuned against it.
+had to look. Neither of the two above measures any of that, which is why the ladders were retuned
+against it: EXTREME, ORACLE, BLIND and HUGE x BLIND (decisions 0041 to 0044), SEER (0054) and
+AUGUR (0088), with SPRINKLE DONUT tuned on it from the start (0046). The rest were measured and
+kept their schedules (0058).
 
 ## The method
 
@@ -42,10 +45,11 @@ retuned against it.
    `ladders.py`, shift a schedule in memory, call `build()`), point the sims at it with
    `CS_LADDERS=path`, measure, and only then replace the real file, checked byte for byte against
    the candidate that was measured.
-2. **Match a curve, and say which.** Every retune so far matched the honest player's forced-guess
-   curve of a reference ladder (ARCANE's, HIVE's, CROSS's), because that is what "as puzzling as"
-   means. A ladder meant to be as *deadly* would match the clear rate instead and land elsewhere;
-   the two disagree wherever a forced guess is cheap.
+2. **Match a curve, and say which.** Before Milestone 4 every retune matched the honest player's
+   forced-guess curve of a reference ladder (ARCANE's, HIVE's, CROSS's), because that is what "as
+   puzzling as" means. Since then a retune matches the graded player's target for its ladder
+   (`docs/human-tuning-plan.md`, section 7). A ladder meant to be as *deadly* would match the clear
+   rate instead and land elsewhere; the two disagree wherever a forced guess is cheap.
 3. **Teach the instrument the rule first.** A player who cannot see the checkerboard's colours, or
    walk the dungeon, measures a different game and tunes it far too sparse.
 4. **Measure, don't argue.** Several findings contradicted the intuition: WRAPAROUND is the
@@ -58,19 +62,26 @@ retuned against it.
 
 - 34% density is the battle ceiling: past it a board stops being a puzzle. HIVE (35%), ARCANE
   (34.5%) and CHECKERBOARD (38.5%) sit past it for stated reasons (`docs/modes.md`).
-- Placement ceilings: PAIRS 26% (`PAIR` jams at 24.8 to 25.6%), PACKS 36%, CONGA LINE 34%,
-  PATROL 8.6% (its routes never jammed at 8.5% in 300 seeds and jammed on 5 to 50% at 9%).
-- Spell prices 30 / 50 / 75 / 85 / 150 (Census, Augur, Reveal, Beacon, Exercise), one global table on purpose:
-  income (pools span 150 to 1,233) and demand (forced guesses 0.1 to 6.0 a board) already carry the
-  variation between ladders. Starting mana is 75 because it is "one Reveal exactly"; anything that
-  changes Reveal's price has to move it.
+- Placement ceilings: PAIRS 26% (the pairing deal, `choosePairs`, jams at 24.8 to 25.6%), PACKS
+  36%, CONGA LINE 34%, PATROL 8.6% (its routes never jammed at 8.5% in 300 seeds and jammed on 5
+  to 50% at 9%).
+- Spell prices 30 / 50 / 75 / 85 / 150 (Census, Augur, Reveal, Beacon, Exercise), one global
+  table on purpose: income (pools span 150 to 1,233) and demand (forced guesses 0.1 to 6.0 a
+  board) already carry the variation between ladders. Starting mana is 75 because it is "one
+  Reveal exactly"; anything that changes Reveal's price has to move it.
 - `MANA_PER_EMPTY_CELLS = 4` is an untuned first guess. `EXERCISE_LEVELS` is 1 and must stay 1:
   damage is a staircase, so two levels clears two steps at once.
-- The Full Run heal is half the pool, rounded down (so BLIND's pool of 1 heals nothing). A first
-  guess; both ends are one number away in `run.ts`.
+- The Full Run heal is half the pool at the tuned dials, rounded down (so BLIND's pool of 1 heals
+  nothing): `hpRegenRatio` in `src/engine/settings.ts`, which the Full Run regen dial moves. A
+  first guess.
 - The counted unlock schedule opens one ladder per menu category every five boards from 15, BLIND
-  last at 70, in a hand-set order that does not follow difficulty (decision 0036). `test/unlocks.test.ts` walks it and fails if any gate is unreachable on tuned
-  boards alone.
+  last at 70, in a hand-set order that does not follow difficulty (decision 0036).
+  `test/unlocks.test.ts` walks it and fails if any gate is unreachable on tuned boards alone.
+- The continuation past board 10 stops at `CEILINGS` in `design/ladders.py`: a 64x32 box, 34%
+  density on a battle board and 30% on a search board, tier 9, and no fewer than 12 SUDOKU givens
+  (the generator refuses most boards at 11). A ladder can set its own in a `ceiling` table, whose
+  keys (`max_w`, `max_h`, `density_cap`, `hp_floor`, `givens_floor`) the TOML's header lists and
+  `load_types` checks.
 
 ## What the spells are worth, measured
 
@@ -84,8 +95,8 @@ ladder, each spell against playing spell-less on the ladders that offer it:
 | Census, where it demonstrably helps | 30 | 0.48 | 0.0158 | 0.8 |
 | Exercise | 150 | 0.90 | 0.0098 | 2.5 |
 | Beacon (ORACLE only, 80 seeds, 25 September) | 85 | 0.57 | 0.0067 | 5.9 |
-| Augur, as played (ARCANE with Augur added, 40 seeds, 27 September) | 20 | 0.000 | 0.0000 | 0.0 |
-| Augur, where it demonstrably helps | 20 | 2.29 | 0.1143 | 1.0 |
+| Augur as it was (the strongest alone), as played: ARCANE with Augur added, 40 seeds, 27 September | 20 | 0.000 | 0.0000 | 0.0 |
+| Augur as it was, where it demonstrably helps | 20 | 2.29 | 0.1143 | 1.0 |
 
 - Beacon is priced where a mana of it saves what a mana of Reveal does on ORACLE, the one ladder
   that offers both (decision 0037). Measured there at 80 seeds a board, 25 September 2026, Reveal
@@ -100,8 +111,9 @@ ladder, each spell against playing spell-less on the ladders that offer it:
   the old strongest-only Augur did together (50), since a scratch measure found it as useful as
   both: at the graded player's stuck points on AUGUR, the list cast over the best number in
   hindsight freed a cell at 93% of them, and cast where it was likeliest to free one, at 25% (the
-  strongest alone 20%, the count 17%; 60 seeds a board, 30 September 2026). The old figure, 1 cast in 67 freeing a
-  ring, measured a player that cast only where a whole ring could come free.
+  strongest alone 20%, the count 17%; 60 seeds a board, 30 September 2026). The table's Augur
+  rows measure the strongest alone, at its old price. The old figure, 1 cast in 67 freeing a ring,
+  measured a player that cast only where a whole ring could come free.
 - Reveal's ring (the empty ground around its target) is 45% of the spell and gives nothing away.
   It cannot cascade off a creature, because every neighbour of a tier-N cell carries at least N.
 - Exercise is close to Reveal per cast and the worst per mana: it makes the unavoidable guess
@@ -120,8 +132,9 @@ ladder, each spell against playing spell-less on the ladders that offer it:
 
 ## Open questions, in order of weight
 
-1. **The ladders have never been played.** Everything is derived and simulation-checked, not
-   playtested. Play-testing is what both plans wait on (`docs/human-tuning-plan.md` step 4.10,
+1. **The ladders have not yet been measured against play.** Everything is derived and
+   simulation-checked. The play statistics (decision 0060), which reach the owner in play-test
+   reports (decision 0085), are what both plans wait on (`docs/human-tuning-plan.md` step 4.10,
    `docs/teaching-plan.md` section 9); tuning changes live in `ladder_types.toml` and `ladders.py`.
 2. **Boards contain unresolvable 50/50s, and the solver can say which.** Guess-free
    generate-and-test is affordable early and impossible late: a perfect deducer finishes NORMAL
@@ -142,10 +155,14 @@ ladder, each spell against playing spell-less on the ladders that offer it:
    against the honest player, which understands their rules worse than a strong human. Re-deriving
    CHECKERBOARD, PAIRS, DOMINOES, PACKS and CONGA LINE against the solver is open. PAIRS and
    DOMINOES also no longer show a beaten creature's number, which the instrument still reads.
+   Measured with the graded player on 27 September 2026 (grade 2 with each rule's own reads, 40
+   seeds a board), every one clears 95 to 100% of boards 8 to 10 at its shipped schedule, and
+   neither density nor the lock brings them to the human target, so they keep their schedules
+   (decision 0058).
 5. **Reveal buys twice what Exercise does per mana** since the ring; pricing Reveal at 100 would
    level them. Left alone deliberately.
 6. **Marks are not gated the way the pencil is** (a mark may claim the wrong parity on
-   CHECKERBOARD). A decision, left open.
+   CHECKERBOARD). Deliberately so (decision 0010), which leaves open whether they should be.
 7. **Smaller:** BLIND's unlock timing (70 boards) is a guess; pinch-zoom has only met
    synthetic touch events; touch has no hover, so on a phone a beaten creature's number is read
    through the Beaten toggle (decision 0067).

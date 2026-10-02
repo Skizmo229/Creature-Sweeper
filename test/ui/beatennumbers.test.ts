@@ -9,20 +9,13 @@ import './setup.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { boardConfig } from '../../src/engine/config.js';
 import { Game } from '../../src/engine/game.js';
-import { App } from '../../src/ui/app.js';
 import { offersBeatenNumbers } from '../../src/ui/board/paint.js';
 import { type BoardDisplay, BoardView, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { ladders } from '../../src/ui/ladders.js';
 import { themeFor } from '../../src/ui/looks.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
-
-/** The app's surface as the test drives it, private members included. */
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  readonly settings: Settings;
-  readonly view: { readonly display: BoardDisplay } | null;
-}
+import { type AppDriver, key, mountApp } from './driver.js';
 
 /** Every `fillText` on a canvas made while this runs, with the colour it was filled in. */
 function recordText(): { texts: { text: string; color: string }[]; stop: () => void } {
@@ -98,20 +91,15 @@ describe('what the board draws', () => {
 });
 
 describe('the toggle', () => {
-  let app: Driver;
+  let app: AppDriver;
   beforeEach(() => {
-    localStorage.clear();
-    document.body.innerHTML = '<div id="app"></div>';
-    app = new App(document.getElementById('app')!) as unknown as Driver;
+    app = mountApp();
   });
 
   const toggle = (): HTMLButtonElement | null =>
     [...document.querySelectorAll<HTMLButtonElement>('button')].find((b) =>
       b.textContent?.startsWith('Beaten: '),
     ) ?? null;
-  const key = (k: string, held: KeyboardEventInit = {}): void => {
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, ...held }));
-  };
 
   it('is offered where a beaten creature’s number is the player’s to read, and nowhere else', () => {
     const offered: Record<string, boolean> = {

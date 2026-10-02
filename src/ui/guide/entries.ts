@@ -30,6 +30,7 @@ export interface LadderRules {
   readonly spells: readonly string[];
 }
 
+/** One entry of the guide: a trick, or one of the catalogue's other bold leads. */
 export interface GuideEntry {
   /** The catalogue's bold lead, without its full stop; absent for an entry that is a list. */
   readonly heading?: string;
@@ -40,6 +41,7 @@ export interface GuideEntry {
   readonly body: readonly Block[];
 }
 
+/** One section of the guide, as one of the catalogue's. */
 export interface GuideSection {
   /** The catalogue's section heading, without its number. */
   readonly title: string;
@@ -110,6 +112,7 @@ export const DAMAGE_TABLE = { tiers: [2, 3, 4, 5, 6], levels: [1, 2, 3, 4, 5] } 
 /** The section the tutor sends a player to at a guess. */
 export const GUESSING_WELL = 'Guessing well';
 
+/** The guide's sections, in the catalogue's order. */
 export const GUIDE: readonly GuideSection[] = [
   {
     title: 'Three things to know before the first click',

@@ -54,30 +54,29 @@
  */
 
 import type { Cell } from '../types.js';
+import { ORTHO } from '../grid.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
 import { placeDealt, readDealt } from './deal.js';
-import { type Deal, type PlacementRow, type PlacementRule, boardName } from './rule.js';
-import { PACKS_RULE, packPoolAndCount, packsIn } from './packs.js';
+import {
+  type Deal,
+  type PlacementRow,
+  type PlacementRule,
+  boardName,
+  refuseDensity,
+} from './rule.js';
+import { PACKS_RULE, openPiece, packPoolAndCount, packsIn } from './packs.js';
 
 /** Restarts allowed before a board is refused. PACKS's argument. */
 const CONGO_ATTEMPTS = 60;
 
 /**
- * The most creatures a congo board may be asked for, as a share of its cells.
- * Measured with 40 seeds a point: 34% lands on every seed from 30x16 to 60x30;
- * 35% starts losing seeds on 60x30 and 37% loses nearly all of them on 44x24.
- * A line has more rim per member than a compact pack, which is why it jams a
- * little before PACKS's 36%. It is also the battle ceiling, so the scaling
- * boards stop at the same place either way.
+ * The most creatures a congo board may be asked for, as a share of its cells:
+ * where a random lay-down stops landing the quota reliably (measured in the
+ * design reference). A line has more rim per member than a compact pack, which
+ * is why it jams a little before `PACK_MAX_DENSITY`. It is also the battle
+ * ceiling, so the scaling boards stop at the same place either way.
  */
 export const CONGO_MAX_DENSITY = 0.34;
-
-const ORTHO: ReadonlyArray<readonly [number, number]> = [
-  [1, 0],
-  [-1, 0],
-  [0, 1],
-  [0, -1],
-];
 
 /**
  * The orthogonal neighbours of a flat index on a plain `width` x `height`
@@ -218,7 +217,7 @@ export function dealLines(
 
 /**
  * Covered cells a congo board has proven to be empty ground, from what is
- * open. The three proofs in the header; each holds at any level.
+ * open. The four proofs in the header; each holds at any level.
  *
  * Reads only open cells, so it is exactly as strong as what the player can
  * see — and a covered cell it names is never a creature, whatever the
@@ -227,21 +226,20 @@ export function dealLines(
 export function congoClear(grid: readonly (readonly Cell[])[], tiers: number): Set<Cell> {
   const height = grid.length;
   const width = grid[0]?.length ?? 0;
-  const at = (x: number, y: number): Cell | null =>
-    x >= 0 && x < width && y >= 0 && y < height && grid[y]![x]!.present ? grid[y]![x]! : null;
+  const { at, ortho } = boardLookup(grid);
   const openCreature = (c: Cell | null): boolean => !!c && c.open && c.tier > 0;
   const out = new Set<Cell>();
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const cell = at(x, y);
-      if (!openCreature(cell)) continue;
-      const ortho = ORTHO.map(([dx, dy]) => at(x + dx, y + dy)).filter((c): c is Cell => !!c);
-      const mates = ortho.filter(openCreature).length;
+      if (!cell || !openCreature(cell)) continue;
+      const beside = ortho(cell);
+      const mates = beside.filter(openCreature).length;
       // The leader is an end, so one linemate fills it; anyone else is full
       // at two.
-      const full = mates >= 2 || (mates >= 1 && cell!.tier === tiers);
-      if (full) for (const n of ortho) if (!n.open) out.add(n);
+      const full = mates >= 2 || (mates >= 1 && cell.tier === tiers);
+      if (full) for (const n of beside) if (!n.open) out.add(n);
     }
   }
 
@@ -291,11 +289,50 @@ export function congoClear(grid: readonly (readonly Cell[])[], tiers: number): S
  * cells are not one contiguous stretch and the counting above does not hold.
  */
 function beyondReach(grid: readonly (readonly Cell[])[], tiers: number): Cell[] {
+  const { ring, ortho } = boardLookup(grid);
+  const done = new Set<Cell>();
+  const out: Cell[] = [];
+  for (const row of grid) {
+    for (const seed of row) {
+      if (!seed.present || !seed.open || seed.tier === 0 || done.has(seed)) continue;
+      const piece = openPiece(seed, ring, done);
+      const missing = tiers - piece.length;
+      if (missing <= 0) continue; // whole: the pack proof frees the ring.
+      if (!orthogonallyConnected(piece, ortho)) continue;
+
+      const inPiece = new Set(piece);
+      const degree = (c: Cell): number => ortho(c).filter((n) => inPiece.has(n)).length;
+      const ends = piece.length === 1 ? piece : piece.filter((c) => degree(c) === 1);
+      const growing = piece.length === 1 ? ends : ends.filter((c) => c.tier !== tiers);
+      // Every cell the missing members could stand on.
+      const reach = cellsWithinSteps(growing, missing, piece, ortho);
+
+      for (const c of piece) {
+        for (const n of ring(c)) if (!n.open && !reach.has(n)) out.push(n);
+      }
+    }
+  }
+  return out;
+}
+
+/** A congo board by position: the present cell at (x, y), and a cell's present neighbours. */
+interface BoardLookup {
+  at(x: number, y: number): Cell | null;
+  /** All eight neighbours. */
+  ring(c: Cell): Cell[];
+  /** The orthogonal four, in `ORTHO`'s order. */
+  ortho(c: Cell): Cell[];
+}
+
+/**
+ * Read a congo board by position. A congo board is a plain unwrapped square grid, so this is
+ * arithmetic on the coordinates rather than `neighbours()` (see `orthoFlat`). Holes are no cell.
+ */
+function boardLookup(grid: readonly (readonly Cell[])[]): BoardLookup {
   const height = grid.length;
   const width = grid[0]?.length ?? 0;
   const at = (x: number, y: number): Cell | null =>
     x >= 0 && x < width && y >= 0 && y < height && grid[y]![x]!.present ? grid[y]![x]! : null;
-  const openCreature = (c: Cell): boolean => c.open && c.tier > 0;
   const ring = (c: Cell): Cell[] => {
     const out: Cell[] = [];
     for (let dy = -1; dy <= 1; dy++)
@@ -308,66 +345,55 @@ function beyondReach(grid: readonly (readonly Cell[])[], tiers: number): Cell[] 
   };
   const ortho = (c: Cell): Cell[] =>
     ORTHO.map(([dx, dy]) => at(c.x + dx, c.y + dy)).filter((n): n is Cell => !!n);
+  return { at, ring, ortho };
+}
 
-  const done = new Set<Cell>();
-  const out: Cell[] = [];
-  for (const row of grid) {
-    for (const seed of row) {
-      if (!seed.present || !openCreature(seed) || done.has(seed)) continue;
-      const piece = [seed];
-      done.add(seed);
-      for (let i = 0; i < piece.length; i++) {
-        for (const n of ring(piece[i]!)) {
-          if (openCreature(n) && !done.has(n)) {
-            done.add(n);
-            piece.push(n);
-          }
-        }
-      }
-      const missing = tiers - piece.length;
-      if (missing <= 0) continue; // whole: the pack proof frees the ring.
-
-      // Contiguous stretch: orthogonally connected, a path.
-      const inPiece = new Set(piece);
-      const degree = (c: Cell): number => ortho(c).filter((n) => inPiece.has(n)).length;
-      const walked = new Set<Cell>([seed]);
-      const queue = [seed];
-      for (let i = 0; i < queue.length; i++) {
-        for (const n of ortho(queue[i]!)) {
-          if (inPiece.has(n) && !walked.has(n)) {
-            walked.add(n);
-            queue.push(n);
-          }
-        }
-      }
-      if (walked.size !== piece.length) continue;
-      const ends = piece.length === 1 ? piece : piece.filter((c) => degree(c) === 1);
-      const growing = piece.length === 1 ? ends : ends.filter((c) => c.tier !== tiers);
-
-      // Every cell the missing members could stand on: up to `missing`
-      // orthogonal steps out from a growing end.
-      const reach = new Set<Cell>();
-      let frontier = growing.slice();
-      const seen = new Set<Cell>(piece);
-      for (let step = 0; step < missing && frontier.length; step++) {
-        const next: Cell[] = [];
-        for (const c of frontier) {
-          for (const n of ortho(c)) {
-            if (seen.has(n) || (n.open && n.tier === 0)) continue;
-            seen.add(n);
-            reach.add(n);
-            next.push(n);
-          }
-        }
-        frontier = next;
-      }
-
-      for (const c of piece) {
-        for (const n of ring(c)) if (!n.open && !reach.has(n)) out.push(n);
+/**
+ * Is the piece one contiguous stretch of its line: orthogonally connected, walking from its first
+ * cell? Then it is a path, since orthogonal neighbours in a line are consecutive (the header).
+ */
+function orthogonallyConnected(piece: readonly Cell[], ortho: (c: Cell) => Cell[]): boolean {
+  const inPiece = new Set(piece);
+  const walked = new Set<Cell>([piece[0]!]);
+  const queue = [piece[0]!];
+  for (let i = 0; i < queue.length; i++) {
+    for (const n of ortho(queue[i]!)) {
+      if (inPiece.has(n) && !walked.has(n)) {
+        walked.add(n);
+        queue.push(n);
       }
     }
   }
-  return out;
+  return walked.size === piece.length;
+}
+
+/**
+ * Every cell up to `steps` orthogonal steps out from `from`, outside `piece`, walking through
+ * covered cells and open creatures and never onto open empty ground, which is known not to be a
+ * member of the line.
+ */
+function cellsWithinSteps(
+  from: readonly Cell[],
+  steps: number,
+  piece: readonly Cell[],
+  ortho: (c: Cell) => Cell[],
+): Set<Cell> {
+  const reach = new Set<Cell>();
+  let frontier = from.slice();
+  const seen = new Set<Cell>(piece);
+  for (let step = 0; step < steps && frontier.length; step++) {
+    const next: Cell[] = [];
+    for (const c of frontier) {
+      for (const n of ortho(c)) {
+        if (seen.has(n) || (n.open && n.tier === 0)) continue;
+        seen.add(n);
+        reach.add(n);
+        next.push(n);
+      }
+    }
+    frontier = next;
+  }
+  return reach;
 }
 
 /**
@@ -459,14 +485,12 @@ function validateCongo(row: PlacementRow): void {
         `a line is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
     );
   }
-  const share = row.monsters / row.cells;
-  if (share > CONGO_MAX_DENSITY) {
-    throw new Error(
-      `${where}: ${row.monsters} creatures on ${row.cells} cells is ` +
-        `${(100 * share).toFixed(1)}%, past the ${(100 * CONGO_MAX_DENSITY).toFixed(0)}% ` +
-        `non-touching lines can be laid down reliably`,
-    );
-  }
+  refuseDensity(
+    row,
+    row.monsters,
+    CONGO_MAX_DENSITY,
+    'non-touching lines can be laid down reliably',
+  );
 }
 
 /** Lines come back leader first, so the deal can put the strongest tier at the front. */
@@ -478,6 +502,7 @@ function dealCongo(d: Deal): void {
   placeDealt(d, dealLines(lines, cfg.tiers, d.rng));
 }
 
+/** The congo placement: packs strung out as orthogonal lines, each led by the top tier. */
 export const CONGO_RULE: PlacementRule = {
   id: 'congo',
   validate: validateCongo,

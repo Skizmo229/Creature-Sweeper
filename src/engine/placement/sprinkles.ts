@@ -25,7 +25,7 @@
 
 import type { BoardConfig, Cell } from '../types.js';
 import type { Grid } from '../grid.js';
-import { noteBit } from '../notes.js';
+import { allNotes, noteBit } from '../notes.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
 import { ONE_POOL, readDealt, shapeLeftTooFew, shuffledPool, takeInOrder } from './deal.js';
 import {
@@ -36,6 +36,8 @@ import {
   type PlacementRule,
   type RuleView,
   boardName,
+  refuseDensity,
+  refuseOddTotal,
 } from './rule.js';
 
 /**
@@ -154,8 +156,7 @@ function plainGround(view: RuleView): ReadonlySet<Cell> {
  * the rule refuses these, because the board has drawn the answer.
  */
 function shownCandidates(cell: Cell, view: RuleView): number {
-  const everyTier = (1 << (view.config.tiers + 1)) - 1;
-  return cell.tier === 0 ? noteBit(0) : everyTier & ~noteBit(0);
+  return cell.tier === 0 ? noteBit(0) : allNotes(view.config.tiers) & ~noteBit(0);
 }
 
 /**
@@ -164,23 +165,13 @@ function shownCandidates(cell: Cell, view: RuleView): number {
  * a sprinkle drawn a board apart.
  */
 function validateSprinkles(row: PlacementRow): void {
-  const where = boardName(row);
   const total = row.quantity.reduce((a, b) => a + b, 0);
-  if (total % 2 !== 0) {
-    throw new Error(
-      `${where}: ${total} creatures cannot pair up — every creature has a partner, ` +
-        `so the total must be even`,
-    );
-  }
-  const share = total / row.cells;
-  if (share > SPRINKLE_MAX_DENSITY) {
-    throw new Error(
-      `${where}: ${total} creatures on ${row.cells} cells is ${(100 * share).toFixed(1)}%, ` +
-        `past the ${(100 * SPRINKLE_MAX_DENSITY).toFixed(0)}% the pairs are laid down reliably at`,
-    );
-  }
+  refuseOddTotal(row, total, 'every creature has a partner');
+  refuseDensity(row, total, SPRINKLE_MAX_DENSITY, 'the pairs are laid down reliably at');
   if (row.wrap !== undefined && row.wrap !== 'none') {
-    throw new Error(`${where}: a pair across a wrapped seam would be a sprinkle a board apart`);
+    throw new Error(
+      `${boardName(row)}: a pair across a wrapped seam would be a sprinkle a board apart`,
+    );
   }
 }
 
@@ -213,6 +204,7 @@ function sprinkleFault(grid: Grid, cfg: BoardConfig): string | null {
   return null;
 }
 
+/** The sprinkle placement: pairs free to touch, every creature's place shown. */
 export const SPRINKLES_RULE: PlacementRule = {
   id: 'sprinkles',
   validate: validateSprinkles,

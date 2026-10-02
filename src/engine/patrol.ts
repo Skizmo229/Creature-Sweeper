@@ -1,10 +1,10 @@
 /**
- * PATROL: creatures that walk. A tier-t creature walks the edge of a square t cells a side, one cell
- * per action, clockwise from the square's top-left corner, where every creature starts: t cells
- * right, t down, t left and t up, home again after 4t actions. The patrol placement rule deals the
- * routes so that no two share a cell (`placement/patrol.ts`), so two creatures never meet and a
- * beaten one lies where nobody else will ever walk. Numbers are sums of the creatures standing
- * round a cell now, living or beaten, and are worked out again after every step.
+ * PATROL: creatures that walk. A tier-t creature walks the edge of a square t cells a side, one
+ * cell per action, clockwise from the square's top-left corner, where every creature starts: t
+ * cells right, t down, t left and t up, home again after 4t actions. The patrol placement rule
+ * deals the routes so that no two share a cell (`placement/patrol.ts`), so two creatures never meet
+ * and a beaten one lies where nobody else will ever walk. Numbers are sums of the creatures
+ * standing round a cell now, living or beaten, and are worked out again after every step.
  *
  * A creature that walks onto ground the player has uncovered covers that cell again while it
  * stands there (`occupied`), so every rule and every proof reads it as unknown, and it is drawn as
@@ -63,6 +63,10 @@ interface Walker {
   at: Cell;
 }
 
+/**
+ * One PATROL board's walking creatures, read off the board as dealt, and the routes the player
+ * has marked for them.
+ */
 export class Patrol {
   /** Actions taken, which is how far round its route every creature has walked. */
   moves = 0;
@@ -79,7 +83,7 @@ export class Patrol {
     }
   }
 
-  /** Every living creature takes one step, and the numbers and the routes are brought up to date. */
+  /** Every living creature takes one step; the numbers and the routes are brought up to date. */
   step(host: PatrolHost): GameEvent[] {
     this.moves++;
     for (const w of this.walkers) {

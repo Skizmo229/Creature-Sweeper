@@ -13,14 +13,17 @@
  * correctly priced relative to each other when a point of mana buys the same
  * amount of certainty through either one.
  *
- * The deduction here is deliberately the game's own — the bound Sweep proves,
- * plus exact tiers from Reveal's marks, plus the Census count and the Augur
- * ceiling, which Sweep reads as well (`provenByCensus` and `provenByAugur` in
- * `engine/sweep.ts`). A spell whose answer the game cannot act on is worth
- * less than the same answer in a form it can.
+ * The deduction is the honest player's (`deduce.ts`): one number at a time and
+ * pairs of numbers subtracted, the placement rules' readings, exact tiers from
+ * Reveal's marks, and the Census count and the Augur's count and ceiling, which
+ * Sweep reads as well (`provenByCensus` and `provenByAugur` in
+ * `engine/sweep.ts`). A spell whose answer the game cannot act on is worth less
+ * than the same answer in a form it can.
  *
  *   npx tsx src/sim/cli/spellvalue.ts [seeds]          every magic ladder
  *   npx tsx src/sim/cli/spellvalue.ts [seeds] arcane   one ladder, board by board
+ *   POLICY=gym npx tsx src/sim/cli/spellvalue.ts [seeds] workout
+ *                                   WORKOUT with Exercise spent on free kills too
  *
  * The per-board view answers a different question from the per-ladder one: not
  * what a spell is worth, but whether there is anything for it to be worth. A
@@ -32,7 +35,8 @@ import { loadLadders } from '../../data.js';
 import { boardConfig } from '../../engine/config.js';
 import { Game } from '../../engine/game.js';
 import { SPELLS, type SpellId } from '../../engine/spells.js';
-import { type Policy, type Run, SPELL_POLICIES, play } from '../honest.js';
+import { type Policy, type HonestRun, SPELL_POLICIES, play } from '../honest.js';
+import { seedAt, seedCount } from '../tables.js';
 
 /** Every measured policy with the spell it casts, in the order the tables print them. */
 const MEASURED: ReadonlyArray<{ policy: Policy; spell: SpellId }> = (
@@ -57,10 +61,9 @@ function workoutTable(seeds: number, typeId: string): void {
     'board  density  lock |  none: stuck  clear |  exercise: clear casts |' +
       '  workout: stuck  hp lost  clear  casts  spent/pool',
   );
-  const seedAt = (s: number) => s * 2654435761 + 11;
-  const pct = (rs: Run[]) =>
+  const clearPct = (rs: HonestRun[]) =>
     ((100 * rs.filter((r) => r.cleared).length) / rs.length).toFixed(0).padStart(4) + '%';
-  const avg = (rs: Run[], pick: (r: Run) => number) =>
+  const avg = (rs: HonestRun[], pick: (r: HonestRun) => number) =>
     rs.reduce((a, r) => a + pick(r), 0) / rs.length;
   for (const board of type.boards) {
     const cfg = boardConfig(ladders, type.id, board.n);
@@ -75,8 +78,8 @@ function workoutTable(seeds: number, typeId: string): void {
       `${String(board.n).padStart(4)}  ${board.density.toFixed(1).padStart(6)}%  ${board.lock}    |` +
         `${avg(none, (r) => r.stuckPoints)
           .toFixed(1)
-          .padStart(12)} ${pct(none)} |` +
-        `${pct(ex).padStart(16)} ${avg(ex, (r) => r.casts)
+          .padStart(12)} ${clearPct(none)} |` +
+        `${clearPct(ex).padStart(16)} ${avg(ex, (r) => r.casts)
           .toFixed(1)
           .padStart(5)} |` +
         `${avg(wo, (r) => r.stuckPoints)
@@ -84,7 +87,7 @@ function workoutTable(seeds: number, typeId: string): void {
           .padStart(15)} ${avg(wo, (r) => r.hpLost)
           .toFixed(2)
           .padStart(8)}` +
-        ` ${pct(wo)} ${avg(wo, (r) => r.casts)
+        ` ${clearPct(wo)} ${avg(wo, (r) => r.casts)
           .toFixed(1)
           .padStart(6)}` +
         `${((100 * avg(wo, (r) => r.manaSpent)) / avg(wo, (r) => r.manaPool)).toFixed(0).padStart(10)}%`,
@@ -117,20 +120,19 @@ function byBoard(seeds: number, typeId: string): void {
 
   for (const board of type.boards) {
     const cfg = boardConfig(ladders, type.id, board.n);
-    const seedAt = (s: number) => s * 2654435761 + 11;
-    const base: Run[] = [];
+    const base: HonestRun[] = [];
     for (let s = 0; s < seeds; s++) base.push(play(Game.create(cfg, seedAt(s)), 'none', null));
 
     // Same seeds for every policy, so the difference between two columns is
     // the spell and never the board.
-    const withSpell = new Map<SpellId, Run[]>();
+    const withSpell = new Map<SpellId, HonestRun[]>();
     for (const id of offered) {
       const policy = SPELL_POLICIES[id][0]!;
-      const runs: Run[] = [];
+      const runs: HonestRun[] = [];
       for (let s = 0; s < seeds; s++) runs.push(play(Game.create(cfg, seedAt(s)), policy, id));
       withSpell.set(id, runs);
     }
-    const mean = (rs: Run[], pick: (r: Run) => number) =>
+    const mean = (rs: HonestRun[], pick: (r: HonestRun) => number) =>
       rs.reduce((a, r) => a + pick(r), 0) / rs.length;
 
     console.log(
@@ -157,7 +159,7 @@ function byBoard(seeds: number, typeId: string): void {
 }
 
 function main(): void {
-  const seeds = Number(process.argv[2] ?? 40);
+  const seeds = seedCount(process.argv[2], 40, 'npm run sim:spells -- [seeds] [ladder]');
   if (process.argv[3]) {
     byBoard(seeds, process.argv[3]);
     return;
@@ -177,37 +179,33 @@ function main(): void {
       'mana spent  of pool',
   );
 
-  const totals = new Map<Policy, Run[]>();
+  const totals = new Map<Policy, HonestRun[]>();
   /**
    * The spell-less runs each policy is judged against — only over the ladders
-   * that actually offer that spell.
-   *
-   * One baseline for everything was fine while every magic ladder carried
-   * every spell being measured. Exercise is not on every ladder, so a single
-   * baseline would compare its runs on the ladders that have it against
-   * spell-less runs on ladders that do not, and the difference would be a fact
-   * about which boards those are rather than about the spell.
+   * that actually offer that spell. Not every ladder offers every spell, so one
+   * baseline for all would set a spell's runs beside spell-less runs on boards
+   * it never sees, and the difference would be about the boards, not the spell.
    */
-  const baselines = new Map<Policy, Run[]>();
+  const baselines = new Map<Policy, HonestRun[]>();
 
   for (const type of magic) {
-    let typeBase: Run[] = [];
+    let typeBase: HonestRun[] = [];
     for (const { policy, spell: spellId } of [
       { policy: 'none' as Policy, spell: null },
       ...MEASURED,
     ]) {
       if (spellId && !(type.spells ?? []).includes(spellId)) continue;
-      const runs: Run[] = [];
+      const runs: HonestRun[] = [];
 
       for (const board of type.boards) {
         const cfg = boardConfig(ladders, type.id, board.n);
         for (let s = 0; s < seeds; s++) {
-          runs.push(play(Game.create(cfg, s * 2654435761 + 11), policy, spellId));
+          runs.push(play(Game.create(cfg, seedAt(s)), policy, spellId));
         }
       }
-      (totals.get(policy) ?? totals.set(policy, []).get(policy)!).push(...runs);
+      addRuns(totals, policy, runs);
       if (policy === 'none') typeBase = runs;
-      else (baselines.get(policy) ?? baselines.set(policy, []).get(policy)!).push(...typeBase);
+      else addRuns(baselines, policy, typeBase);
 
       printPolicyRow(type.name, policy, runs);
     }
@@ -217,9 +215,17 @@ function main(): void {
   printValueTable(totals, baselines);
 }
 
+/** Add runs to a policy's list, starting one if it has none: a copy, never `runs` itself. */
+function addRuns(to: Map<Policy, HonestRun[]>, policy: Policy, runs: readonly HonestRun[]): void {
+  const list = to.get(policy);
+  if (list) list.push(...runs);
+  else to.set(policy, [...runs]);
+}
+
 /** One ladder under one policy: the row of the per-ladder table. */
-function printPolicyRow(typeName: string, policy: Policy, runs: Run[]): void {
-  const mean = (pick: (r: Run) => number) => runs.reduce((s, r) => s + pick(r), 0) / runs.length;
+function printPolicyRow(typeName: string, policy: Policy, runs: HonestRun[]): void {
+  const mean = (pick: (r: HonestRun) => number) =>
+    runs.reduce((s, r) => s + pick(r), 0) / runs.length;
   console.log(
     `${typeName.padEnd(13)} ${policy.padEnd(12)} ` +
       `${(100 * mean((r) => (r.cleared ? 1 : 0))).toFixed(1).padStart(6)}%  ` +
@@ -278,8 +284,11 @@ function printFairPrices(perMana: readonly PerMana[]): void {
 }
 
 /** Each spell against playing spell-less, on the ladders that offer it, and the fair price. */
-function printValueTable(totals: Map<Policy, Run[]>, baselines: Map<Policy, Run[]>): void {
-  const mean = (rs: Run[], pick: (r: Run) => number) =>
+function printValueTable(
+  totals: Map<Policy, HonestRun[]>,
+  baselines: Map<Policy, HonestRun[]>,
+): void {
+  const mean = (rs: HonestRun[], pick: (r: HonestRun) => number) =>
     rs.reduce((s, r) => s + pick(r), 0) / rs.length;
   const base = totals.get('none')!;
   const baseHp = mean(base, (r) => r.hpLost);

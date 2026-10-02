@@ -7,7 +7,8 @@
  *   npm run sim:human -- [seeds] normal --profile  how often each trick fired, per board
  *   npm run sim:human -- [seeds] pairs --peek      read numbers the game hides (PAIRS, DOMINOES)
  *   npm run sim:human -- [seeds] oracle --solver   with the complete deducer attached: `forced`
- *   npm run sim:human -- [seeds] oracle --spells   spending mana: Reveal, Census, Beacon, Exercise
+ *   npm run sim:human -- [seeds] oracle --spells   spending mana: Reveal, Augur, Census, Beacon,
+ *                                                  Exercise
  *   npm run sim:human -- [seeds] huge --attention=4   look within 4 cells of the last action first
  *
  * The graded player (`graded.ts`) plays with the tricks of `docs/strategies.md` up to a grade,
@@ -15,17 +16,20 @@
  * needed, how many moves were on offer when it had to look, and what it had to guess. The
  * columns:
  *
- *   stuck    passes on which nothing at that grade yielded, a board (the forced guesses)
+ *   stuck    stuck points a board: times nothing at that grade yielded a move, each counted once
+ *            however many casts (--spells) were tried there before the next move, which is a
+ *            guess, a rescue (--solver) or what a cast unlocked; spell-less, one a guess or rescue
  *   guess    guesses taken; lethal, those whose worst case could kill at the HP of the moment
  *   clear    share of boards finished; hp, HP lost a board
  *   need>=g  share of boards on which the grade-4 player needed a trick of grade g or above
  *   avail    moves on offer per pass above grade 0, for the grade-4 player: low means scanning
  *   effort   passes weighted by grade cost, plus the guesses (`PASS_COST`, `GUESS_COST`)
  *   unsound  times a trick was wrong about a cell; must be 0
- *   forced   with --solver: stuck points the complete deducer could not rescue either
+ *   forced   with --solver: stuck points the complete deducer did not rescue (with --spells it is
+ *            asked once the casts are tried, so a stuck point a cast settled counts here too)
  *
- * Spell-less, and the search ladders are played at level 0. SUDOKU is left out: it is generated
- * guess-free and its tricks are Sudoku's own.
+ * Spell-less unless --spells, and the search ladders are played at level 0. SUDOKU is left out:
+ * it is generated guess-free and its tricks are Sudoku's own.
  */
 
 import { loadLadders } from '../../data.js';
@@ -34,9 +38,8 @@ import { Game } from '../../engine/game.js';
 import { placementRule } from '../../engine/placement/registry.js';
 import { type GradedOptions, type GradedRun, play } from '../graded.js';
 import { solve } from '../solver.js';
+import { boardRange, mean, pct, seedAt, seedCount } from '../tables.js';
 import { type Grade, TRICK_IDS, TRICKS } from '../tricks.js';
-
-const seedAt = (s: number): number => s * 2654435761 + 11;
 
 interface Flags {
   peek: boolean;
@@ -62,9 +65,6 @@ function measure(type: LadderType, board: number, seeds: number, grade: Grade, f
   return runs;
 }
 
-const mean = (rs: GradedRun[], pick: (r: GradedRun) => number): number =>
-  rs.reduce((a, r) => a + pick(r), 0) / Math.max(1, rs.length);
-const pct = (x: number): string => `${(100 * x).toFixed(0)}%`;
 const share = (rs: GradedRun[], test: (r: GradedRun) => boolean): string =>
   pct(mean(rs, (r) => (test(r) ? 1 : 0)));
 const avail = (rs: GradedRun[]): string => {
@@ -225,9 +225,13 @@ const flags: Flags = {
   solver: args.includes('--solver'),
 };
 const words = args.filter((a) => !a.startsWith('--'));
-const seeds = Number(words[0] ?? 30);
-const range = words[2]?.split('-').map(Number);
-const only: [number, number] | undefined = range ? [range[0]!, range[1] ?? range[0]!] : undefined;
+const seeds = seedCount(
+  words[0],
+  30,
+  'npm run sim:human -- [seeds] [ladder] [a-b] [--profile] [--peek] [--solver] [--spells] ' +
+    '[--attention=R]',
+);
+const only = boardRange(words[2]);
 if (words[1] && flags.profile) profile(seeds, findLadder(words[1]), only, flags);
 else if (words[1]) byBoard(seeds, findLadder(words[1]), only, flags);
 else everyLadder(seeds, flags);

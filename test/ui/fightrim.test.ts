@@ -7,24 +7,14 @@
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { GameEvent } from '../../src/engine/types.js';
-import { App } from '../../src/ui/app.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
+import { type AppDriver, mountApp, tiles } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  apply(events: GameEvent[]): void;
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  readonly settings: Settings;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 const fought = (damage: number): GameEvent => ({
@@ -54,9 +44,7 @@ describe('the glow for damage only', () => {
   it('is a tile on the glow row, and a save holding it is read', () => {
     app.showSettings(() => app.showTypes());
     const row = document.querySelector('.rim-demo')!.closest('.settings-row')!;
-    const tile = [...row.querySelectorAll<HTMLButtonElement>('.preview-chip')].find(
-      (b) => b.textContent === 'Damage only',
-    )!;
+    const tile = tiles(row).find((b) => b.textContent === 'Damage only')!;
     tile.click();
     expect(Settings.load().presentation.fightRim).toBe('hits');
     localStorage.setItem(

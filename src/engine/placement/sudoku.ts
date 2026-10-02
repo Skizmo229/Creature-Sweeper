@@ -12,9 +12,10 @@
  *
  * With 1-9 there is no empty ground at all, so anything the board pre-reveals
  * is a pre-KILLED creature — and a removed creature must still pay its full
- * EXP or the `C_k` gates become unreachable. Thirty random pre-kills grant
- * about 1,700 EXP, past C_7, which would hand the player level 8 before their
- * first click. 0-8 removes that problem rather than managing it.
+ * EXP or the `C_k` gates become unreachable, while a few dozen random
+ * pre-kills would pay enough to hand the player a high level before their
+ * first click (the design reference works it through). 0-8 removes that
+ * problem rather than managing it.
  *
  * The quantities are fixed by the rule — nine of each tier — so `C_k` is
  * identical on every board of the ladder and density, tier count and
@@ -22,9 +23,10 @@
  * number of GIVENS: cells whose tier the player is told up front.
  */
 
-import type { Rng } from '../rng.js';
+import { type Rng, shuffle } from '../rng.js';
 import type { Grid } from '../grid.js';
 import { expForTier } from '../combat.js';
+import { allNotes, hasNote, lowestNote, noteBit } from '../notes.js';
 import { ONE_POOL } from './deal.js';
 import {
   type Deal,
@@ -38,10 +40,14 @@ import {
   boardName,
 } from './rule.js';
 
+/** A Sudoku board's side, and how many digits it uses: 0 to 8. */
 export const SUDOKU_SIZE = 9;
 const SUDOKU_BOX = 3;
+/** Cells on the board, indexed flat as `y * SUDOKU_SIZE + x`. */
+const SUDOKU_CELLS = SUDOKU_SIZE * SUDOKU_SIZE;
 const DIGITS = SUDOKU_SIZE;
-const ALL = (1 << DIGITS) - 1;
+/** Every digit still a candidate. A candidate mask is a note mask: bit `d` is digit `d`. */
+const ALL = allNotes(DIGITS - 1);
 
 /** A solution grid, indexed [y][x], holding tiers 0..8. */
 export type SudokuGrid = number[][];
@@ -71,7 +77,7 @@ const SUDOKU_UNITS: ReadonlyArray<ReadonlyArray<number>> = (() => {
 
 /** Every cell sharing a row, column or box with this one. */
 const SUDOKU_PEERS: ReadonlyArray<ReadonlyArray<number>> = (() => {
-  const peers: Set<number>[] = Array.from({ length: 81 }, () => new Set<number>());
+  const peers: Set<number>[] = Array.from({ length: SUDOKU_CELLS }, () => new Set<number>());
   for (const unit of SUDOKU_UNITS) {
     for (const a of unit) for (const b of unit) if (a !== b) peers[a]!.add(b);
   }
@@ -98,21 +104,17 @@ const SUDOKU_NBRS: ReadonlyArray<ReadonlyArray<number>> = (() => {
   return out;
 })();
 
-function bit(digit: number): number {
-  return 1 << digit;
-}
-
-function lowestBit(mask: number): number {
-  for (let d = 0; mask >>> d; d++) if (mask & bit(d)) return d;
-  return -1;
-}
-
+/**
+ * The strongest digit a candidate mask still admits, -1 for an empty one. The generator's bound,
+ * on candidates it has proven; a player's pencil is never read this way (docs/invariants.md).
+ */
 function highestBit(mask: number): number {
   let hi = -1;
-  for (let d = 0; mask >>> d; d++) if (mask & bit(d)) hi = d;
+  for (let d = 0; mask >>> d; d++) if (hasNote(mask, d)) hi = d;
   return hi;
 }
 
+/** How many candidates a mask holds. */
 function popCount(mask: number): number {
   let n = 0;
   for (let m = mask; m; m >>>= 1) n += m & 1;
@@ -128,21 +130,17 @@ function popCount(mask: number): number {
  * restricted source would bias what survives.
  */
 export function sudokuSolution(rng: Rng): SudokuGrid {
-  const cells = new Int32Array(81).fill(-1);
-  const used: number[] = new Array(81).fill(0);
+  const cells = new Int32Array(SUDOKU_CELLS).fill(-1);
 
+  // Each cell tries the digits in an order of its own.
   const order: number[][] = [];
-  for (let i = 0; i < 81; i++) {
+  for (let i = 0; i < SUDOKU_CELLS; i++) {
     const digits = Array.from({ length: DIGITS }, (_, d) => d);
-    for (let k = digits.length - 1; k > 0; k--) {
-      const j = Math.floor(rng() * (k + 1));
-      [digits[k], digits[j]] = [digits[j]!, digits[k]!];
-    }
-    order.push(digits);
+    order.push(shuffle(digits, rng));
   }
 
   const solve = (at: number): boolean => {
-    if (at === 81) return true;
+    if (at === SUDOKU_CELLS) return true;
     for (const d of order[at]!) {
       let clash = false;
       for (const p of SUDOKU_PEERS[at]!) {
@@ -160,7 +158,6 @@ export function sudokuSolution(rng: Rng): SudokuGrid {
   };
 
   if (!solve(0)) throw new Error('sudoku: no solution from an empty grid, which cannot happen');
-  void used;
 
   const grid: SudokuGrid = [];
   for (let y = 0; y < SUDOKU_SIZE; y++) {
@@ -198,67 +195,95 @@ function numbersOf(grid: SudokuGrid): number[] {
 function propagate(cand: number[], open: boolean[], nums: number[]): boolean {
   let changed = true;
   while (changed) {
-    changed = false;
+    const solved = eliminateSolved(cand);
+    if (solved === null) return false;
+    const singles = placeHiddenSingles(cand);
+    if (singles === null) return false;
+    const sums = boundBySums(cand, open, nums);
+    if (sums === null) return false;
+    changed = solved || singles || sums;
+  }
+  return true;
+}
 
-    for (let i = 0; i < 81; i++) {
-      if (popCount(cand[i]!) !== 1) continue;
-      const d = lowestBit(cand[i]!);
-      for (const p of SUDOKU_PEERS[i]!) {
-        if (cand[p]! & bit(d)) {
-          cand[p] = cand[p]! & ~bit(d);
-          if (!cand[p]) return false;
-          changed = true;
-        }
-      }
-    }
+/** What one pass of a channel did: true if it narrowed a candidate set, null on a contradiction. */
+type Pass = boolean | null;
 
-    for (const unit of SUDOKU_UNITS) {
-      for (let d = 0; d < DIGITS; d++) {
-        let home = -1;
-        let count = 0;
-        for (const c of unit) {
-          if (cand[c]! & bit(d)) {
-            home = c;
-            count++;
-          }
-        }
-        if (count === 0) return false;
-        if (count === 1 && popCount(cand[home]!) > 1) {
-          cand[home] = bit(d);
-          changed = true;
-        }
-      }
-    }
-
-    for (let i = 0; i < 81; i++) {
-      if (!open[i]) continue;
-      const ns = SUDOKU_NBRS[i]!;
-      let lo = 0;
-      let hi = 0;
-      for (const n of ns) {
-        lo += lowestBit(cand[n]!);
-        hi += highestBit(cand[n]!);
-      }
-      const target = nums[i]!;
-      if (target < lo || target > hi) return false;
-      for (const n of ns) {
-        const othersLo = lo - lowestBit(cand[n]!);
-        const othersHi = hi - highestBit(cand[n]!);
-        let keep = 0;
-        for (let d = 0; d < DIGITS; d++) {
-          if (!(cand[n]! & bit(d))) continue;
-          const rest = target - d;
-          if (rest >= othersLo && rest <= othersHi) keep |= bit(d);
-        }
-        if (!keep) return false;
-        if (keep !== cand[n]) {
-          cand[n] = keep;
-          changed = true;
-        }
+/** A solved cell's digit is no candidate for any of its peers. */
+function eliminateSolved(cand: number[]): Pass {
+  let changed = false;
+  for (let i = 0; i < SUDOKU_CELLS; i++) {
+    if (popCount(cand[i]!) !== 1) continue;
+    const d = lowestNote(cand[i]!);
+    for (const p of SUDOKU_PEERS[i]!) {
+      if (cand[p]! & noteBit(d)) {
+        cand[p] = cand[p]! & ~noteBit(d);
+        if (!cand[p]) return null;
+        changed = true;
       }
     }
   }
-  return true;
+  return changed;
+}
+
+/** A digit with one home left in a row, column or box takes it. */
+function placeHiddenSingles(cand: number[]): Pass {
+  let changed = false;
+  for (const unit of SUDOKU_UNITS) {
+    for (let d = 0; d < DIGITS; d++) {
+      let home = -1;
+      let count = 0;
+      for (const c of unit) {
+        if (cand[c]! & noteBit(d)) {
+          home = c;
+          count++;
+        }
+      }
+      if (count === 0) return null;
+      if (count === 1 && popCount(cand[home]!) > 1) {
+        cand[home] = noteBit(d);
+        changed = true;
+      }
+    }
+  }
+  return changed;
+}
+
+/**
+ * Each open cell's number bounds its neighbours: a candidate survives only if the others, at their
+ * least and most, can still make up the rest. The bounds are taken once per open cell, before any
+ * of its neighbours narrows.
+ */
+function boundBySums(cand: number[], open: boolean[], nums: number[]): Pass {
+  let changed = false;
+  for (let i = 0; i < SUDOKU_CELLS; i++) {
+    if (!open[i]) continue;
+    const ns = SUDOKU_NBRS[i]!;
+    let lo = 0;
+    let hi = 0;
+    for (const n of ns) {
+      lo += lowestNote(cand[n]!);
+      hi += highestBit(cand[n]!);
+    }
+    const target = nums[i]!;
+    if (target < lo || target > hi) return null;
+    for (const n of ns) {
+      const othersLo = lo - lowestNote(cand[n]!);
+      const othersHi = hi - highestBit(cand[n]!);
+      let keep = 0;
+      for (let d = 0; d < DIGITS; d++) {
+        if (!(cand[n]! & noteBit(d))) continue;
+        const rest = target - d;
+        if (rest >= othersLo && rest <= othersHi) keep |= noteBit(d);
+      }
+      if (!keep) return null;
+      if (keep !== cand[n]) {
+        cand[n] = keep;
+        changed = true;
+      }
+    }
+  }
+  return changed;
 }
 
 /**
@@ -269,7 +294,7 @@ function propagate(cand: number[], open: boolean[], nums: number[]): boolean {
  * feed each other — you cannot read a number until you have killed the cell
  * that shows it, and you cannot kill it until you have proved it weak enough.
  * The question is whether that loop ignites from the givens and the nine
- * empties, and then runs all the way to 81.
+ * empties, and then runs all the way to the last cell.
  *
  * A false here is the generator's reject signal, not a statement that the
  * board is unsolvable by a cleverer player: the propagator does singles and
@@ -288,16 +313,16 @@ export function clearableWithoutGuessing(
       flat.push(grid[y]![x]!);
     }
   const nums = numbersOf(grid);
-  const cand: number[] = new Array(81).fill(ALL);
-  const open: boolean[] = new Array(81).fill(false);
+  const cand: number[] = new Array(SUDOKU_CELLS).fill(ALL);
+  const open: boolean[] = new Array(SUDOKU_CELLS).fill(false);
 
-  for (const g of givens) cand[g] = bit(flat[g]!);
+  for (const g of givens) cand[g] = noteBit(flat[g]!);
   // The opening: every empty cell, free and by construction.
   let openCount = 0;
-  for (let i = 0; i < 81; i++) {
+  for (let i = 0; i < SUDOKU_CELLS; i++) {
     if (flat[i] === 0) {
       open[i] = true;
-      cand[i] = bit(0);
+      cand[i] = noteBit(0);
       openCount++;
     }
   }
@@ -314,7 +339,7 @@ export function clearableWithoutGuessing(
     if (!propagate(cand, open, nums)) return false;
 
     let progressed = false;
-    for (let i = 0; i < 81; i++) {
+    for (let i = 0; i < SUDOKU_CELLS; i++) {
       if (open[i]) continue;
       // Every tier still possible here is at or below your level, so the fight
       // is free whichever it turns out to be. That is Sweep's own bound, read
@@ -322,11 +347,11 @@ export function clearableWithoutGuessing(
       if (highestBit(cand[i]!) > level) continue;
       open[i] = true;
       openCount++;
-      cand[i] = bit(flat[i]!);
+      cand[i] = noteBit(flat[i]!);
       if (flat[i]! > 0) exp += expForTier(flat[i]!);
       progressed = true;
     }
-    if (openCount === 81) return true;
+    if (openCount === SUDOKU_CELLS) return true;
     if (!progressed) return false;
     levelUp();
   }
@@ -350,15 +375,15 @@ export function sudokuDeduction(
   nums: ReadonlyArray<number>,
   marks: ReadonlyArray<number>,
 ): number[] | null {
-  const cand: number[] = new Array(81).fill(ALL);
-  const open: boolean[] = new Array(81).fill(false);
-  for (let i = 0; i < 81; i++) {
+  const cand: number[] = new Array(SUDOKU_CELLS).fill(ALL);
+  const open: boolean[] = new Array(SUDOKU_CELLS).fill(false);
+  for (let i = 0; i < SUDOKU_CELLS; i++) {
     const tier = openTiers[i];
     if (tier !== null && tier !== undefined) {
       open[i] = true;
-      cand[i] = bit(tier);
+      cand[i] = noteBit(tier);
     } else if (marks[i]) {
-      cand[i] = bit(marks[i]!);
+      cand[i] = noteBit(marks[i]!);
     }
   }
   return propagate(cand, open, nums as number[]) ? cand : null;
@@ -369,6 +394,7 @@ export function sudokuCeiling(mask: number): number {
   return highestBit(mask);
 }
 
+/** A generated Sudoku board: the solution, and the cells the player is told. */
 export interface SudokuBoard {
   grid: SudokuGrid;
   /** Flat indices of the cells whose tier the player is told up front. */
@@ -412,10 +438,7 @@ function generateSudokuBoard(
       for (let x = 0; x < SUDOKU_SIZE; x++) {
         if (grid[y]![x]! > 0) creatures.push(idx(x, y));
       }
-    for (let k = creatures.length - 1; k > 0; k--) {
-      const j = Math.floor(rng() * (k + 1));
-      [creatures[k], creatures[j]] = [creatures[j]!, creatures[k]!];
-    }
+    shuffle(creatures, rng);
     const chosen = creatures.slice(0, Math.min(givens, creatures.length));
     if (clearableWithoutGuessing(grid, chosen, thresholds, startLevel)) {
       return { grid, givens: chosen };
@@ -423,7 +446,7 @@ function generateSudokuBoard(
   }
   throw new Error(
     `sudoku: no guess-free board with ${givens} givens in ${SUDOKU_ATTEMPTS} attempts — ` +
-      `the givens schedule in ladders.py is below what the propagator can carry`,
+      `the givens schedule in design/ladder_types.toml is below what the propagator can carry`,
   );
 }
 
@@ -514,6 +537,7 @@ function sudokuFault(grid: Grid): string | null {
   return null;
 }
 
+/** The Sudoku placement: a guess-free Sudoku solution over tiers 0 to 8, with givens. */
 export const SUDOKU_RULE: PlacementRule = {
   id: 'sudoku',
   validate: validateSudoku,

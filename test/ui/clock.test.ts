@@ -7,35 +7,18 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { DEFAULT_GAMEPLAY } from '../../src/engine/settings.js';
 import { autoplayTierOrder } from '../../src/sim/autoplay.js';
-import { App } from '../../src/ui/app.js';
-import type { BoardClock } from '../../src/ui/game/clock.js';
 import { clockText } from '../../src/ui/game/hud.js';
-import type { Game } from '../../src/engine/game.js';
 import { ladders } from '../../src/ui/ladders.js';
-import type { Progress } from '../../src/ui/progress.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
+import { type AppDriver, mountApp, settingsRow, tileLabel, tiles } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  finish(): void;
-  updateClock(): void;
-  readonly current: Game | null;
-  readonly clock: BoardClock;
-  readonly progress: Progress;
-  readonly settings: Settings;
-  readonly teaching: { startLesson(index: number): void };
-  showSettings(back: () => void): void;
-  showTypes(): void;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 const readout = (): HTMLElement => document.querySelector<HTMLElement>('.hud-t')!;
@@ -70,7 +53,11 @@ describe('the clock setting', () => {
   });
 
   it('shows Time Attack’s countdown in the style too', () => {
-    app.progress.recordClear(ladders, 'normal', 1, { perfect: false, seconds: 200 });
+    app.progress.recordClear(ladders, 'normal', 1, {
+      perfect: false,
+      seconds: 200,
+      dials: DEFAULT_GAMEPLAY,
+    });
     app.settings.setGameplay({ timeAttack: true });
     app.settings.setPresentation({ clock: 'minutes' });
     app.play('normal', 1, 7);
@@ -108,18 +95,12 @@ describe('the clock setting', () => {
 
   it('is offered on the settings screen with a sample of each style', () => {
     app.showSettings(() => app.showTypes());
-    const row = [...document.querySelectorAll('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Clock',
-    )!;
-    const tiles = [...row.querySelectorAll<HTMLButtonElement>('.preview-chip')];
-    expect(tiles.map((t) => t.querySelector('.chip-label')!.textContent)).toEqual([
-      'Seconds',
-      'Minutes and seconds',
-      'Hidden',
-    ]);
-    expect(tiles[0]!.querySelector('.hud-t')!.textContent).toBe('TIME 125');
-    expect(tiles[1]!.querySelector('.hud-t')!.textContent).toBe('TIME 2:05');
-    tiles[1]!.click();
+    const row = settingsRow('Clock');
+    const styles = tiles(row);
+    expect(styles.map(tileLabel)).toEqual(['Seconds', 'Minutes and seconds', 'Hidden']);
+    expect(styles[0]!.querySelector('.hud-t')!.textContent).toBe('TIME 125');
+    expect(styles[1]!.querySelector('.hud-t')!.textContent).toBe('TIME 2:05');
+    styles[1]!.click();
     expect(Settings.load().presentation.clock).toBe('minutes');
   });
 

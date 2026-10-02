@@ -14,7 +14,7 @@ import { type Diagram, diagramPicture, pressDiagram } from '../../sim/diagrams.j
 import type { TrickId } from '../../sim/tricks.js';
 import type { Lesson } from '../../sim/tutor.js';
 import { type BoardDisplay, BoardView } from '../board/view.js';
-import { el } from '../dom.js';
+import { type OverlayCard, el } from '../dom.js';
 import type { TypeTheme } from '../looktypes.js';
 import {
   type Block,
@@ -30,6 +30,7 @@ import { notesFor } from '../guide/ladders.js';
 /** Where the guide opens: at a trick's entry, or at the top of a section, by its title. */
 export type GuideTarget = { trick: TrickId } | { section: string };
 
+/** What the guide is drawn with: the ladders, the look of its diagrams, and its way out. */
 export interface GuideOptions {
   ladders: readonly LadderType[];
   theme: TypeTheme;
@@ -195,7 +196,7 @@ function drawDiagram(d: Diagram, o: GuideOptions): HTMLElement {
   const picture = diagramPicture(d);
   view.setGame(picture, o.theme, { ...o.display, highlight: null });
   const { lesson } = pressDiagram(d);
-  if (lesson) view.setLesson(within(lesson, picture.config.width));
+  if (lesson) view.setPointer(within(lesson, picture.config.width));
   figure.append(canvas);
   if (lesson) figure.append(el('figcaption', undefined, `Hint says: ${lesson.caption}`));
   return figure;
@@ -224,7 +225,7 @@ export function buildLadderCard(
   ladder: LadderType,
   guide: () => void,
   close: () => void,
-): { overlay: HTMLElement; focus: HTMLElement } {
+): OverlayCard {
   const overlay = el('div', 'overlay win');
   const card = el('div', 'overlay-card howto');
   card.append(el('h2', undefined, `HOW TO PLAY ${ladder.name}`));

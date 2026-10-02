@@ -8,31 +8,16 @@
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Game } from '../../src/engine/game.js';
-import { App } from '../../src/ui/app.js';
-import type { BoardClock } from '../../src/ui/game/clock.js';
+import { DEFAULT_GAMEPLAY } from '../../src/engine/settings.js';
 import { ladders } from '../../src/ui/ladders.js';
-import type { Progress } from '../../src/ui/progress.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
+import { type AppDriver, mountApp, settingsRow } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  runFull(typeId: string, seed?: number): void;
-  readonly current: Game | null;
-  readonly clock: BoardClock;
-  readonly progress: Progress;
-  readonly settings: Settings;
-  readonly actions: { onCellPrimary(x: number, y: number): void; doSweep(useMarks: boolean): void };
-  showSettings(back: () => void): void;
-  showTypes(): void;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
   app.progress.setUnlockAll(true);
 });
 
@@ -94,7 +79,11 @@ describe('a chord', () => {
 
 describe('the clock’s dials', () => {
   it('race a share of the best, take the shorter of that and a limit, and limit a run per board', () => {
-    app.progress.recordClear(ladders, 'normal', 1, { perfect: false, seconds: 100 });
+    app.progress.recordClear(ladders, 'normal', 1, {
+      perfect: false,
+      seconds: 100,
+      dials: DEFAULT_GAMEPLAY,
+    });
     app.settings.setGameplay({ timeAttack: true, timeAttackRatio: 0.5 });
     app.play('normal', 1, 7);
     expect(app.clock.timeLimit).toBe(50);
@@ -124,9 +113,7 @@ describe('the rows', () => {
     ]) {
       expect(names, name).toContain(name);
     }
-    const sweep = [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Sweep',
-    )!;
+    const sweep = settingsRow('Sweep');
     const select = sweep.querySelector<HTMLSelectElement>('select')!;
     expect([...select.options].map((o) => o.value)).toEqual(['on', 'charge', 'budget', 'off']);
     select.value = 'budget';

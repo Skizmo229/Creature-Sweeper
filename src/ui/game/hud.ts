@@ -13,10 +13,15 @@ import type { Cell } from '../../engine/types.js';
 import { el } from '../dom.js';
 import type { ClockStyle } from '../presentation.js';
 import { type TierPalette, tierColor, tierGilded } from '../tiercolors.js';
-import { hintText } from './hint.js';
+import { hintLineText } from './hintline.js';
 import type { EntryMode } from './mode.js';
 import type { GameScreenElements } from './screen.js';
 import type { LessonLine } from '../teaching.js';
+
+/** At or below this share of its maximum, or at 1, HP reads as low. */
+const LOW_HP_FRACTION = 0.3;
+/** At or below this many seconds left, the countdown reads as low. */
+const LOW_TIME_SECONDS = 10;
 
 const pad = (n: number, width: number) => String(Math.max(0, Math.floor(n))).padStart(width, '0');
 
@@ -56,13 +61,14 @@ function syncBeatenToggle(btn: HTMLButtonElement, on: boolean): void {
   btn.setAttribute('aria-pressed', String(on));
 }
 
+/** What a refresh of the game screen reads, gathered by `App` from the game and the settings. */
 export interface HudState {
   game: Game;
   run: FullRun | null;
   boardIndex: number;
   mode: EntryMode;
   hovered: Cell | null;
-  /** What the tutor is saying, in place of the hint line, while a lesson is showing. */
+  /** What the tutor is saying, in place of the hint line, while it is pointing at something. */
   tutor: string | null;
   /** On a lesson board, what the lesson says there instead of the hint. */
   lesson: LessonLine | null;
@@ -74,6 +80,38 @@ export interface HudState {
   hintLine: boolean;
 }
 
+/**
+ * What the Sweep button says: off; while the dial has it closed, the budget left or the charge
+ * banked; else how many cells it would open, and the budget left. The meter goes on the button,
+ * because what the player needs to know is why THIS control is dark.
+ */
+function sweepLabel(game: Game, safeCount: number): string {
+  const sweepMode = game.settings.sweep;
+  if (sweepMode === 'off') return 'Sweep off';
+  const left = sweepMode === 'budget' ? ` (${game.sweepsLeft} left)` : '';
+  if (!game.sweepAvailable) {
+    return sweepMode === 'budget' ? `Sweep${left}` : `Sweep (${game.charge}/${game.chargeNeeded})`;
+  }
+  return safeCount > 0 ? `Sweep ${safeCount}${left}` : `Sweep${left}`;
+}
+
+/** The Sweep button's tooltip: what the dial makes of it. */
+function sweepTitle(game: Game): string {
+  switch (game.settings.sweep) {
+    case 'off':
+      return 'Sweep is off in Settings.';
+    case 'charge':
+      return (
+        `Cells opened by hand charge Sweep: ${game.chargeNeeded} per use, ` +
+        `${game.charge} banked.`
+      );
+    case 'budget':
+      return `${game.settings.sweepBudget} sweeps a board; ${game.sweepsLeft} left.`;
+    default:
+      return 'Opens what is proven safe. Never costs HP.';
+  }
+}
+
 /** The Sweep buttons, their meter and their counts, and PATROL's Wait, brought up to date. */
 function syncSweep(els: GameScreenElements, game: Game): void {
   const sweepMode = game.settings.sweep;
@@ -81,29 +119,9 @@ function syncSweep(els: GameScreenElements, game: Game): void {
   const safeCount = sweepMode === 'off' ? 0 : game.safeCells({ useMarks: false }).length;
   const markCount = sweepMode === 'off' ? 0 : game.safeCells({ useMarks: true }).length;
   if (els.sweepSafeBtn) {
-    // The meter goes on the button, because what the player needs to know is why THIS control
-    // is dark.
-    const left = sweepMode === 'budget' ? ` (${game.sweepsLeft} left)` : '';
-    els.sweepSafeBtn.textContent =
-      sweepMode === 'off'
-        ? 'Sweep off'
-        : gated
-          ? sweepMode === 'budget'
-            ? `Sweep${left}`
-            : `Sweep (${game.charge}/${game.chargeNeeded})`
-          : safeCount > 0
-            ? `Sweep ${safeCount}${left}`
-            : `Sweep${left}`;
+    els.sweepSafeBtn.textContent = sweepLabel(game, safeCount);
     els.sweepSafeBtn.disabled = gated || safeCount === 0;
-    els.sweepSafeBtn.title =
-      sweepMode === 'off'
-        ? 'Sweep is off in Settings.'
-        : sweepMode === 'charge'
-          ? `Cells opened by hand charge Sweep: ${game.chargeNeeded} per use, ` +
-            `${game.charge} banked.`
-          : sweepMode === 'budget'
-            ? `${game.settings.sweepBudget} sweeps a board; ${game.sweepsLeft} left.`
-            : 'Opens what is proven safe. Never costs HP.';
+    els.sweepSafeBtn.title = sweepTitle(game);
   }
   // The move count is what a player times a creature's walk by: every creature was on its route's
   // corner at move 0 and walks one cell a move.
@@ -119,9 +137,17 @@ function syncSweep(els: GameScreenElements, game: Game): void {
 
 /** Everything on the screen that reads the game, brought up to date. */
 export function syncGameScreen(els: GameScreenElements, s: HudState): void {
-  const { game, mode } = s;
+  syncReadouts(els, s);
+  syncPalette(els, s);
+  syncHintLine(els, s);
+  syncSpells(els, s);
+  syncSweep(els, s.game);
+}
 
-  els.hud.hp!.textContent = `HP ${game.hp}`;
+/** The HUD's readouts: HP, the level in its tier's colour, EXP, the next level, the run. */
+function syncReadouts(els: GameScreenElements, s: HudState): void {
+  const { game } = s;
+  els.hud.hp.textContent = `HP ${game.hp}`;
   // The level number wears its tier's creature colour, the one encoding of a tier the whole game
   // shares; tiers past five carry the halo their pips do, or Level 6 reads as Level 1.
   const levelNum = el('span', 'hud-level-num', String(game.level));
@@ -130,18 +156,22 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
     levelNum.classList.add('gilded');
     levelNum.style.setProperty('--halo', s.tierColors.halo);
   }
-  els.hud.lv!.replaceChildren('Level ', levelNum);
+  els.hud.lv.replaceChildren('Level ', levelNum);
   // A standing Exercise is a level carried into the next fight, shown on the level until spent.
   if (game.exerciseCharge > 0) {
-    els.hud.lv!.append(el('span', 'hud-buff', ` +${game.exerciseCharge}`));
+    els.hud.lv.append(el('span', 'hud-buff', ` +${game.exerciseCharge}`));
   }
-  els.hud.ex!.textContent = `EXP ${game.ex}`;
-  els.hud.ne!.textContent = `Next Level ${game.progression.toNext()}`;
-  els.hud.hp!.classList.toggle('low', game.hp <= Math.max(1, game.maxHp * 0.3));
+  els.hud.ex.textContent = `EXP ${game.ex}`;
+  els.hud.ne.textContent = `Next Level ${game.progression.toNext()}`;
+  els.hud.hp.classList.toggle('low', game.hp <= Math.max(1, game.maxHp * LOW_HP_FRACTION));
   if (els.hud.run && s.run) {
     els.hud.run.textContent = `RUN${s.boardIndex}/${s.run.boardCount}`;
   }
+}
 
+/** The LV palette: each tier's counter, the entry mode, the Beaten toggle, the empty pencil. */
+function syncPalette(els: GameScreenElements, s: HudState): void {
+  const { game, mode } = s;
   // With the counters hidden the button is the tier alone, and never dims for a tier that is gone.
   const { countersHidden } = game.settings;
   for (const btn of els.counters) {
@@ -163,9 +193,14 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
   els.emptyNoteBtn.hidden = !mode.notesMode || !canPencilEmpty(game);
   els.emptyNoteBtn.classList.toggle('active', mode.notesMode && mode.markMode === 0);
   gatePalette(els, game, mode, s.hovered);
+}
+
+/** The hint line, or the tutor or a lesson speaking in its place, and the tutor's button. */
+function syncHintLine(els: GameScreenElements, s: HudState): void {
+  const { game, mode } = s;
   // The tutor speaks where the hint does, and in the ink rather than the hint's grey: it is the
   // thing the player just asked for.
-  els.hint.textContent = s.tutor ?? s.lesson?.say ?? hintText(game, mode);
+  els.hint.textContent = s.tutor ?? s.lesson?.say ?? hintLineText(game, mode);
   els.hint.hidden = !s.hintLine && s.tutor === null && s.lesson === null;
   els.hint.classList.toggle('tutoring', s.tutor !== null);
   els.hint.classList.toggle('teaching', s.tutor === null && s.lesson !== null);
@@ -174,8 +209,12 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
     if (s.lesson.refused) els.hint.prepend(el('span', 'refused', `${s.lesson.refused} `));
     if (s.lesson.next) els.hint.append(' ', els.next);
   }
-  if (els.whyBtn) els.whyBtn.disabled = game.status !== 'playing';
+  if (els.hintBtn) els.hintBtn.disabled = game.status !== 'playing';
+}
 
+/** The mana readout, a button per spell with its price, and the stage while one is armed. */
+function syncSpells(els: GameScreenElements, s: HudState): void {
+  const { game, mode } = s;
   if (els.hud.mp) {
     els.hud.mp.textContent = `MP ${game.mana}`;
     els.hud.mp.classList.toggle('charged', game.exerciseCharge > 0);
@@ -187,8 +226,6 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
     btn.classList.toggle('armed', mode.pendingSpell === id);
   }
   els.stage.classList.toggle('targeting', mode.pendingSpell !== null);
-
-  syncSweep(els, game);
 }
 
 /** A count of seconds as the clock setting shows it: the seconds, or minutes and seconds. */
@@ -208,10 +245,9 @@ export function syncClock(
   style: ClockStyle,
 ): void {
   const t = els.hud.t;
-  if (!t) return;
   t.hidden = style === 'hidden';
   t.textContent =
     left === null ? `TIME ${clockText(elapsed, style)}` : `TIME ${clockText(left, style)} LEFT`;
-  // Under ten seconds it reads like the HP counter does: it is the number about to end the board.
-  t.classList.toggle('low', left !== null && left <= 10);
+  // Near the end it reads like the HP counter does: it is the number about to end the board.
+  t.classList.toggle('low', left !== null && left <= LOW_TIME_SECONDS);
 }

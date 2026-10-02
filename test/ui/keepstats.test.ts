@@ -6,28 +6,16 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Game } from '../../src/engine/game.js';
 import { autoplayTierOrder } from '../../src/sim/autoplay.js';
-import { App } from '../../src/ui/app.js';
-import { SETTINGS_KEY } from '../../src/ui/savefile.js';
+import { SETTINGS_KEY, boardKey } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
 import { TelemetryStore } from '../../src/ui/telemetrystore.js';
+import { type AppDriver, mountApp, settingsRow } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  finish(): void;
-  readonly current: Game | null;
-  readonly settings: Settings;
-  showSettings(back: () => void): void;
-  showTypes(): void;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 /** How many boards the statistics on this device hold attempts on. */
@@ -53,11 +41,27 @@ describe('keeping play statistics', () => {
     expect(boardsKept()).toBe(2);
   });
 
+  it("times each board from its own deal, not from the last board's clock", () => {
+    const secondsOn = (board: number): number =>
+      TelemetryStore.load().current.tuned[boardKey('normal', board)]!.seconds;
+    app.play('normal', 1, 7);
+    app.clock.addSeconds(30);
+    autoplayTierOrder(app.current!);
+    app.finish();
+    expect(secondsOn(1)).toBeGreaterThanOrEqual(30);
+
+    // The clock still holds board 1's 30 seconds when board 2 is dealt.
+    app.play('normal', 2, 7);
+    app.clock.addSeconds(5);
+    autoplayTierOrder(app.current!);
+    app.finish();
+    expect(secondsOn(2)).toBeGreaterThanOrEqual(5);
+    expect(secondsOn(2)).toBeLessThan(30);
+  });
+
   it('is a toggle on the settings screen, and reads a save without it as on', () => {
     app.showSettings(() => app.showTypes());
-    const row = [...document.querySelectorAll('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Keep play statistics',
-    )!;
+    const row = settingsRow('Keep play statistics');
     const box = row.querySelector<HTMLInputElement>('input[type=checkbox]')!;
     expect(box.checked).toBe(true);
     box.click();

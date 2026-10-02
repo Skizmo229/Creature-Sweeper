@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { boardFingerprint, ladderFingerprint } from '../src/engine/config.js';
+import { DEFAULT_GAMEPLAY } from '../src/engine/settings.js';
 import { Progress, type SaveData } from '../src/ui/progress.js';
 import { ladders } from './helpers.js';
 
@@ -12,12 +13,24 @@ const TYPE = 'easy';
 const BOARD = 1;
 
 function clear(progress: Progress, seconds: number, hints: number) {
-  progress.recordClear(ladders, TYPE, BOARD, { perfect: false, seconds, hints });
+  progress.recordClear(ladders, TYPE, BOARD, {
+    perfect: false,
+    seconds,
+    hints,
+    dials: DEFAULT_GAMEPLAY,
+  });
   return progress.boardRecord(ladders, TYPE, BOARD);
 }
 
 function completeRun(progress: Progress, seconds: number, hints: number) {
-  progress.recordRun(ladders, TYPE, { completed: true, reachedBoard: 10, hp: 1, seconds, hints });
+  progress.recordRun(ladders, TYPE, {
+    completed: true,
+    reachedBoard: 10,
+    hp: 1,
+    seconds,
+    hints,
+    dials: DEFAULT_GAMEPLAY,
+  });
   return progress.runRecord(ladders, TYPE);
 }
 
@@ -68,6 +81,7 @@ describe('a Full Run', () => {
       hp: 0,
       seconds: 100,
       hints: 1,
+      dials: DEFAULT_GAMEPLAY,
     });
     expect(progress.runRecord(ladders, TYPE)).toMatchObject({
       bestTime: null,
@@ -159,5 +173,18 @@ describe('a record set on another tuning of the board (decision 0079)', () => {
     expect(boardFingerprint(ladders, TYPE, 1)).toMatch(/^[0-9a-f]{8}$/);
     expect(boardFingerprint(ladders, TYPE, 1)).not.toBe(boardFingerprint(ladders, TYPE, 2));
     expect(boardFingerprint(ladders, TYPE, 1)).toBe(boardFingerprint(ladders, TYPE, 1));
+  });
+});
+
+describe('dials easier than the tuned game', () => {
+  it('write no clear and no run, an attempt included', () => {
+    const progress = new Progress();
+    const easier = { ...DEFAULT_GAMEPLAY, hpRatio: 2 };
+    const clear = { perfect: true, seconds: 10, dials: easier };
+    expect(progress.recordClear(ladders, TYPE, BOARD, clear)).toBeNull();
+    expect(progress.boardRecord(ladders, TYPE, BOARD).cleared).toBe(false);
+    const run = { completed: true, reachedBoard: 10, hp: 1, seconds: 10, dials: easier };
+    progress.recordRun(ladders, TYPE, run);
+    expect(progress.runRecord(ladders, TYPE).attempts).toBe(0);
   });
 });

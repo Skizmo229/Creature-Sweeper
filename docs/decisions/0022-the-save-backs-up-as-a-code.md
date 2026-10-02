@@ -1,6 +1,7 @@
 # 0022. The save backs up as a CS1: base64 code
 
-2026-09-21. Status: adopted.
+2026-09-21. Status: adopted. An unreadable save is set aside, and the code names the version that
+wrote it, since 0080.
 
 ## Context
 The save is `localStorage` inside itch.io's third-party iframe, which Safari caps and may clear.

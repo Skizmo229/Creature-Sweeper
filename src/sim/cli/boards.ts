@@ -12,8 +12,9 @@ import { loadLadders } from '../../data.js';
 import { boardConfig } from '../../engine/config.js';
 import { Game } from '../../engine/game.js';
 import { autoplaySearch, autoplayTierOrder } from '../autoplay.js';
+import { seedCount } from '../tables.js';
 
-const seeds = Number(process.argv[2] ?? 20);
+const seeds = seedCount(process.argv[2], 20, 'npm run sim -- [seeds]');
 const ladders = loadLadders();
 
 function median(values: number[]): number {
@@ -59,8 +60,8 @@ for (const type of ladders) {
       maxLevel = Math.max(maxLevel, result.finalLevel);
     }
 
-    if (cleared !== seeds || hpLost !== 0) failures++;
     const ok = cleared === seeds && hpLost === 0;
+    if (!ok) failures++;
     console.log(
       String(row.n).padStart(3) +
         `${row.w}x${row.h}`.padStart(9) +

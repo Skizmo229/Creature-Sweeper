@@ -10,8 +10,21 @@
  */
 
 import { type Ladders, boardFingerprint, ladderFingerprint } from '../engine/config.js';
-import { PROGRESS_KEY as KEY } from './savefile.js';
+import { type GameplaySettings, isAtLeastAsHard } from '../engine/settings.js';
+import {
+  PROGRESS_KEY as KEY,
+  boardKey,
+  dropKept,
+  hasKept,
+  isRecord,
+  keepUnreadable,
+  ladderPrefix,
+} from './savefile.js';
 
+/** The tuned boards of a ladder the table does not name: the ten every ladder has. */
+const TUNED_BOARDS = 10;
+
+/** What the save holds for one board of a ladder. */
 export interface BoardRecord {
   cleared: boolean;
   /** Cleared without losing a single point of HP. */
@@ -30,10 +43,11 @@ export interface BoardRecord {
   fingerprint?: string;
 }
 
+/** What the save holds for one ladder: how far up it is unlocked, and whether it is cleared. */
 export interface TypeRecord {
   /** Highest board index unlocked; you always start with board 1. */
   highestBoard: number;
-  /** Board 10 beaten — the type is cleared and unlocks what it gates. */
+  /** The last tuned board beaten: the type is cleared and unlocks what it gates. */
   cleared: boolean;
 }
 
@@ -59,6 +73,7 @@ export interface FullRunRecord {
   fingerprint?: string;
 }
 
+/** The stored save, version 1: every record, and what the player has been shown once. */
 export interface SaveData {
   version: 1;
   types: Record<string, TypeRecord>;
@@ -90,42 +105,6 @@ export interface SaveData {
   ladderCards: string[];
 }
 
-/**
- * Where a stored value this build could not read is kept, beside the fresh one that replaces it
- * (decision 0080): a save from a newer version, or a damaged one, is set aside rather than
- * written over, so a later build, or a person, can still get at it.
- */
-export function keptKey(key: string): string {
-  return `${key}.unreadable`;
-}
-
-/** Set an unreadable stored value aside under its kept key. Storage that throws keeps nothing. */
-export function keepUnreadable(key: string, raw: string): void {
-  try {
-    localStorage.setItem(keptKey(key), raw);
-  } catch {
-    // Blocked storage: nothing could be read from it, and nothing can be written to it.
-  }
-}
-
-/** Whether something is kept aside under this key. */
-function hasKept(key: string): boolean {
-  try {
-    return localStorage.getItem(keptKey(key)) !== null;
-  } catch {
-    return false;
-  }
-}
-
-/** Let what was kept aside under this key go, as Reset progress does. */
-export function dropKept(key: string): void {
-  try {
-    localStorage.removeItem(keptKey(key));
-  } catch {
-    // Nothing to do.
-  }
-}
-
 function emptySave(): SaveData {
   return {
     version: 1,
@@ -138,15 +117,6 @@ function emptySave(): SaveData {
     lessons: [],
     ladderCards: [],
   };
-}
-
-/** Every board key of a ladder begins with this. */
-function ladderPrefix(typeId: string): string {
-  return `${typeId}#`;
-}
-
-function boardKey(typeId: string, board: number): string {
-  return `${ladderPrefix(typeId)}${board}`;
 }
 
 /**
@@ -165,9 +135,6 @@ function bestOf(
   if (prev.bestTime !== null) return { bestTime: prev.bestTime };
   return { bestTime: null, fewestHints: Math.min(prev.fewestHints ?? hints, hints) };
 }
-
-const isRecord = (v: unknown): v is Record<string, unknown> =>
-  typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /**
  * A parsed version-1 save, read field by field: a field of the wrong shape (a null list, a
@@ -195,6 +162,10 @@ function readSave(parsed: Record<string, unknown>): SaveData {
   };
 }
 
+/**
+ * The save in play: loaded once, read by every screen, and written to storage after every
+ * change. A record is read as it applies to the ladder as it is tuned now (decision 0079).
+ */
 export class Progress {
   private data: SaveData;
 
@@ -292,20 +263,28 @@ export class Progress {
   }
 
   /**
-   * Full Run opens once the type's board 10 is cleared.
+   * Full Run opens once the type's last tuned board is cleared.
    *
    * Deliberately the type's own clear and nothing else: a run is a victory lap
    * down a ladder you have already walked, so it can never be the way a player
    * first meets a board.
    */
   isFullRunUnlocked(ladders: Ladders, typeId: string): boolean {
+    return this.ladderFinished(ladders, typeId);
+  }
+
+  /** Whether a ladder is open and its last tuned board cleared, or everything is unlocked. */
+  private ladderFinished(ladders: Ladders, typeId: string): boolean {
     if (this.data.unlockAll) return true;
     if (!this.isTypeUnlocked(ladders, typeId)) return false;
     return this.typeRecord(typeId).cleared;
   }
 
-  /** Record how a run ended. Runs never advance the board ladder — every
-   *  board of a run was already cleared, or the run would not have opened. */
+  /**
+   * Record how a run ended. Runs never advance the board ladder: every board of a run was already
+   * cleared, or the run would not have opened. A run played on dials easier than the tuned game
+   * writes nothing, an attempt included.
+   */
   recordRun(
     ladders: Ladders,
     typeId: string,
@@ -316,8 +295,11 @@ export class Progress {
       seconds: number;
       /** Times the tutor was asked over the run. */
       hints?: number;
+      /** The gameplay dials the run was played on. */
+      dials: GameplaySettings;
     },
   ): void {
+    if (!isAtLeastAsHard(opts.dials)) return;
     const prev = this.runRecord(ladders, typeId);
     // A run the tutor helped with is cleared and counts, but races nothing.
     const { bestTime, fewestHints } = opts.completed
@@ -336,16 +318,14 @@ export class Progress {
   }
 
   /**
-   * Scaling boards open on the same condition a Full Run does: board 10.
+   * Scaling boards open on the same condition a Full Run does: the last tuned board.
    *
    * Same reasoning too — the continuation is the ladder carried on past its
    * end, so meeting it before finishing the ladder would be meeting the
    * ladder out of order.
    */
   isScalingUnlocked(ladders: Ladders, typeId: string): boolean {
-    if (this.data.unlockAll) return true;
-    if (!this.isTypeUnlocked(ladders, typeId)) return false;
-    return this.typeRecord(typeId).cleared;
+    return this.ladderFinished(ladders, typeId);
   }
 
   /** The scaling board this type is pointed at. Never below the first one. */
@@ -379,7 +359,7 @@ export class Progress {
   /**
    * Distinct boards cleared, anywhere in the game or on the one ladder named.
    *
-   * Every board counts once, including the scaling boards past 10 — they are
+   * Every board counts once, including the scaling boards past the tuned ones — they are
    * boards you cleared, and a player who would rather go deep on one ladder
    * than wide across several should get there too.
    */
@@ -415,19 +395,27 @@ export class Progress {
   }
 
   /**
-   * Record a clear and advance the ladder. Returns the newly unlocked board. A board the tutor
-   * helped with (`hints`) is cleared, unlocks the next and may be perfect, but sets no best time:
-   * the one cost of asking why (docs/teaching-plan.md, 4.4). Until a best time exists, it keeps
-   * the fewest hints instead (decision 0065).
+   * Record a clear and advance the ladder. Returns the board it unlocked, or null. A board the
+   * tutor helped with (`hints`) is cleared, unlocks the next and may be perfect, but sets no best
+   * time: the one cost of asking for a hint (docs/teaching-plan.md, 4.4). Until a best time
+   * exists, it keeps the fewest hints instead (decision 0065). A board played on dials easier
+   * than the tuned game writes nothing and unlocks nothing.
    */
   recordClear(
     ladders: Ladders,
     typeId: string,
     board: number,
-    opts: { perfect: boolean; seconds: number; hints?: number },
-  ): { unlockedBoard: number | null; clearedType: boolean } {
+    opts: {
+      perfect: boolean;
+      seconds: number;
+      hints?: number;
+      /** The gameplay dials the board was played on. */
+      dials: GameplaySettings;
+    },
+  ): number | null {
+    if (!isAtLeastAsHard(opts.dials)) return null;
     const type = ladders.find((t) => t.id === typeId);
-    const lastBoard = type?.boards.length ?? 10;
+    const lastBoard = type?.boards.length ?? TUNED_BOARDS;
 
     const key = boardKey(typeId, board);
     const prev = this.boardRecord(ladders, typeId, board);
@@ -448,7 +436,7 @@ export class Progress {
     this.data.types[typeId] = { highestBoard: rec.highestBoard, cleared: clearedType };
 
     this.save();
-    return { unlockedBoard, clearedType: clearedType && !rec.cleared ? true : clearedType };
+    return unlockedBoard;
   }
 
   reset(): void {

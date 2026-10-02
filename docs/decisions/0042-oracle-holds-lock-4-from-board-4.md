@@ -21,3 +21,9 @@ harder. The continuation past board 10 stays at lock 4. `test/spells.test.ts`'s 
 stuck count for ORACLE board 10 is re-measured with `npm run sim:spells -- 40 oracle`; the
 `boards`, `runs`, `spells-*` and `human-oracle` golden outputs that ORACLE appears in are
 re-recorded. EXTREME took the same lever in decision 0041.
+
+**Recounted, 2 October 2026.** The forced guesses above are the graded player's stuck column with
+spells, which until then counted a stuck point again for every cast that settled nothing there.
+Counted once a stuck point, boards 7 to 10 are stuck 2.4, 3.3, 4.1 and 4.5 times a board; the clear
+rates and the guesses taken (0.7 to 2.0 a board) did not move. The old schedule's 8.7 to 11.8 was
+counted the same way and was not measured again.

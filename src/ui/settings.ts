@@ -3,11 +3,9 @@
  *
  * Two halves that behave very differently:
  *
- * **Presentation** — icons and their tiers' colours, palette, the board's font
- * and the interface's, sound, the clear effect, the glow after a fight, the
- * cursor highlight and its colour, the struck-out creatures, the zoom ceiling.
- * None of it touches a rule, so none of it can affect whether a clear is
- * recorded. What each one is, and how a saved one is read, is `presentation.ts`.
+ * **Presentation** — how a board looks and sounds, and the page around it. None
+ * of it touches a rule, so none of it can affect whether a clear is recorded.
+ * What each one is, and how a saved one is read, is `presentation.ts`.
  *
  * **Gameplay** — the dials in `engine/settings.ts`. Those change the rules, so
  * they decide whether a board counts. See `isAtLeastAsHard`: a player who
@@ -24,9 +22,13 @@
 import {
   DEFAULT_GAMEPLAY,
   type GameplaySettings,
+  MAX_HP_REGEN_RATIO,
+  MAX_RATIO,
   MAX_SWEEP_BUDGET,
+  MAX_SWEEP_CHARGE_CLICKS,
   MAX_TIME_LIMIT,
   MIN_SWEEP_BUDGET,
+  MIN_SWEEP_CHARGE_CLICKS,
   MIN_TIME_ATTACK_RATIO,
   type SweepMode,
 } from '../engine/settings.js';
@@ -40,11 +42,12 @@ import {
   OFF,
   type PresentationSettings,
   DEFAULT_PRESENTATION,
+  bool,
   num,
   oneOf,
   readPresentation,
 } from './presentation.js';
-import { MARK_COLOR } from './theme.js';
+import { MARK_COLOR, isSfxPack, isVictoryId } from './theme.js';
 import { DEFAULT_TIERS, TIER_PRESETS, type TierPalette } from './tiercolors.js';
 import { type GameFont, TITLE_FONT, fontFor } from './typefaces.js';
 import { SETTINGS_KEY as KEY } from './savefile.js';
@@ -76,31 +79,38 @@ function whole(value: unknown, min: number, max: number, fallback: number): numb
     : fallback;
 }
 
-const bool = (value: unknown, fallback: boolean): boolean =>
-  typeof value === 'boolean' ? value : fallback;
-
 /** A saved set of dials. Every dial from before a setting reads as the tuned game's. */
 function readGameplay(raw: unknown): GameplaySettings {
   const g = (raw ?? {}) as Record<string, unknown>;
   const d = DEFAULT_GAMEPLAY;
   return {
-    hpRatio: num(g.hpRatio, 0, 3, d.hpRatio),
-    hpRegenRatio: num(g.hpRegenRatio, 0, 1, d.hpRegenRatio),
-    enemyDamageRatio: num(g.enemyDamageRatio, 0, 3, d.enemyDamageRatio),
-    manaRegenRatio: num(g.manaRegenRatio, 0, 3, d.manaRegenRatio),
-    manaRewardRatio: num(g.manaRewardRatio, 0, 3, d.manaRewardRatio),
+    hpRatio: num(g.hpRatio, 0, MAX_RATIO, d.hpRatio),
+    hpRegenRatio: num(g.hpRegenRatio, 0, MAX_HP_REGEN_RATIO, d.hpRegenRatio),
+    enemyDamageRatio: num(g.enemyDamageRatio, 0, MAX_RATIO, d.enemyDamageRatio),
+    manaRegenRatio: num(g.manaRegenRatio, 0, MAX_RATIO, d.manaRegenRatio),
+    manaRewardRatio: num(g.manaRewardRatio, 0, MAX_RATIO, d.manaRewardRatio),
     sweep: oneOf(g.sweep, SWEEP_MODES, d.sweep),
-    sweepChargeClicks: whole(g.sweepChargeClicks, 1, 50, d.sweepChargeClicks),
+    sweepChargeClicks: whole(
+      g.sweepChargeClicks,
+      MIN_SWEEP_CHARGE_CLICKS,
+      MAX_SWEEP_CHARGE_CLICKS,
+      d.sweepChargeClicks,
+    ),
     timeAttack: bool(g.timeAttack, d.timeAttack),
     sweepBudget: whole(g.sweepBudget, MIN_SWEEP_BUDGET, MAX_SWEEP_BUDGET, d.sweepBudget),
-    spellPriceRatio: num(g.spellPriceRatio, 0, 3, d.spellPriceRatio),
-    startManaRatio: num(g.startManaRatio, 0, 3, d.startManaRatio),
+    spellPriceRatio: num(g.spellPriceRatio, 0, MAX_RATIO, d.spellPriceRatio),
+    startManaRatio: num(g.startManaRatio, 0, MAX_RATIO, d.startManaRatio),
     countersHidden: bool(g.countersHidden, d.countersHidden),
     timeAttackRatio: num(g.timeAttackRatio, MIN_TIME_ATTACK_RATIO, 1, d.timeAttackRatio),
     timeLimit: whole(g.timeLimit, 0, MAX_TIME_LIMIT, d.timeLimit),
   };
 }
 
+/**
+ * The player's settings: the presentation for every ladder, each ladder's own, and the gameplay
+ * dials. Every change is saved and heard by `onChange`'s listeners; the resolvers say what a
+ * setting comes to on a ladder.
+ */
 export class Settings {
   private data: SettingsData;
   private readonly listeners = new Set<() => void>();
@@ -264,7 +274,8 @@ export class Settings {
     if (this.data.presentation.muted) return null;
     const choice = this.presentationFor(typeId).sfx;
     if (choice === OFF) return null;
-    return (choice === DEFAULT ? lookFor(typeId).sfx : choice) as SfxPackId;
+    // A pack this build does not have, from a newer build's save, plays the ladder's own.
+    return choice !== DEFAULT && isSfxPack(choice) ? choice : lookFor(typeId).sfx;
   }
 
   /** What a board-clear effect draws the creatures in: this ladder's palette, the tier colours, the glyph. */
@@ -281,15 +292,14 @@ export class Settings {
   victoryEffect(typeId: string): VictoryId | null {
     const choice = this.presentationFor(typeId).victory;
     if (choice === OFF) return null;
-    return (choice === DEFAULT ? lookFor(typeId).victory : choice) as VictoryId;
+    // An effect this build does not have plays the ladder's own, as an unknown pack does.
+    return choice !== DEFAULT && isVictoryId(choice) ? choice : lookFor(typeId).victory;
   }
 
   /** How the cursor lights the board, or null for no highlight at all. */
   highlightStyle(typeId: string): HighlightStyle | null {
     const choice = this.presentationFor(typeId).highlight;
     if (choice === OFF) return null;
-    // No type currently overrides this, but resolving through `lookFor`'s
-    // sibling would be the place to start if one ever wants to.
     if (choice !== DEFAULT) return choice;
     // No ladder overrides this today, so every type's default is the true
     // adjacency ring. `lookFor(typeId)` is where a per-type answer would

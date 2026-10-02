@@ -19,12 +19,7 @@ function table(title: string, bucket: Record<string, BoardStats>): void {
   const rows = statsRows(bucket);
   console.log(`\n${title}: ${rows.length} board${rows.length === 1 ? '' : 's'}\n`);
   if (!rows.length) return;
-  console.log(
-    'board             tries clear | opens guess sweep cast hint |   hp  secs | deaths'.replace(
-      /\s+$/,
-      '',
-    ),
-  );
+  console.log('board             tries clear | opens guess sweep cast hint |   hp  secs | deaths');
   const f = (n: number, w: number, d = 1) => n.toFixed(d).padStart(w);
   for (const r of rows as StatsRow[]) {
     console.log(

@@ -59,6 +59,36 @@ class TheSchema(unittest.TestCase):
             r"normal: lock has 3 entries",
         )
 
+    def test_an_unknown_ceiling(self):
+        self.refuses(
+            lambda s: s.replace("{ density_cap = 0.27 }", "{ density_cap = 0.27, hp_flor = 8 }", 1),
+            r"dungeon: unknown ceiling \['hp_flor'\]",
+        )
+
+    def test_a_cell_count_on_a_shape_that_is_not_seeded(self):
+        cells = "cells = [" + ", ".join(["400"] * 10) + "]"
+        self.refuses(
+            lambda s: s.replace('id = "normal"', f'id = "normal"\n{cells}', 1),
+            r"normal: a `cells` schedule goes with a seeded shape",
+        )
+
+    def test_a_seeded_shape_without_a_cell_count(self):
+        cells = "cells = [290, 305, 320, 355, 370, 405, 420, 460, 480, 525]\n"
+        self.refuses(
+            lambda s: s.replace(cells, "", 1),
+            r"cave: a `cells` schedule goes with a seeded shape",
+        )
+
+    def test_a_boss_count_of_zero(self):
+        # Absent is how a ladder pins no boss; a 0 would be read as a boss on one archetype and
+        # as none on the other.
+        self.refuses(
+            lambda s: s.replace(
+                "boss = [1, 1, 1, 1, 2, 2, 2, 2, 3, 3]", "boss = [0, 1, 1, 1, 2, 2, 2, 2, 3, 3]", 1
+            ),
+            r"huge: boss pins at least one creature",
+        )
+
 
 class Apportioning(unittest.TestCase):
     def test_distribute_lands_the_total_and_leaves_no_tier_empty(self):
@@ -175,6 +205,14 @@ class TheContinuation(unittest.TestCase):
                 for k in range(min(len(was), len(now))):
                     self.assertGreaterEqual(now[k], was[k], f"{t['id']}#{cur['n']} C_{k + 1}")
 
+    def test_never_carries_a_boss_count_down_to_none(self):
+        # No ladder's boss schedule falls today, so one that does is made up: HUGE's, reversed.
+        huge = next(t for t in L.TYPES if t["id"] == "huge")
+        falling = dict(huge, boss=list(reversed(huge["boss"])))
+        bosses = [row["boss"] for row in L.extend(falling)]
+        self.assertTrue(bosses)
+        self.assertGreaterEqual(min(bosses), 1)
+
     def test_never_takes_hp_below_the_floor_the_tuned_ladder_chose(self):
         for t in BUILT:
             floor = min(b["hp"] for b in t["boards"])
@@ -183,7 +221,7 @@ class TheContinuation(unittest.TestCase):
 
     def test_stays_inside_the_ceilings(self):
         # A ladder may set its own box (a square one for a round outline), never a bigger board
-        # than the global one, unless its own tuned ladder already is (CARD's).
+        # than the global one, unless its own tuned ladder already is (STAR's).
         for t in BUILT:
             over = next(x for x in L.TYPES if x["id"] == t["id"]).get("ceiling", {})
             last = t["boards"][-1]
@@ -221,11 +259,12 @@ class TheContinuation(unittest.TestCase):
                 self.assertEqual(b["cells"], 3 * r * (r + 1) + 1, f"{t['id']}#{b['n']}")
 
     def test_keeps_the_givens_above_the_sudoku_generators_floor(self):
+        floor = L.CEILINGS["givens_floor"]
         for t in BUILT:
             if t.get("placement") != "sudoku":
                 continue
             for b in t["extended"]:
-                self.assertGreaterEqual(b["givens"], 12, f"{t['id']}#{b['n']}")
+                self.assertGreaterEqual(b["givens"], floor, f"{t['id']}#{b['n']}")
 
 
 if __name__ == "__main__":

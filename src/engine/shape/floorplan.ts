@@ -6,8 +6,7 @@
  */
 
 import { type Rng, randInt } from '../rng.js';
-
-export type Mask = boolean[][];
+import { type Mask, ORTHO } from '../grid.js';
 
 /**
  * How many rooms a floor plan aims for, whatever size the board is.
@@ -54,35 +53,13 @@ const ROOM_MISSES = 60;
  */
 const LOOP_SHARE = 0.35;
 
+/** A room's rectangle on the floor plan, in cells. */
 export interface Room {
   x: number;
   y: number;
   w: number;
   h: number;
 }
-
-export function blank(w: number, h: number): Mask {
-  return Array.from({ length: h }, () => new Array<boolean>(w).fill(false));
-}
-
-export function count(mask: Mask): number {
-  let n = 0;
-  for (const row of mask) for (const on of row) if (on) n++;
-  return n;
-}
-
-export const ORTHO: ReadonlyArray<readonly [number, number]> = [
-  [1, 0],
-  [-1, 0],
-  [0, 1],
-  [0, -1],
-];
-export const DIAG: ReadonlyArray<readonly [number, number]> = [
-  [1, 1],
-  [1, -1],
-  [-1, 1],
-  [-1, -1],
-];
 
 /** The cells a room covers, plus the wall around it. */
 function halo(room: Room): { x0: number; y0: number; x1: number; y1: number } {
@@ -98,10 +75,12 @@ function roomSide(mean: number, rng: Rng): number {
   return Math.max(ROOM_MIN, Math.round(mean * (1 + (rng() * 2 - 1) * ROOM_VARIETY)));
 }
 
+/** Is (x, y) on any room's floor? */
 export function inAnyRoom(rooms: Room[], x: number, y: number): boolean {
   return rooms.some((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
 }
 
+/** Is (x, y) in any room's halo, its floor and the wall round it, leaving out room `except`? */
 export function inAnyHalo(rooms: Room[], except: number, x: number, y: number): boolean {
   for (let i = 0; i < rooms.length; i++) {
     if (i === except) continue;
@@ -174,63 +153,23 @@ function distance(a: Room, b: Room): number {
  * why this can be drawn without caring what it passes through.
  */
 export function carveHalls(hall: Mask, rooms: Room[], rng: Rng): void {
-  const line = (fromX: number, toX: number, fromY: number, toY: number): void => {
-    for (let y = Math.min(fromY, toY); y <= Math.max(fromY, toY); y++) {
-      for (let x = Math.min(fromX, toX); x <= Math.max(fromX, toX); x++) hall[y]![x] = true;
-    }
-  };
-  /**
-   * How much of this hallway would end up two cells wide.
-   *
-   * An L-shaped path cannot widen itself — it turns once — so the only way a
-   * hallway comes out two wide is by running alongside one that is already
-   * there. Both elbows are costed and the tidier one taken, which roughly
-   * halves it; `thinHalls` then removes whatever is left.
-   */
-  const parallelCells = (cells: Array<[number, number]>): number => {
-    let n = 0;
-    for (const [x, y] of cells) {
-      for (const [dx, dy] of ORTHO) {
-        if (hall[y + dy]?.[x + dx]) n++;
-      }
-    }
-    return n;
-  };
-  const elbow = (ax: number, ay: number, bx: number, by: number, first: 'x' | 'y') => {
-    const cells: Array<[number, number]> = [];
-    const run = (x0: number, x1: number, y0: number, y1: number): void => {
-      for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++) {
-        for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) cells.push([x, y]);
-      }
-    };
-    if (first === 'x') {
-      run(ax, bx, ay, ay);
-      run(bx, bx, ay, by);
-    } else {
-      run(ax, ax, ay, by);
-      run(ax, bx, by, by);
-    }
-    return cells;
-  };
+  const tree = spanningEdges(rooms);
+  for (const [a, b] of [...tree, ...shortcutEdges(rooms, tree)]) {
+    connect(hall, rooms[a]!, rooms[b]!, rng);
+  }
+}
 
-  const connect = (a: Room, b: Room): void => {
-    const [ax, ay] = centre(a);
-    const [bx, by] = centre(b);
-    const options =
-      rng() < 0.5
-        ? [elbow(ax, ay, bx, by, 'x'), elbow(ax, ay, bx, by, 'y')]
-        : [elbow(ax, ay, bx, by, 'y'), elbow(ax, ay, bx, by, 'x')];
-    // The coin decides ties; the count decides everything else, so a tidier
-    // route always wins and the shape still varies with the seed.
-    const chosen =
-      parallelCells(options[1]!) < parallelCells(options[0]!) ? options[1]! : options[0]!;
-    for (const [x, y] of chosen) line(x, x, y, y);
-  };
+/** A hallway's two ends, as indices into the room list, the first being where it is drawn from. */
+type Edge = readonly [number, number];
 
+/**
+ * The spanning tree, by Prim's over room centres from room 0: each edge joins the room nearest
+ * the tree so far to the tree room it is nearest, in the order they join.
+ */
+function spanningEdges(rooms: readonly Room[]): Edge[] {
   const inTree = [0];
   const rest = rooms.map((_, i) => i).slice(1);
-  const used = new Set<string>();
-
+  const edges: Edge[] = [];
   while (rest.length) {
     let bestAt = 0;
     let bestFrom = 0;
@@ -246,11 +185,15 @@ export function carveHalls(hall: Mask, rooms: Room[], rng: Rng): void {
       }
     }
     const to = rest.splice(bestAt, 1)[0]!;
-    connect(rooms[bestFrom]!, rooms[to]!);
-    used.add(bestFrom < to ? `${bestFrom}:${to}` : `${to}:${bestFrom}`);
+    edges.push([bestFrom, to]);
     inTree.push(to);
   }
+  return edges;
+}
 
+/** The `LOOP_SHARE` of shortest room pairs the tree did not join, shortest first. */
+function shortcutEdges(rooms: readonly Room[], tree: readonly Edge[]): Edge[] {
+  const used = new Set(tree.map(([a, b]) => (a < b ? `${a}:${b}` : `${b}:${a}`)));
   const spare: Array<[number, number, number]> = [];
   for (let i = 0; i < rooms.length; i++) {
     for (let j = i + 1; j < rooms.length; j++) {
@@ -259,9 +202,64 @@ export function carveHalls(hall: Mask, rooms: Room[], rng: Rng): void {
     }
   }
   spare.sort((p, q) => p[0] - q[0]);
-  for (const [, i, j] of spare.slice(0, Math.floor(rooms.length * LOOP_SHARE))) {
-    connect(rooms[i]!, rooms[j]!);
+  return spare.slice(0, Math.floor(rooms.length * LOOP_SHARE)).map(([, i, j]) => [i, j]);
+}
+
+/** Draw one hallway from room `a` to room `b`: the tidier of the two L-shaped routes. */
+function connect(hall: Mask, a: Room, b: Room, rng: Rng): void {
+  const [ax, ay] = centre(a);
+  const [bx, by] = centre(b);
+  const options =
+    rng() < 0.5
+      ? [elbowCells(ax, ay, bx, by, 'x'), elbowCells(ax, ay, bx, by, 'y')]
+      : [elbowCells(ax, ay, bx, by, 'y'), elbowCells(ax, ay, bx, by, 'x')];
+  // The coin decides ties; the count decides everything else, so a tidier
+  // route always wins and the shape still varies with the seed.
+  const chosen =
+    parallelCells(hall, options[1]!) < parallelCells(hall, options[0]!) ? options[1]! : options[0]!;
+  for (const [x, y] of chosen) hall[y]![x] = true;
+}
+
+/** The cells of the L from (ax, ay) to (bx, by) that runs along `first` and then turns. */
+function elbowCells(
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  first: 'x' | 'y',
+): Array<[number, number]> {
+  const cells: Array<[number, number]> = [];
+  const run = (x0: number, x1: number, y0: number, y1: number): void => {
+    for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++) {
+      for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) cells.push([x, y]);
+    }
+  };
+  if (first === 'x') {
+    run(ax, bx, ay, ay);
+    run(bx, bx, ay, by);
+  } else {
+    run(ax, ax, ay, by);
+    run(ax, bx, by, by);
   }
+  return cells;
+}
+
+/**
+ * How much of this hallway would end up two cells wide.
+ *
+ * An L-shaped path cannot widen itself — it turns once — so the only way a
+ * hallway comes out two wide is by running alongside one that is already
+ * there. Both elbows are costed and the tidier one taken, which roughly
+ * halves it; `thinHalls` then removes whatever is left.
+ */
+function parallelCells(hall: Mask, cells: ReadonlyArray<readonly [number, number]>): number {
+  let n = 0;
+  for (const [x, y] of cells) {
+    for (const [dx, dy] of ORTHO) {
+      if (hall[y + dy]?.[x + dx]) n++;
+    }
+  }
+  return n;
 }
 
 /**
@@ -312,8 +310,15 @@ export function thinHalls(hall: Mask, rooms: Room[], bw: number, bh: number): vo
   }
 }
 
-/** Is everything the predicate calls solid reachable from the first of it? */
-function connectedWith(solid: (x: number, y: number) => boolean, bw: number, bh: number): boolean {
+/**
+ * Is everything the predicate calls solid, inside a `bw` x `bh` box, reachable from the first of
+ * it in reading order, walking orthogonally? False when nothing is solid.
+ */
+export function connectedWith(
+  solid: (x: number, y: number) => boolean,
+  bw: number,
+  bh: number,
+): boolean {
   let start: [number, number] | null = null;
   let total = 0;
   for (let y = 0; y < bh; y++) {

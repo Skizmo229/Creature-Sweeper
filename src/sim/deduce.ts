@@ -10,13 +10,17 @@ import type { Cell } from '../engine/types.js';
 import { ringIsFree } from '../engine/placement/pairs.js';
 import { missingFrom } from '../engine/placement/packs.js';
 import { placementRule } from '../engine/placement/registry.js';
+import { openPiece, soleCoveredRim, touchingOf } from './reader.js';
 
 /**
  * What the board tells you, per open numbered cell: how much tier is still
  * hidden behind it, and which cells that is spread over.
  *
- * Marks only ever come from Reveal here, so a mark is an exact tier rather
- * than a claim, and subtracting it is as sound as subtracting an open cell.
+ * Marks here are exact: the player marks only what it proved, and a given is
+ * the truth. So subtracting a mark is as sound as subtracting an open cell.
+ *
+ * The graded player's `Constraint` (`reader.ts`) is the same idea read more
+ * strictly: only the numbers the game draws, and the Augur's whole list.
  */
 export interface Constraint {
   readonly cell: Cell;
@@ -85,6 +89,18 @@ function constraintsOf(game: Game): Constraint[] {
   return out;
 }
 
+/** The most covered cells a number may hide and still be subtracted from another's. */
+const MOST_SUBTRACTED_CELLS = 6;
+
+/** The most tiers any ladder has: a name is never above it. */
+const TOP_TIER = 9;
+
+/**
+ * A cell no number touches is reckoned to hide up to this many times the board's average tier a
+ * covered cell, when choosing where to gamble.
+ */
+const UNTOUCHED_CEILING = 2;
+
 /**
  * Pairs of numbers, subtracted.
  *
@@ -105,17 +121,10 @@ function constraintsOf(game: Game): Constraint[] {
  */
 function subtractPairs(constraints: Constraint[]): Constraint[] {
   const derived: Constraint[] = [];
-  const over = new Map<Cell, Constraint[]>();
-  for (const c of constraints) {
-    for (const cell of c.unknown) {
-      const list = over.get(cell);
-      if (list) list.push(c);
-      else over.set(cell, [c]);
-    }
-  }
+  const over = touchingOf(constraints);
 
   for (const a of constraints) {
-    if (a.unknown.length > 6) continue;
+    if (a.unknown.length > MOST_SUBTRACTED_CELLS) continue;
     for (const b of over.get(a.unknown[0]!)!) {
       if (a === b) continue;
       if (a.unknown.length >= b.unknown.length) continue;
@@ -187,11 +196,13 @@ export function nameWhatIsCertain(game: Game): boolean {
     if (c.unknown.length !== 1) continue;
     const cell = c.unknown[0]!;
     if (cell.mark > 0 || cell.open || c.residual === 0) continue;
-    name(game, cell, Math.min(9, c.residual));
+    name(game, cell, Math.min(TOP_TIER, c.residual));
     learned = true;
   }
+  // The pairing reading and the pack reading both run, in that order; a board has one rule at most.
   const paired = namePairs(game);
-  return namePacks(game) || paired || learned;
+  const packed = namePacks(game);
+  return learned || paired || packed;
 }
 
 /**
@@ -237,7 +248,7 @@ function namePairs(game: Game): boolean {
     // Still out there, so it is one of the covered cells — and if that is the
     // only one left, it is named without a guess.
     if (covered.length === 1 && covered[0]!.mark === 0 && cell.num > 0) {
-      name(game, covered[0]!, Math.min(9, cell.num));
+      name(game, covered[0]!, Math.min(TOP_TIER, cell.num));
       learned = true;
     }
   }
@@ -265,26 +276,15 @@ function namePacks(game: Game): boolean {
 
   for (const cell of game.grid.flat()) {
     if (!cell.present || !cell.open || cell.tier === 0 || done.has(cell)) continue;
-    const piece: Cell[] = [cell];
-    done.add(cell);
-    for (let i = 0; i < piece.length; i++) {
-      for (const n of game.neighboursOf(piece[i]!)) {
-        if (n.open && n.tier > 0 && !done.has(n)) {
-          done.add(n);
-          piece.push(n);
-        }
-      }
-    }
+    const piece = openPiece(game, cell, done);
     if (piece.length !== tiers - 1) continue;
-    const rim = new Set<Cell>();
-    for (const c of piece) for (const n of game.neighboursOf(c)) if (!n.open) rim.add(n);
-    if (rim.size !== 1) continue;
-    const [only] = [...rim];
+    const only = soleCoveredRim(game, piece);
+    if (!only) continue;
     const found = new Set(piece.map((c) => c.tier));
     let missing = 0;
     for (let t = 1; t <= tiers; t++) if (!found.has(t)) missing = t;
-    if (only!.mark === 0 && missing > 0) {
-      name(game, only!, missing);
+    if (only.mark === 0 && missing > 0) {
+      name(game, only, missing);
       learned = true;
     }
   }
@@ -328,10 +328,10 @@ function packCaps(game: Game): Map<Cell, number> {
 /**
  * Everything that can be opened without a gamble.
  *
- * Four rules, in order of how much they need to know:
- *   nothing left to hide  — residual 0, so every covered neighbour is empty;
+ * The rules, in the order they are tried:
  *   a named creature      — Reveal or deduction gave an exact tier, and it is
  *                           at or under your level, so the fight is free;
+ *   nothing left to hide  — residual 0, so every covered neighbour is empty;
  *   Sweep's bound         — the whole residual fits under your level, so no
  *                           single cell behind it can be over your level;
  *   the Census bound      — knowing how many creatures share the residual puts
@@ -342,7 +342,10 @@ function packCaps(game: Game): Map<Cell, number> {
  *                           as a residual of zero, and anything short of the
  *                           full count says which cells only by luck;
  *   the Augur ceiling     — the strongest tier around the number, so at or
- *                           under your level nothing behind it can hurt.
+ *                           under your level nothing behind it can hurt;
+ *   the colour bound      — the placement rule's cap, cell by cell;
+ *   the pairing ring      — a creature's number is its partner's tier;
+ *   the pack ring         — beside a pack, only a tier it has not shown.
  */
 export function safeToOpen(game: Game, constraints: Constraint[]): Cell[] {
   const safe = new Set<Cell>();
@@ -449,7 +452,10 @@ export function bestGuess(
   let best: Cell | null = null;
   let bestKey: [number, number] = [Infinity, Infinity];
   for (const cell of field) {
-    const key: [number, number] = [ceiling.get(cell) ?? loose * 2, mean.get(cell) ?? loose];
+    const key: [number, number] = [
+      ceiling.get(cell) ?? loose * UNTOUCHED_CEILING,
+      mean.get(cell) ?? loose,
+    ];
     if (key[0] < bestKey[0] || (key[0] === bestKey[0] && key[1] < bestKey[1])) {
       best = cell;
       bestKey = key;
@@ -515,15 +521,29 @@ export function augurTarget(game: Game, constraints: Constraint[], guess: Cell):
  * upper bound on what perfect aiming could be worth, so a weak result cannot be blamed on the aim.
  */
 export function augurOracle(game: Game, guess: Cell): Cell | null {
+  return firstThatUnlocks(game, guess, 'augur', hiddenTiers);
+}
+
+/**
+ * The first open cell near the guess, in grid order, with no answer of this spell on it yet and a
+ * covered unmarked neighbour, where writing the spell's true answer onto it makes something
+ * provable. Each answer is taken back after it is tried; null when none unlocks anything.
+ */
+function firstThatUnlocks<K extends 'census' | 'augur'>(
+  game: Game,
+  guess: Cell,
+  spell: K,
+  answer: (ring: Cell[]) => NonNullable<Cell[K]>,
+): Cell | null {
   const near = twoSteps(game, guess);
   for (const cell of game.grid.flat()) {
-    if (!cell.present || !cell.open || cell.augur !== null || !near.has(cell)) continue;
+    if (!cell.present || !cell.open || cell[spell] !== null || !near.has(cell)) continue;
     const ns = game.neighboursOf(cell);
     if (!ns.some((n) => !n.open && n.mark === 0)) continue;
 
-    cell.augur = hiddenTiers(ns);
+    cell[spell] = answer(ns);
     const unlocked = safeToOpen(game, allConstraints(game)).some((c) => !c.open);
-    cell.augur = null;
+    cell[spell] = null;
     if (unlocked) return cell;
   }
   return null;
@@ -552,16 +572,5 @@ function twoSteps(game: Game, cell: Cell): Set<Cell> {
  * result cannot be blamed on the harness aiming badly.
  */
 export function censusOracle(game: Game, guess: Cell): Cell | null {
-  const near = twoSteps(game, guess);
-  for (const cell of game.grid.flat()) {
-    if (!cell.present || !cell.open || cell.census !== null || !near.has(cell)) continue;
-    const ns = game.neighboursOf(cell);
-    if (!ns.some((n) => !n.open && n.mark === 0)) continue;
-
-    cell.census = ns.filter((n) => n.tier > 0).length;
-    const unlocked = safeToOpen(game, allConstraints(game)).some((c) => !c.open);
-    cell.census = null;
-    if (unlocked) return cell;
-  }
-  return null;
+  return firstThatUnlocks(game, guess, 'census', (ring) => ring.filter((n) => n.tier > 0).length);
 }

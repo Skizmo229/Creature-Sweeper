@@ -6,9 +6,8 @@
 
 import { LADDER_CATEGORIES } from '../../engine/config.js';
 import { lch } from '../colorspace.js';
-import { ladders } from '../ladders.js';
+import { CATEGORY_NAMES, ladders } from '../ladders.js';
 import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
-import { CATEGORY_NAMES } from '../screens/ladders.js';
 import {
   FONTS,
   FONT_IDS,
@@ -50,6 +49,7 @@ function byColour(ids: readonly string[]): string[] {
   return [...colours, ...greys].map((t) => t.id);
 }
 
+/** The palette window's orders: by ladder, by name and by colour. */
 export function paletteSorts(): PickerSort[] {
   const byName = [...LOOK_IDS].sort((a, b) => typeName(a).localeCompare(typeName(b)));
   return [
@@ -83,6 +83,7 @@ function facesByLadder(): SortGroup[] {
   ];
 }
 
+/** The font windows' orders: by ladder, by name and by style. */
 export function fontSorts(): PickerSort[] {
   const byName = [...FONT_IDS].sort((a, b) => FONTS[a].name.localeCompare(FONTS[b].name));
   const kinds = Object.keys(FONT_KIND_NAMES) as FontKind[];

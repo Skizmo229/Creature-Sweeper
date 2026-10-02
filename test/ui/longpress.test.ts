@@ -9,13 +9,13 @@ import './setup.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { boardConfig } from '../../src/engine/config.js';
 import { Game } from '../../src/engine/game.js';
-import { App } from '../../src/ui/app.js';
 import { BoardView, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { ladders } from '../../src/ui/ladders.js';
 import { themeFor } from '../../src/ui/looks.js';
 import { DEFAULT_LONG_PRESS } from '../../src/ui/presentation.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
+import { mountApp, settingsRow } from './driver.js';
 
 /** A board on screen, with what its input reports. */
 function board(longPressMs: number): {
@@ -111,17 +111,9 @@ describe('a long press', () => {
 
 describe('the setting', () => {
   it('is a slider in the Interface section, and reads a save without it as half a second', () => {
-    localStorage.clear();
-    document.body.innerHTML = '<div id="app"></div>';
-    const app = new App(document.getElementById('app')!) as unknown as {
-      showSettings(back: () => void): void;
-      showTypes(): void;
-      settings: Settings;
-    };
+    const app = mountApp();
     app.showSettings(() => app.showTypes());
-    const row = [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Long press to mark',
-    )!;
+    const row = settingsRow('Long press to mark');
     const input = row.querySelector<HTMLInputElement>('input[type=range]')!;
     expect(row.querySelector('.settings-value')!.textContent).toBe('500 ms');
     input.value = '0';

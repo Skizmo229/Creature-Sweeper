@@ -9,32 +9,23 @@
 import './setup.js';
 import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
 import { type BoardDisplay, BoardView, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { colorDifference } from '../../src/ui/colorspace.js';
 import { themeFor } from '../../src/ui/looks.js';
 import { HIGHLIGHT_PIN, highlightSampleBoard } from '../../src/ui/preview.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
-import { DEFAULT, HIGHLIGHT_COLORS, OFF, readHexColor } from '../../src/ui/presentation.js';
+import { readHexColor } from '../../src/ui/colorspace.js';
+import { DEFAULT, HIGHLIGHT_COLORS, OFF } from '../../src/ui/presentation.js';
 import { Settings } from '../../src/ui/settings.js';
-import { NEAR_REFUSAL } from '../../src/ui/settingsscreen/customcolor.js';
+import { NEAR_TAKEN } from '../../src/ui/settingsscreen/customcolor.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
-import { MARK_COLOR, OUT_OF_REACH_COLOR } from '../../src/ui/theme.js';
+import { MARK_COLOR, REFUSAL_COLOR } from '../../src/ui/theme.js';
+import { type AppDriver, mountApp, settingsRow, tileLabel, tiles } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  readonly settings: Settings;
-  readonly view: { readonly display: BoardDisplay } | null;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 /** A saved presentation, as a save file holds it. */
@@ -140,7 +131,7 @@ describe('the board', () => {
     );
     view.setGame(highlightSampleBoard('square'), themeFor('normal'), display('#2ee6ff'));
     view.pinHover(HIGHLIGHT_PIN.x, HIGHLIGHT_PIN.y);
-    expect(strokedIn(OUT_OF_REACH_COLOR)).toBe(RING);
+    expect(strokedIn(REFUSAL_COLOR)).toBe(RING);
     expect(strokedIn('#2ee6ff')).toBe(0);
   });
 
@@ -161,9 +152,9 @@ describe('the presets', () => {
 
   it('stay clear of the red of a click that would do nothing', () => {
     for (const { name, color } of HIGHLIGHT_COLORS) {
-      expect(colorDifference(color, OUT_OF_REACH_COLOR), name).toBeGreaterThanOrEqual(NEAR_REFUSAL);
+      expect(colorDifference(color, REFUSAL_COLOR), name).toBeGreaterThanOrEqual(NEAR_TAKEN);
     }
-    expect(colorDifference(MARK_COLOR, OUT_OF_REACH_COLOR)).toBeGreaterThanOrEqual(NEAR_REFUSAL);
+    expect(colorDifference(MARK_COLOR, REFUSAL_COLOR)).toBeGreaterThanOrEqual(NEAR_TAKEN);
   });
 
   it('are measured against a threshold that parts the reds from their neighbours', () => {
@@ -171,10 +162,10 @@ describe('the presets', () => {
     expect(colorDifference('#1e90ff', '#1e90ff')).toBe(0);
     // Pure red, a light red and a red-orange fall inside it; orange and hot pink do not.
     for (const red of ['#ff0000', '#ffa0a0', '#ff7f2a']) {
-      expect(colorDifference(red, OUT_OF_REACH_COLOR), red).toBeLessThan(NEAR_REFUSAL);
+      expect(colorDifference(red, REFUSAL_COLOR), red).toBeLessThan(NEAR_TAKEN);
     }
     for (const near of ['#ff9d3a', '#ff3399']) {
-      expect(colorDifference(near, OUT_OF_REACH_COLOR), near).toBeGreaterThan(NEAR_REFUSAL);
+      expect(colorDifference(near, REFUSAL_COLOR), near).toBeGreaterThan(NEAR_TAKEN);
     }
   });
 });
@@ -182,24 +173,18 @@ describe('the presets', () => {
 /** The settings row for the highlight's colour, on a freshly built screen. */
 function colorRow(): HTMLElement {
   app.showSettings(() => app.showTypes());
-  return [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
-    (r) => r.querySelector('.settings-name')?.textContent === 'Cursor highlight colour',
-  )!;
+  return settingsRow('Cursor highlight colour');
 }
 
-const tiles = (row: HTMLElement): HTMLButtonElement[] => [
-  ...row.querySelectorAll<HTMLButtonElement>('.preview-chip'),
-];
-const label = (tile: Element): string => tile.querySelector('.chip-label')!.textContent!;
 const lit = (row: HTMLElement): string[] =>
   tiles(row)
     .filter((t) => t.classList.contains('active'))
-    .map(label);
+    .map(tileLabel);
 
 describe('the settings row', () => {
   it('offers the game type green, the presets and a custom colour, each drawn on a board', () => {
     const row = colorRow();
-    expect(tiles(row).map(label)).toEqual([
+    expect(tiles(row).map(tileLabel)).toEqual([
       'Game type default — green',
       ...HIGHLIGHT_COLORS.map((c) => c.name),
       'Custom — any colour',
@@ -212,7 +197,7 @@ describe('the settings row', () => {
   it('saves a preset when it is picked', () => {
     const cyan = HIGHLIGHT_COLORS.find((c) => c.name === 'Cyan')!;
     tiles(colorRow())
-      .find((t) => label(t) === 'Cyan')!
+      .find((t) => tileLabel(t) === 'Cyan')!
       .click();
     expect(Settings.load().presentation.highlightColor).toBe(cyan.color);
     expect(lit(colorRow())).toEqual(['Cyan']);

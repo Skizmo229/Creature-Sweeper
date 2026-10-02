@@ -31,3 +31,8 @@ The blurb says HP falls from 10 to 8. The spells are worth about a guess a top b
 points of clearing, bought with mana at 50 an Augur; Census, at 30, is the cheap half. If board
 9 should bite harder, HP is spent (7 moves nothing), so the lever is lock 4 a board or two earlier
 or a denser board 9, which the density ceiling (0056) argues against.
+
+**Recounted, 2 October 2026.** The graded player's casts at a stuck point now come back after a
+guess or a rescue, as the honest player's do, where before they came back only after a pass that
+found a move. With spells, board 10 clears 63% rather than 61% (80 seeds), still inside the 60 to
+70% target; board 9 stays at 88%.

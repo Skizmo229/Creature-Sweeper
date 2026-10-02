@@ -7,12 +7,16 @@ import type { SpellId } from './spells.js';
 /** 0 = empty ground; 1..tiers = a creature of that power level. */
 export type Tier = number;
 
+/**
+ * One cell of a board: what stands on it, what the player sees and has written on it, and whether
+ * it exists at all. Engine state: only the engine changes it, and everything else reads it.
+ */
 export interface Cell {
   readonly x: number;
   readonly y: number;
   /** 0 for empty ground, otherwise the creature's tier. */
   tier: Tier;
-  /** Sum of the eight neighbours' tiers — NOT a count of creatures. */
+  /** Sum of the neighbours' tiers — NOT a count of creatures. */
   num: number;
   open: boolean;
   /** True while a creature here is undefeated. Always false for empty ground. */
@@ -74,7 +78,7 @@ export interface Cell {
    */
   notes: number;
   /**
-   * Creatures among this cell's eight neighbours, once Census has counted
+   * Creatures among this cell's neighbours, once Census has counted
    * them. The number is their SUM, so sum plus count usually pins the layout.
    */
   census: number | null;
@@ -177,6 +181,11 @@ export type OpeningRule =
 
 export type { Placement };
 
+/**
+ * Everything a board is dealt from: its size, creatures, thresholds and HP, and the rules it is
+ * played by. Read off a ladder row by `boardConfig`, or counted off a drawing by `readLayout`; a
+ * board is a pure function of this and its seed.
+ */
 export interface BoardConfig {
   /** Game type id, e.g. "normal". */
   readonly typeId: string;
@@ -214,7 +223,8 @@ export interface BoardConfig {
   readonly givens: number;
   /**
    * How far from already-revealed ground the player may act, in steps of
-   * adjacency. 0 means anywhere on the board, which is every type but DUNGEON.
+   * adjacency. 0 means anywhere on the board, as on every ladder without the
+   * crawl rule.
    *
    * Distance is counted through `neighbours()`, not across the grid, so it is
    * the distance you could WALK: it stops at a wall instead of reaching
@@ -230,8 +240,8 @@ export interface BoardConfig {
    */
   readonly reach: number;
   /**
-   * PETRI DISH's companion to a one-step reach: a covered cell the player has marked counts as
-   * uncovered ground for reach, but only while it is itself within reach of ground really
+   * The companion to a one-step reach (decision 0039): a covered cell the player has marked counts
+   * as uncovered ground for reach, but only while it is itself within reach of ground really
    * uncovered. So a mark carries the reach one step past a creature the player has named, and
    * marks cannot be chained across the board. Nothing checks the mark is right, since the answer
    * would tell the player whether it was. Optional so every config built by hand stays unchanged.
@@ -247,9 +257,10 @@ export interface BoardConfig {
    */
   readonly workout?: WorkoutRule;
   /**
-   * False on a ladder that offers no Sweep at all — EASY, where the numbers are
-   * learned by hand. Absent means Sweep is on offer, subject to the player's
-   * dial. Optional so every config built by hand stays unchanged.
+   * False on a ladder that offers no Sweep at all: EASY, where the numbers are
+   * learned by hand, and PATROL (decision 0063). Absent means Sweep is on offer,
+   * subject to the player's dial. Optional so every config built by hand stays
+   * unchanged.
    */
   readonly sweep?: boolean;
 }
@@ -271,8 +282,13 @@ export interface WorkoutRule {
   readonly expMultiplier: number;
 }
 
+/** Whether a board is still being played, or how it ended. */
 export type GameStatus = 'playing' | 'won' | 'lost';
 
+/**
+ * What an engine action caused, in order. Every action returns these, so a renderer can animate
+ * them and a test can assert on them.
+ */
 export type GameEvent =
   /** Cells uncovered, including everything a cascade reached. */
   | { type: 'revealed'; cells: ReadonlyArray<{ x: number; y: number }> }
@@ -293,6 +309,7 @@ export type GameEvent =
   /** PATROL's creatures each took a step; `moves` is how many actions the board has seen. */
   | { type: 'moved'; moves: number };
 
+/** Why an action did nothing, carried by a `blocked` event. */
 export type BlockReason =
   /** The cell is marked above your level — the guard that protects you. */
   | 'mark-guard'
@@ -300,14 +317,26 @@ export type BlockReason =
    * certain loss of HP. The same guard, read off a set instead of a value. */
   | 'note-guard'
   | 'already-open'
+  /**
+   * Off the board or a hole, or an argument the board has no use for: a mark or a note that is not
+   * one of its tiers, a targeted spell cast without a target, a PATROL route that would leave it.
+   */
   | 'out-of-bounds'
   | 'game-over'
-  /** Not enough mana, or this type does not offer that spell. */
+  /** Not enough mana for the spell. */
   | 'no-mana'
+  /** This board does not offer that spell. */
   | 'no-such-spell'
-  /** The spell had nothing to act on. */
+  /**
+   * The action would change nothing: a Census or an Augur already cast on the cell, an Exercise
+   * already standing, a Beacon with nothing left to open, a Wait where nothing walks, a chord
+   * anywhere but on open ground.
+   */
   | 'no-effect'
-  /** Sweep is switched off, or its charge is not banked yet. */
+  /**
+   * Sweep is not to be had right now: the ladder offers none, the dial switches it off, its charge
+   * is not banked yet, or the board's budget of sweeps is spent.
+   */
   | 'no-charge'
   /** The cell carries a board-dealt clue, which the player may not rub out. */
   | 'given'
@@ -324,6 +353,7 @@ export type BlockReason =
    */
   | 'out-of-reach';
 
+/** How a sweep reads the board. */
 export interface SweepOptions {
   /**
    * Subtract the player's marks from a cell's number when deciding what is

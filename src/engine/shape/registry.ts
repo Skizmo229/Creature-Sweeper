@@ -21,6 +21,7 @@ import {
 import { CAVE_SHAPE } from './cave.js';
 import { DUNGEON_SHAPE } from './dungeon.js';
 
+/** Every board shape, keyed by the name the ladder data uses. */
 export const SHAPES = {
   rect: RECT_SHAPE,
   donut: DONUT_SHAPE,

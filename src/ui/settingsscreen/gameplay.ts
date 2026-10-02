@@ -6,10 +6,15 @@
 
 import {
   DEFAULT_GAMEPLAY,
+  MAX_HP_REGEN_RATIO,
+  MAX_RATIO,
   MAX_SWEEP_BUDGET,
+  MAX_SWEEP_CHARGE_CLICKS,
   MAX_TIME_LIMIT,
   MIN_SWEEP_BUDGET,
+  MIN_SWEEP_CHARGE_CLICKS,
   MIN_TIME_ATTACK_RATIO,
+  RATIO_STEP,
   type SweepMode,
   easierThanDefault,
   isAtLeastAsHard,
@@ -17,9 +22,10 @@ import {
 } from '../../engine/settings.js';
 import { el } from '../dom.js';
 import { MAX_TUTOR_GRADE, MIN_TUTOR_GRADE, type TutorStyle } from '../presentation.js';
+import { plural } from '../words.js';
 import type { ScreenContext } from './context.js';
 import { gameplayPresetsRow } from './presets.js';
-import { gallery, ratio, row, section, slider, toggle } from './widgets.js';
+import { gallery, row, section, slider, times, toggle } from './widgets.js';
 
 type RatioKey =
   | 'hpRatio'
@@ -29,9 +35,6 @@ type RatioKey =
   | 'manaRewardRatio'
   | 'spellPriceRatio'
   | 'startManaRatio';
-
-const MIN_CHARGE_CLICKS = 1;
-const MAX_CHARGE_CLICKS = 50;
 
 /** The time limit's slider moves in half minutes, and the setting is kept in seconds. */
 const LIMIT_STEP = 30;
@@ -70,6 +73,7 @@ interface Play {
   refreshStatus: () => void;
 }
 
+/** The Gameplay section, appended to the screen. */
 export function gameplaySection(ctx: ScreenContext): void {
   const host = section(
     ctx.host,
@@ -123,19 +127,18 @@ function dialRows({ ctx, host, refreshStatus }: Play): void {
       host,
       label,
       shadeByDifficulty(
-        slider(
-          0,
+        slider({
+          min: 0,
           max,
-          0.05,
-          settings.gameplay[key],
-          ratio,
-          (v) => {
+          step: RATIO_STEP,
+          value: settings.gameplay[key],
+          format: times,
+          onInput: (v) => {
             settings.setGameplay({ [key]: Math.round(v * 100) / 100 });
             refreshStatus();
           },
-          undefined,
-          DEFAULT_GAMEPLAY[key],
-        ),
+          resetTo: DEFAULT_GAMEPLAY[key],
+        }),
         DEFAULT_GAMEPLAY[key],
         easyEnd,
         hardEnd,
@@ -143,42 +146,42 @@ function dialRows({ ctx, host, refreshStatus }: Play): void {
       hint,
     );
   };
-  dial('Player HP', 'hpRatio', 3, 'Scales the board’s HP pool, never below 1.');
+  dial('Player HP', 'hpRatio', MAX_RATIO, 'Scales the board’s HP pool, never below 1.');
   dial(
     'Full run HP regen',
     'hpRegenRatio',
-    1,
+    MAX_HP_REGEN_RATIO,
     'Share of the pool healed after each Full Run board, rounded down. Nothing heals inside a ' +
       'board. Default ×0.50.',
   );
   dial(
     'Creature damage',
     'enemyDamageRatio',
-    3,
+    MAX_RATIO,
     'Scales what a creature’s retaliation costs. A fight at or below your level stays free.',
   );
   dial(
     'Mana regen',
     'manaRegenRatio',
-    3,
+    MAX_RATIO,
     'Scales the mana earned per empty cell you uncover. ×0 switches it off.',
   );
   dial(
     'Mana per creature',
     'manaRewardRatio',
-    3,
+    MAX_RATIO,
     'Scales the mana a defeated creature pays. EXP is never scaled.',
   );
   dial(
     'Spell prices',
     'spellPriceRatio',
-    3,
+    MAX_RATIO,
     'Scales what every spell costs, WORKOUT’s own price included. ×0 makes them free.',
   );
   dial(
     'Starting mana',
     'startManaRatio',
-    3,
+    MAX_RATIO,
     'Scales the mana a board opens with: one Reveal exactly on the magic ladders.',
   );
 }
@@ -247,37 +250,35 @@ function sweepControl({ ctx, refreshStatus }: Play): HTMLElement {
   const charge = subRow(
     'Cells per sweep',
     shadeByDifficulty(
-      slider(
-        MIN_CHARGE_CLICKS,
-        MAX_CHARGE_CLICKS,
-        1,
-        g().sweepChargeClicks,
-        (v) => `${Math.round(v)} cells`,
-        (v) => {
+      slider({
+        min: MIN_SWEEP_CHARGE_CLICKS,
+        max: MAX_SWEEP_CHARGE_CLICKS,
+        step: 1,
+        value: g().sweepChargeClicks,
+        format: (v) => `${Math.round(v)} cells`,
+        onInput: (v) => {
           settings.setGameplay({ sweepChargeClicks: Math.round(v) });
           refreshStatus();
         },
-        undefined,
-        DEFAULT_GAMEPLAY.sweepChargeClicks,
-      ),
+        resetTo: DEFAULT_GAMEPLAY.sweepChargeClicks,
+      }),
       DEFAULT_GAMEPLAY.sweepChargeClicks,
-      MIN_CHARGE_CLICKS,
-      MAX_CHARGE_CLICKS,
+      MIN_SWEEP_CHARGE_CLICKS,
+      MAX_SWEEP_CHARGE_CLICKS,
     ),
     () => g().sweep === 'charge',
   );
   const budget = subRow(
     'Sweeps per board',
-    slider(
-      MIN_SWEEP_BUDGET,
-      MAX_SWEEP_BUDGET,
-      1,
-      g().sweepBudget,
-      (v) => `${Math.round(v)} sweep${Math.round(v) === 1 ? '' : 's'}`,
-      (v) => settings.setGameplay({ sweepBudget: Math.round(v) }),
-      undefined,
-      DEFAULT_GAMEPLAY.sweepBudget,
-    ),
+    slider({
+      min: MIN_SWEEP_BUDGET,
+      max: MAX_SWEEP_BUDGET,
+      step: 1,
+      value: g().sweepBudget,
+      format: (v) => plural(Math.round(v), 'sweep'),
+      onInput: (v) => settings.setGameplay({ sweepBudget: Math.round(v) }),
+      resetTo: DEFAULT_GAMEPLAY.sweepBudget,
+    }),
     () => g().sweep === 'budget',
   );
   select.addEventListener('change', () => {
@@ -304,16 +305,15 @@ function timeRows({ ctx, host, refreshStatus }: Play): void {
   );
   const race = subRow(
     'Race the best ×',
-    slider(
-      MIN_TIME_ATTACK_RATIO,
-      1,
-      0.05,
-      g().timeAttackRatio,
-      ratio,
-      (v) => settings.setGameplay({ timeAttackRatio: Math.round(v * 100) / 100 }),
-      undefined,
-      DEFAULT_GAMEPLAY.timeAttackRatio,
-    ),
+    slider({
+      min: MIN_TIME_ATTACK_RATIO,
+      max: 1,
+      step: RATIO_STEP,
+      value: g().timeAttackRatio,
+      format: times,
+      onInput: (v) => settings.setGameplay({ timeAttackRatio: Math.round(v * 100) / 100 }),
+      resetTo: DEFAULT_GAMEPLAY.timeAttackRatio,
+    }),
     () => g().timeAttack,
   );
   box.append(race.line);
@@ -329,16 +329,15 @@ function timeRows({ ctx, host, refreshStatus }: Play): void {
   row(
     host,
     'Time limit per board',
-    slider(
-      0,
-      MAX_TIME_LIMIT,
-      LIMIT_STEP,
-      g().timeLimit,
-      minutes,
-      (v) => settings.setGameplay({ timeLimit: Math.round(v) }),
-      undefined,
-      DEFAULT_GAMEPLAY.timeLimit,
-    ),
+    slider({
+      min: 0,
+      max: MAX_TIME_LIMIT,
+      step: LIMIT_STEP,
+      value: g().timeLimit,
+      format: minutes,
+      onInput: (v) => settings.setGameplay({ timeLimit: Math.round(v) }),
+      resetTo: DEFAULT_GAMEPLAY.timeLimit,
+    }),
     'Every board must be cleared within this, best time or not; a Full Run gets it once for ' +
       'each of its boards. Only ever harder, so it records.',
   );
@@ -375,16 +374,15 @@ function tutorRows(ctx: ScreenContext, host: HTMLElement): void {
   row(
     host,
     'Tutor grade',
-    slider(
-      MIN_TUTOR_GRADE,
-      MAX_TUTOR_GRADE,
-      1,
-      p.tutorGrade,
-      (v) => (v >= MAX_TUTOR_GRADE ? `Grade ${MAX_TUTOR_GRADE}, everything` : `Grade ${v}`),
-      (v) => settings.setPresentation({ tutorGrade: Math.round(v) }),
-      undefined,
-      MAX_TUTOR_GRADE,
-    ),
+    slider({
+      min: MIN_TUTOR_GRADE,
+      max: MAX_TUTOR_GRADE,
+      step: 1,
+      value: p.tutorGrade,
+      format: (v) => (v >= MAX_TUTOR_GRADE ? `Grade ${MAX_TUTOR_GRADE}, everything` : `Grade ${v}`),
+      onInput: (v) => settings.setPresentation({ tutorGrade: Math.round(v) }),
+      resetTo: MAX_TUTOR_GRADE,
+    }),
     'The dearest trick the tutor will use, as the field guide grades them: 0 a glance, 4 ' +
       'counting the board. Capped, it says when nothing cheaper proves a move.',
   );

@@ -6,9 +6,10 @@
 
 import type { Game } from '../../engine/game.js';
 import type { FullRun } from '../../engine/run.js';
-import { type GameplaySettings, easierThanDefault } from '../../engine/settings.js';
+import type { GameplaySettings } from '../../engine/settings.js';
 import { el } from '../dom.js';
 import type { CardHold } from '../presentation.js';
+import { easierSentence, plural } from '../words.js';
 
 /**
  * The ladder that teaches, and so the only one that explains a death. A claim about the ladder's
@@ -19,13 +20,7 @@ const TEACHING_TYPE = 'easy';
 
 /** The one-line explanation of why a clear was not written down. */
 function modifiedNote(gameplay: GameplaySettings): HTMLElement {
-  const easier = easierThanDefault(gameplay);
-  return el(
-    'p',
-    'overlay-note modified',
-    `Not recorded: ${easier.join(', ')} ${easier.length === 1 ? 'is' : 'are'} ` +
-      'set easier than the tuned game.',
-  );
+  return el('p', 'overlay-note modified', `Not recorded: ${easierSentence(gameplay)}`);
 }
 
 /**
@@ -33,9 +28,10 @@ function modifiedNote(gameplay: GameplaySettings): HTMLElement {
  * look like a bug; the tile says what the clear left behind instead (decision 0065).
  */
 function hintsNote(hints: number): HTMLElement {
-  return el('p', 'overlay-note', `Cleared with ${hints} hint${hints === 1 ? '' : 's'}.`);
+  return el('p', 'overlay-note', `Cleared with ${plural(hints, 'hint')}.`);
 }
 
+/** How a single board ended, and where the card's buttons go, for `buildBoardOutcome`. */
 export interface BoardOutcome {
   game: Game;
   typeId: string;
@@ -69,6 +65,40 @@ export interface BoardOutcome {
   onList(): void;
 }
 
+/** A single board's card's heading: a clear, perfect or not, the clock run out, or a loss. */
+function boardHeadline(o: BoardOutcome): string {
+  if (o.won) return o.perfect ? 'PERFECT CLEAR' : 'CLEAR';
+  return o.timeExpired ? 'OUT OF TIME' : 'GAME OVER';
+}
+
+/** The line under it: the board, the time and the HP of a clear, or what was left standing. */
+function boardStats(o: BoardOutcome): string {
+  const { game } = o;
+  if (o.won) {
+    return `${o.typeName} board ${o.boardIndex} · ${o.seconds}s · HP ${game.hp}/${game.maxHp}`;
+  }
+  return o.timeExpired
+    ? `Time ran out · ${game.creaturesLeft()} creatures still standing`
+    : `${game.creaturesLeft()} creatures still standing · reached LV ${game.level}`;
+}
+
+/** A button on a card's row of ways on, appended to `row`. */
+function actionButton(
+  row: HTMLElement,
+  cls: string,
+  label: string,
+  onClick: () => void,
+): HTMLButtonElement {
+  const button = el('button', cls, label);
+  button.addEventListener('click', onClick);
+  row.append(button);
+  return button;
+}
+
+/**
+ * The card a single board ends with: CLEAR (or PERFECT CLEAR), GAME OVER or OUT OF TIME, what the
+ * result was, and the ways on. The caller appends it to the screen.
+ */
 export function buildBoardOutcome(o: BoardOutcome): HTMLElement {
   const { game, won } = o;
   // A held card waits while the clear effect plays over the board, or until a click (styles.css).
@@ -80,25 +110,8 @@ export function buildBoardOutcome(o: BoardOutcome): HTMLElement {
     });
   }
   const card = el('div', 'overlay-card');
-  card.append(
-    el(
-      'h2',
-      undefined,
-      won ? (o.perfect ? 'PERFECT CLEAR' : 'CLEAR') : o.timeExpired ? 'OUT OF TIME' : 'GAME OVER',
-    ),
-  );
-
-  card.append(
-    el(
-      'p',
-      'overlay-stats',
-      won
-        ? `${o.typeName} board ${o.boardIndex} · ${o.seconds}s · HP ${game.hp}/${game.maxHp}`
-        : o.timeExpired
-          ? `Time ran out · ${game.creaturesLeft()} creatures still standing`
-          : `${game.creaturesLeft()} creatures still standing · reached LV ${game.level}`,
-    ),
-  );
+  card.append(el('h2', undefined, boardHeadline(o)));
+  card.append(el('p', 'overlay-stats', boardStats(o)));
 
   if (won && o.perfect) {
     card.append(el('p', 'overlay-note', 'No damage taken'));
@@ -130,29 +143,17 @@ export function buildBoardOutcome(o: BoardOutcome): HTMLElement {
 
   const row = el('div', 'overlay-actions');
   // The continuation has a next board too.
-  if (won && o.boardIndex < o.lastBoard) {
-    const next = el('button', 'primary', 'Next board');
-    next.addEventListener('click', o.onNext);
-    row.append(next);
-  }
-  const again = el('button', won ? '' : 'primary', won ? 'Replay' : 'Try again');
-  again.addEventListener('click', o.onReplay);
-  row.append(again);
-
-  const same = el('button', 'ghost', 'Same board again');
-  same.title = `Seed ${o.seed}`;
-  same.addEventListener('click', o.onSame);
-  row.append(same);
-
-  const list = el('button', 'ghost', 'Board select');
-  list.addEventListener('click', o.onList);
-  row.append(list);
+  if (won && o.boardIndex < o.lastBoard) actionButton(row, 'primary', 'Next board', o.onNext);
+  actionButton(row, won ? '' : 'primary', won ? 'Replay' : 'Try again', o.onReplay);
+  actionButton(row, 'ghost', 'Same board again', o.onSame).title = `Seed ${o.seed}`;
+  actionButton(row, 'ghost', 'Board select', o.onList);
 
   card.append(row);
   overlay.append(card);
   return overlay;
 }
 
+/** How a board of a Full Run ended, and where the card's buttons go, for `buildRunOutcome`. */
 export interface RunOutcome {
   game: Game;
   run: FullRun;
@@ -183,91 +184,92 @@ export function buildRunOutcome(o: RunOutcome): HTMLElement {
   const overlay = el('div', `overlay ${game.status === 'lost' ? 'lose' : 'win'}`);
   const card = el('div', 'overlay-card');
 
-  if (midRun) {
-    const healed = Math.min(run.healPerBoard, run.maxHp - game.hp);
-    card.append(el('h2', undefined, `BOARD ${o.boardIndex} CLEAR`));
-    card.append(
-      el(
-        'p',
-        'overlay-stats',
-        `${o.typeName} full run · ${o.seconds}s · HP ${game.hp}/${run.maxHp}`,
-      ),
-    );
-    // Said explicitly, because the number is the mode: at full HP the heal is zero and a player
-    // who is not told that will read it as a bug.
-    card.append(
-      el(
-        'p',
-        'overlay-note',
-        healed > 0
-          ? `Healed +${healed} — HP ${game.hp + healed}/${run.maxHp} going into board ${o.boardIndex + 1}.`
-          : run.healPerBoard === 0
-            ? `No heal on a pool of ${run.maxHp}. Every point you lose is gone for the run.`
-            : `Already at full HP, so the +${run.healPerBoard} heal is wasted.`,
-      ),
-    );
-    if (o.recorded && o.hints > 0) card.append(hintsNote(o.hints));
-    card.append(el('p', 'overlay-note', 'Level, EXP and mana reset next board. Only HP carries.'));
-  } else if (won) {
-    const perfect = game.hp === run.maxHp;
-    card.append(el('h2', undefined, perfect ? 'PERFECT FULL RUN' : 'FULL RUN COMPLETE'));
-    card.append(
-      el(
-        'p',
-        'overlay-stats',
-        `All ${run.boardCount} boards of ${o.typeName} · ${o.seconds}s · HP ${game.hp}/${run.maxHp}`,
-      ),
-    );
-    card.append(
-      el(
-        'p',
-        'overlay-note',
-        perfect
-          ? 'Ten boards, not a single point of damage.'
-          : `${run.damageTaken} HP lost across the ladder.`,
-      ),
-    );
-    if (o.recorded && o.runHints > 0) card.append(hintsNote(o.runHints));
-  } else {
-    card.append(el('h2', undefined, 'RUN OVER'));
-    card.append(
-      el(
-        'p',
-        'overlay-stats',
-        `${o.typeName} full run · board ${o.boardIndex} of ${run.boardCount} · ${o.seconds}s`,
-      ),
-    );
-    card.append(
-      el(
-        'p',
-        'overlay-note',
-        `${run.legs.length} board${run.legs.length === 1 ? '' : 's'} cleared. ` +
-          'Starts again from board 1.',
-      ),
-    );
-  }
+  if (midRun) writeMidRun(card, o);
+  else if (won) writeRunComplete(card, o);
+  else writeRunOver(card, o);
 
   const row = el('div', 'overlay-actions');
   if (midRun) {
-    const next = el('button', 'primary', `Continue → board ${o.boardIndex + 1}`);
-    next.addEventListener('click', o.onContinue);
-    row.append(next);
+    actionButton(row, 'primary', `Continue → board ${o.boardIndex + 1}`, o.onContinue);
   } else {
-    const again = el('button', 'primary', 'New run');
-    again.addEventListener('click', o.onNewRun);
-    row.append(again);
-    const same = el('button', 'ghost', 'Same run again');
-    same.title = `Run seed ${run.seed}`;
-    same.addEventListener('click', o.onSameRun);
-    row.append(same);
+    actionButton(row, 'primary', 'New run', o.onNewRun);
+    actionButton(row, 'ghost', 'Same run again', o.onSameRun).title = `Run seed ${run.seed}`;
   }
-  const list = el('button', 'ghost', midRun ? 'Abandon run' : 'Board select');
-  list.addEventListener('click', midRun ? o.onAbandon : o.onList);
-  row.append(list);
+  const leave = midRun ? o.onAbandon : o.onList;
+  actionButton(row, 'ghost', midRun ? 'Abandon run' : 'Board select', leave);
 
   if (!o.recorded) card.append(modifiedNote(o.gameplay));
 
   card.append(row);
   overlay.append(card);
   return overlay;
+}
+
+/** A cleared board that is not the run's last: the heal, and that only HP carries. */
+function writeMidRun(card: HTMLElement, o: RunOutcome): void {
+  const { game, run } = o;
+  const healed = Math.min(run.healPerBoard, run.maxHp - game.hp);
+  card.append(el('h2', undefined, `BOARD ${o.boardIndex} CLEAR`));
+  card.append(
+    el('p', 'overlay-stats', `${o.typeName} full run · ${o.seconds}s · HP ${game.hp}/${run.maxHp}`),
+  );
+  // Said explicitly, because the number is the mode: at full HP the heal is zero and a player
+  // who is not told that will read it as a bug.
+  card.append(
+    el(
+      'p',
+      'overlay-note',
+      healed > 0
+        ? `Healed +${healed} — HP ${game.hp + healed}/${run.maxHp} going into board ${o.boardIndex + 1}.`
+        : run.healPerBoard === 0
+          ? `No heal on a pool of ${run.maxHp}. Every point you lose is gone for the run.`
+          : `Already at full HP, so the +${run.healPerBoard} heal is wasted.`,
+    ),
+  );
+  if (o.recorded && o.hints > 0) card.append(hintsNote(o.hints));
+  card.append(el('p', 'overlay-note', 'Level, EXP and mana reset next board. Only HP carries.'));
+}
+
+/** The run's last board cleared: the run complete, perfect or not. */
+function writeRunComplete(card: HTMLElement, o: RunOutcome): void {
+  const { game, run } = o;
+  const perfect = game.hp === run.maxHp;
+  card.append(el('h2', undefined, perfect ? 'PERFECT FULL RUN' : 'FULL RUN COMPLETE'));
+  card.append(
+    el(
+      'p',
+      'overlay-stats',
+      `All ${run.boardCount} boards of ${o.typeName} · ${o.seconds}s · HP ${game.hp}/${run.maxHp}`,
+    ),
+  );
+  card.append(
+    el(
+      'p',
+      'overlay-note',
+      perfect
+        ? 'Ten boards, not a single point of damage.'
+        : `${run.damageTaken} HP lost across the ladder.`,
+    ),
+  );
+  if (o.recorded && o.runHints > 0) card.append(hintsNote(o.runHints));
+}
+
+/** A board of the run lost: the run over, and how far it got. */
+function writeRunOver(card: HTMLElement, o: RunOutcome): void {
+  const { run } = o;
+  card.append(el('h2', undefined, 'RUN OVER'));
+  card.append(
+    el(
+      'p',
+      'overlay-stats',
+      `${o.typeName} full run · board ${o.boardIndex} of ${run.boardCount} · ${o.seconds}s`,
+    ),
+  );
+  card.append(
+    el(
+      'p',
+      'overlay-note',
+      `${plural(run.legs.length, 'board')} cleared. Starts again from board 1.`,
+    ),
+  );
 }

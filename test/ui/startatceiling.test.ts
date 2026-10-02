@@ -8,12 +8,12 @@ import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { boardConfig } from '../../src/engine/config.js';
 import { Game } from '../../src/engine/game.js';
-import { App } from '../../src/ui/app.js';
 import { BoardView, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { ladders } from '../../src/ui/ladders.js';
 import { themeFor } from '../../src/ui/looks.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
+import { mountApp, settingsRow } from './driver.js';
 
 /** A NORMAL board in a stage 120 pixels wide, the least a stage can be, so it cannot fit at 48. */
 function shown(startAtCeiling: boolean): BoardView {
@@ -54,20 +54,13 @@ describe('starting at the ceiling', () => {
   });
 
   it('is a toggle beside the zoom ceiling, and reads a save without it as off', () => {
-    document.body.innerHTML = '<div id="app"></div>';
-    const app = new App(document.getElementById('app')!) as unknown as {
-      showSettings(back: () => void): void;
-      showTypes(): void;
-      settings: Settings;
-    };
+    const app = mountApp();
     app.showSettings(() => app.showTypes());
     const names = [...document.querySelectorAll('.settings-name')].map((n) => n.textContent);
     expect(names.indexOf('Start boards at the maximum zoom')).toBe(
       names.indexOf('Maximum zoom in') + 1,
     );
-    const row = [...document.querySelectorAll('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Start boards at the maximum zoom',
-    )!;
+    const row = settingsRow('Start boards at the maximum zoom');
     row.querySelector<HTMLInputElement>('input[type=checkbox]')!.click();
     expect(Settings.load().presentation.startAtCeiling).toBe(true);
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({ version: 1, presentation: {} }));

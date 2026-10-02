@@ -4,8 +4,7 @@
  * No audio files anywhere in the repo, and that is a deliberate choice rather
  * than a placeholder: a pack is a dozen numbers, it costs nothing to ship, it
  * cannot 404, and a new pack is a new row in a table rather than a round of
- * asset work. The art is still temporary — see the pip creatures — so the
- * sound matches it.
+ * asset work (decision 0024).
  *
  * TWO THINGS THAT WILL BITE ANYONE WHO CHANGES THIS.
  *
@@ -21,8 +20,6 @@
  */
 
 import type { SfxEvent, SfxPackId } from './looktypes.js';
-
-export type { SfxEvent } from './looktypes.js';
 
 interface Voice {
   wave: OscillatorType;
@@ -371,6 +368,11 @@ const LIMIT_RELEASE = 0.1;
 /** The gain an envelope starts and ends at: an exponential ramp cannot reach zero. */
 const SILENT = 0.0001;
 
+/**
+ * The game's mixer: `play` sounds an event in the chosen pack at the game's volume, throttled per
+ * event and passing over a silenced one; `audition` sounds any pack's, for the sound check. Never
+ * throws: a broken audio stack goes silent for the rest of the session.
+ */
 export class Sfx {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;

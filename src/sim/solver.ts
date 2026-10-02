@@ -3,8 +3,8 @@
  *
  * The honest player in `honest.ts` deduces the way a careful person does: one
  * number at a time, pairs of numbers subtracted, the placement rules read off
- * the cells beside them. Every forced-guess figure in CLAUDE.md is what THAT
- * player could not get past, which makes each one an upper bound on the
+ * the cells beside them. Its forced-guess figures in docs/tuning.md are what
+ * THAT player could not get past, which makes each one an upper bound on the
  * guesses a board really forces. This answers the exact question instead: is
  * there a covered cell that every layout consistent with the screen makes free?
  *
@@ -40,16 +40,10 @@
 import type { Game } from '../engine/game.js';
 import type { Cell } from '../engine/types.js';
 import { placementRule } from '../engine/placement/registry.js';
-import {
-  type Constraint,
-  type Model,
-  type Problem,
-  Search,
-  type Sum,
-  highest,
-  lowest,
-} from './search.js';
+import { everyTier, highestTier, lowestTier, tiersUpTo } from './masks.js';
+import { type ExactSum, type Model, type Problem, Search, type Sum } from './search.js';
 
+/** What `solve` is asked: its search budget, the joint search's size, and the tier to prove. */
 export interface SolveOptions {
   /** Search nodes one question may use before it is left undecided. */
   budget?: number;
@@ -65,6 +59,7 @@ export interface SolveOptions {
   threshold?: number;
 }
 
+/** What the screen proves: the free cells, and the alarms that say whether to believe it. */
 export interface Solution {
   /** Covered cells at or below your level in every consistent layout. */
   safe: Cell[];
@@ -75,6 +70,18 @@ export interface Solution {
   /** Whether the frontier was searched as one system. */
   joint: boolean;
 }
+
+/** Search nodes one question may use, where `SolveOptions.budget` does not say. */
+const DEFAULT_BUDGET = 20000;
+
+/** Frontiers up to this many cells are searched as one system, where `jointVars` does not say. */
+const DEFAULT_JOINT_VARS = 40;
+
+/** The windows tried round a cell before its whole piece is searched, in numbers out from it. */
+const WINDOW_RADII: readonly number[] = [2, 4];
+
+/** A window's search, and the piece's filled in round it, may use a quarter of the budget. */
+const WINDOW_BUDGET_SHARE = 1 / 4;
 
 function buildModel(game: Game): Model | null {
   const tiers = game.config.tiers;
@@ -102,7 +109,7 @@ function buildModel(game: Game): Model | null {
 
   const index = new Map<Cell, number>();
   const vars: Cell[] = [];
-  const cons: Constraint[] = [];
+  const cons: ExactSum[] = [];
   for (const c of all) {
     if (!c.open) continue;
     let target = c.num;
@@ -144,12 +151,24 @@ function buildModel(game: Game): Model | null {
 function pieces(model: Model, joint: boolean): Problem[] {
   const { cons, consOf } = model;
   const n = model.vars.length;
+  // Union-find over the variables: every variable of a number is joined to its first, so two
+  // variables share a root exactly when a chain of numbers links them.
   const parent = Array.from({ length: n }, (_, i) => i);
-  const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i]!)));
-  for (const c of cons) for (const v of c.vars.slice(1)) parent[find(v)] = find(c.vars[0]!);
+  const root = (i: number): number => {
+    if (parent[i] !== i) parent[i] = root(parent[i]!);
+    return parent[i]!;
+  };
+  const join = (a: number, b: number): void => {
+    const top = root(a);
+    parent[top] = root(b);
+  };
+  for (const c of cons) for (const v of c.vars.slice(1)) join(v, c.vars[0]!);
   const groups = new Map<number, number[]>();
-  for (let v = 0; v < n; v++)
-    (groups.get(find(v)) ?? groups.set(find(v), []).get(find(v))!).push(v);
+  for (let v = 0; v < n; v++) {
+    const group = groups.get(root(v));
+    if (group) group.push(v);
+    else groups.set(root(v), [v]);
+  }
 
   const exact = (members: number[]): Problem => {
     const inside = new Set(members);
@@ -166,9 +185,11 @@ function pieces(model: Model, joint: boolean): Problem[] {
   return joint ? [exact(Array.from({ length: n }, (_, i) => i))] : [...groups.values()].map(exact);
 }
 
-/** The cells within `radius` numbers of v, with every number that reaches
- *  outside the window relaxed to what its outside cells could make up. */
-function window(model: Model, v: number, radius: number, d: ArrayLike<number>): Problem {
+/**
+ * The cells within `radius` numbers of v, with every number that reaches outside the window
+ * relaxed to what its outside cells could make up.
+ */
+function localWindow(model: Model, v: number, radius: number, d: ArrayLike<number>): Problem {
   const { cons, consOf } = model;
   const inside = new Set([v]);
   let ring = [v];
@@ -195,8 +216,8 @@ function window(model: Model, v: number, radius: number, d: ArrayLike<number>): 
     for (const w of vs) {
       if (inside.has(w)) own.push(w);
       else {
-        oLo += lowest(d[w]!);
-        oHi += highest(d[w]!);
+        oLo += lowestTier(d[w]!);
+        oHi += highestTier(d[w]!);
       }
     }
     sums.push({ vars: own, lo: target - oHi, hi: target - oLo });
@@ -204,18 +225,88 @@ function window(model: Model, v: number, radius: number, d: ArrayLike<number>): 
   return { members: [...inside], sums };
 }
 
+/**
+ * Local first, for one variable `v` restricted to its dangerous values (`d`). A window with no
+ * room for a dangerous v is a proof. A window with room is a candidate layout, and fixing it and
+ * filling in the rest of the piece is usually the fastest way to a real witness — the far side of
+ * a piece is only loosely tied to the near side. Says which it found, or null for neither.
+ */
+function settleInWindows(
+  model: Model,
+  search: Search,
+  v: number,
+  d: number[],
+  piece: Problem,
+  leaf: (() => boolean) | null,
+  limit: number,
+): 'safe' | 'witnessed' | null {
+  for (const radius of WINDOW_RADII) {
+    const local = localWindow(model, v, radius, d);
+    if (local.members.length >= piece.members.length) break;
+    const r = search.feasible(local, d, v, null, { bold: true, limit });
+    if (r === false) return 'safe';
+    if (r !== true) continue;
+    const fixed = d.slice();
+    for (const w of local.members) fixed[w] = search.cur[w]!;
+    if (search.feasible(piece, fixed, v, leaf, { limit }) === true) {
+      search.record(piece);
+      return 'witnessed';
+    }
+  }
+  return null;
+}
+
+/**
+ * The hidden interior. Without the joint search nothing bounds it but the tiers already used up;
+ * with it, a tier can reach the interior only if some layout of the frontier leaves one of that
+ * tier over. Adds the interior cells it proves to `safe`; returns the questions left undecided.
+ */
+function proveInterior(
+  model: Model,
+  search: Search,
+  whole: Problem[],
+  above: number,
+  joint: boolean,
+  safe: Cell[],
+): number {
+  const { tiers, dom, interior, interiorDom } = model;
+  let undecided = 0;
+  const classes = new Map<number, Cell[]>();
+  interior.forEach((c, i) => {
+    const d = interiorDom[i]! & above;
+    if (!d) {
+      safe.push(c);
+      return;
+    }
+    const same = classes.get(d);
+    if (same) same.push(c);
+    else classes.set(d, [c]);
+  });
+  for (const [d, cells] of classes) {
+    if (!joint || search.interiorSeen & d) continue;
+    const r = search.feasible(whole[0]!, dom, -1, () => {
+      if (!search.interiorFits()) return false;
+      for (let t = 1; t <= tiers; t++) if (d & (1 << t) && search.leftover(t) > 0) return true;
+      return false;
+    });
+    if (r === true) search.record(whole[0]!);
+    else if (r === false) safe.push(...cells);
+    else undecided++;
+  }
+  return undecided;
+}
+
 /** Every cell the screen proves at or below the player's level. */
 export function solve(game: Game, opts: SolveOptions = {}): Solution {
-  const budget = opts.budget ?? 20000;
-  const jointVars = opts.jointVars ?? 40;
+  const budget = opts.budget ?? DEFAULT_BUDGET;
+  const jointVars = opts.jointVars ?? DEFAULT_JOINT_VARS;
   const model = buildModel(game);
   if (!model) return { safe: [], undecided: 0, inconsistent: true, joint: false };
 
-  const { tiers, vars, dom, interior, interiorDom } = model;
+  const { tiers, vars, dom } = model;
   const n = vars.length;
   const level = opts.threshold ?? game.level;
-  const every = (1 << (tiers + 1)) - 1;
-  const above = level >= tiers ? 0 : every & ~((1 << (level + 1)) - 1);
+  const above = everyTier(tiers) & ~tiersUpTo(level);
   const joint = n <= jointVars;
   const search = new Search(
     model,
@@ -224,7 +315,8 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
     joint,
     budget,
   );
-  const { cur, seen } = search;
+  const { seen } = search;
+  const windowLimit = Math.floor(budget * WINDOW_BUDGET_SHARE);
 
   const whole = pieces(model, joint);
   const home = new Map<number, Problem>();
@@ -254,29 +346,8 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
     d[v] = dom[v]! & above;
     const p = home.get(v)!;
 
-    // Local first. A window with no room for a dangerous v is a proof. A
-    // window with room is a candidate layout, and fixing it and filling in the
-    // rest of the piece is usually the fastest way to a real witness — the far
-    // side of a piece is only loosely tied to the near side.
-    let settled = false;
-    for (const radius of [2, 4]) {
-      const local = window(model, v, radius, d);
-      if (local.members.length >= p.members.length) break;
-      const r = search.feasible(local, d, v, null, true, budget >> 2);
-      if (r === false) {
-        safe.push(vars[v]!);
-        settled = true;
-        break;
-      }
-      if (r !== true) continue;
-      const fixed = d.slice();
-      for (const w of local.members) fixed[w] = cur[w]!;
-      if (search.feasible(p, fixed, v, leaf, false, budget >> 2) === true) {
-        search.record(p);
-        settled = true;
-        break;
-      }
-    }
+    const settled = settleInWindows(model, search, v, d, p, leaf, windowLimit);
+    if (settled === 'safe') safe.push(vars[v]!);
     if (settled) continue;
 
     const r = search.feasible(p, d, v, leaf);
@@ -285,29 +356,6 @@ export function solve(game: Game, opts: SolveOptions = {}): Solution {
     else undecided++;
   }
 
-  // The hidden interior. Without the joint search nothing bounds it but the
-  // tiers already used up; with it, a tier can reach the interior only if some
-  // layout of the frontier leaves one of that tier over.
-  const classes = new Map<number, Cell[]>();
-  interior.forEach((c, i) => {
-    const d = interiorDom[i]! & above;
-    if (!d) {
-      safe.push(c);
-      return;
-    }
-    (classes.get(d) ?? classes.set(d, []).get(d)!).push(c);
-  });
-  for (const [d, cells] of classes) {
-    if (!joint || search.interiorSeen & d) continue;
-    const r = search.feasible(whole[0]!, dom, -1, () => {
-      if (!search.interiorFits()) return false;
-      for (let t = 1; t <= tiers; t++) if (d & (1 << t) && search.leftover(t) > 0) return true;
-      return false;
-    });
-    if (r === true) search.record(whole[0]!);
-    else if (r === false) safe.push(...cells);
-    else undecided++;
-  }
-
+  undecided += proveInterior(model, search, whole, above, joint, safe);
   return { safe, undecided, inconsistent: false, joint };
 }

@@ -43,17 +43,16 @@
  *
  * AND WHAT IT COSTS — the opposite of PAIRS. Pairing spreads creatures evenly
  * and gives the game its smallest openings. Packs of six are big clusters, and
- * clustering is what makes empty ground: measured on 30x16 at 25% density,
- * cells with nothing around them rise from 9.4% on a uniform board to 23.3%,
- * and the largest opening from 7.3% of the board to 19.8%. So this ladder has
- * to run dense to be a puzzle at all. The packing ceiling is not what binds it
- * the way it bound PAIRS: groups of six have far less rim per creature than
- * dominoes do, and with restarts a lay-down lands 36% on every seed measured,
- * against PAIRS's 26%.
+ * clustering is what makes empty ground: at the same density, cells with
+ * nothing around them and the opening both more than double against a
+ * uniform board (measured in the design reference). So this ladder has to run
+ * dense to be a puzzle at all. The packing ceiling is not what binds it the
+ * way it bound PAIRS: groups of six have far less rim per creature than
+ * dominoes do, so `PACK_MAX_DENSITY` sits well above PAIRS's ceiling.
  */
 
 import type { Cell } from '../types.js';
-import { noteBit } from '../notes.js';
+import { allNotes, noteBit } from '../notes.js';
 import { type Rng, randInt, shuffle } from '../rng.js';
 import { ONE_POOL, placeDealt, readDealt, shuffledPool } from './deal.js';
 import {
@@ -66,6 +65,7 @@ import {
   type RuleView,
   WHOLE_SUM,
   boardName,
+  refuseDensity,
 } from './rule.js';
 
 /**
@@ -89,30 +89,48 @@ function packCandidates(
   neighboursOf: (c: Cell) => readonly Cell[],
   tiers: number,
 ): number | null {
-  const known = (c: Cell): boolean => c.present && c.open && c.tier > 0;
   const seen = new Set<Cell>();
   let shown = 0;
   let touched = false;
   for (const n of neighboursOf(cell)) {
-    if (!known(n) || seen.has(n)) continue;
+    if (!isOpenCreature(n) || seen.has(n)) continue;
     touched = true;
-    const piece = [n];
-    seen.add(n);
     let mask = 0;
-    for (let i = 0; i < piece.length; i++) {
-      const p = piece[i]!;
-      mask |= 1 << p.tier;
-      for (const m of neighboursOf(p))
-        if (known(m) && !seen.has(m)) {
-          seen.add(m);
-          piece.push(m);
-        }
-    }
+    for (const p of openPiece(n, neighboursOf, seen)) mask |= noteBit(p.tier);
     if (shown & mask) return noteBit(0);
     shown |= mask;
   }
   if (!touched) return null;
-  return (((1 << (tiers + 1)) - 1) & ~shown) | noteBit(0);
+  return (allNotes(tiers) & ~shown) | noteBit(0);
+}
+
+/** A creature the player can see: present, uncovered, and not empty ground. */
+function isOpenCreature(c: Cell): boolean {
+  return c.present && c.open && c.tier > 0;
+}
+
+/**
+ * The open creatures joined to `seed` through `neighboursOf`, `seed` first, in the order a
+ * breadth-first walk meets them: a pack, or a line, as far as the player can see it. Each is added
+ * to `done` and none already there is taken, so one `done` shared across calls splits a board
+ * into its pieces.
+ */
+export function openPiece(
+  seed: Cell,
+  neighboursOf: (c: Cell) => readonly Cell[],
+  done: Set<Cell>,
+): Cell[] {
+  const piece = [seed];
+  done.add(seed);
+  for (let i = 0; i < piece.length; i++) {
+    for (const n of neighboursOf(piece[i]!)) {
+      if (isOpenCreature(n) && !done.has(n)) {
+        done.add(n);
+        piece.push(n);
+      }
+    }
+  }
+  return piece;
 }
 
 /**
@@ -125,13 +143,11 @@ const PACK_ATTEMPTS = 60;
 /**
  * The most creatures a pack board may be asked for, as a share of the cells
  * they may stand on — where a random lay-down stops landing the quota
- * reliably. Measured with 40 seeds a point: 36% places on every seed from 24x14
- * to 44x24; 37% starts losing seeds on the biggest board and 38% loses half of
- * them there. The tuned ladder sits well under it — see `ladders.py` — because
- * what limits this mode is where a board stops being a puzzle, not the
- * packing. A hand-edited schedule past it fails at the config boundary with the
- * arithmetic in the message, rather than as an occasional seed that cannot be
- * placed.
+ * reliably (measured in the design reference). The tuned ladder sits well
+ * under it — see `design/ladder_types.toml` — because what limits this mode is
+ * where a board stops being a puzzle, not the packing. A hand-edited schedule
+ * past it fails at the config boundary with the arithmetic in the message,
+ * rather than as an occasional seed that cannot be placed.
  */
 export const PACK_MAX_DENSITY = 0.36;
 
@@ -268,20 +284,9 @@ export function missingFrom(
   tiers: number,
 ): Map<Cell, number> {
   const out = new Map<Cell, number>();
-  const known = (c: Cell): boolean => c.present && c.open && c.tier > 0;
-
   for (const seed of cells) {
-    if (!known(seed) || out.has(seed)) continue;
-    const piece: Cell[] = [seed];
-    const seen = new Set<Cell>(piece);
-    for (let i = 0; i < piece.length; i++) {
-      for (const n of neighboursOf(piece[i]!)) {
-        if (known(n) && !seen.has(n)) {
-          seen.add(n);
-          piece.push(n);
-        }
-      }
-    }
+    if (!isOpenCreature(seed) || out.has(seed)) continue;
+    const piece = openPiece(seed, neighboursOf, new Set());
     const found = new Set(piece.map((c) => c.tier));
     let top = 0;
     for (let t = tiers; t >= 1; t--)
@@ -342,14 +347,12 @@ function validatePacks(row: PlacementRow): void {
         `a pack is one of each of the ${row.tiers} tiers, so the quantity has to be flat`,
     );
   }
-  const share = row.monsters / row.cells;
-  if (share > PACK_MAX_DENSITY) {
-    throw new Error(
-      `${where}: ${row.monsters} creatures on ${row.cells} cells is ` +
-        `${(100 * share).toFixed(1)}%, past the ${(100 * PACK_MAX_DENSITY).toFixed(0)}% ` +
-        `non-touching packs can be laid down reliably`,
-    );
-  }
+  refuseDensity(
+    row,
+    row.monsters,
+    PACK_MAX_DENSITY,
+    'non-touching packs can be laid down reliably',
+  );
 }
 
 /**
@@ -390,6 +393,7 @@ function dealPackBoard(d: Deal): void {
   placeDealt(d, dealPacks(packs, d.cfg.tiers, d.rng));
 }
 
+/** The pack placement: non-touching packs of one of every tier. */
 export const PACKS_RULE: PlacementRule = {
   id: 'packs',
   validate: validatePacks,

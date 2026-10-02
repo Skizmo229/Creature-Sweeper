@@ -1,12 +1,14 @@
 /**
- * What each trick is called and what it says, for whatever teaches it: the tutor's caption, the
- * school's script and the field guide (docs/teaching-plan.md). One entry per trick, named as
- * `docs/strategies.md` names it and stated in one short sentence of the game's own; the test in
- * `test/tricktext.test.ts` holds the names and the sections to the document, both ways.
+ * What each trick is called and what it says, for whatever teaches it: the tutor's hint line, the
+ * school's script and the field guide (docs/teaching-plan.md); a proof's caption, its numbers
+ * filled in, is written in `captions.ts`. One entry per trick, named as `docs/strategies.md` names
+ * it and stated in one short sentence of the game's own; the test in `test/tricktext.test.ts`
+ * holds the names and the sections to the document, both ways.
  */
 
 import type { TrickId } from './tricks.js';
 
+/** A trick's words: its name, where the catalogue has it, and its rule. */
 export interface TrickText {
   /** The catalogue's heading for the trick, as sections 2 to 6 of `docs/strategies.md` bold it. */
   readonly name: string;
@@ -16,6 +18,7 @@ export interface TrickText {
   readonly rule: string;
 }
 
+/** Every trick's words, keyed by id, so a new trick cannot be added without them. */
 export const TRICK_TEXT: Readonly<Record<TrickId, TrickText>> = {
   'raw-ring': {
     name: 'The raw ring',

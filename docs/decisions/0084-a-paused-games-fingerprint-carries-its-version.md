@@ -5,8 +5,8 @@
 ## Context
 A paused game is checked on resuming by a fingerprint of the board its moves reach (0057), and one
 that does not match is refused and its slot emptied. The fingerprint that 0.9.1 and every build
-before it took left out four things the player is shown: a cell's Census count, its Augur answer and its
-sprinkle partner, and the sweeps left of a budget. Census and Augur also feed Sweep's proofs. An
+before it took left out four things the player is shown: a cell's Census count, its Augur answer and
+its sprinkle partner, and the sweeps left of a budget. Census and Augur also feed Sweep's proofs. An
 update that changed what one of them says, as 0062 changed Augur's answer on 28 September 2026,
 would hand a paused game back with a different answer and pass the check. The multi-agent sweep of
 28 September found this and left it unverified. Taking the four in changes every fingerprint, so a

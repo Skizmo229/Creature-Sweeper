@@ -15,6 +15,7 @@ import { CONGO_RULE } from './congo.js';
 import { PATROL_RULE } from './patrol.js';
 import { SPRINKLES_RULE } from './sprinkles.js';
 
+/** Every placement rule, keyed by the name the ladder data uses. */
 export const RULES = {
   uniform: UNIFORM_RULE,
   sudoku: SUDOKU_RULE,

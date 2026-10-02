@@ -4,6 +4,7 @@
  * refresh. Every control reports through `GameScreenActions`, so this file decides nothing.
  */
 
+import { findType } from '../../engine/config.js';
 import type { Game } from '../../engine/game.js';
 import type { FullRun } from '../../engine/run.js';
 import { SPELLS, type SpellId, spellKey } from '../../engine/spells.js';
@@ -13,6 +14,7 @@ import { ladders } from '../ladders.js';
 import { type TierPalette, tierColor, tierGilded } from '../tiercolors.js';
 import { themeFor } from '../looks.js';
 
+/** What the game screen's controls report to. */
 export interface GameScreenActions {
   openSettings(): void;
   /** Leave the board, asking first whether to pause or abandon a game with anything in it. */
@@ -28,11 +30,8 @@ export interface GameScreenActions {
   sweep(useMarks: boolean): void;
   /** PATROL's Wait: the creatures take a step and nothing else happens. */
   wait(): void;
-  /** The tutor: point at the next provable move, and why; and whether it is offered at all. */
-  explain(): void;
-  readonly tutor: boolean;
-  /** The colour of each tier, which its LV button wears. */
-  readonly tierColors: TierPalette;
+  /** The tutor: point at the next provable move, and why. */
+  hint(): void;
   /** The field guide, at what the tutor is saying. */
   guide(): void;
   /** On a lesson board: go on to the next step. */
@@ -41,12 +40,36 @@ export interface GameScreenActions {
   cancelSpell(): void;
 }
 
+/**
+ * The HUD's readouts, each a span `hud.ts` fills in, with `hud-` and its key as a class so each
+ * can reserve its own width. Mana only on a ladder with spells, the run's place only in a run.
+ */
+export interface HudReadouts {
+  hp: HTMLElement;
+  lv: HTMLElement;
+  ex: HTMLElement;
+  ne: HTMLElement;
+  mp: HTMLElement | null;
+  run: HTMLElement | null;
+  t: HTMLElement;
+}
+
+/** What the game screen is built from besides the game and its controls' actions. */
+export interface GameScreenOptions {
+  /** Whether the tutor is offered: without it, the board has no Hint button. */
+  readonly tutor: boolean;
+  /** The colour of each tier, which its LV button wears. */
+  readonly tierColors: TierPalette;
+  /** A school lesson's title, shown in place of the board's label; null on a ladder's board. */
+  readonly lessonTitle: string | null;
+}
+
 /** The elements the refresh writes into. */
 export interface GameScreenElements {
   root: HTMLElement;
   stage: HTMLElement;
   canvas: HTMLCanvasElement;
-  hud: Record<string, HTMLElement>;
+  hud: HudReadouts;
   counters: HTMLButtonElement[];
   emptyNoteBtn: HTMLButtonElement;
   notesBtn: HTMLButtonElement;
@@ -57,7 +80,7 @@ export interface GameScreenElements {
   /** PATROL's Wait, which also shows how many moves the board has seen. */
   waitBtn: HTMLButtonElement | null;
   /** The tutor's button; null where the setting has switched the tutor off. */
-  whyBtn: HTMLButtonElement | null;
+  hintBtn: HTMLButtonElement | null;
   spellBtns: HTMLButtonElement[];
   hint: HTMLParagraphElement;
   /** Shown at the end of the hint line while the tutor speaks: the guide's entry for it. */
@@ -66,25 +89,31 @@ export interface GameScreenElements {
   next: HTMLButtonElement;
 }
 
-/** `lesson` is a school lesson's title, shown in place of the board's label. */
+/**
+ * The game screen for `game`, board `boardIndex` of ladder `typeId` (in `run`, if one), with every
+ * control reporting to `a`. The caller puts it on the page and draws the board on its canvas.
+ */
 export function buildGameScreen(
   game: Game,
   typeId: string,
   boardIndex: number,
   run: FullRun | null,
   a: GameScreenActions,
-  lesson: string | null = null,
+  o: GameScreenOptions,
 ): GameScreenElements {
-  const type = ladders.find((t) => t.id === typeId)!;
+  const { lessonTitle } = o;
+  const type = findType(ladders, typeId);
   const wrap = el('div', 'screen game');
   // The board wears the chosen palette; the screen around it keeps the ladder's own accent, so
   // the menus stay recognisable however the board is painted.
   wrap.style.setProperty('--tint', themeFor(typeId).accent);
 
-  const { hudEl, hud } = buildHud(game, run, a, lesson === null);
+  const { hudEl, hud } = buildHud(game, run, a, lessonTitle === null);
   wrap.append(
     hudEl,
-    lesson ? el('div', 'board-label', lesson) : boardLabel(type.name, game, boardIndex, run),
+    lessonTitle
+      ? el('div', 'board-label', lessonTitle)
+      : boardLabel(type.name, game, boardIndex, run),
   );
 
   const stage = el('div', 'stage');
@@ -92,7 +121,7 @@ export function buildGameScreen(
   stage.append(canvas);
   wrap.append(stage);
 
-  const { palette, ...controls } = buildPalette(game, a, a.tutor);
+  const { palette, ...controls } = buildPalette(game, a, o);
   wrap.append(palette);
   const { row, spellBtns } = buildSpellRow(game, a);
   if (row) wrap.append(row);
@@ -114,24 +143,23 @@ function buildHud(
   run: FullRun | null,
   a: GameScreenActions,
   pausable: boolean,
-): { hudEl: HTMLElement; hud: Record<string, HTMLElement> } {
+): { hudEl: HTMLElement; hud: HudReadouts } {
   const hudEl = el('div', 'hud');
-  const hud: Record<string, HTMLElement> = {};
-  const mk = (key: string, cls = '') => {
-    // The key rides along as a class so each readout can reserve its own width.
+  const readout = (key: keyof HudReadouts, cls = ''): HTMLElement => {
     const span = el('span', `hud-item hud-${key} ${cls}`.trim());
-    hud[key] = span;
     hudEl.append(span);
     return span;
   };
-  mk('hp');
-  mk('lv');
-  mk('ex');
-  mk('ne');
-  if (game.spells.length) mk('mp', 'mana');
-  // In a run, how far down the ladder you are is the one thing HP alone cannot tell you.
-  if (run) mk('run', 'run');
-  mk('t', 'right');
+  const hud: HudReadouts = {
+    hp: readout('hp'),
+    lv: readout('lv'),
+    ex: readout('ex'),
+    ne: readout('ne'),
+    mp: game.spells.length ? readout('mp', 'mana') : null,
+    // In a run, how far down the ladder you are is the one thing HP alone cannot tell you.
+    run: run ? readout('run', 'run') : null,
+    t: readout('t', 'right'),
+  };
   // Spelled out rather than a gear glyph: the font is a player setting (decision 0021).
   const gear = el('button', 'ghost small', 'Settings');
   gear.title = 'Settings. The board waits.';
@@ -172,33 +200,38 @@ function boardLabel(
   return label;
 }
 
-/** The LV palette, which doubles as the per-tier counter, with the pencil and Sweep. */
+/** The LV palette, which doubles as the per-tier counter, with the pencil, Sweep and the tutor. */
 function buildPalette(
   game: Game,
   a: GameScreenActions,
-  tutor: boolean,
-): Pick<
-  GameScreenElements,
-  | 'counters'
-  | 'emptyNoteBtn'
-  | 'notesBtn'
-  | 'numbersBtn'
-  | 'sweepSafeBtn'
-  | 'sweepMarkBtn'
-  | 'waitBtn'
-  | 'whyBtn'
-> & { palette: HTMLElement } {
+  o: GameScreenOptions,
+): ReturnType<typeof buildTierCounters> &
+  ReturnType<typeof buildBoardButtons> & { palette: HTMLElement } {
   const palette = el('div', 'palette');
+  return {
+    palette,
+    ...buildTierCounters(palette, game, a, o.tierColors),
+    ...buildBoardButtons(palette, game, a, o.tutor),
+  };
+}
+
+/** A button per tier in its colour, then the empty pencil, each appended to `palette`. */
+function buildTierCounters(
+  palette: HTMLElement,
+  game: Game,
+  a: GameScreenActions,
+  tierColors: TierPalette,
+): Pick<GameScreenElements, 'counters' | 'emptyNoteBtn'> {
   const counters: HTMLButtonElement[] = [];
   for (let tier = 1; tier <= game.config.tiers; tier++) {
     const btn = el('button', 'counter');
     btn.dataset.tier = String(tier);
     // Its tier's creature colour, as the HUD's level number wears it; tiers past five get the
     // halo their pips are ringed with, as the border.
-    btn.style.setProperty('--tier', tierColor(a.tierColors, tier));
+    btn.style.setProperty('--tier', tierColor(tierColors, tier));
     if (tierGilded(tier)) {
       btn.classList.add('gilded');
-      btn.style.setProperty('--halo', a.tierColors.halo);
+      btn.style.setProperty('--halo', tierColors.halo);
     }
     btn.addEventListener('click', () => a.pickTier(tier));
     counters.push(btn);
@@ -210,7 +243,22 @@ function buildPalette(
   emptyNoteBtn.title = 'Pencil "might be empty ground".';
   emptyNoteBtn.addEventListener('click', a.pencilEmpty);
   palette.append(emptyNoteBtn);
+  return { counters, emptyNoteBtn };
+}
 
+/**
+ * The entry toggle, then where the board has each the Beaten toggle, Sweep and Sweep + marks,
+ * PATROL's Wait and the tutor's Hint, each appended to `palette`.
+ */
+function buildBoardButtons(
+  palette: HTMLElement,
+  game: Game,
+  a: GameScreenActions,
+  tutor: boolean,
+): Pick<
+  GameScreenElements,
+  'notesBtn' | 'numbersBtn' | 'sweepSafeBtn' | 'sweepMarkBtn' | 'waitBtn' | 'hintBtn'
+> {
   // Labelled with the mode it is IN, not the mode it switches to (decision 0008).
   const notesBtn = el('button', 'ghost small', 'Entry: Mark');
   notesBtn.addEventListener('click', a.toggleNotes);
@@ -251,26 +299,16 @@ function buildPalette(
   }
   // The tutor is the opposite of Sweep: it opens nothing and says why a cell could be. On every
   // ladder, EASY included, where there is no Sweep to lean on (docs/teaching-plan.md).
-  let whyBtn: HTMLButtonElement | null = null;
+  let hintBtn: HTMLButtonElement | null = null;
   if (tutor) {
-    whyBtn = el('button', 'sweep why', '[H]int');
-    whyBtn.title =
+    hintBtn = el('button', 'sweep why', '[H]int');
+    hintBtn.title =
       'Points at the next provable move and says why. Opens nothing; a hinted board sets no ' +
       'best time.';
-    whyBtn.addEventListener('click', a.explain);
-    palette.append(whyBtn);
+    hintBtn.addEventListener('click', a.hint);
+    palette.append(hintBtn);
   }
-  return {
-    palette,
-    counters,
-    emptyNoteBtn,
-    notesBtn,
-    numbersBtn,
-    sweepSafeBtn,
-    sweepMarkBtn,
-    waitBtn,
-    whyBtn,
-  };
+  return { notesBtn, numbersBtn, sweepSafeBtn, sweepMarkBtn, waitBtn, hintBtn };
 }
 
 /** The spell row, on a ladder that offers any: one button per spell, and Cancel. */

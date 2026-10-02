@@ -13,8 +13,8 @@ import {
   SYMBOL_COUNT,
   SYMBOL_SETS,
   findSymbol,
-  glyphChar,
-  isGlyphPip,
+  isSymbolPip,
+  symbolChar,
 } from '../src/ui/pipsymbols.js';
 
 const DIR = 'src/ui/pipfont';
@@ -80,8 +80,8 @@ describe('the symbol table', () => {
       for (const s of set.symbols) {
         expect(s.name.length, s.pip).toBeGreaterThan(0);
         expect([...s.char], s.pip).toHaveLength(1);
-        expect(glyphChar(s.pip)).toBe(s.char);
-        expect(isGlyphPip(s.pip)).toBe(true);
+        expect(symbolChar(s.pip)).toBe(s.char);
+        expect(isSymbolPip(s.pip)).toBe(true);
       }
     }
   });
@@ -89,10 +89,10 @@ describe('the symbol table', () => {
 
 describe('a symbol pip', () => {
   it('is told apart from a drawn shape', () => {
-    expect(isGlyphPip('U+2764')).toBe(true);
-    expect(isGlyphPip('U+1F571')).toBe(true);
+    expect(isSymbolPip('U+2764')).toBe(true);
+    expect(isSymbolPip('U+1F571')).toBe(true);
     for (const shape of ['circle', 'ringDiamond', 'default', 'U+', 'U+27G4', 'u+2764']) {
-      expect(isGlyphPip(shape), shape).toBe(false);
+      expect(isSymbolPip(shape), shape).toBe(false);
     }
   });
 

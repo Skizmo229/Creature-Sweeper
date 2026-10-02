@@ -11,15 +11,24 @@
  * settings screen can mean leaving it.
  */
 
+import { RATIO_STEP } from '../../engine/settings.js';
 import { el } from '../dom.js';
-import { SFX_EVENTS, type SfxPackId } from '../looktypes.js';
-import { DEFAULT_PRESENTATION, MAX_SOUND_CHECK_VOLUME } from '../presentation.js';
+import { SFX_EVENTS, type SfxEvent, type SfxPackId } from '../looktypes.js';
+import { DEFAULT_SOUND_CHECK_VOLUME, MAX_SOUND_CHECK_VOLUME } from '../presentation.js';
 import type { Settings } from '../settings.js';
-import { type SfxEvent, sfxPitch, sfxRatio, sfxSoundId } from '../sfx.js';
-import { SFX_EVENT_NAMES, SFX_NAMES } from '../theme.js';
+import { sfxPitch, sfxRatio, sfxSoundId } from '../sfx.js';
+import { SFX_EVENT_NAMES, SFX_NAMES, isSfxEvent, isSfxPack } from '../theme.js';
 import type { ScreenContext } from './context.js';
-import { type PianoRoll, nearestNote, noteName, pianoRoll } from './pianoroll.js';
-import { slider } from './widgets.js';
+import {
+  HIGHEST_NOTE,
+  LOWEST_NOTE,
+  OCTAVE,
+  type PianoRoll,
+  nearestNote,
+  noteName,
+  pianoRoll,
+} from './pianoroll.js';
+import { percent, slider, windowShell } from './widgets.js';
 
 interface Sound {
   pack: SfxPackId;
@@ -33,12 +42,13 @@ interface Sound {
 const keys = new Map<string, Sound>();
 const pitches = new Map<string, number>();
 
+/** The sound check's own volume (`SoundCheckSettings.volume`), kept like the keys. */
+let volume = DEFAULT_SOUND_CHECK_VOLUME;
+
 /** A stored sound id back to a sound, or null for one this build has no button for. */
 function parseSound(id: string): Sound | null {
   const [pack, event] = id.split(':');
-  return pack && event && pack in SFX_NAMES && event in SFX_EVENT_NAMES
-    ? { pack: pack as SfxPackId, event: event as SfxEvent }
-    : null;
+  return pack && event && isSfxPack(pack) && isSfxEvent(event) ? { pack, event } : null;
 }
 
 function load(settings: Settings): void {
@@ -62,9 +72,6 @@ function save(settings: Settings): void {
     },
   });
 }
-
-/** The sound check's own volume (`SoundCheckSettings.volume`), kept like the keys. */
-let volume = 1;
 
 /**
  * Keys that keep their own job in the window: Escape closes it, Tab moves the focus, Shift swaps
@@ -97,9 +104,11 @@ const PIANO_KEYS = new Map<string, number>([
 ]);
 const OCTAVE_DOWN = 'z';
 const OCTAVE_UP = 'x';
-/** Where the home row can start: C2 to C6, so a whole octave above it is still on the keyboard. */
-const LOWEST_C = 36;
-const HIGHEST_C = 84;
+/** Where the home row can start: any C on the keyboard with a whole octave above it. */
+const LOWEST_C = LOWEST_NOTE;
+const HIGHEST_C = HIGHEST_NOTE - OCTAVE;
+/** Where the home row starts before anything moves it. */
+const MIDDLE_C = 60;
 
 /** A letter is the same key with or without Shift. */
 const keyId = (e: KeyboardEvent): string => (e.key.length === 1 ? e.key.toLowerCase() : e.key);
@@ -134,20 +143,6 @@ function statusText(assign: Assign, muted: boolean, playing: boolean): string {
   if (assign.step === 'sound') return 'Click the sound to assign.';
   if (assign.step === 'key') return `Press a key for ${soundName(assign.sound)}.`;
   return keys.size > 0 ? 'Press an assigned key to play its sound.' : '';
-}
-
-/** The window and its title bar, in the picker's clothes. */
-function shell(): { overlay: HTMLElement; card: HTMLElement; close: HTMLElement } {
-  const overlay = el('div', 'overlay picker');
-  overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-modal', 'true');
-  overlay.setAttribute('aria-label', 'Sound check');
-  const card = el('div', 'overlay-card picker-card');
-  const head = el('div', 'picker-head');
-  const close = el('button', 'ghost small', 'Close (Esc)');
-  head.append(el('h2', undefined, 'Sound check'), close);
-  card.append(head);
-  return { overlay, card, close };
 }
 
 interface SoundButton {
@@ -185,7 +180,8 @@ function soundGrid(onClick: (s: Sound) => void): { grid: HTMLElement; buttons: S
   for (const pack of Object.keys(SFX_NAMES) as SfxPackId[]) {
     grid.append(el('h3', 'soundcheck-pack', SFX_NAMES[pack]));
     const packGrid = el('div', 'soundcheck-grid');
-    for (const event of Object.keys(SFX_EVENT_NAMES) as SfxEvent[]) {
+    // SFX_EVENTS's order, as the switches above have it, not the names record's.
+    for (const event of SFX_EVENTS) {
       const sound = { pack, event };
       const btn = el('button', 'soundcheck-sound');
       const badge = el('span', 'soundcheck-key');
@@ -214,9 +210,9 @@ interface PianoInput {
 /** The computer's keys as a piano. A note stays lit on the keyboard until its key comes up. */
 function pianoInput(roll: PianoRoll, play: (note: number) => void): PianoInput {
   const held = new Map<string, number>();
-  let octave = 60;
+  let octave = MIDDLE_C;
   const moveTo = (note: number): void => {
-    octave = Math.min(HIGHEST_C, Math.max(LOWEST_C, note - (note % 12)));
+    octave = Math.min(HIGHEST_C, Math.max(LOWEST_C, note - (note % OCTAVE)));
   };
   const release = (): void => {
     for (const note of held.values()) roll.press(note, false);
@@ -228,7 +224,7 @@ function pianoInput(roll: PianoRoll, play: (note: number) => void): PianoInput {
     down(id, repeat) {
       if (id === OCTAVE_DOWN || id === OCTAVE_UP) {
         release();
-        moveTo(octave + (id === OCTAVE_UP ? 12 : -12));
+        moveTo(octave + (id === OCTAVE_UP ? OCTAVE : -OCTAVE));
         return 'octave';
       }
       const semis = PIANO_KEYS.get(id);
@@ -306,6 +302,7 @@ function take(e: KeyboardEvent): void {
   e.stopImmediatePropagation();
 }
 
+/** Open the sound check over the settings screen. */
 export function openSoundCheck(ctx: ScreenContext): void {
   new SoundCheck(ctx);
 }
@@ -316,6 +313,8 @@ export function openSoundCheck(ctx: ScreenContext): void {
  */
 class SoundCheck {
   private readonly overlay: HTMLElement;
+  /** Take the window away and hand the focus back to what opened it (`windowShell`). */
+  private readonly remove: () => void;
   private readonly assignBtn = el('button', 'primary small', 'Assign key');
   private readonly clearBtn = el('button', 'ghost small', 'Clear keys');
   private readonly status = el('span', 'soundcheck-status');
@@ -337,29 +336,31 @@ class SoundCheck {
 
   constructor(private readonly ctx: ScreenContext) {
     load(ctx.settings);
-    const { overlay, card, close } = shell();
+    // Not `settingsWindow`, whose Escape closes at once: this one's steps back first (`back`).
+    const { overlay, card, close, remove } = windowShell('Sound check');
     this.overlay = overlay;
+    this.remove = remove;
     const tools = el('div', 'soundcheck-tools');
     this.status.setAttribute('aria-live', 'polite');
     const loudness = el('div', 'soundcheck-volume');
     loudness.append(
       el('span', undefined, 'Volume'),
-      slider(
-        0,
-        MAX_SOUND_CHECK_VOLUME,
-        0.05,
-        volume,
-        (v) => `${Math.round(v * 100)}%`,
-        (v) => {
+      slider({
+        min: 0,
+        max: MAX_SOUND_CHECK_VOLUME,
+        step: RATIO_STEP,
+        value: volume,
+        format: percent,
+        onInput: (v) => {
           volume = v;
         },
         // On release, so the new level is saved once and heard without a sound per step.
-        () => {
+        onRelease: () => {
           save(this.ctx.settings);
           if (this.tuning) this.play(this.tuning);
         },
-        DEFAULT_PRESENTATION.soundCheck.volume,
-      ),
+        resetTo: DEFAULT_SOUND_CHECK_VOLUME,
+      }),
     );
     tools.append(this.assignBtn, this.clearBtn, loudness, this.status);
 
@@ -395,7 +396,6 @@ class SoundCheck {
     window.addEventListener('keyup', this.onKeyUp, true);
 
     card.append(tools, playedRow(ctx.settings), this.grid, this.pitch.element);
-    overlay.append(card);
     ctx.host.append(overlay);
     // After it is in the page, so the keyboard has a width to scroll within.
     this.sync();
@@ -463,7 +463,7 @@ class SoundCheck {
   }
 
   private dismiss(): void {
-    this.overlay.remove();
+    this.remove();
     window.removeEventListener('keydown', this.onKey, true);
     window.removeEventListener('keyup', this.onKeyUp, true);
   }

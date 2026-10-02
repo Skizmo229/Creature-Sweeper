@@ -15,9 +15,9 @@ export function expForTier(tier: Tier): number {
 }
 
 /**
- * Mana awarded for defeating a tier-E creature: linear, where EXP is
- * exponential. That difference is what keeps spells available early and scarce
- * late. Unused until magic lands, but it belongs beside its sibling.
+ * Mana awarded for defeating a tier-E creature, before the mana-reward dial:
+ * linear, where EXP is exponential. That difference is what keeps spells
+ * available early and scarce late.
  */
 export function manaForTier(tier: Tier): number {
   return tier;
@@ -42,6 +42,7 @@ export function isFreeKill(level: number, tier: Tier): boolean {
   return level > 0 && tier <= level;
 }
 
+/** How one fight came out. */
 export interface BattleResult {
   defeated: boolean;
   /** Player HP after the exchange; 0 or less means dead. */
@@ -114,6 +115,7 @@ export class Progression {
     return this.thresholds[this.level - 1]!;
   }
 
+  /** Past the last threshold: there is no level left to reach. */
   isMaxLevel(): boolean {
     return this.level > this.thresholds.length;
   }

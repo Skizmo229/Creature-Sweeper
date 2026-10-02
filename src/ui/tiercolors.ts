@@ -4,7 +4,7 @@
  * round every pip.
  *
  * Global, not per ladder: pip SHAPE carries ladder identity, pip COLOUR carries tier identity, so
- * a tier 4 looks the same on every board (`theme.ts`). The player can choose one of the presets
+ * a tier 4 looks the same on every board (`creature.ts`). The player can choose one of the presets
  * below or mix their own for each tier (decision 0053). DOM-free, so the tests can measure them.
  */
 
@@ -48,8 +48,10 @@ function fiveAndHalo(five: readonly string[]): TierPalette {
   return { colors: [...five, ...five.slice(0, TIER_COUNT - five.length)], halo: TIER_GOLD };
 }
 
+/** The game's own tier colours. */
 export const DEFAULT_TIERS: TierPalette = fiveAndHalo(HUES);
 
+/** The presets offered besides the game's own, by id. */
 export type TierPresetId = 'distinct' | 'nine' | 'plain';
 
 /** A palette offered besides the game's own, by name. */
@@ -97,6 +99,7 @@ export const TIER_PRESETS: readonly TierPreset[] = [
   },
 ];
 
+/** A tier's colour in a palette, the tier held to 1 to `TIER_COUNT`. */
 export function tierColor(palette: TierPalette, tier: number): string {
   return palette.colors[Math.min(TIER_COUNT, Math.max(1, tier)) - 1]!;
 }

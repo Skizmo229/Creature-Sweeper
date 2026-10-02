@@ -75,13 +75,16 @@ behind, which is why CHECKERBOARD's colour rule reaches the whole of deduction.
 
 - **Where it lives:** `computeNumbers` and `neighbours()` in `src/engine/grid.ts`. Adjacency is
   in exactly one function; see `docs/architecture.md`.
+- **What protects it:** `topology > numbers every board from its own adjacency, whatever the
+  shape` in `test/topology.test.ts`, and the adjacency tests beside it.
 
 ## Rules that follow from the four
 
 - **Notes can protect you; they must never expose you.** A pencil mask is read in one direction
-  only: `lowestNote > level` guards a cell. Reading it the other way (`highestNote <= level` means
-  safe) shipped briefly and charged a player 7 HP for a cell pencilled {2,3} that was a tier 7. A
-  note means "the tiers I have not ruled out", not a claim; a mark is the claim.
+  only, by `notesGuard` in `src/engine/notes.ts`: `lowestNote > level` guards a cell. Reading it the
+  other way (`highestNote <= level` means safe) shipped briefly and charged a player 7 HP for a cell
+  pencilled {2,3} that was a tier 7. A note means "the tiers I have not ruled out", not a claim; a
+  mark is the claim.
 - **Sweep must stay strictly weaker than any generator's solver.** On SUDOKU the boards are made
   by rejecting whatever the propagator cannot finish, so wiring that propagator into `safeCells`
   made Sweep clear every board in one click. Sweep there harvests the player's own marks and the

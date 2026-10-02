@@ -21,15 +21,22 @@ export function noteBit(tier: number): number {
   return 1 << tier;
 }
 
+/** Every tier of a `tiers`-tier board, empty ground included, as one mask. */
+export function allNotes(tiers: number): number {
+  return (1 << (tiers + 1)) - 1;
+}
+
 /** True when the player has actually pencilled something in. */
-export function hasNotes(mask: number): boolean {
+function hasNotes(mask: number): boolean {
   return mask !== 0;
 }
 
+/** Is this tier one of the mask's candidates? */
 export function hasNote(mask: number, tier: number): boolean {
   return (mask & noteBit(tier)) !== 0;
 }
 
+/** The mask with this tier added if it was absent, or taken out if it was there. */
 export function toggleNote(mask: number, tier: number): number {
   return mask ^ noteBit(tier);
 }
@@ -51,4 +58,12 @@ export function lowestNote(mask: number): number {
   return -1;
 }
 
-/** Exactly one candidate left, which is a claim in all but name. */
+/**
+ * Do the pencil marks guard this cell at `level`: is every candidate above it? Read off the
+ * lowest candidate only, because notes can protect the player and must never expose them
+ * (docs/invariants.md): a set holding anything survivable does not guard, and no notes guard
+ * nothing.
+ */
+export function notesGuard(mask: number, level: number): boolean {
+  return hasNotes(mask) && lowestNote(mask) > level;
+}

@@ -1,62 +1,22 @@
 // @vitest-environment happy-dom
 /**
- * A smoke test of the screens: boots the app in a DOM, starts boards, drives the keyboard and
- * the mode toggles, and reads the HUD and hint back. It exists so the app.ts split (and anything
- * after it) can be checked against what the screens say, not only against the engine.
+ * The screens as a player meets them: the ladder list, a board's HUD and hint line, the keys and
+ * entry modes, the stage's rim after a fight, the tutor, the field guide and the school, the clear
+ * and game-over cards, a Full Run, the settings screen and the way back, Escape on every screen,
+ * and the board and interface fonts. A setting with more to it has a test file of its own here.
  */
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Game } from '../../src/engine/game.js';
 import type { GameEvent } from '../../src/engine/types.js';
 import { autoplayTierOrder } from '../../src/sim/autoplay.js';
-import { App } from '../../src/ui/app.js';
-import type { BoardDisplay } from '../../src/ui/board/view.js';
-import type { BoardClock } from '../../src/ui/game/clock.js';
-import type { Progress } from '../../src/ui/progress.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
-import type { Settings } from '../../src/ui/settings.js';
 import { FONTS, TITLE_FONT } from '../../src/ui/typefaces.js';
 import { ladders } from '../../src/ui/ladders.js';
 import { GUIDE } from '../../src/ui/guide/entries.js';
 import { DIAGRAMS } from '../../src/sim/diagrams.js';
-import type { TrickId } from '../../src/sim/tricks.js';
 import { TRICK_TEXT } from '../../src/sim/tricktext.js';
-
-/** The app's surface as the test drives it, private members included, the way the dev console does. */
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  runFull(typeId: string, seed?: number): void;
-  readonly current: Game | null;
-  readonly progress: Progress;
-  readonly settings: Settings;
-  readonly view: { readonly display: BoardDisplay } | null;
-  readonly clock: BoardClock;
-  finish(): void;
-  apply(events: GameEvent[]): void;
-  readonly actions: {
-    pickSpell(id: string): void;
-    pickTier(tier: number): void;
-    onCellPrimary(x: number, y: number): void;
-  };
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  readonly modal: {
-    ask(opts: {
-      title: string;
-      body: string;
-      confirmLabel: string;
-      cancelLabel: string;
-      onConfirm(): void;
-    }): void;
-  };
-  buildGameScreen(): void;
-  readonly mode: { pendingSpell: string | null; notesMode: boolean; markMode: number };
-}
-
-const key = (k: string, extra: KeyboardEventInit = {}): void => {
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, ...extra }));
-};
+import { type AppDriver, key, mountApp, settingsRow, startApp, tiles } from './driver.js';
 
 const text = (selector: string): string =>
   document.querySelector<HTMLElement>(selector)?.textContent ?? '';
@@ -71,12 +31,10 @@ const levelUp: GameEvent = { type: 'levelUp', level: 2 };
 const rimOf = (host: Element): string[] =>
   [...host.classList].filter((c) => c.startsWith('fight-'));
 
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 describe('the app', () => {
@@ -218,9 +176,7 @@ describe('the app', () => {
     expect(text('.hint')).toMatch(/^Grade \d · /);
     expect(document.querySelector('.hint')!.classList.contains('tutoring')).toBe(true);
     // The lesson is the same code the instrument runs, so what it points at is sound.
-    const lesson = (
-      app as unknown as { teaching: { tutor: { shown(): { open: { tier: number }[] } } } }
-    ).teaching.tutor.shown();
+    const lesson = app.teaching.tutor.shown()!;
     for (const cell of lesson.open) expect(cell.tier).toBeLessThanOrEqual(game.level);
     // A second press moves on; any move on the board dismisses the lesson.
     key('h');
@@ -233,6 +189,12 @@ describe('the app', () => {
     expect(text('.overlay')).toContain('Cleared with 2 hints');
     expect(app.progress.boardRecord(ladders, 'normal', 1).cleared).toBe(true);
     expect(app.progress.boardRecord(ladders, 'normal', 1).bestTime).toBeNull();
+  });
+
+  it('promises Sweep on the rules card only where a ladder has it, since the first has none', () => {
+    const card = document.querySelector('.overlay-card.howto')!.textContent!;
+    expect(ladders[0]!.sweep).toBe(false);
+    expect(card).toContain('S opens what is provably safe on a ladder with Sweep.');
   });
 
   it('opens the field guide from the rules card, the ladder list and, at the lesson, a board', () => {
@@ -256,9 +218,8 @@ describe('the app', () => {
     app.play('normal', 1, 7);
     key('h');
     expect(document.querySelector('.hint .hint-more')).not.toBeNull();
-    const { tutor } = (app as unknown as { teaching: { tutor: { shown(): { trick: TrickId } } } })
-      .teaching;
-    const trick = tutor.shown().trick;
+    const { tutor } = app.teaching;
+    const trick = tutor.shown()!.trick;
     key('g');
     expect(text('.guide-here h4')).toContain(TRICK_TEXT[trick].name);
     key('Escape');
@@ -318,8 +279,7 @@ describe('the app', () => {
 
   it('shows a ladder whose rules add a trick its card the first time it is opened, and once', () => {
     app.progress.setUnlockAll(true);
-    const boards = (id: string): void =>
-      (app as unknown as { showBoards(id: string): void }).showBoards(id);
+    const boards = (id: string): void => app.showBoards(id);
     boards('normal');
     expect(document.querySelector('.overlay')).toBeNull();
     boards('pairs');
@@ -332,7 +292,7 @@ describe('the app', () => {
 
   it("opens the guide for a ladder from its boards, led by the catalogue's note on it", () => {
     app.progress.setUnlockAll(true);
-    (app as unknown as { showBoards(id: string): void }).showBoards('pairs');
+    app.showBoards('pairs');
     [...document.querySelectorAll<HTMLButtonElement>('.title-bar button')]
       .find((b) => b.textContent === 'How to play PAIRS')!
       .click();
@@ -602,10 +562,7 @@ describe('the board font and the interface font', () => {
     // Pinned to this test's app: the screen stays up, and its Escape handler outlives the test.
     const here = app;
     here.showSettings(() => here.showTypes());
-    const row = [...document.querySelectorAll('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Interface font',
-    )!;
-    row.querySelectorAll<HTMLButtonElement>('.preview-chip')[1]!.click();
+    tiles(settingsRow('Interface font'))[1]!.click();
     // Found by its caption: the tile's own text begins with its example, the HUD's readouts.
     const tile = [...document.querySelectorAll<HTMLButtonElement>('.picker .preview-chip')].find(
       (b) => b.querySelector('.chip-label')?.textContent?.startsWith(FONTS.atkinson.name),
@@ -619,10 +576,7 @@ describe('the board font and the interface font', () => {
   it('name every ladder that wears them, in the order the ladder list reads', () => {
     const here = app;
     here.showSettings(() => here.showTypes());
-    const row = [...document.querySelectorAll('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Board font',
-    )!;
-    row.querySelectorAll<HTMLButtonElement>('.preview-chip')[1]!.click();
+    tiles(settingsRow('Board font'))[1]!.click();
     const captions = [...document.querySelectorAll('.picker .chip-label')].map(
       (c) => c.textContent,
     );
@@ -634,12 +588,12 @@ describe('the board font and the interface font', () => {
   });
 
   it('read a save from before the interface had its own as one face for both', () => {
-    const load = (presentation: object): Driver => {
+    const load = (presentation: object): AppDriver => {
       localStorage.setItem(
         SETTINGS_KEY,
         JSON.stringify({ version: 1, presentation, gameplay: {} }),
       );
-      return new App(document.getElementById('app')!) as unknown as Driver;
+      return startApp();
     };
     const old = load({ font: 'bungee' });
     expect(old.settings.presentation.interfaceFont).toBe('bungee');

@@ -8,7 +8,6 @@
 
 import './setup.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
 import { BEATEN_ALPHA } from '../../src/ui/board/paint.js';
 import { type BoardDisplay, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { type Rgb, colorDifference, hexOf, rgbOf } from '../../src/ui/colorspace.js';
@@ -25,21 +24,12 @@ import {
   type TierPalette,
   tierGilded,
 } from '../../src/ui/tiercolors.js';
+import { type AppDriver, mountApp, settingsRow, tileLabel, tiles } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  readonly settings: Settings;
-  readonly view: { readonly display: BoardDisplay } | null;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 /** A saved presentation, as a save file holds it. */
@@ -324,27 +314,21 @@ describe('what is drawn in them', () => {
 /** The settings row for the creature colours, on a freshly built screen. */
 function colorsRow(): HTMLElement {
   app.showSettings(() => app.showTypes());
-  return [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
-    (r) => r.querySelector('.settings-name')?.textContent === 'Creature colours',
-  )!;
+  return settingsRow('Creature colours');
 }
 
 /** The Distinct preset's tile, by its label. */
 const DISTINCT_TILE = 'Distinct — apart under any colour vision';
 
-const tiles = (row: HTMLElement): HTMLButtonElement[] => [
-  ...row.querySelectorAll<HTMLButtonElement>('.preview-chip'),
-];
-const label = (tile: Element): string => tile.querySelector('.chip-label')!.textContent!;
 const lit = (row: HTMLElement): string[] =>
   tiles(row)
     .filter((t) => t.classList.contains('active'))
-    .map(label);
+    .map(tileLabel);
 
 describe('the settings row', () => {
   it('offers the game’s own colours, the presets and colours of your own, each drawn on a board', () => {
     const row = colorsRow();
-    expect(tiles(row).map(label)).toEqual([
+    expect(tiles(row).map(tileLabel)).toEqual([
       'Default — five hues, then haloed',
       ...TIER_PRESETS.map((t) => `${t.name} — ${t.blurb}`),
       'Custom — any colours',
@@ -356,7 +340,7 @@ describe('the settings row', () => {
 
   it('saves a preset when it is picked', () => {
     tiles(colorsRow())
-      .find((t) => label(t) === DISTINCT_TILE)!
+      .find((t) => tileLabel(t) === DISTINCT_TILE)!
       .click();
     expect(Settings.load().presentation.tierColors).toBe('distinct');
     expect(lit(colorsRow())).toEqual([DISTINCT_TILE]);
@@ -449,7 +433,7 @@ describe('the custom colours window', () => {
     set(hexField(card), '#1e90ff');
     use(card);
     tiles(colorsRow())
-      .find((t) => label(t) === DISTINCT_TILE)!
+      .find((t) => tileLabel(t) === DISTINCT_TILE)!
       .click();
     const row = colorsRow();
     expect(lit(row)).toEqual([DISTINCT_TILE]);

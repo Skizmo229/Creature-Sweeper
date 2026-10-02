@@ -21,31 +21,26 @@
  *
  * That split has a consequence worth stating plainly: creatures are packed
  * into a fraction of the board, so the density the ladder quotes is not the
- * density you feel. Measured at the shipped schedule, rooms run 9.8-21.1%
- * against a nominal 9.0-14.6% — about 1.4x. `MIN_SPAWN_SHARE` is what keeps that fraction from drifting
- * seed to seed — a layout that leaves too little room floor is thrown away
- * rather than shipped, because the quota has to fit and the board has to play
- * the way it was measured.
+ * density you feel, and rooms play denser than the nominal figure (decision
+ * 0003). `MIN_SPAWN_SHARE` is what keeps that fraction from drifting seed to
+ * seed — a layout that leaves too little room floor is thrown away rather than
+ * shipped, because the quota has to fit and the board has to play the way it
+ * was measured.
  *
- * The earlier version of this made every cell part of a 2x2 block, which
- * bought a two-cell minimum width everywhere by construction. That is gone
- * deliberately: hallways are one cell wide now, so there is no width
- * guarantee left to make. What survives from it is the refusal to join two
- * parts of the map at a corner only — a diagonal pinch is legible as a gap
- * rather than as a passage, whatever its width.
+ * Hallways are one cell wide, so there is no width to guarantee. What the map
+ * does refuse is two of its parts joined at a corner only (`pinches`): a
+ * diagonal pinch is legible as a gap rather than as a passage, whatever its
+ * width.
  */
 
 import { type Rng, randInt, shuffle } from '../rng.js';
+import { DIAG, type Mask, ORTHO, blankMask, countPresent } from '../grid.js';
 import { type ShapeRule, refuseHexAndWrap } from './rule.js';
 import {
-  DIAG,
-  type Mask,
-  ORTHO,
   ROOM_MIN,
   type Room,
-  blank,
   carveHalls,
-  count,
+  connectedWith,
   inAnyHalo,
   inAnyRoom,
   placeRooms,
@@ -63,12 +58,13 @@ import {
 const DUNGEON_MARGIN = 1;
 
 /**
- * Share of the cell budget spent on rooms before hallways are carved.
+ * Shares of the cell budget spent on rooms before hallways are carved, tried
+ * in turn, `ATTEMPTS_PER_SHARE` plans each, until one lands.
  *
- * A first guess that the attempt loop corrects: hallway cost is not knowable
- * until the rooms exist, so this is deliberately low and the leftovers are
- * spent widening rooms afterwards. One-cell hallways are cheap, so this sits
- * much higher than it did when they were two.
+ * Each is a guess the attempt loop corrects: hallway cost is not knowable
+ * until the rooms exist, so the leftovers are spent widening rooms afterwards,
+ * and a share whose plan fails gives way to the next. One-cell hallways are
+ * cheap, so the shares sit high.
  */
 const ROOM_SHARES = [0.86, 0.8, 0.9, 0.74, 0.94, 0.68];
 
@@ -85,31 +81,17 @@ const ATTEMPTS_PER_SHARE = 2;
  * from wandering seed to seed. A plan under it is thrown away and another
  * tried.
  *
- * IT WAS 0.78, AND THAT NUMBER WAS DERIVED RATHER THAN CHOSEN: board 10's
- * nominal density is 26.4%, and 26.4/0.78 = 33.8%, just inside the 34% the
- * rest of the game treats as the point a board stops being a puzzle. So the
- * floor was the ceiling, restated as a share.
- *
- * The doorway pocket makes 0.78 unreachable. Measured over 40 seeds a board,
- * the share now runs 58-76% at worst and 71-82% on average, so every plan on
- * the small boards was refused and `dungeonMap` threw on every seed — small
- * boards have small rooms, and a small room is mostly perimeter.
- *
- * What it costs, measured rather than reasoned about: felt room density goes
- * from 15.9-30.4% to 18.0-32.6% on an average seed, and reaches 34.9% on the
- * worst board-10 seed in 40. That is 0.9 points past the ceiling, on a ladder
- * where HIVE already sits at 35% and CHECKERBOARD at 38.5% for stated reasons
- * — and the pocket itself hands back guaranteed-safe ground, so the board is
- * not straightforwardly denser to play even where it is denser to describe.
- * THAT LAST CLAIM IS THE UNMEASURED ONE. DUNGEON's schedule is the only one in
- * the game derived by playing it, with the honest player in `sim:spells`, and
- * re-deriving it is what would settle whether the density should now come down.
+ * It is this low because of the doorway pocket: small boards have small rooms,
+ * a small room is mostly perimeter, and a higher floor refused every plan on
+ * them. Rooms play denser for it, and the pocket's free ground still made the
+ * board easier to play; the measurements are in decision 0003.
  */
 const MIN_SPAWN_SHARE = 0.55;
 
 /** Tries at spending the remaining budget before the attempt is abandoned. */
 const SPEND_TRIES = 600;
 
+/** A dungeon's map, as masks over the bounding box. */
 export interface DungeonMap {
   /** Which cells of the bounding box exist. */
   present: Mask;
@@ -168,25 +150,10 @@ function widen(
     for (const [dx, dy] of shuffle([...ORTHO], rng)) {
       const along = dx ? room.h : room.w;
       if (along > budget) continue;
+      const strip = stripBeside(room, dx, dy);
+      if (!stripIsClear(present, bw, bh, rooms, at, strip)) continue;
 
-      const x0 = dx > 0 ? room.x + room.w : dx < 0 ? room.x - 1 : room.x;
-      const y0 = dy > 0 ? room.y + room.h : dy < 0 ? room.y - 1 : room.y;
-      const w = dx ? 1 : room.w;
-      const h = dy ? 1 : room.h;
-      if (x0 < 0 || y0 < 0 || x0 + w > bw || y0 + h > bh) continue;
-
-      let ok = true;
-      for (let y = y0; y < y0 + h && ok; y++) {
-        for (let x = x0; x < x0 + w; x++) {
-          if (present[y]![x] || inAnyHalo(rooms, at, x, y)) {
-            ok = false;
-            break;
-          }
-        }
-      }
-      if (!ok) continue;
-
-      for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) present[y]![x] = true;
+      fillRect(present, strip);
       if (dx < 0) room.x--;
       if (dy < 0) room.y--;
       if (dx) room.w++;
@@ -195,6 +162,53 @@ function widen(
     }
   }
   return 0;
+}
+
+/** A rectangle of cells: a room, or a strip along one. */
+interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** The one-cell strip running along a room's wall on the side (`dx`, `dy`) points to. */
+function stripBeside(room: Room, dx: number, dy: number): Rect {
+  return {
+    x: dx > 0 ? room.x + room.w : dx < 0 ? room.x - 1 : room.x,
+    y: dy > 0 ? room.y + room.h : dy < 0 ? room.y - 1 : room.y,
+    w: dx ? 1 : room.w,
+    h: dy ? 1 : room.h,
+  };
+}
+
+/**
+ * May room `at` grow into this strip: inside the box, over no cell already laid, and clear of
+ * every other room's halo?
+ */
+function stripIsClear(
+  present: Mask,
+  bw: number,
+  bh: number,
+  rooms: Room[],
+  at: number,
+  strip: Rect,
+): boolean {
+  const { x: x0, y: y0, w, h } = strip;
+  if (x0 < 0 || y0 < 0 || x0 + w > bw || y0 + h > bh) return false;
+  for (let y = y0; y < y0 + h; y++) {
+    for (let x = x0; x < x0 + w; x++) {
+      if (present[y]![x] || inAnyHalo(rooms, at, x, y)) return false;
+    }
+  }
+  return true;
+}
+
+/** Lay every cell of the rectangle. */
+function fillRect(mask: Mask, rect: Rect): void {
+  for (let y = rect.y; y < rect.y + rect.h; y++) {
+    for (let x = rect.x; x < rect.x + rect.w; x++) mask[y]![x] = true;
+  }
 }
 
 /** One free cell against the map that would not pinch it. Costs exactly one. */
@@ -213,74 +227,67 @@ function alcove(present: Mask, bw: number, bh: number, rng: Rng): boolean {
   return true;
 }
 
-/** Every present cell reachable from the first, walking orthogonally. */
-function connected(present: Mask, bw: number, bh: number): boolean {
-  let start = -1;
-  let total = 0;
-  for (let y = 0; y < bh; y++) {
-    for (let x = 0; x < bw; x++) {
-      if (!present[y]![x]) continue;
-      total++;
-      if (start < 0) start = y * bw + x;
-    }
-  }
-  if (start < 0) return false;
-
-  const seen = new Set([start]);
-  const queue = [start];
-  for (let head = 0; head < queue.length; head++) {
-    const at = queue[head]!;
-    const x = at % bw;
-    const y = (at - x) / bw;
-    for (const [dx, dy] of ORTHO) {
-      const nx = x + dx;
-      const ny = y + dy;
-      if (nx < 0 || ny < 0 || nx >= bw || ny >= bh || !present[ny]![nx]) continue;
-      const next = ny * bw + nx;
-      if (seen.has(next)) continue;
-      seen.add(next);
-      queue.push(next);
-    }
-  }
-  return seen.size === total;
-}
-
-/** One floor plan, at one guess for how much of the budget rooms should take. */
-function attempt(
+/**
+ * One floor plan of exactly `target` cells, at one guess for how much of the budget rooms should
+ * take: the rooms, the hallways between them, then the rest of the budget spent on the rooms.
+ * Throws a plan that misses the count, falls apart or pinches.
+ */
+function layFloorPlan(
   bw: number,
   bh: number,
   target: number,
   share: number,
   rng: Rng,
-): {
-  present: Mask;
-  rooms: Room[];
-  hall: Mask;
-} {
+): { present: Mask; hall: Mask } {
   const rooms = placeRooms(bw, bh, Math.round(target * share), rng);
   if (rooms.length < 2) throw new Error(`only ${rooms.length} room(s) fit`);
 
-  const present = blank(bw, bh);
-  for (const room of rooms) {
-    for (let y = room.y; y < room.y + room.h; y++) {
-      for (let x = room.x; x < room.x + room.w; x++) present[y]![x] = true;
-    }
+  const present = blankMask(bw, bh);
+  for (const room of rooms) fillRect(present, room);
+  const hall = layHallways(rooms, bw, bh, rng);
+  for (let y = 0; y < bh; y++) {
+    for (let x = 0; x < bw; x++) if (hall[y]![x]) present[y]![x] = true;
   }
 
-  const hall = blank(bw, bh);
+  const laid = spendLeftover(present, bw, bh, rooms, target, rng);
+  if (laid !== target) throw new Error(`landed on ${laid} of ${target} cells`);
+  if (!connectedWith((x, y) => present[y]![x]!, bw, bh)) throw new Error('floor plan is in pieces');
+  // Checked at the end and answered by throwing the plan away, rather than by
+  // repairing it: a repair costs a cell, and the budget has already been spent
+  // to the last one by this point. A pinch is uncommon, so a retry is cheaper
+  // than carrying the cell around.
+  const pinch = firstPinch(present, bw, bh);
+  if (pinch) throw new Error(`floor plan pinches at (${pinch[0]},${pinch[1]})`);
+  return { present, hall };
+}
+
+/** The hallways joining the rooms: carved, less what runs through a room, and thinned. */
+function layHallways(rooms: Room[], bw: number, bh: number, rng: Rng): Mask {
+  const hall = blankMask(bw, bh);
   carveHalls(hall, rooms, rng);
   // A hallway cell inside a room is room; only the part outside is hallway.
   for (let y = 0; y < bh; y++) {
     for (let x = 0; x < bw; x++) if (inAnyRoom(rooms, x, y)) hall[y]![x] = false;
   }
   thinHalls(hall, rooms, bw, bh);
-  for (let y = 0; y < bh; y++) {
-    for (let x = 0; x < bw; x++) if (hall[y]![x]) present[y]![x] = true;
-  }
+  return hall;
+}
 
-  let laid = count(present);
+/**
+ * Spend what the rooms and hallways left of `target` on the rooms, a wall's strip at a time,
+ * then single alcoves, until it is gone or nothing fits. Returns the cells laid; throws if the
+ * hallways alone overshot.
+ */
+function spendLeftover(
+  present: Mask,
+  bw: number,
+  bh: number,
+  rooms: Room[],
+  target: number,
+  rng: Rng,
+): number {
+  let laid = countPresent(present, bw, bh);
   if (laid > target) throw new Error(`hallways overshot: ${laid} of ${target} cells`);
-
   for (let tries = 0; laid < target && tries < SPEND_TRIES; tries++) {
     const gained = widen(present, bw, bh, rooms, target - laid, rng);
     if (gained) {
@@ -290,25 +297,21 @@ function attempt(
     if (!alcove(present, bw, bh, rng)) break;
     laid++;
   }
+  return laid;
+}
 
-  if (laid !== target) throw new Error(`landed on ${laid} of ${target} cells`);
-  if (!connected(present, bw, bh)) throw new Error('floor plan is in pieces');
-  // Checked at the end and answered by throwing the plan away, rather than by
-  // repairing it: a repair costs a cell, and the budget has already been spent
-  // to the last one by this point. Measured, about one plan in twenty-five has
-  // a pinch in it, so a retry is cheaper than carrying the cell around.
+/** The first laid cell, in reading order, that touches the map at a corner only; null if none. */
+function firstPinch(present: Mask, bw: number, bh: number): [number, number] | null {
   for (let y = 0; y < bh; y++) {
     for (let x = 0; x < bw; x++) {
-      if (present[y]![x] && pinches(present, bw, bh, x, y)) {
-        throw new Error(`floor plan pinches at (${x},${y})`);
-      }
+      if (present[y]![x] && pinches(present, bw, bh, x, y)) return [x, y];
     }
   }
-  return { present, rooms, hall };
+  return null;
 }
 
 /**
- * Which cells a creature may be dealt into: room floor, less every doorway.
+ * Which cells a creature may be dealt into: room floor, less every doorway and its pocket.
  *
  * A door is a room cell with a hallway orthogonally beside it. Keeping those
  * empty is what makes stepping out of a hallway safe and stepping further into
@@ -317,8 +320,8 @@ function attempt(
  * nothing.
  */
 function spawnableCells(present: Mask, hall: Mask, bw: number, bh: number): Mask {
-  const out = blank(bw, bh);
-  const door = blank(bw, bh);
+  const out = blankMask(bw, bh);
+  const door = blankMask(bw, bh);
   for (let y = 0; y < bh; y++) {
     for (let x = 0; x < bw; x++) {
       if (!present[y]![x] || hall[y]![x]) continue;
@@ -327,42 +330,52 @@ function spawnableCells(present: Mask, hall: Mask, bw: number, bh: number): Mask
       out[y]![x] = !atDoor;
     }
   }
+  clearDoorwayPockets(out, door, present, bw, bh);
+  return out;
+}
 
-  // THE DOORWAY POCKET: a door's neighbours that are also against a wall.
-  //
-  // The doorway itself being empty already buys a free read into the room, but
-  // the cell you step onto NEXT was still a blind commitment, and the crawl
-  // rule makes that the expensive kind of guess — you are forced to gamble on
-  // what is in front of you rather than on the cheapest square anywhere.
-  //
-  // "Against a wall" is what keeps this small and keeps it a pocket rather
-  // than a corridor of immunity reaching into the room. For a door in the
-  // middle of a wall it clears the two cells flanking it along that wall and
-  // nothing else, because the cells deeper in touch no void. So the safe
-  // ground hugs the entrance and the room proper is still the risk.
-  //
-  // ORTHO for "next to the door", the full ring for "touches a wall", and the
-  // asymmetry is the whole reason this fits. The ring on BOTH cannot generate:
-  // rooms here are small (ROOM_COUNT pins seven of them), so most of a room's
-  // perimeter is both wall-adjacent and door-adjacent, the ring swallows it
-  // whole, and too little floor is left for any plan (decision 0003).
-  //
-  // Out of bounds counts as wall, which is correct and not an accident of the
-  // lookup: the plan is laid out inside DUNGEON_MARGIN, so the edge of the box
-  // is void in exactly the way the space between rooms is.
+/**
+ * THE DOORWAY POCKET: take out of `spawnable` every room cell beside a door that is also against
+ * a wall.
+ *
+ * The doorway itself being empty already buys a free read into the room, but the cell you step
+ * onto NEXT was still a blind commitment, and the crawl rule makes that the expensive kind of
+ * guess — you are forced to gamble on what is in front of you rather than on the cheapest square
+ * anywhere.
+ *
+ * "Against a wall" is what keeps this small and keeps it a pocket rather than a corridor of
+ * immunity reaching into the room. For a door in the middle of a wall it clears the two cells
+ * flanking it along that wall and nothing else, because the cells deeper in touch no void. So the
+ * safe ground hugs the entrance and the room proper is still the risk.
+ *
+ * ORTHO for "beside the door", the full ring for "against a wall", and the asymmetry is the whole
+ * reason this fits. The ring on BOTH cannot generate: rooms here are small (ROOM_COUNT pins seven
+ * of them), so most of a room's perimeter is both wall-adjacent and door-adjacent, the ring
+ * swallows it whole, and too little floor is left for any plan (decision 0003).
+ *
+ * Out of bounds counts as wall, which is correct and not an accident of the lookup: the plan is
+ * laid out inside DUNGEON_MARGIN, so the edge of the box is void in exactly the way the space
+ * between rooms is.
+ */
+function clearDoorwayPockets(
+  spawnable: Mask,
+  door: Mask,
+  present: Mask,
+  bw: number,
+  bh: number,
+): void {
   const ring = [...ORTHO, ...DIAG];
   const wallAt = (x: number, y: number) => present[y]?.[x] !== true;
   const pocket: Array<[number, number]> = [];
   for (let y = 0; y < bh; y++) {
     for (let x = 0; x < bw; x++) {
-      if (!out[y]![x]) continue; // hall, door, or void
+      if (!spawnable[y]![x]) continue; // hall, door, or void
       if (!ORTHO.some(([dx, dy]) => door[y + dy]?.[x + dx] === true)) continue;
       if (!ring.some(([dx, dy]) => wallAt(x + dx, y + dy))) continue;
       pocket.push([x, y]);
     }
   }
-  for (const [x, y] of pocket) out[y]![x] = false;
-  return out;
+  for (const [x, y] of pocket) spawnable[y]![x] = false;
 }
 
 /**
@@ -385,17 +398,17 @@ export function dungeonMap(w: number, h: number, target: number, rng: Rng): Dung
   for (const share of ROOM_SHARES) {
     for (let n = 0; n < ATTEMPTS_PER_SHARE; n++) {
       try {
-        const { present, hall } = attempt(bw, bh, target, share, rng);
+        const { present, hall } = layFloorPlan(bw, bh, target, share, rng);
         const spawnable = spawnableCells(present, hall, bw, bh);
-        const room = count(spawnable);
+        const room = countPresent(spawnable, bw, bh);
         if (room < target * MIN_SPAWN_SHARE) {
           throw new Error(`only ${room} of ${target} cells can hold a creature`);
         }
 
         const out: DungeonMap = {
-          present: blank(w, h),
-          spawnable: blank(w, h),
-          hall: blank(w, h),
+          present: blankMask(w, h),
+          spawnable: blankMask(w, h),
+          hall: blankMask(w, h),
         };
         for (let y = 0; y < bh; y++) {
           for (let x = 0; x < bw; x++) {

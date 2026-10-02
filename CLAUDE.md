@@ -1,8 +1,8 @@
 # Creature Sweeper: notes for AI sessions
 
 A remix of **mamono sweeper** (itself a Minesweeper remix) with heavy customisation, QOL and a
-progression mode, intended for freeware release. This file is short on purpose: the knowledge
-that used to live here is in `docs/`, where a human can find it too.
+progression mode, released as freeware on itch.io with its source on GitHub. This file is short
+on purpose: the knowledge is in `docs/`, where a human can find it too.
 
 ## Read first
 
@@ -15,15 +15,15 @@ and the open questions), `docs/ui.md` (presentation rules), `docs/extending.md` 
 `docs/decisions/` (why things are the way they are), `docs/glossary.md`, `CONTRIBUTING.md`, and
 `docs/refactoring-plan.md` (Milestone 3, the readability refactor, complete on 24 September 2026),
 `docs/strategies.md` (how a person plays: the tricks, graded), `docs/human-tuning-plan.md`
-(Milestone 4, tuning for the human player, in progress) and `docs/teaching-plan.md` (Milestone 5,
-teaching the tricks in the game: built and merged on 27 September 2026, play-testing left; its
-section 10 is the status).
+(Milestone 4, tuning for the human player: retuned, re-measuring against play left) and
+`docs/teaching-plan.md` (Milestone 5, teaching the tricks in the game: built and merged on 27
+September 2026, play-testing left; its section 10 is the status).
 
 ## Rules for a session
 
 - **The engine stays headless.** Nothing under `src/engine` touches the DOM, I/O or timers; the
-  second typecheck pass has no DOM library and will fail the build. Tests and `preview.ts` are
-  compiled the same way.
+  second typecheck pass has no DOM library and will fail the build. The tests outside `test/ui`,
+  and the UI modules they import (`preview.ts` among them), are compiled the same way.
 - **Never remove a creature or skip its EXP**, in any spell, item or rule. Never heal inside a
   board. Never let a gameplay dial reach EXP or a threshold. (`docs/invariants.md`.)
 - **Notes can protect the player; they must never expose them.** Read a pencil mask by its
@@ -52,8 +52,8 @@ section 10 is the status).
 - **Nothing that pictures the original game goes in the repo.** `design/original-reference/`,
   `game_types.pdn` and `design/screenshots/` are untracked on purpose; rules and formulas are free
   to take, expression is not.
-- **Bash heredocs in this environment collapse `\n` escapes** and very long commands are cut off.
-  Use the Write/Edit tools for any file with escapes, and split long shell scripts.
+- **On the owner's Windows setup, Bash heredocs collapse `\n` escapes** and very long commands
+  are cut off. Use the Write/Edit tools for any file with escapes, and split long shell scripts.
 
 ## Dev handle
 

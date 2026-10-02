@@ -5,10 +5,12 @@
  */
 
 import { el } from '../dom.js';
+import { wearFace } from '../dress.js';
 import { keepFocus } from '../overlays/modal.js';
 import { DEFAULT } from '../presentation.js';
 import type { GameFont } from '../typefaces.js';
 
+/** One option in a gallery: its value, its name and its example. */
 export interface Choice {
   value: string;
   label: string;
@@ -23,6 +25,7 @@ export interface Choice {
   open?: () => void;
 }
 
+/** A section of the screen under its heading, appended to `host`. */
 export function section(host: HTMLElement, title: string, blurb?: string): HTMLElement {
   const box = el('section', 'settings-group');
   box.append(el('h2', 'settings-head', title));
@@ -31,6 +34,7 @@ export function section(host: HTMLElement, title: string, blurb?: string): HTMLE
   return box;
 }
 
+/** A setting's row: its name and hint beside its control. */
 export function row(host: HTMLElement, label: string, control: HTMLElement, hint?: string): void {
   const line = el('div', 'settings-row');
   const text = el('div', 'settings-label');
@@ -63,11 +67,7 @@ function optionTile(c: Choice, current: string): HTMLButtonElement {
   chip.setAttribute('aria-pressed', String(active));
   if (c.example) chip.append(c.example());
   const caption = el('span', 'chip-label', c.label);
-  if (c.labelFont) {
-    caption.style.fontFamily = c.labelFont.stack;
-    // Set even when it is 1, or the caption inherits the page's own fix.
-    caption.style.setProperty('--ex-fix', String(c.labelFont.exHeightFix ?? 1));
-  }
+  if (c.labelFont) wearFace(caption, c.labelFont);
   chip.append(caption);
   if (c.open) chip.setAttribute('aria-haspopup', 'dialog');
   return chip;
@@ -121,20 +121,10 @@ export function settingsWindow(
   title: string,
   cardClass = '',
 ): { card: HTMLElement; close: HTMLElement; dismiss: () => void } {
-  const overlay = el('div', 'overlay picker');
-  overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-modal', 'true');
-  overlay.setAttribute('aria-label', title);
-  const card = el('div', `overlay-card picker-card ${cardClass}`.trim());
-  const head = el('div', 'picker-head');
-  const close = el('button', 'ghost small', 'Close (Esc)');
-  head.append(el('h2', undefined, title), close);
-
-  const giveFocusBack = keepFocus();
+  const { overlay, card, close, remove } = windowShell(title, cardClass);
   const dismiss = (): void => {
-    overlay.remove();
+    remove();
     window.removeEventListener('keydown', onKey, true);
-    giveFocusBack();
   };
   const onKey = (e: KeyboardEvent): void => {
     if (!overlay.isConnected) {
@@ -154,11 +144,39 @@ export function settingsWindow(
     if (e.target === overlay) dismiss();
   });
   window.addEventListener('keydown', onKey, true);
-
-  card.append(head);
-  overlay.append(card);
   screen.append(overlay);
   return { card, close, dismiss };
+}
+
+/**
+ * A window's overlay and its card, in the picker's clothes: a title bar with a close button,
+ * handed back to be wired and filled. `settingsWindow` wires one; the sound check, whose Escape
+ * steps back before it closes, wires its own. It notes where the focus is as it opens, and
+ * `remove` takes the window away and hands the focus back, so no window closes without it.
+ */
+export function windowShell(
+  title: string,
+  cardClass = '',
+): { overlay: HTMLElement; card: HTMLElement; close: HTMLElement; remove: () => void } {
+  const overlay = el('div', 'overlay picker');
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', title);
+  const card = el('div', `overlay-card picker-card ${cardClass}`.trim());
+  const head = el('div', 'picker-head');
+  const close = el('button', 'ghost small', 'Close (Esc)');
+  head.append(el('h2', undefined, title), close);
+  card.append(head);
+  overlay.append(card);
+  const giveFocusBack = keepFocus();
+  let removed = false;
+  const remove = (): void => {
+    if (removed) return;
+    removed = true;
+    overlay.remove();
+    giveFocusBack();
+  };
+  return { overlay, card, close, remove };
 }
 
 /** A run of a picker's options, shown under its heading if it has one. */
@@ -174,6 +192,7 @@ export interface PickerSort {
   groups: readonly SortGroup[];
 }
 
+/** A setting shown as two tiles and a window of every option (`choiceRow`). */
 export interface ChoiceRowSpec {
   label: string;
   hint: string;
@@ -274,47 +293,54 @@ export function choiceRow(screen: HTMLElement, host: HTMLElement, spec: ChoiceRo
   wideRow(host, spec.label, spec.hint, gallery([spec.fallback, user], spec.current, spec.onPick));
 }
 
+/** What a slider is made of. */
+export interface SliderSpec {
+  readonly min: number;
+  readonly max: number;
+  readonly step: number;
+  readonly value: number;
+  /** The value as the readout beside the slider spells it. */
+  readonly format: (v: number) => string;
+  /** Every step of a drag. */
+  readonly onInput: (value: number) => void;
+  /** Once, on release: for a setting too big to apply on every frame of a drag. */
+  readonly onRelease?: (value: number) => void;
+  /** The default, which gives the slider a Reset. */
+  readonly resetTo?: number;
+}
+
 /**
  * A slider with its value spelled out beside it.
  *
- * `input` rather than `change`, so the number under the thumb tracks the drag. `onCommit`, if
- * given, fires once on release, for a setting too big to apply on every frame of a drag. With a
- * `defaultValue` the slider carries a Reset, lit while it stands anywhere else, which moves it
- * there as a drag and a release would: a slider is the one control on the screen with no tile
- * to say what the default is, or to get back to it short of resetting its whole section.
+ * `input` rather than `change`, so the number under the thumb tracks the drag. With `resetTo` the
+ * slider carries a Reset, lit while it stands anywhere else, which moves it there as a drag and a
+ * release would: a slider is the one control on the screen with no tile to say what the default
+ * is, or to get back to it short of resetting its whole section.
  */
-export function slider(
-  min: number,
-  max: number,
-  step: number,
-  current: number,
-  format: (v: number) => string,
-  onSet: (value: number) => void,
-  onCommit?: (value: number) => void,
-  defaultValue?: number,
-): HTMLElement {
+export function slider(spec: SliderSpec): HTMLElement {
+  const { format, onInput, onRelease, resetTo } = spec;
   const box = el('div', 'settings-slider');
   const input = el('input');
   input.type = 'range';
-  input.min = String(min);
-  input.max = String(max);
-  input.step = String(step);
-  input.value = String(current);
-  const read = el('span', 'settings-value', format(current));
+  input.min = String(spec.min);
+  input.max = String(spec.max);
+  input.step = String(spec.step);
+  input.value = String(spec.value);
+  const read = el('span', 'settings-value', format(spec.value));
   input.addEventListener('input', () => {
     const v = Number(input.value);
     read.textContent = format(v);
-    onSet(v);
+    onInput(v);
   });
-  if (onCommit) input.addEventListener('change', () => onCommit(Number(input.value)));
+  if (onRelease) input.addEventListener('change', () => onRelease(Number(input.value)));
   box.append(input, read);
-  if (defaultValue !== undefined) {
-    box.dataset.default = String(defaultValue);
+  if (resetTo !== undefined) {
+    box.dataset.default = String(resetTo);
     const reset = el('button', 'ghost small settings-reset', 'Reset');
     reset.type = 'button';
-    reset.title = `Back to ${format(defaultValue)}`;
+    reset.title = `Back to ${format(resetTo)}`;
     reset.addEventListener('click', () => {
-      input.value = String(defaultValue);
+      input.value = String(resetTo);
       // Through the input's own events, so everything listening to the drag hears the reset.
       input.dispatchEvent(new Event('input'));
       input.dispatchEvent(new Event('change'));
@@ -344,6 +370,7 @@ export function showSliderValue(
   syncReset(box);
 }
 
+/** A checkbox labelled On. */
 export function toggle(current: boolean, onSet: (v: boolean) => void): HTMLElement {
   const label = el('label', 'toggle');
   const box = el('input');
@@ -354,4 +381,8 @@ export function toggle(current: boolean, onSet: (v: boolean) => void): HTMLEleme
   return label;
 }
 
-export const ratio = (v: number): string => `×${v.toFixed(2)}`;
+/** A ratio as the sliders spell it: `×1.00`. */
+export const times = (v: number): string => `×${v.toFixed(2)}`;
+
+/** A multiple as a percentage: `150%`. */
+export const percent = (v: number): string => `${Math.round(v * 100)}%`;

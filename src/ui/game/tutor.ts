@@ -8,8 +8,8 @@
 import type { Game } from '../../engine/game.js';
 import type { Cell } from '../../engine/types.js';
 import { TRICK_TEXT } from '../../sim/tricktext.js';
-import { GRADES, type Grade, type TrickId } from '../../sim/tricks.js';
-import { tiersUpTo } from '../../sim/reader.js';
+import { GRADES, type Grade, TRICKS, type TrickId } from '../../sim/tricks.js';
+import { tiersUpTo } from '../../sim/masks.js';
 import { type Advice, type Explanation, type Lesson, explain } from '../../sim/tutor.js';
 import type { TutorStyle } from '../presentation.js';
 
@@ -24,6 +24,10 @@ const EVERY_GRADE: Grade = GRADES[GRADES.length - 1]!;
 /** A saved grade as one the tricks have: whole, and within them. */
 const gradeOf = (n: number): Grade => Math.max(0, Math.min(EVERY_GRADE, Math.round(n))) as Grade;
 
+/**
+ * The tutor's state on the board on screen: what the last press found, which of its lessons is
+ * showing, and the hints asked on this board and this run. Reads the game; never changes it.
+ */
 export class Tutor {
   /** The last press: what it found, and which lesson is showing. Null once the board has moved. */
   private last: { explanation: Explanation; index: number } | null = null;
@@ -90,7 +94,7 @@ export class Tutor {
   private adviceLesson(advice: Advice): Lesson {
     this.advicePointer ??= {
       trick: 'bounds',
-      grade: 2,
+      grade: TRICKS.bounds.grade,
       why: { constraints: advice.constraints, cells: [] },
       open: [],
       mark: [],

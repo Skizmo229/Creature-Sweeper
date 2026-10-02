@@ -9,10 +9,9 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { paint, testConfig, EMPTY8 } from './helpers.js';
+import { ladders, paint, testConfig, EMPTY8 } from './helpers.js';
 import { Game } from '../src/engine/game.js';
 import { SPELLS } from '../src/engine/spells.js';
-import { loadLadders } from '../src/data.js';
 import { boardConfig, findType } from '../src/engine/config.js';
 import { FullRun } from '../src/engine/run.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';
@@ -151,7 +150,6 @@ describe('double EXP', () => {
 });
 
 describe('the WORKOUT ladder', () => {
-  const ladders = loadLadders();
   const type = findType(ladders, 'workout');
 
   it('carries Exercise alone, at 30 rising by 10, with 30 mana to start', () => {
@@ -199,7 +197,6 @@ describe('the WORKOUT ladder', () => {
 });
 
 describe('the workout rule at the boundary', () => {
-  const ladders = loadLadders();
   const base = findType(ladders, 'workout');
 
   it('is refused on a ladder that does not offer Exercise', () => {

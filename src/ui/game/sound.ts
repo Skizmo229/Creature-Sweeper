@@ -8,7 +8,8 @@
  */
 
 import type { GameEvent } from '../../engine/types.js';
-import type { SfxEvent } from '../sfx.js';
+import type { SfxEvent } from '../looktypes.js';
+import type { Sfx } from '../sfx.js';
 
 /** Each sound an action can make, loudest first, and what in the action's events calls for it. */
 const BY_CONSEQUENCE: ReadonlyArray<readonly [SfxEvent, (events: GameEvent[]) => boolean]> = [
@@ -34,4 +35,11 @@ export function soundFor(
     if (plays(sound) && calledFor(events)) return sound;
   }
   return null;
+}
+
+/** Sound an action: its `soundFor`, through `sfx`, unless the sound is off. */
+export function soundAction(sfx: Sfx, events: GameEvent[]): void {
+  if (!sfx.enabled) return;
+  const sound = soundFor(events, (e) => sfx.plays(e));
+  if (sound) sfx.play(sound);
 }

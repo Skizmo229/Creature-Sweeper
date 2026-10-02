@@ -18,6 +18,9 @@ import { hexAt, hexBoardSize, hexCentre, hexRadius, hexRowStep } from '../hexgeo
  */
 export const MIN_CELL = 8;
 
+/** How far one wheel notch or zoom key moves the cell size, in CSS pixels. */
+export const ZOOM_STEP = 2;
+
 /**
  * Cells of a wrapped board shown beyond each joined edge. One is enough: what the player needs
  * is to see the cells immediately across the seam, because those are the ones that are genuinely

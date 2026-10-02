@@ -6,26 +6,20 @@
  * the game runs in a frame, and the pages it links to will not load inside one.
  */
 
-import { el } from '../dom.js';
+import { type OverlayCard, el, link } from '../dom.js';
 import { VERSION } from '../version.js';
 
 /** The repository: the source, the licence, and where bugs and ideas go. */
 export const SOURCE_URL = 'https://github.com/Skizmo229/Creature-Sweeper';
+/** The repository as a link says it. */
+export const SOURCE_LABEL = 'github.com/Skizmo229/Creature-Sweeper';
 const LICENCE_URL = `${SOURCE_URL}/blob/main/LICENSE`;
 const ORIGINAL_URL = 'https://hojamaka.com/games/mamono_sweeper/';
 /** Shipped beside index.html in every build (`public/`), so it resolves on itch.io and in dev. */
 const FONT_LICENCES = './FONT-LICENSES.txt';
 
-/** A link that leaves the game in a tab of its own. */
-export function link(href: string, text: string): HTMLAnchorElement {
-  const a = el('a', undefined, text);
-  a.href = href;
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  return a;
-}
-
-export function buildAbout(onClose: () => void): { overlay: HTMLElement; focus: HTMLElement } {
+/** The About card, and its Close button to focus. `onClose` is what Close does. */
+export function buildAbout(onClose: () => void): OverlayCard {
   const overlay = el('div', 'overlay win');
   const card = el('div', 'overlay-card about');
   card.append(el('h2', undefined, 'CREATURE SWEEPER'));
@@ -47,7 +41,7 @@ export function buildAbout(onClose: () => void): { overlay: HTMLElement; focus: 
     link(LICENCE_URL, 'GNU General Public License'),
     ', version 3 or later. It comes with no warranty.',
   );
-  say('Source, bug reports and ideas: ', link(SOURCE_URL, 'github.com/Skizmo229/Creature-Sweeper'));
+  say('Source, bug reports and ideas: ', link(SOURCE_URL, SOURCE_LABEL));
   say('Fonts: SIL Open Font License (', link(FONT_LICENCES, 'notices'), ').');
 
   const row = el('div', 'overlay-actions');

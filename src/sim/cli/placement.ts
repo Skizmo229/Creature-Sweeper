@@ -36,9 +36,10 @@ import type { BoardConfig } from '../../engine/types.js';
 import { type Grid, computeNumbers, makeCell } from '../../engine/grid.js';
 import { findBestOpening } from '../../engine/opening.js';
 import { generateGrid } from '../../engine/generate.js';
-import { placementRule } from '../../engine/placement/registry.js';
+import { type Placement, placementRule } from '../../engine/placement/registry.js';
+import { seedCount } from '../tables.js';
 
-const TRIALS = Number(process.argv[2] ?? 240);
+const TRIALS = seedCount(process.argv[2], 240, 'npx tsx src/sim/cli/placement.ts [trials]');
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DATA = resolve(HERE, '..', '..', '..', 'design', 'data');
 const rng: Rng = mulberry32(31415);
@@ -326,6 +327,9 @@ writeFileSync(resolve(DATA, 'placement.json'), JSON.stringify(rows, null, 1));
 
 // ---------- every rule a ladder uses, against its own creatures scattered ----------
 
+/** The placement each rule is measured against: the engine's own scatter. */
+const SCATTER: Placement = 'uniform';
+
 console.log(
   '\n=== each shipped placement rule on its own board 5, against the same creatures scattered ===',
 );
@@ -337,8 +341,8 @@ const ruled: object[] = [];
 for (const type of ladders) {
   const cfg = boardConfig(ladders, type.id, 5);
   // Uniform is the scatter itself; a guess-free rule's board is a generated puzzle, not a deal.
-  if (cfg.placement === 'uniform' || placementRule(cfg.placement).guessFree) continue;
-  const scatterCfg: BoardConfig = { ...cfg, placement: 'uniform' };
+  if (cfg.placement === SCATTER || placementRule(cfg.placement).guessFree) continue;
+  const scatterCfg: BoardConfig = { ...cfg, placement: SCATTER };
   const scatter = trial(scatterCfg, engine(scatterCfg));
   const rule = trial(cfg, engine(cfg));
   if (!scatter || !rule) continue;

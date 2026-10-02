@@ -1,6 +1,6 @@
 {
   "name": "creature-sweeper",
-  "version": "0.9.2",
+  "version": "1.0.0",
   "private": true,
   "engines": {
     "node": ">=22"
@@ -8,6 +8,14 @@
   "type": "module",
   "description": "A Minesweeper/RPG hybrid — remix of mamono sweeper, played in the browser.",
   "license": "GPL-3.0-or-later",
+  "homepage": "https://skizmo.itch.io/creature-sweeper",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Skizmo229/Creature-Sweeper.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Skizmo229/Creature-Sweeper/issues"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

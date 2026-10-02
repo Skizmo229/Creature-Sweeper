@@ -33,17 +33,21 @@ import {
   sudokuDeduction,
   sudokuSolution,
 } from '../../engine/placement/sudoku.js';
+import { seedCount } from '../tables.js';
 
-const perRung = Number(process.argv[2] ?? 20);
+const perRung = seedCount(process.argv[2], 20, 'npm run sim:sudoku -- [boards-per-rung [--sweep]]');
 const ladders = loadLadders();
 const type = findType(ladders, 'sudoku');
+
+/** The most boards tried for one givens count before it is called out of reach. */
+const MOST_ATTEMPTS = 60000;
 
 /** Attempts per accepted board — measured, not assumed. */
 function attemptsPerBoard(givens: number, thresholds: readonly number[], want: number): number {
   const rng = mulberry32(0xd0c0 + givens);
   let tried = 0;
   let passed = 0;
-  while (passed < want && tried < 60000) {
+  while (passed < want && tried < MOST_ATTEMPTS) {
     tried++;
     const grid = sudokuSolution(rng);
     const creatures: number[] = [];
@@ -97,7 +101,7 @@ function play(game: Game): Play {
     if (!cand) break; // contradiction: the board lied
 
     const safe: Array<[number, number]> = [];
-    for (let i = 0; i < 81; i++) {
+    for (let i = 0; i < SUDOKU_SIZE ** 2; i++) {
       if (openTiers[i] !== null) continue;
       const ceiling = sudokuCeiling(cand[i]!);
       if (ceiling >= 0 && ceiling <= game.level) {

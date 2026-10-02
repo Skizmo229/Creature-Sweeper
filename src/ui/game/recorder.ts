@@ -31,8 +31,23 @@ export interface RecorderHost {
   play(move: Move): GameEvent[];
 }
 
+type Battle = Extract<GameEvent, { type: 'battle' }>;
+
+/**
+ * The last fight in a move's events that cost HP: on a board the move lost, the blow that ended
+ * it, since a click resolves at most one fight and a sweep stops the moment HP runs out.
+ */
+export function fatalBlow(events: readonly GameEvent[]): Battle | undefined {
+  const fights = events.filter((e): e is Battle => e.type === 'battle' && e.damage > 0);
+  return fights[fights.length - 1];
+}
+
 type Counts = Pick<Attempt, 'opens' | 'guesses' | 'sweeps' | 'casts'>;
 
+/**
+ * Tallies one attempt at the board on screen, from `begin` to `end`: every move passes through
+ * `move` on its way to the keeper, and `end` writes the attempt to the play statistics.
+ */
 export class BoardRecorder {
   private counts: Counts = { opens: 0, guesses: 0, sweeps: 0, casts: 0 };
   /** HP, hints and seconds when the attempt began, so the attempt's own are differences. */
@@ -40,30 +55,34 @@ export class BoardRecorder {
   /** The tier of the blow that ended a lost board, from the events of the move that lost it. */
   private fatalTier: number | null = null;
 
-  constructor(private readonly h: RecorderHost) {}
+  constructor(private readonly host: RecorderHost) {}
 
-  /** A board dealt, or a paused one taken up: tally from here. Nothing is tallied until this. */
+  /**
+   * A board dealt, or a paused one taken up: tally from here. Nothing is tallied until this. The
+   * attempt's seconds are the clock's from now, so call it once the clock reads this board's
+   * start: after `clock.begin` on a board dealt, after the keeper resumes a paused one.
+   */
   begin(): void {
-    const game = this.h.game();
+    const game = this.host.game();
     if (!game) return;
     this.counts = { opens: 0, guesses: 0, sweeps: 0, casts: 0 };
     this.fatalTier = null;
     this.start = {
       hp: game.hp,
-      hints: this.h.tutor.hints,
-      seconds: this.h.clock.elapsedSeconds(),
+      hints: this.host.tutor.hints,
+      seconds: this.host.clock.elapsedSeconds(),
     };
   }
 
   /** Make a move and count it. A move the board refused counts as nothing. */
   move(move: Move): GameEvent[] {
-    const game = this.h.game();
+    const game = this.host.game();
     // Asked before the move, since the move changes what is provable.
     const proven =
       this.start && game && move.kind === 'open'
         ? game.safeCells({ useMarks: false }).some((c) => c.x === move.x && c.y === move.y)
         : true;
-    const events = this.h.play(move);
+    const events = this.host.play(move);
     if (!this.start || events.some((e) => e.type === 'blocked')) return events;
     if (move.kind === 'open') {
       this.counts.opens++;
@@ -74,16 +93,15 @@ export class BoardRecorder {
       this.counts.casts++;
     }
     if (events.some((e) => e.type === 'lost')) {
-      const fights = events.filter((e) => e.type === 'battle' && e.damage > 0);
-      const last = fights[fights.length - 1];
-      if (last && last.type === 'battle') this.fatalTier = last.tier;
+      const blow = fatalBlow(events);
+      if (blow) this.fatalTier = blow.tier;
     }
     return events;
   }
 
   /** The attempt is over: written to its board's totals, under the dials it was played with. */
   end(how: Attempt['how']): void {
-    const game = this.h.game();
+    const game = this.host.game();
     const start = this.start;
     this.start = null;
     if (!game || !start) return;
@@ -91,15 +109,15 @@ export class BoardRecorder {
       how,
       ...this.counts,
       hpLost: Math.max(0, start.hp - game.hp),
-      hints: Math.max(0, this.h.tutor.hints - start.hints),
-      seconds: Math.max(0, this.h.clock.elapsedSeconds() - start.seconds),
+      hints: Math.max(0, this.host.tutor.hints - start.hints),
+      seconds: Math.max(0, this.host.clock.elapsedSeconds() - start.seconds),
     };
     if (how === 'lost') {
-      attempt.deathBy = this.h.clock.timeExpired ? 'time' : String(this.fatalTier ?? 'forfeit');
+      attempt.deathBy = this.host.clock.timeExpired ? 'time' : String(this.fatalTier ?? 'forfeit');
     }
-    this.h.telemetry.record(
-      this.h.typeId(),
-      this.h.boardIndex(),
+    this.host.telemetry.record(
+      this.host.typeId(),
+      this.host.boardIndex(),
       isAtLeastAsHard(game.settings),
       attempt,
     );

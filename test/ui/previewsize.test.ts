@@ -6,25 +6,17 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { MAX_PREVIEW_SIZE } from '../../src/ui/presentation.js';
 import { Settings } from '../../src/ui/settings.js';
 import { CHIP_CELL, DEMO_CELL } from '../../src/ui/settingsscreen/render.js';
 import { sampleBoard } from '../../src/ui/preview.js';
+import { type AppDriver, mountApp } from './driver.js';
 
-interface Driver {
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  settings: Settings;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 /** A canvas's drawn width in CSS pixels. */

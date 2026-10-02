@@ -1,6 +1,6 @@
 /**
  * What each ladder looks and sounds like by default: one record per ladder, so a new ladder is one
- * entry. Kept DOM-free, apart from `theme.ts` and its canvas drawing, so the tests can hold every
+ * entry. Kept DOM-free, apart from `creature.ts` and its canvas drawing, so the tests can hold every
  * ladder to its record (`test/fonts.test.ts`).
  *
  * The split the palettes keep: pip SHAPE carries ladder identity, pip COLOUR carries tier identity
@@ -464,7 +464,8 @@ const LOOKS: Record<string, LadderLook> = {
 
 /** A ladder's look. A ladder without one wears NORMAL's, and fails `test/fonts.test.ts`. */
 export function lookFor(typeId: string): LadderLook {
-  return LOOKS[typeId] ?? LOOKS.normal!;
+  // Looked up as LOOKS's own key: a palette id comes from a save, and may be anything.
+  return Object.hasOwn(LOOKS, typeId) ? LOOKS[typeId]! : LOOKS.normal!;
 }
 
 /** A ladder's palette, or a palette the player picked by its ladder's id. */

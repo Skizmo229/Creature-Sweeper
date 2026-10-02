@@ -15,37 +15,7 @@ import { readBoard } from '../src/sim/reader.js';
 import { TRICKS, TRICK_IDS, type TrickId } from '../src/sim/tricks.js';
 import { TRICK_TEXT } from '../src/sim/tricktext.js';
 import { type Lesson, explain, provable } from '../src/sim/tutor.js';
-import { ladders, playPartWay } from './helpers.js';
-
-/** Every kind of board the tricks read differently, as `test/graded.test.ts` lists them. */
-const KINDS = [
-  'normal',
-  'extreme',
-  'oracle',
-  'huge',
-  'hive',
-  'wraparound',
-  'donut',
-  'cross',
-  'wrapped_cross',
-  'diamond',
-  'cave',
-  'dungeon',
-  'checker',
-  'pairs',
-  'dominoes',
-  'packs',
-  'congo',
-  'workout',
-  'blind',
-  'seer',
-  'augur',
-  'patrol',
-  'pyramid',
-  'petri',
-  'gear',
-  'sprinkle_donut',
-];
+import { TRICK_KINDS, ladders, playPartWay } from './helpers.js';
 
 /** Play a lesson's moves, the way a player who took it would. */
 function take(game: Game, lesson: Lesson): void {
@@ -69,7 +39,8 @@ describe('the tutor', () => {
     // Every kind of board once, and the hard ladders' top boards a few more times, where the
     // rarest lessons (a what-if, a count) are found, as `test/graded.test.ts` samples them.
     const games: Array<[string, number, number]> = [];
-    for (const id of KINDS) for (const board of [2, 6, 10]) games.push([id, board, 0xbeef + board]);
+    for (const id of TRICK_KINDS)
+      for (const board of [2, 6, 10]) games.push([id, board, 0xbeef + board]);
     for (const id of ['extreme', 'oracle']) {
       for (const board of [8, 10]) for (let s = 0; s < 6; s++) games.push([id, board, 0xf00d + s]);
     }
@@ -234,7 +205,7 @@ describe('the tutor', () => {
 
   it('proves only what is true, at least what a press teaches, and more at a dearer grade', () => {
     let proved = 0;
-    for (const id of KINDS) {
+    for (const id of TRICK_KINDS) {
       for (const board of [3, 8]) {
         const seed = 0xace + board;
         const game = Game.create(boardConfig(ladders, id, board), seed);

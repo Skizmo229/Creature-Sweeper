@@ -6,8 +6,9 @@
 import { tierColor } from '../tiercolors.js';
 import type { VictoryId } from '../looktypes.js';
 import { flip, float, march, scatter, spin, swarm } from './departures.js';
-import { type Painter, type Stage, type VictorySprite, blit, movers } from './stage.js';
+import { type Mover, type Painter, type Stage, type VictorySprite, blit, movers } from './stage.js';
 
+/** The painter for an icon effect; the three wipes are one painter. */
 export function iconPainter(effect: VictoryId, stage: Stage): Painter {
   switch (effect) {
     case 'tumble':
@@ -260,28 +261,80 @@ function burn(stage: Stage): Painter {
   return { paint, accumulates: false };
 }
 
+/** The stage's size and centre, which a wipe's direction is measured on. */
+interface WipeGround {
+  readonly w: number;
+  readonly h: number;
+  readonly cx: number;
+  readonly cy: number;
+  /** The centre's distance to a corner, at least 1. */
+  readonly maxD: number;
+}
+
+/**
+ * A wipe's direction: how far along it a creature sits, 0 to 1; which way the band pushes a
+ * creature `push` pixels; and the band's line at `front`, traced on the path in hand.
+ */
+interface WipeDirection {
+  axis(s: VictorySprite, g: WipeGround): number;
+  push(m: Mover, push: number, g: WipeGround): { dx: number; dy: number };
+  band(ctx: CanvasRenderingContext2D, front: number, g: WipeGround): void;
+}
+
+/** Left to right, the default for any wipe not named below. */
+const ACROSS: WipeDirection = {
+  axis: (s, g) => s.x / Math.max(1, g.w),
+  push: (_m, push) => ({ dx: push, dy: 0 }),
+  band: (ctx, front, g) => {
+    ctx.moveTo(front * g.w, 0);
+    ctx.lineTo(front * g.w, g.h);
+  },
+};
+
+/** The wipes' directions, by effect. */
+const WIPE_DIRECTIONS: Partial<Record<VictoryId, WipeDirection>> = {
+  wipe: ACROSS,
+  wipeDown: {
+    axis: (s, g) => s.y / Math.max(1, g.h),
+    push: (_m, push) => ({ dx: 0, dy: push }),
+    band: (ctx, front, g) => {
+      ctx.moveTo(0, front * g.h);
+      ctx.lineTo(g.w, front * g.h);
+    },
+  },
+  wipeRadial: {
+    axis: (s, g) => Math.hypot(s.x - g.cx, s.y - g.cy) / g.maxD,
+    push: (m, push, g) => ({
+      dx: ((m.x - g.cx) / g.maxD) * push * 2,
+      dy: ((m.y - g.cy) / g.maxD) * push * 2,
+    }),
+    band: (ctx, front, g) => ctx.arc(g.cx, g.cy, front * g.maxD, 0, Math.PI * 2),
+  },
+};
+
 /**
  * The wipes — a band crosses the board and takes the creatures with it.
  *
  * One implementation, three directions. Which axis a creature is measured
- * along is the only thing that differs, so adding a direction is a line rather
- * than an effect.
+ * along is the only thing that differs, so adding a direction is an entry in
+ * `WIPE_DIRECTIONS` rather than an effect.
  *
  * A creature does not simply vanish as the front reaches it: it fades over a
  * short window while sliding the way the wipe is going, which is what makes
  * the band look like it is carrying them off rather than switching them off.
  */
 function wipe(effect: VictoryId, stage: Stage): Painter {
+  const direction = WIPE_DIRECTIONS[effect] ?? ACROSS;
   const cx = stage.w / 2;
   const cy = stage.h / 2;
-  const maxD = Math.max(1, Math.hypot(cx, cy));
-  const axisOf =
-    effect === 'wipeDown'
-      ? (s: VictorySprite) => s.y / Math.max(1, stage.h)
-      : effect === 'wipeRadial'
-        ? (s: VictorySprite) => Math.hypot(s.x - cx, s.y - cy) / maxD
-        : (s: VictorySprite) => s.x / Math.max(1, stage.w);
-  const items = movers(stage, axisOf);
+  const ground: WipeGround = {
+    w: stage.w,
+    h: stage.h,
+    cx,
+    cy,
+    maxD: Math.max(1, Math.hypot(cx, cy)),
+  };
+  const items = movers(stage, (s) => direction.axis(s, ground));
 
   const paint = (ctx: CanvasRenderingContext2D, t: number): void => {
     // Runs slightly ahead of the clock so the last creature is gone before the
@@ -296,11 +349,7 @@ function wipe(effect: VictoryId, stage: Stage): Painter {
         blit(ctx, stage.atlas, m);
         continue;
       }
-      const push = local * m.sprite.size * 0.8;
-      const dx =
-        effect === 'wipeDown' ? 0 : effect === 'wipeRadial' ? ((m.x - cx) / maxD) * push * 2 : push;
-      const dy =
-        effect === 'wipeDown' ? push : effect === 'wipeRadial' ? ((m.y - cy) / maxD) * push * 2 : 0;
+      const { dx, dy } = direction.push(m, local * m.sprite.size * 0.8, ground);
       blit(ctx, stage.atlas, m, { alpha: 1 - local, scale: 1 + 0.45 * local, dx, dy });
     }
 
@@ -312,15 +361,7 @@ function wipe(effect: VictoryId, stage: Stage): Painter {
     ctx.shadowBlur = 16;
     ctx.lineWidth = 3;
     ctx.beginPath();
-    if (effect === 'wipeRadial') {
-      ctx.arc(cx, cy, front * maxD, 0, Math.PI * 2);
-    } else if (effect === 'wipeDown') {
-      ctx.moveTo(0, front * stage.h);
-      ctx.lineTo(stage.w, front * stage.h);
-    } else {
-      ctx.moveTo(front * stage.w, 0);
-      ctx.lineTo(front * stage.w, stage.h);
-    }
+    direction.band(ctx, front, ground);
     ctx.stroke();
     ctx.restore();
   };

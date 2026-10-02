@@ -25,7 +25,9 @@ By request: HUGE and EXTREME leave the chain off NORMAL; ARCANE and ORACLE leave
 WRAPPED CROSS drops its two parents and opens before CROSS; DUNGEON is Magic and HIVE Special;
 BLIND trades three Full Runs for a board count, one step past the rest. Only EASY -> NORMAL and
 the two combined Normal ladders (HUGE x EXTREME, HUGE x BLIND) keep type gates. The Full Run gate
-had no other user and was removed with it.
+had no other user and was removed with it. SUDOKU closes Special because it cannot be ranked
+with the rest (0018), and DUNGEON, second easiest by that ranking, closes Magic: it carries spells
+and the crawl rule, and by then the player has met every spell on ARCANE, WORKOUT and ORACLE.
 
 ## Consequences
 HUGE can open before NORMAL is cleared, and WRAPPED CROSS before either ladder it combines; both

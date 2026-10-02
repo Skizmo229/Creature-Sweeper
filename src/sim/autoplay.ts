@@ -8,13 +8,14 @@
  * weight.
  *
  * Whether a player could actually work out where those creatures are is a
- * different question, and needs the constraint solver that solvable generation
- * will be built on.
+ * different question, which the honest and graded players and the complete
+ * deducer (`solver.ts`) answer.
  */
 
 import type { Cell } from '../engine/types.js';
 import { Game } from '../engine/game.js';
 
+/** What the omniscient player made of one board. */
 export interface AutoplayResult {
   cleared: boolean;
   /** HP lost over the whole board. The tuning claim is that this stays 0. */
@@ -72,10 +73,8 @@ export function autoplayTierOrder(game: Game): AutoplayResult {
 
 /**
  * The lowest-tier creature still alive that costs nothing to kill, and that
- * the crawl rule allows to be touched.
- *
- * `inReach` is free on every board without one, so this stays the same search
- * it always was everywhere else.
+ * the crawl rule allows to be touched (`inReach` allows any cell on a board
+ * without one).
  */
 function nextSafeTarget(game: Game): Cell | null {
   let best: Cell | null = null;

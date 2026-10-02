@@ -6,18 +6,12 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
+import { type AppDriver, key, mountApp } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 const throwAt = (type: string, fields: Record<string, unknown>): void => {
@@ -51,7 +45,7 @@ describe('an error nothing caught', () => {
     throwAt('error', { error: new Error('boom') });
     expect(card()).not.toBeNull();
 
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    key('Escape');
     expect(card()).toBeNull();
     expect(document.querySelector('.type-groups')).not.toBeNull();
 

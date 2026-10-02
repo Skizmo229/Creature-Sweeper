@@ -6,29 +6,19 @@
 
 import './setup.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
-import { type BoardDisplay, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
+import { DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { themeFor } from '../../src/ui/looks.js';
 import { MAX_DIGIT_SIZE } from '../../src/ui/presentation.js';
 import { sampleBoard } from '../../src/ui/preview.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
+import { type AppDriver, mountApp, settingsRow } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  readonly settings: Settings;
-  readonly view: { readonly display: BoardDisplay } | null;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 /** The size a face's digits are measured at before they are sized, which is not a drawing. */
@@ -88,9 +78,7 @@ describe('the digit size', () => {
 
   it('is a slider whose example follows the thumb, saved on release', () => {
     app.showSettings(() => app.showTypes());
-    const row = [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Digit size',
-    )!;
+    const row = settingsRow('Digit size');
     const input = row.querySelector<HTMLInputElement>('input[type=range]')!;
     expect(row.querySelector('.digit-size-demo canvas')).not.toBeNull();
     recording.sizes.length = 0;

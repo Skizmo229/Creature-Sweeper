@@ -10,14 +10,8 @@ import { placementRule } from '../../engine/placement/registry.js';
 import type { Cell } from '../../engine/types.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
 import type { BeatenLook, CreatureGlyph } from '../presentation.js';
-import {
-  AUGUR_COLOR,
-  CENSUS_COLOR,
-  GIVEN_COLOR,
-  MARK_OUTLINE,
-  drawCreature,
-  noteColor,
-} from '../theme.js';
+import { drawCreature } from '../creature.js';
+import { ANNOTATION_OUTLINE, AUGUR_COLOR, CENSUS_COLOR, GIVEN_COLOR, noteColor } from '../theme.js';
 import type { TypeTheme } from '../looktypes.js';
 import { TIER_COUNT, type TierPalette } from '../tiercolors.js';
 import type { GameFont } from '../typefaces.js';
@@ -175,24 +169,44 @@ export function drawTile(p: Paint, cell: Cell, cx: number, cy: number): void {
   ctx.stroke();
 }
 
+/** How tall a mark is drawn, and a tier the tutor names, as a share of the cell's content box. */
+export const MARK_SCALE = 0.58;
+
+/**
+ * Text centred on a cell, `scale` times `digitScale` of its content box, over the dark outline a
+ * mark wears: outlined, because the mark green alone vanishes on a light tile like EASY's olive. A
+ * mark, and what the tutor writes on a cell; the caller saves and restores the context round it.
+ */
+export function writeOnCell(
+  p: Paint,
+  cx: number,
+  cy: number,
+  text: string,
+  color: string,
+  scale: number,
+  digitScale = 1,
+): void {
+  const { ctx } = p;
+  const box = contentBox(p.layout, cx, cy);
+  const { centre } = setNumberFont(ctx, p.font, box.size * scale * digitScale);
+  ctx.textAlign = 'center';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = Math.max(2, box.size * 0.16);
+  ctx.strokeStyle = ANNOTATION_OUTLINE;
+  ctx.strokeText(text, cx, cy + centre);
+  ctx.fillStyle = color;
+  ctx.fillText(text, cx, cy + centre);
+}
+
 /** What the player, or the board, wrote on a covered tile: a mark, or pencil notes. */
 export function drawAnnotation(p: Paint, cell: Cell, cx: number, cy: number): void {
   const { ctx } = p;
   if (cell.mark > 0) {
-    const box = contentBox(p.layout, cx, cy);
-    // Outlined, because green alone vanishes on a light tile like EASY's olive.
-    ctx.save();
-    const { centre } = setNumberFont(ctx, p.font, box.size * 0.58 * p.digitScale);
-    ctx.textAlign = 'center';
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = Math.max(2, box.size * 0.16);
-    ctx.strokeStyle = MARK_OUTLINE;
-    const my = cy + centre;
-    ctx.strokeText(String(cell.mark), cx, my);
     // A clue the board dealt and a claim the player made are different things, so they are
     // different colours. Same outline, because both have to survive whatever tile they land on.
-    ctx.fillStyle = cell.given ? GIVEN_COLOR : p.markColor;
-    ctx.fillText(String(cell.mark), cx, my);
+    const color = cell.given ? GIVEN_COLOR : p.markColor;
+    ctx.save();
+    writeOnCell(p, cx, cy, String(cell.mark), color, MARK_SCALE, p.digitScale);
     ctx.restore();
   } else if (cell.notes) {
     drawNotes(p, cell, cx, cy);
@@ -242,7 +256,7 @@ function drawNotes(p: Paint, cell: Cell, cx: number, cy: number): void {
   ctx.textAlign = 'center';
   ctx.lineJoin = 'round';
   ctx.lineWidth = Math.max(1.5, font * 0.3);
-  ctx.strokeStyle = MARK_OUTLINE;
+  ctx.strokeStyle = ANNOTATION_OUTLINE;
   ctx.fillStyle = noteColor(p.markColor);
   const at: { glyph: string; x: number; y: number }[] = [];
   for (let t = 0; t < slots; t++) {
@@ -286,7 +300,7 @@ export function drawOpen(p: Paint, cell: Cell, cx: number, cy: number): void {
     ctx.save();
     if (beaten && dim) ctx.globalAlpha = BEATEN_ALPHA;
     const tiers = beaten && grey ? greyTiers(theme.ink) : p.tierColors;
-    drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme, tiers, {
+    drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme.pip, tiers, {
       glyph: p.glyph,
       font: p.font,
     });
@@ -336,6 +350,9 @@ export function drawCensus(p: Paint, cell: Cell, cx: number, cy: number): void {
   drawCornerBadge(p, cx, cy, String(cell.census), CENSUS_COLOR, 'left');
 }
 
+/** The dark backing under a corner badge and Augur's column, so their digits read on any tile. */
+const BADGE_BACKING = 'rgba(6, 12, 18, 0.85)';
+
 /** An Augur's digit against its content box, and its line height against the digit's ascent. */
 const AUGUR_DIGIT = 0.28;
 const AUGUR_LINE = 1.25;
@@ -361,7 +378,7 @@ export function drawAugur(p: Paint, answer: readonly number[], cx: number, cy: n
   const width = Math.max(...answer.map((t) => ctx.measureText(String(t)).width));
   const pad = Math.max(1, size * 0.04);
   const right = box.x + size;
-  ctx.fillStyle = 'rgba(6, 12, 18, 0.85)';
+  ctx.fillStyle = BADGE_BACKING;
   ctx.fillRect(right - width - pad * 2, box.y, width + pad * 2, line * answer.length + pad * 2);
   ctx.fillStyle = AUGUR_COLOR;
   ctx.textAlign = 'center';
@@ -389,7 +406,7 @@ function drawCornerBadge(
   const x = side === 'left' ? box.x : box.x + size;
   const dir = side === 'left' ? 1 : -1;
   ctx.save();
-  ctx.fillStyle = 'rgba(6, 12, 18, 0.85)';
+  ctx.fillStyle = BADGE_BACKING;
   ctx.beginPath();
   ctx.moveTo(x, y);
   ctx.lineTo(x + dir * r * 2, y);

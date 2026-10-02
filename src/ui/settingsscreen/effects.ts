@@ -1,10 +1,12 @@
 /**
- * The three settings whose only possible example is themselves: the sound pack, the glow after a
- * fight and the board-clear effect. Each is played, not pictured, which is only possible because
+ * The Presentation section's settings whose only possible example is themselves: the sound pack,
+ * the glow and the motion after a fight, and the board-clear effect, with when it plays, what
+ * holds the clear card and its speed. Each is played, not pictured, which is only possible because
  * these tiles update in place rather than rebuilding the screen (decision 0025).
  */
 
 import { randomSeed } from '../../engine/rng.js';
+import { RATIO_STEP } from '../../engine/settings.js';
 import type { GameEvent } from '../../engine/types.js';
 import { el } from '../dom.js';
 import { flashStage } from '../game/flash.js';
@@ -26,7 +28,7 @@ import { playVictory } from '../victory/play.js';
 import { type ScreenContext, typeName } from './context.js';
 import { renderPreview } from './render.js';
 import { openSoundCheck } from './soundcheck.js';
-import { type Choice, gallery, ratio, slider, wideRow } from './widgets.js';
+import { type Choice, gallery, slider, times, wideRow } from './widgets.js';
 
 /**
  * The board-clear demo currently running, if any. Module-level because a screen rebuild throws
@@ -48,8 +50,9 @@ export function stopSettingsDemo(): void {
   stopDemo = null;
 }
 
+/** The sound pack: a tile per pack, each played as it is picked, and the sound check's button. */
 export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, ident } = ctx;
+  const { p, ownLook } = ctx;
   const check = el('button', 'ghost small soundcheck-open', 'Sound check');
   check.setAttribute('aria-haspopup', 'dialog');
   check.addEventListener('click', () => openSoundCheck(ctx));
@@ -57,7 +60,7 @@ export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
   stack.append(
     gallery(
       [
-        { value: DEFAULT, label: `Game type default — ${SFX_NAMES[ident.sfx]}` },
+        { value: DEFAULT, label: `Game type default — ${SFX_NAMES[ownLook.sfx]}` },
         ...(Object.keys(SFX_NAMES) as SfxPackId[]).map((id): Choice => ({
           value: id,
           label: SFX_NAMES[id],
@@ -201,42 +204,71 @@ function clearEffectOptions(ctx: ScreenContext, host: HTMLElement, replay: () =>
     host,
     'Clear effect speed',
     'How fast the effect runs. Picking a speed replays it below.',
-    slider(
-      MIN_EFFECT_SPEED,
-      MAX_EFFECT_SPEED,
-      0.05,
-      p.effectSpeed,
-      ratio,
-      (v) => ctx.set({ effectSpeed: Math.round(v * 100) / 100 }),
-      replay,
-      DEFAULT_EFFECT_SPEED,
-    ),
+    slider({
+      min: MIN_EFFECT_SPEED,
+      max: MAX_EFFECT_SPEED,
+      step: RATIO_STEP,
+      value: p.effectSpeed,
+      format: times,
+      onInput: (v) => ctx.set({ effectSpeed: Math.round(v * 100) / 100 }),
+      onRelease: replay,
+      resetTo: DEFAULT_EFFECT_SPEED,
+    }),
   );
 }
 
+/** The clear effect's tiles: the game type's own, every effect, and none, each played as picked. */
+function effectGallery(ctx: ScreenContext, onPick: () => void): HTMLElement {
+  return gallery(
+    [
+      { value: DEFAULT, label: `Game type default — ${VICTORY_NAMES[ctx.ownLook.victory]}` },
+      ...(Object.keys(VICTORY_NAMES) as VictoryId[]).map((id): Choice => ({
+        value: id,
+        label: VICTORY_NAMES[id],
+      })),
+      { value: OFF, label: 'Off — no effect' },
+    ],
+    ctx.p.victory,
+    (v) => {
+      ctx.set({ victory: v as VictoryId | typeof DEFAULT | typeof OFF });
+      onPick();
+    },
+    true,
+  );
+}
+
+/** The Test button, live only while there is an effect to play; `sync` relights it after a pick. */
+function testButton(
+  ctx: ScreenContext,
+  onTest: () => void,
+): { button: HTMLButtonElement; sync: () => void } {
+  const button = el('button', 'primary small', 'Test on a new board');
+  const sync = (): void => {
+    const effect = ctx.settings.victoryEffect(ctx.typeId);
+    button.disabled = effect === null;
+    button.title =
+      effect === null
+        ? 'The clear effect is off, so there is nothing to play.'
+        : 'Clear a freshly generated board and play the effect over it.';
+  };
+  sync();
+  button.addEventListener('click', onTest);
+  return { button, sync };
+}
+
 /**
- * The demo board is kept rather than rebuilt per play, because half these effects animate its
- * creatures and need to borrow the glyphs off the view that is drawing them. It carries one of
- * every tier the real board uses and none above.
+ * The board-clear effect, played over a won board, with its option rows above it. The demo board
+ * is kept rather than rebuilt per play, because half these effects animate its creatures and need
+ * to borrow the glyphs off the view that is drawing them. It carries one of every tier the real
+ * board uses and none above.
  */
 export function clearEffectRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, ident, settings, typeId, tiers, currentTheme } = ctx;
+  const { settings, typeId, tiers, currentTheme } = ctx;
   const demo = renderPreview(clearedBoard(demoSeed, tiers), currentTheme, ctx.display(), {
     cell: ctx.demoCell,
   });
   const demoBox = el('div', 'clear-demo');
   demoBox.append(demo.canvas);
-
-  const testBtn = el('button', 'primary small', 'Test on a new board');
-
-  const syncTest = (): void => {
-    const effect = settings.victoryEffect(typeId);
-    testBtn.disabled = effect === null;
-    testBtn.title =
-      effect === null
-        ? 'The clear effect is off, so there is nothing to play.'
-        : 'Clear a freshly generated board and play the effect over it.';
-  };
 
   const runDemo = (): void => {
     stopSettingsDemo();
@@ -263,33 +295,18 @@ export function clearEffectRow(ctx: ScreenContext, host: HTMLElement): void {
     demo.view.setGame(clearedBoard(demoSeed, tiers), currentTheme, ctx.display());
     runDemo();
   };
-
-  syncTest();
-  testBtn.addEventListener('click', freshDemo);
+  const test = testButton(ctx, freshDemo);
 
   const demoWrap = el('div', 'settings-stack');
   demoWrap.append(
-    gallery(
-      [
-        { value: DEFAULT, label: `Game type default — ${VICTORY_NAMES[ident.victory]}` },
-        ...(Object.keys(VICTORY_NAMES) as VictoryId[]).map((id): Choice => ({
-          value: id,
-          label: VICTORY_NAMES[id],
-        })),
-        { value: OFF, label: 'Off — no effect' },
-      ],
-      p.victory,
-      (v) => {
-        ctx.set({ victory: v as VictoryId | typeof DEFAULT | typeof OFF });
-        syncTest();
-        // Replays over the SAME board, so the gallery stays a comparison between effects rather
-        // than between effects and layouts. Test is the one that deals a new board.
-        runDemo();
-      },
-      true,
-    ),
+    effectGallery(ctx, () => {
+      test.sync();
+      // Replays over the SAME board, so the gallery stays a comparison between effects rather
+      // than between effects and layouts. Test is the one that deals a new board.
+      runDemo();
+    }),
     demoBox,
-    testBtn,
+    test.button,
   );
 
   clearEffectOptions(ctx, host, runDemo);

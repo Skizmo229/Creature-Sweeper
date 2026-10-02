@@ -1,6 +1,7 @@
 # 0014. Sweep is charged by default, and easier settings record nothing
 
-2026-09-21. Status: adopted.
+2026-09-21. Status: adopted. A budget of sweeps a board, which records nothing, is a mode of its own
+since 0072.
 
 ## Context
 With Sweep always on, no setting of the dial could be easier than default. Charging it (ten

@@ -1,8 +1,9 @@
 /**
  * One lesson being taken (docs/teaching-plan.md, section 5.3): its board, which step is up, what the
  * tutor points at for it, and which clicks the school lets through. Headless, so
- * `test/school.test.ts` takes every lesson through it; the school screen draws it and hands it the
- * player's actions. It never acts on the board itself.
+ * `test/school.test.ts` takes every lesson through it; `teaching.ts` holds the one being taken and
+ * hands it the player's actions, and the game screen draws its board. It never acts on the board
+ * itself.
  *
  * On a lesson board a click that no trick has proven is refused, with the reason, rather than
  * fought, except where guessing is the lesson: a lesson that derails into a death teaches the
@@ -11,7 +12,7 @@
  */
 
 import { Game, type GameOptions } from '../../engine/game.js';
-import { hasNotes, lowestNote, noteBit } from '../../engine/notes.js';
+import { noteBit, notesGuard } from '../../engine/notes.js';
 import { fightCostFor } from '../../engine/settings.js';
 import type { Cell } from '../../engine/types.js';
 import { type Lesson, merge, provable } from '../../sim/tutor.js';
@@ -20,6 +21,7 @@ import type { SchoolLesson, Spot, Step, Wait } from './lessons.js';
 /** The catalogue's boards, and so the school's, have five tiers. */
 const TIERS = 5;
 
+/** One lesson being taken: its board, at the lesson's level and with no Sweep, and its place. */
 export class LessonRun {
   readonly game: Game;
   private at = 0;
@@ -91,7 +93,7 @@ export class LessonRun {
     const { game } = this;
     if (this.lesson.grade === null || cell.open || game.status !== 'playing') return null;
     if (cell.mark > game.level) return null;
-    if (hasNotes(cell.notes) && lowestNote(cell.notes) > game.level) return null;
+    if (notesGuard(cell.notes, game.level)) return null;
     const proven = provable(game);
     if (proven.open.has(cell)) return null;
     const tier = proven.mark.get(cell);

@@ -6,10 +6,18 @@
  * those numbers.
  */
 
-import type { BoardConfig, BoardShape, OpeningRule, Placement, WorkoutRule } from './types.js';
+import type {
+  BoardConfig,
+  BoardShape,
+  OpeningRule,
+  Placement,
+  Topology,
+  WorkoutRule,
+} from './types.js';
 import { RULES, isPlacement, placementRule } from './placement/registry.js';
 import { SHAPES, isShape, shapeRule } from './shape/registry.js';
 import { SPELLS, type SpellId, isSpellId, orderSpells } from './spells.js';
+import { expForTier } from './combat.js';
 
 /** One board's row as `ladders.py` emits it. */
 export interface LadderBoard {
@@ -32,6 +40,7 @@ export interface LadderBoard {
 
 /** The menu's four groups, in the order it shows them. `CATEGORIES` in `ladders.py` fills them. */
 export const LADDER_CATEGORIES = ['normal', 'shape', 'magic', 'special'] as const;
+/** One of the menu's groups. */
 export type LadderCategory = (typeof LADDER_CATEGORIES)[number];
 
 /** One game type's ladder as `ladders.py` emits it. */
@@ -62,14 +71,14 @@ export interface LadderType {
   shape_param?: number;
   /**
    * Steps of adjacency the player may act beyond already-revealed ground.
-   * Absent or 0 means the whole board, which is every type but DUNGEON.
+   * Absent or 0 means the whole board, as on every ladder without the crawl rule.
    */
   reach?: number;
-  /** PETRI DISH: a mark touching uncovered ground counts as uncovered for reach. */
+  /** With a reach of 1: a mark touching uncovered ground counts as uncovered for reach. */
   reach_marks?: boolean;
   /** A key of the placement registry (`src/engine/placement/registry.ts`). Absent is uniform. */
   placement?: string;
-  /** How the board is opened, where the ladder chooses: an `OpeningRule`. Absent is the placement's. */
+  /** The ladder's own `OpeningRule`, where it chooses one. Absent is the placement's. */
   opening?: string;
   /**
    * The HP pool a Full Run gets for all ten boards, taken from board 1.
@@ -113,8 +122,10 @@ export interface LadderType {
   extended: LadderBoard[];
 }
 
+/** The whole ladder data, every game type, as `ladders.json` holds it. */
 export type Ladders = LadderType[];
 
+/** What a caller may change about a board when its config is built. */
 export interface BoardOptions {
   opening?: OpeningRule;
   /**
@@ -248,6 +259,15 @@ function readOpening(type: LadderType, placement: Placement): OpeningRule {
   return known;
 }
 
+/** The board's cells, square or hex, refusing a topology this build does not have. */
+function readTopology(type: LadderType): Topology {
+  const raw = type.topology ?? 'square';
+  if (raw !== 'square' && raw !== 'hex') {
+    throw new Error(`${type.id}: unknown topology "${raw}" (square | hex)`);
+  }
+  return raw;
+}
+
 /** The board's shape, refusing a type it cannot live on (each shape's `validate`). */
 function readShape(type: LadderType): BoardShape {
   const raw = type.shape ?? 'rect';
@@ -304,6 +324,7 @@ export function boardRow(ladders: Ladders, typeId: string, board: number): Ladde
     : type.extended[board - type.boards.length - 1];
 }
 
+/** A game type's ladder by its id. Throws, naming the ids there are, for one that is not there. */
 export function findType(ladders: Ladders, typeId: string): LadderType {
   const type = ladders.find((t) => t.id === typeId);
   if (!type) {
@@ -331,6 +352,8 @@ export function boardConfig(
 
   // Search modes put the player at level 0, where no fight can be won.
   const startLevel = type.search ? 0 : 1;
+  // First: the shape and the placement read the topology as the data spells it.
+  const topology = readTopology(type);
   const shape = readShape(type);
   const placement = readPlacement(type, row);
   const spells = readSpells(type);
@@ -356,7 +379,7 @@ export function boardConfig(
     startMana: type.start_mana ?? 0,
     ...(workout ? { workout } : {}),
     ...(type.sweep === false ? { sweep: false } : {}),
-    topology: type.topology === 'hex' ? 'hex' : 'square',
+    topology,
     wrap: readWrap(type, row),
     shape: shape,
     // A seeded shape's parameter is the cell count the mask must land on, and
@@ -395,8 +418,11 @@ export function ladderFingerprint(ladders: Ladders, typeId: string): string {
   return fnv1a(`${boards.join(',')}|${type.run_hp}`);
 }
 
-/** FNV-1a, 32 bits, as eight hex digits: short, stable, and enough to tell two tunings apart. */
-function fnv1a(text: string): string {
+/**
+ * FNV-1a, 32 bits, as eight hex digits: short, stable, and enough to tell two tunings or two board
+ * states apart. It guards against an update, not against an adversary.
+ */
+export function fnv1a(text: string): string {
   let hash = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
     hash ^= text.charCodeAt(i);
@@ -417,7 +443,7 @@ export function cumulativeExp(quantity: readonly number[]): number[] {
   const out: number[] = [];
   let running = 0;
   for (let i = 0; i < quantity.length; i++) {
-    running += quantity[i]! * 2 ** i;
+    running += quantity[i]! * expForTier(i + 1);
     out.push(running);
   }
   return out;

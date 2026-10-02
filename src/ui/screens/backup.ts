@@ -5,54 +5,26 @@
  * loading it; both routes exist because the embed can block either one (decision 0022).
  */
 
-import { el } from '../dom.js';
+import { el, link } from '../dom.js';
 import type { AskOptions } from '../overlays/ask.js';
 import {
-  PROGRESS_KEY,
-  SETTINGS_KEY,
   type SaveBundle,
   decodeSave,
   describeSave,
   encodeSave,
   localDate,
+  readStoredSave,
+  writeStoredSave,
 } from '../savefile.js';
 import { describeTelemetry, encodeTelemetry } from '../telemetry.js';
 import { VERSION } from '../version.js';
 import { TelemetryStore } from '../telemetrystore.js';
-import { SOURCE_URL, link } from './about.js';
+import { SOURCE_URL } from './about.js';
 
 /** Where a play-tester sends the statistics: the repository's play-test report (decision 0085). */
 export const PLAYTEST_REPORT_URL = `${SOURCE_URL}/issues/new?template=playtest.yml`;
 
-/** The save exactly as stored. Blocked storage reads as no save at all. */
-function readStoredSave(): SaveBundle {
-  const read = (key: string): string | null => {
-    try {
-      return localStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  };
-  return { progress: read(PROGRESS_KEY), settings: read(SETTINGS_KEY) };
-}
-
-/**
- * Replace the stored save, and report whether it actually landed. A save with no settings in it
- * clears them rather than keeping this browser's, so a restore is the exported state and not a
- * mixture of two. Read back afterwards because a blocked store can fail without throwing.
- */
-function writeStoredSave(bundle: SaveBundle): boolean {
-  try {
-    if (bundle.progress === null) localStorage.removeItem(PROGRESS_KEY);
-    else localStorage.setItem(PROGRESS_KEY, bundle.progress);
-    if (bundle.settings === null) localStorage.removeItem(SETTINGS_KEY);
-    else localStorage.setItem(SETTINGS_KEY, bundle.settings);
-    return localStorage.getItem(PROGRESS_KEY) === bundle.progress;
-  } catch {
-    return false;
-  }
-}
-
+/** What the backup card asks of the modal that shows it. */
 export interface SaveBackupActions {
   /** Ask before replacing the save. */
   ask(opts: AskOptions): void;
@@ -109,11 +81,7 @@ function copyButton(box: HTMLTextAreaElement, code: string, style: string): HTML
 /** The way out: this browser's save as a code, to copy or to download as a file. */
 function appendExport(card: HTMLElement, current: SaveBundle, code: string): void {
   card.append(el('p', 'backup-label', `This browser — ${describeSave(current)}`));
-  const out = el('textarea', 'backup-code');
-  out.readOnly = true;
-  out.value = code;
-  out.rows = 4;
-  out.addEventListener('focus', () => out.select());
+  const out = codeBox(code, 4);
   card.append(out);
 
   const exportRow = el('div', 'overlay-actions');
@@ -154,6 +122,32 @@ function appendRestore(
   const err = el('p', 'overlay-note backup-error', error);
   card.append(err);
 
+  const file = fileLoader(input, err);
+  card.append(file);
+
+  const importRow = el('div', 'overlay-actions');
+  const restore = el('button', 'primary', 'Restore');
+  restore.addEventListener('click', () => confirmRestore(input, err, current, a));
+  const load = el('button', 'ghost', 'Load file');
+  load.addEventListener('click', () => file.click());
+  const close = el('button', 'ghost', 'Close');
+  close.addEventListener('click', a.close);
+  importRow.append(restore, load, close);
+  card.append(importRow);
+}
+
+/** A read-only box holding a code, `rows` lines high, that selects the code when focused. */
+function codeBox(value: string, rows: number): HTMLTextAreaElement {
+  const box = el('textarea', 'backup-code');
+  box.readOnly = true;
+  box.value = value;
+  box.rows = rows;
+  box.addEventListener('focus', () => box.select());
+  return box;
+}
+
+/** A hidden file input that loads the chosen file's text into `input`, or says in `err` why not. */
+function fileLoader(input: HTMLTextAreaElement, err: HTMLElement): HTMLInputElement {
   const file = el('input');
   file.type = 'file';
   file.accept = '.txt,.json,text/plain,application/json';
@@ -168,50 +162,48 @@ function appendRestore(
       err.textContent = 'That file could not be read.';
     }
   });
-  card.append(file);
+  return file;
+}
 
-  const importRow = el('div', 'overlay-actions');
-  const restore = el('button', 'primary', 'Restore');
-  restore.addEventListener('click', () => {
-    const result = decodeSave(input.value);
-    if (!result.ok) {
-      err.textContent = result.error;
-      return;
-    }
-    const stamp = [
-      result.exported && `saved ${localDate(new Date(result.exported))}`,
-      result.game && `version ${result.game}`,
-    ].filter(Boolean);
-    const from = stamp.length ? ` (${stamp.join(', ')})` : '';
-    a.ask({
-      title: 'REPLACE SAVE?',
-      body:
-        `Restoring: ${describeSave(result.bundle)}${from} ` +
-        `This replaces the save in this browser: ${describeSave(current)}`,
-      confirmLabel: 'Replace my save',
-      cancelLabel: 'Cancel',
-      // The question took the card's place; a change of mind gets the card back, code and all.
-      onCancel: () => a.reopen(input.value, ''),
-      onConfirm: () => {
-        // Reloading is the only way every store, progress, settings and the live board, picks
-        // the restored save up at once.
-        if (writeStoredSave(result.bundle)) {
-          window.location.reload();
-        } else {
-          a.reopen(
-            input.value,
-            'This browser is blocking saved data, so nothing could be restored.',
-          );
-        }
-      },
-    });
+/**
+ * Restore the code in `input`: refused in `err` when it is not a save, otherwise asked about
+ * first, since it replaces this browser's save, `current`.
+ */
+function confirmRestore(
+  input: HTMLTextAreaElement,
+  err: HTMLElement,
+  current: SaveBundle,
+  a: SaveBackupActions,
+): void {
+  const result = decodeSave(input.value);
+  if (!result.ok) {
+    err.textContent = result.error;
+    return;
+  }
+  const stamp = [
+    result.exported && `saved ${localDate(new Date(result.exported))}`,
+    result.game && `version ${result.game}`,
+  ].filter(Boolean);
+  const from = stamp.length ? ` (${stamp.join(', ')})` : '';
+  a.ask({
+    title: 'REPLACE SAVE?',
+    body:
+      `Restoring: ${describeSave(result.bundle)}${from} ` +
+      `This replaces the save in this browser: ${describeSave(current)}`,
+    confirmLabel: 'Replace my save',
+    cancelLabel: 'Cancel',
+    // The question took the card's place; a change of mind gets the card back, code and all.
+    onCancel: () => a.reopen(input.value, ''),
+    onConfirm: () => {
+      // Reloading is the only way every store, progress, settings and the live board, picks
+      // the restored save up at once.
+      if (writeStoredSave(result.bundle)) {
+        window.location.reload();
+      } else {
+        a.reopen(input.value, 'This browser is blocking saved data, so nothing could be restored.');
+      }
+    },
   });
-  const load = el('button', 'ghost', 'Load file');
-  load.addEventListener('click', () => file.click());
-  const close = el('button', 'ghost', 'Close');
-  close.addEventListener('click', a.close);
-  importRow.append(restore, load, close);
-  card.append(importRow);
 }
 
 /**
@@ -230,11 +222,7 @@ function appendStatistics(card: HTMLElement): void {
   );
   note.append(link(PLAYTEST_REPORT_URL, 'play-test report'), '.');
   card.append(note);
-  const out = el('textarea', 'backup-code');
-  out.readOnly = true;
-  out.value = encodeTelemetry(data, new Date(), VERSION);
-  out.rows = 3;
-  out.addEventListener('focus', () => out.select());
+  const out = codeBox(encodeTelemetry(data, new Date(), VERSION), 3);
   card.append(out);
   const row = el('div', 'overlay-actions');
   row.append(copyButton(out, out.value, 'ghost'));

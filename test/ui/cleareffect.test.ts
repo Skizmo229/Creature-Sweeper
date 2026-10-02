@@ -6,28 +6,16 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Game } from '../../src/engine/game.js';
 import { autoplayTierOrder } from '../../src/sim/autoplay.js';
-import { App } from '../../src/ui/app.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
 import { effectDuration } from '../../src/ui/victory/play.js';
+import { type AppDriver, mountApp, settingsRow, tiles } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  finish(): void;
-  readonly current: Game | null;
-  readonly settings: Settings;
-  showSettings(back: () => void): void;
-  showTypes(): void;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 const clear = (board: number): void => {
@@ -87,13 +75,10 @@ describe('the settings', () => {
       'Clear card',
       'Clear effect speed',
     ]);
-    const row = (name: string): HTMLElement =>
-      [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
-        (r) => r.querySelector('.settings-name')?.textContent === name,
-      )!;
-    row('Clear card').querySelectorAll<HTMLButtonElement>('.preview-chip')[1]!.click();
+    tiles(settingsRow('Clear card'))[1]!.click();
     expect(Settings.load().presentation.cardHold).toBe('click');
-    const speed = row('Clear effect speed').querySelector<HTMLInputElement>('input[type=range]')!;
+    const speed =
+      settingsRow('Clear effect speed').querySelector<HTMLInputElement>('input[type=range]')!;
     speed.value = '1.5';
     speed.dispatchEvent(new Event('input'));
     expect(Settings.load().presentation.effectSpeed).toBe(1.5);

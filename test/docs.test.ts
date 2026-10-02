@@ -1,6 +1,7 @@
 /**
- * The maps of the tree in `README.md` and `docs/architecture.md`, held to the tree. A map that
- * names a file that is gone, or leaves out one that exists, sends a reader to the wrong place.
+ * The maps of the tree in `README.md` and `docs/architecture.md`, held to the tree, and the index of
+ * the decision records held to the records. A map that names a file that is gone, or leaves out one
+ * that exists, sends a reader to the wrong place.
  */
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -92,5 +93,29 @@ describe('the architecture map', () => {
         .filter((p) => !mapped.has(p)),
     );
     expect(unmapped).toEqual([]);
+  });
+});
+
+describe('the decisions index', () => {
+  const DIR = 'docs/decisions';
+  const records = readdirSync(DIR).filter((f) => /^\d{4}-.*\.md$/.test(f));
+  /** The index's rows, `| [NNNN](file.md) | title | status |`: the number, the file, the title. */
+  const rows = [
+    ...readFileSync(join(DIR, 'README.md'), 'utf8').matchAll(
+      /^\| \[(\d{4})\]\(([^)]+)\) \| (.+?) \|/gm,
+    ),
+  ].map(([, number, file, title]) => ({ number: number!, file: file!, title: title! }));
+
+  it('lists every record once, by its own file', () => {
+    expect(rows.map((r) => r.file).sort()).toEqual([...records].sort());
+    expect(rows.filter((r) => !r.file.startsWith(`${r.number}-`))).toEqual([]);
+  });
+
+  it('gives each record the title its heading has', () => {
+    const wrong = rows.filter((r) => {
+      const heading = readFileSync(join(DIR, r.file), 'utf8').split('\n')[0];
+      return heading !== `# ${r.number}. ${r.title}`;
+    });
+    expect(wrong.map((r) => r.number)).toEqual([]);
   });
 });

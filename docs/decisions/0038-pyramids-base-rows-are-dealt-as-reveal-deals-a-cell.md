@@ -1,6 +1,6 @@
 # 0038. PYRAMID's bottom two rows are dealt face up, as Reveal deals a cell
 
-2026-09-25. Status: adopted.
+2026-09-25. Status: adopted. Climbed by the crawl rule since 0086.
 
 ## Context
 The owner asked for a stepped pyramid board, rows two, four, six cells wide, that starts with its

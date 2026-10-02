@@ -11,7 +11,6 @@
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { LOOK_IDS, lookFor } from '../src/ui/looks.js';
 import {
   FONTS,
@@ -21,6 +20,7 @@ import {
   fontFor,
   migrateFontChoice,
 } from '../src/ui/typefaces.js';
+import { ladders } from './helpers.js';
 
 const CSS = readFileSync('src/ui/fonts.css', 'utf8');
 const STYLES = readFileSync('src/ui/styles.css', 'utf8');
@@ -38,7 +38,7 @@ const FACES = [...CSS.matchAll(/@font-face\s*{([^}]*)}/g)].map(([, body]) => {
 const familyOf = (stack: string): string => stack.split(',')[0]!.trim().replace(/^"|"$/g, '');
 
 describe('every ladder', () => {
-  const ids = loadLadders().map((t) => t.id);
+  const ids = ladders.map((t) => t.id);
 
   it('has a look, and every look is a ladder', () => {
     // A ladder without one wears NORMAL's, silently.

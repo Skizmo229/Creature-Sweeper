@@ -1,5 +1,5 @@
 /**
- * The rules engine.
+ * The state machine of one board: open, mark, note, sweep, cast, wait, forfeit.
  *
  * Pure state plus transitions — no rendering, no timers, no storage. Every
  * action returns the events it caused, so a renderer can animate them and a
@@ -12,17 +12,23 @@ import { SPELLS, type SpellId } from './spells.js';
 import {
   DEFAULT_GAMEPLAY,
   type GameplaySettings,
-  cellsPerMana,
   effectiveHp,
   spellPriceFor,
   startManaFor,
 } from './settings.js';
-import { hasNote, hasNotes, lowestNote, noteBit, toggleNote as toggleNoteBit } from './notes.js';
+import { notesGuard } from './notes.js';
+import {
+  canNote as mayNote,
+  clearNotes as clearNotesOn,
+  noteCandidates as candidatesOf,
+  toggleNote as toggleNoteOn,
+} from './pencil.js';
 import { placementRule } from './placement/registry.js';
 import { SPELL_EFFECTS } from './cast.js';
 import { computeSealed, withinReach } from './reach.js';
 import { safeCells as provenSafe } from './sweep.js';
 import { SweepGate } from './sweepgate.js';
+import { ExploreIncome } from './explore.js';
 import { type Grid, inBounds, neighbours } from './grid.js';
 import { dealOpening } from './opening.js';
 import { type LayoutOptions, readLayout, showDrawing } from './layout.js';
@@ -30,6 +36,7 @@ import { Patrol } from './patrol.js';
 import { dealGrid } from './generate.js';
 import { fight, revealAllCells, revealAllCreatures } from './fight.js';
 
+/** How a board is entered, beyond its config and seed. */
 export interface GameOptions {
   /**
    * HP to enter the board with, when that is not a full pool. Defaults to the
@@ -44,7 +51,7 @@ export interface GameOptions {
   settings?: GameplaySettings;
 }
 
-/** The HP a board is entered with: `options.startHp`, checked, or the full pool after the HP dial. */
+/** HP to enter a board with: `options.startHp`, checked, or the full pool after the HP dial. */
 function enteringHp(config: BoardConfig, settings: GameplaySettings, options: GameOptions): number {
   // The ceiling is the dialled one, not the schedule's: entering at the
   // board's own hp with the dial at 0.5 would start you at double the pool.
@@ -59,6 +66,11 @@ function enteringHp(config: BoardConfig, settings: GameplaySettings, options: Ga
   return startHp;
 }
 
+/**
+ * One board in play: its cells, the player's HP, level, mana and marks, and every action the
+ * player can take on it. Made by `create` (dealt from a seed) or `fromLayout` (drawn); each action
+ * returns the events it caused.
+ */
 export class Game {
   readonly config: BoardConfig;
   readonly seed: number;
@@ -66,8 +78,9 @@ export class Game {
   readonly progression: Progression;
   /**
    * Whether the crawl rule currently has the player walled in, or null when
-   * it has not been worked out since the last thing that could change it.
-   * Always read through `sealedIn()`.
+   * it has not been worked out since the last thing that could change it:
+   * ground uncovered (`uncover`) or the creatures walking (`moveOn`). Always
+   * read through `sealedIn()`.
    */
   private sealed: boolean | null = null;
   private sealedLevel = -1;
@@ -94,8 +107,8 @@ export class Game {
    * below zero. Always zero on a board without a workout rule.
    */
   exerciseSurcharge = 0;
-  /** Empty cells uncovered since the last mana the trickle paid out. */
-  private exploreProgress = 0;
+  /** Mana for the empty ground the player uncovers by hand (`explore.ts`). */
+  private readonly income: ExploreIncome;
 
   /** How the dial gates Sweep, and what has been banked toward one (`sweepgate.ts`). */
   private readonly gate: SweepGate;
@@ -119,6 +132,7 @@ export class Game {
     this.grid = grid;
     this.settings = settings;
     this.gate = new SweepGate(settings);
+    this.income = new ExploreIncome(settings);
     this.maxHp = effectiveHp(config.hp, settings);
     this.hp = startHp;
     this.progression = new Progression(config.startLevel, config.exp);
@@ -178,10 +192,12 @@ export class Game {
 
   // ---------------------------------------------------------------- queries
 
+  /** The player's level: their attack, and the highest tier they kill for free. */
   get level(): number {
     return this.progression.level;
   }
 
+  /** EXP earned on this board. */
   get ex(): number {
     return this.progression.ex;
   }
@@ -191,6 +207,7 @@ export class Game {
     return neighbours(this.grid, cell.x, cell.y, this.config.topology, this.config.wrap);
   }
 
+  /** The cell at (x, y), or null off the board or on a hole. */
   cellAt(x: number, y: number): Cell | null {
     if (!inBounds(this.config, x, y)) return null;
     const cell = this.grid[y]![x]!;
@@ -206,6 +223,7 @@ export class Game {
     return this.config.search ? left - (this.marksPlaced[tier - 1] ?? 0) : left;
   }
 
+  /** Undefeated creatures on the board, every tier. */
   creaturesLeft(): number {
     return this.remaining.reduce((a, b) => a + b, 0);
   }
@@ -263,7 +281,7 @@ export class Game {
     // The same guard read off a set: refuse only when EVERY candidate is out
     // of reach, because a set containing anything survivable is a cell the
     // player may legitimately want to gamble on. Exercise counts here too.
-    if (hasNotes(cell.notes) && lowestNote(cell.notes) > this.level + this.exerciseCharge) {
+    if (notesGuard(cell.notes, this.level + this.exerciseCharge)) {
       return [{ type: 'blocked', reason: 'note-guard' }];
     }
 
@@ -272,20 +290,10 @@ export class Game {
     const revealed = this.reveal(cell);
     events.push({ type: 'revealed', cells: revealed });
 
-    // Exploration income. Only ground YOU uncovered counts: the dealt opening
-    // is not your work, and Beacon's cells are already paid for, so neither
-    // accrues. Creature cells are excluded too — those pay via the kill.
+    // Exploration income, on a board with spells: the empty ground this open uncovered.
     if (this.config.spells.length) {
-      for (const r of revealed) {
-        if (this.grid[r.y]![r.x]!.tier === 0) this.exploreProgress++;
-      }
-      // Infinity when the mana-regen dial is at zero, which switches the
-      // trickle off rather than making it very slow.
-      const per = cellsPerMana(this.settings);
-      while (this.exploreProgress >= per) {
-        this.exploreProgress -= per;
-        this.mana++;
-      }
+      const empties = revealed.filter((r) => this.grid[r.y]![r.x]!.tier === 0).length;
+      this.mana += this.income.bank(empties);
     }
 
     if (cell.tier > 0 && cell.alive) events.push(...fight(this, cell));
@@ -305,9 +313,15 @@ export class Game {
     return this.moveOn();
   }
 
-  /** After an action, on a board whose creatures walk and are still in play: a step each. */
+  /**
+   * After an action, on a board whose creatures walk and are still in play: a step each. A step
+   * uncovers and covers ground, so whether the player is walled in is read again after it.
+   */
   private moveOn(): GameEvent[] {
-    return this.patrol && this.status === 'playing' ? this.patrol.step(this) : [];
+    if (!this.patrol || this.status !== 'playing') return [];
+    const events = this.patrol.step(this);
+    this.sealed = null;
+    return events;
   }
 
   /**
@@ -364,81 +378,28 @@ export class Game {
     return [{ type: 'marked', x, y, from, to }];
   }
 
-  /**
-   * Add or remove one candidate tier from a covered cell's pencil marks.
-   * Tier 0 is a candidate like any other — "this might just be empty".
-   *
-   * Notes and a mark are mutually exclusive: pencilling on a marked cell
-   * erases the mark, the way you rub out a written digit before pencilling
-   * alternatives back in. Clearing the last candidate leaves the cell blank
-   * rather than impossible.
-   */
+  // ---------------------------------------------------------------- the pencil
+  //
+  // The rules are `pencil.ts`; these are the board's doors to them.
+
+  /** Add or remove one candidate tier from a covered cell's pencil marks (`pencil.ts`). */
   toggleNote(x: number, y: number, tier: number): GameEvent[] {
-    if (this.status !== 'playing') return [{ type: 'blocked', reason: 'game-over' }];
-    const cell = this.cellAt(x, y);
-    if (!cell) return [{ type: 'blocked', reason: 'out-of-bounds' }];
-    if (cell.open) return [{ type: 'blocked', reason: 'already-open' }];
-    if (cell.given) return [{ type: 'blocked', reason: 'given' }];
-    if (tier < 0 || tier > this.config.tiers) {
-      return [{ type: 'blocked', reason: 'out-of-bounds' }];
-    }
-    // Before the mark is rubbed out, so a refused candidate changes nothing.
-    if (!this.canNote(cell, tier)) return [{ type: 'blocked', reason: 'ruled-out' }];
-
-    const events: GameEvent[] = [];
-    if (cell.mark > 0) {
-      const wasMark = cell.mark;
-      this.applyMark(cell, 0);
-      events.push({ type: 'marked', x, y, from: wasMark, to: 0 });
-    }
-
-    const from = cell.notes;
-    const to = toggleNoteBit(from, tier);
-    if (from === to) return events;
-    cell.notes = to;
-    events.push({ type: 'noted', x, y, from, to });
-    return events;
+    return toggleNoteOn(this, x, y, tier);
   }
 
-  /**
-   * The tiers this covered cell could still be holding by the placement rule
-   * alone, as a note mask: what the pencil may offer here. The rule's own
-   * `candidates`, read off what is on screen, and tier 0 refused where the
-   * opening uncovered every empty cell.
-   *
-   * Deliberately not anything that takes deduction, or it becomes the
-   * auto-candidates convenience that turns Sweep back into a solve button.
-   * Sound one way only: the tier a cell really holds is never taken out, which
-   * the tests check on every covered cell of real boards played part-way
-   * (decision 0010).
-   */
+  /** What the pencil may offer on this covered cell, as a note mask (`pencil.ts`). */
   noteCandidates(cell: Cell): number {
-    const rule = placementRule(this.config.placement);
-    let mask = (1 << (this.config.tiers + 1)) - 1;
-    if (!rule.coveredCanBeEmpty) mask &= ~noteBit(0);
-    const allowed = rule.candidates(cell, this);
-    if (allowed !== null) mask &= allowed;
-    return mask;
+    return candidatesOf(this, cell);
   }
 
-  /**
-   * Would `toggleNote` accept this tier on this cell? Taking a candidate OFF is
-   * always allowed — a note pencilled before the board ruled it out has to stay
-   * erasable — so only adding one is held to `noteCandidates`.
-   */
+  /** Would `toggleNote` accept this tier on this cell? (`pencil.ts`) */
   canNote(cell: Cell, tier: number): boolean {
-    return hasNote(cell.notes, tier) || hasNote(this.noteCandidates(cell), tier);
+    return mayNote(this, cell, tier);
   }
 
   /** Rub out a cell's pencil marks entirely. */
   clearNotes(x: number, y: number): GameEvent[] {
-    if (this.status !== 'playing') return [{ type: 'blocked', reason: 'game-over' }];
-    const cell = this.cellAt(x, y);
-    if (!cell) return [{ type: 'blocked', reason: 'out-of-bounds' }];
-    const from = cell.notes;
-    if (from === 0) return [];
-    cell.notes = 0;
-    return [{ type: 'noted', x, y, from, to: 0 }];
+    return clearNotesOn(this, x, y);
   }
 
   // ------------------------------------------------------------ sweep gating
@@ -461,10 +422,10 @@ export class Game {
   }
 
   /**
-   * Whether this ladder offers Sweep at all. EASY does not: it is where the
-   * sum rule is learned, and a button that reads the numbers for you takes
-   * away the one thing the ladder is for. A ladder fact rather than a dial, so
-   * it touches no record — the dial compares players, this compares nothing.
+   * Whether this ladder offers Sweep at all. Not on EASY, where the sum rule is learned and a
+   * button that reads the numbers for you would take away the one thing the ladder is for, nor on
+   * PATROL (decision 0063). A ladder fact rather than a dial, so it touches no record — the dial
+   * compares players, this compares nothing.
    */
   get hasSweep(): boolean {
     return this.config.sweep !== false;
@@ -534,13 +495,10 @@ export class Game {
   }
 
   /**
-   * End the board as a loss from outside the rules.
-   *
-   * Time Attack is the only caller: the engine owns no clock, so "the
-   * countdown reached zero" is a fact only the UI can know. It is a method
-   * rather than a status the UI writes directly so that losing always goes
-   * through the same door — the creatures are revealed and a `lost` event is
-   * emitted exactly as they are when HP runs out.
+   * End the board as a loss from outside the rules: a countdown run out (Time Attack, a time
+   * limit), which only the UI can know since the engine owns no clock, or an instrument giving up.
+   * A method rather than a status the caller writes, so losing always goes through the same door:
+   * the creatures are revealed and a `lost` event emitted exactly as when HP runs out.
    */
   forfeit(): GameEvent[] {
     if (this.status !== 'playing') return [{ type: 'blocked', reason: 'game-over' }];
@@ -556,6 +514,7 @@ export class Game {
     return this.config.spells;
   }
 
+  /** Could this spell be cast now: the board is in play, offers it, and the mana is there? */
   canCast(id: SpellId): boolean {
     if (this.status !== 'playing') return false;
     if (!this.config.spells.includes(id)) return false;
@@ -626,8 +585,8 @@ export class Game {
 
   // ---------------------------------------------------------------- internals
 
-  /** Open one cell without cascading. Engine-internal, for `cast.ts`. */
-  markOpen(cell: Cell): boolean {
+  /** Open one cell without cascading; false if it was open. For openings, drawings and spells. */
+  uncover(cell: Cell): boolean {
     if (cell.open) return false;
     cell.open = true;
     // A creature standing on uncovered ground, opened: it is fought where it stands.
@@ -641,7 +600,7 @@ export class Game {
   /**
    * Uncover a cell, cascading through blanks. A cell with number 0 has no
    * creature neighbours by definition, so a cascade never uncovers one.
-   * Iterative rather than recursive: the biggest boards are 2048 cells.
+   * Iterative rather than recursive: the biggest boards are a few thousand cells.
    */
   reveal(start: Cell): Array<{ x: number; y: number }> {
     const revealed: Array<{ x: number; y: number }> = [];
@@ -649,7 +608,7 @@ export class Game {
 
     while (stack.length) {
       const cell = stack.pop()!;
-      if (!this.markOpen(cell)) continue;
+      if (!this.uncover(cell)) continue;
       revealed.push({ x: cell.x, y: cell.y });
       if (cell.num === 0) {
         for (const n of this.neighboursOf(cell)) {

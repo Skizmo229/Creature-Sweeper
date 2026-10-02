@@ -8,6 +8,7 @@ import type { Game } from '../../engine/game.js';
 import type { Move } from '../../engine/replay.js';
 import { SPELLS, type SpellId, spellKey } from '../../engine/spells.js';
 import type { Cell, GameEvent } from '../../engine/types.js';
+import { ZOOM_STEP } from '../board/geometry.js';
 import { offersBeatenNumbers } from '../board/paint.js';
 import type { BoardView } from '../board/view.js';
 import type { RightClick } from '../presentation.js';
@@ -24,7 +25,10 @@ export interface BoardActionsHost {
   view(): BoardView | null;
   readonly mode: EntryMode;
   readonly sfx: Sfx;
-  /** Where the Beaten toggle is kept, as the speaker keeps the mute. */
+  /**
+   * What a click reads (the chord, what a right-click does), and where the Beaten toggle is kept,
+   * as the speaker keeps the mute.
+   */
   readonly settings: Settings;
   /** Make a move on the board on screen: the one door every action of the player's goes through. */
   move(move: Move): GameEvent[];
@@ -35,14 +39,22 @@ export interface BoardActionsHost {
   leaveGame(): void;
   /** Pause the game: it waits on the board list, its clock stopped. */
   pause(): void;
-  /** The tutor: point at the next provable move, or the next lesson if one is already showing. */
-  explain(): void;
+  /** A hint: the tutor points at the next provable move, or the next it found if one is showing. */
+  hint(): void;
   /** The field guide, at what the tutor is showing, if anything. */
   guide(): void;
   /** Whether opening this cell is refused (a lesson board's rule), said to the player if so. */
   refuse(x: number, y: number): boolean;
+  /** Whether a school lesson is being taken on this board. */
+  inLesson(): boolean;
   /** On a lesson board: go on to the next step. */
   next(): void;
+}
+
+/** Whether Enter already does something where it was pressed: on a button, a link or a field. */
+function takesEnter(target: EventTarget | null): boolean {
+  const controls = 'button, a[href], input, select, textarea, summary, [role="button"]';
+  return target instanceof Element && target.closest(controls) !== null;
 }
 
 /**
@@ -62,69 +74,85 @@ export function nextMark(game: Game, mark: number, rule: RightClick): number {
   return 0;
 }
 
+/**
+ * What the player's clicks, buttons and keys do on the board on screen. Each is decided from the
+ * entry mode and made through the host's `move`; nothing here changes the game any other way.
+ */
 export class BoardActions {
-  constructor(private readonly h: BoardActionsHost) {}
+  constructor(private readonly host: BoardActionsHost) {}
+
+  /** The game on screen while it is being played; null before it is dealt and after it ends. */
+  private playing(): Game | null {
+    const game = this.host.game();
+    return game?.status === 'playing' ? game : null;
+  }
 
   onCellPrimary(x: number, y: number): void {
-    const game = this.h.game();
-    if (!game || game.status !== 'playing') return;
+    const game = this.playing();
+    if (!game) return;
     // A pending spell claims the click before anything else does.
-    if (this.h.mode.pendingSpell) {
-      const id = this.h.mode.pendingSpell;
-      this.h.mode.cancelSpell();
-      this.h.apply(this.h.move({ kind: 'cast', id, x, y }));
+    if (this.host.mode.pendingSpell) {
+      const id = this.host.mode.pendingSpell;
+      this.host.mode.cancelSpell();
+      this.host.apply(this.host.move({ kind: 'cast', id, x, y }));
       return;
     }
-    if (this.h.mode.markMode >= 0) {
-      const tier = this.h.mode.markMode;
-      this.h.apply(
-        this.h.move(
-          this.h.mode.notesMode ? { kind: 'note', x, y, tier } : { kind: 'mark', x, y, mark: tier },
+    if (this.host.mode.markMode >= 0) {
+      const tier = this.host.mode.markMode;
+      this.host.apply(
+        this.host.move(
+          this.host.mode.notesMode
+            ? { kind: 'note', x, y, tier }
+            : { kind: 'mark', x, y, mark: tier },
         ),
       );
       return;
     }
     // In pencil mode a click annotates or does nothing; it never opens (decision 0008).
-    if (this.h.mode.notesMode) return;
+    if (this.host.mode.notesMode) return;
     // A click on an open cell chords, when the player has asked: its ring swept at a sweep's price.
-    if (game.cellAt(x, y)?.open && this.h.settings.presentation.chord) {
-      this.chord(x, y);
+    if (game.cellAt(x, y)?.open && this.host.settings.presentation.chord) {
+      this.sweepMove({ kind: 'chord', x, y, useMarks: false });
       return;
     }
-    if (this.h.refuse(x, y)) return;
-    this.h.apply(this.h.move({ kind: 'open', x, y }));
+    if (this.host.refuse(x, y)) return;
+    this.host.apply(this.host.move({ kind: 'open', x, y }));
   }
 
-  /** Sweep one open cell's ring, as a sweep of the board would be sounded and refused. */
-  private chord(x: number, y: number): void {
-    const game = this.h.game();
-    if (!game || game.status !== 'playing') return;
+  /**
+   * A sweep of the board, or a chord: one open cell's ring swept at a sweep's price. The engine
+   * refuses either while the dial has Sweep closed, so it is refused here first, with its sound,
+   * and neither the keyboard nor a chord can get past a gate the button is showing.
+   */
+  private sweepMove(move: Extract<Move, { kind: 'sweep' | 'chord' }>): void {
+    const game = this.playing();
+    if (!game) return;
     if (!game.sweepAvailable) {
-      this.h.sfx.play('blocked');
+      this.host.sfx.play('blocked');
       return;
     }
-    const events = this.h.move({ kind: 'chord', x, y, useMarks: false });
-    if (events.length > 0) this.h.sfx.play('sweep');
-    this.h.apply(events);
+    const events = this.host.move(move);
+    if (events.length > 0) this.host.sfx.play('sweep');
+    this.host.apply(events);
   }
 
   /** Untargeted spells fire at once; targeted ones arm and wait for a cell. */
   pickSpell(id: SpellId): void {
-    const game = this.h.game();
-    if (!game || game.status !== 'playing' || !game.canCast(id)) return;
+    const game = this.playing();
+    if (!game || !game.canCast(id)) return;
     if (!SPELLS[id].targeted) {
-      this.h.mode.cancelSpell();
-      this.h.apply(this.h.move({ kind: 'cast', id }));
+      this.host.mode.cancelSpell();
+      this.host.apply(this.host.move({ kind: 'cast', id }));
       return;
     }
-    this.h.mode.armSpell(id);
-    this.h.refresh();
+    this.host.mode.armSpell(id);
+    this.host.refresh();
   }
 
   /** The spell row's Cancel: disarm a spell picked but not yet cast. */
   cancelSpell(): void {
-    this.h.mode.cancelSpell();
-    this.h.refresh();
+    this.host.mode.cancelSpell();
+    this.host.refresh();
   }
 
   /**
@@ -133,29 +161,29 @@ export class BoardActions {
    * nothing, and a clear, mark the cell with its own mark, which is how the engine takes one off.
    */
   cycleMark(x: number, y: number): void {
-    const game = this.h.game();
-    if (!game || game.status !== 'playing') return;
+    const game = this.playing();
+    if (!game) return;
     const cell = game.cellAt(x, y);
     if (!cell || cell.open) return;
-    const next = nextMark(game, cell.mark, this.h.settings.presentation.rightClick);
+    const next = nextMark(game, cell.mark, this.host.settings.presentation.rightClick);
     if (next === cell.mark) return;
-    this.h.apply(this.h.move({ kind: 'mark', x, y, mark: next === 0 ? cell.mark : next }));
+    this.host.apply(this.host.move({ kind: 'mark', x, y, mark: next === 0 ? cell.mark : next }));
   }
 
   pickTier(tier: number): void {
-    this.h.mode.pickTier(tier);
-    this.h.refresh();
+    this.host.mode.pickTier(tier);
+    this.host.refresh();
   }
 
   /** The palette's empty-set button: pencil mode, armed with the empty set. */
   pencilEmpty(): void {
-    this.h.mode.notesMode = true;
+    this.host.mode.notesMode = true;
     this.pickTier(0);
   }
 
   toggleNotesMode(): void {
-    this.h.mode.toggleNotes();
-    this.h.refresh();
+    this.host.mode.toggleNotes();
+    this.host.refresh();
   }
 
   /**
@@ -163,41 +191,32 @@ export class BoardActions {
    * 0067). A way of looking and not a move, so it is kept in the settings, not the game.
    */
   toggleBeatenNumbers(): void {
-    const game = this.h.game();
+    const game = this.host.game();
     if (!game || !offersBeatenNumbers(game)) return;
-    this.h.settings.setPresentation({ beatenNumbers: !this.h.settings.presentation.beatenNumbers });
-    this.h.refresh();
+    this.host.settings.setPresentation({
+      beatenNumbers: !this.host.settings.presentation.beatenNumbers,
+    });
+    this.host.refresh();
   }
 
   doSweep(useMarks: boolean): void {
-    const game = this.h.game();
-    if (!game || game.status !== 'playing') return;
-    // The engine refuses a sweep the dial has closed, so the keyboard cannot get past a gate the
-    // button is showing.
-    if (!game.sweepAvailable) {
-      this.h.sfx.play('blocked');
-      return;
-    }
-    const events = this.h.move({ kind: 'sweep', useMarks });
-    if (events.length > 0) this.h.sfx.play('sweep');
-    this.h.apply(events);
+    this.sweepMove({ kind: 'sweep', useMarks });
   }
 
   /** PATROL's Wait. The engine refuses it anywhere else, so the key can ask on every board. */
   doWait(): void {
-    const game = this.h.game();
-    if (!game || game.status !== 'playing' || !game.patrols) return;
+    if (!this.playing()?.patrols) return;
     // Charged before the move, which the engine never refuses here, so the game kept after it
     // (the keeper writes the clock down on every move) already holds the second.
-    this.h.addSeconds(WAIT_SECONDS);
-    this.h.apply(this.h.move({ kind: 'wait' }));
+    this.host.addSeconds(WAIT_SECONDS);
+    this.host.apply(this.host.move({ kind: 'wait' }));
   }
 
   /** Zoom in or out a step, or fit the board to the stage; false for any other key. */
   private zoomKey(e: KeyboardEvent, key: string): boolean {
-    const view = this.h.view();
-    if (e.key === '+' || e.key === '=') view?.nudgeZoom(2);
-    else if (e.key === '-' || e.key === '_') view?.nudgeZoom(-2);
+    const view = this.host.view();
+    if (e.key === '+' || e.key === '=') view?.nudgeZoom(ZOOM_STEP);
+    else if (e.key === '-' || e.key === '_') view?.nudgeZoom(-ZOOM_STEP);
     else if (key === 'f') view?.fit();
     else return false;
     e.preventDefault();
@@ -206,98 +225,89 @@ export class BoardActions {
 
   /** A key pressed while the board is on screen; `App` sends nothing else here. */
   onKey(e: KeyboardEvent): void {
-    const game = this.h.game();
+    const game = this.host.game();
     if (!game) return;
     // A key with Ctrl, Cmd or Alt held is the browser's (Ctrl+H is its history, Cmd+U the page's
     // source), never the board's (decision 0082).
     if (e.ctrlKey || e.metaKey || e.altKey) return;
 
     if (e.key === 'Escape') {
-      if (this.h.mode.escape()) this.h.refresh();
-      else this.h.leaveGame();
+      if (this.host.mode.escape()) this.host.refresh();
+      else this.host.leaveGame();
       return;
     }
+    const key = e.key.toLowerCase();
     // Looking, not a move, so it works on a board that has ended.
-    if (e.key.toLowerCase() === 'u') {
-      e.preventDefault();
-      this.toggleBeatenNumbers();
-      return;
-    }
+    if (key === 'u') return this.claim(e, () => this.toggleBeatenNumbers());
     if (game.status !== 'playing') return;
 
-    const key = e.key.toLowerCase();
-    if (key === 's') {
-      e.preventDefault();
-      this.doSweep(e.shiftKey);
-      return;
-    }
-    if (key === 'd') {
-      e.preventDefault();
-      this.doSweep(true);
-      return;
-    }
-    if (key === 'w' && game.patrols) {
-      e.preventDefault();
-      this.doWait();
-      return;
-    }
-    if (key === 'p') {
-      e.preventDefault();
-      this.h.pause();
-      return;
-    }
-    if (key === 'h') {
-      e.preventDefault();
-      this.h.explain();
-      return;
-    }
-    if (key === 'g') {
-      e.preventDefault();
-      this.h.guide();
-      return;
-    }
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      this.h.next();
-      return;
-    }
+    const action = this.boardKey(e, key, game);
+    if (action) return this.claim(e, action);
     if (this.zoomKey(e, key)) return;
     // A spell's own letter casts it, checked after the board's own keys so a spell can never
     // shadow Sweep or zoom.
     const spell = game.spells.find((id) => spellKey(id) === key);
-    if (spell) {
-      e.preventDefault();
-      this.pickSpell(spell);
-      return;
-    }
+    if (spell) return this.claim(e, () => this.pickSpell(spell));
+    if (key === 'n') return this.claim(e, () => this.toggleNotesMode());
+    this.digitKey(e, game);
+  }
 
-    if (key === 'n') {
-      e.preventDefault();
-      this.toggleNotesMode();
-      return;
-    }
+  /** The key is the board's: the browser does nothing more with it, and `action` runs. */
+  private claim(e: KeyboardEvent, action: () => void): void {
+    e.preventDefault();
+    action();
+  }
 
-    // Digits come off e.code, not e.key: Shift+1 is "!" on a US layout and something else again
-    // elsewhere, so the key would be unreadable exactly when the pencil needs it.
+  /**
+   * What one of the board's own keys does, or null for any other: S sweeps (Shift trusting marks)
+   * and D sweeps trusting marks, W is PATROL's Wait, P pauses, H asks the tutor, G opens the
+   * guide, and Enter goes on with a lesson. Anywhere else Enter is the browser's, as it is on a
+   * focused control in a lesson too, so a button reached by Tab still presses.
+   */
+  private boardKey(e: KeyboardEvent, key: string, game: Game): (() => void) | null {
+    if (e.key === 'Enter') {
+      return this.host.inLesson() && !takesEnter(e.target) ? () => this.host.next() : null;
+    }
+    switch (key) {
+      case 's':
+        return () => this.doSweep(e.shiftKey);
+      case 'd':
+        return () => this.doSweep(true);
+      case 'w':
+        return game.patrols ? () => this.doWait() : null;
+      case 'p':
+        return () => this.host.pause();
+      case 'h':
+        return () => this.host.hint();
+      case 'g':
+        return () => this.host.guide();
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * A digit: with a cell hovered, that tier marked or pencilled on it as a click would, the entry
+   * mode deciding and Shift inverting it for this one keystroke; with none, the tier armed. Digits
+   * come off e.code, not e.key: Shift+1 is "!" on a US layout and something else again elsewhere,
+   * so the key would be unreadable exactly when the pencil needs it.
+   */
+  private digitKey(e: KeyboardEvent, game: Game): void {
     const digit = /^(?:Digit|Numpad)([0-9])$/.exec(e.code);
-    if (digit) {
-      const cell: Cell | null = this.h.view()?.hoveredCell ?? null;
-      const tier = Number(digit[1]);
-      if (tier > game.config.tiers) return;
-      e.preventDefault();
-      if (cell) {
-        // The Entry mode decides, exactly as it does for a click, and Shift inverts it for this
-        // one keystroke.
-        const pencil = this.h.mode.notesMode !== e.shiftKey;
-        const { x, y } = cell;
-        this.h.apply(
-          this.h.move(pencil ? { kind: 'note', x, y, tier } : { kind: 'mark', x, y, mark: tier }),
-        );
-      } else {
-        if (e.shiftKey) this.h.mode.notesMode = true;
-        this.pickTier(tier);
-      }
-      return;
+    if (!digit) return;
+    const cell: Cell | null = this.host.view()?.hoveredCell ?? null;
+    const tier = Number(digit[1]);
+    if (tier > game.config.tiers) return;
+    e.preventDefault();
+    if (cell) {
+      const pencil = this.host.mode.notesMode !== e.shiftKey;
+      const { x, y } = cell;
+      this.host.apply(
+        this.host.move(pencil ? { kind: 'note', x, y, tier } : { kind: 'mark', x, y, mark: tier }),
+      );
+    } else {
+      if (e.shiftKey) this.host.mode.notesMode = true;
+      this.pickTier(tier);
     }
   }
 
@@ -307,12 +317,12 @@ export class BoardActions {
    * is armed only annotation's own refusals apply: a given, or a ruled-out candidate.
    */
   clickLands(cell: Cell): boolean {
-    const game = this.h.game();
+    const game = this.host.game();
     if (!game) return true;
-    if (this.h.mode.markMode >= 0) {
+    if (this.host.mode.markMode >= 0) {
       if (cell.open) return true;
       if (cell.given) return false;
-      return !this.h.mode.notesMode || game.canNote(cell, this.h.mode.markMode);
+      return !this.host.mode.notesMode || game.canNote(cell, this.host.mode.markMode);
     }
     return game.inReach(cell);
   }

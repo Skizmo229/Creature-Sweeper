@@ -22,8 +22,9 @@
  * per-board HP schedule is ignored. Board 1 is the most generous entry in
  * every schedule, so the ceiling never drops below what a later board was
  * tuned against — the run is hard because damage persists, not because the
- * ceiling moved under you. After each cleared board you heal half that max,
- * rounded down, capped at the max.
+ * ceiling moved under you. After each cleared board you heal the HP-regen
+ * dial's share of that max, half by default (decision 0015), rounded down,
+ * capped at the max.
  *
  * WHAT THIS DOES NOT BREAK. The zero-damage guarantee is a statement about
  * what is *possible* on one board: at level k every tier <= k is a free kill
@@ -40,6 +41,7 @@ import { Game } from './game.js';
 import { boardConfig, findType, type BoardOptions, type Ladders } from './config.js';
 import { DEFAULT_GAMEPLAY, type GameplaySettings, effectiveHp, healPerBoard } from './settings.js';
 
+/** Whether a run is still being played, or how it ended. */
 export type FullRunStatus = 'playing' | 'won' | 'lost';
 
 /** What one cleared board cost and gave back. */
@@ -53,6 +55,7 @@ export interface FullRunLeg {
   hpAfter: number;
 }
 
+/** How a run's boards are dealt and played. */
 export interface FullRunOptions extends Pick<BoardOptions, 'opening'> {
   /**
    * The player's gameplay dials, applied to every board of the run.
@@ -65,6 +68,7 @@ export interface FullRunOptions extends Pick<BoardOptions, 'opening'> {
   settings?: GameplaySettings;
 }
 
+/** A Full Run in progress: the ladder's boards in turn on one HP pool, the live one in `game`. */
 export class FullRun {
   readonly ladders: Ladders;
   readonly typeId: string;
@@ -74,7 +78,7 @@ export class FullRun {
   readonly boardCount: number;
   /** The pool for all ten boards. Fixed for the run's whole life. */
   readonly maxHp: number;
-  /** Restored after each cleared board: half the max, rounded down. */
+  /** Restored after each cleared board: the dial's share of the max, rounded down. */
   readonly healPerBoard: number;
 
   /** 1-based index of the board being played. */
@@ -173,6 +177,7 @@ export class FullRun {
     return this.game.status === 'won';
   }
 
+  /** Whether the board being played is the run's last. */
   get isLastBoard(): boolean {
     return this.boardIndex >= this.boardCount;
   }
@@ -228,7 +233,7 @@ export class FullRun {
   }
 
   private buildBoard(board: number, startHp: number): Game {
-    // `hp: this.maxHp` is what replaces the per-board schedule: every board of
+    // `hp: type.run_hp` is what replaces the per-board schedule: every board of
     // a run shares one ceiling, so a heal means the same thing on board 9 as
     // it did on board 1.
     // The UNSCALED pool goes into the config, because `Game` applies the HP

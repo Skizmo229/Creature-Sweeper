@@ -13,6 +13,7 @@ import {
   WHOLE_SUM,
 } from './rule.js';
 
+/** The uniform placement: shuffle and take. */
 export const UNIFORM_RULE: PlacementRule = {
   id: 'uniform',
   validate: () => {},

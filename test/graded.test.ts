@@ -13,41 +13,13 @@ import { SPELLS } from '../src/engine/spells.js';
 import { shapeRule } from '../src/engine/shape/registry.js';
 import { placementRule } from '../src/engine/placement/registry.js';
 import { type GradedRun, play } from '../src/sim/graded.js';
-import { everyTier, readBoard } from '../src/sim/reader.js';
+import { CASTS_AT_A_STUCK_POINT } from '../src/sim/honest.js';
+import { everyTier } from '../src/sim/masks.js';
+import { readBoard } from '../src/sim/reader.js';
 import { dungeonScaffold } from '../src/sim/scaffold.js';
 import { solve } from '../src/sim/solver.js';
 import { TRICKS, TRICK_IDS, type TrickId, type View, noMoves } from '../src/sim/tricks.js';
-import { ladders } from './helpers.js';
-
-/** Every kind of board the tricks read differently: each rule, each topology, each shape, level 0. */
-const KINDS = [
-  'normal',
-  'extreme',
-  'oracle',
-  'huge',
-  'hive',
-  'wraparound',
-  'donut',
-  'cross',
-  'wrapped_cross',
-  'diamond',
-  'cave',
-  'dungeon',
-  'checker',
-  'pairs',
-  'dominoes',
-  'packs',
-  'congo',
-  'workout',
-  'blind',
-  'seer',
-  'augur',
-  'patrol',
-  'pyramid',
-  'petri',
-  'gear',
-  'sprinkle_donut',
-];
+import { TRICK_KINDS, ladders } from './helpers.js';
 
 const wrongIn = (run: GradedRun): number => run.unsound + run.trickDamage + run.rescueDamage;
 
@@ -56,7 +28,7 @@ describe('the graded player', () => {
     const wrong: string[] = [];
     let fired = 0;
     let cleared = 0;
-    for (const id of KINDS) {
+    for (const id of TRICK_KINDS) {
       for (const board of [2, 6, 10]) {
         const cfg = boardConfig(ladders, id, board);
         // Once spell-less, and once spending where the ladder has spells to spend.
@@ -78,7 +50,7 @@ describe('the graded player', () => {
     expect(wrong).toEqual([]);
     // It has to have done something, or this test is exercising nothing.
     expect(fired).toBeGreaterThan(1000);
-    expect(cleared).toBeGreaterThan(KINDS.length);
+    expect(cleared).toBeGreaterThan(TRICK_KINDS.length);
   });
 
   it('uses every trick somewhere, and each grade concludes what the one below could not', () => {
@@ -88,7 +60,7 @@ describe('the graded player', () => {
     const fires = Object.fromEntries(TRICK_IDS.map((t) => [t, 0])) as Record<TrickId, number>;
     const pencils = Object.fromEntries(TRICK_IDS.map((t) => [t, 0])) as Record<TrickId, number>;
     const stuckAt = [0, 0, 0, 0, 0];
-    for (const id of KINDS) {
+    for (const id of TRICK_KINDS) {
       for (const board of [2, 6, 10]) {
         for (const [seed, peek] of [
           [0xbeef + board, false],
@@ -212,6 +184,48 @@ describe('the graded player', () => {
     expect(rescued).toBeGreaterThan(0);
   });
 
+  it('has the whole cast budget at every stuck point, after a guess or a rescue too', () => {
+    // A spell that always casts and never helps: the player spends the budget at every stuck
+    // point and then asks the deducer, which at grade 1 rescues many and leaves the rest to a
+    // guess. The casts counted are those since the player's last click, which was a deduction, a
+    // rescue or a guess.
+    const spent: string[] = [];
+    let rescued = 0;
+    let guessed = 0;
+    for (const board of [6, 8, 10]) {
+      for (const seed of [0x5eed, 0x5eed + 1]) {
+        const game = Game.create(boardConfig(ladders, 'extreme', board), seed);
+        let casts = 0;
+        game.canCast = () => game.status === 'playing';
+        game.cast = (id) => {
+          if (id !== 'exercise') casts++;
+          return [];
+        };
+        const open = game.open.bind(game);
+        game.open = (x, y) => {
+          casts = 0;
+          return open(x, y);
+        };
+        const setMark = game.setMark.bind(game);
+        game.setMark = (x, y, mark) => {
+          casts = 0;
+          return setMark(x, y, mark);
+        };
+        const rescue = (g: Game): Cell[] => {
+          if (casts !== CASTS_AT_A_STUCK_POINT) spent.push(`#${board} seed ${seed}: ${casts}`);
+          const safe = solve(g, { budget: 5000 }).safe;
+          if (safe.length) rescued++;
+          else guessed++;
+          return safe;
+        };
+        play(game, { grade: 1, spells: true, rescue });
+      }
+    }
+    expect(rescued).toBeGreaterThan(5);
+    expect(guessed).toBeGreaterThan(5);
+    expect(spent).toEqual([]);
+  });
+
   it('says why it concluded every cell, from things the player can see', () => {
     // A teacher points at the proof (docs/teaching-plan.md), so every conclusion carries one, and
     // it names only visible numbers and visible cells. The tricks whose proof is the board's own
@@ -224,7 +238,7 @@ describe('the graded player', () => {
     ]);
     const faults: string[] = [];
     let concluded = 0;
-    for (const id of KINDS) {
+    for (const id of TRICK_KINDS) {
       for (const board of [2, 6, 10]) {
         const cfg = boardConfig(ladders, id, board);
         const game = Game.create(cfg, 0xbeef + board);

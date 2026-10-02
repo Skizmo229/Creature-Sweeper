@@ -5,7 +5,7 @@
  * Generated from the Fontsource packages (Google Fonts' own files), Latin
  * subset only: the interface is English, and a glyph a face lacks (the arrows,
  * the star) falls through to the system fonts named after it in each stack in
- * theme.ts. Every family here must have an entry in FONTS there, and its
+ * typefaces.ts. Every family here must have an entry in FONTS there, and its
  * copyright line in public/FONT-LICENSES.txt — test/fonts.test.ts holds all
  * three together.
  *

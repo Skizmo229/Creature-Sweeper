@@ -8,27 +8,16 @@
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Game } from '../../src/engine/game.js';
-import { App } from '../../src/ui/app.js';
 import { nextMark } from '../../src/ui/game/actions.js';
 import type { RightClick } from '../../src/ui/presentation.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
+import { type AppDriver, mountApp, settingsRow, tiles } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  readonly current: Game | null;
-  readonly settings: Settings;
-  readonly actions: { cycleMark(x: number, y: number): void };
-  showSettings(back: () => void): void;
-  showTypes(): void;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 /** A board of five tiers with creatures of tiers 1 and 2 only, so 3, 4 and 5 are off the counters. */
@@ -83,12 +72,9 @@ describe('on a board', () => {
 
   it('is offered on the settings screen, and read from a save without it as cycling up', () => {
     app.showSettings(() => app.showTypes());
-    const row = [...document.querySelectorAll('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Right-click',
-    )!;
-    const tiles = [...row.querySelectorAll<HTMLButtonElement>('.preview-chip')];
-    expect(tiles).toHaveLength(4);
-    tiles[2]!.click();
+    const row = settingsRow('Right-click');
+    expect(tiles(row)).toHaveLength(4);
+    tiles(row)[2]!.click();
     expect(Settings.load().presentation.rightClick).toBe('cycleCounters');
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({ version: 1, presentation: {} }));
     expect(Settings.load().presentation.rightClick).toBe('cycleUp');

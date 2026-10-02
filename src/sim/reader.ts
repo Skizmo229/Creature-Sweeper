@@ -71,6 +71,7 @@ function numberVisible(game: Game, cell: Cell, peek: boolean): boolean {
   return !cell.alive && placementRule(game.config.placement).display.hoverShowsNumber;
 }
 
+/** Which of the player's marks a reading believes. */
 export interface ReadOptions {
   /**
    * Whether a mark is believed. The graded player writes only proven marks and believes them
@@ -85,7 +86,6 @@ export interface ReadOptions {
 /** Read the board. `peek` reads a beaten creature's number even where the game hides it. */
 export function readBoard(game: Game, peek: boolean, options: ReadOptions = {}): Reading {
   const constraints: Constraint[] = [];
-  const touching = new Map<Cell, Constraint[]>();
   const unknown: Cell[] = [];
   const marked = new Map<Cell, number>();
 
@@ -111,37 +111,57 @@ export function readBoard(game: Game, peek: boolean, options: ReadOptions = {}):
       continue;
     }
     if (!numberVisible(game, cell, peek)) continue;
-    let residual = cell.num;
-    let counted = 0;
-    const covered: Cell[] = [];
-    const ring = game.neighboursOf(cell);
-    // An Augur lists the marked creatures too: each believed mark takes its tier out of the list.
-    const tiers = augurNow(cell, ring);
-    for (const n of ring) {
-      if (n.open) {
-        residual -= n.tier;
-        if (n.tier > 0) counted++;
-      } else if (believed(n)) {
-        residual -= n.mark;
-        counted++;
-        const at = tiers?.indexOf(n.mark) ?? -1;
-        if (at >= 0) tiers!.splice(at, 1);
-      } else covered.push(n);
-    }
-    if (!covered.length) continue;
-    let creatures = cell.census === null ? null : cell.census - counted;
-    if (tiers) creatures = tiers.length;
-    if (shown) creatures = covered.filter((n) => n.tier > 0).length;
-    const ceiling = tiers ? (tiers[0] ?? 0) : null;
-    const c: Constraint = { cell, residual, unknown: covered, creatures, ceiling, tiers };
-    constraints.push(c);
-    for (const n of covered) {
-      const list = touching.get(n);
-      if (list) list.push(c);
-      else touching.set(n, [c]);
-    }
+    const c = readNumber(game, cell, believed, shown);
+    if (c) constraints.push(c);
   }
+  const touching = touchingOf(constraints);
+  return { constraints, touching, unknown, marked, ...countHiding(game, marked, flags) };
+}
 
+/**
+ * One visible number, less what is on show around it and the marks believed; null when nothing
+ * around it is still covered. `shown` reads the count of creatures off a board that draws them.
+ */
+function readNumber(
+  game: Game,
+  cell: Cell,
+  believed: (cell: Cell) => boolean,
+  shown: boolean,
+): Constraint | null {
+  let residual = cell.num;
+  let counted = 0;
+  const covered: Cell[] = [];
+  const ring = game.neighboursOf(cell);
+  // An Augur lists the marked creatures too: each believed mark takes its tier out of the list.
+  const tiers = augurNow(cell, ring);
+  for (const n of ring) {
+    if (n.open) {
+      residual -= n.tier;
+      if (n.tier > 0) counted++;
+    } else if (believed(n)) {
+      residual -= n.mark;
+      counted++;
+      const at = tiers?.indexOf(n.mark) ?? -1;
+      if (at >= 0) tiers!.splice(at, 1);
+    } else covered.push(n);
+  }
+  if (!covered.length) return null;
+  let creatures = cell.census === null ? null : cell.census - counted;
+  if (tiers) creatures = tiers.length;
+  if (shown) creatures = covered.filter((n) => n.tier > 0).length;
+  const ceiling = tiers ? (tiers[0] ?? 0) : null;
+  return { cell, residual, unknown: covered, creatures, ceiling, tiers };
+}
+
+/**
+ * What the counters say is still hiding in the unknown cells: each tier's count, less the marks
+ * believed (`marked`), plus the marks read as unknown on a search board (`flags`).
+ */
+function countHiding(
+  game: Game,
+  marked: ReadonlyMap<Cell, number>,
+  flags: readonly number[],
+): Pick<Reading, 'hiding' | 'hidingMask' | 'top' | 'totalHiding'> {
   let hidingMask = noteBit(0);
   let top = 0;
   let totalHiding = 0;
@@ -156,36 +176,52 @@ export function readBoard(game: Game, peek: boolean, options: ReadOptions = {}):
     hiding[t] = left;
     totalHiding += t * left;
   }
-  return { constraints, touching, unknown, marked, hiding, hidingMask, top, totalHiding };
+  return { hiding, hidingMask, top, totalHiding };
 }
 
-// ------------------------------------------------------------- candidate sets
-
-/** The mask of every tier from 0 to `tiers`. */
-export function everyTier(tiers: number): number {
-  return (1 << (tiers + 1)) - 1;
-}
-
-/** The highest candidate in a mask, -1 for an empty one. */
-export function highestTier(mask: number): number {
-  return 31 - Math.clz32(mask);
-}
-
-/** The lowest candidate in a mask, -1 for an empty one. */
-export function lowestTier(mask: number): number {
-  return mask === 0 ? -1 : 31 - Math.clz32(mask & -mask);
+/** The constraints each of their unknown cells is under, each list in the constraints' order. */
+export function touchingOf<C extends { readonly unknown: readonly Cell[] }>(
+  constraints: readonly C[],
+): Map<Cell, C[]> {
+  const touching = new Map<Cell, C[]>();
+  for (const c of constraints) {
+    for (const n of c.unknown) {
+      const list = touching.get(n);
+      if (list) list.push(c);
+      else touching.set(n, [c]);
+    }
+  }
+  return touching;
 }
 
 /**
- * Every tier at or below `max`, as a mask. A remainder can run to hundreds on a fresh board,
- * far past what a mask can hold, so anything beyond the widest mask is the widest mask: every
- * tier there is, which caps nothing, and is what a remainder that large means.
+ * The open creatures joined to `start` through open creatures, which is how a pack shows: a flood
+ * fill from `start` that adds each creature it reaches to `seen` and passes over those in it.
  */
-export function tiersUpTo(max: number): number {
-  if (max < 0) return 0;
-  if (max >= 30) return 0x7fffffff;
-  return (1 << (max + 1)) - 1;
+export function openPiece(game: Game, start: Cell, seen: Set<Cell>): Cell[] {
+  const piece = [start];
+  seen.add(start);
+  for (let i = 0; i < piece.length; i++) {
+    for (const n of game.neighboursOf(piece[i]!)) {
+      if (n.open && n.tier > 0 && !seen.has(n)) {
+        seen.add(n);
+        piece.push(n);
+      }
+    }
+  }
+  return piece;
 }
+
+/** The one covered cell touching a piece; null when none does, or more than one. */
+export function soleCoveredRim(game: Game, piece: readonly Cell[]): Cell | null {
+  const rim = new Set<Cell>();
+  for (const c of piece) for (const n of game.neighboursOf(c)) if (!n.open) rim.add(n);
+  if (rim.size !== 1) return null;
+  const [only] = rim;
+  return only!;
+}
+
+// ------------------------------------------------------------- candidate sets
 
 /**
  * Which values of each cell can take part in a sum landing in [lo, hi].

@@ -19,6 +19,7 @@ import type { MoveCode } from '../engine/replay.js';
 /** Every paused game's key begins with this; nothing else in storage does. */
 const PAUSED_PREFIX = 'creature-sweeper.paused.v1:';
 
+/** One paused game as stored: enough to replay it, check the replay, and list it unreplayed. */
 export interface PausedGame {
   typeId: string;
   /** The board being played; in a run, the board of the run it has reached. */
@@ -91,6 +92,7 @@ export function newToken(): string {
   return `${Date.now().toString(36)}.${Math.random().toString(36).slice(2)}`;
 }
 
+/** The paused games in storage, a slot at a time; every access is guarded. */
 export const pausedGames = {
   /** The game paused in a slot, or null. */
   get(slot: Slot): PausedGame | null {

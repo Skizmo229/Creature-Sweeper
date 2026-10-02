@@ -10,36 +10,11 @@ import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Game } from '../../src/engine/game.js';
 import { DIGEST_VERSION, boardDigest } from '../../src/engine/replay.js';
-import type { FullRun } from '../../src/engine/run.js';
 import { autoplayTierOrder } from '../../src/sim/autoplay.js';
-import { App } from '../../src/ui/app.js';
 import { ladders } from '../../src/ui/ladders.js';
-import type { BoardClock } from '../../src/ui/game/clock.js';
-import type { Tutor } from '../../src/ui/game/tutor.js';
 import { type Slot, pausedGames } from '../../src/ui/paused.js';
-import type { Progress } from '../../src/ui/progress.js';
-import type { Settings } from '../../src/ui/settings.js';
+import { type AppDriver, key, mountApp } from './driver.js';
 
-/** The app's surface as the test drives it, private members included. */
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  runFull(typeId: string, seed?: number): void;
-  readonly current: Game | null;
-  readonly currentRun: FullRun | null;
-  readonly progress: Progress;
-  readonly settings: Settings;
-  readonly clock: BoardClock;
-  readonly teaching: { readonly tutor: Tutor };
-  readonly actions: { onCellPrimary(x: number, y: number): void };
-  finish(): void;
-  pause(): void;
-  showBoards(typeId: string): void;
-  showTypes(): void;
-}
-
-const key = (k: string): void => {
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
-};
 const text = (selector: string): string =>
   document.querySelector<HTMLElement>(selector)?.textContent ?? '';
 const onGame = (): boolean => document.querySelector('.screen.game') !== null;
@@ -55,7 +30,7 @@ const seen = (game: Game): string =>
     standing: [game.hp, game.level, game.ex, game.mana, game.status],
   });
 
-let app: Driver;
+let app: AppDriver;
 
 /**
  * Open the lowest free cell through the board's own click, which is how every move reaches the
@@ -77,9 +52,7 @@ function freeMoves(n: number): void {
 }
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
   app.progress.setUnlockAll(true);
 });
 
@@ -163,7 +136,7 @@ describe('a paused board', () => {
     tiles()[3]!.click();
     // Time Attack's way of losing: the same door as any other loss.
     const events = app.current!.forfeit();
-    (app as unknown as { apply(e: typeof events): void }).apply(events);
+    app.apply(events);
     expect(pausedGames.get(four)).toBeNull();
   });
 
@@ -258,5 +231,15 @@ describe('a paused Full Run', () => {
     button('Abandon run').click();
     expect(pausedGames.get(slot)).toBeNull();
     expect(app.progress.runRecord(ladders, 'easy').attempts).toBe(1);
+  });
+
+  it('abandoned on dials easier than the tuned game writes no attempt', () => {
+    app.settings.setGameplay({ hpRatio: 2 });
+    app.runFull('easy', 7);
+    freeMoves(2);
+    key('Escape');
+    button('Abandon run').click();
+    expect(pausedGames.get(slot)).toBeNull();
+    expect(app.progress.runRecord(ladders, 'easy').attempts).toBe(0);
   });
 });

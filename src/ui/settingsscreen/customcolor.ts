@@ -1,8 +1,8 @@
 /**
- * A Custom tile's window for a colour: the colour mixer (`colormixer.ts`), a slider for each of
- * red, green and blue, the same three numbers to type and the colour in hex, and an example
- * board drawn in the colour as any of them moves. "Use this colour" saves it, as Enter does from
- * a typed field.
+ * A colour setting's row, and its Custom tile's window: the colour mixer (`colormixer.ts`), a
+ * slider for each of red, green and blue, the same three numbers to type and the colour in hex,
+ * and an example board drawn in the colour as any of them moves. "Use this colour" saves it, as
+ * Enter does from a typed field.
  *
  * The board already means something by a few colours: red crosses out a click that would do
  * nothing (decision 0051), gold is a given, and so on (decision 0032). So the window shows the
@@ -12,8 +12,9 @@
 
 import { colorDifference } from '../colorspace.js';
 import { el } from '../dom.js';
-import { colorMixer } from './colormixer.js';
-import { settingsWindow } from './widgets.js';
+import { DEFAULT } from '../presentation.js';
+import { colorForm, colorMixer } from './colormixer.js';
+import { type Choice, gallery, settingsWindow, wideRow } from './widgets.js';
 
 /**
  * How close a colour can come to one the board already means something by before the window says
@@ -21,7 +22,7 @@ import { settingsWindow } from './widgets.js';
  * refused click: pure red is 38 from it, a light red 37 and a red-orange 35, where orange is 46
  * and hot pink 45; every preset is 81 or more.
  */
-export const NEAR_REFUSAL = 40;
+export const NEAR_TAKEN = 40;
 
 /** A colour the board already means something by, as the legend names it and the warning does. */
 export interface TakenColor {
@@ -32,6 +33,7 @@ export interface TakenColor {
   readonly name: string;
 }
 
+/** What a colour window opens with. */
 export interface ColorWindowSpec {
   title: string;
   /** What the window is for, under its title. */
@@ -61,7 +63,8 @@ function legend(spec: ColorWindowSpec): { box: HTMLElement; mixed: HTMLElement }
   return { box, mixed };
 }
 
-export function openColorWindow(screen: HTMLElement, spec: ColorWindowSpec): void {
+/** Open a colour window over the settings screen, on `spec.current`, the red slider focused. */
+function openColorWindow(screen: HTMLElement, spec: ColorWindowSpec): void {
   const { card, dismiss } = settingsWindow(screen, spec.title, 'color-card');
 
   const swatches = legend(spec);
@@ -69,24 +72,66 @@ export function openColorWindow(screen: HTMLElement, spec: ColorWindowSpec): voi
   const example = el('div', 'color-example');
   const mixer = colorMixer((color) => {
     swatches.mixed.style.background = color;
-    const near = spec.taken.find((t) => colorDifference(color, t.color) < NEAR_REFUSAL);
+    const near = spec.taken.find((t) => colorDifference(color, t.color) < NEAR_TAKEN);
     warn.hidden = near === undefined;
     warn.textContent = near ? `Close to ${near.name}.` : '';
     example.replaceChildren(spec.example(color));
   });
-  const use = el('button', 'primary color-use', 'Use this colour');
-  use.type = 'submit';
-  const form = el('form', 'color-controls');
-  form.append(...mixer.lines, swatches.box, warn, use);
-  const body = el('div', 'color-body');
-  body.append(example, form);
-  card.append(el('p', 'settings-blurb', spec.blurb), body);
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    dismiss();
-    spec.onUse(mixer.color());
+  colorForm(card, {
+    blurb: spec.blurb,
+    example,
+    controls: [...mixer.lines, swatches.box, warn],
+    use: 'Use this colour',
+    dismiss,
+    onUse: () => spec.onUse(mixer.color()),
   });
 
   mixer.set(spec.current);
   mixer.focus();
+}
+
+/** A colour setting's row (`colorRow`). */
+export interface ColorRowSpec {
+  readonly label: string;
+  readonly hint: string;
+  /** The setting as saved: `DEFAULT`, a preset's colour, or a colour of the player's own. */
+  readonly current: string;
+  /** The game type default's tile, already naming what it resolves to. */
+  readonly fallback: Choice;
+  readonly presets: readonly { readonly name: string; readonly color: string }[];
+  /** The example, drawn in a colour. */
+  readonly chip: (color: string) => () => HTMLElement;
+  /** The Custom tile's window, but for its example and what it saves, which are the row's. */
+  readonly window: Omit<ColorWindowSpec, 'example' | 'onUse'>;
+  readonly onPick: (color: string) => void;
+}
+
+/**
+ * A colour setting's row: the game type's own, the presets, and a Custom tile, lit while a colour
+ * of the player's own is in force, which opens the colour window either way.
+ */
+export function colorRow(screen: HTMLElement, host: HTMLElement, spec: ColorRowSpec): void {
+  const { chip, current, onPick } = spec;
+  const preset = spec.presets.some((c) => c.color === current);
+  const own = current === DEFAULT || preset ? null : current;
+  const custom: Choice = {
+    value: own ?? '',
+    label: own ? `Custom — ${own}` : 'Custom — any colour',
+    example: own
+      ? chip(own)
+      : () => el('div', 'picker-placeholder', 'Any colour, mixed from red, green and blue'),
+    open: () =>
+      openColorWindow(screen, { ...spec.window, example: (color) => chip(color)(), onUse: onPick }),
+  };
+  const presets = spec.presets.map((c): Choice => ({
+    value: c.color,
+    label: c.name,
+    example: chip(c.color),
+  }));
+  wideRow(
+    host,
+    spec.label,
+    spec.hint,
+    gallery([spec.fallback, ...presets, custom], current, onPick),
+  );
 }

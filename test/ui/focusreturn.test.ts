@@ -7,19 +7,12 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
+import { type AppDriver, mountApp, settingsRow, tiles } from './driver.js';
 
-interface Driver {
-  showSettings(back: () => void): void;
-  showTypes(): void;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 const button = (label: string): HTMLButtonElement =>
@@ -61,15 +54,22 @@ describe('the focus, when an overlay closes', () => {
 
   it('goes back to the tile that opened a settings window', () => {
     app.showSettings(() => app.showTypes());
-    const row = [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Board palette',
-    )!;
-    const tile = row.querySelectorAll<HTMLButtonElement>('.preview-chip')[1]!;
+    const tile = tiles(settingsRow('Board palette'))[1]!;
     press(tile);
     expect(document.querySelector('.picker-card')).not.toBeNull();
     expect(document.activeElement).not.toBe(tile);
     escape();
     expect(document.querySelector('.picker-card')).toBeNull();
     expect(document.activeElement).toBe(tile);
+  });
+
+  it('goes back to the button that opened the sound check, which builds its own window', () => {
+    app.showSettings(() => app.showTypes());
+    const opener = button('Sound check');
+    press(opener);
+    expect(document.querySelector('.overlay.picker')).not.toBeNull();
+    button('Close (Esc)').click();
+    expect(document.querySelector('.overlay.picker')).toBeNull();
+    expect(document.activeElement).toBe(opener);
   });
 });

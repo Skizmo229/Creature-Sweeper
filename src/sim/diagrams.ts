@@ -24,6 +24,7 @@ const TIERS = 5;
  */
 const REST: readonly number[] = [4, 2, 1, 1, 1];
 
+/** One of the catalogue's diagrams: what it draws, what is under it, what its trick concludes. */
 export interface Diagram {
   /** The trick it illustrates: the catalogue's bold heading above it. */
   readonly trick: TrickId;
@@ -44,6 +45,7 @@ export interface Diagram {
   readonly taughtRest?: string;
 }
 
+/** The catalogue's diagrams, each held to docs/strategies.md by `test/strategies.test.ts`. */
 export const DIAGRAMS: readonly Diagram[] = [
   {
     trick: 'raw-ring',

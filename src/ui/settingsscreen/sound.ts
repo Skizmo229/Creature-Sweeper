@@ -3,6 +3,7 @@
  * at once. The pack a ladder speaks in is chosen with its look, in the Presentation section.
  */
 
+import { RATIO_STEP } from '../../engine/settings.js';
 import { SFX_EVENTS, type SfxEvent } from '../looktypes.js';
 import { DEFAULT_SFX_VOLUME, MAX_SFX_VOLUME } from '../presentation.js';
 import type { ScreenContext } from './context.js';
@@ -10,6 +11,7 @@ import { openSoundCheck } from './soundcheck.js';
 import {
   type Choice,
   gallery,
+  percent,
   row,
   section,
   showSliderValue,
@@ -76,21 +78,21 @@ function playedRow(ctx: ScreenContext, host: HTMLElement): void {
   );
 }
 
+/** The Sound section, appended to the screen. */
 export function soundSection(ctx: ScreenContext): void {
   const { p, settings } = ctx;
   const host = section(ctx.host, 'Sound', 'Every sound the game makes, on every ladder.');
-  const percent = (v: number): string => `${Math.round(v * 100)}%`;
-  const volume = slider(
-    0,
-    MAX_SFX_VOLUME,
-    0.05,
-    p.sfxVolume,
-    percent,
-    (v) => settings.setPresentation({ sfxVolume: v }),
+  const volume = slider({
+    min: 0,
+    max: MAX_SFX_VOLUME,
+    step: RATIO_STEP,
+    value: p.sfxVolume,
+    format: percent,
+    onInput: (v) => settings.setPresentation({ sfxVolume: v }),
     // Heard on release rather than a sound per step of the drag.
-    () => ctx.onPreview('levelup'),
-    DEFAULT_SFX_VOLUME,
-  );
+    onRelease: () => ctx.onPreview('levelup'),
+    resetTo: DEFAULT_SFX_VOLUME,
+  });
   // The speaker's own slider sets the same volume, and can while this screen is open.
   const unhook = settings.onChange(() => {
     if (volume.isConnected) showSliderValue(volume, settings.presentation.sfxVolume, percent);

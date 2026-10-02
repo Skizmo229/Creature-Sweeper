@@ -26,8 +26,7 @@
  */
 
 import type { Tier } from './types.js';
-import { resolveBattle } from './combat.js';
-/** Empty cells you must uncover yourself to earn one mana, unmodified. */
+import { manaForTier, resolveBattle } from './combat.js';
 import { MANA_PER_EMPTY_CELLS } from './spells.js';
 
 /** How the Sweep buttons are gated. */
@@ -41,14 +40,19 @@ export type SweepMode =
   /** A budget: so many sweeps a board, `sweepBudget`, and no more. */
   | 'budget';
 
-/** The most sweeps a budget can hold, and the least. */
+/** The most sweeps a budget can hold. */
 export const MAX_SWEEP_BUDGET = 20;
+/** The fewest sweeps a budget can hold. */
 export const MIN_SWEEP_BUDGET = 1;
 /** How far below the best Time Attack can race: half of it. */
 export const MIN_TIME_ATTACK_RATIO = 0.5;
 /** The longest a board's time limit can be, in seconds: half an hour. */
 export const MAX_TIME_LIMIT = 1800;
 
+/**
+ * The player's gameplay dials. None reaches EXP, a threshold, or whether a creature dies and pays
+ * out; the header says why that is the rule.
+ */
 export interface GameplaySettings {
   /** Scales the board's HP pool. 0 still leaves 1 HP — a board you enter
    *  already dead is not a board. */
@@ -104,6 +108,7 @@ export interface GameplaySettings {
   readonly timeLimit: number;
 }
 
+/** The tuned game: every dial where the ladders were measured. */
 export const DEFAULT_GAMEPLAY: GameplaySettings = {
   hpRatio: 1,
   hpRegenRatio: 0.5,
@@ -122,7 +127,13 @@ export const DEFAULT_GAMEPLAY: GameplaySettings = {
 };
 
 /** The step every ratio slider moves in. */
-const RATIO_STEP = 0.05;
+export const RATIO_STEP = 0.05;
+/** The most a ratio dial can be set to, and Full Run's HP regen, a share of the pool. */
+export const MAX_RATIO = 3;
+export const MAX_HP_REGEN_RATIO = 1;
+/** The fewest and the most cells by hand a Sweep charge can cost. */
+export const MIN_SWEEP_CHARGE_CLICKS = 1;
+export const MAX_SWEEP_CHARGE_CLICKS = 50;
 
 /**
  * True when nothing here makes the game easier than the tuned default.
@@ -242,7 +253,7 @@ export function fightCostFor(level: number, hp: number, tier: Tier, s: GameplayS
 
 /** Mana a defeated tier-E creature pays. Its EXP is never scaled. */
 export function manaRewardFor(tier: number, s: GameplaySettings): number {
-  return Math.max(0, Math.round(tier * s.manaRewardRatio));
+  return Math.max(0, Math.round(manaForTier(tier) * s.manaRewardRatio));
 }
 
 /** What a spell costs after the dial, from its price on the table or WORKOUT's own. */

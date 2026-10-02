@@ -1,7 +1,8 @@
 # 0012. Hovering a beaten creature shows its number; the hover-level setting was retired
 
 2026-09-22. Status: adopted. See 0001 for the code removal; the pencil no longer reads the hidden
-number (0061); a toggle shows every beaten creature's number at once since 0067.
+number (0061); a toggle shows every beaten creature's number at once since 0067; a creature may be
+drawn as its tier's digit since 0074.
 
 ## Context
 A beaten creature's number used to be a click toggle held on the cell (`showNum`), preset on the

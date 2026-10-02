@@ -1,14 +1,15 @@
 /**
  * The Presentation section's drawn settings: creature icons (the window of symbols behind the
  * custom tile is in `symbols.ts`) and colours (the custom colours' window is in `customtiers.ts`),
- * board palette, the board's font and the interface's, text size, the game types' palette strip,
- * the cursor highlight and its colour (the custom colour's window is in `customcolor.ts`), the
- * strike-through and the zoom ceiling. Every example is a
- * real board, or for the interface a copy of the HUD (decision 0025).
+ * the board palette, the board's font and the interface's, the cursor highlight and its colour
+ * (a colour's row and its custom window are in `customcolor.ts`), how a beaten creature is drawn
+ * and the zoom ceiling; the section's other rows are in `board.ts` and `effects.ts`. Every
+ * example is a real board, or for the interface font a copy of the HUD (decision 0025).
  */
 
 import type { BoardDisplay } from '../board/view.js';
 import { el } from '../dom.js';
+import { wearFace } from '../dress.js';
 import { ladders } from '../ladders.js';
 import {
   HIGHLIGHT_PIN,
@@ -32,23 +33,24 @@ import {
   type TierColorChoice,
 } from '../presentation.js';
 import { PIP_NAMES, PIP_SHAPES } from '../pips.js';
-import { OUT_OF_REACH_COLOR, pipName } from '../theme.js';
+import { REFUSAL_COLOR, pipName } from '../theme.js';
 import { DEFAULT_TIERS, TIER_PRESETS, type TierPalette, tierColor } from '../tiercolors.js';
 import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
-import { SYMBOL_COUNT, isGlyphPip } from '../pipsymbols.js';
+import { SYMBOL_COUNT, isSymbolPip } from '../pipsymbols.js';
 import { FONTS, FONT_IDS, type FontId, type GameFont, LEGIBLE_FONT } from '../typefaces.js';
 import { type ScreenContext, typeName } from './context.js';
-import { openColorWindow } from './customcolor.js';
+import { colorRow } from './customcolor.js';
 import { openTierWindow } from './customtiers.js';
 import { renderPreview } from './render.js';
 import { fontSorts, paletteSorts } from './sorts.js';
 import { openSymbolWindow } from './symbols.js';
 import { type Choice, choiceRow, gallery, slider, wideRow } from './widgets.js';
 
+/** The creature icons: the ladder's own, every drawn shape, or any symbol. */
 export function iconsRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, typeId, currentTheme, currentPip } = ctx;
+  const { p, typeId, currentTheme } = ctx;
   const own = themeFor(typeId).pip;
-  const symbol = isGlyphPip(p.icons) ? p.icons : null;
+  const symbol = isSymbolPip(p.icons) ? p.icons : null;
   const pick = (v: string): void => ctx.pick({ icons: v as IconChoice });
   // Lit when a symbol is the icon in force; clicking it opens the window of symbols either way.
   const custom: Choice = {
@@ -58,7 +60,7 @@ export function iconsRow(ctx: ScreenContext, host: HTMLElement): void {
       ? ctx.chipBoard({ ...currentTheme, pip: symbol })
       : () =>
           el('div', 'picker-placeholder', `${SYMBOL_COUNT} symbols from Dingbats and Wingdings`),
-    open: () => openSymbolWindow(ctx, currentPip, pick),
+    open: () => openSymbolWindow(ctx, currentTheme.pip, pick),
   };
   choiceRow(ctx.host, host, {
     label: 'Creature icons',
@@ -149,8 +151,10 @@ export function tierColorsRow(ctx: ScreenContext, host: HTMLElement): void {
   );
 }
 
+/** The board palette: the ladder's own or any other ladder's, each in the icon in force. */
 export function paletteRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, typeId, currentPip } = ctx;
+  const { p, typeId } = ctx;
+  const { pip } = ctx.currentTheme;
   choiceRow(ctx.host, host, {
     label: 'Board palette',
     hint: 'Borrow another ladder’s colours for the board. The menus keep this ladder’s own accent.',
@@ -159,12 +163,12 @@ export function paletteRow(ctx: ScreenContext, host: HTMLElement): void {
     fallback: {
       value: DEFAULT,
       label: `Default — ${typeName(typeId)}`,
-      example: ctx.chipBoard({ ...themeFor(typeId), pip: currentPip }),
+      example: ctx.chipBoard({ ...themeFor(typeId), pip }),
     },
     options: LOOK_IDS.map((id): Choice => ({
       value: id,
       label: typeName(id),
-      example: ctx.chipBoard({ ...themeFor(id), pip: currentPip }),
+      example: ctx.chipBoard({ ...themeFor(id), pip }),
     })),
     sorts: paletteSorts(),
     onPick: (v) => ctx.pick({ palette: v }),
@@ -185,8 +189,9 @@ function fontOwner(id: FontId): string {
     .join(', ');
 }
 
+/** The board's font: the ladder's own or any bundled face, each on the standard example. */
 export function boardFontRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, ident, currentTheme } = ctx;
+  const { p, ownLook, currentTheme } = ctx;
   choiceRow(ctx.host, host, {
     label: 'Board font',
     hint:
@@ -196,9 +201,9 @@ export function boardFontRow(ctx: ScreenContext, host: HTMLElement): void {
     current: p.font,
     fallback: {
       value: DEFAULT,
-      label: `Default — ${FONTS[ident.font].name}`,
-      example: ctx.chipBoard(currentTheme, { font: FONTS[ident.font] }),
-      labelFont: FONTS[ident.font],
+      label: `Default — ${FONTS[ownLook.font].name}`,
+      example: ctx.chipBoard(currentTheme, { font: FONTS[ownLook.font] }),
+      labelFont: FONTS[ownLook.font],
     },
     options: FONT_IDS.map((id): Choice => ({
       value: id,
@@ -242,22 +247,18 @@ export function hudCopy(
   return copy;
 }
 
-/**
- * An interface font's example: the HUD's first two readouts, set in the face. It declares its own
- * size correction, as anything wearing a face other than the page's must (see body in styles.css).
- */
+/** An interface font's example: the HUD's first two readouts, set in the face. */
 function hudInFace(face: GameFont, tierColors: TierPalette): () => HTMLElement {
   return () => {
     const copy = hudCopy('font-demo', tierColors, 2);
-    copy.style.fontFamily = face.stack;
-    copy.style.setProperty('--ex-fix', String(face.exHeightFix ?? 1));
+    wearFace(copy, face);
     return copy;
   };
 }
 
 /** A face picked here dresses this screen at once, so the page is an example as well as the tiles. */
 export function interfaceFontRow(ctx: ScreenContext, host: HTMLElement): void {
-  const { p, ident } = ctx;
+  const { p, ownLook } = ctx;
   choiceRow(ctx.host, host, {
     label: 'Interface font',
     hint: 'The HUD, the menus and this screen. The title keeps its own face unless you choose one here.',
@@ -265,9 +266,9 @@ export function interfaceFontRow(ctx: ScreenContext, host: HTMLElement): void {
     current: p.interfaceFont,
     fallback: {
       value: DEFAULT,
-      label: `Default — ${FONTS[ident.font].name}`,
-      example: hudInFace(FONTS[ident.font], ctx.display().tierColors),
-      labelFont: FONTS[ident.font],
+      label: `Default — ${FONTS[ownLook.font].name}`,
+      example: hudInFace(FONTS[ownLook.font], ctx.display().tierColors),
+      labelFont: FONTS[ownLook.font],
     },
     options: FONT_IDS.map((id): Choice => ({
       value: id,
@@ -296,6 +297,7 @@ export function highlightChip(ctx: ScreenContext, over: Partial<BoardDisplay>): 
     ).canvas;
 }
 
+/** The cursor highlight's shape, each lit on the highlight example, or none. */
 export function highlightRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, typeId } = ctx;
   const hex = ladders.find((t) => t.id === typeId)?.topology === 'hex';
@@ -341,61 +343,38 @@ export function highlightColorRow(ctx: ScreenContext, host: HTMLElement): void {
   const style = settings.highlightStyle(typeId);
   const chip = (color: string): (() => HTMLElement) =>
     highlightChip(ctx, { highlight: style ?? 'neighbours', highlightColor: color });
-  const pick = (color: string): void => ctx.pick({ highlightColor: color });
-  const preset = HIGHLIGHT_COLORS.some((c) => c.color === p.highlightColor);
-  const own = p.highlightColor === DEFAULT || preset ? null : p.highlightColor;
-  // Lit when a colour of the player's own is in force; clicking it opens the window either way.
-  const custom: Choice = {
-    value: own ?? '',
-    label: own ? `Custom — ${own}` : 'Custom — any colour',
-    example: own
-      ? chip(own)
-      : () => el('div', 'picker-placeholder', 'Any colour, mixed from red, green and blue'),
-    open: () =>
-      openColorWindow(ctx.host, {
-        title: 'Custom highlight colour',
-        blurb:
-          'Mix a colour from red, green and blue, or type it in hex. Red is taken: it crosses ' +
-          'out a click that would do nothing.',
-        mixedLabel: 'A click that lands',
-        taken: [
-          {
-            color: OUT_OF_REACH_COLOR,
-            label: 'A click that would do nothing',
-            name: 'the red that crosses out a click that would do nothing',
-          },
-        ],
-        current: settings.highlightColor(typeId),
-        example: (color) => chip(color)(),
-        onUse: pick,
-      }),
-  };
-
-  wideRow(
-    host,
-    'Cursor highlight colour',
-    'The box round the cell under the cursor when a click would land. A click that would do ' +
+  colorRow(ctx.host, host, {
+    label: 'Cursor highlight colour',
+    hint:
+      'The box round the cell under the cursor when a click would land. A click that would do ' +
       'nothing is crossed out in red whatever this is; under red–green colour blindness magenta ' +
       'is the easiest to tell from that red.' +
       (style ? '' : ' The highlight is off above, so none of this shows until it is on.'),
-    gallery(
-      [
+    current: p.highlightColor,
+    fallback: {
+      value: DEFAULT,
+      label: `Game type default — ${p.markColor === DEFAULT ? 'green' : 'the mark colour'}`,
+      example: chip(settings.markColor(typeId)),
+    },
+    presets: HIGHLIGHT_COLORS,
+    chip,
+    window: {
+      title: 'Custom highlight colour',
+      blurb:
+        'Mix a colour from red, green and blue, or type it in hex. Red is taken: it crosses ' +
+        'out a click that would do nothing.',
+      mixedLabel: 'A click that lands',
+      taken: [
         {
-          value: DEFAULT,
-          label: `Game type default — ${p.markColor === DEFAULT ? 'green' : 'the mark colour'}`,
-          example: chip(settings.markColor(typeId)),
+          color: REFUSAL_COLOR,
+          label: 'A click that would do nothing',
+          name: 'the red that crosses out a click that would do nothing',
         },
-        ...HIGHLIGHT_COLORS.map((c): Choice => ({
-          value: c.color,
-          label: c.name,
-          example: chip(c.color),
-        })),
-        custom,
       ],
-      p.highlightColor,
-      pick,
-    ),
-  );
+      current: settings.highlightColor(typeId),
+    },
+    onPick: (color) => ctx.pick({ highlightColor: color }),
+  });
 }
 
 /** How a beaten creature is drawn, each look on the standard example. */
@@ -445,20 +424,19 @@ export function zoomRow(ctx: ScreenContext, host: HTMLElement): void {
 
   const zoomControl = el('div', 'settings-stack');
   zoomControl.append(
-    slider(
-      MIN_MAX_ZOOM,
-      MAX_MAX_ZOOM,
-      4,
-      p.maxZoom,
-      (v) => `${Math.round(v)}px per cell`,
-      (v) => {
+    slider({
+      min: MIN_MAX_ZOOM,
+      max: MAX_MAX_ZOOM,
+      step: 4,
+      value: p.maxZoom,
+      format: (v) => `${Math.round(v)}px per cell`,
+      onInput: (v) => {
         const cell = Math.round(v);
         drawZoom(cell);
         ctx.set({ maxZoom: cell });
       },
-      undefined,
-      DEFAULT_MAX_ZOOM,
-    ),
+      resetTo: DEFAULT_MAX_ZOOM,
+    }),
   );
   zoomControl.append(zoomBox);
 

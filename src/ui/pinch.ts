@@ -7,6 +7,12 @@
  * the same reason `preview.ts` builds boards and renders nothing.
  */
 
+/** A finger on the canvas, in CSS pixels from its top-left corner. */
+export interface Point {
+  readonly x: number;
+  readonly y: number;
+}
+
 /** What was true when the second finger landed. */
 export interface PinchStart {
   /** Distance between the two fingers, in CSS pixels. */
@@ -18,6 +24,7 @@ export interface PinchStart {
   readonly by: number;
 }
 
+/** A view of the board: its cell size and where its origin is, in CSS pixels. */
 export interface PinchView {
   readonly cell: number;
   readonly originX: number;
@@ -25,17 +32,11 @@ export interface PinchView {
 }
 
 /** Record the start of a pinch from the two fingers and the current view. */
-export function pinchStart(
-  ax: number,
-  ay: number,
-  bx: number,
-  by: number,
-  view: PinchView,
-): PinchStart {
-  const mx = (ax + bx) / 2;
-  const my = (ay + by) / 2;
+export function pinchStart(a: Point, b: Point, view: PinchView): PinchStart {
+  const mx = (a.x + b.x) / 2;
+  const my = (a.y + b.y) / 2;
   return {
-    dist: Math.max(1, Math.hypot(ax - bx, ay - by)),
+    dist: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)),
     cell: view.cell,
     bx: (mx - view.originX) / view.cell,
     by: (my - view.originY) / view.cell,
@@ -51,19 +52,17 @@ export function pinchStart(
  * gesture zoom and pan at once, the way a map does. Whole pixels, because the
  * board is drawn on a pixel grid and a fractional cell blurs every edge.
  */
-export function pinchTo(
+export function pinchView(
   start: PinchStart,
-  ax: number,
-  ay: number,
-  bx: number,
-  by: number,
+  a: Point,
+  b: Point,
   minCell: number,
   maxCell: number,
 ): PinchView {
-  const dist = Math.max(1, Math.hypot(ax - bx, ay - by));
+  const dist = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
   const cell = Math.max(minCell, Math.min(maxCell, Math.round((start.cell * dist) / start.dist)));
-  const mx = (ax + bx) / 2;
-  const my = (ay + by) / 2;
+  const mx = (a.x + b.x) / 2;
+  const my = (a.y + b.y) / 2;
   return {
     cell,
     originX: Math.round(mx - start.bx * cell),

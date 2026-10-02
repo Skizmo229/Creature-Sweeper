@@ -34,6 +34,7 @@ import {
   type PlacementRule,
   WHOLE_SUM,
   boardName,
+  refuseDensity,
 } from './rule.js';
 
 /**
@@ -110,13 +111,7 @@ function validatePatrols(row: PlacementRow): void {
       `${where}: a tier-${row.tiers} route does not fit a ${row.width}x${row.height} board`,
     );
   }
-  const share = row.monsters / row.cells;
-  if (share > PATROL_MAX_DENSITY) {
-    throw new Error(
-      `${where}: ${row.monsters} creatures on ${row.cells} cells is ${(100 * share).toFixed(1)}%, ` +
-        `past the ${(100 * PATROL_MAX_DENSITY).toFixed(1)}% patrols can be dealt at reliably`,
-    );
-  }
+  refuseDensity(row, row.monsters, PATROL_MAX_DENSITY, 'patrols can be dealt at reliably', 1);
 }
 
 /** A dealt board's fault: a creature off its corner's route, or two routes sharing a cell. */
@@ -136,6 +131,7 @@ function patrolFault(grid: Grid, cfg: BoardConfig): string | null {
   return null;
 }
 
+/** The patrol placement: square routes that never share a cell, laid biggest first. */
 export const PATROL_RULE: PlacementRule = {
   id: 'patrol',
   validate: validatePatrols,

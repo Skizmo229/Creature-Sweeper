@@ -9,7 +9,7 @@ import './setup.js';
 import { existsSync } from 'node:fs';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { version } from '../../package.json';
-import { App } from '../../src/ui/app.js';
+import { key, mountApp } from './driver.js';
 
 const card = (): HTMLElement | null => document.querySelector('.overlay-card.about');
 const links = (): HTMLAnchorElement[] => [...(card()?.querySelectorAll('a') ?? [])];
@@ -19,9 +19,7 @@ const openAbout = (): void =>
     .click();
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  new App(document.getElementById('app')!);
+  mountApp();
 });
 
 describe('the version', () => {
@@ -67,7 +65,7 @@ describe('the About card', () => {
     card()!.querySelector<HTMLButtonElement>('button')!.click();
     expect(card()).toBeNull();
     openAbout();
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    key('Escape');
     expect(card()).toBeNull();
   });
 });

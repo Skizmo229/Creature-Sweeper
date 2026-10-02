@@ -9,30 +9,20 @@ import './setup.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { boardConfig } from '../../src/engine/config.js';
 import { Game } from '../../src/engine/game.js';
-import { App } from '../../src/ui/app.js';
 import { REACH_SHADE } from '../../src/ui/board/overlays.js';
-import { type BoardDisplay, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
+import { DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { ladders } from '../../src/ui/ladders.js';
 import { themeFor } from '../../src/ui/looks.js';
 import { reachSampleBoard } from '../../src/ui/preview.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
+import { type AppDriver, mountApp, settingsRow, tileLabel, tiles } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  readonly settings: Settings;
-  readonly view: { readonly display: BoardDisplay } | null;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 /** Every path filled in the shade on a canvas made while this runs. */
@@ -104,17 +94,20 @@ describe('the setting', () => {
 
   it('is a pair of tiles on a board with a crawl rule', () => {
     app.showSettings(() => app.showTypes());
-    const row = [...document.querySelectorAll('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Reach shading',
-    )!;
-    const tiles = [...row.querySelectorAll<HTMLButtonElement>('.preview-chip')];
-    expect(tiles.map((t) => t.querySelector('.chip-label')!.textContent)).toEqual([
-      'Shaded',
-      'Not shaded',
-    ]);
+    const row = settingsRow('Reach shading');
+    const shading = tiles(row);
+    expect(shading.map(tileLabel)).toEqual(['Shaded', 'Not shaded']);
     expect(row.querySelectorAll('.preview-chip canvas')).toHaveLength(2);
-    tiles[0]!.click();
+    shading[0]!.click();
     expect(Settings.load().presentation.reachShading).toBe(true);
+  });
+
+  it('names every ladder with a crawl rule, read off the ladder data', () => {
+    app.showSettings(() => app.showTypes());
+    const hint = settingsRow('Reach shading').querySelector('.settings-hint')!.textContent!;
+    const crawling = ladders.filter((t) => (t.reach ?? 0) > 0);
+    expect(crawling.length).toBeGreaterThan(2);
+    for (const type of crawling) expect(hint, type.id).toContain(type.name);
   });
 
   it('reads a save from before it, or one holding anything but true or false, as off', () => {

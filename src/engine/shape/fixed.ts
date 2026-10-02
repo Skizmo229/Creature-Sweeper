@@ -9,6 +9,7 @@
 
 import { type ShapeRule, predicateShape } from './rule.js';
 
+/** The plain rectangle: every cell of the box. */
 export const RECT_SHAPE = predicateShape('rect', () => true);
 
 /**
@@ -21,6 +22,7 @@ export const CROSS_SHAPE = predicateShape(
     Math.abs(x - (w - 1) / 2) <= param / 2 || Math.abs(y - (h - 1) / 2) <= param / 2,
 );
 
+/** A diamond whose corners touch the middle of each side of the box. */
 export const DIAMOND_SHAPE = predicateShape(
   'diamond',
   (_param, w, h, x, y) =>
@@ -63,8 +65,8 @@ export const DONUT_SHAPE = predicateShape('donut', (param, w, h, x, y) => {
 
 /**
  * The gear's proportions, as shares of its tip radius (half the box's shorter side): eight square
- * teeth, one pointing straight up, about as wide as they are deep, round a hole. The owner chose
- * square teeth pointing straight out over upright blocks, knowing the diagonal four step.
+ * teeth, one pointing straight up, about as wide as they are deep, round a hole. The teeth point
+ * straight out, so the diagonal four step on a square grid (`docs/modes.md`).
  */
 const GEAR = { root: 0.7, hole: 0.3, halfWidth: 0.17 };
 
@@ -80,6 +82,7 @@ const GEAR_TEETH: ReadonlyArray<readonly [number, number]> = [
   [-Math.SQRT1_2, -Math.SQRT1_2],
 ];
 
+/** A gear filling a square box, by `GEAR`'s proportions. */
 export const GEAR_SHAPE = predicateShape('gear', (_param, w, h, x, y) => {
   const { dx, dy } = fromCentre(w, h, x, y);
   const tip = Math.min(w, h) / 2;
@@ -100,8 +103,8 @@ export const GEAR_SHAPE = predicateShape('gear', (_param, w, h, x, y) => {
  * A playing card, in a box kept at a card's 5:7: rounded corners, and four suit-shaped holes where
  * a Four's pips sit, spade and heart above, diamond and club below and upside down, as they are
  * printed. The suits are drawn cell by cell and are the same size on every board, since curves
- * at this size read as blobs; the owner chose these over the curves. The corner rounding and where
- * the suits sit are shares of the box.
+ * at this size read as blobs (`docs/modes.md`). The corner rounding and where the suits sit are
+ * shares of the box.
  */
 const CARD = { corner: 0.09, cols: [0.28, 0.72], rows: [0.25, 0.75] } as const;
 
@@ -191,6 +194,7 @@ function inSuit(
   return (flipped ? art[rows - 1 - j]![cols - 1 - i] : art[j]![i]) === '#';
 }
 
+/** A playing card with a Four's suits cut out of it, laid out by `CARD`. */
 export const CARD_SHAPE = predicateShape('card', (_param, w, h, x, y) => {
   const xc = x + 0.5;
   const yc = y + 0.5;
@@ -215,6 +219,7 @@ function inHeartCurve(x: number, y: number): boolean {
  */
 const HEART = { halfWidth: 1.135, halfHeight: 1.118, lift: 0.118 };
 
+/** A heart filling the box, point down, by `HEART`'s proportions. */
 export const HEART_SHAPE = predicateShape('heart', (_param, w, h, x, y) => {
   const { dx, dy } = fromCentre(w, h, x, y);
   return inHeartCurve(
@@ -251,6 +256,7 @@ const STAR_CORNERS: ReadonlyArray<readonly [number, number]> = [
   [-STAR.cos54, -STAR.sin54],
 ];
 
+/** A five-pointed star, point up, by `STAR`'s proportions. */
 export const STAR_SHAPE = predicateShape('star', (_param, w, h, x, y) => {
   // The star is 2 cos 18 of its radius across and 1 + sin 54 tall, its centre below the box's.
   const radius = Math.min(w / (2 * STAR.cos18), h / (1 + STAR.sin54));
@@ -271,6 +277,9 @@ export const STAR_SHAPE = predicateShape('star', (_param, w, h, x, y) => {
   return inside;
 });
 
+/** An odd-r offset column as an axial one; odd rows sit half a hex right (grid.ts's `HEX_DIRS`). */
+const axialColumn = (col: number, row: number): number => col - (row - (row & 1)) / 2;
+
 /**
  * A regular hexagon of hex cells: every cell within `R` steps of the box's centre, counted as a
  * hex grid counts them, `R` being as large as the box allows, so a box `2R + 1` square holds
@@ -278,9 +287,6 @@ export const STAR_SHAPE = predicateShape('star', (_param, w, h, x, y) => {
  * distance is taken in axial coordinates, whole numbers throughout. It means nothing on a square
  * grid, and a wrapped one would join its empty corners, so both are refused.
  */
-/** An odd-r offset column as an axial one: odd rows sit half a hex right (`HEX_DIRS` in grid.ts). */
-const axialColumn = (col: number, row: number): number => col - (row - (row & 1)) / 2;
-
 export const HEXAGON_SHAPE: ShapeRule = {
   ...predicateShape('hexagon', (_param, w, h, x, y) => {
     const radius = Math.floor((Math.min(w, h) - 1) / 2);

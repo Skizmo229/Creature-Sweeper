@@ -1,5 +1,10 @@
+/**
+ * The spells (`src/engine/spells.ts`, `cast.ts`): the mana economy, each spell on a hand-built
+ * board, what a board offers and the shortcuts, and the magic ladders' loadouts on the real data.
+ */
+
 import { describe, expect, it } from 'vitest';
-import { paint, testConfig, EMPTY8 } from './helpers.js';
+import { ladders, paint, testConfig, EMPTY8 } from './helpers.js';
 import { Game } from '../src/engine/game.js';
 import { augurNow } from '../src/engine/augur.js';
 import {
@@ -12,7 +17,6 @@ import {
   spellLabel,
   totalMana,
 } from '../src/engine/spells.js';
-import { loadLadders } from '../src/data.js';
 import { boardConfig, cumulativeExp } from '../src/engine/config.js';
 import type { BoardConfig } from '../src/engine/types.js';
 
@@ -28,6 +32,16 @@ function magicConfig(over: Partial<BoardConfig> = {}): BoardConfig {
     ...over,
   });
 }
+
+describe('a ladder’s spells', () => {
+  it('are refused by any name that is not one, a name every object inherits included', () => {
+    const arcane = ladders.find((t) => t.id === 'arcane')!;
+    for (const name of ['echo', 'constructor', 'toString']) {
+      const type = { ...arcane, spells: [...(arcane.spells ?? []), name] };
+      expect(() => boardConfig([type], type.id, 1), name).toThrow(/unknown spell/);
+    }
+  });
+});
 
 describe('mana', () => {
   it('starts at the board’s allowance and earns tier per kill', () => {
@@ -484,9 +498,8 @@ describe('spell shortcuts', () => {
     // The ladder data's own order is not trusted, so a type cannot be dealt a
     // row that disagrees with its prices.
     expect(orderSpells(['beacon', 'reveal', 'census'])).toEqual(['census', 'reveal', 'beacon']);
-    const data = loadLadders();
-    for (const type of data.filter((t) => (t.spells ?? []).length > 0)) {
-      const offered = boardConfig(data, type.id, 1).spells.map((id) => SPELLS[id].cost);
+    for (const type of ladders.filter((t) => (t.spells ?? []).length > 0)) {
+      const offered = boardConfig(ladders, type.id, 1).spells.map((id) => SPELLS[id].cost);
       expect(offered, `${type.id} offers its spells out of price order`).toEqual(
         [...offered].sort((a, b) => a - b),
       );
@@ -509,7 +522,6 @@ describe('spell shortcuts', () => {
 });
 
 describe('the magic ladders', () => {
-  const ladders = loadLadders();
   // Read from the data rather than listed here: magic started as its own
   // branch and has since been handed to the shaped ladders too, so a list in
   // the test would just be a second place to forget.

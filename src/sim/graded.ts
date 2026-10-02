@@ -15,8 +15,8 @@
  * against its real tier, and `unsound` counts the times a trick was wrong. It must stay zero
  * (`test/graded.test.ts`), or nothing the instrument measures means anything.
  *
- * Spell-less in this version; the honest player's spending policies are the next step
- * (docs/human-tuning-plan.md, section 10).
+ * With `spells` it spends mana before HP, as docs/strategies.md section 8 advises: an
+ * information spell at a stuck point (`spend`), and Exercise before a guess that could hurt.
  */
 
 import type { Game } from '../engine/game.js';
@@ -25,20 +25,24 @@ import { hasNote, noteBit } from '../engine/notes.js';
 import { mulberry32 } from '../engine/rng.js';
 import { fightCostFor } from '../engine/settings.js';
 import type { SpellId } from '../engine/spells.js';
-import { type Constraint, type Reading, everyTier, highestTier, readBoard } from './reader.js';
+import { everyTier, highestTier } from './masks.js';
+import { type Constraint, type Reading, readBoard, touchingOf } from './reader.js';
 import {
   GRADES,
   type Grade,
   type Moves,
-  TRICKS,
+  TRICKS_BY_GRADE,
   TRICK_IDS,
   type TrickId,
   type View,
   noMoves,
+  runTrick,
 } from './tricks.js';
 import { augurAnswer, expectedFreed } from './aim.js';
+import { StuckPoint, waitBudget } from './honest.js';
 import { dungeonScaffold } from './scaffold.js';
 
+/** How the graded player plays: its grade, and what it may read, spend and fall back on. */
 export interface GradedOptions {
   /** The highest grade of trick the player uses. */
   grade: Grade;
@@ -57,10 +61,17 @@ export interface GradedOptions {
   attention?: number;
 }
 
+/**
+ * What one board demanded of the graded player and what it cost. The alarms (`unsound`,
+ * `trickDamage`, `rescueDamage`) must stay 0.
+ */
 export interface GradedRun {
   cleared: boolean;
   hpLost: number;
-  /** Passes on which nothing at the player's grade yielded a move. */
+  /**
+   * Times nothing at the player's grade yielded a move: one a stuck point (`StuckPoint`),
+   * however many casts were tried there before the next move.
+   */
   stuckPoints: number;
   guesses: number;
   /** Guesses whose worst case could have killed at the HP of the moment. */
@@ -110,15 +121,19 @@ const GUESS_COST = 8;
 /** Rounds of narrowing at one grade before it is called dry. Candidate sets only ever shrink. */
 const NARROW_ROUNDS = 12;
 
-/** How long a stuck point is waited out where the creatures walk, in laps of the longest route. */
-const PATIENCE_LAPS = 1;
-
 /** What scanning the whole board costs, over the pass that then finds something. A first guess. */
 const SCAN_COST = 4;
 
-/** Information casts allowed at one stuck point before the gamble is taken. */
-const CASTS_AT_A_STUCK_POINT = 2;
+/** Passes of the play loop a board is allowed, per cell and per wait, before the player stops. */
+const PASSES_PER_CELL = 8;
 
+/** Mixed into the board's seed for the player's own tie-breaking draw, apart from the deal's. */
+const DRAW_SALT = 0x9e3779b9;
+
+/**
+ * Play one board as the graded player, a pass at a time, until it is won or lost; with nothing
+ * left to gamble on, it forfeits. Mutates the game; returns what the board demanded and cost.
+ */
 export function play(game: Game, options: GradedOptions): GradedRun {
   const run: GradedRun = {
     cleared: false,
@@ -150,9 +165,9 @@ export function play(game: Game, options: GradedOptions): GradedRun {
   const startHp = game.hp;
   // Where the creatures walk (PATROL) every action is a step, what the pencil held is stale
   // after it, and a stuck point is waited out before it is gambled on, as the honest player
-  // does: one lap of the longest route shows the biggest creature on every cell it can stand on.
-  const patience = game.patrols ? PATIENCE_LAPS * 4 * game.config.tiers : 0;
-  let guard = game.config.width * game.config.height * 8 * (1 + patience);
+  // does (`waitBudget`).
+  const patience = waitBudget(game);
+  let guard = game.config.width * game.config.height * PASSES_PER_CELL * (1 + patience);
   let waited = 0;
   let movesRead = game.moves;
   while (game.status === 'playing' && guard-- > 0) {
@@ -162,7 +177,7 @@ export function play(game: Game, options: GradedOptions): GradedRun {
     }
     if (player.pass()) {
       waited = 0;
-      player.castsHere = 0;
+      player.stuck.moved();
       continue;
     }
     if (waited < patience) {
@@ -171,11 +186,11 @@ export function play(game: Game, options: GradedOptions): GradedRun {
       run.waits++;
       continue;
     }
-    run.stuckPoints++;
+    if (player.stuck.reached()) run.stuckPoints++;
     waited = 0;
     if (player.spend()) continue;
-    if (player.rescue()) continue;
-    player.guess();
+    if (!player.rescue()) player.guess();
+    player.stuck.moved();
   }
   run.cleared = game.status === 'won';
   run.hpLost = startHp - game.hp;
@@ -187,8 +202,8 @@ class Player {
   private readonly scaffold: ReadonlySet<Cell>;
   private readonly draw: () => number;
   private readonly all: number;
-  /** Information casts at the current stuck point. */
-  castsHere = 0;
+  /** The stuck point it is at and the information casts spent there, as the honest player keeps. */
+  readonly stuck = new StuckPoint();
   /** Where the player last acted, which is where it looks first when attention is bounded. */
   private focus: Cell | null = null;
 
@@ -198,8 +213,13 @@ class Player {
     private readonly run: GradedRun,
   ) {
     this.scaffold = dungeonScaffold(game);
-    this.draw = mulberry32(game.seed ^ 0x9e3779b9);
+    this.draw = mulberry32(game.seed ^ DRAW_SALT);
     this.all = everyTier(game.config.tiers);
+  }
+
+  /** Whether a beaten creature's number is read where the game hides it. */
+  private get peek(): boolean {
+    return this.options.peek ?? false;
   }
 
   private domain(cell: Cell): number {
@@ -216,7 +236,7 @@ class Player {
       game: this.game,
       reading,
       level: this.game.level,
-      peek: this.options.peek ?? false,
+      peek: this.peek,
       domain: (cell) => this.domain(cell),
       scaffold: this.scaffold,
     };
@@ -248,15 +268,12 @@ class Player {
   private passOver(grade: Grade, radius: number): boolean {
     const { game, run } = this;
     for (let round = 0; round < NARROW_ROUNDS; round++) {
-      const reading = this.nearby(readBoard(game, this.options.peek ?? false), radius);
+      const reading = this.nearby(readBoard(game, this.peek), radius);
       const view = this.view(reading);
       const moves = noMoves();
       let narrowed = 0;
-      for (const id of TRICK_IDS) {
-        const trick = TRICKS[id];
-        if (trick.grade !== grade) continue;
-        const found = noMoves();
-        trick.apply(view, found);
+      for (const id of TRICKS_BY_GRADE[grade]) {
+        const found = runTrick(id, view);
         narrowed += this.narrow(id, found);
         this.credit(id, found, moves);
       }
@@ -284,30 +301,31 @@ class Player {
     const constraints = reading.constraints.filter(
       (c) => Math.abs(c.cell.x - at.x) <= radius && Math.abs(c.cell.y - at.y) <= radius,
     );
-    const touching = new Map<Cell, Constraint[]>();
-    for (const c of constraints) {
-      for (const n of c.unknown) {
-        const list = touching.get(n);
-        if (list) list.push(c);
-        else touching.set(n, [c]);
-      }
-    }
-    return { ...reading, constraints, touching };
+    return { ...reading, constraints, touching: touchingOf(constraints) };
   }
 
   /** Narrow the pencil by what a trick found, and count what was new. */
   private narrow(id: TrickId, found: Moves): number {
     let n = 0;
     for (const [cell, mask] of found.narrow) {
-      const before = this.domain(cell);
-      const after = before & mask;
-      if (after === before || after === 0) continue;
-      this.domains.set(cell, after);
-      this.run.pencils[id]++;
-      if (!hasNote(after, cell.tier)) this.alarm(id, cell, `narrowed to ${after.toString(2)}`);
-      n++;
+      if (this.pencil(id, cell, mask, (after) => `narrowed to ${after.toString(2)}`)) n++;
     }
     return n;
+  }
+
+  /**
+   * Narrow one cell's pencil to `mask` for a trick, count it, and sound the alarm if the truth
+   * was struck off (`what` says how, for the alarm). False when it would change nothing, or
+   * leave nothing.
+   */
+  private pencil(id: TrickId, cell: Cell, mask: number, what: (after: number) => string): boolean {
+    const before = this.domain(cell);
+    const after = before & mask;
+    if (after === before || after === 0) return false;
+    this.domains.set(cell, after);
+    this.run.pencils[id]++;
+    if (!hasNote(after, cell.tier)) this.alarm(id, cell, what(after));
+    return true;
   }
 
   /**
@@ -342,12 +360,7 @@ class Player {
     // there), so on such a board a name goes into the pencil instead, until the next step.
     if (!this.game.marksAreClaims) {
       for (const [cell, tier] of found.mark) {
-        const before = this.domain(cell);
-        const after = before & noteBit(tier);
-        if (cell.open || after === 0 || after === before) continue;
-        this.domains.set(cell, after);
-        this.run.pencils[id]++;
-        if (!hasNote(after, cell.tier)) this.alarm(id, cell, `named ${tier} in the pencil`);
+        if (!cell.open) this.pencil(id, cell, noteBit(tier), () => `named ${tier} in the pencil`);
       }
       return;
     }
@@ -431,13 +444,14 @@ class Player {
       // that kills at the dial in force.
       const worst =
         ceiling <= game.level ? 0 : fightCostFor(game.level, game.hp, ceiling, game.settings);
-      const key = [worst >= game.hp ? 1 : 0, ceiling, mean, -near.length];
+      const lethal = worst >= game.hp;
+      const key = [lethal ? 1 : 0, ceiling, mean, -near.length];
       const order = best ? compare(key, best.key) : -1;
       if (order < 0) {
-        best = { cell, key, ceiling, near };
+        best = { cell, key, lethal, ceiling, near };
         ties = 1;
       } else if (order === 0 && this.draw() * ++ties < 1) {
-        best = { cell, key, ceiling, near };
+        best = { cell, key, lethal, ceiling, near };
       }
     }
     return best;
@@ -446,7 +460,7 @@ class Player {
   /** Gamble, spending an Exercise first where the worst case is above the level and it can. */
   guess(): void {
     const { game, run } = this;
-    const gamble = this.pick(readBoard(game, this.options.peek ?? false));
+    const gamble = this.pick(readBoard(game, this.peek));
     if (!gamble) {
       game.forfeit();
       return;
@@ -455,7 +469,7 @@ class Player {
     if (this.options.spells && gamble.ceiling > game.level && game.exerciseCharge === 0) {
       this.cast('exercise');
     }
-    if (gamble.key[0] === 1) run.lethalGuesses++;
+    if (gamble.lethal) run.lethalGuesses++;
     run.guesses++;
     run.effort += GUESS_COST;
     const hp = game.hp;
@@ -469,13 +483,14 @@ class Player {
    * Spend mana before HP (docs/strategies.md, section 8): at a stuck point, Reveal on the cell
    * that would otherwise be gambled on; else Augur on the number whose list is likeliest to free a
    * cell (`expectedFreed`); else Census on the number over the gamble that a count would tighten
-   * most; else Beacon. At most `CASTS_AT_A_STUCK_POINT` information casts a stuck point, as the
-   * honest player allows itself. True when something was cast, so the board is re-read.
+   * most; else Beacon. At most `CASTS_AT_A_STUCK_POINT` information casts a stuck point, counted
+   * by the `StuckPoint` the honest player keeps too. True when something was cast, so the board
+   * is re-read.
    */
   spend(): boolean {
     const { game } = this;
-    if (!this.options.spells || this.castsHere >= CASTS_AT_A_STUCK_POINT) return false;
-    const gamble = this.pick(readBoard(game, this.options.peek ?? false));
+    if (!this.options.spells || !this.stuck.mayCast) return false;
+    const gamble = this.pick(readBoard(game, this.peek));
     if (!gamble) return false;
     if (this.cast('reveal', gamble.cell)) return true;
     const augur = game.canCast('augur') ? this.augurTarget() : null;
@@ -493,7 +508,7 @@ class Player {
   /** The number whose Augur would free most, on average, of what the pencil leaves open. */
   private augurTarget(): Constraint | null {
     const { game } = this;
-    const reading = readBoard(game, this.options.peek ?? false);
+    const reading = readBoard(game, this.peek);
     let best: Constraint | null = null;
     let most = 0;
     for (const c of reading.constraints) {
@@ -516,20 +531,24 @@ class Player {
     if (events.some((e) => e.type === 'blocked')) return false;
     run.casts++;
     run.manaSpent += before - game.mana;
-    if (id !== 'exercise') this.castsHere++;
+    if (id !== 'exercise') this.stuck.cast();
     return true;
   }
 }
 
+/** A cell to gamble on, and what ranked it. */
 interface Gamble {
   cell: Cell;
+  /** The ranking, lowest first, compared in order: lethal, ceiling, mean, -(numbers touching). */
   key: number[];
+  /** Whether its worst case could kill at the HP of the moment. */
+  lethal: boolean;
   ceiling: number;
   near: readonly Constraint[];
 }
 
+/** Two keys of the same length in lexicographic order: negative when `a` ranks first. */
 function compare(a: readonly number[], b: readonly number[]): number {
-  if (!b.length) return -1;
   for (let i = 0; i < a.length; i++) {
     if (a[i]! !== b[i]!) return a[i]! < b[i]! ? -1 : 1;
   }

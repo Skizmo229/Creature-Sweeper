@@ -8,19 +8,10 @@ import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { boardConfig } from '../../src/engine/config.js';
 import { Game } from '../../src/engine/game.js';
-import { App } from '../../src/ui/app.js';
 import { BoardView, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { ladders } from '../../src/ui/ladders.js';
 import { themeFor } from '../../src/ui/looks.js';
-
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  readonly current: Game | null;
-}
-
-const key = (k: string, held: KeyboardEventInit = {}): void => {
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, ...held }));
-};
+import { key, startApp } from './driver.js';
 
 beforeEach(() => {
   localStorage.clear();
@@ -29,7 +20,7 @@ beforeEach(() => {
 
 describe('a shortcut with a modifier held', () => {
   it('is left to the browser', () => {
-    const app = new App(document.getElementById('app')!) as unknown as Driver;
+    const app = startApp();
     app.play('normal', 1, 7);
     for (const held of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }]) {
       key('p', held);
@@ -37,6 +28,33 @@ describe('a shortcut with a modifier held', () => {
     }
     key('p');
     expect(document.querySelector('.stage')).toBeNull();
+  });
+});
+
+describe('Enter on a board', () => {
+  /** Press Enter at `target`, and whether the board claimed it from the browser. */
+  const claimed = (target: EventTarget): boolean => {
+    const press = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    target.dispatchEvent(press);
+    return press.defaultPrevented;
+  };
+
+  it('is the browser’s outside a lesson, so a focused button still takes it', () => {
+    const app = startApp();
+    app.play('normal', 1, 7);
+    const pause = [...document.querySelectorAll<HTMLButtonElement>('.screen.game button')][0]!;
+    pause.focus();
+    expect(claimed(pause)).toBe(false);
+    expect(claimed(window)).toBe(false);
+  });
+
+  it('goes on with a lesson, unless a focused control takes it', () => {
+    const app = startApp();
+    app.teaching.startLesson(0);
+    expect(claimed(window)).toBe(true);
+    const button = document.querySelector<HTMLButtonElement>('.screen.game button')!;
+    button.focus();
+    expect(claimed(button)).toBe(false);
   });
 });
 

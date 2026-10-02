@@ -7,7 +7,8 @@ A cave cannot be counted ahead of time like a per-cell shape, and `C_k` needs th
 fixed before the board exists. The first generator trimmed a noise field down to a count; every
 trimming order had a signature (thinnest-first shaved protrusions, most-connected-first filled bays,
 oldest-first left threads), it could not guarantee a minimum width, and it left stray islands in 13
-of 40 boards.
+of 40 boards. The first grower kept every cavern it punched, and a cavern could cut the blob in
+two: growth then filled whichever piece the seed landed in and left the rest of the board empty.
 
 ## Decision
 The count is *chosen* per board in `ladders.py`'s `cells` schedule and carried in `shapeParam`; the

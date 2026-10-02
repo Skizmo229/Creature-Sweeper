@@ -11,6 +11,7 @@
  */
 
 import type { Game } from './game.js';
+import { fnv1a } from './config.js';
 import { SPELLS, type SpellId } from './spells.js';
 import type { GameEvent } from './types.js';
 
@@ -56,6 +57,7 @@ export function replayMoves(game: Game, moves: readonly Move[]): void {
  */
 export type MoveCode = readonly (string | number)[];
 
+/** A move as it is stored, the inverse of `decodeMove`. */
 export function encodeMove(move: Move): MoveCode {
   switch (move.kind) {
     case 'open':
@@ -115,9 +117,8 @@ export const DIGEST_VERSION = 2;
 
 /**
  * A fingerprint of everything a board is: its config, every cell, and the player's standing. Two
- * boards with the same fingerprint are, to every rule and to the player, the same board. FNV-1a
- * over a canonical string; it guards against an update, not against an adversary. An older
- * `version` is only for checking a game paused under it.
+ * boards with the same fingerprint are, to every rule and to the player, the same board: `fnv1a`
+ * over a canonical string. An older `version` is only for checking a game paused under it.
  */
 export function boardDigest(game: Game, version = DIGEST_VERSION): string {
   const full = version >= 2;
@@ -142,11 +143,5 @@ export function boardDigest(game: Game, version = DIGEST_VERSION): string {
     game.moves,
     ...(full ? [game.sweepsLeft] : []),
   ];
-  const text = `${JSON.stringify(game.config)}|${standing.join(',')}|${cells.join(';')}`;
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0).toString(16).padStart(8, '0');
+  return fnv1a(`${JSON.stringify(game.config)}|${standing.join(',')}|${cells.join(';')}`);
 }

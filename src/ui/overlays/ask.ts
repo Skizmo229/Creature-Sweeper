@@ -5,8 +5,9 @@
  * 0017). This is the same overlay the win and loss screens use.
  */
 
-import { el } from '../dom.js';
+import { type OverlayCard, el } from '../dom.js';
 
+/** A question: its words, its buttons' labels, and what each answer does. */
 export interface AskOptions {
   title: string;
   body: string;
@@ -23,10 +24,7 @@ export interface AskOptions {
 }
 
 /** Build the question. `close` removes it; the caller appends it and focuses `focus`. */
-export function buildAsk(
-  opts: AskOptions,
-  close: () => void,
-): { overlay: HTMLElement; focus: HTMLElement } {
+export function buildAsk(opts: AskOptions, close: () => void): OverlayCard {
   const overlay = el('div', 'overlay lose');
   const card = el('div', 'overlay-card');
   card.append(el('h2', undefined, opts.title));

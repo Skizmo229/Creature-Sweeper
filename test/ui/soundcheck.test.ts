@@ -7,22 +7,14 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { App } from '../../src/ui/app.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
-import type { Sfx } from '../../src/ui/sfx.js';
+import { type AppDriver, mountApp, settingsRow, startApp } from './driver.js';
 
-interface Driver {
-  showSettings(back: () => void): void;
-  showTypes(): void;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 const openSoundCheck = (): HTMLElement => {
@@ -66,7 +58,7 @@ describe('the sound check', () => {
 
     // A fresh app reads the save, as a reload would.
     document.body.innerHTML = '<div id="app"></div>';
-    app = new App(document.getElementById('app')!) as unknown as Driver;
+    app = startApp();
     window_ = openSoundCheck();
     const badge = window_.querySelector('.soundcheck-sound .soundcheck-key')!;
     expect(badge.textContent).toBe('Q · E5');
@@ -86,7 +78,7 @@ describe('the sound check', () => {
       .click();
 
     // What the game's mixer is handed, and what one of its sounds is played at.
-    const sfx = (app as unknown as { sfx: Sfx }).sfx;
+    const sfx = app.sfx;
     const heard: number[] = [];
     // happy-dom has no audio, so the sound check's own plays left the mixer marked dead.
     Object.assign(sfx, {
@@ -105,9 +97,7 @@ describe('the sound check', () => {
       expect(Settings.load().presentation.customPitches).toBe(false);
       expect(openCell()).toBe(1);
 
-      const setting = [...document.querySelectorAll('.settings-row')].find((r) =>
-        r.textContent?.startsWith('Custom pitches in play'),
-      )!;
+      const setting = settingsRow('Custom pitches in play');
       const box = setting.querySelector<HTMLInputElement>('input[type=checkbox]')!;
       box.click();
       sfx.setPack('chime');
@@ -121,6 +111,16 @@ describe('the sound check', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('lists each pack’s sounds in the order of the switches that say which play', () => {
+    const window = openSoundCheck();
+    const switches = [...window.querySelectorAll('label.toggle span')].map((s) => s.textContent);
+    const firstPack = window.querySelector('.soundcheck-grid')!;
+    const sounds = [...firstPack.querySelectorAll('.soundcheck-sound > span:first-child')].map(
+      (s) => s.textContent,
+    );
+    expect(sounds).toEqual(switches);
   });
 
   it('drops malformed entries from a save and keeps the rest', () => {

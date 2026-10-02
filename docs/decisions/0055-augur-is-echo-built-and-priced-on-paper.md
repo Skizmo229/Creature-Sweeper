@@ -1,6 +1,7 @@
 # 0055. Augur is Echo, built, and priced at its paper value because value as played is nil
 
-2026-09-27. Status: adopted. The answer leaves out open neighbours since 0062.
+2026-09-27. Status: adopted. The answer leaves out open neighbours since 0062, and lists every
+hidden tier, at 50 mana, since 0087.
 
 ## Context
 The owner asked for game types that focus on magic, and the design reference had carried a spell

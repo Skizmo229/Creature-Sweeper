@@ -13,11 +13,14 @@ import type { Lesson } from '../../sim/tutor.js';
 import {
   type BeatenLook,
   type CreatureGlyph,
+  DEFAULT_DIGIT_SIZE,
+  DEFAULT_HIGHLIGHT_WIDTH,
+  DEFAULT_LONG_PRESS,
   DEFAULT_MAX_ZOOM,
   type HighlightStyle,
 } from '../presentation.js';
 import type { TypeTheme } from '../looktypes.js';
-import { PIP_FAMILY, glyphChar, isGlyphPip } from '../pipsymbols.js';
+import { PIP_FAMILY, isSymbolPip, symbolChar } from '../pipsymbols.js';
 import { MARK_COLOR } from '../theme.js';
 import { DEFAULT_TIERS, type TierPalette } from '../tiercolors.js';
 import { FONTS, type GameFont } from '../typefaces.js';
@@ -38,7 +41,7 @@ import {
   drawBoxRules,
   drawGhostBand,
   drawHighlight,
-  drawLesson,
+  drawPointer,
   drawReach,
   drawSeams,
   drawSilhouette,
@@ -90,6 +93,17 @@ export interface BoardDisplay {
   tierColors: TierPalette;
 }
 
+/** The cell size, in CSS pixels, before the first fit. */
+const INITIAL_CELL = 32;
+/** The smallest stage, in CSS pixels each way, a fit sizes the canvas to. */
+const MIN_STAGE_PX = 120;
+/** The stage a fit assumes while the canvas has no parent to measure. */
+const FALLBACK_STAGE = { w: 960, h: 520 } as const;
+/** What a fit leaves between the canvas and its stage, in CSS pixels, across each axis. */
+const STAGE_PADDING = 8;
+/** The most device pixels per CSS pixel the canvas is drawn at, however dense the screen. */
+const MAX_DPR = 3;
+
 /** The renderer's own defaults, which the game's own settings resolve to; the tests start here. */
 export const DEFAULT_DISPLAY: BoardDisplay = {
   maxCell: DEFAULT_MAX_ZOOM,
@@ -98,12 +112,12 @@ export const DEFAULT_DISPLAY: BoardDisplay = {
   glyph: 'pips',
   highlight: 'neighbours',
   highlightColor: MARK_COLOR,
-  highlightWidth: 2,
+  highlightWidth: DEFAULT_HIGHLIGHT_WIDTH,
   beatenLook: 'dimStrike',
-  digitScale: 1,
+  digitScale: DEFAULT_DIGIT_SIZE,
   reachShading: false,
   markColor: MARK_COLOR,
-  longPressMs: 500,
+  longPressMs: DEFAULT_LONG_PRESS,
   beatenNumbers: false,
   tierColors: DEFAULT_TIERS,
 };
@@ -120,6 +134,7 @@ export interface BoardViewOptions {
   fixedCell?: number;
 }
 
+/** What a click, a right-click and the cursor on the board report to the view's owner. */
 export interface BoardViewCallbacks {
   onOpen: (x: number, y: number) => void;
   /** Right-click / long-press: cycle the mark on a covered cell. */
@@ -132,6 +147,11 @@ export interface BoardViewCallbacks {
   lands?: (cell: Cell) => boolean;
 }
 
+/**
+ * A board drawn on a canvas: the game, its theme and display, the cell size and origin, and the
+ * hovered cell. `render` repaints it whole; the game screen, the guide's diagrams and the settings
+ * screen's examples are all one of these.
+ */
 export class BoardView implements InputHost {
   readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
@@ -140,12 +160,12 @@ export class BoardView implements InputHost {
   private theme: TypeTheme | null = null;
   private display: BoardDisplay = DEFAULT_DISPLAY;
 
-  private cellPxValue = 32;
+  private cellPxValue = INITIAL_CELL;
   /**
    * The size fit() chose. Zoom stops here on the way out: shrinking the board below what the
    * stage can already hold gains nothing, so the only way out is back to the fit.
    */
-  private fittedCellValue = 32;
+  private fittedCellValue = INITIAL_CELL;
   private originXValue = 0;
   private originYValue = 0;
   private hoveredCellValue: Cell | null = null;
@@ -166,8 +186,11 @@ export class BoardView implements InputHost {
   private canPanValue = false;
   private readonly options: BoardViewOptions;
 
-  /** The tutor's lesson pointed at on the board, if one is showing (docs/teaching-plan.md). */
-  private lesson: Lesson | null = null;
+  /**
+   * What the tutor, or a school lesson's step, is pointing at on the board: a proof's numbers,
+   * cells and conclusions (docs/teaching-plan.md). Null while nothing is.
+   */
+  private pointer: Lesson | null = null;
 
   /**
    * The faces this view has asked the browser for and is waiting on, so a repaint is requested
@@ -219,10 +242,10 @@ export class BoardView implements InputHost {
     this.render();
   }
 
-  /** Point at a lesson, or at nothing. The lesson is drawn over everything but the cursor. */
-  setLesson(lesson: Lesson | null): void {
-    if (this.lesson === lesson) return;
-    this.lesson = lesson;
+  /** Point at a proof, or at nothing. The pointer is drawn over everything but the cursor. */
+  setPointer(pointer: Lesson | null): void {
+    if (this.pointer === pointer) return;
+    this.pointer = pointer;
     this.render();
   }
 
@@ -286,8 +309,8 @@ export class BoardView implements InputHost {
       });
       this.stageWatch.observe(box);
     }
-    const availW = Math.max(120, (box?.clientWidth ?? 960) - 8);
-    const availH = Math.max(120, (box?.clientHeight ?? 520) - 8);
+    const availW = Math.max(MIN_STAGE_PX, (box?.clientWidth ?? FALLBACK_STAGE.w) - STAGE_PADDING);
+    const availH = Math.max(MIN_STAGE_PX, (box?.clientHeight ?? FALLBACK_STAGE.h) - STAGE_PADDING);
 
     const fitted = fittedCellFor(game, availW, availH);
     // The ceiling caps magnification only. A small board is held at the player's limit rather
@@ -298,7 +321,7 @@ export class BoardView implements InputHost {
     const ceiling = Math.max(this.fittedCell, this.display.maxCell);
     this.cellPxValue = zoomed
       ? Math.max(this.fittedCell, Math.min(this.cellPx, ceiling))
-      : opening && this.display.startAtCeiling && !fixed
+      : opening && this.display.startAtCeiling
         ? ceiling
         : this.fittedCell;
 
@@ -326,7 +349,7 @@ export class BoardView implements InputHost {
   }
 
   private resizeCanvas(cssW: number, cssH: number): void {
-    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    const dpr = Math.min(MAX_DPR, window.devicePixelRatio || 1);
     this.canvas.style.width = `${cssW}px`;
     this.canvas.style.height = `${cssH}px`;
     this.canvas.width = Math.round(cssW * dpr);
@@ -439,7 +462,7 @@ export class BoardView implements InputHost {
     const pip = this.theme?.pip;
     // The pip font is one family of several faces, each holding some of the symbols, so it is
     // the face for this symbol that is waited on.
-    if (pip && isGlyphPip(pip)) this.awaitFace(`16px ${PIP_FAMILY}`, glyphChar(pip));
+    if (pip && isSymbolPip(pip)) this.awaitFace(`16px ${PIP_FAMILY}`, symbolChar(pip));
   }
 
   private awaitFace(probe: string, text?: string): void {
@@ -516,13 +539,16 @@ export class BoardView implements InputHost {
     drawBonds(p);
     drawSeams(p);
 
-    if (this.lesson && game.status === 'playing') drawLesson(p, this.lesson);
+    if (this.pointer && game.status === 'playing') drawPointer(p, this.pointer);
 
     const hovered = this.hoveredCellValue;
     if (hovered && game.status === 'playing' && this.display.highlight) {
       const lands = (cell: Cell): boolean =>
         this.cb.lands ? this.cb.lands(cell) : game.inReach(cell);
-      drawHighlight(p, hovered, this.display.highlight, this.display.highlightColor, lands, {
+      drawHighlight(p, hovered, {
+        style: this.display.highlight,
+        color: this.display.highlightColor,
+        lands,
         width: this.display.highlightWidth,
       });
     }
@@ -575,14 +601,9 @@ export class BoardView implements InputHost {
     return this.hoveredCellValue;
   }
 
-  /** Current cell size in CSS pixels, for the zoom readout. */
+  /** Current cell size in CSS pixels, for the dev handle and the tests. */
   get cellSize(): number {
     return this.cellPx;
-  }
-
-  /** True when zooming out further would do nothing. */
-  get atFit(): boolean {
-    return this.cellPx <= this.fittedCell;
   }
 
   /** Step the zoom from a button or key, anchored on the stage centre. */

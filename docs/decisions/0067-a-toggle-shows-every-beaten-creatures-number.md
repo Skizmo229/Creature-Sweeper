@@ -1,6 +1,7 @@
 # 0067. A toggle shows every beaten creature's number at once
 
-2026-09-28. Status: adopted. Amends 0012.
+2026-09-28. Status: adopted. Amends 0012. Every board key leaves Ctrl, Cmd and Alt to the browser
+since 0082.
 
 ## Context
 Since decision 0012 a beaten creature's number shows only while the cursor is over it. A touch

@@ -1,6 +1,7 @@
 # 0048. The tutor costs the best time and nothing else, and trusts no mark
 
-2026-09-26. Status: adopted.
+2026-09-26. Status: adopted. A hinted clear keeps the fewest hints until a best time exists since
+0065.
 
 ## Context
 Milestone 5 puts the catalogue of tricks (`docs/strategies.md`) inside the game, first as a tutor:

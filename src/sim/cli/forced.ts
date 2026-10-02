@@ -5,10 +5,10 @@
  *   npx tsx src/sim/cli/forced.ts [seeds] oracle    one ladder, board by board
  *   npx tsx src/sim/cli/forced.ts [seeds] oracle 7-10   only those boards
  *
- * Every forced-guess figure in CLAUDE.md comes from the honest player in
- * `honest.ts`, which deduces locally — Sweep's bound, exact tiers, pairs of
- * numbers subtracted, the placement rules read off neighbouring cells. So each
- * figure is an upper bound on what the board really forces. This runs two
+ * The honest player in `honest.ts`, whose forced guesses docs/tuning.md quotes,
+ * deduces locally — Sweep's bound, exact tiers, pairs of numbers subtracted,
+ * the placement rules read off neighbouring cells. So each of its figures is
+ * an upper bound on what the board really forces. This runs two
  * players per seed on the same board, against the complete deducer in
  * `solver.ts`:
  *
@@ -34,17 +34,16 @@ import { loadLadders } from '../../data.js';
 import { boardConfig, type LadderType } from '../../engine/config.js';
 import { Game } from '../../engine/game.js';
 import { placementRule } from '../../engine/placement/registry.js';
-import { play, type Run } from '../honest.js';
+import { play, type HonestRun } from '../honest.js';
 import { solve } from '../solver.js';
+import { boardRange, mean, pct, seedAt, seedCount } from '../tables.js';
 
 interface Row {
-  honest: Run[];
-  solver: Run[];
+  honest: HonestRun[];
+  solver: HonestRun[];
   undecided: number;
   bad: number;
 }
-
-const seedAt = (s: number): number => s * 2654435761 + 11;
 
 function measure(typeId: string, board: number, seeds: number): Row {
   const ladders = loadLadders();
@@ -63,12 +62,8 @@ function measure(typeId: string, board: number, seeds: number): Row {
   return row;
 }
 
-const mean = (rs: Run[], pick: (r: Run) => number): number =>
-  rs.reduce((a, r) => a + pick(r), 0) / Math.max(1, rs.length);
-const pct = (x: number): string => `${(100 * x).toFixed(0)}%`;
-
 /** Share of the honest player's stuck points that had a free move in them. */
-const freeShare = (rs: Run[]): number => {
+const freeShare = (rs: HonestRun[]): number => {
   const stuck = rs.reduce((a, r) => a + r.stuckPoints, 0);
   return stuck ? rs.reduce((a, r) => a + r.couldRescue, 0) / stuck : 0;
 };
@@ -144,10 +139,9 @@ function everyLadder(seeds: number): void {
   }
 }
 
-const seeds = Number(process.argv[2] ?? 30);
+const seeds = seedCount(process.argv[2], 30, 'npm run sim:forced -- [seeds] [ladder] [a-b]');
 // A board range, for the ladders slow enough that running all ten to look at
 // two is most of the cost: `7-10`, or a single board.
-const range = process.argv[4]?.split('-').map(Number);
-const only: [number, number] | undefined = range ? [range[0]!, range[1] ?? range[0]!] : undefined;
+const only = boardRange(process.argv[4]);
 if (process.argv[3]) byBoard(seeds, process.argv[3], only);
 else everyLadder(seeds);

@@ -12,8 +12,8 @@
  *
  * That is the economy only, exactly as `npm run sim` is. Whether a human can
  * *deduce* their way through ten boards on one pool is the other question, and
- * the one the mode exists to ask — a deductive player's odds are the product
- * of ten boards' clear rates, so this reports the honest expectation too.
+ * the one the mode exists to ask: a deductive player's odds are the product of
+ * ten boards' clear rates, which `sim:spells` and `sim:human` measure.
  *
  * Exits non-zero if any run cannot be completed at full HP, so it is a
  * regression gate on the run rules the same way `sim` is on the ladders.
@@ -21,16 +21,18 @@
 
 import { loadLadders } from '../../data.js';
 import { FullRun } from '../../engine/run.js';
+import { DEFAULT_GAMEPLAY, healPerBoard } from '../../engine/settings.js';
 import { autoplaySearch, autoplayTierOrder } from '../autoplay.js';
+import { seedCount } from '../tables.js';
 
-const runs = Number(process.argv[2] ?? 20);
+const runs = seedCount(process.argv[2], 20, 'npm run sim:run -- [runs]');
 const ladders = loadLadders();
 
 interface TypeResult {
   completed: number;
   hpLost: number;
   worstBoard: number;
-  /** Distinct start-of-board HP values seen, to show the pool never moved. */
+  /** The lowest start-of-board HP seen, to show the pool never moved. */
   minHpSeen: number;
 }
 
@@ -78,7 +80,7 @@ for (const type of ladders) {
   console.log(
     type.name.padEnd(15) +
       String(type.run_hp).padStart(6) +
-      String(Math.floor(type.run_hp / 2)).padStart(6) +
+      String(healPerBoard(type.run_hp, DEFAULT_GAMEPLAY)).padStart(6) +
       String(type.boards.length).padStart(8) +
       `${result.completed}/${runs}`.padStart(11) +
       String(result.hpLost).padStart(9) +

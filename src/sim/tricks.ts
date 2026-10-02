@@ -22,21 +22,22 @@ import type { Cell } from '../engine/types.js';
 import { hasNote, noteBit } from '../engine/notes.js';
 import { missingFrom } from '../engine/placement/packs.js';
 import { placementRule } from '../engine/placement/registry.js';
+import { everyTier, highestTier, isSingle, lowestTier, tiersUpTo } from './masks.js';
 import {
   type Constraint,
   type Reading,
-  everyTier,
-  highestTier,
-  lowestTier,
+  openPiece,
   reachable,
+  soleCoveredRim,
   supported,
-  tiersUpTo,
 } from './reader.js';
 
 /** How much has to be held in the head at once; `docs/strategies.md` says what each means. */
 export type Grade = 0 | 1 | 2 | 3 | 4;
+/** Every grade, cheapest first: the order the tricks are tried in. */
 export const GRADES: readonly Grade[] = [0, 1, 2, 3, 4];
 
+/** Every trick's id; docs/strategies.md section 10 maps each to its entry. */
 export type TrickId =
   | 'raw-ring'
   | 'named-kill'
@@ -96,11 +97,13 @@ export interface Moves {
   readonly because: Map<Cell, Why>;
 }
 
+/** A technique at its grade: `apply` adds what it proves on the view to `moves`, and never acts. */
 export interface Trick {
   readonly grade: Grade;
   apply(view: View, moves: Moves): void;
 }
 
+/** No moves yet, for a trick to fill. */
 export function noMoves(): Moves {
   return { open: new Set(), mark: new Map(), narrow: new Map(), because: new Map() };
 }
@@ -114,7 +117,7 @@ function by(constraints: readonly Constraint[], cells: readonly Cell[] = []): Wh
 const RULE: Why = by([]);
 
 /** Propose a cell as safe to open, remembering why. */
-function open(m: Moves, cell: Cell, why: Why): void {
+function proposeOpen(m: Moves, cell: Cell, why: Why): void {
   m.open.add(cell);
   if (!m.because.has(cell)) m.because.set(cell, why);
 }
@@ -129,7 +132,7 @@ function settle(view: View, cell: Cell, mask: number, moves: Moves, why: Why): v
   const dom = before & mask;
   if (dom === 0) return;
   if (highestTier(dom) <= view.level) moves.open.add(cell);
-  else if ((dom & (dom - 1)) === 0) moves.mark.set(cell, lowestTier(dom));
+  else if (isSingle(dom)) moves.mark.set(cell, lowestTier(dom));
   else if (dom !== before) moves.narrow.set(cell, dom);
   else return;
   if (!moves.because.has(cell)) moves.because.set(cell, why);
@@ -146,7 +149,7 @@ function concludeSum(
 ): void {
   if (hi < 0 || lo > hi || !cells.length) return;
   if (hi <= view.level) {
-    for (const c of cells) open(m, c, why);
+    for (const c of cells) proposeOpen(m, c, why);
     return;
   }
   const sup = supported(
@@ -175,21 +178,24 @@ const coveredUnmarked = (c: Cell): boolean => !c.open && c.mark === 0;
 
 // ------------------------------------------------------------------ grade 0
 
+// A number at or below the level: nothing under it can be stronger, so its whole ring is safe.
 const rawRing: Trick = {
   grade: 0,
   apply(v, m) {
     for (const c of v.reading.constraints) {
       if (c.cell.num > v.level) continue;
-      for (const n of c.unknown) open(m, n, by([c]));
+      for (const n of c.unknown) proposeOpen(m, n, by([c]));
     }
   },
 };
 
+// A creature marked at or below the level is a free kill.
 const namedKill: Trick = {
   grade: 0,
   apply(v, m) {
     if (v.level <= 0) return;
-    for (const [cell, mark] of v.reading.marked) if (mark <= v.level) open(m, cell, by([], [cell]));
+    for (const [cell, mark] of v.reading.marked)
+      if (mark <= v.level) proposeOpen(m, cell, by([], [cell]));
   },
 };
 
@@ -204,19 +210,20 @@ const metPartner: Trick = {
       const ns = v.game.neighboursOf(cell);
       const partner = ns.find(openCreature);
       if (!partner) continue;
-      for (const n of ns) if (coveredUnmarked(n)) open(m, n, by([], [cell, partner]));
+      for (const n of ns) if (coveredUnmarked(n)) proposeOpen(m, n, by([], [cell, partner]));
     }
     for (const cell of v.reading.unknown) {
       const creatures = v.game.neighboursOf(cell).filter(openCreature);
-      if (creatures.length >= 2) open(m, cell, by([], creatures));
+      if (creatures.length >= 2) proposeOpen(m, cell, by([], creatures));
     }
   },
 };
 
+// A dungeon's hallways, doorways and pockets are empty ground (`scaffold.ts`).
 const corridor: Trick = {
   grade: 0,
   apply(v, m) {
-    for (const cell of v.scaffold) if (coveredUnmarked(cell)) open(m, cell, RULE);
+    for (const cell of v.scaffold) if (coveredUnmarked(cell)) proposeOpen(m, cell, RULE);
   },
 };
 
@@ -232,16 +239,18 @@ const sprinkles: Trick = {
 
 // ------------------------------------------------------------------ grade 1
 
+// A number less what is on show around it: at or below the level, its whole ring is safe.
 const residualRing: Trick = {
   grade: 1,
   apply(v, m) {
     for (const c of v.reading.constraints) {
       if (c.residual > v.level) continue;
-      for (const n of c.unknown) open(m, n, by([c]));
+      for (const n of c.unknown) proposeOpen(m, n, by([c]));
     }
   },
 };
 
+// A number with one covered neighbour left has named it: it holds exactly what is hidden.
 const lastCell: Trick = {
   grade: 1,
   apply(v, m) {
@@ -252,8 +261,6 @@ const lastCell: Trick = {
   },
 };
 
-// A tier whose creatures are all dead, or all marked, is hiding nowhere; when nothing above the
-// level is hiding at all, every covered cell is free.
 // A Census says how many creatures share the remainder; each is worth at least 1, so the
 // biggest is the remainder less one for every other. Sweep proves the same.
 const censusRing: Trick = {
@@ -262,7 +269,7 @@ const censusRing: Trick = {
     for (const c of v.reading.constraints) {
       if (c.creatures === null || c.creatures > c.unknown.length) continue;
       if (c.creatures > 0 && c.residual - (c.creatures - 1) > v.level) continue;
-      for (const n of c.unknown) open(m, n, by([c]));
+      for (const n of c.unknown) proposeOpen(m, n, by([c]));
     }
   },
 };
@@ -278,7 +285,7 @@ const augurCap: Trick = {
       if (c.tiers === null) continue;
       const why = by([c]);
       if ((c.tiers[0] ?? 0) <= v.level) {
-        for (const n of c.unknown) open(m, n, why);
+        for (const n of c.unknown) proposeOpen(m, n, why);
         continue;
       }
       let listed = c.tiers.length < c.unknown.length ? noteBit(0) : 0;
@@ -293,12 +300,14 @@ const augurCap: Trick = {
   },
 };
 
+// A tier whose creatures are all dead, or all marked, is hiding nowhere; when nothing above the
+// level is hiding at all, every covered cell is free.
 const counters: Trick = {
   grade: 1,
   apply(v, m) {
     const r = v.reading;
     if (r.top <= v.level) {
-      for (const cell of r.unknown) open(m, cell, RULE);
+      for (const cell of r.unknown) proposeOpen(m, cell, RULE);
       return;
     }
     for (const cell of r.unknown) {
@@ -316,7 +325,7 @@ const loneDark: Trick = {
     for (const c of v.reading.constraints) {
       if (c.residual <= 0) continue;
       for (const n of c.unknown) {
-        if (rule.cap(n, c.residual, c.unknown) === 0) open(m, n, by([c]));
+        if (rule.cap(n, c.residual, c.unknown) === 0) proposeOpen(m, n, by([c]));
       }
     }
   },
@@ -392,6 +401,7 @@ const overlap: Trick = {
   },
 };
 
+// One number on its own: only the candidates of each cell that can take part in its sum.
 const bounds: Trick = {
   grade: 2,
   apply(v, m) {
@@ -438,24 +448,13 @@ const packGap: Trick = {
     const seen = new Set<Cell>();
     for (const start of gaps.keys()) {
       if (seen.has(start)) continue;
-      const piece = [start];
-      seen.add(start);
-      for (let i = 0; i < piece.length; i++) {
-        for (const n of v.game.neighboursOf(piece[i]!)) {
-          if (openCreature(n) && !seen.has(n)) {
-            seen.add(n);
-            piece.push(n);
-          }
-        }
-      }
+      const piece = openPiece(v.game, start, seen);
       if (piece.length !== tiers - 1) continue;
-      const rim = new Set<Cell>();
-      for (const c of piece) for (const n of v.game.neighboursOf(c)) if (!n.open) rim.add(n);
-      if (rim.size !== 1) continue;
-      const [only] = rim;
+      const only = soleCoveredRim(v.game, piece);
+      if (!only) continue;
       const shown = new Set(piece.map((c) => c.tier));
       for (let t = 1; t <= tiers; t++) {
-        if (!shown.has(t) && coveredUnmarked(only!)) settle(v, only!, noteBit(t), m, by([], piece));
+        if (!shown.has(t) && coveredUnmarked(only)) settle(v, only, noteBit(t), m, by([], piece));
       }
     }
   },
@@ -494,7 +493,7 @@ const whatIf: Trick = {
     const { touching } = v.reading;
     for (const cell of v.reading.unknown) {
       const dom = v.domain(cell);
-      if ((dom & (dom - 1)) === 0) continue;
+      if (isSingle(dom)) continue;
       const near = touching.get(cell);
       if (!near) continue;
       const window = new Set<Constraint>(near);
@@ -516,11 +515,12 @@ const whatIf: Trick = {
   },
 };
 
+// What the rule proves empty outright: beside a line's middle, and beyond its ends' reach.
 const lineReach: Trick = {
   grade: 3,
   apply(v, m) {
     for (const cell of placementRule(v.game.config.placement).emptied(v.game)) {
-      if (coveredUnmarked(cell)) open(m, cell, RULE);
+      if (coveredUnmarked(cell)) proposeOpen(m, cell, RULE);
     }
   },
 };
@@ -613,4 +613,23 @@ export const TRICKS: Readonly<Record<TrickId, Trick>> = {
   'last-of-tier': lastOfTier,
 };
 
+/** Every trick id, in `TRICKS`'s order, which is the order the tricks of a grade run in. */
 export const TRICK_IDS = Object.keys(TRICKS) as TrickId[];
+
+const tricksAt = (g: Grade): readonly TrickId[] => TRICK_IDS.filter((id) => TRICKS[id].grade === g);
+
+/** The trick ids of each grade, in `TRICK_IDS`'s order. */
+export const TRICKS_BY_GRADE: Readonly<Record<Grade, readonly TrickId[]>> = {
+  0: tricksAt(0),
+  1: tricksAt(1),
+  2: tricksAt(2),
+  3: tricksAt(3),
+  4: tricksAt(4),
+};
+
+/** What one trick proposes on the view. */
+export function runTrick(id: TrickId, view: View): Moves {
+  const found = noMoves();
+  TRICKS[id].apply(view, found);
+  return found;
+}

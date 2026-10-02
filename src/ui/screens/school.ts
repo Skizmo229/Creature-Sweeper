@@ -1,20 +1,22 @@
 /**
- * The school (docs/teaching-plan.md, section 5.4): the nine lessons as cards, each with the trick it
+ * The school (docs/teaching-plan.md, section 5.4): the lessons as cards, each with the trick it
  * teaches and its grade and whether it has been taken to its end, and the card that closes a
  * lesson. Offered, never required: nothing waits on a lesson (principle 7).
  */
 
-import { el } from '../dom.js';
+import { type OverlayCard, el } from '../dom.js';
 import type { Progress } from '../progress.js';
 import { TRICK_TEXT } from '../../sim/tricktext.js';
 import { LESSONS } from '../school/lessons.js';
 
+/** What the school's list reads, and where its cards go. */
 export interface SchoolListActions {
   progress: Progress;
   back(): void;
   start(index: number): void;
 }
 
+/** The school's screen: a card per lesson, saying what it teaches and whether it was taken. */
 export function buildSchoolList(a: SchoolListActions): HTMLElement {
   const wrap = el('div', 'screen');
   const head = el('header', 'title-bar');
@@ -54,7 +56,7 @@ export function buildLessonDone(
   title: string,
   onNext: (() => void) | null,
   onSchool: () => void,
-): { overlay: HTMLElement; focus: HTMLElement } {
+): OverlayCard {
   const overlay = el('div', 'overlay win');
   const card = el('div', 'overlay-card');
   card.append(el('h2', undefined, 'LESSON TAKEN'));

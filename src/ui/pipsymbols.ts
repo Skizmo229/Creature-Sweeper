@@ -12,14 +12,15 @@
  * DOM-free, so the headless tests can hold the table to the fonts.
  */
 
-import type { GlyphPip, Pip } from './looktypes.js';
+import type { Pip, SymbolPip } from './looktypes.js';
 import table from './pipsymbols.json';
 
 /** The family every symbol is drawn in, as a CSS font-family value. */
 export const PIP_FAMILY = "'Pip Symbols'";
 
+/** One symbol the custom-icon window offers. */
 export interface PipSymbol {
-  pip: GlyphPip;
+  pip: SymbolPip;
   /** The symbol itself, as text. */
   char: string;
   /** Its Unicode name, in sentence case. */
@@ -28,36 +29,39 @@ export interface PipSymbol {
   code: number | null;
 }
 
+/** One font's symbols, a tab of the window: Dingbats, or one of the Wingdings. */
 export interface SymbolSet {
   id: string;
   name: string;
   symbols: readonly PipSymbol[];
 }
 
+/** Every set, in the window's order, read from `pipsymbols.json`. */
 export const SYMBOL_SETS: readonly SymbolSet[] = table.sets.map((set) => ({
   id: set.id,
   name: set.name,
   symbols: set.symbols.map(([code, hex, name]) => ({
-    pip: `U+${hex}` as GlyphPip,
+    pip: `U+${hex}` as SymbolPip,
     char: String.fromCodePoint(parseInt(hex as string, 16)),
     name: name as string,
     code: code as number | null,
   })),
 }));
 
-const GLYPH = /^U\+([0-9A-F]{4,6})$/;
+const SYMBOL_PIP = /^U\+([0-9A-F]{4,6})$/;
 
-export function isGlyphPip(pip: Pip | string): pip is GlyphPip {
-  return GLYPH.test(pip);
+/** Whether a pip is a symbol, written `U+` and its code point, rather than a drawn shape. */
+export function isSymbolPip(pip: Pip | string): pip is SymbolPip {
+  return SYMBOL_PIP.test(pip);
 }
 
 /** The text that draws a symbol pip. */
-export function glyphChar(pip: GlyphPip): string {
+export function symbolChar(pip: SymbolPip): string {
   return String.fromCodePoint(parseInt(pip.slice(2), 16));
 }
 
 /** Where a symbol pip is found: the first set to hold it, and the symbol. */
-export function findSymbol(pip: GlyphPip): { set: SymbolSet; symbol: PipSymbol } | undefined {
+export function findSymbol(pip: SymbolPip): { set: SymbolSet; symbol: PipSymbol } | undefined {
   for (const set of SYMBOL_SETS) {
     const symbol = set.symbols.find((s) => s.pip === pip);
     if (symbol) return { set, symbol };

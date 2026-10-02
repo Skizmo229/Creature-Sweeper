@@ -10,6 +10,10 @@ what it finds, and turns the techniques it uses into a catalogue the game can te
 Started 25 September 2026. The catalogue is `docs/strategies.md`; the instrument is the graded
 player in `src/sim/graded.ts` (`npm run sim:human`). Status of each step is in section 9.
 
+Status: in progress. The catalogue, the instrument, the baseline and the retune are done (section
+9; decisions 0041 to 0044 and 0058). Left: the Minesweeper anchor (step 4.4), deferral in the
+graded player (4.9), and re-measuring against the play statistics (4.10).
+
 ## 1. The problem
 
 The honest player (`src/sim/honest.ts`) and the complete deducer (`src/sim/solver.ts`) were built
@@ -40,10 +44,11 @@ person they are wrong in both directions, and the errors do not cancel:
   looks at HP, at whether the worst case kills, at what the guess would reveal, or at whether
   two more free kills would make the cell free.
 
-The consequence is stated in `docs/tuning.md` as open question 1: the ladders have never been
-played. Playtesting will come; this milestone builds the instrument that stands in for it and
-stays useful after it, because a model that reproduces what players do can be run 40 times a
-board on a candidate schedule and a playtest cannot.
+The consequence is stated in `docs/tuning.md` as open question 1: the ladders had not been
+played. Play-testing came with the 0.9.x releases, and the play statistics (4.8) to measure it;
+this milestone builds the instrument that stands in for it and stays useful after it, because a
+model that reproduces what players do can be run 40 times a board on a candidate schedule and a
+play-test cannot.
 
 ## 2. What "hard for a person" will mean
 
@@ -84,18 +89,18 @@ most of the golden runs play it, so leaving it untouched keeps them byte-identic
 
 ### What it reads
 
-Only what is on screen, stated per field rather than assumed. An open empty cell's number; an
-open creature's tier; a beaten creature's number **only where the rule draws it on hover**
-(`placementRule(config.placement).display.hoverShowsNumber`, false on PAIRS and DOMINOES), with
-a `seesHiddenNumbers` switch to measure what hiding it costs; the per-tier counters
-(`game.counterFor`); level, HP, mana and the spell list; the crawl rule through `game.inReach`;
-the placement rule's own readings through its hooks (`cap`, `emptied`, `missingFrom`, `groups`),
-each assigned a grade because they are full-strength techniques, not free knowledge; the
-silhouette (`present`), from which it infers a dungeon's corridors the way a person does. It
-never reads a covered cell's `tier`, `num` or `alive`, never calls `noteCandidates` on a rule
-whose number it may not see, never calls `sealedIn`'s internals, and never touches the map's
-`hall` or `spawnable` masks. Everything it opens as safe is checked against the real tier by the
-tests, on every ladder that has a rule (section 5).
+Only what is on screen, stated per field rather than assumed. An open empty cell's number; an open
+creature's tier; a beaten creature's number **only where the rule draws it on hover**
+(`placementRule(config.placement).display.hoverShowsNumber`, false on PAIRS and DOMINOES), with a
+`peek` option (`--peek` on the command line) to measure what hiding it costs; the per-tier counters
+(`game.counterFor`); level, HP, mana and the spell list; the crawl rule through `game.inReach`; the
+placement rule's own readings through its hooks (`cap`, `emptied`, `missingFrom`, `groups`), each
+assigned a grade because they are full-strength techniques, not free knowledge; the silhouette
+(`present`), from which it infers a dungeon's corridors the way a person does. It never reads a
+covered cell's `tier`, `num` or `alive`, never calls `noteCandidates` on a rule whose number it may
+not see, never calls `sealedIn`'s internals, and never touches the map's `hall` or `spawnable`
+masks. Everything it opens as safe is checked against the real tier by the tests, on every ladder
+that has a rule (section 5).
 
 ### The grades and their techniques
 
@@ -113,6 +118,8 @@ as a bound; `docs/invariants.md`). The ids are the catalogue's.
 | 0 | `sprinkles` | where every creature is drawn, a plain cell is empty and a sprinkle is a creature | sprinkle donut |
 | 1 | `residual-ring` | subtract the tiers you can see; a remainder at or under your level frees the ring, a remainder of 0 empties it | all |
 | 1 | `last-cell` | a number with one covered neighbour left has named it | all |
+| 1 | `census-ring` | a number whose creatures are counted: the strongest is at most the remainder less one for every other; at or under your level, the ring is free | a Census or an Augur cast, sprinkle donut |
+| 1 | `augur-cap` | an Augur's list: nothing is above its first tier, so at or under your level the ring is free; above it each cell is empty or a listed tier, none is empty where the list fills the ring, and a tier listed k times that only k cells can hold is in each | an Augur cast |
 | 1 | `counters` | a tier whose counter reads 0 is gone; when every tier left is at or under your level, everything is free | all |
 | 1 | `lone-dark` | the one covered dark square under an even remainder is empty | checkerboard |
 | 1 | `partner-number` | a beaten creature's number is its partner's tier: read beside a lone creature | pairs, dominoes, only when the number is visible |
@@ -152,7 +159,7 @@ Every move that opens a cell is filtered by the crawl rule, as the honest player
 candidate sets narrow and never widen, and a set that narrows to one tier names the cell; a set
 whose largest tier is at or under the level frees it. When the player's own grade includes a
 technique that would read a hidden number on a pairing board, the technique is skipped rather
-than the number peeked, which is what makes the `seesHiddenNumbers` switch a measurement.
+than the number peeked, which is what makes the `peek` option a measurement.
 
 ### Guessing
 
@@ -193,13 +200,14 @@ order of magnitude of that, so 40 seeds over ten boards is under a minute a ladd
 
 ## 4. Where it plugs in
 
-`play(game, options)` returns a `Run` like the honest player's, extended with the four measures;
-the CLI `src/sim/cli/human.ts` iterates `type.boards` and prints a table per ladder, board by
-board, at grades 1 to 4 side by side, and every-ladder rows at one grade; `--profile` prints how
-often each technique fired. The solver can be attached as the ceiling through the same `rescue`
-hook `forced.ts` uses, which is how "forced at any grade" is reported beside "forced at this
-grade". Two golden runs fix the printout: `human-normal`, and `human-oracle` with `--profile`.
-`docs/tuning.md`'s instrument table and the README's commands list gain the row.
+`play(game, options)` returns a `GradedRun`, a record of the board like the honest player's
+`HonestRun`, with the four measures besides; the CLI `src/sim/cli/human.ts` iterates `type.boards`
+and prints a table per ladder, board by board, at grades 1 to 4 side by side, and every-ladder rows
+at one grade; `--profile` prints how often each technique fired. The solver can be attached as the
+ceiling through the same `rescue` hook `forced.ts` uses, which is how "forced at any grade" is
+reported beside "forced at this grade". Two golden runs fix the printout: `human-normal`, and
+`human-oracle` with `--profile`. `docs/tuning.md`'s instrument table and the README's commands list
+gain the row.
 
 ## 5. Validation
 
@@ -210,8 +218,8 @@ Nothing about a person is in the tests, only the instrument's honesty. What is a
   `rescueDamage`'s equivalent (HP lost on a cell a technique called safe) must be zero.
 - **Non-vacuity.** Each technique fires somewhere on a real board, and each grade clears
   something the grade below could not, or the test is exercising nothing.
-- **Visibility.** The `seesHiddenNumbers` switch changes the figures on PAIRS and on no other
-  ladder, which proves the predicate is asked rather than the name.
+- **Visibility.** The `peek` option changes the figures on PAIRS and on no other ladder, which
+  proves the predicate is asked rather than the name.
 - **The corridor inference** equals the dungeon map's hallways, doors and pockets on every seed
   it is checked on; a cell it calls empty is never spawnable.
 - **Monotonicity.** Adding a grade never adds a stuck point on the same seed.
@@ -225,7 +233,7 @@ Beyond the tests, four anchors for the shape of the curves, none sufficient alon
    technique ladders span a 30-fold win rate on it (single-point 0.5%, coupled subsets 33%), 84%
    of boards force at least one guess, and 88% of a board is cleared before the first one. The
    graded player's grades 1, 2 and 4 should land in that order and near those figures.
-2. **The original's own stars.** hojamaka rates Easy 1, Normal 2, Huge 3, Extreme 3, Blind 5,
+2. **The original's own stars.** Hojamaka Games rates Easy 1, Normal 2, Huge 3, Extreme 3, Blind 5,
    and marks Huge x Extreme and Huge x Blind not recommended: five ordinal points for the ladders
    that mirror them.
 3. **Self-consistency.** Grade 2 subsumes the honest player's arithmetic, so on every ladder but
@@ -297,14 +305,15 @@ technique id is. Three routes into the game, in the order they are worth doing:
    that proves the graded player needs exactly that technique to clear it.
 
 Telemetry, built 27 September 2026 as the play statistics (`src/ui/telemetry.ts`, the store in
-`telemetrystore.ts`, the tally in `game/recorder.ts`, decision 0060): a separate store (its own key and version, never inside the `CS1:` code,
-which is in the wild) recording per board: attempts, HP lost, cells opened by hand, cells opened
-outside `safeCells({ useMarks: false })` at that moment (the honest definition of a guess a
-player made), sweeps, casts, deaths and the tier that dealt them, elapsed time, and the dials
-the board was played under (tuned and modified dials kept apart). Local only, exported on request
-as a code the owner can paste and `npm run telemetry` prints as a table, one row a board, beside
-which `sim:human`'s row for the same board says whether a person plays like the graded player.
-This is what calibrates the technique costs and the retune targets once the game has been played.
+`telemetrystore.ts`, the tally in `game/recorder.ts`, decision 0060): a separate store (its own key
+and version, never inside the `CS1:` code, which is in the wild) recording per board: attempts, HP
+lost, cells opened by hand, cells opened outside `safeCells({ useMarks: false })` at that moment
+(the honest definition of a guess a player made), sweeps, casts, deaths and the tier that dealt
+them, elapsed time, and the dials the board was played under (tuned and modified dials kept apart).
+Local only, copied out by the player as a code for a play-test report on GitHub (decision 0085),
+which `npm run telemetry` prints as a table, one row a board, beside which `sim:human`'s row for the
+same board says whether a person plays like the graded player. This is what calibrates the technique
+costs and the retune targets once the game has been played.
 
 ## 9. The steps, and where they stand
 
@@ -316,18 +325,18 @@ This is what calibrates the technique costs and the retune targets once the game
 | 4.4 | The anchors: the Minesweeper board, the stars, the honest comparison | Minesweeper pending |
 | 4.5 | Decide the target per ladder with the owner | decided 26 September 2026, as proposed in section 7 |
 | 4.6 | Retune, one commit per ladder, decision record each | EXTREME and ORACLE done 26 September 2026; HUGE x EXTREME measured on target and left as is; BLIND and HUGE x BLIND done 26 September 2026; the plain ladders measured and left as they are, since only the lock reaches the target (9.1); the shapes and the placement ladders measured 27 September 2026 and left for the same reason (9.1, decision 0058). Every ladder has now been measured against its target |
-| 4.7 | Per-ladder tips and the tricks page | open |
+| 4.7 | Per-ladder tips and the tricks page | superseded by Milestone 5 (`docs/teaching-plan.md`), built 27 September 2026: the field guide, its ladder notes and cards, and the school |
 | 4.8 | Telemetry store and export | done 27 September 2026 (decision 0060): the play statistics, kept per board on the device, exported from the backup screen as a `CST1:` code and read by `npm run telemetry`; since 30 September 2026 the screen links a play-test report on GitHub for the code (decision 0085) |
 | 4.9 | Spending policies and attention in the graded player | spells and attention done 26 September 2026; deferral open |
 | 4.10 | Re-measure against telemetry; revise the costs | after release |
 
 ### 9.1 Baseline, 25 September 2026
 
-Recorded with `npm run sim:human -- 40` on the ladder data of 25 September 2026, and again on
-26 September with the eight ladders merged that day (every earlier figure reproduced exactly):
-every ladder but SUDOKU, its ten tuned boards, 40 seeds each, spell-less, numbers hidden where
-the game hides them, `unsound` 0 throughout. SPRINKLE DONUT's row was measured on its own the
-same day, when it was added (decision 0046). Stuck points, guesses, lethal guesses and HP lost are per board;
+Recorded with `npm run sim:human -- 40` on the ladder data of 25 September 2026, and again on 26
+September with the eight ladders merged that day (every earlier figure reproduced exactly): every
+ladder but SUDOKU, its ten tuned boards, 40 seeds each, spell-less, numbers hidden where the game
+hides them, `unsound` 0 throughout. SPRINKLE DONUT's row was measured on its own the same day, when
+it was added (decision 0046). Stuck points, guesses, lethal guesses and HP lost are per board;
 "need" is the share of boards on which the grade-4 player needed a trick of that grade or above;
 "avail" is the moves on offer per pass above grade 0; "#10" is board 10's clear rate.
 
@@ -386,10 +395,10 @@ What it says, read on the day it was recorded:
   day and left alone: boards 7 to 10 clear 70, 55, 60 and 63% at grade 4 (40 seeds), on the
   target already, since decision 0019 tuned it against the perfect deducer to about where the
   human target sits; board 8's 55% is within the noise of 40 seeds, about eight points. DONUT
-  is the needle ladder: 4.1 moves on offer per pass, two guesses a board, 80% of board 10. Its
-  row is as made round on 26 September 2026 (decision 0045), six density points up to hold the
-  square ring's 95% and 80%; the square ring's row was 1.9 stuck, 3.5 on offer and 174 effort. The honest player finds the round ring harder than the graded
-  player does (68% against 83% before).
+  is the needle ladder: 4.1 moves on offer per pass, two guesses a board, 80% of board 10. Its row
+  is as made round on 26 September 2026 (decision 0045), six density points up to hold the square
+  ring's 95% and 80%; the square ring's row was 1.9 stuck, 3.5 on offer and 174 effort. The honest
+  player finds the round ring harder than the graded player does (68% against 83% before).
 - **The graded player clears more than the honest player where guesses are dear.** EXTREME 80%
   against the honest player's 55%, ORACLE 60% against 48%: it holds a pencil, bounds two
   numbers that overlap, never guesses a cell it has named, and refuses a guess that could kill
@@ -449,14 +458,13 @@ What it says, read on the day it was recorded:
   the target's board-10 figure only at the grade-4 player's expense (93% and 88%, under the 95%
   the target holds it to). And the lock one deeper on boards 8 to 10 does nothing on a board
   whose rule names the tiers for you: CHECKERBOARD 100 / 100 / 100%, PAIRS 100 / 100 / 98%,
-  DOMINOES 98 / 100 / 95%, CONGA LINE 95 / 100 / 95% and PACKS 93 / 98 / 90%, with forced guesses
-  on board 10 up by a third of one (PACKS by 1.2, from 1.3 to 2.5); PATROL is 100% and
-  guess-free either way. The one
-  exception is DUNGEON, a five-tier board with no tier rule, where the lock does what it does
-  everywhere else: 78 / 70 / 55%, six to nine forced guesses a board, one of them lethal. WORKOUT
-  already runs lock 4 from board 4 and Exercise carries a grade-2 player to 98 to 100% even at
-  34% density with six forced guesses on board 10. Nothing was moved. The placement ladders'
-  reward is understanding the rule, and the instrument says that once understood they are
+  DOMINOES 98 / 100 / 95%, CONGA LINE 95 / 100 / 95% and PACKS 93 / 98 / 90%, with forced guesses on
+  board 10 up by a third of one (PACKS by 1.2, from 1.3 to 2.5); PATROL is 100% and guess-free
+  either way. The one exception is DUNGEON, a five-tier board with no tier rule, where the lock does
+  what it does everywhere else: 78 / 70 / 55%, six to nine forced guesses a board, one of them
+  lethal. WORKOUT already runs lock 4 from board 4 and Exercise carries a grade-2 player to 98 to
+  100% even at 34% density with six forced guesses on board 10. Nothing was moved. The placement
+  ladders' reward is understanding the rule, and the instrument says that once understood they are
   clearable; what remains to measure is how often a person misreads the rule, which is
   telemetry (4.8).
 - **The new ladders sit where their curves put them.** PYRAMID's face-up base rows make it as
@@ -474,9 +482,8 @@ What it says, read on the day it was recorded:
   Both rows are as retuned on 26 September 2026 (decisions 0043 and 0044, density 16.5 to 19.7%
   and 16.0 to 19.4% in place of NORMAL's and HUGE's), on a target proposed for the one-mistake
   ladders and open to being moved: 88% and 78% of board 1 falling to 28% and 33% of board 10 at
-  grade 4. Notice what is left once
-  the density is right: a quarter of its boards need a what-if or a count, the highest share of
-  any ladder, because proving a cell empty is all there is.
+  grade 4. Notice what is left once the density is right: a quarter of its boards need a what-if or
+  a count, the highest share of any ladder, because proving a cell empty is all there is.
 
 ## 10. Open questions and known limits
 

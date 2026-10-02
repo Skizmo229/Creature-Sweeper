@@ -5,11 +5,10 @@
 import type { BoardConfig, Cell, Topology, Wrap } from './types.js';
 import { type Grid, neighbours } from './grid.js';
 
+/** A zero-region, as what opening it would uncover. */
 export interface Opening {
   /** Every cell the cascade would uncover: the zero-region plus its fringe. */
   cells: Cell[];
-  /** How many of those are zero cells (the region itself). */
-  zeroCount: number;
 }
 
 /**
@@ -64,30 +63,39 @@ function zeroRegions(grid: Grid, coveredOnly: boolean, topology: Topology, wrap:
       if (seen[y]![x] || !start.present || start.tier !== 0 || start.num !== 0) continue;
       // Beacon wants a region nobody has touched yet, not the one you started on.
       if (coveredOnly && start.open) continue;
-
-      // Flood the 8-connected component of zero cells, collecting its fringe.
-      const region: Cell[] = [];
-      const revealed = new Set<Cell>();
-      const stack: Cell[] = [start];
-      seen[y]![x] = true;
-
-      while (stack.length) {
-        const cell = stack.pop()!;
-        region.push(cell);
-        revealed.add(cell);
-        for (const n of neighbours(grid, cell.x, cell.y, topology, wrap)) {
-          revealed.add(n);
-          if (n.tier === 0 && n.num === 0 && !seen[n.y]![n.x]) {
-            seen[n.y]![n.x] = true;
-            stack.push(n);
-          }
-        }
-      }
-
-      regions.push({ cells: [...revealed], zeroCount: region.length });
+      regions.push({ cells: floodZeroRegion(grid, start, seen, topology, wrap) });
     }
   }
   return regions;
+}
+
+/**
+ * What opening the zero cell `start` would uncover: the zero cells connected to it through
+ * `neighbours()`, each marked in `seen`, and their fringe of numbered cells, in the order the
+ * flood meets them.
+ */
+function floodZeroRegion(
+  grid: Grid,
+  start: Cell,
+  seen: boolean[][],
+  topology: Topology,
+  wrap: Wrap,
+): Cell[] {
+  const revealed = new Set<Cell>();
+  const stack: Cell[] = [start];
+  seen[start.y]![start.x] = true;
+  while (stack.length) {
+    const cell = stack.pop()!;
+    revealed.add(cell);
+    for (const n of neighbours(grid, cell.x, cell.y, topology, wrap)) {
+      revealed.add(n);
+      if (n.tier === 0 && n.num === 0 && !seen[n.y]![n.x]) {
+        seen[n.y]![n.x] = true;
+        stack.push(n);
+      }
+    }
+  }
+  return [...revealed];
 }
 
 /** How many rows the 'base' opening deals face up, counted from the bottom of the box. */
@@ -99,10 +107,10 @@ function baseCells(grid: Grid, rows: number): Cell[] {
 }
 
 /**
- * Fallback for boards with no zero-region at all — unreachable at ladder
- * densities (28,000 simulated boards, zero failures) but possible in Free mode
- * once density climbs past roughly 40%. Pick the safest single cell: lowest
- * number, then most empty neighbours.
+ * The opening for a board with no zero-region at all: the safest single cell, lowest number
+ * first, then most empty neighbours. Rare, but dealt: SPRINKLE DONUT had no zero-region on 23 of
+ * 1,000 deals (100 seeds a board), and every other ladder on none of 200 (20 seeds a board;
+ * measured 1 October 2026).
  */
 function findFallbackOpening(
   grid: Grid,
@@ -132,7 +140,7 @@ export interface OpeningHost {
   readonly grid: Grid;
   readonly config: BoardConfig;
   /** Open one cell without cascading; false if it was already open. */
-  markOpen(cell: Cell): boolean;
+  uncover(cell: Cell): boolean;
   /** Uncover a cell, cascading through blanks; the cells opened. */
   reveal(start: Cell): Array<{ x: number; y: number }>;
   /** Write a mark, keeping the per-tier counters honest. */
@@ -167,7 +175,7 @@ function openLargest(host: OpeningHost): void {
   const { grid, config } = host;
   const best = findBestOpening(grid, false, config.topology, config.wrap);
   if (best) {
-    for (const cell of best.cells) host.markOpen(cell);
+    for (const cell of best.cells) host.uncover(cell);
     return;
   }
   const fallback = findFallbackOpening(grid, config.topology, config.wrap);
@@ -184,7 +192,7 @@ function openLargest(host: OpeningHost): void {
 function openEveryEmpty(host: OpeningHost): void {
   for (const row of host.grid) {
     for (const cell of row) {
-      if (cell.present && cell.tier === 0) host.markOpen(cell);
+      if (cell.present && cell.tier === 0) host.uncover(cell);
     }
   }
 }
@@ -200,7 +208,7 @@ function openIslands(host: OpeningHost): void {
     openLargest(host);
     return;
   }
-  for (const island of islands) for (const cell of island.cells) host.markOpen(cell);
+  for (const island of islands) for (const cell of island.cells) host.uncover(cell);
 }
 
 /**

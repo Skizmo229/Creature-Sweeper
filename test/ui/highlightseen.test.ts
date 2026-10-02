@@ -8,13 +8,13 @@
 import './setup.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Game } from '../../src/engine/game.js';
-import { App } from '../../src/ui/app.js';
 import { type BoardDisplay, BoardView, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { themeFor } from '../../src/ui/looks.js';
 import { HIGHLIGHT_NAMES, type HighlightStyle } from '../../src/ui/presentation.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
-import { MARK_COLOR, OUT_OF_REACH_COLOR } from '../../src/ui/theme.js';
+import { MARK_COLOR, REFUSAL_COLOR } from '../../src/ui/theme.js';
+import { mountApp, settingsRow } from './driver.js';
 
 /** Every `stroke()` on a canvas made while this runs: its colour and its width. */
 function recordStrokes(): { strokes: { color: string; width: number }[]; stop: () => void } {
@@ -74,7 +74,7 @@ function lit(
   const boxes = recording.strokes.filter((s) => s.color === MARK_COLOR);
   return {
     boxes: boxes.length,
-    crosses: recording.strokes.filter((s) => s.color === OUT_OF_REACH_COLOR).length,
+    crosses: recording.strokes.filter((s) => s.color === REFUSAL_COLOR).length,
     widths: [...new Set(boxes.map((s) => s.width))],
   };
 }
@@ -96,24 +96,13 @@ describe('the seen highlight', () => {
 
 describe('the settings', () => {
   it('offer the shape and the thickness, and read a save without a thickness as 2', () => {
-    localStorage.clear();
-    document.body.innerHTML = '<div id="app"></div>';
-    const app = new App(document.getElementById('app')!) as unknown as {
-      showSettings(back: () => void): void;
-      showTypes(): void;
-      settings: Settings;
-    };
+    const app = mountApp();
     app.showSettings(() => app.showTypes());
-    const rows = [...document.querySelectorAll<HTMLElement>('.settings-row')];
-    const shape = rows.find(
-      (r) => r.querySelector('.settings-name')?.textContent === '3×3 cursor highlight',
-    )!;
+    const shape = settingsRow('3×3 cursor highlight');
     expect([...shape.querySelectorAll('.chip-label')].map((l) => l.textContent)).toContain(
       HIGHLIGHT_NAMES.seen,
     );
-    const width = rows.find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Cursor highlight thickness',
-    )!;
+    const width = settingsRow('Cursor highlight thickness');
     const input = width.querySelector<HTMLInputElement>('input[type=range]')!;
     expect(input.value).toBe('2');
     input.value = '3';

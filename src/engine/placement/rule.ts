@@ -56,6 +56,7 @@ export interface Pools {
   forTier(tier: number): string;
 }
 
+/** A placement rule: everything the engine, the renderer and the instruments ask of one. */
 export interface PlacementRule {
   readonly id: Placement;
   /**
@@ -118,7 +119,7 @@ export interface PlacementRule {
   /** What the renderer draws for the rule. */
   readonly display: PlacementDisplay;
 
-  /** Where each tier may stand by position alone, for a reader that counts capacity (the solver). */
+  /** Where each tier may stand by position alone, for a reader counting capacity (the solver). */
   readonly pools: Pools;
   /**
    * The groups the rule's creatures stand in, for a reader that reasons about a group beyond the
@@ -181,9 +182,10 @@ export type RingProof = (cell: Cell, ring: readonly Cell[]) => boolean;
 /** The rules whose pencil offers every tier on every cell: they say nothing about a cell. */
 export const NO_CANDIDATES = (): null => null;
 
-/** The rules with no whole-ring proof and nothing proven empty. */
+/** The rules with no whole-ring proof. */
 export const NO_RING_PROOF = (): null => null;
 const NONE: ReadonlySet<Cell> = new Set();
+/** The rules that prove no covered cell empty. */
 export const NOTHING_EMPTIED = (): ReadonlySet<Cell> => NONE;
 /** The cap without a rule that bounds one cell: the whole hidden sum. */
 export const WHOLE_SUM = (_cell: Cell, hidden: number): number => hidden;
@@ -191,4 +193,37 @@ export const WHOLE_SUM = (_cell: Cell, hidden: number): number => hidden;
 /** `${typeId}#${n}`, the way every config message names a board. */
 export function boardName(row: PlacementRow): string {
   return `${row.typeId}#${row.n}`;
+}
+
+/**
+ * Refuse a row asking for `creatures` on its cells at a density past `ceiling`, the share the
+ * rule's lay-down lands reliably: the quota must land exactly, because C_k assumed it. The message
+ * names the board, the density and the ceiling, to `digits` decimals, and ends with `what`.
+ */
+export function refuseDensity(
+  row: PlacementRow,
+  creatures: number,
+  ceiling: number,
+  what: string,
+  digits = 0,
+): void {
+  const share = creatures / row.cells;
+  if (share > ceiling) {
+    throw new Error(
+      `${boardName(row)}: ${creatures} creatures on ${row.cells} cells is ` +
+        `${(100 * share).toFixed(1)}%, past the ${(100 * ceiling).toFixed(digits)}% ${what}`,
+    );
+  }
+}
+
+/**
+ * Refuse a row of `total` creatures that cannot pair up, on a rule where every creature has a
+ * partner. `why` is the message's reason that the total must be even.
+ */
+export function refuseOddTotal(row: PlacementRow, total: number, why: string): void {
+  if (total % 2 !== 0) {
+    throw new Error(
+      `${boardName(row)}: ${total} creatures cannot pair up — ${why}, so the total must be even`,
+    );
+  }
 }

@@ -50,11 +50,10 @@ export type LadderOwn = Partial<PresentationSettings>;
  * cannot read is the default, as it is for every ladder. Ladders this build's data lacks are
  * kept, as an unknown icon is.
  *
- * `shared` is the presentation for every ladder, already read. A ladder can choose its own tier
- * colours but not own the palette they are mixed from: `customTierColors` is not in
- * `LADDER_SCOPED`, so the store keeps the palette on the shared record alone. Read on its own, a
- * ladder's `custom` would have no palette beside it and fall to the game's own colours; read
- * against the shared palette it stays the choice the player made.
+ * `shared` is the presentation for every ladder, already read. Its `customTierColors` is the
+ * fallback for a save whose ladder chose `custom` without a palette of its own: read alone, that
+ * choice would have no palette beside it and fall to the game's own colours; read against the
+ * shared palette it stays the choice the player made.
  */
 export function readLadderOwn(
   raw: unknown,

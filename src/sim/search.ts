@@ -6,28 +6,32 @@
 
 import type { Cell } from '../engine/types.js';
 import type { Pools } from '../engine/placement/rule.js';
+import { highestTier, isSingle, lowestTier } from './masks.js';
 
-export interface Constraint {
+/** One open number as a sum: the variables behind it (indices into `Model.vars`) make `target`. */
+export interface ExactSum {
   readonly vars: number[];
   readonly target: number;
 }
 
+/** What is on screen, as a system of sums over the covered cells; `solver.ts` builds it. */
 export interface Model {
   readonly tiers: number;
-  /** Covered cells some number touches. */
+  /** Covered cells some number touches: the variables, by index. */
   readonly vars: Cell[];
+  /** What each variable could hold, as a tier mask (bit 0 for empty ground). */
   readonly dom: number[];
-  readonly cons: Constraint[];
+  /** Every open number with a covered neighbour, as a sum over the variables. */
+  readonly cons: ExactSum[];
+  /** For each variable, the indices into `cons` of the sums it is in. */
   readonly consOf: number[][];
   /** Creatures of each tier still unaccounted for; index 0 unused. */
   readonly remaining: number[];
-  /** Covered cells no number touches, and what each could hold. */
+  /** Covered cells no number touches. */
   readonly interior: Cell[];
+  /** What each interior cell could hold, as a tier mask, in `interior`'s order. */
   readonly interiorDom: number[];
 }
-
-export const lowest = (m: number): number => 31 - Math.clz32(m & -m);
-export const highest = (m: number): number => 31 - Math.clz32(m);
 
 /**
  * A sum over some cells that must land in [lo, hi]. Exact on the board. A range
@@ -42,12 +46,11 @@ export interface Sum {
   readonly hi: number;
 }
 
+/** One question's variables and the sums over them: a piece of the frontier, or a window. */
 export interface Problem {
   readonly members: number[];
   readonly sums: Sum[];
 }
-
-const single = (d: number): boolean => (d & (d - 1)) === 0;
 
 /**
  * The search state every question asked of one board shares, and the search itself: bounds
@@ -56,7 +59,8 @@ const single = (d: number): boolean => (d & (d - 1)) === 0;
 export class Search {
   /** Each variable's current domain, as a tier mask. */
   readonly cur: Int32Array;
-  readonly counts: Int32Array;
+  /** Creatures of each tier the layout in hand places. */
+  private readonly counts: Int32Array;
   /** Every value a layout found so far has given each variable. */
   readonly seen: Int32Array;
   /** Tiers some layout of the frontier has left over for the interior. */
@@ -112,10 +116,12 @@ export class Search {
     this.need = new Array<number>(poolIds.size);
   }
 
+  /** Creatures of tier `t` the layout in hand does not place, so left for the interior. */
   leftover(t: number): number {
     return this.model.remaining[t]! - this.counts[t]!;
   }
 
+  /** Whether the interior has room, pool by pool, for every creature the layout leaves over. */
   interiorFits(): boolean {
     const { need, tierPool, capacity } = this;
     need.fill(0);
@@ -132,23 +138,23 @@ export class Search {
 
   /**
    * Is there a layout of `p` within domains `d`? True leaves it in `cur`; null
-   * means the budget ran out first. `bold` has each cell not yet shown
-   * dangerous try its dangerous values first, so one layout settles as many as
-   * it can — worth it in a small window, ruinous across a whole piece, where
-   * the ordinary lowest-first order finds a layout far faster.
+   * means the budget (`limit`, the whole budget by default) ran out first.
+   * `bold` has each cell not yet shown dangerous try its dangerous values
+   * first, so one layout settles as many as it can — worth it in a small
+   * window, ruinous across a whole piece, where the ordinary lowest-first
+   * order finds a layout far faster.
    */
   feasible(
     p: Problem,
     d: ArrayLike<number>,
     start: number,
     leaf: (() => boolean) | null,
-    bold = false,
-    limit = this.budget,
+    options: { readonly bold?: boolean; readonly limit?: number } = {},
   ): boolean | null {
     this.prepare(p, d);
     this.leaf = leaf;
-    this.bold = bold;
-    this.limit = limit;
+    this.bold = options.bold ?? false;
+    this.limit = options.limit ?? this.budget;
     for (let i = 0; i < this.sums.length; i++) this.enqueue(i);
     if (!this.settle()) return false;
     if (!this.members.length) {
@@ -160,12 +166,16 @@ export class Search {
     return this.dfs(0);
   }
 
+  /**
+   * Keep the layout `feasible` just found for `p` as a witness: every value it gave each variable,
+   * and in a joint search the tiers it leaves for the interior.
+   */
   record(p: Problem): void {
     const { cur, seen, counts } = this;
     for (const w of p.members) seen[w]! |= cur[w]!;
     if (!this.joint) return;
     counts.fill(0);
-    for (const w of p.members) if (cur[w]! > 1) counts[lowest(cur[w]!)]!++;
+    for (const w of p.members) if (cur[w]! > 1) counts[lowestTier(cur[w]!)]!++;
     for (let t = 1; t <= this.model.tiers; t++)
       if (this.leftover(t) > 0) this.interiorSeen |= 1 << t;
   }
@@ -237,8 +247,8 @@ export class Search {
       let lo = 0;
       let hi = 0;
       for (const w of s.vars) {
-        lo += lowest(cur[w]!);
-        hi += highest(cur[w]!);
+        lo += lowestTier(cur[w]!);
+        hi += highestTier(cur[w]!);
       }
       if (s.hi < lo || s.lo > hi) {
         this.flush();
@@ -246,9 +256,9 @@ export class Search {
       }
       for (const w of s.vars) {
         const m = cur[w]!;
-        if (single(m)) continue;
-        const wl = lowest(m);
-        const wh = highest(m);
+        if (isSingle(m)) continue;
+        const wl = lowestTier(m);
+        const wh = highestTier(m);
         const min = s.lo - (hi - wh);
         const max = s.hi - (lo - wl);
         if (min <= wl && max >= wh) continue;
@@ -267,7 +277,7 @@ export class Search {
     this.counts.fill(0);
     for (const w of this.members) {
       const m = this.cur[w]!;
-      if (single(m) && m > 1) this.counts[lowest(m)]!++;
+      if (isSingle(m) && m > 1) this.counts[lowestTier(m)]!++;
     }
   }
 
@@ -285,7 +295,7 @@ export class Search {
     if (!spent) return true;
     for (const w of this.members) {
       const m = cur[w]!;
-      if (single(m) || !(m & spent)) continue;
+      if (isSingle(m) || !(m & spent)) continue;
       const nd = m & ~spent;
       if (!nd) return false;
       this.narrow(w, nd);
@@ -327,7 +337,7 @@ export class Search {
   private dfs(from: number): boolean | null {
     const { order, cur } = this;
     let i = from;
-    while (i < order.length && single(cur[order[i]!]!)) i++;
+    while (i < order.length && isSingle(cur[order[i]!]!)) i++;
     if (i === order.length) {
       if (!this.leaf) return true;
       this.countAll();

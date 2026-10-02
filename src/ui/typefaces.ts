@@ -1,7 +1,7 @@
 /**
- * The bundled faces, and which ladder wears which.
+ * The bundled faces, and the kind of face each is; which ladder wears which is in `looks.ts`.
  *
- * Kept apart from `theme.ts` because that file draws creatures on a canvas,
+ * Kept apart from `creature.ts` because that file draws creatures on a canvas,
  * and the test pass compiles with no DOM at all — the same reason `preview.ts`
  * builds boards and renders nothing. Everything here is data, so
  * `test/fonts.test.ts` can hold the table, the CSS that loads it, the files
@@ -13,7 +13,7 @@
  * that no ladder wears, one chosen for nothing but legibility and one for the
  * arcade.
  *
- * All bundled (`fonts.css`), because twenty-four distinct faces cannot come
+ * All bundled (`fonts.css`), because this many distinct faces cannot come
  * from what happens to be installed — the system stacks this replaced looked
  * different on every machine, and one of them (Georgia) set its 3, 4, 5, 7 and
  * 9 below the line, so a board of numbers jumped about. Every face here has
@@ -54,6 +54,7 @@ export type FontId =
   | 'press-start-2p'
   | 'courier-prime';
 
+/** A bundled face, and what the board and the interface need to draw in it. */
 export interface GameFont {
   /** The face's own name, as the picker shows it. */
   name: string;
@@ -171,6 +172,7 @@ export const FONTS: Record<FontId, GameFont> = {
   'courier-prime': { name: 'Courier Prime', stack: `"Courier Prime", ${MONO}`, weight: 700 },
 };
 
+/** Every face's id, in `FONTS`'s order. */
 export const FONT_IDS = Object.keys(FONTS) as FontId[];
 
 /** What kind of face each is, for the font windows' Style order. */
@@ -258,10 +260,10 @@ const LEGACY_FONTS: Record<string, FontId> = {
 
 /** A saved font choice, with the retired ids mapped onto their successors. */
 export function migrateFontChoice(saved: string): string {
-  return LEGACY_FONTS[saved] ?? saved;
+  return Object.hasOwn(LEGACY_FONTS, saved) ? LEGACY_FONTS[saved]! : saved;
 }
 
 /** A font by id, or the baseline face for an id this build does not know. */
 export function fontFor(id: string): GameFont {
-  return FONTS[id as FontId] ?? FONTS['jetbrains-mono'];
+  return Object.hasOwn(FONTS, id) ? FONTS[id as FontId] : FONTS['jetbrains-mono'];
 }

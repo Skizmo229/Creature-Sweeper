@@ -104,7 +104,8 @@ and the two test lists that pin the ladder set.
    player then walks (`src/sim/scaffold.ts`).
 3. `ladders.py`: `shape_present` / `shape_cells` carry a copy of the predicate so the generator
    can apportion creatures; the test `agrees with the ladder generator on how many cells a shape
-   leaves` guards the two copies.
+   leaves` guards the two copies. A seeded shape goes in `SEEDED_SHAPES` there instead and takes a
+   `cells` schedule in its ladder; `load_types` refuses either without the other.
 4. Connectivity must be asserted: the opening reveals one region.
 5. The continuation refuses a candidate whose `C_k` went backwards; check the shape's cell count
    is monotone in the box, or the ladder stops early.
@@ -117,7 +118,8 @@ and the two test lists that pin the ladder set.
 1. A `[[type]]` in `design/ladder_types.toml`: id, name, tint, archetype, axis, blurb, and the
    ten-element schedules (the schema is written at the top of the file and enforced on load).
    Then its place in `CATEGORIES` in `design/ladders.py`, which files it under one of the menu's
-   four columns and sets where in the column it sits. Regenerate `ladders.json`.
+   four columns and sets where in the column it sits; the TOML's blocks follow the same order.
+   Regenerate `ladders.json`.
 2. An unlock: a place in its `CATEGORIES` column puts it on the counted schedule, which opens
    one ladder per column every five boards (decision 0036); a ladder that combines two others
    takes `requires` in `UNLOCKS` instead. `test/unlocks.test.ts` fails if a save can be stranded.
@@ -153,19 +155,21 @@ and the two test lists that pin the ladder set.
 
 ## Adding a presentation setting
 
-1. `PresentationSettings`, its default and its reader in `src/ui/presentation.ts` (the reader ignores
-   unknown keys, so old saves need no migration; a retired setting can simply go). If a ladder
-   may have it of its own, its key goes in `LADDER_SCOPED` too (decision 0070), and every row
-   that saves it writes through `ctx.set` or `ctx.pick`, which know the scope.
-2. A row in `src/ui/settingsscreen/` (`look.ts` for a setting that is drawn, `effects.ts` for one
-   that plays itself), called from `screen.ts`, as a gallery of real boards where the setting is
-   visual, with any "game type default" option naming what it resolves to. An example board is
-   drawn at `ctx.chipCell` (or `ctx.demoCell`), never at `CHIP_CELL` itself, so the preview size
-   reaches it.
-3. `BoardDisplay` in `src/ui/board/view.ts` if the renderer reads it, and `App.boardDisplay`.
+1. `PresentationSettings`, its default and its reader in `src/ui/presentation.ts` (the reader
+   ignores unknown keys, so old saves need no migration; a retired setting can simply go). If a
+   ladder may have it of its own, its key goes in `LADDER_SCOPED` too (decision 0070), and every
+   row that saves it writes through `ctx.set` or `ctx.pick`, which know the scope.
+2. A row in `src/ui/settingsscreen/` (`look.ts` or `board.ts` for a setting that is drawn,
+   `effects.ts` for one that plays itself, `interface.ts` for the page around the board), listed in
+   `PRESENTATION_ROWS` in `screen.ts` if it is a Presentation row, as a gallery of real boards where
+   the setting is visual, with any "game type default" option naming what it resolves to. An
+   example board is drawn at `ctx.chipCell` (or `ctx.demoCell`), never at `CHIP_CELL` itself, so
+   the preview size reaches it.
+3. `BoardDisplay` in `src/ui/board/view.ts` if the renderer reads it, and `boardDisplayFor` in
+   `src/ui/dress.ts`, which the game and the settings screen's examples both read it through.
 4. `test/preview.test.ts` if it has an example board.
 
-## Adding a trick to the graded player (4 files, 5 with a golden re-record)
+## Adding a trick to the graded player (6 files, 7 with a golden re-record)
 
 The graded player (`src/sim/graded.ts`) plays with the tricks of `docs/strategies.md`, one
 technique per entry, so a new trick is an entry there first and a function second.
@@ -178,11 +182,15 @@ technique per entry, so a new trick is an entry there first and a function secon
    name; a beaten creature's number only where `numberVisible` says so. It proposes moves and
    never touches the game. Concluding a cell with `settle` keeps the three outcomes (open, name,
    narrow) consistent with the level.
-3. **The tests.** `test/graded.test.ts` already holds every trick to soundness on every kind of
+3. **Its words.** Its entry in `TRICK_TEXT` (`src/sim/tricktext.ts`), what it is called and what
+   it says in the tutor, the school and the guide, and its caption in `CAPTIONS`
+   (`src/sim/captions.ts`), the proof in a sentence with its numbers filled in. Both are keyed by
+   `TrickId`, so the compiler asks for them too.
+4. **The tests.** `test/graded.test.ts` already holds every trick to soundness on every kind of
    board (`unsound` and `trickDamage` must be 0) and to firing somewhere; a trick the cheaper
    reads usually pre-empt gets a direct test, as the line's ends have.
-4. **The plan.** Its row in the technique table of `docs/human-tuning-plan.md`, section 3.
-5. **The golden run.** `human-normal` fixes the printout of `npm run sim:human -- 3 normal`; a
+5. **The plan.** Its row in the technique table of `docs/human-tuning-plan.md`, section 3.
+6. **The golden run.** `human-normal` fixes the printout of `npm run sim:human -- 3 normal`; a
    trick that changes what a NORMAL board demands re-records it, and the commit says so.
 
 ## Adding creature-icon symbols, and a font to draw them

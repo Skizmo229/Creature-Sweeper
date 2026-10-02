@@ -6,44 +6,7 @@ import { type Rng, randInt } from '../rng.js';
 import { type Mask, blankMask, countPresent } from '../grid.js';
 import { type ShapeRule, refuseHexAndWrap } from './rule.js';
 
-/**
- * The ragged cave: a blob of caverns and passages, seeded, and built from
- * exactly the cells the ladder budgeted for it.
- *
- * Why exact, and why that is the whole trick. Every level threshold on a board
- * derives from C_k, the total EXP its creatures are worth, which needs the
- * creature quota fixed before the board exists — and the quota is a density
- * applied to the cells the shape leaves. A mask whose size wobbled with the
- * seed would move C_k with it, so the thresholds in `ladders.json` would be
- * right for one seed and wrong for the rest. That is the reason a ragged cave
- * sat deferred: not the carving, the counting.
- *
- * Pinning the count settles it. `shapeParam` IS the cell count, the generator
- * is required to land on it, and everything upstream — quota, C_k, thresholds,
- * the zero-damage guarantee — carries over from the fixed shapes untouched.
- * `ladders.py` needs no copy of this algorithm either; it records the number it
- * asked for.
- *
- * Nothing is ever carved away. The cave is *grown*: a budget of cells is laid
- * down two-by-two until it runs out, so the count only ever climbs to the
- * target and the last cell placed is the last cell there is. The earlier
- * version generated a noise field and trimmed it down, which hit the same
- * number but read differently — trimming pares a cave back from its rims, and
- * where it stops is a subtraction rather than a shape. Growing puts every cell
- * somewhere on purpose.
- *
- * Two-by-two is also the only way to promise a minimum width. Every cell
- * arrives as one corner of a 2x2 square laid down whole, and nothing is ever
- * removed, so every cell stays inside a full 2x2 square forever: there is no
- * passage one cell wide anywhere on the board, and no way for one to appear
- * later. Corner-to-corner touches are refused for the same reason — two lobes
- * meeting at a point are a gap you could squeeze through but never walk down.
- *
- * The shape comes from the space it is grown into rather than from the growth:
- * a rim that wanders in from the inscribed ellipse, with caverns punched out
- * of the inside before a single cell is placed. Growth then fills what is
- * left, and stops short of filling it, so the leftovers fray the edges of both.
- */
+/** Cells of the bounding box kept clear all round. */
 const CAVE_MARGIN = 1;
 /** How far the rim may wander in from the inscribed ellipse, as a fraction. */
 const CAVE_RIM_WOBBLE = 0.22;
@@ -89,6 +52,17 @@ function rimLimit(rng: Rng): (angle: number) => number {
 }
 
 /**
+ * How far out a point is on the rim's superellipse, its offsets from the centre given as shares of
+ * the semi-axes: 1 on the unwobbled rim, less inside it.
+ */
+function rimRadius(dx: number, dy: number): number {
+  return (Math.abs(dx) ** CAVE_RIM_POWER + Math.abs(dy) ** CAVE_RIM_POWER) ** (1 / CAVE_RIM_POWER);
+}
+
+/** How much more room than its target the cave is grown into, as a fraction (`caveSpace`). */
+const CAVE_SLACK = 0.08;
+
+/**
  * Where the cave is allowed to be: inside the rim, outside the caverns.
  *
  * Punching the caverns out first is what stops growth from settling into a
@@ -97,18 +71,14 @@ function rimLimit(rng: Rng): (angle: number) => number {
  * between them.
  *
  * Each cavern is kept only if the cave still fits around it. That one test
- * does two jobs. It keeps a cavern from cutting the blob in half — which is
- * how the first version of this went wrong, growing a neat little island in
- * whichever piece the seed landed in while the rest of the board sat empty —
- * and it means growth cannot fail for want of room, because the space was
- * measured against the budget before a single cell was laid.
+ * does two jobs. It keeps a cavern from cutting the blob in half (decision
+ * 0002), and it means growth cannot fail for want of room, because the space
+ * was measured against the budget before a single cell was laid.
  *
- * The slack left over is where the raggedness comes from: the cave is grown
- * into a space slightly bigger than itself, so it stops a little short of the
- * walls, in different places every seed.
+ * The slack, `CAVE_SLACK`, is where the raggedness comes from: the cave is
+ * grown into a space slightly bigger than itself, so it stops a little short
+ * of the walls, in different places every seed.
  */
-const CAVE_SLACK = 0.08;
-
 function caveSpace(w: number, h: number, target: number, rng: Rng): Mask {
   const space = blankMask(w, h);
   const cx = (w - 1) / 2;
@@ -121,9 +91,7 @@ function caveSpace(w: number, h: number, target: number, rng: Rng): Mask {
     for (let x = 0; x < w; x++) {
       const dx = (x - cx) / a;
       const dy = (y - cy) / b;
-      const r =
-        (Math.abs(dx) ** CAVE_RIM_POWER + Math.abs(dy) ** CAVE_RIM_POWER) ** (1 / CAVE_RIM_POWER);
-      if (r <= limit(Math.atan2(dy, dx))) space[y]![x] = true;
+      if (rimRadius(dx, dy) <= limit(Math.atan2(dy, dx))) space[y]![x] = true;
     }
   }
 
@@ -133,11 +101,7 @@ function caveSpace(w: number, h: number, target: number, rng: Rng): Mask {
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       if (!space[y]![x]) continue;
-      const dx = (x - cx) / a;
-      const dy = (y - cy) / b;
-      const r =
-        (Math.abs(dx) ** CAVE_RIM_POWER + Math.abs(dy) ** CAVE_RIM_POWER) ** (1 / CAVE_RIM_POWER);
-      if (r <= CAVE_VOID_REACH) inner.push(y * w + x);
+      if (rimRadius((x - cx) / a, (y - cy) / b) <= CAVE_VOID_REACH) inner.push(y * w + x);
     }
   }
   if (!inner.length) return space;
@@ -267,13 +231,67 @@ function cornerTouch(placed: Mask, w: number, h: number, ox: number, oy: number)
 }
 
 /** Cells this square would add that are not already there. */
-function stampGain(placed: Mask, w: number, ox: number, oy: number): number {
+function stampGain(placed: Mask, ox: number, oy: number): number {
   let n = 0;
   for (let dy = 0; dy <= 1; dy++)
     for (let dx = 0; dx <= 1; dx++) {
       if (!placed[oy + dy]![ox + dx]) n++;
     }
   return n;
+}
+
+/**
+ * Where growth starts: a square drawn from the eighth of the chamber's squares nearest its middle,
+ * so growth can spread every way at once rather than crawling out from a wall.
+ */
+function centralOrigin(origins: readonly number[], w: number, rng: Rng): number {
+  let sumX = 0;
+  let sumY = 0;
+  for (const idx of origins) {
+    sumX += idx % w;
+    sumY += (idx - (idx % w)) / w;
+  }
+  const midX = sumX / origins.length;
+  const midY = sumY / origins.length;
+  const central = [...origins].sort((p, q) => {
+    const px = p % w;
+    const qx = q % w;
+    return (
+      (px - midX) ** 2 +
+      ((p - px) / w - midY) ** 2 -
+      ((qx - midX) ** 2 + ((q - qx) / w - midY) ** 2)
+    );
+  });
+  return central[randInt(rng, Math.max(1, Math.floor(central.length / 8)))]!;
+}
+
+/**
+ * Sweep the whole frontier for the square that adds the most within `budget` without a corner
+ * touch, the first on a tie, or -1 for none; and the frontier less the squares with nothing left
+ * to give, dropped while we are here.
+ */
+function biggestFittingStamp(
+  frontier: readonly number[],
+  placed: Mask,
+  w: number,
+  h: number,
+  budget: number,
+): { chosen: number; live: number[] } {
+  const live: number[] = [];
+  let chosen = -1;
+  let bestGain = 0;
+  for (const idx of frontier) {
+    const ox = idx % w;
+    const oy = (idx - ox) / w;
+    const gain = stampGain(placed, ox, oy);
+    if (gain === 0) continue;
+    live.push(idx);
+    if (gain > bestGain && gain <= budget && !cornerTouch(placed, w, h, ox, oy)) {
+      chosen = idx;
+      bestGain = gain;
+    }
+  }
+  return { chosen, live };
 }
 
 /**
@@ -291,27 +309,7 @@ function growCave(space: Mask, w: number, h: number, target: number, rng: Rng): 
     throw new Error(`cave ${w}x${h}: chamber holds ${room.cells}, needs ${target}`);
   }
   const usable = new Set(room.origins);
-
-  // Start near the middle of the chamber so growth can spread every way at
-  // once rather than crawling out from a wall.
-  let sumX = 0;
-  let sumY = 0;
-  for (const idx of room.origins) {
-    sumX += idx % w;
-    sumY += (idx - (idx % w)) / w;
-  }
-  const midX = sumX / room.origins.length;
-  const midY = sumY / room.origins.length;
-  const central = [...room.origins].sort((p, q) => {
-    const px = p % w;
-    const qx = q % w;
-    return (
-      (px - midX) ** 2 +
-      ((p - px) / w - midY) ** 2 -
-      ((qx - midX) ** 2 + ((q - qx) / w - midY) ** 2)
-    );
-  });
-  const seed = central[randInt(rng, Math.max(1, Math.floor(central.length / 8)))]!;
+  const seed = centralOrigin(room.origins, w, rng);
 
   const placed = blankMask(w, h);
   let count = 0;
@@ -341,7 +339,7 @@ function growCave(space: Mask, w: number, h: number, target: number, rng: Rng): 
   const fits = (idx: number, budget: number): boolean => {
     const ox = idx % w;
     const oy = (idx - ox) / w;
-    const gain = stampGain(placed, w, ox, oy);
+    const gain = stampGain(placed, ox, oy);
     return gain >= 1 && gain <= budget && !cornerTouch(placed, w, h, ox, oy);
   };
 
@@ -359,22 +357,9 @@ function growCave(space: Mask, w: number, h: number, target: number, rng: Rng): 
     }
 
     if (chosen < 0) {
-      // Sweep the whole frontier, take the biggest that fits, and drop the
-      // squares that have nothing left to give while we are here.
-      const live: number[] = [];
-      let bestGain = 0;
-      for (const idx of frontier) {
-        const ox = idx % w;
-        const oy = (idx - ox) / w;
-        const gain = stampGain(placed, w, ox, oy);
-        if (gain === 0) continue;
-        live.push(idx);
-        if (gain > bestGain && gain <= budget && !cornerTouch(placed, w, h, ox, oy)) {
-          chosen = idx;
-          bestGain = gain;
-        }
-      }
-      frontier = live;
+      const swept = biggestFittingStamp(frontier, placed, w, h, budget);
+      chosen = swept.chosen;
+      frontier = swept.live;
     }
 
     if (chosen < 0) {
@@ -385,6 +370,37 @@ function growCave(space: Mask, w: number, h: number, target: number, rng: Rng): 
   return placed;
 }
 
+/**
+ * The ragged cave: a blob of caverns and passages, seeded, and built from
+ * exactly the `target` cells the ladder budgeted for it.
+ *
+ * Why exact, and why that is the whole trick. Every level threshold on a board
+ * derives from C_k, the total EXP its creatures are worth, which needs the
+ * creature quota fixed before the board exists — and the quota is a density
+ * applied to the cells the shape leaves. A mask whose size wobbled with the
+ * seed would move C_k with it, so the thresholds in `ladders.json` would be
+ * right for one seed and wrong for the rest. Pinning the count settles it.
+ * `shapeParam` IS the cell count, the generator is required to land on it, and
+ * everything upstream — quota, C_k, thresholds, the zero-damage guarantee —
+ * carries over from the fixed shapes untouched. `ladders.py` needs no copy of
+ * this algorithm; it records the number it asked for.
+ *
+ * Nothing is ever carved away (decision 0002). The cave is *grown*: a budget
+ * of cells is laid down two-by-two until it runs out, so the count only ever
+ * climbs to the target and every cell is put somewhere on purpose. Two-by-two
+ * is also the only way to promise a minimum width: every cell arrives as one
+ * corner of a 2x2 square laid down whole, and nothing is ever removed, so
+ * there is no passage one cell wide anywhere on the board, and no way for one
+ * to appear later. Corner-to-corner touches are refused for the same reason —
+ * two lobes meeting at a point are a gap you could squeeze through but never
+ * walk down.
+ *
+ * The shape comes from the space it is grown into (`caveSpace`) rather than
+ * from the growth: a rim that wanders in from the inscribed ellipse, with
+ * caverns punched out of the inside before a single cell is placed. Growth
+ * then fills what is left, and stops short of filling it, so the leftovers
+ * fray the edges of both.
+ */
 function caveMask(w: number, h: number, target: number, rng: Rng): Mask {
   const usable = (w - 2 * CAVE_MARGIN) * (h - 2 * CAVE_MARGIN);
   if (target > usable) {

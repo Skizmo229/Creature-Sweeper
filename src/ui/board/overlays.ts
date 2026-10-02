@@ -1,41 +1,43 @@
 /**
  * What is drawn over or around the cells: the ghost band beyond a wrapped edge, the board's
- * silhouette, the placement rule's box rules and bonds, the wrap seams, and the
- * cursor highlight. Each is its own pass over the finished board, because a cell drawn later would
- * paint over its neighbour's half of a shared line.
+ * silhouette, the placement rule's box rules and bonds, the wrap seams, the tutor's pointer and
+ * the cursor highlight. Each is its own pass over the finished board, because a cell drawn later
+ * would paint over its neighbour's half of a shared line.
  */
 
+import type { Game } from '../../engine/game.js';
+import { noteTiers } from '../../engine/notes.js';
 import { placementRule } from '../../engine/placement/registry.js';
 import type { Cell } from '../../engine/types.js';
 import type { Lesson } from '../../sim/tutor.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
-import type { HighlightStyle } from '../presentation.js';
+import { DEFAULT_HIGHLIGHT_WIDTH, type HighlightStyle } from '../presentation.js';
 import {
+  ANNOTATION_OUTLINE,
   BOARD_OUTLINE,
   BOND_COLOR,
   BOX_RULE,
-  MARK_OUTLINE,
-  OUT_OF_REACH_COLOR,
+  REFUSAL_COLOR,
   TUTOR_COLOR,
 } from '../theme.js';
 import { tierColor } from '../tiercolors.js';
-import { setNumberFont } from './digits.js';
 import {
   GHOST_CELLS,
   HEX_EDGE_DIRS,
   SQUARE_EDGE_DIRS,
   centreOf,
-  contentBox,
   squareCorners,
   wrapPeriod,
 } from './geometry.js';
 import {
+  MARK_SCALE,
   type Paint,
   TILE_INSET,
   drawCovered,
   drawOpen,
   showsBeatenNumber,
   tracePath,
+  writeOnCell,
 } from './paint.js';
 
 /**
@@ -320,10 +322,10 @@ export function drawSeams(p: Paint): void {
 export const REACH_SHADE = 'rgba(0, 0, 0, 0.45)';
 
 /**
- * Darken every covered cell the crawl rule keeps out of reach (DUNGEON, PETRI DISH) when the
- * player has asked: the rule made visible, where the cursor shows it one cell at a time. It reads
- * nothing but the geometry the rule reads, so it exposes nothing; a sealed-in board is entirely in
- * reach and draws no shade.
+ * Darken every covered cell the crawl rule keeps out of reach, on a ladder with a crawl rule, when
+ * the player has asked: the rule made visible, where the cursor shows it one cell at a time. It
+ * reads nothing but the geometry the rule reads, so it exposes nothing; a sealed-in board is
+ * entirely in reach and draws no shade.
  */
 export function drawReach(p: Paint): void {
   const { ctx, game, layout } = p;
@@ -348,8 +350,6 @@ export function drawReach(p: Paint): void {
  */
 const HEX_DIAGONAL_REACH = Math.cos(Math.PI / 6) / Math.cos(Math.PI / 12);
 
-/** The cursor highlight's line, in CSS pixels, where nothing else is asked for. */
-const HIGHLIGHT_WIDTH = 2;
 /** The dark outline under a cross, each side of its line, in CSS pixels. */
 const CROSS_OUTLINE = 1;
 
@@ -369,10 +369,10 @@ function crossOut(p: Paint, cx: number, cy: number, width: number): void {
   ctx.lineTo(cx + reach, cy + reach);
   ctx.moveTo(cx + reach, cy - reach);
   ctx.lineTo(cx - reach, cy + reach);
-  ctx.strokeStyle = MARK_OUTLINE;
+  ctx.strokeStyle = ANNOTATION_OUTLINE;
   ctx.lineWidth = width + 2 * CROSS_OUTLINE;
   ctx.stroke();
-  ctx.strokeStyle = OUT_OF_REACH_COLOR;
+  ctx.strokeStyle = REFUSAL_COLOR;
   ctx.lineWidth = width;
   ctx.stroke();
 }
@@ -385,57 +385,43 @@ function seenBy(p: Paint, cell: Cell): Cell[] {
   return p.game.neighboursOf(cell).filter((n) => n.open && (n.num > 0 || n.tier > 0));
 }
 
+/** How the cursor highlight is drawn: its shape, its colour, its line, and where a click lands. */
+export interface HighlightOptions {
+  readonly style: HighlightStyle;
+  /** The colour a cell is boxed in where a click would land. */
+  readonly color: string;
+  /** Whether a click on this cell would land. */
+  readonly lands: (cell: Cell) => boolean;
+  /** The line's thickness, in CSS pixels. */
+  readonly width?: number;
+}
+
 /**
- * Light the cell under the cursor, and depending on the style its surroundings too.
- * 'neighbours' asks the engine what is genuinely adjacent (six on hex, across a seam on a wrapped
- * board); 'block' is the literal 3x3 of grid coordinates and deliberately does not fold wrapped
- * edges in; 'seen' lights the open numbers that constrain a covered cell, and over an open cell
- * what it sees. Each cell is asked for itself whether a click there would land, so hovering the
- * edge of your reach shows the boundary rather than just which side the centre is on. One that
- * would is boxed in the player's `color`; one that would not is crossed out in red instead, so the
- * refusal reads by its shape as well as its colour (decision 0051). `width` is the line's, in CSS
- * pixels.
+ * Light the cell under the cursor, and depending on the style its surroundings too
+ * (`highlightRing`). Each cell is asked for itself whether a click there would land, so hovering
+ * the edge of your reach shows the boundary rather than just which side the centre is on. One that
+ * would is boxed in the player's colour; one that would not is crossed out in red instead, so the
+ * refusal reads by its shape as well as its colour (decision 0051).
  */
-export function drawHighlight(
-  p: Paint,
-  hovered: Cell,
-  style: HighlightStyle,
-  color: string,
-  lands: (cell: Cell) => boolean,
-  { width = HIGHLIGHT_WIDTH }: { width?: number } = {},
-): void {
-  const { ctx, game, layout } = p;
+export function drawHighlight(p: Paint, hovered: Cell, o: HighlightOptions): void {
+  const { ctx, layout } = p;
+  const width = o.width ?? DEFAULT_HIGHLIGHT_WIDTH;
   const light = (cell: Cell, inset: number): void => {
     const { cx, cy } = centreOf(layout, cell.x, cell.y);
-    if (!lands(cell)) {
+    if (!o.lands(cell)) {
       crossOut(p, cx, cy, width);
       return;
     }
-    ctx.strokeStyle = color;
+    ctx.strokeStyle = o.color;
     tracePath(p, cx, cy, inset);
     ctx.stroke();
   };
   ctx.save();
   ctx.lineWidth = width;
 
-  if (style !== 'cell') {
+  if (o.style !== 'cell') {
     ctx.globalAlpha = 0.4;
-    const around: Cell[] = [];
-    if (style === 'neighbours' || (style === 'seen' && hovered.open)) {
-      around.push(...game.neighboursOf(hovered));
-    } else if (style === 'seen') {
-      around.push(...seenBy(p, hovered));
-    } else {
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          if (dx === 0 && dy === 0) continue;
-          // Clipped to cells that exist rather than drawn over holes and off-board space.
-          const cell = game.cellAt(hovered.x + dx, hovered.y + dy);
-          if (cell) around.push(cell);
-        }
-      }
-    }
-    for (const n of around) light(n, 3);
+    for (const n of highlightRing(p, hovered, o.style)) light(n, 3);
   }
 
   ctx.globalAlpha = 1;
@@ -444,13 +430,40 @@ export function drawHighlight(
 }
 
 /**
- * Point at a lesson (docs/teaching-plan.md, Part 1): the numbers and cells its proof read, ringed
- * in the tutor's colour with the covered cells each number sees lit faintly around it; what it
- * concludes, washed in the mark green where it is safe to open, ringed in the tier's colour with
- * the tier written on it where it is named, and ringed dashed with the candidates where it is
- * only narrowed. Nothing here is a mark: the player still writes every one.
+ * The cells a highlight lights round the hovered one. 'neighbours' asks the engine what is
+ * genuinely adjacent (six on hex, across a seam on a wrapped board); 'block' is the literal 3x3 of
+ * grid coordinates and deliberately does not fold wrapped edges in; 'seen' is the open numbers
+ * that constrain a covered cell, and over an open cell what it sees.
  */
-export function drawLesson(p: Paint, lesson: Lesson): void {
+function highlightRing(p: Paint, hovered: Cell, style: Exclude<HighlightStyle, 'cell'>): Cell[] {
+  if (style === 'neighbours' || (style === 'seen' && hovered.open)) {
+    return p.game.neighboursOf(hovered);
+  }
+  if (style === 'seen') return seenBy(p, hovered);
+  return blockAround(p.game, hovered);
+}
+
+/** The 3x3 block round a cell, clipped to cells that exist: no holes, nothing off the board. */
+function blockAround(game: Game, cell: Cell): Cell[] {
+  const around: Cell[] = [];
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const n = game.cellAt(cell.x + dx, cell.y + dy);
+      if (n) around.push(n);
+    }
+  }
+  return around;
+}
+
+/**
+ * Point at a proof, the tutor's or a school step's (docs/teaching-plan.md, Part 1): the numbers and
+ * cells it read, ringed in the tutor's colour with the covered cells each number sees lit faintly
+ * around it; what it concludes, washed in the mark green where it is safe to open, ringed in the
+ * tier's colour with the tier written on it where it is named, and ringed dashed with the
+ * candidates where it is only narrowed. Nothing here is a mark: the player still writes every one.
+ */
+export function drawPointer(p: Paint, pointer: Lesson): void {
   const { ctx, layout } = p;
   ctx.save();
   ctx.lineWidth = 2;
@@ -458,7 +471,7 @@ export function drawLesson(p: Paint, lesson: Lesson): void {
   // The rings each number sees, faint, so the shape of the proof is visible before its parts.
   ctx.globalAlpha = 0.35;
   ctx.strokeStyle = TUTOR_COLOR;
-  for (const c of lesson.why.constraints) {
+  for (const c of pointer.why.constraints) {
     for (const n of c.unknown) {
       const { cx, cy } = centreOf(layout, n.x, n.y);
       tracePath(p, cx, cy, 3);
@@ -467,7 +480,7 @@ export function drawLesson(p: Paint, lesson: Lesson): void {
   }
 
   ctx.globalAlpha = 1;
-  for (const cell of [...lesson.why.constraints.map((c) => c.cell), ...lesson.why.cells]) {
+  for (const cell of [...pointer.why.constraints.map((c) => c.cell), ...pointer.why.cells]) {
     const { cx, cy } = centreOf(layout, cell.x, cell.y);
     ctx.strokeStyle = TUTOR_COLOR;
     ctx.lineWidth = 3;
@@ -475,17 +488,17 @@ export function drawLesson(p: Paint, lesson: Lesson): void {
     ctx.stroke();
   }
   // A proof that read a beaten creature's number has to be checkable without the cursor on it, so
-  // the number is written on the creature while the lesson shows, unless the board already shows
+  // the number is written on the creature while the pointer shows, unless the board already shows
   // it there (hovered, or with the Beaten toggle on; decision 0067).
-  for (const c of lesson.why.constraints) {
+  for (const c of pointer.why.constraints) {
     if (c.cell.tier > 0 && !showsBeatenNumber(p, c.cell)) {
       const { cx, cy } = centreOf(layout, c.cell.x, c.cell.y);
-      writeOnCell(p, cx, cy, String(c.cell.num), TUTOR_COLOR, 0.5);
+      writeSolid(p, cx, cy, String(c.cell.num), TUTOR_COLOR, 0.5);
     }
   }
 
   ctx.lineWidth = 2;
-  for (const cell of lesson.open) {
+  for (const cell of pointer.open) {
     const { cx, cy } = centreOf(layout, cell.x, cell.y);
     ctx.globalAlpha = 0.35;
     ctx.fillStyle = p.markColor;
@@ -496,43 +509,47 @@ export function drawLesson(p: Paint, lesson: Lesson): void {
     ctx.stroke();
   }
 
-  for (const [cell, tier] of lesson.mark) {
+  for (const [cell, tier] of pointer.mark) {
     const { cx, cy } = centreOf(layout, cell.x, cell.y);
     ctx.strokeStyle = tierColor(p.tierColors, tier);
     tracePath(p, cx, cy, 2);
     ctx.stroke();
-    writeOnCell(p, cx, cy, String(tier), tierColor(p.tierColors, tier), 0.58);
+    writeSolid(p, cx, cy, String(tier), tierColor(p.tierColors, tier), MARK_SCALE);
   }
 
   ctx.setLineDash([4, 3]);
-  for (const [cell, mask] of lesson.narrow) {
+  for (const [cell, mask] of pointer.narrow) {
     const { cx, cy } = centreOf(layout, cell.x, cell.y);
     ctx.strokeStyle = TUTOR_COLOR;
     tracePath(p, cx, cy, 2);
     ctx.stroke();
-    const tiers: string[] = [];
-    for (let t = 0; t < 31; t++) if (mask & (1 << t)) tiers.push(String(t));
-    // Candidates running from empty up to a ceiling are the ceiling, which is what a bound says.
-    const capped = (mask & (mask + 1)) === 0 && tiers.length > 2;
-    const label = capped ? `\u2264${tiers.length - 1}` : tiers.join('');
-    writeOnCell(p, cx, cy, label, TUTOR_COLOR, label.length > 2 ? 0.3 : 0.42);
+    const label = candidateLabel(mask);
+    writeSolid(p, cx, cy, label, TUTOR_COLOR, label.length > 2 ? 0.3 : 0.42);
   }
   ctx.restore();
 }
 
-/** Text centred on a cell, outlined as a mark is so it survives any tile. */
-function writeOnCell(p: Paint, cx: number, cy: number, text: string, color: string, scale: number) {
-  const { ctx } = p;
-  const box = contentBox(p.layout, cx, cy);
-  ctx.save();
-  ctx.setLineDash([]);
-  const { centre } = setNumberFont(ctx, p.font, box.size * scale);
-  ctx.textAlign = 'center';
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = Math.max(2, box.size * 0.16);
-  ctx.strokeStyle = MARK_OUTLINE;
-  ctx.strokeText(text, cx, cy + centre);
-  ctx.fillStyle = color;
-  ctx.fillText(text, cx, cy + centre);
-  ctx.restore();
+/**
+ * A narrowed cell's candidates as the pointer writes them: the tiers run together, or, for
+ * candidates running from empty up to a ceiling, the ceiling, which is what a bound says.
+ */
+function candidateLabel(mask: number): string {
+  const tiers = noteTiers(mask).map(String);
+  const capped = (mask & (mask + 1)) === 0 && tiers.length > 2;
+  return capped ? `\u2264${tiers.length - 1}` : tiers.join('');
+}
+
+/** `writeOnCell` in solid strokes, whatever dash the ring round the cell was drawn with. */
+function writeSolid(
+  p: Paint,
+  cx: number,
+  cy: number,
+  text: string,
+  color: string,
+  scale: number,
+): void {
+  p.ctx.save();
+  p.ctx.setLineDash([]);
+  writeOnCell(p, cx, cy, text, color, scale);
+  p.ctx.restore();
 }

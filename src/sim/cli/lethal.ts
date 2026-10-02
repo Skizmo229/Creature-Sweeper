@@ -29,18 +29,17 @@ import { resolveBattle } from '../../engine/combat.js';
 import { Game } from '../../engine/game.js';
 import { biteFor } from '../../engine/settings.js';
 import type { Cell } from '../../engine/types.js';
-import { honestGuess, play, type Run } from '../honest.js';
+import { honestGuess, play, type HonestRun } from '../honest.js';
 import { solve } from '../solver.js';
+import { mean, pct, seedAt, seedCount } from '../tables.js';
 
 interface Board {
-  run: Run;
+  run: HonestRun;
   /** Forced guesses whose safest option could still have killed. */
   risky: number;
   /** Guesses that turned out above the tier the solver proved them under. Must be 0. */
   unsound: number;
 }
-
-const seedAt = (s: number): number => s * 2654435761 + 11;
 
 /** The lowest tier whose fight would end the board from here, or Infinity. */
 function lethalTier(game: Game): number {
@@ -58,8 +57,9 @@ function provenBelow(game: Game, k: number): Cell[] {
 
 function playBoard(cfg: ReturnType<typeof boardConfig>, seed: number): Board {
   const game = Game.create(cfg, seed);
-  const board: Board = { run: undefined as unknown as Run, risky: 0, unsound: 0 };
-  board.run = play(game, 'none', null, {
+  let risky = 0;
+  let unsound = 0;
+  const run = play(game, 'none', null, {
     rescue: (g) => solve(g).safe,
     guess: (g) => {
       // Stuck, so nothing is proven at the player's level: walk the threshold
@@ -75,9 +75,9 @@ function playBoard(cfg: ReturnType<typeof boardConfig>, seed: number): Board {
         k = g.config.tiers;
       }
       if (!field.length) return null;
-      if (k >= lethalTier(g)) board.risky++;
+      if (k >= lethalTier(g)) risky++;
       const pick = honestGuess(g, new Set(field)) ?? field[0]!;
-      if (pick.tier > k) board.unsound++;
+      if (pick.tier > k) unsound++;
       // The honest player marks what it has named, and a mark above your level
       // locks the cell. Choosing the lowest worst case can mean choosing a
       // creature it has already named — so, like a real player, rub it out
@@ -86,11 +86,8 @@ function playBoard(cfg: ReturnType<typeof boardConfig>, seed: number): Board {
       return pick;
     },
   });
-  return board;
+  return { run, risky, unsound };
 }
-
-const mean = (xs: number[]): number => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length);
-const pct = (x: number): string => `${(100 * x).toFixed(0)}%`;
 
 function byBoard(type: LadderType, seeds: number): void {
   const ladders = loadLadders();
@@ -103,16 +100,16 @@ function byBoard(type: LadderType, seeds: number): void {
     const boards = Array.from({ length: seeds }, (_, s) => playBoard(cfg, seedAt(s)));
     console.log(
       `${String(b.n).padStart(4)}  ${b.density.toFixed(1).padStart(6)}% ${String(b.hp).padStart(3)} |` +
-        `${mean(boards.map((x) => x.run.stuckPoints))
+        `${mean(boards, (x) => x.run.stuckPoints)
           .toFixed(1)
           .padStart(8)}` +
-        `${mean(boards.map((x) => x.risky))
+        `${mean(boards, (x) => x.risky)
           .toFixed(1)
           .padStart(12)} |` +
-        `${pct(mean(boards.map((x) => (x.run.stuckPoints === 0 ? 1 : 0)))).padStart(9)}` +
-        `${pct(mean(boards.map((x) => (x.risky === 0 ? 1 : 0)))).padStart(16)}` +
-        `${pct(mean(boards.map((x) => (x.run.cleared ? 1 : 0)))).padStart(9)}` +
-        `${mean(boards.map((x) => x.run.hpLost))
+        `${pct(mean(boards, (x) => (x.run.stuckPoints === 0 ? 1 : 0))).padStart(9)}` +
+        `${pct(mean(boards, (x) => (x.risky === 0 ? 1 : 0))).padStart(16)}` +
+        `${pct(mean(boards, (x) => (x.run.cleared ? 1 : 0))).padStart(9)}` +
+        `${mean(boards, (x) => x.run.hpLost)
           .toFixed(2)
           .padStart(9)}` +
         (boards.some((x) => x.run.rescueDamage) ? '   SOLVER CALLED A HARMFUL CELL FREE' : '') +
@@ -121,7 +118,7 @@ function byBoard(type: LadderType, seeds: number): void {
   }
 }
 
-const seeds = Number(process.argv[2] ?? 30);
+const seeds = seedCount(process.argv[2], 30, 'npm run sim:lethal -- [seeds] [ladder,ladder,...]');
 const wanted = (process.argv[3] ?? 'extreme,huge_extreme,oracle').split(',');
 const ladders = loadLadders();
 for (const id of wanted) {

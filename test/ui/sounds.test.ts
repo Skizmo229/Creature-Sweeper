@@ -9,26 +9,16 @@
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { GameEvent } from '../../src/engine/types.js';
-import { App } from '../../src/ui/app.js';
 import { soundFor } from '../../src/ui/game/sound.js';
 import { SFX_EVENTS } from '../../src/ui/looktypes.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
-import type { Sfx } from '../../src/ui/sfx.js';
+import { type AppDriver, mountApp, settingsRow, tileLabel, tiles } from './driver.js';
 
-interface Driver {
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  readonly settings: Settings;
-  readonly sfx: Sfx;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 const kill: GameEvent = { type: 'battle', x: 0, y: 0, tier: 1, damage: 0, defeated: true };
@@ -60,21 +50,14 @@ describe('the mixer', () => {
 });
 
 describe('the settings', () => {
-  const row = (name: string): HTMLElement =>
-    [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === name,
-    )!;
-  const tiles = (r: HTMLElement): HTMLButtonElement[] => [
-    ...r.querySelectorAll<HTMLButtonElement>('.preview-chip'),
-  ];
   const lit = (r: HTMLElement): string[] =>
     tiles(r)
       .filter((t) => t.classList.contains('active'))
-      .map((t) => t.querySelector('.chip-label')!.textContent!);
+      .map(tileLabel);
 
   it('offers named sets, and a Custom tile lit by any other', () => {
     app.showSettings(() => app.showTypes());
-    const r = row('Which sounds play');
+    const r = settingsRow('Which sounds play');
     expect(tiles(r)).toHaveLength(4);
     expect(lit(r)).toEqual(['Every sound']);
     tiles(r)[1]!.click();
@@ -92,12 +75,12 @@ describe('the settings', () => {
 
     app.settings.setPresentation({ silenced: ['sweep'] });
     app.showSettings(() => app.showTypes());
-    expect(lit(row('Which sounds play'))).toEqual(['Custom — 1 silenced']);
+    expect(lit(settingsRow('Which sounds play'))).toEqual(['Custom — 1 silenced']);
   });
 
   it('silences single sounds from the sound check', () => {
     app.showSettings(() => app.showTypes());
-    tiles(row('Which sounds play'))[3]!.click();
+    tiles(settingsRow('Which sounds play'))[3]!.click();
     const boxes = [...document.querySelectorAll<HTMLInputElement>('.soundcheck-played input')];
     expect(boxes).toHaveLength(SFX_EVENTS.length);
     expect(boxes.every((b) => b.checked)).toBe(true);

@@ -13,15 +13,16 @@
  *
  * TWO FAMILIES, AND THE SECOND ONE NEEDS THE BOARD'S HELP.
  *
- * *Ambient* effects (confetti, burst, ripple, sparkle) are decoration over the
- * top and know nothing about what they are covering.
+ * *Ambient* effects (`ambient.ts`) are decoration over the top and know nothing
+ * about what they are covering.
  *
- * *Icon* effects (tumble, cascade, pop, burn, the wipes) animate the board's
- * own creatures, so they need two things from the renderer: where every glyph
- * is, and for the board to stop drawing them. Without the second the original
- * icons stay painted underneath and every creature appears to leave a ghost of
- * itself behind. That is what `VictorySource` is for, and why the effect puts
- * the glyphs back when it ends — including when it is cut short.
+ * *Icon* effects (`ICON_EFFECTS`, in `icons.ts` and `departures.ts`) animate
+ * the board's own creatures, so they need two things from the renderer: where
+ * every glyph is, and for the board to stop drawing them. Without the second
+ * the original icons stay painted underneath and every creature appears to
+ * leave a ghost of itself behind. That is what `VictorySource` is for, and why
+ * the effect puts the glyphs back when it ends — including when it is cut
+ * short.
  *
  * Every effect is finite and removes itself. There is no idle loop.
  */
@@ -84,6 +85,30 @@ const DURATION: Record<VictoryId, number> = {
   swarm: 2800,
 };
 
+/**
+ * The longest step a physics effect takes, in seconds, however long the frame: a backgrounded tab
+ * resumes with a delta of seconds, and an unclamped step would teleport everything through the
+ * floor.
+ */
+const MAX_STEP_S = 1 / 20;
+
+/**
+ * Where the layer starts fading, as a share of the effect, and over how much of it: the last
+ * third, so nothing ever vanishes mid-flight.
+ */
+const FADE_FROM = 0.66;
+const FADE_SPAN = 0.34;
+/** Cascade's element fades later and faster, since its trail is the effect. */
+const TRAIL_FADE_FROM = 0.86;
+const TRAIL_FADE_SPAN = 0.14;
+
+/** The highest device pixel ratio the layer is drawn at. */
+const MAX_DPR = 3;
+
+/** 1 until `from`, then down to 0 over `span`, as `t` runs from 0 to 1. */
+const fade = (t: number, from: number, span: number): number =>
+  t < from ? 1 : 1 - (t - from) / span;
+
 /** How long an effect runs at a speed, in milliseconds: its own length divided by the speed. */
 export function effectDuration(effect: VictoryId, speed: number): number {
   return DURATION[effect] / speed;
@@ -144,10 +169,8 @@ export function playVictory(
 
   const frame = (now: number) => {
     const t = (now - start) / duration;
-    // Clamped, because a backgrounded tab resumes with a delta of seconds and
-    // an unclamped step would teleport everything through the floor. The speed scales the step
-    // too, so a physics effect falls faster rather than being cut short.
-    const dt = Math.min(1 / 20, Math.max(0, (now - last) / 1000)) * speed;
+    // The speed scales the step too, so a physics effect falls faster rather than being cut short.
+    const dt = Math.min(MAX_STEP_S, Math.max(0, (now - last) / 1000)) * speed;
     last = now;
     if (stopped || t >= 1) {
       finish();
@@ -157,13 +180,11 @@ export function playVictory(
     if (painter.accumulates) {
       // The trail is the effect, so the canvas is never cleared and the fade
       // has to happen on the element instead of in the paint.
-      canvas.style.opacity = t < 0.86 ? '1' : String(Math.max(0, 1 - (t - 0.86) / 0.14));
+      canvas.style.opacity = String(Math.max(0, fade(t, TRAIL_FADE_FROM, TRAIL_FADE_SPAN)));
       ctx.globalAlpha = 1;
     } else {
       ctx.clearRect(0, 0, w, h);
-      // Fade the whole layer out over the last third, so nothing ever vanishes
-      // mid-flight.
-      ctx.globalAlpha = t < 0.66 ? 1 : 1 - (t - 0.66) / 0.34;
+      ctx.globalAlpha = fade(t, FADE_FROM, FADE_SPAN);
     }
 
     painter.paint(ctx, t, dt);
@@ -200,7 +221,7 @@ function makeLayer(host: HTMLElement): {
   const canvas = document.createElement('canvas');
   canvas.className = 'victory-layer';
   const rect = host.getBoundingClientRect();
-  const dpr = Math.min(3, window.devicePixelRatio || 1);
+  const dpr = Math.min(MAX_DPR, window.devicePixelRatio || 1);
   const w = Math.max(1, Math.round(rect.width));
   const h = Math.max(1, Math.round(rect.height));
   canvas.style.width = `${w}px`;
@@ -227,10 +248,10 @@ function borrow(
   rect: DOMRect,
   source: VictorySource | undefined,
 ): { chosen: VictoryId; sprites: VictorySprite[] } {
-  // Line the board's coordinates up with this layer's. The board canvas sits
-  // inside the stage and may be panned, so its offset is not zero.
   if (!ICON_EFFECTS.has(effect)) return { chosen: effect, sprites: [] };
   if (source && source.sprites.length > 0) {
+    // Line the board's coordinates up with this layer's. The board canvas sits
+    // inside the stage and may be panned, so its offset is not zero.
     const board = source.canvas.getBoundingClientRect();
     const dx = board.left - rect.left;
     const dy = board.top - rect.top;

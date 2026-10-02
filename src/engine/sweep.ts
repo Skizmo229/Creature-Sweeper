@@ -14,7 +14,7 @@
  */
 
 import type { BoardConfig, Cell, GameStatus, SweepOptions } from './types.js';
-import { hasNotes, lowestNote } from './notes.js';
+import { notesGuard } from './notes.js';
 import { placementRule } from './placement/registry.js';
 import { augurNow } from './augur.js';
 import type { Grid } from './grid.js';
@@ -62,20 +62,32 @@ export function safeCells(game: SweepView, options: SweepOptions = {}): Cell[] {
 
       for (const n of ring) {
         if (n.open || seen.has(n)) continue;
-        // The player's own lock always wins, written as a value or as a set.
-        if (n.mark > level) continue;
-        if (hasNotes(n.notes) && lowestNote(n.notes) > level) continue;
-        if (!proven && !cellProof(n)) {
-          // Only the mark-assisted bound is left, and it covers only the UNMARKED neighbours:
-          // the marked ones are the assumption that produced it, never a conclusion from it.
-          if (!claimedSafe || n.mark > 0) continue;
-        }
+        if (!sweepable(n, level, proven, claimedSafe, cellProof)) continue;
         seen.add(n);
         out.push(n);
       }
     }
   }
   return out;
+}
+
+/**
+ * May Sweep open this covered neighbour of an open cell whose ring is `proven` free, or
+ * `claimedSafe` by the player's marks? `cellProof` is the rule's proof for one cell.
+ */
+function sweepable(
+  n: Cell,
+  level: number,
+  proven: boolean,
+  claimedSafe: boolean,
+  cellProof: (n: Cell) => boolean,
+): boolean {
+  // The player's own lock always wins, written as a value or as a set.
+  if (n.mark > level || notesGuard(n.notes, level)) return false;
+  if (proven || cellProof(n)) return true;
+  // Only the mark-assisted bound is left, and it covers only the UNMARKED neighbours:
+  // the marked ones are the assumption that produced it, never a conclusion from it.
+  return claimedSafe && n.mark === 0;
 }
 
 /** What one open cell's ring shows: the sum already known, the marks claimed, what is covered. */
@@ -149,10 +161,10 @@ function claimedByMarks(facts: RingFacts, level: number): boolean {
 }
 
 /**
- * Sweep on a guess-free (Sudoku) board: harvest the cells whose tier is written down and within your level.
- * Givens under the strict button (the board talking), the player's marks under the assisted one.
- * Measured, the neighbour-sum proof finds nothing at this density, and this cannot run away,
- * because marks are player-authored and nothing regenerates them.
+ * Sweep on a guess-free (Sudoku) board: harvest the cells whose tier is written down and within
+ * your level. Givens under the strict button (the board talking), the player's marks under the
+ * assisted one. Measured, the neighbour-sum proof finds nothing at this density, and this cannot
+ * run away, because marks are player-authored and nothing regenerates them.
  */
 function markedSafe(game: SweepView, useMarks: boolean): Cell[] {
   const out: Cell[] = [];

@@ -5,9 +5,10 @@ deduces from it (the Sweep proof), what the pencil refuses under it, what would 
 and how it was tuned. Measurements are summarised; `docs/tuning.md` and the design reference have
 the full numbers.
 
-The plain ladders (EASY, NORMAL, HUGE, EXTREME, HUGE x EXTREME) differ only in schedule. The magic
-ladders (ARCANE, ORACLE) add spells. BLIND and HUGE x BLIND are search boards, and SEER is a
-search board with spells. The rest follow.
+The plain ladders (EASY, NORMAL, HUGE, EXTREME, HUGE x EXTREME) differ only in schedule, and EASY
+has no Sweep, since it is where the sum rule is learned. The magic ladders (ARCANE, ORACLE) add
+spells. BLIND and HUGE x BLIND are search boards, and SEER is a search board with spells. The rest
+follow.
 
 ## Topology and shape
 
@@ -47,7 +48,15 @@ even at 37%.
 rectangle: a cross is nearly all rim, so it loses little information, and joining its four dead-end
 arms into two loops lets a player stuck at one tip work in from the other. It is easier than CROSS
 and ships 1.2 density points above it to sit on CROSS's curve. Counted like the other shapes, not
-gated on its two parents (decision 0036).
+gated on its two parents (decision 0036). It is DUNGEON's walls pointed the other way: what sets the
+forced-guess count is how many separate puzzles the board is cut into. Measured with the honest
+player from `sim:spells` by 20 September 2026, 25 seeds a board, at CROSS's own schedule it was
+cornered 0.0 to 2.3 times a board against CROSS's 0.3 to 2.4, and cleared 92% of board 10 against
+80%; 1.2 points up gave 0.1 to 2.7 and 84%, topping out at 31.9%. When CROSS moved 2.5 points up
+for its spells it moved too (decision 0020), and re-measured at 60 seeds (21 September 2026) it was
+still on CROSS's curve, 21.7 stuck points over the ladder against 21.8, clearing 84% against 89%.
+The price is the opening boards, 1.3 to 1.9 stuck against CROSS's 0.9 to 1.2: joined tips cost the
+most where the board is small. It tops out at 34.4%, past 34 by as much as ARCANE's 34.5.
 
 **RAGGED CAVE** is grown, never trimmed. Cells are laid down as whole 2x2 squares and none is ever
 removed, so no passage one cell wide can exist; corner-to-corner touches are refused at placement.
@@ -83,7 +92,7 @@ the honest player against ARCANE's 22.3), with or without the crawl rule.
 
 **GEAR** is a gear, a per-cell mask in a square box: eight square teeth, one pointing straight up,
 about as wide as they are deep, round a hole three tenths of the radius across. The teeth point
-straight out, so the diagonal four step on a square grid; the owner chose that over upright blocks.
+straight out, so the diagonal four step on a square grid, chosen over upright blocks.
 Its proportions are shares of the box because the box is always square, so the outline plays the
 same on every board. It came out harder than ARCANE at ARCANE's schedule, as DONUT did, and ships a
 point and a half below it, on ARCANE's curve (24.1 stuck over the ladder and 82% cleared against
@@ -94,12 +103,13 @@ global 64x32: 45 square, inside the same 2,048 cells.
 four suit-shaped holes where a Four's pips sit, spade and heart above, diamond and club below and
 upside down. The suits are drawn cell by cell, 11 wide and 10 to 12 tall, the same size on every
 board (`SUIT_ART`, with its copy in `ladders.py`): drawn as curves at this size they read as
-blobs, and the owner chose the drawn ones. It started at 48x68 and was made smaller at the
-owner's request, 30x42 growing to 35x49, twice an ordinary board; the tall box would be clipped
-by the continuation's global 64x32, so the continuation keeps board 10's card. It sits on
-ARCANE's forced-guess curve per board, which on a board this size means sparser per cell: at
-ARCANE's schedule it was stuck 51.3 times over the ladder and cleared 62%, and it ships on a ramp
-from 4.2 density points below ARCANE's to 3.7 (23.1 stuck and 85% against 23.9 and 82%; 120
+blobs. It started at 48x68 and was made smaller, 30x42 growing a sixth each way to 35x49 (984 to
+1,439 cells), twice an ordinary board; the tall box would be clipped by the continuation's global
+64x32, so the continuation keeps board 10's card. It sits on ARCANE's forced-guess curve per
+board, which on a board this size means sparser per cell: at ARCANE's schedule it was stuck 51.3
+times over the ladder and cleared 62% (60 seeds). Ramps shifted down stayed flatter than ARCANE's,
+too many guesses early and too few late, so it ships on a ramp from 4.2 density points below
+ARCANE's to 3.7 (23.1 stuck and 85% against 23.9 and 82%, and board 10 4.9 stuck against 5.1; 120
 seeds, 26 September 2026).
 
 **VALENTINES** is a heart, a per-cell mask filling a square box: the classic heart curve, the
@@ -192,7 +202,7 @@ reads marks here (`Game.marksAreClaims`). Notes are ordinary.
 
 The price is density. Every creature holds its route for good, four cells a tier, and NORMAL's tier
 mix averages about nine route cells a creature, so NORMAL's 21 to 27% would need more route than
-the board has cells. The owner chose routes that never cross over that density, and the deal packs
+the board has cells. Routes that never cross were chosen over that density, and the deal packs
 at most 8.5% reliably: PATROL runs NORMAL's boards, tiers, HP and gates on a ramp from 6.5 to
 8.5%. At that density the opening uncovers most of the board (409 of 480 cells on board 1, 586 of
 800 on board 10), so most creatures walk in plain sight as a ?, and the honest player, taught to
@@ -216,31 +226,56 @@ half of the budget, `config.ts` refuses halves that differ by more than one, the
 tiers (three odd, three even), and the board must have an even number of cells. The pencil refuses
 the wrong parity for a square (`noteCandidates`); marks do not, by decision.
 
-Tuned to HIVE's forced-guess curve at 27.5 to 38.5%, past the 34% ceiling because a cell's colour
-has already ruled out half the tiers. Its clear rate falls much more slowly than its guess count
-rises: a guess whose parity you know is a cheap guess.
+Tuned to HIVE's forced-guess curve at 27.5 to 38.5%, the one dial that had to be measured rather
+than inherited (the honest player from `sim:spells`, by 20 September 2026). The colour rule is a
+large, constant, free read: at NORMAL's schedule of the time (25.0 to 33.0%) the player was cornered
+0.0 times on board 1 and 0.6 on board 10 and cleared every board, a ladder with nothing in it.
+Walked up until the curve matched HIVE's, the other ladder that packs an easier board, it gives 0.3
+forced guesses rising to 2.9, against HIVE's 0.3 to 2.8 and CROSS's 0.3 to 2.4. It runs past the
+34% ceiling because that was measured on boards where a covered cell could be any tier; here its
+colour has already ruled out half of them, so the same density carries about half the ambiguity
+(HIVE at 35% and ARCANE at 34.5% sit past it for smaller versions of the same reason). Its clear
+rate falls much more slowly than its guess count rises, 92% of board 10 against HIVE's 80%: a guess
+whose parity you know is a cheap guess, DUNGEON's doorway finding from another direction.
 
 ## PAIRS and DOMINOES
 
 Every creature has exactly one creature neighbour, which forces the occupied cells into dominoes
 that may not touch. A creature's number **is** its partner's tier. `ringIsFree` in `pairs.ts` is
 both Sweep proofs in one: if the partner is within your level, or already open, every other
-covered neighbour is empty ground. Neither can run away, because a freed ring holds one partner
-and blank ground. `pairCandidates` gives the pencil empty ground beside a pair that has met, and nothing beside a
-lone creature, whose number the board hides (decision 0061).
-DOMINOES takes every one of those hooks from the pairing rule by reference (decision 0029); a
-domino board that read any of them differently would lose the deduction silently.
+covered neighbour is empty ground. Neither can run away, because a freed ring holds one partner and
+blank ground. `pairCandidates` gives the pencil empty ground beside a pair that has met, and nothing
+beside a lone creature, whose number the board hides (decision 0061). DOMINOES takes every one of
+those hooks from the pairing rule by reference (decision 0029); a domino board that read any of them
+differently would lose the deduction silently.
 
 The rule spreads creatures evenly, so openings are the smallest in the game and the ladder's axis
 is *size*, not density: non-touching dominoes jam at about 25%, and the quota must land exactly, so
 `choosePairs` throws rather than returning a short board. HP and lock barely move it.
 
+PAIRS was tuned with the honest player from `sim:spells` by 20 September 2026, and its density is
+bounded at both ends. The ceiling is structural: dominoes that may not touch cannot exceed two cells
+in six (33.3%), a random lay-down jams far below that (24.8 to 25.6% over 200 seeds across the
+ladder's sizes), and C_k assumes the quota lands exactly, so the schedule stops where placement is
+reliable: at 26% it places on every seed within 40 restarts, at 28% on one seed in four. The floor
+went the opposite way to the guess. The exclusion ring round each pair spreads the creatures evenly,
+and clustering is what makes a zero region, so the opening is 30 to 65% smaller than a uniform
+board's at the same density (6.9% of the board against 10.0% at 20.6%), and the cells hiding
+nothing drop from 18.8% to 10.7%. Inside the four points left, density does almost nothing: 20% to
+25% on a fixed board moved the forced guesses from 0.0 to 1.5 and left the first six boards at 0.0,
+the failure ARCANE had before it was retuned, while growing the board across the same span gives
+0.2 rising to 2.1, the curve wanted; deduction here is local, so a bigger board is more places to
+be cornered. Density is still scheduled, since every point helps, but it does not carry the
+ladder. HP is not a dial either: the characteristic gamble is "one of these k cells holds a
+tier T", with T read off a beaten creature's number, so a wrong guess is one known, lethal blow,
+and the ladder at HP 12 and at 14 clears the same share of every board as at 10.
+
 **DOMINOES** deals the pairs as a full double-six set, every pairing {a, b} once, so the
 distribution is flat by construction, six tiers always, and the tile order from `choosePairs` must
 survive the deal. No blanks: a [0|x] tile breaks the one-neighbour rule. Density is nearly the
 whole dial (18.5 to 23.5%), and it gets harder by getting *smaller* between set counts. A beaten
-creature's number is not drawn on these two ladders, by request, though the engine and the proofs
-still read it.
+creature's number is not drawn on these two ladders (decision 0012), though the engine and the
+proofs still read it.
 
 ## SPRINKLE DONUT
 
@@ -254,8 +289,10 @@ sprinkle lies at any of four angles. It carries PETRI DISH's growth rule, a reac
 mark beside uncovered ground extends (decision 0039), from DONUT's single opening, so the player
 eats round the ring from one place. At these densities that opening is small, a blank cell and its
 ring, on the rim on a third of boards, and on 1 to 3% no blank at all and the safest single cell;
-the sprinkles make any of them a foothold, since every neighbour is shown. No spells: Census would
-count what the board already shows.
+the sprinkles make any of them a foothold, since every neighbour is shown. Measured, a single cell
+plays no harder: of 1,500 boards (150 seeds a board, 2 October 2026) the 29 that opened on one
+cleared 83 to 86% for the graded player at grades 2 and 4, against 84 to 85% for the rest, with no
+more guesses, so the fallback stays. No spells: Census would count what the board already shows.
 
 Showing the places makes every number a Census: the hidden sum and how many creatures share it.
 `shownCap` is that as Sweep's per-cell bound, the biggest of k creatures under a hidden sum s being
@@ -283,9 +320,20 @@ down at any density up to 90%, so the packing never binds.
 Creatures stand in connected packs of one of every tier, and no two packs touch (touching is
 `neighbours()`, so a diagonal counts). `missingFrom` is the Sweep proof: the strongest tier a
 pack has not shown yet; when that is within your level, or nothing is missing, the ring is free.
-Computed over the component of *open* creatures, which errs safe. `packCandidates` gives the
-pencil the tiers the neighbouring pack has not shown. CONGA LINE takes all of it by reference. Density is
+Computed over the component of *open* creatures, which errs safe. `packCandidates` gives the pencil
+the tiers the neighbouring pack has not shown. CONGA LINE takes all of it by reference. Density is
 the dial (22.5 to 31.6%), and the board grows a row or column every step for granularity.
+
+PACKS was tuned with the honest player from `sim:spells`, taught the pack rule, by 20 September
+2026: at 120 seeds a board, 0.2 forced guesses rising to 5.2, and 99% cleared falling to 70%,
+DOMINOES's 70% at the top, the other ladder reached by clearing PAIRS. A pack of six on a 480-cell
+board is 1.25 density points, so a schedule held on one size rounded neighbouring boards to the
+same board; a column or a row a step gives every board its own pack count. The first guess was
+NORMAL plus a little (26 to 34%), since packs leave so much ground open, and it cleared 35% of
+board 10 at 7.2 forced guesses: on a flat curve a tier 6 is as common as a tier 1, so an open board
+is still an expensive one to guess on. The guess count runs well ahead of the clear rate, 5.2
+against DOMINOES's 2.2 at the same 70%, the signature of CHECKERBOARD and DUNGEON: a guess beside a
+pack is capped by the tiers it has not shown, so it is cheaper. More guesses, each worth less.
 
 **CONGA LINE** strings each pack into an orthogonal line led by the tier 6, with no member
 orthogonally beside any but its neighbours in the line; at six, "no 2x2" and "a true line" are the
@@ -304,6 +352,17 @@ double EXP. Anything pricing a spell must ask `Game.spellCost`, not `SPELLS[id].
 only ever adds, so the four facts hold; `config.ts` refuses a multiplier below 1. Measured, it
 barely moves difficulty; the lever if it should cast more is `relief`.
 
+Tuned with the honest player from `sim:spells`, 40 seeds a board (21 September 2026). At NORMAL's
+own density the deeper lock barely registered on boards 1 to 5, and the player cast Exercise once
+or twice a board, spending a tenth of its mana. Two points denser, with the full lock from board 4,
+gives 0.1 forced guesses rising to 5.7 spell-less, and clears 100% falling to 85% casting Exercise
+at each forced guess, a mean of 96.6% over the ten against NORMAL's 98.8% (spell-less, the same
+player). The double EXP moved very little: a player who also farms it, taking every named creature
+at or one past its level on a charge whenever the price is back at 30, casts about five times a
+board rather than two and clears the same share, because the cheap casts are rationed by level-ups
+and a five-tier board has four. The spell earns its clear rate by making forced guesses
+survivable, as on ORACLE and DUNGEON; the EXP is what makes casting it feel good.
+
 ## SUDOKU
 
 9x9, tiers 0 to 8 as the nine digits, so every row, column and box holds exactly one empty cell
@@ -320,9 +379,9 @@ proof finds nothing at this density; the Sudoku rule itself is deliberately abse
 ## BLIND and HUGE x BLIND
 
 Search boards: one HP, level 0, won by uncovering every empty cell, the creatures untouched until
-the win uncovers them. BLIND climbs 5 to 7 tiers over its ladder. It opens at 70 boards cleared,
-one step after every other counted ladder (decision 0036), and its Full Run heal rounds down to nothing, so a run there is a
-single-mistake run.
+the win uncovers them. BLIND climbs 5 to 7 tiers over its ladder. It opens at 70 boards cleared, one
+step after every other counted ladder (decision 0036), and its Full Run heal rounds down to nothing,
+so a run there is a single-mistake run.
 
 ## SEER
 
@@ -366,11 +425,11 @@ and 17% for the count. It costs 50, Census and the old Augur together (decision 
 figure, 1 cast in 67 freeing a ring (decision 0055), measured a player that cast only where a whole
 ring could come free, not the answer.
 
-The ladder is ARCANE's boards and density with a lock deeper (3, then 4 from board 4) and
-EXTREME's HP, 10 falling to 8 (decision 0088). At ARCANE's lock and HP the graded player was stuck
-0.6 times a board and cleared everything, so an answer had nothing to settle. Here a grade-4 player
-spending mana on the new aim (`src/sim/aim.ts`) clears every early board, 88% of board 9 and 61% of
-board 10, the hard ladders' target; without spells 80% and 57%, with a guess more on each top
-board (80 seeds, 30 September 2026). Density stays at ARCANE's ceiling, where it was measured to
-move nothing (decision 0056); lock 5 measured the same as lock 4 on five tiers, and HP 7 the same
-as 8.
+The ladder is ARCANE's boards and density with a lock deeper (3, then 4 from board 4) and EXTREME's
+HP, 10 falling to 8 (decision 0088). At ARCANE's lock and HP the graded player was stuck 0.6 times a
+board and cleared everything, so an answer had nothing to settle. Here a grade-4 player spending
+mana on the new aim (`src/sim/aim.ts`) clears every early board, 88% of board 9 and 63% of board 10,
+the hard ladders' target; without spells 80% and 57%, with a guess more on each top board (80 seeds,
+30 September 2026; board 10 recounted 2 October 2026, decision 0088). Density stays at ARCANE's
+ceiling, where it was measured to move nothing (decision 0056); lock 5 measured the same as lock 4
+on five tiers, and HP 7 the same as 8.

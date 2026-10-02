@@ -1,7 +1,7 @@
 /**
  * The drawn pip shapes: what each is called, and the path each traces. Which shape a ladder's
  * creatures wear is its look's (`looks.ts`); the pips' colour is the tier's (`tiercolors.ts`);
- * a symbol from the pip font is drawn by `theme.ts` instead.
+ * a symbol from the pip font is drawn by `creature.ts` instead.
  *
  * A shape is a tracer: it adds its outline to the path in hand, centred on (cx, cy) and reaching
  * r from it. Whatever is drawn the same way round is filled; a hole is cut the other way round, so
@@ -31,6 +31,7 @@ export const PIP_SHAPES: readonly PipShape[] = [
   'club',
 ];
 
+/** Each shape as the icon picker names it. */
 export const PIP_NAMES: Record<PipShape, string> = {
   circle: 'Dots',
   square: 'Blocks',
@@ -240,6 +241,6 @@ export function pipPath(
   r: number,
 ): void {
   ctx.beginPath();
-  const tracers: Partial<Record<string, Tracer>> = TRACERS;
-  (tracers[shape] ?? disc)(ctx, cx, cy, r);
+  // An own key only: a saved pip id from a newer build, or a hand-edited one, draws a disc.
+  (Object.hasOwn(TRACERS, shape) ? TRACERS[shape] : disc)(ctx, cx, cy, r);
 }

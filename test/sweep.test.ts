@@ -1,7 +1,11 @@
 /**
  * Sweep's proof (`src/engine/sweep.ts`) on boards small enough to read: each proof on its own, the
- * guards, and the guess-free harvest. The ladder-wide checks that Sweep never costs HP on real
- * boards are in `invariants.test.ts`; each placement rule's own proof is tested beside the rule.
+ * guards and the guess-free harvest, then `sweep and marks`, the same proofs through `Game.sweep`.
+ *
+ * Sweep is held elsewhere too: never to cost HP on the real ladders in `invariants.test.ts`; each
+ * placement rule's own proof beside the rule (`sudoku.test.ts`, `checker.test.ts`,
+ * `pairs.test.ts` and the rest); the pencil's guard and a ladder without Sweep in
+ * `game.test.ts`; the dial, a budget of sweeps and the chord in `settings.test.ts`.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -10,7 +14,7 @@ import { computeNumbers } from '../src/engine/grid.js';
 import { noteBit } from '../src/engine/notes.js';
 import { type SweepView, safeCells } from '../src/engine/sweep.js';
 import type { Cell, GameStatus, Placement, SweepOptions } from '../src/engine/types.js';
-import { testConfig } from './helpers.js';
+import { UNGATED_SWEEP, paint, testConfig } from './helpers.js';
 
 /**
  * A board drawn cell by cell. Covered: `.` empty ground, a digit a creature of that tier. Open:
@@ -188,5 +192,122 @@ describe('on a guess-free board', () => {
     const game = drawn(['1..', '._.', '..2']);
     expect(swept(view(game, 3, 'sudoku'))).toEqual([]);
     expect(swept(view(game, 3, 'uniform'))).toEqual(ringOf(game, 1, 1));
+  });
+});
+
+describe('sweep and marks', () => {
+  it('subtracts creatures you can already see, not just the raw number', () => {
+    const game = Game.create(testConfig(), 7);
+    paint(game, [
+      '3.......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
+    // (1,1) sees a 3, so nothing around it is provably free at LV1...
+    expect(game.safeCells()).toHaveLength(0);
+    // ...but once that tier-3 is dead and visible, the 3 hides nothing at all.
+    game.grid[0]![0]!.open = true;
+    game.grid[0]![0]!.alive = false;
+    expect(game.safeCells().length).toBeGreaterThan(0);
+  });
+
+  it('uses the marked value to reach further', () => {
+    const game = Game.create(testConfig({ tiers: 5, quantity: [1, 0, 0, 1, 0] }), 7);
+    paint(game, [
+      '4.......',
+      '........',
+      '..1.....',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
+    game.open(1, 1); // reveals a 5: the tier-4 plus the tier-1
+    expect(game.grid[1]![1]!.num).toBe(5);
+
+    // 5 hides more than LV1 can promise, so nothing is provable yet.
+    expect(game.safeCells({ useMarks: false })).toHaveLength(0);
+
+    // Claim the tier-4. Residual is 1, so the rest of that ring is free.
+    game.setMark(0, 0, 4);
+    const assisted = game.safeCells();
+    expect(assisted.length).toBeGreaterThan(0);
+    expect(assisted.every((c) => c.mark === 0)).toBe(true); // never the claim itself
+    expect(assisted).not.toContain(game.grid[0]![0]);
+  });
+
+  it('ignores marks that contradict the number', () => {
+    const game = Game.create(testConfig(), 7);
+    paint(game, [
+      '1.......',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
+    game.setMark(0, 1, 5); // claims 5 beside a cell whose whole number is 1
+    const cell = game.grid[1]![1]!;
+    expect(cell.num).toBe(1);
+    // Over-claiming must not make everything look safe.
+    for (const c of game.safeCells()) expect(c.mark).toBe(0);
+  });
+
+  it('never opens a cell marked above your level, even mark-assisted', () => {
+    const game = Game.create(testConfig(), 7);
+    paint(game, [
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+      '........',
+    ]);
+    game.setMark(3, 3, 5);
+    game.open(0, 0);
+    expect(game.safeCells()).not.toContain(game.grid[3]![3]);
+  });
+
+  it('can cost HP when a mark is wrong — the price of the assumption', () => {
+    const build = () => {
+      const g = Game.create(testConfig(), 7, UNGATED_SWEEP);
+      paint(g, [
+        '........',
+        '.3......',
+        '........',
+        '........',
+        '........',
+        '........',
+        '........',
+        '........',
+      ]);
+      g.open(2, 2); // reveals a 3: the tier-3 at (1,1)
+      expect(g.grid[2]![2]!.num).toBe(3);
+      return g;
+    };
+
+    // Strict mode cannot touch it: 3 hides more than LV1 can promise.
+    const strict = build();
+    strict.sweep({ useMarks: false });
+    expect(strict.hp).toBe(strict.maxHp);
+    expect(strict.grid[1]![1]!.alive).toBe(true);
+
+    // Now claim the 3 sits at (3,3) — it does not; (3,3) is empty ground.
+    const lied = build();
+    lied.setMark(3, 3, 3);
+    lied.sweep();
+    // The bad claim made the real tier-3 look free, and it charged for it.
+    expect(lied.grid[1]![1]!.alive).toBe(false);
+    expect(lied.hp).toBe(lied.maxHp - 6); // damage(level 1, tier 3) === 6
   });
 });

@@ -17,73 +17,43 @@ interface Particle {
   color: string;
 }
 
+/** The ambient effects' painters, by effect. */
+const PAINTERS: Partial<Record<VictoryId, (stage: Stage) => Painter>> = {
+  confetti,
+  sparkle,
+  burst,
+  ripple,
+  fireworks,
+};
+
+/** The painter for an ambient effect; an effect that is not one paints nothing. */
 export function ambientPainter(effect: VictoryId, stage: Stage): Painter {
-  if (effect === 'fireworks') return fireworks(stage);
-  const { w, h, colors } = stage;
-  const pick = () => colors[Math.floor(Math.random() * colors.length)]!;
-  const particles: Particle[] = [];
-  const cx = w / 2;
-  const cy = h / 2;
+  return PAINTERS[effect]?.(stage) ?? { paint: () => undefined, accumulates: false };
+}
 
-  if (effect === 'confetti') {
-    for (let i = 0; i < 140; i++) {
-      particles.push({
-        x: Math.random() * w,
-        y: -Math.random() * h * 0.5,
-        vx: (Math.random() - 0.5) * 60,
-        vy: 90 + Math.random() * 190,
-        spin: Math.random() * Math.PI,
-        spinRate: (Math.random() - 0.5) * 9,
-        size: 4 + Math.random() * 6,
-        color: pick(),
-      });
-    }
-  } else if (effect === 'sparkle') {
-    for (let i = 0; i < 110; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const r = Math.random() * Math.min(w, h) * 0.45;
-      particles.push({
-        x: cx + Math.cos(a) * r,
-        y: cy + Math.sin(a) * r,
-        vx: (Math.random() - 0.5) * 24,
-        // Drifting upward, which is what separates a sparkle from confetti.
-        vy: -18 - Math.random() * 34,
-        spin: Math.random() * Math.PI,
-        spinRate: (Math.random() - 0.5) * 4,
-        size: 2 + Math.random() * 3.5,
-        color: pick(),
-      });
-    }
-  } else if (effect === 'burst') {
-    for (let i = 0; i < 90; i++) {
-      const a = (i / 90) * Math.PI * 2 + Math.random() * 0.1;
-      const speed = 220 + Math.random() * 320;
-      particles.push({
-        x: cx,
-        y: cy,
-        vx: Math.cos(a) * speed,
-        vy: Math.sin(a) * speed,
-        spin: a,
-        spinRate: 0,
-        size: 2.5 + Math.random() * 3,
-        color: pick(),
-      });
-    }
-  }
-  // 'ripple' carries no particles at all — it is drawn from the clock alone.
+/**
+ * The step the ambient effects take each frame, in seconds, rather than the measured delta: a
+ * confetti chip has nowhere in particular to be, so a dropped frame should slow it imperceptibly
+ * rather than teleport it. The icon effects cannot afford the same luxury; see `tumble` in
+ * `icons.ts`.
+ */
+const FIXED_STEP = 1 / 60;
 
-  const paint = (ctx: CanvasRenderingContext2D, t: number): void => {
-    if (effect === 'ripple') {
-      drawRipple(ctx, cx, cy, Math.hypot(w, h) / 2, t, colors);
-      return;
-    }
-    // Fixed step rather than the measured delta, and here that is fine: a
-    // confetti chip has nowhere in particular to be, so a dropped frame should
-    // slow it imperceptibly rather than teleport it. The icon effects below
-    // cannot afford the same luxury — see `tumble`.
-    const dt = 1 / 60;
-    const gravity = effect === 'confetti' ? 420 : effect === 'burst' ? 120 : 0;
-    const drag = effect === 'burst' ? 0.955 : 1;
+/** Picks a random one of `colors` each time it is called. */
+const colorPicker = (colors: readonly string[]) => (): string =>
+  colors[Math.floor(Math.random() * colors.length)]!;
+
+/**
+ * A painter that moves its particles each frame, under `gravity` and slowed by `drag` (a share of
+ * their speed kept per step), and draws each with `shape` at its place in its colour.
+ */
+function particlePainter(
+  particles: Particle[],
+  { gravity, drag }: { gravity: number; drag: number },
+  shape: (ctx: CanvasRenderingContext2D, p: Particle) => void,
+): Painter {
+  const paint = (ctx: CanvasRenderingContext2D): void => {
+    const dt = FIXED_STEP;
     for (const p of particles) {
       p.vy += gravity * dt;
       p.vx *= drag;
@@ -91,31 +61,105 @@ export function ambientPainter(effect: VictoryId, stage: Stage): Painter {
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       p.spin += p.spinRate * dt;
-      drawParticle(ctx, p, effect);
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.fillStyle = p.color;
+      shape(ctx, p);
+      ctx.restore();
     }
   };
-
   return { paint, accumulates: false };
 }
 
-function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, effect: VictoryId): void {
-  ctx.save();
-  ctx.translate(p.x, p.y);
-  ctx.fillStyle = p.color;
-  if (effect === 'confetti') {
+/** Confetti: chips falling from above the board, tumbling as they go. */
+function confetti(stage: Stage): Painter {
+  const { w, h } = stage;
+  const pick = colorPicker(stage.colors);
+  const particles: Particle[] = [];
+  for (let i = 0; i < 140; i++) {
+    particles.push({
+      x: Math.random() * w,
+      y: -Math.random() * h * 0.5,
+      vx: (Math.random() - 0.5) * 60,
+      vy: 90 + Math.random() * 190,
+      spin: Math.random() * Math.PI,
+      spinRate: (Math.random() - 0.5) * 9,
+      size: 4 + Math.random() * 6,
+      color: pick(),
+    });
+  }
+  return particlePainter(particles, { gravity: 420, drag: 1 }, (ctx, p) => {
     ctx.rotate(p.spin);
     ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
-  } else if (effect === 'burst') {
-    // A short streak along the direction of travel, so the rays read as rays
-    // rather than as a ring of dots.
+  });
+}
+
+/** Sparkle: motes scattered round the centre, drifting upward. */
+function sparkle(stage: Stage): Painter {
+  const { w, h } = stage;
+  const pick = colorPicker(stage.colors);
+  const cx = w / 2;
+  const cy = h / 2;
+  const particles: Particle[] = [];
+  for (let i = 0; i < 110; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const r = Math.random() * Math.min(w, h) * 0.45;
+    particles.push({
+      x: cx + Math.cos(a) * r,
+      y: cy + Math.sin(a) * r,
+      vx: (Math.random() - 0.5) * 24,
+      // Drifting upward, which is what separates a sparkle from confetti.
+      vy: -18 - Math.random() * 34,
+      spin: Math.random() * Math.PI,
+      spinRate: (Math.random() - 0.5) * 4,
+      size: 2 + Math.random() * 3.5,
+      color: pick(),
+    });
+  }
+  return particlePainter(particles, { gravity: 0, drag: 1 }, dot);
+}
+
+/** Burst: rays flung out from the centre, slowing as they go. */
+function burst(stage: Stage): Painter {
+  const pick = colorPicker(stage.colors);
+  const cx = stage.w / 2;
+  const cy = stage.h / 2;
+  const particles: Particle[] = [];
+  for (let i = 0; i < 90; i++) {
+    const a = (i / 90) * Math.PI * 2 + Math.random() * 0.1;
+    const speed = 220 + Math.random() * 320;
+    particles.push({
+      x: cx,
+      y: cy,
+      vx: Math.cos(a) * speed,
+      vy: Math.sin(a) * speed,
+      spin: a,
+      spinRate: 0,
+      size: 2.5 + Math.random() * 3,
+      color: pick(),
+    });
+  }
+  return particlePainter(particles, { gravity: 120, drag: 0.955 }, (ctx, p) => {
+    // A short streak along the direction of travel, so the rays read as rays rather than as a
+    // ring of dots.
     ctx.rotate(Math.atan2(p.vy, p.vx));
     ctx.fillRect(-p.size * 3, -p.size / 2, p.size * 6, p.size);
-  } else {
-    ctx.beginPath();
-    ctx.arc(0, 0, p.size, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
+  });
+}
+
+/** A round particle. */
+function dot(ctx: CanvasRenderingContext2D, p: Particle): void {
+  ctx.beginPath();
+  ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/** Ripple: no particles at all, drawn from the clock alone. */
+function ripple(stage: Stage): Painter {
+  const { w, h, colors } = stage;
+  const paint = (ctx: CanvasRenderingContext2D, t: number): void =>
+    drawRipple(ctx, w / 2, h / 2, Math.hypot(w, h) / 2, t, colors);
+  return { paint, accumulates: false };
 }
 
 /** A rocket: when it bursts, as a share of the effect, where, and its sparks once it has. */
@@ -166,7 +210,7 @@ function fireworks(stage: Stage): Painter {
 
   const paint = (ctx: CanvasRenderingContext2D, t: number): void => {
     // A fixed step, as the other ambient effects take: a spark has nowhere to be.
-    const dt = 1 / 60;
+    const dt = FIXED_STEP;
     for (const r of rockets) {
       const rise = (t - (r.at - RISE)) / RISE;
       if (rise > 0 && rise < 1) {

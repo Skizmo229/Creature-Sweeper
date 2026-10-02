@@ -22,8 +22,8 @@ import { BoardActions } from './game/actions.js';
 import { BoardRecorder } from './game/recorder.js';
 import { flashStage } from './game/flash.js';
 import { type GameScreenElements, buildGameScreen } from './game/screen.js';
-import { soundFor } from './game/sound.js';
-import { ladders } from './ladders.js';
+import { soundAction } from './game/sound.js';
+import { ladderName, ladders } from './ladders.js';
 import { buildSpeaker } from './mute.js';
 import { CrashWatch } from './overlays/crash.js';
 import { Modal } from './overlays/modal.js';
@@ -37,6 +37,10 @@ import { Sfx } from './sfx.js';
 import { Teaching } from './teaching.js';
 import { TelemetryStore } from './telemetrystore.js';
 
+/** The tiers of the settings screen's example board where no board says: the common five. */
+const PREVIEW_TIERS = 5;
+
+/** The game in the page, built once on its root element by `main.ts`: the router above. */
 export class App {
   private readonly root: HTMLElement;
   private readonly progress = Progress.load();
@@ -66,15 +70,17 @@ export class App {
     mode: this.mode,
     sfx: this.sfx,
     settings: this.settings,
+    // A move goes BoardActions -> BoardRecorder.move -> BoardKeeper.move -> playMove (replay.ts).
     move: (move) => this.recorder.move(move),
     apply: (events) => this.apply(events),
     refresh: () => this.refresh(),
     addSeconds: (seconds) => this.clock.addSeconds(seconds),
     leaveGame: () => this.leaveGame(),
     pause: () => this.pause(),
-    explain: () => this.explainBoard(),
+    hint: () => this.askHint(),
     guide: () => this.teaching.guideFromBoard(),
     refuse: (x, y) => this.teaching.refuse(this.game?.cellAt(x, y) ?? null),
+    inLesson: () => this.teaching.lesson !== null,
     next: () => this.teaching.next(),
   });
   private readonly clock = new BoardClock();
@@ -147,7 +153,7 @@ export class App {
       startBoard: (typeId, board, seed) => this.startBoard(typeId, board, seed),
       startFullRun: (typeId, seed) => this.startFullRun(typeId, seed),
       advanceRun: () => this.advanceRun(),
-      askToLeave: () => this.leaveGame(false),
+      askToLeave: () => this.askToLeave(),
       showBoards: (typeId) => this.showBoards(typeId),
     });
     this.keeper = new BoardKeeper({
@@ -173,7 +179,7 @@ export class App {
       play: (move) => this.keeper.move(move),
     });
     window.addEventListener('keydown', (e) => this.onKey(e));
-    new CrashWatch(this.modal, { stop: () => this.clock.stop(), back: () => this.showTypes() });
+    new CrashWatch(this.modal, this.clock, () => this.showTypes());
     // The clock is kept with the game, so it is written down as the page goes away.
     window.addEventListener('pagehide', () => this.keeper.save());
     document.addEventListener('visibilitychange', () => this.keeper.save());
@@ -207,22 +213,17 @@ export class App {
   /**
    * Whether a clear on the current settings would go in the record books, which the ladder list
    * says. Presentation never counts against it; only the gameplay dials do, and only in one
-   * direction (decision 0014). A board that has ended is judged by its own dials instead, the ones
-   * it was dealt with, because the settings can be changed while it is being played.
+   * direction (decision 0014).
    */
   private get recordsCount(): boolean {
     return isAtLeastAsHard(this.settings.gameplay);
-  }
-
-  private typeName(): string {
-    return ladders.find((t) => t.id === this.typeId)?.name ?? this.typeId;
   }
 
   // ---------------------------------------------------------------- screens
 
   /** Every screen begins here: nothing from the last one may survive. */
   private clearScreen(): void {
-    this.clock.stop();
+    this.clock.stopTicking();
     this.ending.endVictory();
     this.modal.close();
     this.root.replaceChildren();
@@ -332,7 +333,7 @@ export class App {
    */
   private previewTiers(): number {
     if (this.game) return this.game.config.tiers;
-    return boardRow(ladders, this.typeId, this.boardIndex)?.tiers ?? 5;
+    return boardRow(ladders, this.typeId, this.boardIndex)?.tiers ?? PREVIEW_TIERS;
   }
 
   // ------------------------------------------------------------ the board
@@ -353,12 +354,11 @@ export class App {
     // first click has been made and the clock is already the player's problem.
     this.game = Game.create(cfg, seed, { settings: this.settings.gameplay });
     this.keeper.begin();
-    this.recorder.begin();
     this.clock.begin();
     const best = this.progress.boardRecord(ladders, typeId, board).bestTime;
     this.clock.arm(best, this.settings.gameplay);
-    this.buildGameScreen();
-    this.startClock();
+    this.recorder.begin();
+    this.showGame();
   }
 
   /**
@@ -384,8 +384,7 @@ export class App {
     // A run races the run's own best, not board 1's, and a limit per board over all its boards.
     const best = this.progress.runRecord(ladders, typeId).bestTime;
     this.clock.arm(best, this.settings.gameplay, this.run.boardCount);
-    this.buildGameScreen();
-    this.startClock();
+    this.showGame();
   }
 
   /**
@@ -401,8 +400,7 @@ export class App {
     this.resetBoardState();
     this.keeper.nextBoard();
     this.recorder.begin();
-    this.buildGameScreen();
-    this.startClock();
+    this.showGame();
   }
 
   /** A school lesson's board, which `teaching` has begun: no records, no best time, no countdown. */
@@ -412,8 +410,7 @@ export class App {
     this.resetBoardState();
     this.game = game;
     this.clock.begin();
-    this.buildGameScreen();
-    this.startClock();
+    this.showGame();
   }
 
   /**
@@ -437,20 +434,10 @@ export class App {
     this.seed = paused.seed;
     this.boardIndex = run?.boardIndex ?? paused.board;
     this.resetBoardState();
-    this.teaching.tutor.hints = paused.hints;
-    this.teaching.tutor.runHints = paused.runHints;
-    this.clock.resumeAt(paused.elapsedMs);
-    this.clock.timeLimit = paused.timeLimit;
-    this.clock.timeExpired = false;
-    this.keeper.begin(moves);
-    this.keeper.save();
+    this.keeper.resume(paused, moves);
     this.recorder.begin();
-    if (run?.boardWon) {
-      this.advanceRun();
-    } else {
-      this.buildGameScreen();
-      this.startClock();
-    }
+    if (run?.boardWon) this.advanceRun();
+    else this.showGame();
     return true;
   }
 
@@ -461,13 +448,18 @@ export class App {
     this.teaching.tutor.resetBoard();
   }
 
+  /** Put the board in `game` on screen and set its clock ticking. */
+  private showGame(): void {
+    this.buildGameScreen();
+    this.startTicking();
+  }
+
   private buildGameScreen(): void {
     const game = this.game!;
     this.sfx.setPack(this.settings.sfxPack(this.typeId));
     wearInterfaceFont(this.settings, this.typeId);
     this.clearScreen();
 
-    const lesson = this.teaching.lessonTitle();
     const els = buildGameScreen(
       game,
       this.typeId,
@@ -476,11 +468,7 @@ export class App {
       {
         // Returns to this same board: the screen is rebuilt from `game`, which is untouched. The
         // clock keeps running, as it does whenever the player walks away from a board.
-        openSettings: () =>
-          this.showSettings(() => {
-            this.buildGameScreen();
-            this.startClock();
-          }),
+        openSettings: () => this.showSettings(() => this.showGame()),
         leave: () => this.leaveGame(),
         pause: () => this.pause(),
         pickTier: (tier) => this.actions.pickTier(tier),
@@ -489,15 +477,17 @@ export class App {
         toggleBeatenNumbers: () => this.actions.toggleBeatenNumbers(),
         sweep: (useMarks) => this.actions.doSweep(useMarks),
         wait: () => this.actions.doWait(),
-        explain: () => this.explainBoard(),
-        tutor: this.settings.presentation.tutor,
-        tierColors: this.settings.tierColors(this.typeId),
+        hint: () => this.askHint(),
         guide: () => this.teaching.guideFromBoard(),
         next: () => this.teaching.next(),
         pickSpell: (id) => this.actions.pickSpell(id),
         cancelSpell: () => this.actions.cancelSpell(),
       },
-      lesson,
+      {
+        tutor: this.settings.presentation.tutor,
+        tierColors: this.settings.tierColors(this.typeId),
+        lessonTitle: this.teaching.lessonTitle(),
+      },
     );
     this.els = els;
     this.root.append(els.root);
@@ -519,37 +509,39 @@ export class App {
 
   // ---------------------------------------------------------------- actions
 
+  /** Back: as `askToLeave`, except that it pauses at once while Back pauses is on. */
+  private leaveGame(): void {
+    const { backPauses } = this.settings.presentation;
+    if (backPauses && !this.teaching.lesson && this.worthAsking) return this.pause();
+    this.askToLeave();
+  }
+
   /**
-   * Back out to board select. A game with anything in it asks first whether to pause it or
-   * abandon it, or pauses at once when Back pauses is on and `back` is how it was asked (the
-   * mid-run card's Abandon run is not Back); a board with no move made yet needs no guard.
+   * Back out to board select, or from a lesson to the school, asking first whether to pause or
+   * abandon a game with anything in it. The mid-run card's Abandon run asks this way, whatever
+   * Back does.
    */
-  private leaveGame(back = true): void {
+  private askToLeave(): void {
     if (this.teaching.lesson) return this.teaching.school();
-    const playing = this.run ? this.run.status === 'playing' : this.game?.status === 'playing';
-    if (!playing || !(this.run || this.keeper.holding)) return this.showBoards(this.typeId);
-    if (back && this.settings.presentation.backPauses) return this.pause();
+    if (!this.worthAsking) return this.showBoards(this.typeId);
     this.modal.leaveGame({
       boardIndex: this.boardIndex,
-      typeName: this.typeName(),
+      typeName: ladderName(this.typeId),
       run: this.run,
       onPause: () => this.pause(),
       onAbandon: () => this.abandon(),
     });
   }
 
+  /** Whether leaving would lose something: a game still going, with a move in it or a run. */
+  private get worthAsking(): boolean {
+    const playing = this.run ? this.run.status === 'playing' : this.game?.status === 'playing';
+    return playing && (this.run !== null || this.keeper.holding);
+  }
+
   /** Abandon the board, or the run, on screen: its slot emptied, a run written down as an attempt. */
   private abandon(): void {
-    const run = this.run;
-    // An abandoned run is neither won nor lost, but it did reach a board.
-    if (run) {
-      this.progress.recordRun(ladders, this.typeId, {
-        completed: false,
-        reachedBoard: this.boardIndex,
-        hp: run.hp,
-        seconds: this.clock.elapsedSeconds(),
-      });
-    }
+    this.ending.abandon();
     this.recorder.end('abandoned');
     this.keeper.end();
     this.showBoards(this.typeId);
@@ -572,10 +564,7 @@ export class App {
     this.teaching.tutor.dismiss();
 
     if (this.els) flashStage(this.els.stage, events, this.settings.presentationFor(this.typeId));
-    if (this.sfx.enabled) {
-      const sound = soundFor(events, (e) => this.sfx.plays(e));
-      if (sound) this.sfx.play(sound);
-    }
+    soundAction(this.sfx, events);
 
     this.ending.noteFatal(game, events);
 
@@ -600,7 +589,7 @@ export class App {
       beatenNumbers: this.settings.presentation.beatenNumbers,
       hintLine: this.settings.presentation.hintLine,
     });
-    this.view?.setLesson(this.teaching.pointer());
+    this.view?.setPointer(this.teaching.pointer());
     this.view?.render();
     this.updateClock();
   }
@@ -608,8 +597,8 @@ export class App {
   // ------------------------------------------------------------------ tutor
 
   /** The tutor's press: a hint, pointed at the board and said in the hint line. It opens nothing. */
-  private explainBoard(): void {
-    if (this.game && this.els?.whyBtn) {
+  private askHint(): void {
+    if (this.game && this.els?.hintBtn) {
       const near = this.view?.hoveredCell ?? null;
       this.teaching.tutor.press(this.game, near, this.settings.presentation);
       this.keeper.save();
@@ -631,8 +620,9 @@ export class App {
     }
   }
 
-  private startClock(): void {
-    this.clock.start(() => this.updateClock());
+  /** Repaint the clock every frame, which is also how Time Attack's expiry is noticed. */
+  private startTicking(): void {
+    this.clock.startTicking(() => this.updateClock());
   }
 
   // ----------------------------------------------------------------- result

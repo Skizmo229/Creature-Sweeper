@@ -14,13 +14,11 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { placementRule } from '../src/engine/placement/registry.js';
 import {
   PREVIEW_SEED,
   clearedBoard,
   HIGHLIGHT_PIN,
-  hexSampleBoard,
   highlightSampleBoard,
   reachSampleBoard,
   sampleBoard,
@@ -29,6 +27,7 @@ import {
   zoomSampleBoard,
 } from '../src/ui/preview.js';
 import type { Game } from '../src/engine/game.js';
+import { ladders } from './helpers.js';
 
 const tiersOn = (game: Game): Set<number> =>
   new Set(
@@ -40,9 +39,9 @@ const tiersOn = (game: Game): Set<number> =>
 
 const creatures = (game: Game) => game.grid.flat().filter((c) => c.present && c.tier > 0);
 
-/** Every tier count the real ladders actually deal, across all 461 boards. */
+/** Every tier count the real ladders actually deal, on every board, the scaling ones included. */
 const LADDER_TIER_COUNTS: number[] = [
-  ...new Set(loadLadders().flatMap((t) => [...t.boards, ...t.extended].map((b) => b.tiers))),
+  ...new Set(ladders.flatMap((t) => [...t.boards, ...t.extended].map((b) => b.tiers))),
 ].sort((a, b) => a - b);
 
 describe('the board-clear example', () => {
@@ -160,7 +159,7 @@ describe('the gallery examples', () => {
     // Every tile in a gallery draws the same board, so the only thing that
     // differs between them is the setting. Memoised, so this is identity.
     expect(sampleBoard()).toBe(sampleBoard());
-    expect(hexSampleBoard()).toBe(hexSampleBoard());
+    expect(highlightSampleBoard('hex')).toBe(highlightSampleBoard('hex'));
   });
 
   it('draws the cursor-highlight example on either grid', () => {
@@ -180,7 +179,7 @@ describe('the gallery examples', () => {
         .filter((c) => Math.abs(c.x - x) <= 1 && Math.abs(c.y - y) <= 1);
       expect(ring.length).toBe(9);
     }
-    expect(hexSampleBoard()).toBe(highlightSampleBoard('hex'));
+    expect(highlightSampleBoard('hex')).toBe(highlightSampleBoard('hex'));
   });
 
   it('holds the cursor over a beaten creature, so its number shows in `hot`', () => {

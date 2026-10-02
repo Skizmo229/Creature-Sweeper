@@ -1,11 +1,18 @@
 """Creature Sweeper — progression ladder generator.
 
-Derives the 10-board ladder for each game type from a small per-type schedule,
-using the tuning identity found in mamono sweeper's own data:
+    python design/ladders.py    # writes design/data/ladders.json and prints every board
+
+Derives each game type's ladder from its schedules in ladder_types.toml, the tuned ten boards
+and the continuation past board 10, using the tuning identity found in mamono sweeper's own data:
 
     C_k = total EXP from every monster of tier <= k
     the top `lock` thresholds are exactly C_k (full-tier-clear gates)
     the rest are alpha_k * C_k, alpha ramping from alpha0 up to 0.70
+
+In order: the board shapes (a copy of the engine's predicates), the creature distributions, the
+thresholds, the schedules and their schema, the continuation, the menu and the unlocks, and the
+boards themselves. test_ladders.py (`npm run test:py`) holds the generator to its rules, the
+TypeScript tests hold the JSON to the engine, and CI checks the JSON is this script's output.
 """
 import json, math, tomllib
 from dataclasses import dataclass
@@ -207,10 +214,15 @@ def shape_present(shape, param, w, h, x, y):
     return True
 
 
+# The shapes grown from the seed to a count the ladder chooses, its `cells` schedule, rather than
+# read off a predicate: see shape_cells.
+SEEDED_SHAPES = ("cave", "dungeon")
+
+
 def shape_cells(shape, param, w, h):
     if shape == "rect":
         return w * h
-    if shape in ("cave", "dungeon"):
+    if shape in SEEDED_SHAPES:
         # These two invert the relationship every other shape has with this file.
         # A ragged cave has no closed form to count, and its silhouette moves
         # with the seed, while C_k needs the cell count fixed before the board
@@ -222,10 +234,29 @@ def shape_cells(shape, param, w, h):
     return sum(1 for y in range(h) for x in range(w)
                if shape_present(shape, param, w, h, x, y))
 
+
+# The share of its bounding box a seeded mask is asked to fill on the continuation: what the
+# tuned ten hold (RAGGED CAVE's and DUNGEON's `cells` notes in ladder_types.toml).
+CARVED_SHARE = .40
+
+
+def carved_cells(w, h):
+    """How many cells a seeded mask is asked for on a board of this size.
+
+    Chosen rather than measured, which is the whole point -- see shape_cells.
+    """
+    return min(round(CARVED_SHARE * w * h), carved_room(w, h))
+
+
+def carved_room(w, h):
+    """The most cells a seeded mask can hold on a board of this size."""
+    return (w - 2) * (h - 2)
+
 # ---------- shape archetypes -------------------------------------------------
 
-def shape_descending(T, boss=0):
-    """Linear descent over the non-boss tiers, from `n` down to a floor.
+def shape_descending(T, boss=False):
+    """Linear descent over the non-boss tiers, from `n` down to a floor; `boss` says whether the
+    top tier is pinned and so left out.
 
     The floor matters: mamono sweeper's 5-tier descent runs 5..1 (33,27,20,13,6)
     but its 9-tier descent runs 8..2 (52,46,40,36,30,24,18,13), a much shallower
@@ -355,11 +386,16 @@ OPTIONAL = ("boss", "sweep", "spells", "start_mana", "workout", "placement", "se
             "opening", "reach_marks")
 # The fields that are one value per board.
 SCHEDULES = ("size", "tiers", "density", "hp", "lock", "alpha0", "boss", "sets", "givens", "cells")
+# What a ladder's own `ceiling` may set, in place of the continuation's own caps (see extend).
+CEILING_KEYS = ("max_w", "max_h", "density_cap", "hp_floor", "givens_floor")
+# The fewest creatures a boss count pins, on a tuned board and past board 10 alike.
+BOSS_FLOOR = 1
 
 
 def load_types(path=HERE / "ladder_types.toml"):
     """Every type's schedule, checked against the schema. TOML has no null, so a type without a
-    boss count omits it and reads back as None."""
+    boss count omits it and reads back as None, which is the one way to say none: every reader
+    asks `is not None`, and a count of 0 is refused."""
     with open(path, "rb") as f:
         types = tomllib.load(f)["type"]
     for t in types:
@@ -368,9 +404,18 @@ def load_types(path=HERE / "ladder_types.toml"):
         unknown = [k for k in t if k not in REQUIRED + OPTIONAL]
         if missing or unknown:
             raise ValueError(f"{where}: missing {missing}, unknown {unknown}")
+        unknown = [k for k in t.get("ceiling", {}) if k not in CEILING_KEYS]
+        if unknown:
+            raise ValueError(f"{where}: unknown ceiling {unknown}")
+        if (t.get("shape") in SEEDED_SHAPES) != ("cells" in t):
+            raise ValueError(f"{where}: a `cells` schedule goes with a seeded shape "
+                             f"({', '.join(SEEDED_SHAPES)}), and only with one")
         for k in SCHEDULES:
             if k in t and len(t[k]) != 10:
                 raise ValueError(f"{where}: {k} has {len(t[k])} entries, one per board is 10")
+        if "boss" in t and min(t["boss"]) < BOSS_FLOOR:
+            raise ValueError(f"{where}: boss pins at least one creature a board; "
+                             "a ladder that pins none omits it")
         t.setdefault("boss", None)
     return types
 
@@ -395,7 +440,8 @@ TYPES = load_types()
 # replaying the last one already gives you.
 
 CEILINGS = dict(
-    # 2048 cells. The largest board the tuned ladders already reach.
+    # 2048 cells: HUGE x BLIND's board 10, the largest box of the rectangular ladders. A ladder
+    # whose own box is bigger or a different shape sets its own (STAR's board 10 is 49x47).
     max_w=64, max_h=32,
     # Past this a board stops being a puzzle and starts being a minefield;
     # search boards cap lower because they have no level economy to lean on.
@@ -406,9 +452,14 @@ CEILINGS = dict(
     alpha_floor=.05,
     tier=9,
     boss=6,
+    # The fewest givens a SUDOKU board is asked for. Timed by the initial commit (20 September
+    # 2026): 14 givens cost 6ms a board, 13 cost 20ms, 12 about 100ms, and at 11 the generator
+    # refuses six boards in eight. It throws rather than ship a board it cannot vouch for, so the
+    # continuation stops above that.
+    givens_floor=12,
     # How far the SCHEDULE is walked, in board-steps. Much larger than the
     # number of boards it yields, because a step that rounds to the same board
-    # is skipped rather than emitted - EXTREME grows 0.444 cells a board, so it
+    # is skipped rather than emitted - EXTREME grows 0.444 columns a board, so it
     # takes two or three steps to earn one board.
     horizon=400,
     # How many boards the continuation may emit. A ceiling on content, not on
@@ -446,6 +497,11 @@ def _density_cap(t):
     return max(t["density"][-1], t.get("ceiling", {}).get("density_cap", default))
 
 
+# The width-to-height ratio a domino board's continuation is sized to, near that of DOMINOES's own
+# landscape boards.
+DOMINO_ASPECT = 1.75
+
+
 def _domino_box(t, T, i, density, max_w, max_h):
     """Step i of a domino ladder's continuation: its board size and its number of sets, or None
     once a set no longer fits the largest board."""
@@ -465,7 +521,7 @@ def _domino_box(t, T, i, density, max_w, max_h):
     # natural shape stops fitting does the height go to the ceiling to buy
     # width.
     cells = creatures / density
-    h = min(max_h, max(1, round(math.sqrt(cells / 1.75))))
+    h = min(max_h, max(1, round(math.sqrt(cells / DOMINO_ASPECT))))
     w = math.ceil(creatures / (density * h))
     if w > max_w:
         h = max_h
@@ -494,7 +550,7 @@ def extend(t):
     dd, dhp = _step(t["density"]), _step(t["hp"])
     dlock, dalpha = _step(t["lock"]), _step(t["alpha0"])
     dtier = _step(t["tiers"])
-    dboss = _step(t["boss"]) if t.get("boss") else 0.0
+    dboss = _step(t["boss"]) if t.get("boss") is not None else 0.0
     dgiv = _step(t["givens"]) if t.get("givens") else 0.0
 
     rows = []
@@ -530,31 +586,50 @@ def extend(t):
             alpha0=0 if search else max(CEILINGS["alpha_floor"],
                                         t["alpha0"][-1] + dalpha * i),
         )
-        if t.get("boss"):
-            row["boss"] = min(CEILINGS["boss"], round(t["boss"][-1] + dboss * i))
+        if t.get("boss") is not None:
+            boss = round(t["boss"][-1] + dboss * i)
+            row["boss"] = max(BOSS_FLOOR, min(CEILINGS["boss"], boss))
         if t.get("givens"):
-            # Measured floor, not a taste call: at 12 givens a guess-free board
-            # costs ~100ms to find, at 11 the generator refuses three boards in
-            # four. Below its floor it throws rather than shipping a board it
-            # cannot vouch for, so the schedule must stop above it.
-            row["givens"] = max(over.get("givens_floor", 12),
+            row["givens"] = max(over.get("givens_floor", CEILINGS["givens_floor"]),
                                 round(t["givens"][-1] + dgiv * i))
         if t.get("placement") == "dominoes":
             box = _domino_box(t, T, i, row["density"], max_w, max_h)
             if box is None:
                 break
             row["size"], row["sets"] = box
-        if t.get("cells") is not None:
-            # A carved shape's count is chosen, never measured - same 40% of
-            # the bounding box the tuned ten hold, and still inside the margin
-            # the generator needs.
+        if t.get("shape") in SEEDED_SHAPES:
+            # A carved shape's count is chosen, never measured - the same
+            # CARVED_SHARE of the bounding box the tuned ten hold, and still
+            # inside the margin the generator needs.
             w, h = row["size"]
-            row["cells"] = carved_cells(t.get("shape"), w, h)
+            row["cells"] = carved_cells(w, h)
         rows.append(row)
     return rows
 
 
 # ---------- unlocks ----------------------------------------------------------
+# The menu's four categories, and the order within each. Every type is in
+# exactly one. A ladder sits where its main idea is, not where its rules
+# happen to be implemented: DUNGEON is a shape in the engine but a spell
+# ladder to play, and HIVE is a topology that plays as a special rule.
+#
+#   normal   the original game's seven modes
+#   shape    the board's outline or its edges are the point
+#   magic    the spells are the point
+#   special  everything else, mostly a placement rule
+#
+# Within a category the order is the order its gates open, so the menu reads
+# the way a player meets it.
+CATEGORIES = {
+    "normal": ["easy", "normal", "huge", "extreme", "huge_extreme", "blind", "huge_blind"],
+    "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave", "pyramid",
+              "gear", "card", "valentines", "star"],
+    "magic": ["arcane", "workout", "oracle", "dungeon", "seer", "augur"],
+    "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku",
+                "ultra_hive", "petri", "patrol", "sprinkle_donut"],
+}
+CATEGORY = {tid: cat for cat, ids in CATEGORIES.items() for tid in ids}
+
 # Two kinds of gate, and they mean different things.
 #
 # A TYPE gate ("clear EASY") is a statement about readiness: this ladder
@@ -577,39 +652,13 @@ UNLOCKS = {
     "huge_blind": ["huge", "blind"],
 }
 
-# Boards cleared anywhere in the game, counting each board once. 0 means the
-# type has no board-count gate at all.
-#
-# Every five boards from 15 opens the next ladder in each menu category that
-# has one left (decision 0036), so a step offers a choice of what kind of
-# thing to play next rather than the next thing. It starts at 15 so the first
-# step arrives after EASY and half of NORMAL, not on EASY alone. Within a
-# category the order follows CATEGORIES, and BLIND waits one step past the
-# last of the rest, where its old Full Run gate used to put it: 1 HP with no
-# fighting is the game's hardest discipline, not its next lesson.
-#
-# The type gates alone offer 20 ladder boards (EASY, NORMAL), past the first
-# step at 15, and every step opens at least ten boards for the five it asks,
-# so the schedule is met without a single scaling board;
-# `test/unlocks.test.ts` walks it in order to check exactly that. Scaling
-# boards past 10 count too, for a player who would rather go deep.
-#
-# THE ORDER IS A DESIGN CHOICE, not the measured difficulty ranking (decision
-# 0018). It is set by hand to pace what the player meets. For reference, the
-# honest player from `sim:spells`, spell-less, 30 seeds a board, mean clear rate
-# over the tuned ten, ranks the ladders that used to be counted:
-#
-#   WRAPAROUND 99.0   DUNGEON 97.7   CHECKERBOARD 97.4   DIAMOND 95.5
-#   CROSS 94.0        CONGA LINE 92.8 HIVE 92.7          PAIRS 92.1
-#   RAGGED CAVE 89.0  DONUT 84.9
-#
-# Spell-less on purpose, so every ladder is measured by the same player; the
-# shaped ladders carry spells in play, which only makes them gentler than this.
-# HIVE and PAIRS are within the noise of each other. SUDOKU cannot be measured
-# on the same scale -- it is guess-free by construction -- so it closes its
-# category. DUNGEON, the second easiest, closes Magic: it carries spells and
-# the crawl rule, and by then the player has met every spell on ARCANE,
-# WORKOUT and ORACLE.
+# Boards cleared anywhere in the game, each counted once; 0 means the type has no board-count
+# gate. Every five boards from 15 opens the next ladder in each menu category that has one left,
+# in CATEGORIES's order, so a step offers a choice of what kind of thing to play next rather than
+# the next thing (decision 0036). It starts at 15 so the first step arrives after EASY and half of
+# NORMAL, not on EASY alone, and BLIND waits a step past the rest: 1 HP with no fighting is the
+# game's hardest discipline, not its next lesson. The order is set by hand to pace what the player
+# meets, not by measured difficulty (decision 0018); `test/unlocks.test.ts` walks it.
 BOARD_STEP = 5
 FIRST_STEP = 15
 BLIND_AFTER_STEPS = 1
@@ -626,42 +675,8 @@ def unlock_boards():
     return gates
 
 
-# The menu's four categories, and the order within each. Every type is in
-# exactly one. A ladder sits where its main idea is, not where its rules
-# happen to be implemented: DUNGEON is a shape in the engine but a spell
-# ladder to play, and HIVE is a topology that plays as a special rule.
-#
-#   normal   the original game's seven modes
-#   shape    the board's outline or its edges are the point
-#   magic    the spells are the point
-#   special  everything else, mostly a placement rule
-#
-# Within a category the order is the order its gates open, so the menu reads
-# the way a player meets it.
-CATEGORIES = {
-    "normal": ["easy", "normal", "huge", "extreme", "huge_extreme", "blind", "huge_blind"],
-    "shape": ["wraparound", "wrapped_cross", "cross", "diamond", "donut", "cave", "pyramid",
-              "gear", "card", "valentines", "star"],
-    "magic": ["arcane", "workout", "oracle", "dungeon", "seer", "augur"],
-    "special": ["hive", "pairs", "dominoes", "packs", "checker", "congo", "sudoku",
-                "ultra_hive", "petri", "patrol", "sprinkle_donut"],
-}
-CATEGORY = {tid: cat for cat, ids in CATEGORIES.items() for tid in ids}
 UNLOCK_BOARDS = unlock_boards()
 POSTGAME = ["blind", "huge_blind"]
-
-
-def carved_cells(shape, w, h, share=.40):
-    """How many cells a seeded mask is asked for on a board of this size.
-
-    Chosen rather than measured, which is the whole point -- see shape_cells.
-    """
-    return min(round(share * w * h), (w - 2) * (h - 2))
-
-
-def carved_room(shape, w, h):
-    """The most cells a seeded mask can hold on a board of this size."""
-    return (w - 2) * (h - 2)
 
 
 @dataclass(frozen=True)
@@ -683,7 +698,7 @@ class BoardDials:
     @classmethod
     def tuned(cls, t, i):
         """Board i + 1 of a type's tuned ladder."""
-        at = lambda key: t[key][i] if t.get(key) else None
+        at = lambda key: t[key][i] if t.get(key) is not None else None
         return cls(n=i + 1, size=tuple(t["size"][i]), tiers=t["tiers"][i], lock=t["lock"][i],
                    alpha0=t["alpha0"][i], hp=t["hp"][i], density=t["density"][i],
                    boss=at("boss"), givens=at("givens"), cells=at("cells"), sets=at("sets"))
@@ -703,12 +718,12 @@ def board_row(t, d):
         d.lock, d.alpha0, d.hp, d.density, d.boss, d.givens, d.sets)
     shape = t.get("shape", "rect")
     shape_param = t.get("shape_param", 0)
-    if shape in ("cave", "dungeon"):
+    if shape in SEEDED_SHAPES:
         cells = d.cells
         # The generator keeps a one-cell margin all round and cannot carve
         # more than what is inside it. Caught here, where the schedule is
         # written, rather than on the board.
-        room = carved_room(shape, W, H)
+        room = carved_room(W, H)
         if cells > room:
             raise ValueError(
                 f"{t['id']}#{n}: {cells} cells asked of a {W}x{H} box "
@@ -728,23 +743,15 @@ def board_row(t, d):
         # all - it falls out of how big a board the set is laid on. `sets`
         # copies of the set scale the count without bending the curve.
         q = [(T + 1) * sets] * T
+    elif t.get("placement") in ("packs", "congo"):
+        # The rule IS the distribution, as for DOMINOES: every pack is one
+        # of each tier, so n packs is n of every tier and the curve is flat
+        # by construction. Unlike a domino set a pack is small, so density
+        # still drives the count directly - rounded DOWN to whole packs,
+        # the direction that can never push a board past its packing.
+        q = [round(density * cells) // T] * T
     else:
         M = round(density * cells)
-        if t.get("placement") in ("packs", "congo"):
-            # The rule IS the distribution, as for DOMINOES: every pack is one
-            # of each tier, so n packs is n of every tier and the curve is flat
-            # by construction. Unlike a domino set a pack is small, so density
-            # still drives the count directly - rounded DOWN to whole packs,
-            # the direction that can never push a board past its packing.
-            q = [M // T] * T
-            C = cumulative_exp(q)
-            ea = exp_array(q, lock, alpha0)
-            return dict(
-                n=n, w=W, h=H, cells=cells, monsters=sum(q),
-                density=round(100 * sum(q) / cells, 1),
-                tiers=T, quantity=q, hp=hp, lock=lock, exp=ea, givens=givens,
-                total_exp=C[-1], empty=cells - sum(q),
-            )
         if t.get("placement") in ("pairs", "sprinkles"):
             # Every creature has exactly one partner, so an odd total leaves
             # one of them with nobody. Rounded DOWN rather than up, because the
@@ -753,10 +760,12 @@ def board_row(t, d):
             # can make a board fail to generate. SPRINKLE DONUT's pairs may
             # touch and pack far looser, and round the same way.
             M -= M % 2
+        # A pinned boss count takes the top tier out of the shape, whichever the archetype.
+        pinned = boss is not None
         if t["archetype"] == "flat":
-            w = shape_flat(T if boss is None else T - 1)
+            w = shape_flat(T - 1 if pinned else T)
         else:
-            w = shape_descending(T, boss=1 if boss else 0)
+            w = shape_descending(T, boss=pinned)
         if t.get("placement") == "checker":
             # The colour rule decides where a tier may stand, so the balance it
             # promises has to be met here, in the quantities -- see
@@ -817,10 +826,10 @@ def continued_boards(t, boards):
     for row in extend(t):
         cand = board_row(t, BoardDials.continued(row))
         # A board that offers LESS exp than the one before it cannot be a
-        # step up, and its thresholds could not be lifted to match even if
-        # we wanted them to - there would not be the EXP on the board to
-        # meet them. See the module note: a wider CROSS can be a smaller
-        # one, because its arm width depends on the parity of the box.
+        # step up, and its thresholds could not be lifted to match: there
+        # would not be the EXP on the board to meet them. It happens: a
+        # CROSS's arm is a cell thicker across an odd box than an even one,
+        # so a box a cell bigger each way can hold fewer cells.
         # Only the battle ladders. A search type has no level economy at
         # all - no thresholds, no gates - so C_k says nothing about its
         # difficulty, and BLIND's own tuned ten already step C_1 backwards

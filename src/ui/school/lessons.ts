@@ -1,9 +1,9 @@
 /**
- * The school's lessons (docs/teaching-plan.md, section 5): nine short lessons, one trick each, on
+ * The school's lessons (docs/teaching-plan.md, section 5): short lessons, one trick each, on
  * boards drawn so that the trick is the move. A lesson is a board and a list of steps, and a step
  * says something, points with the tutor, and waits for one thing. Data, DOM-free: where a trick is
  * taught the words are the trick text's, so a change to that sentence reaches the school too.
- * `run.ts` takes one lesson; `test/school.test.ts` takes all nine with the tricks at each lesson's
+ * `run.ts` takes one lesson; `test/school.test.ts` takes them all with the tricks at each lesson's
  * grade, and holds the grade below to failing where the lesson's trick is needed.
  *
  * Where a board needs weak creatures kept out of the lesson (every threshold is `C_k`, so the level
@@ -28,6 +28,7 @@ export type Wait =
   /** This cell pencilled with exactly these candidates. */
   | { readonly pencil: Spot; readonly tiers: readonly number[] };
 
+/** One step of a lesson: what it says, what the tutor points at, and what it waits for. */
 export interface Step {
   /** What the teacher says. */
   readonly say: string;
@@ -38,6 +39,7 @@ export interface Step {
   readonly key?: true;
 }
 
+/** A lesson: its board as drawn, the level it starts at, and its steps in order. */
 export interface SchoolLesson {
   /** Stable, for the save. */
   readonly id: string;
@@ -55,9 +57,10 @@ export interface SchoolLesson {
 
 const rule = (trick: TrickId): string => TRICK_TEXT[trick].rule;
 
-/** Pencil mode, and how to reach it, said the same way wherever a lesson asks for it. */
+/** How to mark a cell, said the same way wherever a lesson asks for it. */
 const HOW_TO_MARK = 'right-click it, or pick its LV button and click it';
 
+/** The school's lessons, in the order its screen lists them. */
 export const LESSONS: readonly SchoolLesson[] = [
   {
     id: 'sum',
