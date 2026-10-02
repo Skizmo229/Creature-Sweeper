@@ -1,3 +1,10 @@
+/**
+ * The game's state machine (`src/engine/game.ts`), mostly on small hand-built boards so the
+ * assertions can be exact: numbers, the opening, open(), marks, determinism, the pencil, the crawl
+ * rule and a ladder without Sweep. Sweep's proofs are in `sweep.test.ts`, the spells' in
+ * `spells.test.ts`.
+ */
+
 import { describe, expect, it } from 'vitest';
 import { Game } from '../src/engine/game.js';
 import { noteTiers } from '../src/engine/notes.js';
@@ -9,7 +16,6 @@ import { BASE_ROWS, ISLANDS, findBestOpening, findOpenings } from '../src/engine
 import { boardConfig } from '../src/engine/config.js';
 import { autoplayTierOrder } from '../src/sim/autoplay.js';
 
-/** A small hand-built board so the assertions can be exact. */
 /** Reveal size of every candidate opening on the board, largest-first. */
 function everyOpeningSize(grid: Game['grid']): number[] {
   const h = grid.length;
@@ -712,10 +718,7 @@ describe('a ladder without Sweep', () => {
   // EASY is where the sum rule is learned and PATROL is keeping up with numbers that move, so
   // neither offers Sweep at all — under any setting of the player's dial, and through any door.
   const WITHOUT = ['easy', 'patrol'];
-  it('offers none on EASY or PATROL, whatever the dial says', async () => {
-    const { loadLadders } = await import('../src/data.js');
-    const { boardConfig } = await import('../src/engine/config.js');
-    const ladders = loadLadders();
+  it('offers none on EASY or PATROL, whatever the dial says', () => {
     for (const id of WITHOUT) {
       for (const n of [1, 10]) {
         const game = Game.create(boardConfig(ladders, id, n), 3, {
