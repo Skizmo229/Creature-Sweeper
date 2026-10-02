@@ -108,6 +108,25 @@ phase 6's split; `ladders.py`'s comments lose their history; the names of the fi
 are corrected wherever the docs and comments still used the old ones; and the design generators
 write LF on Windows.
 
+**The final pass, 1 October 2026.** Before the 1.0 release the owner asked for one more
+readability pass. Five read-only audits (the engine, the game screen, the settings and looks, the
+instruments, the tests and tooling) found about 150 things a newcomer would trip on, most of them
+left by a week of features landing fast: comments that had drifted from the code or sat on the
+wrong declaration, history told in code, exports with no docblock, helpers copied between files,
+long branching functions, and four files squeezed under the 600-line bar. Branch
+`final-refactor` fixed them in 187 commits, none meant to change behaviour, checked three ways:
+the golden outputs byte-identical after every commit; every output the golden runs do not reach
+(the human sim's runs, every spell policy, every tutor caption) diffed before and after; and, for
+the interface, a scratch harness that recorded every canvas call, every Web Audio call and the
+HTML of every screen, for every ladder in four states, every clear effect, the settings screen and
+the lessons, identical before and after. Measured with ESLint at bars tighter than the check's
+(70-line functions, complexity 20, nesting 4): functions over 70 lines went from 20 to 3, over
+complexity 20 from 19 to 6, and blocks nested past 4 from 31 to 17; `game.ts`, `app.ts`,
+`presentation.ts` and `tutor.ts` now sit at 598, 586, 569 and 414 lines. Left as they are on
+purpose: `Game.ex` (as `exp` it would sit beside `config.exp`, the thresholds), `Game.charge`
+(documented where it stands, among Sweep's other getters), and the Sudoku generator sharing a file
+with its rule (533 lines).
+
 ---
 
 ## 1. The short version
