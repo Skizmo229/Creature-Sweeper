@@ -302,14 +302,26 @@ export type BlockReason =
    * certain loss of HP. The same guard, read off a set instead of a value. */
   | 'note-guard'
   | 'already-open'
+  /**
+   * Off the board or a hole, or an argument the board has no use for: a mark or a note that is not
+   * one of its tiers, a targeted spell cast without a target, a PATROL route that would leave it.
+   */
   | 'out-of-bounds'
   | 'game-over'
-  /** Not enough mana, or this type does not offer that spell. */
+  /** Not enough mana for the spell. */
   | 'no-mana'
+  /** This board does not offer that spell. */
   | 'no-such-spell'
-  /** The spell had nothing to act on. */
+  /**
+   * The action would change nothing: a Census or an Augur already cast on the cell, an Exercise
+   * already standing, a Beacon with nothing left to open, a Wait where nothing walks, a chord
+   * anywhere but on open ground.
+   */
   | 'no-effect'
-  /** Sweep is switched off, or its charge is not banked yet. */
+  /**
+   * Sweep is not to be had right now: the ladder offers none, the dial switches it off, its charge
+   * is not banked yet, or the board's budget of sweeps is spent.
+   */
   | 'no-charge'
   /** The cell carries a board-dealt clue, which the player may not rub out. */
   | 'given'
