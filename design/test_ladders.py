@@ -79,6 +79,16 @@ class TheSchema(unittest.TestCase):
             r"cave: a `cells` schedule goes with a seeded shape",
         )
 
+    def test_a_boss_count_of_zero(self):
+        # Absent is how a ladder pins no boss; a 0 would be read as a boss on one archetype and
+        # as none on the other.
+        self.refuses(
+            lambda s: s.replace(
+                "boss = [1, 1, 1, 1, 2, 2, 2, 2, 3, 3]", "boss = [0, 1, 1, 1, 2, 2, 2, 2, 3, 3]", 1
+            ),
+            r"huge: boss pins at least one creature",
+        )
+
 
 class Apportioning(unittest.TestCase):
     def test_distribute_lands_the_total_and_leaves_no_tier_empty(self):
@@ -194,6 +204,14 @@ class TheContinuation(unittest.TestCase):
                 was, now = L.cumulative_exp(prev["quantity"]), L.cumulative_exp(cur["quantity"])
                 for k in range(min(len(was), len(now))):
                     self.assertGreaterEqual(now[k], was[k], f"{t['id']}#{cur['n']} C_{k + 1}")
+
+    def test_never_carries_a_boss_count_down_to_none(self):
+        # No ladder's boss schedule falls today, so one that does is made up: HUGE's, reversed.
+        huge = next(t for t in L.TYPES if t["id"] == "huge")
+        falling = dict(huge, boss=list(reversed(huge["boss"])))
+        bosses = [row["boss"] for row in L.extend(falling)]
+        self.assertTrue(bosses)
+        self.assertGreaterEqual(min(bosses), 1)
 
     def test_never_takes_hp_below_the_floor_the_tuned_ladder_chose(self):
         for t in BUILT:

@@ -17,7 +17,7 @@
 #   lock               schedule: how many top thresholds are exact C_k gates
 #   alpha0             schedule: where the unlocked thresholds start, as a share of C_k
 #
-#   boss               schedule: creatures pinned at the top tier (absent: none pinned)
+#   boss               schedule: creatures pinned at the top tier, 1 or more (absent: none pinned)
 #   sweep              false on a ladder that offers no Sweep
 #   spells, start_mana the magic ladders' loadout and opening mana
 #   workout            WORKOUT's Exercise pricing: base, step, relief, exp_multiplier

@@ -254,8 +254,9 @@ def carved_room(w, h):
 
 # ---------- shape archetypes -------------------------------------------------
 
-def shape_descending(T, boss=0):
-    """Linear descent over the non-boss tiers, from `n` down to a floor.
+def shape_descending(T, boss=False):
+    """Linear descent over the non-boss tiers, from `n` down to a floor; `boss` says whether the
+    top tier is pinned and so left out.
 
     The floor matters: mamono sweeper's 5-tier descent runs 5..1 (33,27,20,13,6)
     but its 9-tier descent runs 8..2 (52,46,40,36,30,24,18,13), a much shallower
@@ -387,11 +388,14 @@ OPTIONAL = ("boss", "sweep", "spells", "start_mana", "workout", "placement", "se
 SCHEDULES = ("size", "tiers", "density", "hp", "lock", "alpha0", "boss", "sets", "givens", "cells")
 # What a ladder's own `ceiling` may set, in place of the continuation's own caps (see extend).
 CEILING_KEYS = ("max_w", "max_h", "density_cap", "hp_floor", "givens_floor")
+# The fewest creatures a boss count pins, on a tuned board and past board 10 alike.
+BOSS_FLOOR = 1
 
 
 def load_types(path=HERE / "ladder_types.toml"):
     """Every type's schedule, checked against the schema. TOML has no null, so a type without a
-    boss count omits it and reads back as None."""
+    boss count omits it and reads back as None, which is the one way to say none: every reader
+    asks `is not None`, and a count of 0 is refused."""
     with open(path, "rb") as f:
         types = tomllib.load(f)["type"]
     for t in types:
@@ -409,6 +413,9 @@ def load_types(path=HERE / "ladder_types.toml"):
         for k in SCHEDULES:
             if k in t and len(t[k]) != 10:
                 raise ValueError(f"{where}: {k} has {len(t[k])} entries, one per board is 10")
+        if "boss" in t and min(t["boss"]) < BOSS_FLOOR:
+            raise ValueError(f"{where}: boss pins at least one creature a board; "
+                             "a ladder that pins none omits it")
         t.setdefault("boss", None)
     return types
 
@@ -543,7 +550,7 @@ def extend(t):
     dd, dhp = _step(t["density"]), _step(t["hp"])
     dlock, dalpha = _step(t["lock"]), _step(t["alpha0"])
     dtier = _step(t["tiers"])
-    dboss = _step(t["boss"]) if t.get("boss") else 0.0
+    dboss = _step(t["boss"]) if t.get("boss") is not None else 0.0
     dgiv = _step(t["givens"]) if t.get("givens") else 0.0
 
     rows = []
@@ -579,8 +586,9 @@ def extend(t):
             alpha0=0 if search else max(CEILINGS["alpha_floor"],
                                         t["alpha0"][-1] + dalpha * i),
         )
-        if t.get("boss"):
-            row["boss"] = min(CEILINGS["boss"], round(t["boss"][-1] + dboss * i))
+        if t.get("boss") is not None:
+            boss = round(t["boss"][-1] + dboss * i)
+            row["boss"] = max(BOSS_FLOOR, min(CEILINGS["boss"], boss))
         if t.get("givens"):
             row["givens"] = max(over.get("givens_floor", CEILINGS["givens_floor"]),
                                 round(t["givens"][-1] + dgiv * i))
@@ -690,7 +698,7 @@ class BoardDials:
     @classmethod
     def tuned(cls, t, i):
         """Board i + 1 of a type's tuned ladder."""
-        at = lambda key: t[key][i] if t.get(key) else None
+        at = lambda key: t[key][i] if t.get(key) is not None else None
         return cls(n=i + 1, size=tuple(t["size"][i]), tiers=t["tiers"][i], lock=t["lock"][i],
                    alpha0=t["alpha0"][i], hp=t["hp"][i], density=t["density"][i],
                    boss=at("boss"), givens=at("givens"), cells=at("cells"), sets=at("sets"))
@@ -752,10 +760,12 @@ def board_row(t, d):
             # can make a board fail to generate. SPRINKLE DONUT's pairs may
             # touch and pack far looser, and round the same way.
             M -= M % 2
+        # A pinned boss count takes the top tier out of the shape, whichever the archetype.
+        pinned = boss is not None
         if t["archetype"] == "flat":
-            w = shape_flat(T if boss is None else T - 1)
+            w = shape_flat(T - 1 if pinned else T)
         else:
-            w = shape_descending(T, boss=1 if boss else 0)
+            w = shape_descending(T, boss=pinned)
         if t.get("placement") == "checker":
             # The colour rule decides where a tier may stand, so the balance it
             # promises has to be met here, in the quantities -- see
