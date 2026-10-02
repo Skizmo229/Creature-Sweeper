@@ -1,8 +1,9 @@
 /**
- * What each trick is called and what it says, for whatever teaches it: the tutor's caption, the
- * school's script and the field guide (docs/teaching-plan.md). One entry per trick, named as
- * `docs/strategies.md` names it and stated in one short sentence of the game's own; the test in
- * `test/tricktext.test.ts` holds the names and the sections to the document, both ways.
+ * What each trick is called and what it says, for whatever teaches it: the tutor's hint line, the
+ * school's script and the field guide (docs/teaching-plan.md); a proof's caption, its numbers
+ * filled in, is written in `captions.ts`. One entry per trick, named as `docs/strategies.md` names
+ * it and stated in one short sentence of the game's own; the test in `test/tricktext.test.ts`
+ * holds the names and the sections to the document, both ways.
  */
 
 import type { TrickId } from './tricks.js';
