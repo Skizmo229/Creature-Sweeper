@@ -30,6 +30,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   augur.ts        Augur's answer: hiddenTiers, and augurNow, which reads it off the ring as it stands
   sweep.ts        Sweep's proof: safeCells and its named proofs; the Sudoku harvest
   sweepgate.ts    how the dial gates Sweep: on, off, or charged by the cells opened by hand
+  explore.ts      exploration income: the mana for empty ground the player opens
   reach.ts        the crawl rule: withinReach and computeSealed
   patrol.ts       PATROL's walking creatures: routes, the step after every action, route marks
   placement/      the placement rules: one record per rule, and nobody else names one

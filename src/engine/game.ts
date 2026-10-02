@@ -12,7 +12,6 @@ import { SPELLS, type SpellId } from './spells.js';
 import {
   DEFAULT_GAMEPLAY,
   type GameplaySettings,
-  cellsPerMana,
   effectiveHp,
   spellPriceFor,
   startManaFor,
@@ -23,6 +22,7 @@ import { SPELL_EFFECTS } from './cast.js';
 import { computeSealed, withinReach } from './reach.js';
 import { safeCells as provenSafe } from './sweep.js';
 import { SweepGate } from './sweepgate.js';
+import { ExploreIncome } from './explore.js';
 import { type Grid, inBounds, neighbours } from './grid.js';
 import { dealOpening } from './opening.js';
 import { type LayoutOptions, readLayout, showDrawing } from './layout.js';
@@ -95,8 +95,8 @@ export class Game {
    * below zero. Always zero on a board without a workout rule.
    */
   exerciseSurcharge = 0;
-  /** Empty cells uncovered since the last mana the trickle paid out. */
-  private exploreProgress = 0;
+  /** Mana for the empty ground the player uncovers by hand (`explore.ts`). */
+  private readonly income: ExploreIncome;
 
   /** How the dial gates Sweep, and what has been banked toward one (`sweepgate.ts`). */
   private readonly gate: SweepGate;
@@ -120,6 +120,7 @@ export class Game {
     this.grid = grid;
     this.settings = settings;
     this.gate = new SweepGate(settings);
+    this.income = new ExploreIncome(settings);
     this.maxHp = effectiveHp(config.hp, settings);
     this.hp = startHp;
     this.progression = new Progression(config.startLevel, config.exp);
@@ -273,20 +274,10 @@ export class Game {
     const revealed = this.reveal(cell);
     events.push({ type: 'revealed', cells: revealed });
 
-    // Exploration income. Only ground YOU uncovered counts: the dealt opening
-    // is not your work, and Beacon's cells are already paid for, so neither
-    // accrues. Creature cells are excluded too — those pay via the kill.
+    // Exploration income, on a board with spells: the empty ground this open uncovered.
     if (this.config.spells.length) {
-      for (const r of revealed) {
-        if (this.grid[r.y]![r.x]!.tier === 0) this.exploreProgress++;
-      }
-      // Infinity when the mana-regen dial is at zero, which switches the
-      // trickle off rather than making it very slow.
-      const per = cellsPerMana(this.settings);
-      while (this.exploreProgress >= per) {
-        this.exploreProgress -= per;
-        this.mana++;
-      }
+      const empties = revealed.filter((r) => this.grid[r.y]![r.x]!.tier === 0).length;
+      this.mana += this.income.bank(empties);
     }
 
     if (cell.tier > 0 && cell.alive) events.push(...fight(this, cell));
