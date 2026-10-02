@@ -10,7 +10,6 @@ import './setup.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Game } from '../../src/engine/game.js';
 import type { Cell } from '../../src/engine/types.js';
-import { App } from '../../src/ui/app.js';
 import { type Layout, MIN_CELL, centreOf } from '../../src/ui/board/geometry.js';
 import { TILE_INSET } from '../../src/ui/board/paint.js';
 import { type BoardDisplay, BoardView, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
@@ -20,6 +19,7 @@ import { HIGHLIGHT_PIN, highlightSampleBoard, highlightSampleLands } from '../..
 import { HIGHLIGHT_COLORS, type HighlightStyle } from '../../src/ui/presentation.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
 import { ANNOTATION_OUTLINE, MARK_COLOR, REFUSAL_COLOR } from '../../src/ui/theme.js';
+import { startApp } from './driver.js';
 
 type Point = readonly [number, number];
 
@@ -260,14 +260,6 @@ describe('a cell a click would not land on', () => {
   });
 });
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  readonly current: Game | null;
-  readonly view: { readonly display: BoardDisplay; pinHover(x: number, y: number): void } | null;
-}
-
 describe('the highlight examples on the settings screen', () => {
   for (const topology of ['square', 'hex'] as const) {
     it(`cross out the covered cells right of the lit one and box the rest, on ${topology}`, () => {
@@ -295,7 +287,7 @@ describe('the highlight examples on the settings screen', () => {
   }
 
   it('are what the highlight and colour galleries draw', () => {
-    const app = new App(document.getElementById('app')!) as unknown as Driver;
+    const app = startApp();
     recording.strokes.length = 0;
     app.showSettings(() => app.showTypes());
     const inRed = recording.strokes.filter((s) => s.style === REFUSAL_COLOR);
@@ -311,7 +303,7 @@ describe('the highlight examples on the settings screen', () => {
 
 describe('the edge of reach on a board in play', () => {
   it('boxes every cell a click would land on and crosses out every other, on DUNGEON', () => {
-    const app = new App(document.getElementById('app')!) as unknown as Driver;
+    const app = startApp();
     app.play('dungeon', 1);
     const game = app.current!;
     // A cell in reach with cells out of reach around it: where the edge of the crawl runs.

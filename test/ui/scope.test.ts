@@ -8,32 +8,18 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
-import type { BoardDisplay } from '../../src/ui/board/view.js';
 import { themeFor } from '../../src/ui/looks.js';
 import { CUSTOM_TIERS, DEFAULT } from '../../src/ui/presentation.js';
-import type { Progress } from '../../src/ui/progress.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
 import { DEFAULT_TIERS, TIER_PRESETS } from '../../src/ui/tiercolors.js';
 import { FONTS } from '../../src/ui/typefaces.js';
+import { type AppDriver, mountApp, settingsRow, tiles } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  showBoards(typeId: string): void;
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  readonly progress: Progress;
-  readonly settings: Settings;
-  readonly view: { readonly display: BoardDisplay; readonly theme: { tile: string } } | null;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
   app.progress.setUnlockAll(true);
 });
 
@@ -47,11 +33,6 @@ function openSettings(typeId: string, ladderScope: boolean): void {
   )!;
   if (button.getAttribute('aria-pressed') !== 'true') button.click();
 }
-
-const row = (name: string): HTMLElement =>
-  [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
-    (r) => r.querySelector('.settings-name')?.textContent === name,
-  )!;
 
 describe('the store', () => {
   it('keeps a ladder’s own settings over the ones for every ladder, and reads them there alone', () => {
@@ -157,7 +138,7 @@ describe('the screen', () => {
   it('picks for the ladder alone in its scope, and for every ladder otherwise', () => {
     openSettings('normal', true);
     expect(document.querySelector('.settings-scope-note')!.textContent).toContain('NORMAL alone');
-    row('Board palette').querySelectorAll<HTMLButtonElement>('.preview-chip')[1]!.click();
+    tiles(settingsRow('Board palette'))[1]!.click();
     [...document.querySelectorAll<HTMLButtonElement>('.picker .preview-chip')]
       .find((b) => b.textContent === 'STAR')!
       .click();
@@ -166,7 +147,7 @@ describe('the screen', () => {
     expect(document.querySelector('.settings-scope-note')!.textContent).toContain('palette');
 
     openSettings('normal', false);
-    row('Board palette').querySelectorAll<HTMLButtonElement>('.preview-chip')[1]!.click();
+    tiles(settingsRow('Board palette'))[1]!.click();
     [...document.querySelectorAll<HTMLButtonElement>('.picker .preview-chip')]
       .find((b) => b.textContent === 'GEAR')!
       .click();

@@ -6,18 +6,8 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
 import { PROGRESS_KEY } from '../../src/ui/savefile.js';
-
-interface Driver {
-  readonly progress: {
-    lessonDone(id: string): boolean;
-    ladderCardSeen(typeId: string): boolean;
-    typeRecord(typeId: string): { highestBoard: number; cleared: boolean };
-    setUnlockAll(on: boolean): void;
-    readonly unlockAll: boolean;
-  };
-}
+import { startApp } from './driver.js';
 
 beforeEach(() => {
   localStorage.clear();
@@ -39,7 +29,7 @@ describe('a save with a field of the wrong shape', () => {
         ladderCards: [1, 'easy', null],
       }),
     );
-    const app = new App(document.getElementById('app')!) as unknown as Driver;
+    const app = startApp();
     expect(document.querySelector('.type-groups')).not.toBeNull();
     expect(app.progress.typeRecord('easy').highestBoard).toBe(4);
     expect(app.progress.lessonDone('x')).toBe(false);
@@ -52,7 +42,7 @@ describe('a save with a field of the wrong shape', () => {
       PROGRESS_KEY,
       JSON.stringify({ version: 1, types: {}, boards: {}, future: { from: 'a newer build' } }),
     );
-    const app = new App(document.getElementById('app')!) as unknown as Driver;
+    const app = startApp();
     app.progress.setUnlockAll(true);
     const written = JSON.parse(localStorage.getItem(PROGRESS_KEY)!) as Record<string, unknown>;
     expect(written).toMatchObject({
