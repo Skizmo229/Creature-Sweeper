@@ -16,6 +16,12 @@ room side derives from the cell budget. Hallways are thinned after the fact and 
 thrown away. `MIN_SPAWN_SHARE` moved from 0.78 to 0.55 when the pocket made 0.78 unreachable, and
 the invariant moved to the density a room actually plays at.
 
+0.78 had been derived, not chosen: board 10's nominal 26.4% over 0.78 is 33.8%, just inside the
+34% ceiling. With the pocket, over 40 seeds a board, the room-floor share ran 58 to 76% at worst
+and 71 to 82% on average, so every plan on the small boards was refused. At 0.55 the felt room
+density went from 15.9-30.4% to 18.0-32.6% on an average seed, and to 34.9% on the worst board-10
+seed in 40.
+
 ## Consequences
 Measured, the pocket made the board easier to play (98% of board 10 cleared against 83%) and the
 schedule was re-derived to 12.8 to 26.4%. The classification cannot be recovered from the grid, so

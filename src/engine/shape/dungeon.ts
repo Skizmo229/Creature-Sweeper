@@ -21,18 +21,16 @@
  *
  * That split has a consequence worth stating plainly: creatures are packed
  * into a fraction of the board, so the density the ladder quotes is not the
- * density you feel. Measured at the shipped schedule, rooms run 9.8-21.1%
- * against a nominal 9.0-14.6% — about 1.4x. `MIN_SPAWN_SHARE` is what keeps that fraction from drifting
- * seed to seed — a layout that leaves too little room floor is thrown away
- * rather than shipped, because the quota has to fit and the board has to play
- * the way it was measured.
+ * density you feel, and rooms play denser than the nominal figure (decision
+ * 0003). `MIN_SPAWN_SHARE` is what keeps that fraction from drifting seed to
+ * seed — a layout that leaves too little room floor is thrown away rather than
+ * shipped, because the quota has to fit and the board has to play the way it
+ * was measured.
  *
- * The earlier version of this made every cell part of a 2x2 block, which
- * bought a two-cell minimum width everywhere by construction. That is gone
- * deliberately: hallways are one cell wide now, so there is no width
- * guarantee left to make. What survives from it is the refusal to join two
- * parts of the map at a corner only — a diagonal pinch is legible as a gap
- * rather than as a passage, whatever its width.
+ * Hallways are one cell wide, so there is no width to guarantee. What the map
+ * does refuse is two of its parts joined at a corner only (`pinches`): a
+ * diagonal pinch is legible as a gap rather than as a passage, whatever its
+ * width.
  */
 
 import { type Rng, randInt, shuffle } from '../rng.js';
@@ -63,12 +61,13 @@ import {
 const DUNGEON_MARGIN = 1;
 
 /**
- * Share of the cell budget spent on rooms before hallways are carved.
+ * Shares of the cell budget spent on rooms before hallways are carved, tried
+ * in turn, `ATTEMPTS_PER_SHARE` plans each, until one lands.
  *
- * A first guess that the attempt loop corrects: hallway cost is not knowable
- * until the rooms exist, so this is deliberately low and the leftovers are
- * spent widening rooms afterwards. One-cell hallways are cheap, so this sits
- * much higher than it did when they were two.
+ * Each is a guess the attempt loop corrects: hallway cost is not knowable
+ * until the rooms exist, so the leftovers are spent widening rooms afterwards,
+ * and a share whose plan fails gives way to the next. One-cell hallways are
+ * cheap, so the shares sit high.
  */
 const ROOM_SHARES = [0.86, 0.8, 0.9, 0.74, 0.94, 0.68];
 
@@ -85,25 +84,10 @@ const ATTEMPTS_PER_SHARE = 2;
  * from wandering seed to seed. A plan under it is thrown away and another
  * tried.
  *
- * IT WAS 0.78, AND THAT NUMBER WAS DERIVED RATHER THAN CHOSEN: board 10's
- * nominal density is 26.4%, and 26.4/0.78 = 33.8%, just inside the 34% the
- * rest of the game treats as the point a board stops being a puzzle. So the
- * floor was the ceiling, restated as a share.
- *
- * The doorway pocket makes 0.78 unreachable. Measured over 40 seeds a board,
- * the share now runs 58-76% at worst and 71-82% on average, so every plan on
- * the small boards was refused and `dungeonMap` threw on every seed — small
- * boards have small rooms, and a small room is mostly perimeter.
- *
- * What it costs, measured rather than reasoned about: felt room density goes
- * from 15.9-30.4% to 18.0-32.6% on an average seed, and reaches 34.9% on the
- * worst board-10 seed in 40. That is 0.9 points past the ceiling, on a ladder
- * where HIVE already sits at 35% and CHECKERBOARD at 38.5% for stated reasons
- * — and the pocket itself hands back guaranteed-safe ground, so the board is
- * not straightforwardly denser to play even where it is denser to describe.
- * THAT LAST CLAIM IS THE UNMEASURED ONE. DUNGEON's schedule is the only one in
- * the game derived by playing it, with the honest player in `sim:spells`, and
- * re-deriving it is what would settle whether the density should now come down.
+ * It is this low because of the doorway pocket: small boards have small rooms,
+ * a small room is mostly perimeter, and a higher floor refused every plan on
+ * them. Rooms play denser for it, and the pocket's free ground still made the
+ * board easier to play; the measurements are in decision 0003.
  */
 const MIN_SPAWN_SHARE = 0.55;
 
