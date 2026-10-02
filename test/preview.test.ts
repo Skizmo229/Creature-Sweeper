@@ -39,7 +39,7 @@ const tiersOn = (game: Game): Set<number> =>
 
 const creatures = (game: Game) => game.grid.flat().filter((c) => c.present && c.tier > 0);
 
-/** Every tier count the real ladders actually deal, across all 461 boards. */
+/** Every tier count the real ladders actually deal, on every board, the scaling ones included. */
 const LADDER_TIER_COUNTS: number[] = [
   ...new Set(ladders.flatMap((t) => [...t.boards, ...t.extended].map((b) => b.tiers))),
 ].sort((a, b) => a - b);
