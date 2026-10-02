@@ -60,6 +60,11 @@ function enteringHp(config: BoardConfig, settings: GameplaySettings, options: Ga
   return startHp;
 }
 
+/**
+ * One board in play: its cells, the player's HP, level, mana and marks, and every action the
+ * player can take on it. Made by `create` (dealt from a seed) or `fromLayout` (drawn); each action
+ * returns the events it caused.
+ */
 export class Game {
   readonly config: BoardConfig;
   readonly seed: number;
@@ -180,10 +185,12 @@ export class Game {
 
   // ---------------------------------------------------------------- queries
 
+  /** The player's level: their attack, and the highest tier they kill for free. */
   get level(): number {
     return this.progression.level;
   }
 
+  /** EXP earned on this board. */
   get ex(): number {
     return this.progression.ex;
   }
@@ -193,6 +200,7 @@ export class Game {
     return neighbours(this.grid, cell.x, cell.y, this.config.topology, this.config.wrap);
   }
 
+  /** The cell at (x, y), or null off the board or on a hole. */
   cellAt(x: number, y: number): Cell | null {
     if (!inBounds(this.config, x, y)) return null;
     const cell = this.grid[y]![x]!;
@@ -208,6 +216,7 @@ export class Game {
     return this.config.search ? left - (this.marksPlaced[tier - 1] ?? 0) : left;
   }
 
+  /** Undefeated creatures on the board, every tier. */
   creaturesLeft(): number {
     return this.remaining.reduce((a, b) => a + b, 0);
   }
@@ -526,13 +535,10 @@ export class Game {
   }
 
   /**
-   * End the board as a loss from outside the rules.
-   *
-   * Time Attack is the only caller: the engine owns no clock, so "the
-   * countdown reached zero" is a fact only the UI can know. It is a method
-   * rather than a status the UI writes directly so that losing always goes
-   * through the same door — the creatures are revealed and a `lost` event is
-   * emitted exactly as they are when HP runs out.
+   * End the board as a loss from outside the rules: a countdown run out (Time Attack, a time
+   * limit), which only the UI can know since the engine owns no clock, or an instrument giving up.
+   * A method rather than a status the caller writes, so losing always goes through the same door:
+   * the creatures are revealed and a `lost` event emitted exactly as when HP runs out.
    */
   forfeit(): GameEvent[] {
     if (this.status !== 'playing') return [{ type: 'blocked', reason: 'game-over' }];
@@ -548,6 +554,7 @@ export class Game {
     return this.config.spells;
   }
 
+  /** Could this spell be cast now: the board is in play, offers it, and the mana is there? */
   canCast(id: SpellId): boolean {
     if (this.status !== 'playing') return false;
     if (!this.config.spells.includes(id)) return false;

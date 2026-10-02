@@ -115,6 +115,7 @@ export class Progression {
     return this.thresholds[this.level - 1]!;
   }
 
+  /** Past the last threshold: there is no level left to reach. */
   isMaxLevel(): boolean {
     return this.level > this.thresholds.length;
   }

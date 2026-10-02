@@ -177,6 +177,7 @@ export class FullRun {
     return this.game.status === 'won';
   }
 
+  /** Whether the board being played is the run's last. */
   get isLastBoard(): boolean {
     return this.boardIndex >= this.boardCount;
   }

@@ -40,8 +40,9 @@ export type SweepMode =
   /** A budget: so many sweeps a board, `sweepBudget`, and no more. */
   | 'budget';
 
-/** The most sweeps a budget can hold, and the least. */
+/** The most sweeps a budget can hold. */
 export const MAX_SWEEP_BUDGET = 20;
+/** The fewest sweeps a budget can hold. */
 export const MIN_SWEEP_BUDGET = 1;
 /** How far below the best Time Attack can race: half of it. */
 export const MIN_TIME_ATTACK_RATIO = 0.5;

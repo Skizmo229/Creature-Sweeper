@@ -36,6 +36,7 @@
 
 import { manaForTier } from './combat.js';
 
+/** A spell, by the id the ladder data and the `SPELLS` table use. */
 export type SpellId = 'reveal' | 'census' | 'exercise' | 'beacon' | 'augur';
 
 /** One spell's entry in the table: its name, price, whether it takes a target, its tooltip. */
