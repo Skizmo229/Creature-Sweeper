@@ -1,8 +1,8 @@
 # Glossary
 
-The vocabulary the game, the code, the tests and the design notes use, one paragraph each, with
-the module that owns the idea where one does. Terms are grouped, not alphabetical, because most of them only make sense
-next to their neighbours.
+The vocabulary the game, the code, the tests and the design notes use, one paragraph each, with the
+module that owns the idea where one does. Terms are grouped, not alphabetical, because most of them
+only make sense next to their neighbours.
 
 ## The game
 
