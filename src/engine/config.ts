@@ -399,8 +399,11 @@ export function ladderFingerprint(ladders: Ladders, typeId: string): string {
   return fnv1a(`${boards.join(',')}|${type.run_hp}`);
 }
 
-/** FNV-1a, 32 bits, as eight hex digits: short, stable, and enough to tell two tunings apart. */
-function fnv1a(text: string): string {
+/**
+ * FNV-1a, 32 bits, as eight hex digits: short, stable, and enough to tell two tunings or two board
+ * states apart. It guards against an update, not against an adversary.
+ */
+export function fnv1a(text: string): string {
   let hash = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
     hash ^= text.charCodeAt(i);
