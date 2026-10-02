@@ -312,6 +312,17 @@ Computed over the component of *open* creatures, which errs safe. `packCandidate
 pencil the tiers the neighbouring pack has not shown. CONGA LINE takes all of it by reference. Density is
 the dial (22.5 to 31.6%), and the board grows a row or column every step for granularity.
 
+PACKS was tuned with the honest player from `sim:spells`, taught the pack rule, by 20 September
+2026: at 120 seeds a board, 0.2 forced guesses rising to 5.2, and 99% cleared falling to 70%,
+DOMINOES's 70% at the top, the other ladder reached by clearing PAIRS. A pack of six on a 480-cell
+board is 1.25 density points, so a schedule held on one size rounded neighbouring boards to the
+same board; a column or a row a step gives every board its own pack count. The first guess was
+NORMAL plus a little (26 to 34%), since packs leave so much ground open, and it cleared 35% of
+board 10 at 7.2 forced guesses: on a flat curve a tier 6 is as common as a tier 1, so an open board
+is still an expensive one to guess on. The guess count runs well ahead of the clear rate, 5.2
+against DOMINOES's 2.2 at the same 70%, the signature of CHECKERBOARD and DUNGEON: a guess beside a
+pack is capped by the tiers it has not shown, so it is cheaper. More guesses, each worth less.
+
 **CONGA LINE** strings each pack into an orthogonal line led by the tier 6, with no member
 orthogonally beside any but its neighbours in the line; at six, "no 2x2" and "a true line" are the
 same rule. So two open creatures side by side are consecutive, which is why the board ties them

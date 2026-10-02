@@ -787,27 +787,10 @@ blurb = """\
   Creatures come in packs of six, one of every tier, all touching, and no two packs touch. Only \
   the tiers a pack has not shown can hide beside it; a complete pack is ringed by empty ground."""
 placement = "packs"
-# DENSITY IS THE AXIS, and the board grows a little every step as well
-# -- not for difficulty but for granularity. Creatures come in packs of
-# six, so on a 480-cell board one pack is 1.25 density points, and a
-# schedule held on one size rounded neighbouring boards to the SAME
-# board. Growing a column or a row each step gives every board its own
-# pack count.
-#
-# Measured with the honest player from `sim:spells`, taught the pack
-# rule, 120 seeds a board: 0.2 forced guesses rising to 5.2, 99%
-# cleared falling to 70% -- DOMINOES's 70% at the top, the other ladder
-# you reach by clearing PAIRS.
-#
-# Two things about how it got here. First guess was NORMAL-plus-a-bit
-# (26-34%), because packs leave so much ground open; it cleared 35% of
-# board 10 at 7.2 forced guesses. The flat curve is what that missed: a
-# tier 6 is as common as a tier 1, so an open board is still an
-# expensive one to guess on. Second, the guess count here runs well
-# ahead of the clear rate -- 5.2 guesses against DOMINOES's 2.2 at the
-# same 70% -- which is the CHECKERBOARD and DUNGEON signature again: a
-# guess beside a pack is capped by the tiers that pack has not shown,
-# so it is a cheaper guess. More guesses, each worth less.
+# DENSITY IS THE AXIS, on DOMINOES's clear rate at the top: 99% of board 1 falling to 70% of
+# board 10 for the honest player taught the pack rule (120 seeds a board, by 20 September 2026;
+# docs/modes.md, PACKS and CONGA LINE). The board grows a row or a column a step only so that
+# every board has a pack count of its own.
 size = [[30, 16], [30, 16], [31, 16], [31, 17], [32, 17], [33, 17], [33, 18], [34, 18], [35, 19], [36, 19]]
 tiers = [6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
 density = [0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29, 0.3, 0.31, 0.32]
