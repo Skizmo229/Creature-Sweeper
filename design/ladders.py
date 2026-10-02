@@ -825,10 +825,10 @@ def continued_boards(t, boards):
     for row in extend(t):
         cand = board_row(t, BoardDials.continued(row))
         # A board that offers LESS exp than the one before it cannot be a
-        # step up, and its thresholds could not be lifted to match even if
-        # we wanted them to - there would not be the EXP on the board to
-        # meet them. See the module note: a wider CROSS can be a smaller
-        # one, because its arm width depends on the parity of the box.
+        # step up, and its thresholds could not be lifted to match: there
+        # would not be the EXP on the board to meet them. It happens: a
+        # CROSS's arm is a cell thicker across an odd box than an even one,
+        # so a box a cell bigger each way can hold fewer cells.
         # Only the battle ladders. A search type has no level economy at
         # all - no thresholds, no gates - so C_k says nothing about its
         # difficulty, and BLIND's own tuned ten already step C_1 backwards
