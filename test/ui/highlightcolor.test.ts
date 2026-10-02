@@ -9,7 +9,6 @@
 import './setup.js';
 import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
 import { type BoardDisplay, BoardView, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { colorDifference } from '../../src/ui/colorspace.js';
 import { themeFor } from '../../src/ui/looks.js';
@@ -21,21 +20,12 @@ import { Settings } from '../../src/ui/settings.js';
 import { NEAR_TAKEN } from '../../src/ui/settingsscreen/customcolor.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
 import { MARK_COLOR, REFUSAL_COLOR } from '../../src/ui/theme.js';
+import { type AppDriver, mountApp, settingsRow, tileLabel, tiles } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  readonly settings: Settings;
-  readonly view: { readonly display: BoardDisplay } | null;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 /** A saved presentation, as a save file holds it. */
@@ -183,24 +173,18 @@ describe('the presets', () => {
 /** The settings row for the highlight's colour, on a freshly built screen. */
 function colorRow(): HTMLElement {
   app.showSettings(() => app.showTypes());
-  return [...document.querySelectorAll<HTMLElement>('.settings-row')].find(
-    (r) => r.querySelector('.settings-name')?.textContent === 'Cursor highlight colour',
-  )!;
+  return settingsRow('Cursor highlight colour');
 }
 
-const tiles = (row: HTMLElement): HTMLButtonElement[] => [
-  ...row.querySelectorAll<HTMLButtonElement>('.preview-chip'),
-];
-const label = (tile: Element): string => tile.querySelector('.chip-label')!.textContent!;
 const lit = (row: HTMLElement): string[] =>
   tiles(row)
     .filter((t) => t.classList.contains('active'))
-    .map(label);
+    .map(tileLabel);
 
 describe('the settings row', () => {
   it('offers the game type green, the presets and a custom colour, each drawn on a board', () => {
     const row = colorRow();
-    expect(tiles(row).map(label)).toEqual([
+    expect(tiles(row).map(tileLabel)).toEqual([
       'Game type default — green',
       ...HIGHLIGHT_COLORS.map((c) => c.name),
       'Custom — any colour',
@@ -213,7 +197,7 @@ describe('the settings row', () => {
   it('saves a preset when it is picked', () => {
     const cyan = HIGHLIGHT_COLORS.find((c) => c.name === 'Cyan')!;
     tiles(colorRow())
-      .find((t) => label(t) === 'Cyan')!
+      .find((t) => tileLabel(t) === 'Cyan')!
       .click();
     expect(Settings.load().presentation.highlightColor).toBe(cyan.color);
     expect(lit(colorRow())).toEqual(['Cyan']);

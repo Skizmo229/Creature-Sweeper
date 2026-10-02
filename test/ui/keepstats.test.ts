@@ -6,28 +6,16 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Game } from '../../src/engine/game.js';
 import { autoplayTierOrder } from '../../src/sim/autoplay.js';
-import { App } from '../../src/ui/app.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
 import { TelemetryStore } from '../../src/ui/telemetrystore.js';
+import { type AppDriver, mountApp, settingsRow } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  finish(): void;
-  readonly current: Game | null;
-  readonly settings: Settings;
-  showSettings(back: () => void): void;
-  showTypes(): void;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 /** How many boards the statistics on this device hold attempts on. */
@@ -55,9 +43,7 @@ describe('keeping play statistics', () => {
 
   it('is a toggle on the settings screen, and reads a save without it as on', () => {
     app.showSettings(() => app.showTypes());
-    const row = [...document.querySelectorAll('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Keep play statistics',
-    )!;
+    const row = settingsRow('Keep play statistics');
     const box = row.querySelector<HTMLInputElement>('input[type=checkbox]')!;
     expect(box.checked).toBe(true);
     box.click();

@@ -8,25 +8,14 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Game } from '../../src/engine/game.js';
 import { DEFAULT_GAMEPLAY } from '../../src/engine/settings.js';
-import { App } from '../../src/ui/app.js';
 import { LESSONS } from '../../src/ui/school/lessons.js';
-import type { Settings } from '../../src/ui/settings.js';
+import { type AppDriver, mountApp } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  readonly current: Game | null;
-  readonly settings: Settings;
-  readonly teaching: { startLesson(index: number): void };
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
   app.settings.setGameplay({ hpRatio: 0.5, enemyDamageRatio: 2, countersHidden: true });
 });
 

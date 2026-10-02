@@ -6,30 +6,17 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
+import { type AppDriver, key, mountApp, settingsRow } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  readonly settings: Settings;
-  readonly actions: { onCellPrimary(x: number, y: number): void };
-  readonly current: { safeCells(o: { useMarks: boolean }): { x: number; y: number }[] } | null;
-  showSettings(back: () => void): void;
-  showTypes(): void;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 const hint = (): HTMLElement => document.querySelector<HTMLElement>('.hint')!;
-const key = (k: string): boolean =>
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
 
 describe('the hint line setting', () => {
   it('shows the line by default and hides it when off, until the tutor speaks', () => {
@@ -61,9 +48,7 @@ describe('the hint line setting', () => {
 
   it('is a toggle on the settings screen, and reads a save from before it as on', () => {
     app.showSettings(() => app.showTypes());
-    const row = [...document.querySelectorAll('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Hint line',
-    )!;
+    const row = settingsRow('Hint line');
     const box = row.querySelector<HTMLInputElement>('input[type=checkbox]')!;
     expect(box.checked).toBe(true);
     box.click();
