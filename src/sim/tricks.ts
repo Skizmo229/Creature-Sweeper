@@ -118,7 +118,7 @@ function by(constraints: readonly Constraint[], cells: readonly Cell[] = []): Wh
 const RULE: Why = by([]);
 
 /** Propose a cell as safe to open, remembering why. */
-function open(m: Moves, cell: Cell, why: Why): void {
+function proposeOpen(m: Moves, cell: Cell, why: Why): void {
   m.open.add(cell);
   if (!m.because.has(cell)) m.because.set(cell, why);
 }
@@ -150,7 +150,7 @@ function concludeSum(
 ): void {
   if (hi < 0 || lo > hi || !cells.length) return;
   if (hi <= view.level) {
-    for (const c of cells) open(m, c, why);
+    for (const c of cells) proposeOpen(m, c, why);
     return;
   }
   const sup = supported(
@@ -185,7 +185,7 @@ const rawRing: Trick = {
   apply(v, m) {
     for (const c of v.reading.constraints) {
       if (c.cell.num > v.level) continue;
-      for (const n of c.unknown) open(m, n, by([c]));
+      for (const n of c.unknown) proposeOpen(m, n, by([c]));
     }
   },
 };
@@ -195,7 +195,8 @@ const namedKill: Trick = {
   grade: 0,
   apply(v, m) {
     if (v.level <= 0) return;
-    for (const [cell, mark] of v.reading.marked) if (mark <= v.level) open(m, cell, by([], [cell]));
+    for (const [cell, mark] of v.reading.marked)
+      if (mark <= v.level) proposeOpen(m, cell, by([], [cell]));
   },
 };
 
@@ -210,11 +211,11 @@ const metPartner: Trick = {
       const ns = v.game.neighboursOf(cell);
       const partner = ns.find(openCreature);
       if (!partner) continue;
-      for (const n of ns) if (coveredUnmarked(n)) open(m, n, by([], [cell, partner]));
+      for (const n of ns) if (coveredUnmarked(n)) proposeOpen(m, n, by([], [cell, partner]));
     }
     for (const cell of v.reading.unknown) {
       const creatures = v.game.neighboursOf(cell).filter(openCreature);
-      if (creatures.length >= 2) open(m, cell, by([], creatures));
+      if (creatures.length >= 2) proposeOpen(m, cell, by([], creatures));
     }
   },
 };
@@ -223,7 +224,7 @@ const metPartner: Trick = {
 const corridor: Trick = {
   grade: 0,
   apply(v, m) {
-    for (const cell of v.scaffold) if (coveredUnmarked(cell)) open(m, cell, RULE);
+    for (const cell of v.scaffold) if (coveredUnmarked(cell)) proposeOpen(m, cell, RULE);
   },
 };
 
@@ -245,7 +246,7 @@ const residualRing: Trick = {
   apply(v, m) {
     for (const c of v.reading.constraints) {
       if (c.residual > v.level) continue;
-      for (const n of c.unknown) open(m, n, by([c]));
+      for (const n of c.unknown) proposeOpen(m, n, by([c]));
     }
   },
 };
@@ -269,7 +270,7 @@ const censusRing: Trick = {
     for (const c of v.reading.constraints) {
       if (c.creatures === null || c.creatures > c.unknown.length) continue;
       if (c.creatures > 0 && c.residual - (c.creatures - 1) > v.level) continue;
-      for (const n of c.unknown) open(m, n, by([c]));
+      for (const n of c.unknown) proposeOpen(m, n, by([c]));
     }
   },
 };
@@ -285,7 +286,7 @@ const augurCap: Trick = {
       if (c.tiers === null) continue;
       const why = by([c]);
       if ((c.tiers[0] ?? 0) <= v.level) {
-        for (const n of c.unknown) open(m, n, why);
+        for (const n of c.unknown) proposeOpen(m, n, why);
         continue;
       }
       let listed = c.tiers.length < c.unknown.length ? noteBit(0) : 0;
@@ -307,7 +308,7 @@ const counters: Trick = {
   apply(v, m) {
     const r = v.reading;
     if (r.top <= v.level) {
-      for (const cell of r.unknown) open(m, cell, RULE);
+      for (const cell of r.unknown) proposeOpen(m, cell, RULE);
       return;
     }
     for (const cell of r.unknown) {
@@ -325,7 +326,7 @@ const loneDark: Trick = {
     for (const c of v.reading.constraints) {
       if (c.residual <= 0) continue;
       for (const n of c.unknown) {
-        if (rule.cap(n, c.residual, c.unknown) === 0) open(m, n, by([c]));
+        if (rule.cap(n, c.residual, c.unknown) === 0) proposeOpen(m, n, by([c]));
       }
     }
   },
@@ -531,7 +532,7 @@ const lineReach: Trick = {
   grade: 3,
   apply(v, m) {
     for (const cell of placementRule(v.game.config.placement).emptied(v.game)) {
-      if (coveredUnmarked(cell)) open(m, cell, RULE);
+      if (coveredUnmarked(cell)) proposeOpen(m, cell, RULE);
     }
   },
 };
