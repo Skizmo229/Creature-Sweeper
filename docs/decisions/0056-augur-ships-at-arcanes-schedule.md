@@ -1,6 +1,6 @@
 # 0056. AUGUR ships at ARCANE's schedule, because density cannot move it
 
-2026-09-27. Status: adopted.
+2026-09-27. Status: adopted. A lock deeper, with EXTREME's HP, since 0088.
 
 ## Context
 AUGUR is ARCANE's boards with Census and Augur only: the two spells that answer a question and

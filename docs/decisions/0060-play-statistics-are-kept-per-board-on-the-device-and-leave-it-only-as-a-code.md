@@ -1,6 +1,7 @@
 # 0060. Play statistics are kept per board on the device, and leave it only as a code
 
-2026-09-27. Status: adopted.
+2026-09-27. Status: adopted. The code names the version that wrote it since 0080, and goes into a
+play-test report on GitHub since 0085.
 
 ## Context
 Milestone 4 (`docs/human-tuning-plan.md`) tuned the ladders against the graded player, and found

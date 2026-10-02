@@ -1,6 +1,7 @@
 # 0062. Augur names the strongest hidden creature
 
-2026-09-28. Status: adopted. Amends 0055.
+2026-09-28. Status: adopted. Amends 0055. The answer lists every hidden tier, not the strongest
+alone, since 0087.
 
 ## Context
 Augur answered with the strongest tier among all of a cell's neighbours, open ones included
