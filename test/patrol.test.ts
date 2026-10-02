@@ -6,11 +6,13 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { boardConfig } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
 import { neighbours } from '../src/engine/grid.js';
 import { routeCells, routeStep } from '../src/engine/patrol.js';
+import { computeSealed } from '../src/engine/reach.js';
 import type { Cell } from '../src/engine/types.js';
-import { UNGATED_SWEEP, testConfig } from './helpers.js';
+import { UNGATED_SWEEP, ladders, testConfig } from './helpers.js';
 
 /** A 12x12 patrol board: two tier 1s, a tier 2 and a tier 3, and the opening asked for. */
 function patrolGame(seed: number, opening: 'auto' | 'none' = 'auto'): Game {
@@ -195,5 +197,24 @@ describe('marks on PATROL', () => {
     expect(game.marksAreClaims).toBe(false);
     expect(game.safeCells({ useMarks: true })).toEqual(game.safeCells({ useMarks: false }));
     expect(Game.create(testConfig(), 1).marksAreClaims).toBe(true);
+  });
+});
+
+describe('the crawl rule on a board whose creatures walk', () => {
+  it('reads whether the player is walled in off the board as it stands after a step', () => {
+    const patrol = ladders.find((t) => t.id === 'patrol')!;
+    const game = Game.create(boardConfig([{ ...patrol, reach: 2 }], patrol.id, 1), 3);
+    // Everything still covered becomes too strong to touch: the player is walled in.
+    for (const cell of game.grid.flat()) {
+      if (cell.present && !cell.open) {
+        cell.tier = 9;
+        cell.alive = true;
+      }
+    }
+    expect(game.sealedIn()).toBe(true);
+    // The creatures step, leaving empty ground behind them within reach.
+    game.wait();
+    expect(computeSealed(game)).toBe(false);
+    expect(game.sealedIn()).toBe(false);
   });
 });

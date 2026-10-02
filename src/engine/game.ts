@@ -78,8 +78,9 @@ export class Game {
   readonly progression: Progression;
   /**
    * Whether the crawl rule currently has the player walled in, or null when
-   * it has not been worked out since the last thing that could change it.
-   * Always read through `sealedIn()`.
+   * it has not been worked out since the last thing that could change it:
+   * ground uncovered (`uncover`) or the creatures walking (`moveOn`). Always
+   * read through `sealedIn()`.
    */
   private sealed: boolean | null = null;
   private sealedLevel = -1;
@@ -312,9 +313,15 @@ export class Game {
     return this.moveOn();
   }
 
-  /** After an action, on a board whose creatures walk and are still in play: a step each. */
+  /**
+   * After an action, on a board whose creatures walk and are still in play: a step each. A step
+   * uncovers and covers ground, so whether the player is walled in is read again after it.
+   */
   private moveOn(): GameEvent[] {
-    return this.patrol && this.status === 'playing' ? this.patrol.step(this) : [];
+    if (!this.patrol || this.status !== 'playing') return [];
+    const events = this.patrol.step(this);
+    this.sealed = null;
+    return events;
   }
 
   /**
