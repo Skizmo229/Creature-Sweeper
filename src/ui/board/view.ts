@@ -13,6 +13,9 @@ import type { Lesson } from '../../sim/tutor.js';
 import {
   type BeatenLook,
   type CreatureGlyph,
+  DEFAULT_DIGIT_SIZE,
+  DEFAULT_HIGHLIGHT_WIDTH,
+  DEFAULT_LONG_PRESS,
   DEFAULT_MAX_ZOOM,
   type HighlightStyle,
 } from '../presentation.js';
@@ -90,6 +93,17 @@ export interface BoardDisplay {
   tierColors: TierPalette;
 }
 
+/** The cell size, in CSS pixels, before the first fit. */
+const INITIAL_CELL = 32;
+/** The smallest stage, in CSS pixels each way, a fit sizes the canvas to. */
+const MIN_STAGE_PX = 120;
+/** The stage a fit assumes while the canvas has no parent to measure. */
+const FALLBACK_STAGE = { w: 960, h: 520 } as const;
+/** What a fit leaves between the canvas and its stage, in CSS pixels, across each axis. */
+const STAGE_PADDING = 8;
+/** The most device pixels per CSS pixel the canvas is drawn at, however dense the screen. */
+const MAX_DPR = 3;
+
 /** The renderer's own defaults, which the game's own settings resolve to; the tests start here. */
 export const DEFAULT_DISPLAY: BoardDisplay = {
   maxCell: DEFAULT_MAX_ZOOM,
@@ -98,12 +112,12 @@ export const DEFAULT_DISPLAY: BoardDisplay = {
   glyph: 'pips',
   highlight: 'neighbours',
   highlightColor: MARK_COLOR,
-  highlightWidth: 2,
+  highlightWidth: DEFAULT_HIGHLIGHT_WIDTH,
   beatenLook: 'dimStrike',
-  digitScale: 1,
+  digitScale: DEFAULT_DIGIT_SIZE,
   reachShading: false,
   markColor: MARK_COLOR,
-  longPressMs: 500,
+  longPressMs: DEFAULT_LONG_PRESS,
   beatenNumbers: false,
   tierColors: DEFAULT_TIERS,
 };
@@ -146,12 +160,12 @@ export class BoardView implements InputHost {
   private theme: TypeTheme | null = null;
   private display: BoardDisplay = DEFAULT_DISPLAY;
 
-  private cellPxValue = 32;
+  private cellPxValue = INITIAL_CELL;
   /**
    * The size fit() chose. Zoom stops here on the way out: shrinking the board below what the
    * stage can already hold gains nothing, so the only way out is back to the fit.
    */
-  private fittedCellValue = 32;
+  private fittedCellValue = INITIAL_CELL;
   private originXValue = 0;
   private originYValue = 0;
   private hoveredCellValue: Cell | null = null;
@@ -295,8 +309,8 @@ export class BoardView implements InputHost {
       });
       this.stageWatch.observe(box);
     }
-    const availW = Math.max(120, (box?.clientWidth ?? 960) - 8);
-    const availH = Math.max(120, (box?.clientHeight ?? 520) - 8);
+    const availW = Math.max(MIN_STAGE_PX, (box?.clientWidth ?? FALLBACK_STAGE.w) - STAGE_PADDING);
+    const availH = Math.max(MIN_STAGE_PX, (box?.clientHeight ?? FALLBACK_STAGE.h) - STAGE_PADDING);
 
     const fitted = fittedCellFor(game, availW, availH);
     // The ceiling caps magnification only. A small board is held at the player's limit rather
@@ -335,7 +349,7 @@ export class BoardView implements InputHost {
   }
 
   private resizeCanvas(cssW: number, cssH: number): void {
-    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    const dpr = Math.min(MAX_DPR, window.devicePixelRatio || 1);
     this.canvas.style.width = `${cssW}px`;
     this.canvas.style.height = `${cssH}px`;
     this.canvas.width = Math.round(cssW * dpr);

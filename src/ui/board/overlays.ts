@@ -9,7 +9,7 @@ import { placementRule } from '../../engine/placement/registry.js';
 import type { Cell } from '../../engine/types.js';
 import type { Lesson } from '../../sim/tutor.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
-import type { HighlightStyle } from '../presentation.js';
+import { DEFAULT_HIGHLIGHT_WIDTH, type HighlightStyle } from '../presentation.js';
 import {
   BOARD_OUTLINE,
   BOND_COLOR,
@@ -348,8 +348,6 @@ export function drawReach(p: Paint): void {
  */
 const HEX_DIAGONAL_REACH = Math.cos(Math.PI / 6) / Math.cos(Math.PI / 12);
 
-/** The cursor highlight's line, in CSS pixels, where nothing else is asked for. */
-const HIGHLIGHT_WIDTH = 2;
 /** The dark outline under a cross, each side of its line, in CSS pixels. */
 const CROSS_OUTLINE = 1;
 
@@ -402,7 +400,7 @@ export function drawHighlight(
   style: HighlightStyle,
   color: string,
   lands: (cell: Cell) => boolean,
-  { width = HIGHLIGHT_WIDTH }: { width?: number } = {},
+  { width = DEFAULT_HIGHLIGHT_WIDTH }: { width?: number } = {},
 ): void {
   const { ctx, game, layout } = p;
   const light = (cell: Cell, inset: number): void => {
