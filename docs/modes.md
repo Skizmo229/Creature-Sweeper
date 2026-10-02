@@ -289,8 +289,10 @@ sprinkle lies at any of four angles. It carries PETRI DISH's growth rule, a reac
 mark beside uncovered ground extends (decision 0039), from DONUT's single opening, so the player
 eats round the ring from one place. At these densities that opening is small, a blank cell and its
 ring, on the rim on a third of boards, and on 1 to 3% no blank at all and the safest single cell;
-the sprinkles make any of them a foothold, since every neighbour is shown. No spells: Census would
-count what the board already shows.
+the sprinkles make any of them a foothold, since every neighbour is shown. Measured, a single cell
+plays no harder: of 1,500 boards (150 seeds a board, 2 October 2026) the 29 that opened on one
+cleared 83 to 86% for the graded player at grades 2 and 4, against 84 to 85% for the rest, with no
+more guesses, so the fallback stays. No spells: Census would count what the board already shows.
 
 Showing the places makes every number a Census: the hidden sum and how many creatures share it.
 `shownCap` is that as Sweep's per-cell bound, the biggest of k creatures under a hidden sum s being
