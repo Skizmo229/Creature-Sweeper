@@ -1,3 +1,8 @@
+/**
+ * Combat (`src/engine/combat.ts`): the damage formula, a battle's outcome, the rewards, and the
+ * Progression that turns EXP into levels.
+ */
+
 import { describe, expect, it } from 'vitest';
 import {
   Progression,

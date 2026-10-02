@@ -1,3 +1,9 @@
+/**
+ * The board's drawn geometry, kept DOM-free so it can be tested here (`src/ui/hexgeom.ts`,
+ * `src/ui/board/geometry.ts`): hex hit testing and layout, drawn adjacency against the engine's,
+ * and the repeat drawn beyond a wrapped edge.
+ */
+
 import { describe, expect, it } from 'vitest';
 import {
   hexAt,

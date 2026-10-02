@@ -1,3 +1,8 @@
+/**
+ * The spells (`src/engine/spells.ts`, `cast.ts`): the mana economy, each spell on a hand-built
+ * board, what a board offers and the shortcuts, and the magic ladders' loadouts on the real data.
+ */
+
 import { describe, expect, it } from 'vitest';
 import { paint, testConfig, EMPTY8 } from './helpers.js';
 import { Game } from '../src/engine/game.js';
