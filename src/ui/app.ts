@@ -23,7 +23,7 @@ import { BoardRecorder } from './game/recorder.js';
 import { flashStage } from './game/flash.js';
 import { type GameScreenElements, buildGameScreen } from './game/screen.js';
 import { soundFor } from './game/sound.js';
-import { ladders } from './ladders.js';
+import { ladderName, ladders } from './ladders.js';
 import { buildSpeaker } from './mute.js';
 import { CrashWatch } from './overlays/crash.js';
 import { Modal } from './overlays/modal.js';
@@ -213,10 +213,6 @@ export class App {
    */
   private get recordsCount(): boolean {
     return isAtLeastAsHard(this.settings.gameplay);
-  }
-
-  private typeName(): string {
-    return ladders.find((t) => t.id === this.typeId)?.name ?? this.typeId;
   }
 
   // ---------------------------------------------------------------- screens
@@ -531,7 +527,7 @@ export class App {
     if (back && this.settings.presentation.backPauses) return this.pause();
     this.modal.leaveGame({
       boardIndex: this.boardIndex,
-      typeName: this.typeName(),
+      typeName: ladderName(this.typeId),
       run: this.run,
       onPause: () => this.pause(),
       onAbandon: () => this.abandon(),

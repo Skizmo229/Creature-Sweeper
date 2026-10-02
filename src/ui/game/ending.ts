@@ -5,7 +5,7 @@
  * where the overlay's buttons go is `App`'s to say.
  */
 
-import { maxBoard } from '../../engine/config.js';
+import { findType, maxBoard } from '../../engine/config.js';
 import type { Game } from '../../engine/game.js';
 import type { FullRun } from '../../engine/run.js';
 import { isAtLeastAsHard } from '../../engine/settings.js';
@@ -90,7 +90,7 @@ export class BoardEnding {
     const seconds = clock.frozenSeconds!;
     const won = game.status === 'won';
     const perfect = won && game.hp === game.maxHp;
-    const type = ladders.find((t) => t.id === typeId)!;
+    const type = findType(ladders, typeId);
     // Judged by the board's own dials, the ones it was dealt with, not by the settings, which can
     // be changed while it is being played.
     const recorded = isAtLeastAsHard(game.settings);
@@ -159,7 +159,7 @@ export class BoardEnding {
     const game = this.host.game();
     const typeId = this.host.typeId();
     const boardIndex = this.host.boardIndex();
-    const type = ladders.find((t) => t.id === typeId)!;
+    const type = findType(ladders, typeId);
     const midRun = game.status === 'won' && !run.isLastBoard;
     const recorded = isAtLeastAsHard(game.settings);
     // A run's boards were all cleared before it opened, unless Unlock everything let it in.

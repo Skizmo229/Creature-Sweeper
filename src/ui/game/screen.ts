@@ -4,6 +4,7 @@
  * refresh. Every control reports through `GameScreenActions`, so this file decides nothing.
  */
 
+import { findType } from '../../engine/config.js';
 import type { Game } from '../../engine/game.js';
 import type { FullRun } from '../../engine/run.js';
 import { SPELLS, type SpellId, spellKey } from '../../engine/spells.js';
@@ -76,7 +77,7 @@ export function buildGameScreen(
   a: GameScreenActions,
   lessonTitle: string | null = null,
 ): GameScreenElements {
-  const type = ladders.find((t) => t.id === typeId)!;
+  const type = findType(ladders, typeId);
   const wrap = el('div', 'screen game');
   // The board wears the chosen palette; the screen around it keeps the ladder's own accent, so
   // the menus stay recognisable however the board is painted.

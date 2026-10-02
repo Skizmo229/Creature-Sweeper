@@ -5,7 +5,7 @@
  * so, and a click on it takes the game up (decision 0057).
  */
 
-import { boardRow, maxBoard } from '../../engine/config.js';
+import { boardRow, findType, maxBoard } from '../../engine/config.js';
 import { el } from '../dom.js';
 import { ladders } from '../ladders.js';
 import { type PausedGame, pausedGames } from '../paused.js';
@@ -25,7 +25,7 @@ export interface BoardListActions {
 /** The board list of ladder `typeId`: its tuned boards, then the Full Run and scaling tiles. */
 export function buildBoardList(typeId: string, a: BoardListActions): HTMLElement {
   const { progress } = a;
-  const type = ladders.find((t) => t.id === typeId)!;
+  const type = findType(ladders, typeId);
   const theme = themeFor(typeId);
 
   const wrap = el('div', 'screen');
@@ -96,7 +96,7 @@ function showPaused(card: HTMLElement, badge: HTMLElement, paused: PausedGame): 
  */
 function scalingCard(typeId: string, a: BoardListActions): HTMLElement {
   const { progress } = a;
-  const type = ladders.find((t) => t.id === typeId)!;
+  const type = findType(ladders, typeId);
   const first = type.boards.length + 1;
   const last = maxBoard(ladders, typeId);
   const unlocked = progress.isScalingUnlocked(ladders, typeId);
@@ -162,7 +162,7 @@ function scalingCard(typeId: string, a: BoardListActions): HTMLElement {
 /** The Full Run tile. Its rules live in the tooltip, and in full on the first clear overlay. */
 function fullRunCard(typeId: string, a: BoardListActions): HTMLElement {
   const { progress } = a;
-  const type = ladders.find((t) => t.id === typeId)!;
+  const type = findType(ladders, typeId);
   const unlocked = progress.isFullRunUnlocked(ladders, typeId);
   const rec = progress.runRecord(ladders, typeId);
   const pool = type.run_hp;

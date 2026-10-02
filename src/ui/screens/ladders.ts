@@ -8,7 +8,7 @@
 import { LADDER_CATEGORIES, type LadderCategory } from '../../engine/config.js';
 import { easierThanDefault } from '../../engine/settings.js';
 import { el } from '../dom.js';
-import { ladders } from '../ladders.js';
+import { ladderName, ladders } from '../ladders.js';
 import { pausedGames } from '../paused.js';
 import type { Progress } from '../progress.js';
 import type { Settings } from '../settings.js';
@@ -115,9 +115,7 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
       // Both gates, and the count one shows progress: "41 / 45 boards" is a thing to go and do.
       const needs: string[] = [];
       if (type.requires.length) {
-        needs.push(
-          `clear ${type.requires.map((r) => ladders.find((t) => t.id === r)?.name ?? r).join(' + ')}`,
-        );
+        needs.push(`clear ${type.requires.map((r) => ladderName(r)).join(' + ')}`);
       }
       if (type.requires_boards > cleared) {
         needs.push(`${cleared} / ${type.requires_boards} boards cleared`);
