@@ -1,11 +1,18 @@
 """Creature Sweeper — progression ladder generator.
 
-Derives the 10-board ladder for each game type from a small per-type schedule,
-using the tuning identity found in mamono sweeper's own data:
+    python design/ladders.py    # writes design/data/ladders.json and prints every board
+
+Derives each game type's ladder from its schedules in ladder_types.toml, the tuned ten boards
+and the continuation past board 10, using the tuning identity found in mamono sweeper's own data:
 
     C_k = total EXP from every monster of tier <= k
     the top `lock` thresholds are exactly C_k (full-tier-clear gates)
     the rest are alpha_k * C_k, alpha ramping from alpha0 up to 0.70
+
+In order: the board shapes (a copy of the engine's predicates), the creature distributions, the
+thresholds, the schedules and their schema, the continuation, the menu and the unlocks, and the
+boards themselves. test_ladders.py (`npm run test:py`) holds the generator to its rules, the
+TypeScript tests hold the JSON to the engine, and CI checks the JSON is this script's output.
 """
 import json, math, tomllib
 from dataclasses import dataclass
