@@ -8,15 +8,18 @@ import { el } from '../dom.js';
 import { hzNote } from '../sfx.js';
 
 /** MIDI numbers: C2 to C7, which holds the starting pitch of every sound in every pack. */
-const LOWEST_NOTE = 36;
-const HIGHEST_NOTE = 96;
+export const LOWEST_NOTE = 36;
+export const HIGHEST_NOTE = 96;
+/** Semitones in an octave. */
+export const OCTAVE = 12;
 
 // A plain #: the sharp sign is outside Latin-1, and the interface font is a player setting.
 const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const BLACK = new Set([1, 3, 6, 8, 10]);
 
 /** A MIDI number as the keyboard names its note: C4 is middle C. */
-export const noteName = (note: number): string => `${NAMES[note % 12]}${Math.floor(note / 12) - 1}`;
+export const noteName = (note: number): string =>
+  `${NAMES[note % OCTAVE]}${Math.floor(note / OCTAVE) - 1}`;
 
 /** The nearest key to a frequency, kept on the keyboard. */
 export function nearestNote(hz: number): number {
@@ -55,7 +58,7 @@ export function pianoRoll(onPick: (note: number) => void): PianoRoll {
   const keys = new Map<number, { key: HTMLButtonElement; letter: HTMLElement }>();
   let whites = 0;
   for (let note = LOWEST_NOTE; note <= HIGHEST_NOTE; note++) {
-    const black = BLACK.has(note % 12);
+    const black = BLACK.has(note % OCTAVE);
     const key = el('button', black ? 'piano-key black' : 'piano-key white');
     key.title = noteName(note);
     key.setAttribute('aria-label', noteName(note));
@@ -64,7 +67,7 @@ export function pianoRoll(onPick: (note: number) => void): PianoRoll {
     if (black) key.style.setProperty('--at', String(whites));
     else {
       whites++;
-      if (note % 12 === 0) key.append(el('span', 'piano-label', noteName(note)));
+      if (note % OCTAVE === 0) key.append(el('span', 'piano-label', noteName(note)));
     }
     key.addEventListener('click', () => onPick(note));
     keys.set(note, { key, letter });

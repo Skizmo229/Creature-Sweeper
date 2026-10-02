@@ -19,8 +19,16 @@ import type { Settings } from '../settings.js';
 import { sfxPitch, sfxRatio, sfxSoundId } from '../sfx.js';
 import { SFX_EVENT_NAMES, SFX_NAMES } from '../theme.js';
 import type { ScreenContext } from './context.js';
-import { type PianoRoll, nearestNote, noteName, pianoRoll } from './pianoroll.js';
-import { percent, slider } from './widgets.js';
+import {
+  HIGHEST_NOTE,
+  LOWEST_NOTE,
+  OCTAVE,
+  type PianoRoll,
+  nearestNote,
+  noteName,
+  pianoRoll,
+} from './pianoroll.js';
+import { percent, slider, windowShell } from './widgets.js';
 
 interface Sound {
   pack: SfxPackId;
@@ -33,6 +41,9 @@ interface Sound {
  */
 const keys = new Map<string, Sound>();
 const pitches = new Map<string, number>();
+
+/** The sound check's own volume (`SoundCheckSettings.volume`), kept like the keys. */
+let volume = DEFAULT_SOUND_CHECK_VOLUME;
 
 /** A stored sound id back to a sound, or null for one this build has no button for. */
 function parseSound(id: string): Sound | null {
@@ -63,9 +74,6 @@ function save(settings: Settings): void {
     },
   });
 }
-
-/** The sound check's own volume (`SoundCheckSettings.volume`), kept like the keys. */
-let volume = DEFAULT_SOUND_CHECK_VOLUME;
 
 /**
  * Keys that keep their own job in the window: Escape closes it, Tab moves the focus, Shift swaps
@@ -98,9 +106,11 @@ const PIANO_KEYS = new Map<string, number>([
 ]);
 const OCTAVE_DOWN = 'z';
 const OCTAVE_UP = 'x';
-/** Where the home row can start: C2 to C6, so a whole octave above it is still on the keyboard. */
-const LOWEST_C = 36;
-const HIGHEST_C = 84;
+/** Where the home row can start: any C on the keyboard with a whole octave above it. */
+const LOWEST_C = LOWEST_NOTE;
+const HIGHEST_C = HIGHEST_NOTE - OCTAVE;
+/** Where the home row starts before anything moves it. */
+const MIDDLE_C = 60;
 
 /** A letter is the same key with or without Shift. */
 const keyId = (e: KeyboardEvent): string => (e.key.length === 1 ? e.key.toLowerCase() : e.key);
@@ -135,20 +145,6 @@ function statusText(assign: Assign, muted: boolean, playing: boolean): string {
   if (assign.step === 'sound') return 'Click the sound to assign.';
   if (assign.step === 'key') return `Press a key for ${soundName(assign.sound)}.`;
   return keys.size > 0 ? 'Press an assigned key to play its sound.' : '';
-}
-
-/** The window and its title bar, in the picker's clothes. */
-function shell(): { overlay: HTMLElement; card: HTMLElement; close: HTMLElement } {
-  const overlay = el('div', 'overlay picker');
-  overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-modal', 'true');
-  overlay.setAttribute('aria-label', 'Sound check');
-  const card = el('div', 'overlay-card picker-card');
-  const head = el('div', 'picker-head');
-  const close = el('button', 'ghost small', 'Close (Esc)');
-  head.append(el('h2', undefined, 'Sound check'), close);
-  card.append(head);
-  return { overlay, card, close };
 }
 
 interface SoundButton {
@@ -215,9 +211,9 @@ interface PianoInput {
 /** The computer's keys as a piano. A note stays lit on the keyboard until its key comes up. */
 function pianoInput(roll: PianoRoll, play: (note: number) => void): PianoInput {
   const held = new Map<string, number>();
-  let octave = 60;
+  let octave = MIDDLE_C;
   const moveTo = (note: number): void => {
-    octave = Math.min(HIGHEST_C, Math.max(LOWEST_C, note - (note % 12)));
+    octave = Math.min(HIGHEST_C, Math.max(LOWEST_C, note - (note % OCTAVE)));
   };
   const release = (): void => {
     for (const note of held.values()) roll.press(note, false);
@@ -229,7 +225,7 @@ function pianoInput(roll: PianoRoll, play: (note: number) => void): PianoInput {
     down(id, repeat) {
       if (id === OCTAVE_DOWN || id === OCTAVE_UP) {
         release();
-        moveTo(octave + (id === OCTAVE_UP ? 12 : -12));
+        moveTo(octave + (id === OCTAVE_UP ? OCTAVE : -OCTAVE));
         return 'octave';
       }
       const semis = PIANO_KEYS.get(id);
@@ -339,7 +335,8 @@ class SoundCheck {
 
   constructor(private readonly ctx: ScreenContext) {
     load(ctx.settings);
-    const { overlay, card, close } = shell();
+    // Not `settingsWindow`, whose Escape closes at once: this one's steps back first (`back`).
+    const { overlay, card, close } = windowShell('Sound check');
     this.overlay = overlay;
     const tools = el('div', 'soundcheck-tools');
     this.status.setAttribute('aria-live', 'polite');
@@ -397,7 +394,6 @@ class SoundCheck {
     window.addEventListener('keyup', this.onKeyUp, true);
 
     card.append(tools, playedRow(ctx.settings), this.grid, this.pitch.element);
-    overlay.append(card);
     ctx.host.append(overlay);
     // After it is in the page, so the keyboard has a width to scroll within.
     this.sync();

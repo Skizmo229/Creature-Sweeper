@@ -124,15 +124,7 @@ export function settingsWindow(
   title: string,
   cardClass = '',
 ): { card: HTMLElement; close: HTMLElement; dismiss: () => void } {
-  const overlay = el('div', 'overlay picker');
-  overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-modal', 'true');
-  overlay.setAttribute('aria-label', title);
-  const card = el('div', `overlay-card picker-card ${cardClass}`.trim());
-  const head = el('div', 'picker-head');
-  const close = el('button', 'ghost small', 'Close (Esc)');
-  head.append(el('h2', undefined, title), close);
-
+  const { overlay, card, close } = windowShell(title, cardClass);
   const giveFocusBack = keepFocus();
   const dismiss = (): void => {
     overlay.remove();
@@ -157,11 +149,30 @@ export function settingsWindow(
     if (e.target === overlay) dismiss();
   });
   window.addEventListener('keydown', onKey, true);
-
-  card.append(head);
-  overlay.append(card);
   screen.append(overlay);
   return { card, close, dismiss };
+}
+
+/**
+ * A window's overlay and its card, in the picker's clothes: a title bar with a close button,
+ * handed back to be wired and filled. `settingsWindow` wires one; the sound check, whose Escape
+ * steps back before it closes, wires its own.
+ */
+export function windowShell(
+  title: string,
+  cardClass = '',
+): { overlay: HTMLElement; card: HTMLElement; close: HTMLElement } {
+  const overlay = el('div', 'overlay picker');
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', title);
+  const card = el('div', `overlay-card picker-card ${cardClass}`.trim());
+  const head = el('div', 'picker-head');
+  const close = el('button', 'ghost small', 'Close (Esc)');
+  head.append(el('h2', undefined, title), close);
+  card.append(head);
+  overlay.append(card);
+  return { overlay, card, close };
 }
 
 /** A run of a picker's options, shown under its heading if it has one. */
