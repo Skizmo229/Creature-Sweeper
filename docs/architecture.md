@@ -25,6 +25,7 @@ src/engine/     the rules engine: no DOM, no I/O, no timers
   opening.ts      choosing the opening and dealing it (`dealOpening`)
   layout.ts       boards from drawings in the catalogue's notation (`Game.fromLayout`)
   notes.ts        pencil marks as a bitmask; notesGuard, which reads one by its lowest candidate
+  pencil.ts       what the pencil may offer on a cell, and pencilling or rubbing it out
   spells.ts       the five spells, their prices, the mana economy, spellKey
   cast.ts         what each spell does, behind the SpellHost interface
   augur.ts        Augur's answer: hiddenTiers, and augurNow, which reads it off the ring as it
