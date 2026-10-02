@@ -47,7 +47,15 @@ even at 37%.
 rectangle: a cross is nearly all rim, so it loses little information, and joining its four dead-end
 arms into two loops lets a player stuck at one tip work in from the other. It is easier than CROSS
 and ships 1.2 density points above it to sit on CROSS's curve. Counted like the other shapes, not
-gated on its two parents (decision 0036).
+gated on its two parents (decision 0036). It is DUNGEON's walls pointed the other way: what sets the
+forced-guess count is how many separate puzzles the board is cut into. Measured with the honest
+player from `sim:spells` by 20 September 2026, 25 seeds a board, at CROSS's own schedule it was
+cornered 0.0 to 2.3 times a board against CROSS's 0.3 to 2.4, and cleared 92% of board 10 against
+80%; 1.2 points up gave 0.1 to 2.7 and 84%, topping out at 31.9%. When CROSS moved 2.5 points up
+for its spells it moved too (decision 0020), and re-measured at 60 seeds (21 September 2026) it was
+still on CROSS's curve, 21.7 stuck points over the ladder against 21.8, clearing 84% against 89%.
+The price is the opening boards, 1.3 to 1.9 stuck against CROSS's 0.9 to 1.2: joined tips cost the
+most where the board is small. It tops out at 34.4%, past 34 by as much as ARCANE's 34.5.
 
 **RAGGED CAVE** is grown, never trimmed. Cells are laid down as whole 2x2 squares and none is ever
 removed, so no passage one cell wide can exist; corner-to-corner touches are refused at placement.
