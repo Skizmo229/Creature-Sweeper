@@ -5,10 +5,10 @@
  *   npx tsx src/sim/cli/forced.ts [seeds] oracle    one ladder, board by board
  *   npx tsx src/sim/cli/forced.ts [seeds] oracle 7-10   only those boards
  *
- * Every forced-guess figure in CLAUDE.md comes from the honest player in
- * `honest.ts`, which deduces locally — Sweep's bound, exact tiers, pairs of
- * numbers subtracted, the placement rules read off neighbouring cells. So each
- * figure is an upper bound on what the board really forces. This runs two
+ * The honest player in `honest.ts`, whose forced guesses docs/tuning.md quotes,
+ * deduces locally — Sweep's bound, exact tiers, pairs of numbers subtracted,
+ * the placement rules read off neighbouring cells. So each of its figures is
+ * an upper bound on what the board really forces. This runs two
  * players per seed on the same board, against the complete deducer in
  * `solver.ts`:
  *

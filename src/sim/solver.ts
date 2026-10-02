@@ -3,8 +3,8 @@
  *
  * The honest player in `honest.ts` deduces the way a careful person does: one
  * number at a time, pairs of numbers subtracted, the placement rules read off
- * the cells beside them. Every forced-guess figure in CLAUDE.md is what THAT
- * player could not get past, which makes each one an upper bound on the
+ * the cells beside them. Its forced-guess figures in docs/tuning.md are what
+ * THAT player could not get past, which makes each one an upper bound on the
  * guesses a board really forces. This answers the exact question instead: is
  * there a covered cell that every layout consistent with the screen makes free?
  *
