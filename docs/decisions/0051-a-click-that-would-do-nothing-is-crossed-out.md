@@ -7,7 +7,9 @@ The cursor boxed every cell it lit: in the player's highlight colour where a cli
 in `OUT_OF_REACH_COLOR`, a red, where it would not (past the crawl rule's reach or a spell's, or
 a given or a ruled-out note while a tier is armed). So the refusal was said by colour alone.
 Decision 0050 measured the default green only ΔE 11 from that red under deuteranopia, and left a
-refusal drawn differently for a decision of its own.
+refusal drawn differently for a decision of its own. The red was itself the second drawing: the
+first dimmed the green, and on DUNGEON's violet that read as a highlight gone slightly out of
+focus.
 
 Colour vision is not the only gap. Measured 27 Sep 2026, as contrast ratio against the covered
 tile the cursor is drawn on: the red is under 2:1 on 22 of the 33 palettes (median 1.83:1, lowest

@@ -119,11 +119,9 @@ export const BOARD_OUTLINE = '#ffffff';
  * Red, and the only red in the annotation palette, because it is the one
  * highlight that means "this click will do nothing" rather than telling you
  * something about the cell. It has to read at a glance against every ladder's
- * tile colour, which is why it is a saturated red rather than a dimmed green:
- * dimming was the first attempt and on DUNGEON's violet it just looked like
- * the highlight had gone slightly out of focus. Colour is not all it says: a
- * cell the click would not land on is crossed out where one it would is boxed
- * (decision 0051).
+ * tile colour, which is why it is a saturated red rather than a dimmed green.
+ * Colour is not all it says: a cell the click would not land on is crossed out
+ * where one it would is boxed (decision 0051).
  */
 export const OUT_OF_REACH_COLOR = '#ff5a5a';
 
