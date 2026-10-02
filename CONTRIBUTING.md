@@ -2,9 +2,10 @@
 
 Creature Sweeper is a headless rules engine (`src/engine`), the canvas game around it
 (`src/ui`), a set of measurement instruments that drive the engine (`src/sim`), and the Python
-ladder generator whose output tunes all of it (`design/`). `README.md` is the front door.
-`docs/refactoring-plan.md` is Milestone 3, the readability refactor, complete on 24 September
-2026: what was measured, what changed and why.
+ladder generator whose output tunes all of it (`design/`). `README.md` is the front door. Read
+`docs/invariants.md` (the four facts a change must not break) and `docs/architecture.md` (the
+map, and how a board is born and a click flows) first; `docs/extending.md` has the checklists for
+adding a spell, a rule, a shape, a ladder or a setting, and `docs/glossary.md` the vocabulary.
 
 ## Issues and pull requests
 
@@ -22,7 +23,8 @@ section says which files are which.
 
 ## Setup
 
-Node 22 (`.nvmrc`) and, for the ladder generator only, Python 3 with no packages.
+Node 22 (`.nvmrc`) and, for the ladder generator and the design reference's build, Python 3.11
+or later (`tomllib`) with no packages.
 
 ```bash
 npm ci
@@ -41,9 +43,15 @@ size warnings included), knip, the Prettier check, the test suite and the golden
 outputs. Each is also its own script:
 `typecheck`, `lint`, `knip`, `format` / `format:check`, `test`, `sim:golden:check`.
 
-If you touched `design/ladders.py` or `design/ladder_types.toml`, also run `npm run test:py`: the generator's own tests
-(`design/test_ladders.py`, standard-library `unittest`, so still no packages). CI runs them beside
-the check that `ladders.json` is what the generator produces.
+If you touched `design/ladders.py` or `design/ladder_types.toml`, also:
+
+1. `npm run test:py`, the generator's own tests (`design/test_ladders.py`, standard-library
+   `unittest`, so still no packages);
+2. `python design/ladders.py`, which rewrites `design/data/ladders.json`;
+3. `python design/build.py`, which rebuilds `design/reference.html` from the template and the data
+   (run it too when you touch `design/page.template.html`);
+4. commit the JSON and the page with the change. CI runs the generator's tests and fails if the
+   committed `ladders.json` is not what the generator produces.
 
 ## The four facts a change must not break
 
@@ -101,15 +109,15 @@ moved.
 - Each change is a branch; the maintainer reviews and merges.
 - Decisions that a later reader might reverse without knowing why go in `docs/decisions/`.
 - Nothing that pictures the original game goes in the repository. `design/original-reference/`,
-  `game_types.pdn` and `design/screenshots/` are untracked on purpose; see the README's licence
-  section for why.
+  `game_types.pdn` and `design/screenshots/` are untracked on purpose; the README's "Third-party
+  reference" section says why.
 
 ## Releases
 
-A release is numbered MAJOR.MINOR.PATCH (decision 0068), in `package.json` and nowhere else: 0.9.x
-while the game is play-tested, whatever a cut adds (decision 0083), and 1.0.0 for the public
-release. From 1.0.0, a patch fixes; a minor adds or retunes ladders, spells or settings; a major
-changes the save's format and brings its migration.
+A release is numbered MAJOR.MINOR.PATCH (decision 0068), in `package.json` and nowhere else. A
+patch fixes; a minor adds or retunes ladders, spells or settings; a major changes the save's
+format and brings its migration. Before 1.0.0 the 0.9.x releases were the play-testing line,
+numbered 0.9.N whatever a cut added (decision 0083).
 
 To cut one: `npm version <x.y.z> --no-git-tag-version` (it raises the lockfile too), an entry at the
 top of `CHANGELOG.md`, `npm run check`, one commit, and `npm run package` for the itch.io zip,
