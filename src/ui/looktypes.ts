@@ -29,10 +29,10 @@ export type PipShape =
  * A symbol drawn as the pip, by its code point, written as `U+2764`: the player's own choice from
  * the custom-icon window (`pipsymbols.ts`). No ladder wears one by default.
  */
-export type GlyphPip = `U+${string}`;
+export type SymbolPip = `U+${string}`;
 
 /** What a creature's pips are drawn as: a drawn shape, or a symbol from the pip font. */
-export type Pip = PipShape | GlyphPip;
+export type Pip = PipShape | SymbolPip;
 
 /**
  * A board's look as the renderer takes it: the colours the settings call its palette, the pip its

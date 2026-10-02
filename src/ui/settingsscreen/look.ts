@@ -36,7 +36,7 @@ import { PIP_NAMES, PIP_SHAPES } from '../pips.js';
 import { OUT_OF_REACH_COLOR, pipName } from '../theme.js';
 import { DEFAULT_TIERS, TIER_PRESETS, type TierPalette, tierColor } from '../tiercolors.js';
 import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
-import { SYMBOL_COUNT, isGlyphPip } from '../pipsymbols.js';
+import { SYMBOL_COUNT, isSymbolPip } from '../pipsymbols.js';
 import { FONTS, FONT_IDS, type FontId, type GameFont, LEGIBLE_FONT } from '../typefaces.js';
 import { type ScreenContext, typeName } from './context.js';
 import { colorRow } from './customcolor.js';
@@ -50,7 +50,7 @@ import { type Choice, choiceRow, gallery, slider, wideRow } from './widgets.js';
 export function iconsRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, typeId, currentTheme } = ctx;
   const own = themeFor(typeId).pip;
-  const symbol = isGlyphPip(p.icons) ? p.icons : null;
+  const symbol = isSymbolPip(p.icons) ? p.icons : null;
   const pick = (v: string): void => ctx.pick({ icons: v as IconChoice });
   // Lit when a symbol is the icon in force; clicking it opens the window of symbols either way.
   const custom: Choice = {

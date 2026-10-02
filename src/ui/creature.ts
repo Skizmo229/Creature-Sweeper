@@ -8,8 +8,8 @@
  */
 
 import { setNumberFont } from './board/digits.js';
-import type { GlyphPip, Pip } from './looktypes.js';
-import { PIP_FAMILY, glyphChar, isGlyphPip } from './pipsymbols.js';
+import type { Pip, SymbolPip } from './looktypes.js';
+import { PIP_FAMILY, isSymbolPip, symbolChar } from './pipsymbols.js';
 import { pipPath } from './pips.js';
 import type { CreatureGlyph } from './presentation.js';
 import { MARK_OUTLINE } from './theme.js';
@@ -151,7 +151,7 @@ function drawPips(
 
   ctx.save();
   ctx.lineJoin = 'round';
-  if (isGlyphPip(pip)) {
+  if (isSymbolPip(pip)) {
     drawSymbolPips(ctx, pip, centres, r, color, tierColors.halo, gilded ? halo : 0);
     ctx.restore();
     return;
@@ -227,14 +227,14 @@ function symbolInk(ctx: CanvasRenderingContext2D, char: string): Ink {
  */
 function drawSymbolPips(
   ctx: CanvasRenderingContext2D,
-  pip: GlyphPip,
+  pip: SymbolPip,
   centres: readonly { cx: number; cy: number }[],
   r: number,
   color: string,
   haloColor: string,
   halo: number,
 ): void {
-  const char = glyphChar(pip);
+  const char = symbolChar(pip);
   const ink = symbolInk(ctx, char);
   const span = Math.max(ink.left + ink.right, ink.ascent + ink.descent);
   if (!(span > 0)) return;

@@ -8,12 +8,12 @@
 
 import { rgbOf } from './colorspace.js';
 import type { Pip, SfxEvent, SfxPackId, VictoryId } from './looktypes.js';
-import { findSymbol, isGlyphPip } from './pipsymbols.js';
+import { findSymbol, isSymbolPip } from './pipsymbols.js';
 import { PIP_NAMES } from './pips.js';
 
 /** What a pip is called: a shape's name, or a symbol's own. */
 export function pipName(pip: Pip): string {
-  return isGlyphPip(pip) ? (findSymbol(pip)?.symbol.name ?? pip) : (PIP_NAMES[pip] ?? pip);
+  return isSymbolPip(pip) ? (findSymbol(pip)?.symbol.name ?? pip) : (PIP_NAMES[pip] ?? pip);
 }
 
 /** Each sound pack as the settings screen names it. */

@@ -6,14 +6,14 @@
  */
 
 import { el } from '../dom.js';
-import type { GlyphPip, Pip } from '../looktypes.js';
+import type { Pip, SymbolPip } from '../looktypes.js';
 import {
   type PipSymbol,
   SYMBOL_COUNT,
   SYMBOL_SETS,
   type SymbolSet,
   findSymbol,
-  isGlyphPip,
+  isSymbolPip,
 } from '../pipsymbols.js';
 import type { ScreenContext } from './context.js';
 import { settingsWindow } from './widgets.js';
@@ -171,10 +171,10 @@ function symbolCell(
 export function openSymbolWindow(
   ctx: ScreenContext,
   current: Pip,
-  onPick: (pip: GlyphPip) => void,
+  onPick: (pip: SymbolPip) => void,
 ): void {
   const { card, dismiss } = settingsWindow(ctx.host, 'Custom creature icon', 'symbol-card');
-  const found = isGlyphPip(current) ? findSymbol(current) : undefined;
+  const found = isSymbolPip(current) ? findSymbol(current) : undefined;
   let chosen: Located | null = found ?? null;
   let setId = found?.set.id ?? lastSet;
 

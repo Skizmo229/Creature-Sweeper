@@ -20,7 +20,7 @@ import {
   type HighlightStyle,
 } from '../presentation.js';
 import type { TypeTheme } from '../looktypes.js';
-import { PIP_FAMILY, glyphChar, isGlyphPip } from '../pipsymbols.js';
+import { PIP_FAMILY, isSymbolPip, symbolChar } from '../pipsymbols.js';
 import { MARK_COLOR } from '../theme.js';
 import { DEFAULT_TIERS, type TierPalette } from '../tiercolors.js';
 import { FONTS, type GameFont } from '../typefaces.js';
@@ -462,7 +462,7 @@ export class BoardView implements InputHost {
     const pip = this.theme?.pip;
     // The pip font is one family of several faces, each holding some of the symbols, so it is
     // the face for this symbol that is waited on.
-    if (pip && isGlyphPip(pip)) this.awaitFace(`16px ${PIP_FAMILY}`, glyphChar(pip));
+    if (pip && isSymbolPip(pip)) this.awaitFace(`16px ${PIP_FAMILY}`, symbolChar(pip));
   }
 
   private awaitFace(probe: string, text?: string): void {
