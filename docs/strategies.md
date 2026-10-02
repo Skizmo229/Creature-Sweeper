@@ -313,20 +313,19 @@ exactly this hunt: the top thresholds are met by killing every creature of a tie
   have found is a tile you no longer fear, and the last tiles are known before they are seen.
 - **PACKS, CONGA LINE.** The whole pack (grade 0) and the gap (grade 2); on CONGA LINE the
   bonds drawn between open members show the line, and its ends (grade 3).
-- **PATROL.** The creatures walk. A tier-t creature paces the edge of a square t cells a side,
-  one cell per action, clockwise from its top-left corner, and every open and every Wait (`W`, a
-  second on the clock) is an action; marking and pencilling are not. There is no Sweep. The board is sparse (6.5 to
-  8.5%), so the opening uncovers most of it and most creatures walk in plain sight as a `?` on
-  ground you have already cleared. Three habits and one warning. Read the numbers again after
-  every move, because they are the sums as the board stands now, and what you proved a move ago
-  may be gone; a `?` you can see is a creature you know the tier of once it has walked one side
-  of its square, since a side is its tier long. When nothing is proven, Wait rather than guess:
-  waiting costs a second and no HP, the creatures move, and new numbers arrive; one lap of the
-  largest creature, four times its tier in moves, shows it on every cell it can stand on. A mark
-  is a route, not a claim: marking a tier t on a cell draws that creature's whole square from
-  that corner and locks every covered cell of it, which is how you fence off where a creature can
-  step. The warning: a mark on the wrong corner fences the wrong cells and locks ground that was
-  safe.
+- **PATROL.** The creatures walk. A tier-t creature paces the edge of a square t cells a side, one
+  cell per action, clockwise from its top-left corner, and every open and every Wait (`W`, a second
+  on the clock) is an action; marking and pencilling are not. There is no Sweep. The board is sparse
+  (6.5 to 8.5%), so the opening uncovers most of it and most creatures walk in plain sight as a `?`
+  on ground you have already cleared. Three habits and one warning. Read the numbers again after
+  every move, because they are the sums as the board stands now, and what you proved a move ago may
+  be gone; a `?` you can see is a creature you know the tier of once it has walked one side of its
+  square, since a side is its tier long. When nothing is proven, Wait rather than guess: waiting
+  costs a second and no HP, the creatures move, and new numbers arrive; one lap of the largest
+  creature, four times its tier in moves, shows it on every cell it can stand on. A mark is a route,
+  not a claim: marking a tier t on a cell draws that creature's whole square from that corner and
+  locks every covered cell of it, which is how you fence off where a creature can step. The warning:
+  a mark on the wrong corner fences the wrong cells and locks ground that was safe.
 - **WORKOUT.** Exercise lends one level for one fight; a creature named at one tier past your
   level is a free kill for the price of a cast, and pays double EXP for it. The price rises with
   each cast and falls with each level.
@@ -399,10 +398,10 @@ You will be forced to guess, and the hard ladders' top boards force it on everyo
 
 ## 10. For developers
 
-Each trick is one technique of the graded player, `src/sim/tricks.ts`, at the grade this page
-gives it. The engine's Sweep (`src/engine/sweep.ts`) performs the raw ring, the subtraction of
-open tiers, the Census bound, the Augur's list, the lone dark square and the colour caps, the pairing ring and the
-pack ring, and the conga proofs, at the press of a key, so on a ladder with Sweep those are free
+Each trick is one technique of the graded player, `src/sim/tricks.ts`, at the grade this page gives
+it. The engine's Sweep (`src/engine/sweep.ts`) performs the raw ring, the subtraction of open tiers,
+the Census bound, the Augur's list, the lone dark square and the colour caps, the pairing ring and
+the pack ring, and the conga proofs, at the press of a key, so on a ladder with Sweep those are free
 effort for a player; it does not subtract numbers from each other, name a last cell, or count.
 
 Every diagram on this page is a board. `src/sim/diagrams.ts` holds what is under each, and

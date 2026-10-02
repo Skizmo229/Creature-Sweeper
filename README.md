@@ -145,7 +145,8 @@ creature_sweeper/
 │  ├─ sim/        headless measurement, all driving the real engine; cli/ holds the commands
 │  ├─ main.ts     browser entry
 │  └─ data.ts     Node-only loader for the ladder data
-├─ test/          vitest; helpers.ts holds the shared fixtures; golden/ the simulator fingerprints
+├─ test/          vitest; helpers.ts holds the shared fixtures; ui/ the tests that run the game
+│                 in a browser environment (happy-dom); golden/ the simulator fingerprints
 ├─ scripts/       golden.mjs (behaviour-preservation harness), package.mjs (the itch.io zip),
 │                 playtest.cmd (double-click: build, zip and play), pip_symbols.py (the icon
 │                 symbols' fonts)
