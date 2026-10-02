@@ -773,8 +773,10 @@ footer code{font-size:.85em}
           <strong>RAGGED CAVE</strong>, <strong>PYRAMID</strong>, <strong>GEAR</strong>, <strong>CARD</strong>, <strong>VALENTINES</strong> and
           <strong>STAR</strong> — carry
           ARCANE's loadout as well, and
-          <strong>DUNGEON</strong> carries that plus Exercise. Echo and Scry below are
-          still on paper. The rest of this section is what the build follows.</p>
+          <strong>DUNGEON</strong> carries that plus Exercise. PYRAMID is also climbed by PETRI DISH's
+          crawl rule from its face-up base: a cell may be opened only where it touches uncovered ground
+          or a mark beside it (decision 0086). Echo is built as Augur; Scry below is still on paper.
+          The rest of this section is what the build follows.</p>
       </div>
       <p>Worth naming the underlying thing first: <strong>mana and HP are two currencies for the same
         commodity — certainty.</strong> HP buys it by absorbing a wrong guess after the fact; mana buys it in
@@ -855,9 +857,9 @@ footer code{font-size:.85em}
           <tr><td class="l name">Reveal <span class="free">·built</span></td><td>75</td>
             <td class="l">Learn one cell exactly, and clear the empty ground touching it. A creature is marked with its true tier; empty ground opens.</td>
             <td class="l dim">Replaced the weaker "is it empty" idea: a truthful mark also feeds mark-assisted Sweep, so it buys deduction rather than one square. Started at 6 and was repriced on measurement — it is the most valuable thing in the set by a wide margin, saving 0.97 HP a cast where Census saves 0.001 (40 seeds, 24 September 2026), and at 6 it was simply the answer to every question. The ring of blank ground around the target came later and is worth 45% of the spell on its own (0.65 → 0.94 a cast): a cell with no creature on it was always free to open, so clearing it gives away no safety the player did not have, it just saves the clicks. It cannot run away — every neighbour of a tier-N cell carries at least N in its own number, so none of them can be a zero cell, and a cascade needs one.</td></tr>
-          <tr><td class="l name">Augur <span class="free">·built</span></td><td>20</td>
-            <td class="l">Highest tier present in a 3×3.</td>
-            <td class="l dim">Echo on paper, built as Augur because the shortcut is the name's first letter and E is Exercise's (decision 0006). Names the strongest hidden creature around a cell, so it bounds the danger without solving the layout — tells you what you'd survive, not where it is. Sweep reads it as a proof (the ring is free at or below your level) and the pencil loses every tier above it. Its paper price of 6 on the tripled scale, since as played it saves nothing measurable, exactly as Census does: a bound only pays once the layout it bounds is the one in doubt (decision 0055).</td></tr>
+          <tr><td class="l name">Augur <span class="free">·built</span></td><td>50</td>
+            <td class="l">The tier of every creature hidden in a 3×3, strongest first, but not where.</td>
+            <td class="l dim">Echo on paper, built as Augur because the shortcut is the name's first letter and E is Exercise's (decision 0006). Lists every hidden creature's tier around a cell, strongest first, never where — what you'd fight, not where it stands. Sweep reads the strongest as a proof (the ring is free at or below your level); the graded player's pencil keeps only the listed tiers. It began as the strongest alone at 20 (decision 0055), which a cast policy that only looked for whole rings made look worthless; the list answers what Census and that Augur did together and costs their sum (decision 0087).</td></tr>
           <tr><td class="l name">Census <span class="free">·built</span></td><td>30</td>
             <td class="l">How many creatures in a 3×3.</td>
             <td class="l dim">Resolves the sum-versus-count ambiguity the whole game is built on — when you can find the cell worth asking about. Cast where it demonstrably helps it is worth 0.48 HP a cast, about half of Reveal's 0.97 and more than Reveal per mana; cast by judgement it lands on such a cell 2–9% of the time. The information is strong and the aiming is the problem, which is a design question rather than a price.</td></tr>
@@ -927,7 +929,7 @@ footer code{font-size:.85em}
         still carries thirteen full kits. Costs and the starting pool carry over untouched.</p>
       <div class="note gold">
         <p class="note-h">The zero-damage guarantee survives magic untouched</p>
-        <p>Not one of the four spells removes a creature. That is the whole reason the set looks like this:
+        <p>Not one of the five spells removes a creature. That is the whole reason the set looks like this:
           information, a borrowed level and movement only. Every C_k gate still receives every point of EXP it was
           tuned against, and the invariant tests pass on both new ladders unchanged.</p>
       </div>
@@ -946,7 +948,7 @@ footer code{font-size:.85em}
           <tr><td class="l name">DUNGEON</td><td class="l">Reveal · Census · Exercise</td>
             <td class="l dim">Hallways and doorways are always empty, so a forced guess is a guess on what is in front of you and usually one you already know something about. That makes it a ladder of many cheap guesses rather than few expensive ones — a deductive player is cornered 0.2 times on board 1 rising to 4.7 on board 10, near ARCANE's rate, and still clears 98% of board 10 (the doorway pocket took it from 83% — easier to play, though denser to describe). Exercise earns its place here as it does nowhere else outside ORACLE, and this is the ladder with the thinnest mana pool, so the prices bite hardest. 75 starting mana.</td></tr>
           <tr><td class="l name">AUGUR</td><td class="l">Census · Augur</td>
-            <td class="l dim">ARCANE's boards with the two spells that only answer questions: the count and the strongest. Neither opens a cell or names one, so every guess stays the player's; sum, count and strongest together pin most rings. Ships at ARCANE's schedule, which sits at the density ceiling: the graded player at grade 2 spending mana clears 100% of it, as it does ARCANE, so density cannot move it and the lock is the lever if it should be harder (decision 0056). 75 starting mana.</td></tr>
+            <td class="l dim">ARCANE's boards with the two spells that only answer questions: the count, and every hidden tier (decision 0087). Neither opens a cell or names one, so every guess stays the player's. Density stays at ARCANE's, which sits at the ceiling, where it moves nothing (decision 0056); the ladder is a lock deeper (3, then 4 from board 4) with EXTREME's HP, 10 falling to 8, so that a grade-4 graded player spending mana clears every early board, 88% of board 9 and 61% of board 10, the hard ladders' target (decision 0088). 75 starting mana.</td></tr>
           <tr><td class="l name">SEER</td><td class="l">Reveal · Census · Beacon</td>
             <td class="l dim">BLIND's boards with a spellbook: 1 HP, level 0, won by uncovering every empty cell. Nothing is ever killed, so exploration is the whole income (about 100 mana on board 1 rising to 185 on board 10, plus the starting 75) and Reveal is a bought certainty on the one cell that would otherwise be a coin toss. Exercise is left out on purpose: a level lent at level 0 would make a tier 1 a free kill on a board whose creatures are never fought. Runs denser than BLIND to sit on BLIND's target with the spells spent (decision 0054). 75 starting mana.</td></tr>
           <tr><td class="l name dim">every other type</td><td class="l dim">none</td>
