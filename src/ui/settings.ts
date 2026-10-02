@@ -47,7 +47,7 @@ import {
   oneOf,
   readPresentation,
 } from './presentation.js';
-import { MARK_COLOR } from './theme.js';
+import { MARK_COLOR, isSfxPack, isVictoryId } from './theme.js';
 import { DEFAULT_TIERS, TIER_PRESETS, type TierPalette } from './tiercolors.js';
 import { type GameFont, TITLE_FONT, fontFor } from './typefaces.js';
 import { SETTINGS_KEY as KEY } from './savefile.js';
@@ -274,7 +274,8 @@ export class Settings {
     if (this.data.presentation.muted) return null;
     const choice = this.presentationFor(typeId).sfx;
     if (choice === OFF) return null;
-    return (choice === DEFAULT ? lookFor(typeId).sfx : choice) as SfxPackId;
+    // A pack this build does not have, from a newer build's save, plays the ladder's own.
+    return choice !== DEFAULT && isSfxPack(choice) ? choice : lookFor(typeId).sfx;
   }
 
   /** What a board-clear effect draws the creatures in: this ladder's palette, the tier colours, the glyph. */
@@ -291,7 +292,8 @@ export class Settings {
   victoryEffect(typeId: string): VictoryId | null {
     const choice = this.presentationFor(typeId).victory;
     if (choice === OFF) return null;
-    return (choice === DEFAULT ? lookFor(typeId).victory : choice) as VictoryId;
+    // An effect this build does not have plays the ladder's own, as an unknown pack does.
+    return choice !== DEFAULT && isVictoryId(choice) ? choice : lookFor(typeId).victory;
   }
 
   /** How the cursor lights the board, or null for no highlight at all. */

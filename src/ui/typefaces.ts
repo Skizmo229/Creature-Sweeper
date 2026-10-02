@@ -260,10 +260,10 @@ const LEGACY_FONTS: Record<string, FontId> = {
 
 /** A saved font choice, with the retired ids mapped onto their successors. */
 export function migrateFontChoice(saved: string): string {
-  return LEGACY_FONTS[saved] ?? saved;
+  return Object.hasOwn(LEGACY_FONTS, saved) ? LEGACY_FONTS[saved]! : saved;
 }
 
 /** A font by id, or the baseline face for an id this build does not know. */
 export function fontFor(id: string): GameFont {
-  return FONTS[id as FontId] ?? FONTS['jetbrains-mono'];
+  return Object.hasOwn(FONTS, id) ? FONTS[id as FontId] : FONTS['jetbrains-mono'];
 }

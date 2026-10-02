@@ -33,6 +33,16 @@ function magicConfig(over: Partial<BoardConfig> = {}): BoardConfig {
   });
 }
 
+describe('a ladder’s spells', () => {
+  it('are refused by any name that is not one, a name every object inherits included', () => {
+    const arcane = ladders.find((t) => t.id === 'arcane')!;
+    for (const name of ['echo', 'constructor', 'toString']) {
+      const type = { ...arcane, spells: [...(arcane.spells ?? []), name] };
+      expect(() => boardConfig([type], type.id, 1), name).toThrow(/unknown spell/);
+    }
+  });
+});
+
 describe('mana', () => {
   it('starts at the board’s allowance and earns tier per kill', () => {
     const game = Game.create(magicConfig({ startMana: 5 }), 7);

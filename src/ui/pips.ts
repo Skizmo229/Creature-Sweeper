@@ -241,6 +241,6 @@ export function pipPath(
   r: number,
 ): void {
   ctx.beginPath();
-  const tracers: Partial<Record<string, Tracer>> = TRACERS;
-  (tracers[shape] ?? disc)(ctx, cx, cy, r);
+  // An own key only: a saved pip id from a newer build, or a hand-edited one, draws a disc.
+  (Object.hasOwn(TRACERS, shape) ? TRACERS[shape] : disc)(ctx, cx, cy, r);
 }

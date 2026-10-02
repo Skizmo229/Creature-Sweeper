@@ -169,7 +169,7 @@ export function orderSpells(ids: readonly SpellId[]): SpellId[] {
 
 /** Is this ladder-data name a spell? */
 export function isSpellId(value: string): value is SpellId {
-  return value in SPELLS;
+  return Object.hasOwn(SPELLS, value);
 }
 
 /** Total mana a board can yield, for sanity-checking a loadout's prices. */

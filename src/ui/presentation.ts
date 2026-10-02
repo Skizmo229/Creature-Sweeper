@@ -10,7 +10,11 @@
  *
  * A saved file is untrusted input: it may predate a setting, postdate one that was removed, or
  * have been edited by hand. Every reader here falls back to the default rather than throwing,
- * because a settings file is never worth losing a save over.
+ * because a settings file is never worth losing a save over. A name this build has nothing by
+ * (a palette, a face, an icon, a sound pack, a clear effect) is kept, so a newer build reading
+ * the save gets it back, and resolves to the ladder's own where it is used; it is looked up there
+ * as the registry's own key (`Object.hasOwn`), never one the record inherits, such as
+ * `constructor`.
  */
 
 import { snapRatio } from '../engine/settings.js';

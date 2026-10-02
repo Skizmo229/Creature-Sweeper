@@ -17,7 +17,7 @@ import { SFX_EVENTS, type SfxEvent, type SfxPackId } from '../looktypes.js';
 import { DEFAULT_SOUND_CHECK_VOLUME, MAX_SOUND_CHECK_VOLUME } from '../presentation.js';
 import type { Settings } from '../settings.js';
 import { sfxPitch, sfxRatio, sfxSoundId } from '../sfx.js';
-import { SFX_EVENT_NAMES, SFX_NAMES } from '../theme.js';
+import { SFX_EVENT_NAMES, SFX_NAMES, isSfxEvent, isSfxPack } from '../theme.js';
 import type { ScreenContext } from './context.js';
 import {
   HIGHEST_NOTE,
@@ -48,9 +48,7 @@ let volume = DEFAULT_SOUND_CHECK_VOLUME;
 /** A stored sound id back to a sound, or null for one this build has no button for. */
 function parseSound(id: string): Sound | null {
   const [pack, event] = id.split(':');
-  return pack && event && pack in SFX_NAMES && event in SFX_EVENT_NAMES
-    ? { pack: pack as SfxPackId, event: event as SfxEvent }
-    : null;
+  return pack && event && isSfxPack(pack) && isSfxEvent(event) ? { pack, event } : null;
 }
 
 function load(settings: Settings): void {

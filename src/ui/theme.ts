@@ -13,7 +13,8 @@ import { PIP_NAMES } from './pips.js';
 
 /** What a pip is called: a shape's name, or a symbol's own. */
 export function pipName(pip: Pip): string {
-  return isSymbolPip(pip) ? (findSymbol(pip)?.symbol.name ?? pip) : (PIP_NAMES[pip] ?? pip);
+  if (isSymbolPip(pip)) return findSymbol(pip)?.symbol.name ?? pip;
+  return Object.hasOwn(PIP_NAMES, pip) ? PIP_NAMES[pip] : pip;
 }
 
 /** Each sound pack as the settings screen names it. */
@@ -44,6 +45,25 @@ export const SFX_EVENT_NAMES: Record<SfxEvent, string> = {
   win: 'Win',
   lose: 'Lose',
 };
+
+/**
+ * Whether a saved id names one of this build's sound packs, sound events or clear effects. A save
+ * is untrusted (`presentation.ts`), so an id is looked up as the record's own key, never one it
+ * inherits, such as `constructor`.
+ */
+export function isSfxPack(id: string): id is SfxPackId {
+  return Object.hasOwn(SFX_NAMES, id);
+}
+
+/** See `isSfxPack`. */
+export function isSfxEvent(id: string): id is SfxEvent {
+  return Object.hasOwn(SFX_EVENT_NAMES, id);
+}
+
+/** See `isSfxPack`. */
+export function isVictoryId(id: string): id is VictoryId {
+  return Object.hasOwn(VICTORY_NAMES, id);
+}
 
 /** Each board-clear effect as the settings screen names it. */
 export const VICTORY_NAMES: Record<VictoryId, string> = {

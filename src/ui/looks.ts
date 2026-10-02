@@ -464,7 +464,8 @@ const LOOKS: Record<string, LadderLook> = {
 
 /** A ladder's look. A ladder without one wears NORMAL's, and fails `test/fonts.test.ts`. */
 export function lookFor(typeId: string): LadderLook {
-  return LOOKS[typeId] ?? LOOKS.normal!;
+  // Looked up as LOOKS's own key: a palette id comes from a save, and may be anything.
+  return Object.hasOwn(LOOKS, typeId) ? LOOKS[typeId]! : LOOKS.normal!;
 }
 
 /** A ladder's palette, or a palette the player picked by its ladder's id. */
