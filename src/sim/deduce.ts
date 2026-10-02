@@ -10,7 +10,7 @@ import type { Cell } from '../engine/types.js';
 import { ringIsFree } from '../engine/placement/pairs.js';
 import { missingFrom } from '../engine/placement/packs.js';
 import { placementRule } from '../engine/placement/registry.js';
-import { touchingOf } from './reader.js';
+import { openPiece, soleCoveredRim, touchingOf } from './reader.js';
 
 /**
  * What the board tells you, per open numbered cell: how much tier is still
@@ -262,26 +262,15 @@ function namePacks(game: Game): boolean {
 
   for (const cell of game.grid.flat()) {
     if (!cell.present || !cell.open || cell.tier === 0 || done.has(cell)) continue;
-    const piece: Cell[] = [cell];
-    done.add(cell);
-    for (let i = 0; i < piece.length; i++) {
-      for (const n of game.neighboursOf(piece[i]!)) {
-        if (n.open && n.tier > 0 && !done.has(n)) {
-          done.add(n);
-          piece.push(n);
-        }
-      }
-    }
+    const piece = openPiece(game, cell, done);
     if (piece.length !== tiers - 1) continue;
-    const rim = new Set<Cell>();
-    for (const c of piece) for (const n of game.neighboursOf(c)) if (!n.open) rim.add(n);
-    if (rim.size !== 1) continue;
-    const [only] = [...rim];
+    const only = soleCoveredRim(game, piece);
+    if (!only) continue;
     const found = new Set(piece.map((c) => c.tier));
     let missing = 0;
     for (let t = 1; t <= tiers; t++) if (!found.has(t)) missing = t;
-    if (only!.mark === 0 && missing > 0) {
-      name(game, only!, missing);
+    if (only.mark === 0 && missing > 0) {
+      name(game, only, missing);
       learned = true;
     }
   }

@@ -28,7 +28,9 @@ import {
   everyTier,
   highestTier,
   lowestTier,
+  openPiece,
   reachable,
+  soleCoveredRim,
   supported,
   tiersUpTo,
 } from './reader.js';
@@ -449,24 +451,13 @@ const packGap: Trick = {
     const seen = new Set<Cell>();
     for (const start of gaps.keys()) {
       if (seen.has(start)) continue;
-      const piece = [start];
-      seen.add(start);
-      for (let i = 0; i < piece.length; i++) {
-        for (const n of v.game.neighboursOf(piece[i]!)) {
-          if (openCreature(n) && !seen.has(n)) {
-            seen.add(n);
-            piece.push(n);
-          }
-        }
-      }
+      const piece = openPiece(v.game, start, seen);
       if (piece.length !== tiers - 1) continue;
-      const rim = new Set<Cell>();
-      for (const c of piece) for (const n of v.game.neighboursOf(c)) if (!n.open) rim.add(n);
-      if (rim.size !== 1) continue;
-      const [only] = rim;
+      const only = soleCoveredRim(v.game, piece);
+      if (!only) continue;
       const shown = new Set(piece.map((c) => c.tier));
       for (let t = 1; t <= tiers; t++) {
-        if (!shown.has(t) && coveredUnmarked(only!)) settle(v, only!, noteBit(t), m, by([], piece));
+        if (!shown.has(t) && coveredUnmarked(only)) settle(v, only, noteBit(t), m, by([], piece));
       }
     }
   },

@@ -134,6 +134,33 @@ export function touchingOf<C extends { readonly unknown: readonly Cell[] }>(
 }
 
 /**
+ * The open creatures joined to `start` through open creatures, which is how a pack shows: a flood
+ * fill from `start`, adding each creature it reaches to `seen` and passing over those already in it.
+ */
+export function openPiece(game: Game, start: Cell, seen: Set<Cell>): Cell[] {
+  const piece = [start];
+  seen.add(start);
+  for (let i = 0; i < piece.length; i++) {
+    for (const n of game.neighboursOf(piece[i]!)) {
+      if (n.open && n.tier > 0 && !seen.has(n)) {
+        seen.add(n);
+        piece.push(n);
+      }
+    }
+  }
+  return piece;
+}
+
+/** The one covered cell touching a piece; null when none does, or more than one. */
+export function soleCoveredRim(game: Game, piece: readonly Cell[]): Cell | null {
+  const rim = new Set<Cell>();
+  for (const c of piece) for (const n of game.neighboursOf(c)) if (!n.open) rim.add(n);
+  if (rim.size !== 1) return null;
+  const [only] = rim;
+  return only!;
+}
+
+/**
  * One visible number, less what is on show around it and the marks believed; null when nothing
  * around it is still covered. `shown` reads the count of creatures off a board that draws them.
  */
