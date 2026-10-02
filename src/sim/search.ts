@@ -8,7 +8,7 @@ import type { Cell } from '../engine/types.js';
 import type { Pools } from '../engine/placement/rule.js';
 
 /** One open number as a sum: the variables behind it (indices into `Model.vars`) make `target`. */
-export interface Constraint {
+export interface ExactSum {
   readonly vars: number[];
   readonly target: number;
 }
@@ -16,15 +16,19 @@ export interface Constraint {
 /** What is on screen, as a system of sums over the covered cells; `solver.ts` builds it. */
 export interface Model {
   readonly tiers: number;
-  /** Covered cells some number touches. */
+  /** Covered cells some number touches: the variables, by index. */
   readonly vars: Cell[];
+  /** What each variable could hold, as a tier mask (bit 0 for empty ground). */
   readonly dom: number[];
-  readonly cons: Constraint[];
+  /** Every open number with a covered neighbour, as a sum over the variables. */
+  readonly cons: ExactSum[];
+  /** For each variable, the indices into `cons` of the sums it is in. */
   readonly consOf: number[][];
   /** Creatures of each tier still unaccounted for; index 0 unused. */
   readonly remaining: number[];
-  /** Covered cells no number touches, and what each could hold. */
+  /** Covered cells no number touches. */
   readonly interior: Cell[];
+  /** What each interior cell could hold, as a tier mask, in `interior`'s order. */
   readonly interiorDom: number[];
 }
 

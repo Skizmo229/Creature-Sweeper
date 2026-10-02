@@ -17,6 +17,9 @@ import { placementRule } from '../engine/placement/registry.js';
  *
  * Marks here are exact: the player marks only what it proved, and a given is
  * the truth. So subtracting a mark is as sound as subtracting an open cell.
+ *
+ * The graded player's `Constraint` (`reader.ts`) is the same idea read more
+ * strictly: only the numbers the game draws, and the Augur's whole list.
  */
 export interface Constraint {
   readonly cell: Cell;

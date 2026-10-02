@@ -41,7 +41,7 @@ import type { Game } from '../engine/game.js';
 import type { Cell } from '../engine/types.js';
 import { placementRule } from '../engine/placement/registry.js';
 import {
-  type Constraint,
+  type ExactSum,
   type Model,
   type Problem,
   Search,
@@ -104,7 +104,7 @@ function buildModel(game: Game): Model | null {
 
   const index = new Map<Cell, number>();
   const vars: Cell[] = [];
-  const cons: Constraint[] = [];
+  const cons: ExactSum[] = [];
   for (const c of all) {
     if (!c.open) continue;
     let target = c.num;
