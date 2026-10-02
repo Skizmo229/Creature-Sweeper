@@ -5,6 +5,7 @@
  */
 
 import type { BoardDisplay } from '../board/view.js';
+import { boardDisplayFor } from '../dress.js';
 import { ladders } from '../ladders.js';
 import { sampleBoard, samplePin } from '../preview.js';
 import { DEFAULT, type PresentationSettings } from '../presentation.js';
@@ -100,25 +101,13 @@ export function makeContext(
     settings.setPresentationFor(ladderScope ? typeId : null, patch);
   const currentTheme = settings.themeFor(typeId);
   const chipCell = previewCell(CHIP_CELL, p.previewSize);
-  const display = (over: Partial<BoardDisplay> = {}): BoardDisplay => ({
-    maxCell: p.maxZoom,
-    startAtCeiling: p.startAtCeiling,
-    font: settings.boardFont(typeId),
-    glyph: p.glyph,
-    highlight: settings.highlightStyle(typeId),
-    highlightColor: settings.highlightColor(typeId),
-    highlightWidth: p.highlightWidth,
-    beatenLook: p.beatenLook,
-    digitScale: p.digitSize,
-    reachShading: p.reachShading,
-    markColor: settings.markColor(typeId),
-    longPressMs: p.longPress,
+  const shown: BoardDisplay = {
+    ...boardDisplayFor(settings, typeId),
     // The examples show creatures: where one needs a beaten creature's number, it holds the cursor
     // there (decision 0034), so the game screen's toggle does not reach them.
     beatenNumbers: false,
-    tierColors: settings.tierColors(typeId),
-    ...over,
-  });
+  };
+  const display = (over: Partial<BoardDisplay> = {}): BoardDisplay => ({ ...shown, ...over });
   return {
     settings,
     typeId,
