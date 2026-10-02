@@ -9,10 +9,9 @@ import { Game } from '../src/engine/game.js';
 import { ladders, MASK_SEEDS } from './helpers.js';
 
 /**
- * The ragged cave is the only board whose shape is not a predicate, so it is
- * the only one where "how many cells does this leave" is a promise the
- * generator has to keep rather than a fact you can read off the config. These
- * are that promise, written down.
+ * The ragged cave is grown from its seed rather than cut by a predicate, as the dungeon is, so
+ * "how many cells does this leave" is a promise the generator has to keep rather than a fact you
+ * can read off the config. These are that promise, written down.
  */
 describe('the ragged cave', () => {
   const cave = ladders.find((t) => t.id === 'cave')!;
