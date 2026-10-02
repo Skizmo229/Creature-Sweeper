@@ -28,11 +28,11 @@
 import { Game } from '../engine/game.js';
 import type { BoardConfig, Cell } from '../engine/types.js';
 
-/** Fixed, so every thumbnail everywhere shows the same arrangement. */
-const SEED = 0x9e3779b1;
-
-/** The layout every example starts on, before anything asks for a fresh one. */
-export const PREVIEW_SEED = SEED;
+/**
+ * Fixed, so every thumbnail everywhere shows the same arrangement: the layout every example starts
+ * on, before anything asks for a fresh one.
+ */
+export const PREVIEW_SEED = 0x9e3779b1;
 
 /**
  * A board config for an example.
@@ -111,8 +111,8 @@ function markOne(game: Game): void {
  * cell numbered 0 cascades, and on a board this small one cascade uncovers
  * almost all of it, leaving nothing covered to look at.
  */
-function buildSample(config: BoardConfig, creatures: number, empties: number): Game {
-  const game = Game.create(config, SEED);
+function dealHighlightSample(config: BoardConfig, creatures: number, empties: number): Game {
+  const game = Game.create(config, PREVIEW_SEED);
   beatStrongest(game, creatures);
   for (const cell of cellsOf(game, (c) => c.tier === 0 && c.num > 0).slice(0, empties)) {
     game.open(cell.x, cell.y);
@@ -203,7 +203,7 @@ const MAX_DEALS = 10000;
 export function sampleBoard(): Game {
   return once('standard', () => {
     for (let i = 0; i < MAX_DEALS; i++) {
-      const game = dealSample(SEED + i);
+      const game = dealSample(PREVIEW_SEED + i);
       if (showsEverything(game)) return game;
     }
     throw new Error(`no example board in ${MAX_DEALS} deals shows every digit`);
@@ -238,7 +238,11 @@ export function samplePin(): Cell {
  */
 export function highlightSampleBoard(topology: 'square' | 'hex'): Game {
   return once(`highlight-${topology}`, () =>
-    buildSample(previewConfig({ width: 5, height: 4, quantity: [1, 1, 1, 1], topology }), 1, 4),
+    dealHighlightSample(
+      previewConfig({ width: 5, height: 4, quantity: [1, 1, 1, 1], topology }),
+      1,
+      4,
+    ),
   );
 }
 
@@ -280,7 +284,7 @@ export function reachSampleBoard(): Game {
     for (let i = 0; i < MAX_DEALS; i++) {
       const game = Game.create(
         previewConfig({ width: 8, height: 4, quantity: [1, 1, 1, 1], reach: REACH_SAMPLE_STEPS }),
-        SEED + i,
+        PREVIEW_SEED + i,
       );
       const first = cellsOf(game, (c) => c.tier === 0 && c.num > 0 && c.x <= 1)[0];
       if (!first) continue;
@@ -297,15 +301,13 @@ export function reachSampleBoard(): Game {
   });
 }
 
-/** The hex highlight example — HIVE's. */
-export function hexSampleBoard(): Game {
-  return highlightSampleBoard('hex');
-}
-
 /** Two cells at whatever the zoom ceiling is, so the setting is in real units. */
 export function zoomSampleBoard(): Game {
   return once('zoom', () => {
-    const game = Game.create(previewConfig({ width: 2, height: 1, quantity: [0, 0, 0, 1] }), SEED);
+    const game = Game.create(
+      previewConfig({ width: 2, height: 1, quantity: [0, 0, 0, 1] }),
+      PREVIEW_SEED,
+    );
     for (const cell of game.grid.flat()) game.open(cell.x, cell.y);
     return game;
   });
@@ -330,7 +332,7 @@ const CLEARED_QUANTITY: readonly number[] = [4, 3, 3, 2, 2, 2, 1, 1, 1];
  * is at least 1, so "one of each" is a property of the config rather than of the seed;
  * `test/preview.test.ts` holds it at every tier count the ladders use.
  */
-export function clearedBoard(seed: number = SEED, tiers = 5): Game {
+export function clearedBoard(seed: number = PREVIEW_SEED, tiers = 5): Game {
   const count = Math.max(1, Math.min(CLEARED_QUANTITY.length, Math.round(tiers)));
   const game = Game.create(
     previewConfig({

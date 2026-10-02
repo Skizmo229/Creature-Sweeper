@@ -20,7 +20,6 @@ import {
   PREVIEW_SEED,
   clearedBoard,
   HIGHLIGHT_PIN,
-  hexSampleBoard,
   highlightSampleBoard,
   reachSampleBoard,
   sampleBoard,
@@ -160,7 +159,7 @@ describe('the gallery examples', () => {
     // Every tile in a gallery draws the same board, so the only thing that
     // differs between them is the setting. Memoised, so this is identity.
     expect(sampleBoard()).toBe(sampleBoard());
-    expect(hexSampleBoard()).toBe(hexSampleBoard());
+    expect(highlightSampleBoard('hex')).toBe(highlightSampleBoard('hex'));
   });
 
   it('draws the cursor-highlight example on either grid', () => {
@@ -180,7 +179,7 @@ describe('the gallery examples', () => {
         .filter((c) => Math.abs(c.x - x) <= 1 && Math.abs(c.y - y) <= 1);
       expect(ring.length).toBe(9);
     }
-    expect(hexSampleBoard()).toBe(highlightSampleBoard('hex'));
+    expect(highlightSampleBoard('hex')).toBe(highlightSampleBoard('hex'));
   });
 
   it('holds the cursor over a beaten creature, so its number shows in `hot`', () => {

@@ -12,11 +12,10 @@
 
 import { setNumberFont } from './board/digits.js';
 import { rgbOf } from './colorspace.js';
-import type { GlyphPip, Pip, SfxPackId, TypeTheme, VictoryId } from './looktypes.js';
+import type { GlyphPip, Pip, SfxEvent, SfxPackId, TypeTheme, VictoryId } from './looktypes.js';
 import { PIP_FAMILY, findSymbol, glyphChar, isGlyphPip } from './pipsymbols.js';
 import { PIP_NAMES, pipPath } from './pips.js';
 import type { CreatureGlyph } from './presentation.js';
-import type { SfxEvent } from './sfx.js';
 import { type TierPalette, tierColor, tierGilded } from './tiercolors.js';
 import { FONTS, type GameFont } from './typefaces.js';
 

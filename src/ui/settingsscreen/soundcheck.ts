@@ -12,10 +12,10 @@
  */
 
 import { el } from '../dom.js';
-import { SFX_EVENTS, type SfxPackId } from '../looktypes.js';
+import { SFX_EVENTS, type SfxEvent, type SfxPackId } from '../looktypes.js';
 import { DEFAULT_PRESENTATION, MAX_SOUND_CHECK_VOLUME } from '../presentation.js';
 import type { Settings } from '../settings.js';
-import { type SfxEvent, sfxPitch, sfxRatio, sfxSoundId } from '../sfx.js';
+import { sfxPitch, sfxRatio, sfxSoundId } from '../sfx.js';
 import { SFX_EVENT_NAMES, SFX_NAMES } from '../theme.js';
 import type { ScreenContext } from './context.js';
 import { type PianoRoll, nearestNote, noteName, pianoRoll } from './pianoroll.js';
