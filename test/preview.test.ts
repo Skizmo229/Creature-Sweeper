@@ -14,7 +14,6 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { loadLadders } from '../src/data.js';
 import { placementRule } from '../src/engine/placement/registry.js';
 import {
   PREVIEW_SEED,
@@ -28,6 +27,7 @@ import {
   zoomSampleBoard,
 } from '../src/ui/preview.js';
 import type { Game } from '../src/engine/game.js';
+import { ladders } from './helpers.js';
 
 const tiersOn = (game: Game): Set<number> =>
   new Set(
@@ -41,7 +41,7 @@ const creatures = (game: Game) => game.grid.flat().filter((c) => c.present && c.
 
 /** Every tier count the real ladders actually deal, across all 461 boards. */
 const LADDER_TIER_COUNTS: number[] = [
-  ...new Set(loadLadders().flatMap((t) => [...t.boards, ...t.extended].map((b) => b.tiers))),
+  ...new Set(ladders.flatMap((t) => [...t.boards, ...t.extended].map((b) => b.tiers))),
 ].sort((a, b) => a - b);
 
 describe('the board-clear example', () => {
