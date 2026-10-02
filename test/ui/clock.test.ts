@@ -7,6 +7,7 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { DEFAULT_GAMEPLAY } from '../../src/engine/settings.js';
 import { autoplayTierOrder } from '../../src/sim/autoplay.js';
 import { clockText } from '../../src/ui/game/hud.js';
 import { ladders } from '../../src/ui/ladders.js';
@@ -52,7 +53,11 @@ describe('the clock setting', () => {
   });
 
   it('shows Time Attack’s countdown in the style too', () => {
-    app.progress.recordClear(ladders, 'normal', 1, { perfect: false, seconds: 200 });
+    app.progress.recordClear(ladders, 'normal', 1, {
+      perfect: false,
+      seconds: 200,
+      dials: DEFAULT_GAMEPLAY,
+    });
     app.settings.setGameplay({ timeAttack: true });
     app.settings.setPresentation({ clock: 'minutes' });
     app.play('normal', 1, 7);

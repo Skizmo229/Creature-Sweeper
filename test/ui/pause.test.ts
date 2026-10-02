@@ -232,4 +232,14 @@ describe('a paused Full Run', () => {
     expect(pausedGames.get(slot)).toBeNull();
     expect(app.progress.runRecord(ladders, 'easy').attempts).toBe(1);
   });
+
+  it('abandoned on dials easier than the tuned game writes no attempt', () => {
+    app.settings.setGameplay({ hpRatio: 2 });
+    app.runFull('easy', 7);
+    freeMoves(2);
+    key('Escape');
+    button('Abandon run').click();
+    expect(pausedGames.get(slot)).toBeNull();
+    expect(app.progress.runRecord(ladders, 'easy').attempts).toBe(0);
+  });
 });

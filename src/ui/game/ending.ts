@@ -82,6 +82,7 @@ export class BoardEnding {
       reachedBoard: this.host.boardIndex(),
       hp: run.hp,
       seconds: this.host.clock.elapsedSeconds(),
+      dials: run.game.settings,
     });
   }
 
@@ -113,12 +114,13 @@ export class BoardEnding {
     const firstClear = won && !progress.boardRecord(ladders, typeId, boardIndex).cleared;
     const plays = won && this.effectPlays(firstClear);
     let unlocked: number | null = null;
-    // A board cleared on settings easier than the tuned ones is not written down at all.
-    if (won && recorded) {
+    // A board cleared on dials easier than the tuned ones is not written down (`recordClear`).
+    if (won) {
       unlocked = progress.recordClear(ladders, typeId, boardIndex, {
         perfect,
         seconds,
         hints: tutor.hints,
+        dials: game.settings,
       });
     }
     this.host.sfx.play(won ? 'win' : 'lose');
@@ -184,15 +186,14 @@ export class BoardEnding {
 
     if (!midRun) {
       clock.freeze();
-      if (recorded) {
-        progress.recordRun(ladders, typeId, {
-          completed: run.status === 'won',
-          reachedBoard: boardIndex,
-          hp: game.hp,
-          seconds: clock.frozenSeconds!,
-          hints: tutor.runHints,
-        });
-      }
+      progress.recordRun(ladders, typeId, {
+        completed: run.status === 'won',
+        reachedBoard: boardIndex,
+        hp: game.hp,
+        seconds: clock.frozenSeconds!,
+        hints: tutor.runHints,
+        dials: game.settings,
+      });
     }
     this.host.sfx.play(game.status === 'lost' ? 'lose' : 'win');
 

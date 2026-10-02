@@ -8,6 +8,7 @@
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Game } from '../../src/engine/game.js';
+import { DEFAULT_GAMEPLAY } from '../../src/engine/settings.js';
 import { ladders } from '../../src/ui/ladders.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
@@ -78,7 +79,11 @@ describe('a chord', () => {
 
 describe('the clock’s dials', () => {
   it('race a share of the best, take the shorter of that and a limit, and limit a run per board', () => {
-    app.progress.recordClear(ladders, 'normal', 1, { perfect: false, seconds: 100 });
+    app.progress.recordClear(ladders, 'normal', 1, {
+      perfect: false,
+      seconds: 100,
+      dials: DEFAULT_GAMEPLAY,
+    });
     app.settings.setGameplay({ timeAttack: true, timeAttackRatio: 0.5 });
     app.play('normal', 1, 7);
     expect(app.clock.timeLimit).toBe(50);

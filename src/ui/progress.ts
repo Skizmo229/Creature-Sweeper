@@ -10,6 +10,7 @@
  */
 
 import { type Ladders, boardFingerprint, ladderFingerprint } from '../engine/config.js';
+import { type GameplaySettings, isAtLeastAsHard } from '../engine/settings.js';
 import {
   PROGRESS_KEY as KEY,
   boardKey,
@@ -279,8 +280,11 @@ export class Progress {
     return this.typeRecord(typeId).cleared;
   }
 
-  /** Record how a run ended. Runs never advance the board ladder — every
-   *  board of a run was already cleared, or the run would not have opened. */
+  /**
+   * Record how a run ended. Runs never advance the board ladder: every board of a run was already
+   * cleared, or the run would not have opened. A run played on dials easier than the tuned game
+   * writes nothing, an attempt included.
+   */
   recordRun(
     ladders: Ladders,
     typeId: string,
@@ -291,8 +295,11 @@ export class Progress {
       seconds: number;
       /** Times the tutor was asked over the run. */
       hints?: number;
+      /** The gameplay dials the run was played on. */
+      dials: GameplaySettings;
     },
   ): void {
+    if (!isAtLeastAsHard(opts.dials)) return;
     const prev = this.runRecord(ladders, typeId);
     // A run the tutor helped with is cleared and counts, but races nothing.
     const { bestTime, fewestHints } = opts.completed
@@ -391,14 +398,22 @@ export class Progress {
    * Record a clear and advance the ladder. Returns the board it unlocked, or null. A board the
    * tutor helped with (`hints`) is cleared, unlocks the next and may be perfect, but sets no best
    * time: the one cost of asking for a hint (docs/teaching-plan.md, 4.4). Until a best time
-   * exists, it keeps the fewest hints instead (decision 0065).
+   * exists, it keeps the fewest hints instead (decision 0065). A board played on dials easier
+   * than the tuned game writes nothing and unlocks nothing.
    */
   recordClear(
     ladders: Ladders,
     typeId: string,
     board: number,
-    opts: { perfect: boolean; seconds: number; hints?: number },
+    opts: {
+      perfect: boolean;
+      seconds: number;
+      hints?: number;
+      /** The gameplay dials the board was played on. */
+      dials: GameplaySettings;
+    },
   ): number | null {
+    if (!isAtLeastAsHard(opts.dials)) return null;
     const type = ladders.find((t) => t.id === typeId);
     const lastBoard = type?.boards.length ?? TUNED_BOARDS;
 
