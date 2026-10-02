@@ -280,7 +280,7 @@ export function drawOpen(p: Paint, cell: Cell, cx: number, cy: number): void {
     ctx.save();
     if (beaten && dim) ctx.globalAlpha = BEATEN_ALPHA;
     const tiers = beaten && grey ? greyTiers(theme.ink) : p.tierColors;
-    drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme, tiers, {
+    drawCreature(ctx, box.x, box.y, box.size, cell.tier, theme.pip, tiers, {
       glyph: p.glyph,
       font: p.font,
     });

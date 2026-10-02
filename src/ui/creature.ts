@@ -8,12 +8,12 @@
  */
 
 import { setNumberFont } from './board/digits.js';
-import type { GlyphPip, TypeTheme } from './looktypes.js';
+import type { GlyphPip, Pip } from './looktypes.js';
 import { PIP_FAMILY, glyphChar, isGlyphPip } from './pipsymbols.js';
 import { pipPath } from './pips.js';
 import type { CreatureGlyph } from './presentation.js';
 import { MARK_OUTLINE } from './theme.js';
-import { type TierPalette, tierColor, tierGilded } from './tiercolors.js';
+import { TIER_COUNT, type TierPalette, tierColor, tierGilded } from './tiercolors.js';
 import { FONTS, type GameFont } from './typefaces.js';
 
 /** Which of the nine grid positions are lit, per die face. */
@@ -39,8 +39,9 @@ export interface CreatureLook {
 const PIPS_LOOK: CreatureLook = { glyph: 'pips', font: FONTS['jetbrains-mono'] };
 
 /**
- * Draw a creature glyph filling a `size`-pixel cell at (x, y), in its tier's colour: its pips on
- * a 3x3 grid over a 16-unit cell scaled to size, or its tier as a digit, or both.
+ * Draw a creature glyph filling a `size`-pixel cell at (x, y), in its tier's colour: its pips,
+ * in the shape `pip` gives them, on a 3x3 grid over a cell `GRID_UNITS` wide scaled to size, or its
+ * tier as a digit, or both, the digit over the pips' corner.
  */
 export function drawCreature(
   ctx: CanvasRenderingContext2D,
@@ -48,34 +49,19 @@ export function drawCreature(
   y: number,
   size: number,
   tier: number,
-  theme: TypeTheme,
+  pip: Pip,
   tierColors: TierPalette,
   look: CreatureLook = PIPS_LOOK,
 ): void {
-  const color = tierColor(tierColors, tier);
-  const gilded = tierGilded(tier);
+  if (look.glyph !== 'digit') drawPips(ctx, x, y, size, tier, pip, tierColors);
   if (look.glyph !== 'pips') {
-    const corner = look.glyph === 'both';
-    if (!corner) {
-      drawTierDigit(
-        ctx,
-        x,
-        y,
-        size,
-        tier,
-        color,
-        gilded ? tierColors.halo : null,
-        look.font,
-        false,
-      );
-      return;
-    }
-    // The pips first, the digit over their corner.
-    drawPips(ctx, x, y, size, tier, theme, tierColors);
-    drawTierDigit(ctx, x, y, size, tier, color, gilded ? tierColors.halo : null, look.font, true);
-    return;
+    drawTierDigit(ctx, x, y, size, tier, {
+      color: tierColor(tierColors, tier),
+      halo: tierGilded(tier) ? tierColors.halo : null,
+      font: look.font,
+      corner: look.glyph === 'both',
+    });
   }
-  drawPips(ctx, x, y, size, tier, theme, tierColors);
 }
 
 /** The digit's size as a share of the cell, drawn alone or tucked into the corner over the pips. */
@@ -83,6 +69,14 @@ const DIGIT_SHARE = 0.72;
 const CORNER_DIGIT_SHARE = 0.4;
 /** Where the corner digit's centre sits, as a share of the cell from its top-left. */
 const CORNER_AT = 0.78;
+
+/** How a tier's digit is drawn: its colour, a gilded tier's halo, its face, and whether in the corner. */
+interface TierDigit {
+  readonly color: string;
+  readonly halo: string | null;
+  readonly font: GameFont;
+  readonly corner: boolean;
+}
 
 /**
  * A creature's tier as a digit, in its colour over the dark outline every annotation wears, so
@@ -94,15 +88,12 @@ function drawTierDigit(
   y: number,
   size: number,
   tier: number,
-  color: string,
-  halo: string | null,
-  font: GameFont,
-  corner: boolean,
+  { color, halo, font, corner }: TierDigit,
 ): void {
   const px = size * (corner ? CORNER_DIGIT_SHARE : DIGIT_SHARE);
   const cx = x + size * (corner ? CORNER_AT : 0.5);
   const cy = y + size * (corner ? CORNER_AT : 0.5);
-  const text = String(Math.min(9, Math.max(1, tier)));
+  const text = String(Math.min(TIER_COUNT, Math.max(1, tier)));
   ctx.save();
   const { centre } = setNumberFont(ctx, font, px);
   ctx.textAlign = 'center';
@@ -120,29 +111,43 @@ function drawTierDigit(
   ctx.restore();
 }
 
-/** The pips: a die face of the tier, in the shape the theme gives them. */
+/** The die's grid: a cell this many units wide, three pips a side. */
+const GRID_UNITS = 16;
+const DIE_SIDE = 3;
+/** The first pip's centre from the cell's edge, and the step from one pip's centre to the next. */
+const PIP_INSET = 3.5;
+const PIP_STEP = 4.5;
+/** A pip's radius, and a gilded pip's, smaller so its halo fits in the gap between pips. */
+const PIP_RADIUS = 1.9;
+const GILDED_PIP_RADIUS = 1.45;
+/** The halo's width round a gilded pip, and how far inside a hollow pip's edge it is drawn. */
+const HALO_WIDTH = 1.15;
+const HOLLOW_HALO_INSET = 0.55;
+/** A hollow pip's stroke. */
+const HOLLOW_STROKE = 1.1;
+
+/** The pips: a die face of the tier, in the shape `pip` gives them. */
 function drawPips(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   size: number,
   tier: number,
-  theme: TypeTheme,
+  pip: Pip,
   tierColors: TierPalette,
 ): void {
-  const face = DIE_FACES[Math.min(9, Math.max(1, tier))] ?? DIE_FACES[1]!;
+  const face = DIE_FACES[Math.min(TIER_COUNT, Math.max(1, tier))] ?? DIE_FACES[1]!;
   const color = tierColor(tierColors, tier);
   const gilded = tierGilded(tier);
-  const unit = size / 16;
-  // Gilded pips shrink so their halo fits in the 4.5-unit gap between pips.
-  // At full size the halos merged into a blob and the count stopped reading.
-  const r = Math.max(1, unit * (gilded ? 1.45 : 1.9));
-  const halo = Math.max(1.5, unit * 1.15);
+  const unit = size / GRID_UNITS;
+  // A gilded pip is smaller: at full size the halos merged into a blob and the count stopped
+  // reading.
+  const r = Math.max(1, unit * (gilded ? GILDED_PIP_RADIUS : PIP_RADIUS));
+  const halo = Math.max(1.5, unit * HALO_WIDTH);
   const centres = face.map((i) => ({
-    cx: x + unit * (3.5 + (i % 3) * 4.5),
-    cy: y + unit * (3.5 + Math.floor(i / 3) * 4.5),
+    cx: x + unit * (PIP_INSET + (i % DIE_SIDE) * PIP_STEP),
+    cy: y + unit * (PIP_INSET + Math.floor(i / DIE_SIDE) * PIP_STEP),
   }));
-  const pip = theme.pip;
 
   ctx.save();
   ctx.lineJoin = 'round';
@@ -153,17 +158,17 @@ function drawPips(
   }
   const hollow = pip === 'ring' || pip === 'ringDiamond';
   for (const { cx, cy } of centres) {
-    // Tiers 6-9 wear the halo, under the pip so its colour stays whole.
+    // Tiers 6 to 9 wear the halo, under the pip so its colour stays whole.
     if (gilded) {
       ctx.strokeStyle = tierColors.halo;
       ctx.lineWidth = halo;
-      pipPath(ctx, pip, cx, cy, hollow ? r - unit * 0.55 : r);
+      pipPath(ctx, pip, cx, cy, hollow ? r - unit * HOLLOW_HALO_INSET : r);
       ctx.stroke();
     }
 
     ctx.fillStyle = color;
     ctx.strokeStyle = color;
-    ctx.lineWidth = Math.max(1, unit * 1.1);
+    ctx.lineWidth = Math.max(1, unit * HOLLOW_STROKE);
     pipPath(ctx, pip, cx, cy, hollow ? r - ctx.lineWidth / 2 : r);
     if (hollow) ctx.stroke();
     else ctx.fill();

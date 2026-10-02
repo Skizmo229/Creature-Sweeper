@@ -119,7 +119,7 @@ export function buildAtlas(look: VictoryLook, sprites: VictorySprite[]): Atlas {
     glyph.height = px;
     const gtx = glyph.getContext('2d');
     if (!gtx) continue;
-    drawCreature(gtx, 0, 0, px, tier, theme, tierColors, look.creature);
+    drawCreature(gtx, 0, 0, px, tier, theme.pip, tierColors, look.creature);
     atlas.set(tier, glyph);
   }
   return atlas;
