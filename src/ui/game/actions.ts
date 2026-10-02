@@ -228,89 +228,75 @@ export class BoardActions {
       else this.host.leaveGame();
       return;
     }
+    const key = e.key.toLowerCase();
     // Looking, not a move, so it works on a board that has ended.
-    if (e.key.toLowerCase() === 'u') {
-      e.preventDefault();
-      this.toggleBeatenNumbers();
-      return;
-    }
+    if (key === 'u') return this.claim(e, () => this.toggleBeatenNumbers());
     if (game.status !== 'playing') return;
 
-    const key = e.key.toLowerCase();
-    if (key === 's') {
-      e.preventDefault();
-      this.doSweep(e.shiftKey);
-      return;
-    }
-    if (key === 'd') {
-      e.preventDefault();
-      this.doSweep(true);
-      return;
-    }
-    if (key === 'w' && game.patrols) {
-      e.preventDefault();
-      this.doWait();
-      return;
-    }
-    if (key === 'p') {
-      e.preventDefault();
-      this.host.pause();
-      return;
-    }
-    if (key === 'h') {
-      e.preventDefault();
-      this.host.hint();
-      return;
-    }
-    if (key === 'g') {
-      e.preventDefault();
-      this.host.guide();
-      return;
-    }
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      this.host.next();
-      return;
-    }
+    const action = this.boardKey(e, key, game);
+    if (action) return this.claim(e, action);
     if (this.zoomKey(e, key)) return;
     // A spell's own letter casts it, checked after the board's own keys so a spell can never
     // shadow Sweep or zoom.
     const spell = game.spells.find((id) => spellKey(id) === key);
-    if (spell) {
-      e.preventDefault();
-      this.pickSpell(spell);
-      return;
-    }
+    if (spell) return this.claim(e, () => this.pickSpell(spell));
+    if (key === 'n') return this.claim(e, () => this.toggleNotesMode());
+    this.digitKey(e, game);
+  }
 
-    if (key === 'n') {
-      e.preventDefault();
-      this.toggleNotesMode();
-      return;
-    }
+  /** The key is the board's: the browser does nothing more with it, and `action` runs. */
+  private claim(e: KeyboardEvent, action: () => void): void {
+    e.preventDefault();
+    action();
+  }
 
-    // Digits come off e.code, not e.key: Shift+1 is "!" on a US layout and something else again
-    // elsewhere, so the key would be unreadable exactly when the pencil needs it.
+  /**
+   * What one of the board's own keys does, or null for any other: S sweeps (Shift trusting marks)
+   * and D sweeps trusting marks, W is PATROL's Wait, P pauses, H asks the tutor, G opens the
+   * guide, and Enter goes on with a lesson.
+   */
+  private boardKey(e: KeyboardEvent, key: string, game: Game): (() => void) | null {
+    if (e.key === 'Enter') return () => this.host.next();
+    switch (key) {
+      case 's':
+        return () => this.doSweep(e.shiftKey);
+      case 'd':
+        return () => this.doSweep(true);
+      case 'w':
+        return game.patrols ? () => this.doWait() : null;
+      case 'p':
+        return () => this.host.pause();
+      case 'h':
+        return () => this.host.hint();
+      case 'g':
+        return () => this.host.guide();
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * A digit: with a cell hovered, that tier marked or pencilled on it as a click would, the entry
+   * mode deciding and Shift inverting it for this one keystroke; with none, the tier armed. Digits
+   * come off e.code, not e.key: Shift+1 is "!" on a US layout and something else again elsewhere,
+   * so the key would be unreadable exactly when the pencil needs it.
+   */
+  private digitKey(e: KeyboardEvent, game: Game): void {
     const digit = /^(?:Digit|Numpad)([0-9])$/.exec(e.code);
-    if (digit) {
-      const cell: Cell | null = this.host.view()?.hoveredCell ?? null;
-      const tier = Number(digit[1]);
-      if (tier > game.config.tiers) return;
-      e.preventDefault();
-      if (cell) {
-        // The Entry mode decides, exactly as it does for a click, and Shift inverts it for this
-        // one keystroke.
-        const pencil = this.host.mode.notesMode !== e.shiftKey;
-        const { x, y } = cell;
-        this.host.apply(
-          this.host.move(
-            pencil ? { kind: 'note', x, y, tier } : { kind: 'mark', x, y, mark: tier },
-          ),
-        );
-      } else {
-        if (e.shiftKey) this.host.mode.notesMode = true;
-        this.pickTier(tier);
-      }
-      return;
+    if (!digit) return;
+    const cell: Cell | null = this.host.view()?.hoveredCell ?? null;
+    const tier = Number(digit[1]);
+    if (tier > game.config.tiers) return;
+    e.preventDefault();
+    if (cell) {
+      const pencil = this.host.mode.notesMode !== e.shiftKey;
+      const { x, y } = cell;
+      this.host.apply(
+        this.host.move(pencil ? { kind: 'note', x, y, tier } : { kind: 'mark', x, y, mark: tier }),
+      );
+    } else {
+      if (e.shiftKey) this.host.mode.notesMode = true;
+      this.pickTier(tier);
     }
   }
 
