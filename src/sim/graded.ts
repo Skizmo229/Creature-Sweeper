@@ -38,6 +38,7 @@ import {
   runTrick,
 } from './tricks.js';
 import { augurAnswer, expectedFreed } from './aim.js';
+import { CASTS_AT_A_STUCK_POINT, waitBudget } from './honest.js';
 import { dungeonScaffold } from './scaffold.js';
 
 /** How the graded player plays: its grade, and what it may read, spend and fall back on. */
@@ -116,14 +117,11 @@ const GUESS_COST = 8;
 /** Rounds of narrowing at one grade before it is called dry. Candidate sets only ever shrink. */
 const NARROW_ROUNDS = 12;
 
-/** How long a stuck point is waited out where the creatures walk, in laps of the longest route. */
-const PATIENCE_LAPS = 1;
-
 /** What scanning the whole board costs, over the pass that then finds something. A first guess. */
 const SCAN_COST = 4;
 
-/** Information casts allowed at one stuck point before the gamble is taken. */
-const CASTS_AT_A_STUCK_POINT = 2;
+/** Passes of the play loop a board is allowed, per cell and per wait, before the player stops. */
+const PASSES_PER_CELL = 8;
 
 /**
  * Play one board as the graded player, a pass at a time, until it is won or lost; with nothing
@@ -160,9 +158,9 @@ export function play(game: Game, options: GradedOptions): GradedRun {
   const startHp = game.hp;
   // Where the creatures walk (PATROL) every action is a step, what the pencil held is stale
   // after it, and a stuck point is waited out before it is gambled on, as the honest player
-  // does: one lap of the longest route shows the biggest creature on every cell it can stand on.
-  const patience = game.patrols ? PATIENCE_LAPS * 4 * game.config.tiers : 0;
-  let guard = game.config.width * game.config.height * 8 * (1 + patience);
+  // does (`waitBudget`).
+  const patience = waitBudget(game);
+  let guard = game.config.width * game.config.height * PASSES_PER_CELL * (1 + patience);
   let waited = 0;
   let movesRead = game.moves;
   while (game.status === 'playing' && guard-- > 0) {

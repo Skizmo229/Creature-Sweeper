@@ -11,6 +11,7 @@
  */
 
 import type { Game } from '../engine/game.js';
+import { routeCells } from '../engine/patrol.js';
 import { SPELLS, type SpellId } from '../engine/spells.js';
 import type { Cell } from '../engine/types.js';
 import {
@@ -74,6 +75,23 @@ const EXERCISE_POLICIES: ReadonlySet<Policy> = new Set<Policy>(['exercise', 'wor
  * longest route: one lap and the biggest creature has shown every cell it can stand on.
  */
 const PATIENCE_LAPS = 1;
+
+/**
+ * The waits a stuck point is given: `PATIENCE_LAPS` laps of the longest route, a step a wait,
+ * where the creatures walk; none where they stand still. The graded player waits as long.
+ */
+export function waitBudget(game: Game): number {
+  return game.patrols ? PATIENCE_LAPS * routeCells(0, 0, game.config.tiers).length : 0;
+}
+
+/**
+ * Information casts at one stuck point before the gamble is taken: past two it is throwing mana at
+ * a wall, which is a decision a player makes once and not again. The graded player holds to it too.
+ */
+export const CASTS_AT_A_STUCK_POINT = 2;
+
+/** Passes of the play loop a board is allowed, per cell and per wait, before the player stops. */
+const PASSES_PER_CELL = 4;
 
 /**
  * The cells to open from one reading of the board. Where the creatures walk every open is a move,
@@ -183,8 +201,8 @@ export function play(
   const startHp = game.hp;
   let castsHere = 0;
   // Where the creatures walk, the player waits out stuck points, so the loop runs longer.
-  const patience = game.patrols ? PATIENCE_LAPS * 4 * game.config.tiers : 0;
-  let guard = game.config.width * game.config.height * 4 * (1 + patience);
+  const patience = waitBudget(game);
+  let guard = game.config.width * game.config.height * PASSES_PER_CELL * (1 + patience);
   let waited = 0;
   let movesRead = game.moves;
 
@@ -242,7 +260,10 @@ export function play(
     if (options.rescue && options.observe && freeMoves().length) run.couldRescue++;
 
     exerciseBeforeGuess(game, policy, run);
-    if (castsHere < 2 && spendAtStuckPoint(game, policy, spellId, guess, constraints, run)) {
+    if (
+      castsHere < CASTS_AT_A_STUCK_POINT &&
+      spendAtStuckPoint(game, policy, spellId, guess, constraints, run)
+    ) {
       castsHere++;
       continue;
     }
@@ -334,9 +355,8 @@ function workoutMove(game: Game, policy: Policy, hasSafe: boolean, run: HonestRu
   return false;
 }
 
-// Spend, if this policy spends and the spell can still be afforded. Two
-// casts at one stuck point at most: past that it is throwing mana at a
-// wall, which is a decision a player makes once and not again.
+// Spend, if this policy spends and the spell can still be afforded; the caller allows
+// `CASTS_AT_A_STUCK_POINT` of these at one stuck point.
 function spendAtStuckPoint(
   game: Game,
   policy: Policy,
