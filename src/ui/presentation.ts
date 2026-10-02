@@ -38,25 +38,19 @@ export type SfxChoice = typeof DEFAULT | typeof OFF | SfxPackId;
 export type VictoryChoice = typeof DEFAULT | typeof OFF | VictoryId;
 
 /**
- * How much of the board the cursor lights up.
- *
- * 'neighbours' is what the game has always done and what every type defaults
- * to: the hovered cell plus everything genuinely adjacent to it, which on a
- * hex board is six cells and on a wrapped board jumps across the seam. That
- * last part is the reason it is worth keeping as the default — it teaches the
- * topology faster than any amount of explaining.
- *
- * 'block' is the literal 3x3 square regardless of topology, for a player who
- * wants a steady shape rather than a truthful one.
+ * How much of the board the cursor lights up. 'neighbours', every ladder's default, is the hovered
+ * cell and everything genuinely adjacent to it: six cells on a hex board, and across the seam on
+ * a wrapped one, which teaches the topology faster than any amount of explaining. 'cell' is the
+ * hovered cell alone. 'block' is the literal 3x3 square whatever the topology, for a player who
+ * wants a steady shape rather than a truthful one. 'seen' lights what constrains a covered cell,
+ * the open numbers and beaten creatures beside it, the setup of every subtraction; over an open
+ * cell it lights what that cell sees, as 'neighbours' does.
  */
 export type HighlightStyle = 'neighbours' | 'cell' | 'block' | 'seen';
+/** The cursor highlight's setting: the game type's own, none, or a style. */
 export type HighlightChoice = typeof DEFAULT | typeof OFF | HighlightStyle;
 
-/**
- * 'seen' lights what constrains a covered cell: the open numbers and beaten creatures beside it,
- * which is the setup of every subtraction; over an open cell it lights what that cell sees, as
- * 'neighbours' does.
- */
+/** Each highlight style as its tile names it. */
 export const HIGHLIGHT_NAMES: Record<HighlightStyle, string> = {
   neighbours: 'True neighbours — follows hex and wrapped edges',
   cell: 'Just the cell under the cursor',
@@ -69,16 +63,16 @@ export const MIN_HIGHLIGHT_WIDTH = 1;
 export const MAX_HIGHLIGHT_WIDTH = 4;
 export const DEFAULT_HIGHLIGHT_WIDTH = 2;
 
-/** A colour as `#rrggbb` in lower case, or the game type's own, the mark green. */
+/** A colour as `#rrggbb` in lower case, or the game type's own, the mark colour. */
 export type HighlightColorChoice = typeof DEFAULT | string;
 
 /**
- * The colours the cursor highlight is offered in besides the game type's green, which every ladder
- * defaults to; the Custom tile makes any other. Chosen by measurement against every palette and
- * against the red a click that would do nothing is lit in (decision 0050): white stands out on the
- * most tiles and yellow next, and with red–green colour blindness, where the green is the hardest
- * of them to tell from the red, magenta is the easiest, cyan holds for the commoner kind and
- * yellow for the other.
+ * The colours the cursor highlight is offered in besides the game type's own, the mark colour,
+ * which every ladder defaults to; the Custom tile makes any other. Chosen by measurement against
+ * every palette and against the red a click that would do nothing is lit in (decision 0050): white
+ * stands out on the most tiles and yellow next, and with red–green colour blindness, where the
+ * mark's green is the hardest of them to tell from the red, magenta is the easiest, cyan holds for
+ * the commoner kind and yellow for the other.
  */
 export const HIGHLIGHT_COLORS: readonly { readonly name: string; readonly color: string }[] = [
   { name: 'White', color: '#ffffff' },
@@ -339,8 +333,8 @@ export interface PresentationSettings {
   /** Size of the board's numbers, marks and pencil notes, as a multiple. */
   readonly digitSize: number;
   /**
-   * Whether the cells the crawl rule keeps out of reach are shaded (DUNGEON, PETRI DISH). The
-   * rule made visible where the cursor shows it one cell at a time; it reads nothing but the
+   * Whether the cells the crawl rule keeps out of reach are shaded, on a ladder with a crawl rule.
+   * The rule made visible where the cursor shows it one cell at a time; it reads nothing but the
    * geometry the rule itself reads.
    */
   readonly reachShading: boolean;
