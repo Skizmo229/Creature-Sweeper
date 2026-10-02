@@ -37,6 +37,9 @@ import { Sfx } from './sfx.js';
 import { Teaching } from './teaching.js';
 import { TelemetryStore } from './telemetrystore.js';
 
+/** The tiers of the settings screen's example board where no board says: the common five. */
+const PREVIEW_TIERS = 5;
+
 /** The game in the page, built once on its root element by `main.ts`: the router above. */
 export class App {
   private readonly root: HTMLElement;
@@ -149,7 +152,7 @@ export class App {
       startBoard: (typeId, board, seed) => this.startBoard(typeId, board, seed),
       startFullRun: (typeId, seed) => this.startFullRun(typeId, seed),
       advanceRun: () => this.advanceRun(),
-      askToLeave: () => this.leaveGame(false),
+      askToLeave: () => this.askToLeave(),
       showBoards: (typeId) => this.showBoards(typeId),
     });
     this.keeper = new BoardKeeper({
@@ -329,7 +332,7 @@ export class App {
    */
   private previewTiers(): number {
     if (this.game) return this.game.config.tiers;
-    return boardRow(ladders, this.typeId, this.boardIndex)?.tiers ?? 5;
+    return boardRow(ladders, this.typeId, this.boardIndex)?.tiers ?? PREVIEW_TIERS;
   }
 
   // ------------------------------------------------------------ the board
@@ -354,8 +357,7 @@ export class App {
     this.clock.begin();
     const best = this.progress.boardRecord(ladders, typeId, board).bestTime;
     this.clock.arm(best, this.settings.gameplay);
-    this.buildGameScreen();
-    this.startTicking();
+    this.showGame();
   }
 
   /**
@@ -381,8 +383,7 @@ export class App {
     // A run races the run's own best, not board 1's, and a limit per board over all its boards.
     const best = this.progress.runRecord(ladders, typeId).bestTime;
     this.clock.arm(best, this.settings.gameplay, this.run.boardCount);
-    this.buildGameScreen();
-    this.startTicking();
+    this.showGame();
   }
 
   /**
@@ -398,8 +399,7 @@ export class App {
     this.resetBoardState();
     this.keeper.nextBoard();
     this.recorder.begin();
-    this.buildGameScreen();
-    this.startTicking();
+    this.showGame();
   }
 
   /** A school lesson's board, which `teaching` has begun: no records, no best time, no countdown. */
@@ -409,8 +409,7 @@ export class App {
     this.resetBoardState();
     this.game = game;
     this.clock.begin();
-    this.buildGameScreen();
-    this.startTicking();
+    this.showGame();
   }
 
   /**
@@ -442,12 +441,8 @@ export class App {
     this.keeper.begin(moves);
     this.keeper.save();
     this.recorder.begin();
-    if (run?.boardWon) {
-      this.advanceRun();
-    } else {
-      this.buildGameScreen();
-      this.startTicking();
-    }
+    if (run?.boardWon) this.advanceRun();
+    else this.showGame();
     return true;
   }
 
@@ -456,6 +451,12 @@ export class App {
     this.mode.reset();
     this.ending.resetBoard();
     this.teaching.tutor.resetBoard();
+  }
+
+  /** Put the board in `game` on screen and set its clock ticking. */
+  private showGame(): void {
+    this.buildGameScreen();
+    this.startTicking();
   }
 
   private buildGameScreen(): void {
@@ -472,11 +473,7 @@ export class App {
       {
         // Returns to this same board: the screen is rebuilt from `game`, which is untouched. The
         // clock keeps running, as it does whenever the player walks away from a board.
-        openSettings: () =>
-          this.showSettings(() => {
-            this.buildGameScreen();
-            this.startTicking();
-          }),
+        openSettings: () => this.showSettings(() => this.showGame()),
         leave: () => this.leaveGame(),
         pause: () => this.pause(),
         pickTier: (tier) => this.actions.pickTier(tier),
@@ -517,16 +514,21 @@ export class App {
 
   // ---------------------------------------------------------------- actions
 
+  /** Back: as `askToLeave`, except that it pauses at once while Back pauses is on. */
+  private leaveGame(): void {
+    const { backPauses } = this.settings.presentation;
+    if (backPauses && !this.teaching.lesson && this.worthAsking) return this.pause();
+    this.askToLeave();
+  }
+
   /**
-   * Back out to board select. A game with anything in it asks first whether to pause it or
-   * abandon it, or pauses at once when Back pauses is on and `back` is how it was asked (the
-   * mid-run card's Abandon run is not Back); a board with no move made yet needs no guard.
+   * Back out to board select, or from a lesson to the school, asking first whether to pause or
+   * abandon a game with anything in it. The mid-run card's Abandon run asks this way, whatever
+   * Back does.
    */
-  private leaveGame(back = true): void {
+  private askToLeave(): void {
     if (this.teaching.lesson) return this.teaching.school();
-    const playing = this.run ? this.run.status === 'playing' : this.game?.status === 'playing';
-    if (!playing || !(this.run || this.keeper.holding)) return this.showBoards(this.typeId);
-    if (back && this.settings.presentation.backPauses) return this.pause();
+    if (!this.worthAsking) return this.showBoards(this.typeId);
     this.modal.leaveGame({
       boardIndex: this.boardIndex,
       typeName: ladderName(this.typeId),
@@ -534,6 +536,12 @@ export class App {
       onPause: () => this.pause(),
       onAbandon: () => this.abandon(),
     });
+  }
+
+  /** Whether leaving would lose something: a game still going, with a move in it or a run. */
+  private get worthAsking(): boolean {
+    const playing = this.run ? this.run.status === 'playing' : this.game?.status === 'playing';
+    return playing && (this.run !== null || this.keeper.holding);
   }
 
   /** Abandon the board, or the run, on screen: its slot emptied, a run written down as an attempt. */
@@ -617,6 +625,7 @@ export class App {
     }
   }
 
+  /** Repaint the clock every frame, which is also how Time Attack's expiry is noticed. */
   private startTicking(): void {
     this.clock.startTicking(() => this.updateClock());
   }
