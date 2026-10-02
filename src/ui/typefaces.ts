@@ -1,5 +1,5 @@
 /**
- * The bundled faces, and which ladder wears which.
+ * The bundled faces, and the kind of face each is; which ladder wears which is in `looks.ts`.
  *
  * Kept apart from `theme.ts` because that file draws creatures on a canvas,
  * and the test pass compiles with no DOM at all — the same reason `preview.ts`
@@ -13,7 +13,7 @@
  * that no ladder wears, one chosen for nothing but legibility and one for the
  * arcade.
  *
- * All bundled (`fonts.css`), because twenty-four distinct faces cannot come
+ * All bundled (`fonts.css`), because this many distinct faces cannot come
  * from what happens to be installed — the system stacks this replaced looked
  * different on every machine, and one of them (Georgia) set its 3, 4, 5, 7 and
  * 9 below the line, so a board of numbers jumped about. Every face here has
