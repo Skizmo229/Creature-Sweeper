@@ -20,8 +20,8 @@ import { settingsWindow } from './widgets.js';
 
 /** A code chart's width, as the fonts' own charts are laid out. */
 const CHART_COLUMNS = 16;
-/** The first position a Wingdings font draws in: 0x20, the space, left blank here. */
-const FIRST_WINGDINGS_ROW = 0x20;
+/** The first code a Wingdings font draws at: 0x20, the space, left blank here. */
+const FIRST_WINGDINGS_CODE = 0x20;
 /** Where the Dingbats block begins, so each symbol sits at its offset into the block. */
 const DINGBATS_START = 0x2700;
 
@@ -32,7 +32,7 @@ let lastSet = SYMBOL_SETS[0]!.id;
 function position(symbol: PipSymbol): number {
   return symbol.code === null
     ? parseInt(symbol.pip.slice(2), 16) - DINGBATS_START
-    : symbol.code - FIRST_WINGDINGS_ROW;
+    : symbol.code - FIRST_WINGDINGS_CODE;
 }
 
 /** Where a symbol comes from: its font and position, and its code point. */
@@ -130,6 +130,43 @@ function markChosen(btn: Element, on: boolean): void {
   btn.setAttribute('aria-pressed', String(on));
 }
 
+/** A tab per set, naming its count; `onShow` hears the set whose tab is pressed. */
+function setTabs(onShow: (id: string) => void): HTMLElement {
+  const tabs = el('div', 'symbol-tabs');
+  tabs.setAttribute('role', 'tablist');
+  for (const set of SYMBOL_SETS) {
+    const tab = el('button', 'symbol-tab', `${set.name} (${set.symbols.length})`);
+    tab.setAttribute('role', 'tab');
+    tab.dataset.set = set.id;
+    tab.addEventListener('click', () => onShow(set.id));
+    tabs.append(tab);
+  }
+  return tabs;
+}
+
+/**
+ * A symbol's button in the chart, lit while it is the one chosen. Pointing at it or focusing it
+ * shows it on the example, a click chooses it (`onChoose`), and a double click saves it.
+ */
+function symbolCell(
+  here: Located,
+  chosen: boolean,
+  side: ExamplePanel,
+  onChoose: (btn: HTMLElement) => void,
+  onCommit: () => void,
+): HTMLButtonElement {
+  const { set, symbol } = here;
+  const btn = el('button', 'symbol-cell', symbol.char);
+  btn.title = `${symbol.name} — ${whereFrom(set, symbol)}`;
+  btn.setAttribute('aria-label', symbol.name);
+  markChosen(btn, chosen);
+  btn.addEventListener('pointerenter', () => side.show(here));
+  btn.addEventListener('focus', () => side.show(here));
+  btn.addEventListener('click', () => onChoose(btn));
+  btn.addEventListener('dblclick', onCommit);
+  return btn;
+}
+
 /** Open the window of symbols over the screen, on `current`; `onPick` hears the one saved. */
 export function openSymbolWindow(
   ctx: ScreenContext,
@@ -147,8 +184,11 @@ export function openSymbolWindow(
     onPick(chosen.symbol.pip);
   };
   const side = examplePanel(ctx, commit);
-  const tabs = el('div', 'symbol-tabs');
-  tabs.setAttribute('role', 'tablist');
+  const tabs = setTabs((id) => {
+    setId = id;
+    lastSet = id;
+    drawChart();
+  });
   const chart = el('div', 'symbol-chart');
   const body = el('div', 'symbol-body');
   body.append(chart, side.panel);
@@ -163,6 +203,13 @@ export function openSymbolWindow(
     body,
   );
 
+  const choose = (here: Located, btn: HTMLElement): void => {
+    chosen = here;
+    for (const other of chart.querySelectorAll('.symbol-cell.chosen')) markChosen(other, false);
+    markChosen(btn, true);
+    side.canUse(true);
+    side.show(here);
+  };
   let cells: (HTMLElement | null)[] = [];
   const drawChart = (): void => {
     const set = SYMBOL_SETS.find((s) => s.id === setId) ?? SYMBOL_SETS[0]!;
@@ -173,39 +220,14 @@ export function openSymbolWindow(
     }
     cells = chartCells(set).map((symbol) => {
       if (!symbol) return null;
-      const btn = el('button', 'symbol-cell', symbol.char);
-      btn.title = `${symbol.name} — ${whereFrom(set, symbol)}`;
-      btn.setAttribute('aria-label', symbol.name);
       const here = { set, symbol };
-      markChosen(btn, chosen?.symbol.pip === symbol.pip);
-      btn.addEventListener('pointerenter', () => side.show(here));
-      btn.addEventListener('focus', () => side.show(here));
-      btn.addEventListener('click', () => {
-        chosen = here;
-        for (const other of chart.querySelectorAll('.symbol-cell.chosen')) markChosen(other, false);
-        markChosen(btn, true);
-        side.canUse(true);
-        side.show(here);
-      });
-      btn.addEventListener('dblclick', commit);
-      return btn;
+      const lit = chosen?.symbol.pip === symbol.pip;
+      return symbolCell(here, lit, side, (btn) => choose(here, btn), commit);
     });
     chart.replaceChildren(...cells.map((c) => c ?? el('span', 'symbol-gap')));
   };
   chartKeys(chart, () => cells);
   chart.addEventListener('pointerleave', () => side.show(chosen));
-
-  for (const set of SYMBOL_SETS) {
-    const tab = el('button', 'symbol-tab', `${set.name} (${set.symbols.length})`);
-    tab.setAttribute('role', 'tab');
-    tab.dataset.set = set.id;
-    tab.addEventListener('click', () => {
-      setId = set.id;
-      lastSet = set.id;
-      drawChart();
-    });
-    tabs.append(tab);
-  }
 
   drawChart();
   side.canUse(chosen !== null);
