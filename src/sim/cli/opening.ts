@@ -3,12 +3,9 @@
  *
  *   npx tsx src/sim/cli/opening.ts [trials]   # writes design/data/opening.json
  *
- * This replaces the original `design/opening.py`, which reimplemented the
- * board rules in Python. The two agreed closely while boards were all plain
- * squares, but a second implementation only stays honest until the first one
- * grows — and it did: Python knows nothing about hex grids or wrapped edges,
- * so three ladders simply had no data. Driving the real engine means the
- * measurement cannot drift from the game again.
+ * It drives the real engine rather than a copy of the board rules, so the
+ * measurement cannot drift from the game: a copy knows only the boards there
+ * were when it was written.
  */
 
 import { writeFileSync } from 'node:fs';
