@@ -66,6 +66,9 @@ export const SPELL_POLICIES: Readonly<Record<SpellId, readonly Policy[]>> = {
   augur: ['augur', 'augur-best'],
 };
 
+/** The policies that put an Exercise on the guess about to be made (`exerciseBeforeGuess`). */
+const EXERCISE_POLICIES: ReadonlySet<Policy> = new Set<Policy>(['exercise', 'workout', 'gym']);
+
 /**
  * How long the player waits out a stuck point on a board whose creatures walk, in laps of the
  * longest route: one lap and the biggest creature has shown every cell it can stand on.
@@ -208,10 +211,7 @@ export function play(
     if (workoutMove(game, policy, safe.length > 0, run)) continue;
 
     if (safe.length) {
-      for (const cell of oneReading(game, safe)) {
-        if (game.status !== 'playing' || cell.open) continue;
-        game.open(cell.x, cell.y);
-      }
+      openProven(game, safe);
       castsHere = 0;
       waited = 0;
       continue;
@@ -241,22 +241,7 @@ export function play(
     run.stuckPoints++;
     if (options.rescue && options.observe && freeMoves().length) run.couldRescue++;
 
-    // Exercise, if this policy holds one, goes on the guess about to be made
-    // rather than on the deduction that has already failed. Cast and fall
-    // straight through: it changes nothing a player could reason about, so
-    // going round the loop again would only find the same dead end.
-    if (
-      (policy === 'exercise' || policy === 'workout' || policy === 'gym') &&
-      game.exerciseCharge === 0 &&
-      game.canCast('exercise')
-    ) {
-      const before = game.mana;
-      if (!game.cast('exercise').some((e) => e.type === 'blocked')) {
-        run.casts++;
-        run.manaSpent += before - game.mana;
-      }
-    }
-
+    exerciseBeforeGuess(game, policy, run);
     if (castsHere < 2 && spendAtStuckPoint(game, policy, spellId, guess, constraints, run)) {
       castsHere++;
       continue;
@@ -276,6 +261,36 @@ export function play(
   run.hpLost = startHp - game.hp;
   run.manaPool = game.mana + run.manaSpent;
   return run;
+}
+
+/** Open what is proven, from one reading of the board. */
+function openProven(game: Game, safe: readonly Cell[]): void {
+  for (const cell of oneReading(game, safe)) {
+    if (game.status !== 'playing' || cell.open) continue;
+    game.open(cell.x, cell.y);
+  }
+}
+
+/** Cast, counting the cast and the mana it cost; false, and nothing counted, if it was blocked. */
+function castCounted(game: Game, run: HonestRun, id: SpellId, target?: Cell | null): boolean {
+  const before = game.mana;
+  const events = target ? game.cast(id, target.x, target.y) : game.cast(id);
+  if (events.some((e) => e.type === 'blocked')) return false;
+  run.casts++;
+  run.manaSpent += before - game.mana;
+  return true;
+}
+
+/**
+ * Exercise, if this policy holds one, goes on the guess about to be made rather than on the
+ * deduction that has already failed. The caller falls straight through to the guess: the charge
+ * changes nothing a player could reason about, so going round the loop again would only find the
+ * same dead end.
+ */
+function exerciseBeforeGuess(game: Game, policy: Policy, run: HonestRun): void {
+  if (EXERCISE_POLICIES.has(policy) && game.exerciseCharge === 0 && game.canCast('exercise')) {
+    castCounted(game, run, 'exercise');
+  }
 }
 
 // WORKOUT's own move, and the reason the mode exists: a creature named at
@@ -308,17 +323,12 @@ function workoutMove(game: Game, policy: Policy, hasSafe: boolean, run: HonestRu
           game.inReach(c),
       )
       .sort((a, b) => b.mark - a.mark)[0];
-    if (reachable) {
-      const before = game.mana;
-      if (!game.cast('exercise').some((e) => e.type === 'blocked')) {
-        run.casts++;
-        run.manaSpent += before - game.mana;
-        const events = game.open(reachable.x, reachable.y);
-        if (events.some((e) => e.type === 'exercised' && (e.spared > 0 || e.bonusExp > 0))) {
-          run.castsThatHelped++;
-        }
-        return true;
+    if (reachable && castCounted(game, run, 'exercise')) {
+      const events = game.open(reachable.x, reachable.y);
+      if (events.some((e) => e.type === 'exercised' && (e.spared > 0 || e.bonusExp > 0))) {
+        run.castsThatHelped++;
       }
+      return true;
     }
   }
   return false;
@@ -335,38 +345,37 @@ function spendAtStuckPoint(
   constraints: Constraint[],
   run: HonestRun,
 ): boolean {
-  if (
-    policy !== 'none' &&
-    policy !== 'workout' &&
-    policy !== 'gym' &&
-    spellId &&
-    game.canCast(spellId)
-  ) {
-    // A spell that takes no target is cast as it is. Beacon, which opens the largest blank region
-    // nobody has touched, is refused when there is none.
-    const untargeted = !SPELLS[spellId].targeted;
-    const target = untargeted
-      ? null
-      : spellId === 'reveal'
-        ? guess
-        : spellId === 'augur'
-          ? policy === 'augur-best'
-            ? augurOracle(game, guess)
-            : augurTarget(game, constraints, guess)
-          : policy === 'census-best'
-            ? censusOracle(game, guess)
-            : censusTarget(game, constraints, guess);
-    if (target || untargeted) {
-      const before = game.mana;
-      const events = target ? game.cast(spellId, target.x, target.y) : game.cast(spellId);
-      if (!events.some((e) => e.type === 'blocked')) {
-        run.casts++;
-        run.manaSpent += before - game.mana;
-        const after = safeToOpen(game, allConstraints(game)).filter((c) => !c.open);
-        if (after.length) run.castsThatHelped++;
-        return true;
-      }
-    }
+  if (policy === 'none' || policy === 'workout' || policy === 'gym') return false;
+  if (!spellId || !game.canCast(spellId)) return false;
+  // A spell that takes no target is cast as it is. Beacon, which opens the largest blank region
+  // nobody has touched, is refused when there is none.
+  const untargeted = !SPELLS[spellId].targeted;
+  const target = untargeted ? null : aimFor(game, policy, spellId, guess, constraints);
+  if (!target && !untargeted) return false;
+  if (!castCounted(game, run, spellId, target)) return false;
+  const after = safeToOpen(game, allConstraints(game)).filter((c) => !c.open);
+  if (after.length) run.castsThatHelped++;
+  return true;
+}
+
+/**
+ * Where a targeted spell goes at a stuck point: Reveal on the cell about to be gambled on; Augur or
+ * Census on the number the policy picks, by judgement, or by looking for the `-best` policies.
+ */
+function aimFor(
+  game: Game,
+  policy: Policy,
+  spellId: SpellId,
+  guess: Cell,
+  constraints: Constraint[],
+): Cell | null {
+  if (spellId === 'reveal') return guess;
+  if (spellId === 'augur') {
+    return policy === 'augur-best'
+      ? augurOracle(game, guess)
+      : augurTarget(game, constraints, guess);
   }
-  return false;
+  return policy === 'census-best'
+    ? censusOracle(game, guess)
+    : censusTarget(game, constraints, guess);
 }
