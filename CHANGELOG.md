@@ -2,6 +2,40 @@
 
 What each version of Creature Sweeper changed, newest first (decision 0068).
 
+## 1.0.0 — 2026-10-02
+
+The public release, free to play on itch.io with its source on GitHub.
+
+- PYRAMID is climbed by PETRI DISH's crawl rule: a cell opens only where it touches ground you
+  have uncovered, and a mark beside open ground carries that reach; reach shading shows it
+  (decision 0086).
+- Augur names the tier of every creature hidden around a number, strongest first but not where,
+  drawn as a column down the cell's edge, and costs 50 (decision 0087).
+- AUGUR is a lock deeper (3, then 4 from board 4) with EXTREME's HP, 10 falling to 8, and its
+  continuation is a board shorter: 960 boards in all (decision 0088).
+- Upgrading from 0.9.x: the save and both codes load as before. Clears on PYRAMID and AUGUR stay,
+  but their best times, perfects and Full Run records start afresh, because the boards changed
+  (decision 0079); every other ladder's records carry over. A game paused on PYRAMID or AUGUR
+  may be refused on resuming, with an offer to start the board again.
+- Fixes:
+  - The play statistics time each board from its own deal; every board after a session's first
+    was written down with too few seconds.
+  - Abandoning a Full Run on dials easier than the tuned game records nothing, as everything else
+    on them already did.
+  - On a board, Enter presses a focused button; it goes on with a lesson only in a lesson.
+  - Closing the sound check gives the focus back, and it lists the sounds in its switches' order.
+  - The reach-shading hint names every ladder with a crawl rule, and the rules card says S sweeps
+    on a ladder with Sweep.
+  - A sound pack or clear effect from a newer build plays the ladder's own instead of silencing
+    the game or never ending, and no saved name can reach one every object inherits.
+- From 1.0.0 the number means what it says: a patch fixes, a minor adds or retunes ladders,
+  spells or settings, a major changes the save (decisions 0068, 0083).
+- For contributors: the code was read through once more for a newcomer, with no change to how
+  the game plays (docs/refactoring-plan.md, "The final pass"); the README opens for players; the
+  decision records have an index; GitHub has a bug-report form and a pull request template; and
+  the instruments count a stuck point once and refuse a seed count below 1, and the ladder data
+  refuses an unknown topology or a boss count of 0.
+
 ## 0.9.2 — 2026-09-30
 
 Fixes for the next round of play-testing, and a place to send what it finds.
