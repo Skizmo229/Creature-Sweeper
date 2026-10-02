@@ -17,6 +17,39 @@ export const ladders = loadLadders();
 /** Every ladder with a level economy, which is all of them but the search ladders. */
 export const battleTypes = ladders.filter((t) => !t.search);
 
+/**
+ * Every kind of board the tricks read differently: each rule, each topology, each shape, level 0.
+ * The graded player's and the tutor's soundness tests walk it.
+ */
+export const TRICK_KINDS = [
+  'normal',
+  'extreme',
+  'oracle',
+  'huge',
+  'hive',
+  'wraparound',
+  'donut',
+  'cross',
+  'wrapped_cross',
+  'diamond',
+  'cave',
+  'dungeon',
+  'checker',
+  'pairs',
+  'dominoes',
+  'packs',
+  'congo',
+  'workout',
+  'blind',
+  'seer',
+  'augur',
+  'patrol',
+  'pyramid',
+  'petri',
+  'gear',
+  'sprinkle_donut',
+];
+
 /** The seeds a board-walking test plays each board with. */
 export const SEEDS = [0xc0ffee, 0x5eed, 0xbeef];
 

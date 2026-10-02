@@ -18,37 +18,7 @@ import { readBoard } from '../src/sim/reader.js';
 import { dungeonScaffold } from '../src/sim/scaffold.js';
 import { solve } from '../src/sim/solver.js';
 import { TRICKS, TRICK_IDS, type TrickId, type View, noMoves } from '../src/sim/tricks.js';
-import { ladders } from './helpers.js';
-
-/** Every kind of board the tricks read differently: each rule, each topology, each shape, level 0. */
-const KINDS = [
-  'normal',
-  'extreme',
-  'oracle',
-  'huge',
-  'hive',
-  'wraparound',
-  'donut',
-  'cross',
-  'wrapped_cross',
-  'diamond',
-  'cave',
-  'dungeon',
-  'checker',
-  'pairs',
-  'dominoes',
-  'packs',
-  'congo',
-  'workout',
-  'blind',
-  'seer',
-  'augur',
-  'patrol',
-  'pyramid',
-  'petri',
-  'gear',
-  'sprinkle_donut',
-];
+import { TRICK_KINDS, ladders } from './helpers.js';
 
 const wrongIn = (run: GradedRun): number => run.unsound + run.trickDamage + run.rescueDamage;
 
@@ -57,7 +27,7 @@ describe('the graded player', () => {
     const wrong: string[] = [];
     let fired = 0;
     let cleared = 0;
-    for (const id of KINDS) {
+    for (const id of TRICK_KINDS) {
       for (const board of [2, 6, 10]) {
         const cfg = boardConfig(ladders, id, board);
         // Once spell-less, and once spending where the ladder has spells to spend.
@@ -79,7 +49,7 @@ describe('the graded player', () => {
     expect(wrong).toEqual([]);
     // It has to have done something, or this test is exercising nothing.
     expect(fired).toBeGreaterThan(1000);
-    expect(cleared).toBeGreaterThan(KINDS.length);
+    expect(cleared).toBeGreaterThan(TRICK_KINDS.length);
   });
 
   it('uses every trick somewhere, and each grade concludes what the one below could not', () => {
@@ -89,7 +59,7 @@ describe('the graded player', () => {
     const fires = Object.fromEntries(TRICK_IDS.map((t) => [t, 0])) as Record<TrickId, number>;
     const pencils = Object.fromEntries(TRICK_IDS.map((t) => [t, 0])) as Record<TrickId, number>;
     const stuckAt = [0, 0, 0, 0, 0];
-    for (const id of KINDS) {
+    for (const id of TRICK_KINDS) {
       for (const board of [2, 6, 10]) {
         for (const [seed, peek] of [
           [0xbeef + board, false],
@@ -225,7 +195,7 @@ describe('the graded player', () => {
     ]);
     const faults: string[] = [];
     let concluded = 0;
-    for (const id of KINDS) {
+    for (const id of TRICK_KINDS) {
       for (const board of [2, 6, 10]) {
         const cfg = boardConfig(ladders, id, board);
         const game = Game.create(cfg, 0xbeef + board);
