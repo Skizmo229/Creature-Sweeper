@@ -88,7 +88,7 @@ function forgetNames(game: Game): void {
 }
 
 /** What one board cost the honest player: how it ended, its guesses and stuck points, its casts. */
-export interface Run {
+export interface HonestRun {
   cleared: boolean;
   hpLost: number;
   guesses: number;
@@ -136,7 +136,7 @@ export function honestGuess(game: Game, among?: ReadonlySet<Cell>): Cell | null 
 }
 
 /** Open what a stronger deducer called free, counting any HP it cost: that would be its bug. */
-function takeRescue(game: Game, found: readonly Cell[], run: Run): void {
+function takeRescue(game: Game, found: readonly Cell[], run: HonestRun): void {
   run.rescued++;
   for (const cell of oneReading(game, found)) {
     if (game.status !== 'playing' || cell.open) continue;
@@ -147,7 +147,7 @@ function takeRescue(game: Game, found: readonly Cell[], run: Run): void {
 }
 
 /** A run before its first move. */
-function freshRun(): Run {
+function freshRun(): HonestRun {
   return {
     cleared: false,
     hpLost: 0,
@@ -173,7 +173,7 @@ export function play(
   policy: Policy,
   spellId: SpellId | null,
   options: PlayOptions = {},
-): Run {
+): HonestRun {
   const run = freshRun();
   const freeMoves = (): Cell[] =>
     options.rescue ? options.rescue(game).filter((c) => !c.open && game.inReach(c)) : [];
@@ -286,7 +286,7 @@ export function play(
 // named at or one past your level, taken on a charge for the double EXP,
 // whenever the price is back at its base. That is the player who treats
 // the spell as a way to level rather than as insurance.
-function workoutMove(game: Game, policy: Policy, hasSafe: boolean, run: Run): boolean {
+function workoutMove(game: Game, policy: Policy, hasSafe: boolean, run: HonestRun): boolean {
   const training =
     policy === 'gym' &&
     game.config.workout &&
@@ -333,7 +333,7 @@ function spendAtStuckPoint(
   spellId: SpellId | null,
   guess: Cell,
   constraints: Constraint[],
-  run: Run,
+  run: HonestRun,
 ): boolean {
   if (
     policy !== 'none' &&

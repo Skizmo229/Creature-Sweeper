@@ -34,12 +34,12 @@ import { loadLadders } from '../../data.js';
 import { boardConfig, type LadderType } from '../../engine/config.js';
 import { Game } from '../../engine/game.js';
 import { placementRule } from '../../engine/placement/registry.js';
-import { play, type Run } from '../honest.js';
+import { play, type HonestRun } from '../honest.js';
 import { solve } from '../solver.js';
 
 interface Row {
-  honest: Run[];
-  solver: Run[];
+  honest: HonestRun[];
+  solver: HonestRun[];
   undecided: number;
   bad: number;
 }
@@ -63,12 +63,12 @@ function measure(typeId: string, board: number, seeds: number): Row {
   return row;
 }
 
-const mean = (rs: Run[], pick: (r: Run) => number): number =>
+const mean = (rs: HonestRun[], pick: (r: HonestRun) => number): number =>
   rs.reduce((a, r) => a + pick(r), 0) / Math.max(1, rs.length);
 const pct = (x: number): string => `${(100 * x).toFixed(0)}%`;
 
 /** Share of the honest player's stuck points that had a free move in them. */
-const freeShare = (rs: Run[]): number => {
+const freeShare = (rs: HonestRun[]): number => {
   const stuck = rs.reduce((a, r) => a + r.stuckPoints, 0);
   return stuck ? rs.reduce((a, r) => a + r.couldRescue, 0) / stuck : 0;
 };

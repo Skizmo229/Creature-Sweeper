@@ -29,11 +29,11 @@ import { resolveBattle } from '../../engine/combat.js';
 import { Game } from '../../engine/game.js';
 import { biteFor } from '../../engine/settings.js';
 import type { Cell } from '../../engine/types.js';
-import { honestGuess, play, type Run } from '../honest.js';
+import { honestGuess, play, type HonestRun } from '../honest.js';
 import { solve } from '../solver.js';
 
 interface Board {
-  run: Run;
+  run: HonestRun;
   /** Forced guesses whose safest option could still have killed. */
   risky: number;
   /** Guesses that turned out above the tier the solver proved them under. Must be 0. */
@@ -58,7 +58,7 @@ function provenBelow(game: Game, k: number): Cell[] {
 
 function playBoard(cfg: ReturnType<typeof boardConfig>, seed: number): Board {
   const game = Game.create(cfg, seed);
-  const board: Board = { run: undefined as unknown as Run, risky: 0, unsound: 0 };
+  const board: Board = { run: undefined as unknown as HonestRun, risky: 0, unsound: 0 };
   board.run = play(game, 'none', null, {
     rescue: (g) => solve(g).safe,
     guess: (g) => {
