@@ -6,9 +6,8 @@
 
 import { LADDER_CATEGORIES } from '../../engine/config.js';
 import { lch } from '../colorspace.js';
-import { ladders } from '../ladders.js';
+import { CATEGORY_NAMES, ladders } from '../ladders.js';
 import { LOOK_IDS, lookFor, themeFor } from '../looks.js';
-import { CATEGORY_NAMES } from '../ladders.js';
 import {
   FONTS,
   FONT_IDS,
