@@ -718,57 +718,17 @@ blurb = """\
   is its partner's tier, and a found pair is ringed by safe ground. Boards grow rather than \
   crowd."""
 placement = "pairs"
-# SIZE IS THE AXIS, and it is the only ladder here where that was
-# forced rather than chosen. Every other variant compensates for an
-# easier board by packing it; this one cannot, because its own rule
-# caps how tightly it can be packed. See the density note below. What
-# is left is area: deduction on this board is local, so a bigger board
-# is more places to be cornered, and the honest player's forced guesses
-# track cells almost linearly where they barely moved with density.
+# SIZE IS THE AXIS, forced rather than chosen: pairs that may not touch jam at about 25%, so
+# density has four points to move in and barely moves the honest player, while a bigger board is
+# more places to be cornered (measured by 20 September 2026; docs/modes.md, PAIRS and DOMINOES).
 size = [[30, 16], [32, 17], [33, 18], [35, 19], [36, 20], [38, 21], [40, 22], [41, 23], [43, 23], [44, 24]]
 tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
-# Bounded at BOTH ends, which is new here, and the ceiling is the
-# binding one.
-#
-# THE CEILING IS STRUCTURAL. Dominoes that may not touch cannot exceed
-# two cells in every six (33.3%), and a random lay-down jams far below
-# that -- 24.8-25.6% over 200 seeds across these board sizes. The quota
-# has to be landed EXACTLY, because C_k assumed it, so the schedule
-# stops where placement is still reliable rather than where the board
-# stops being a puzzle. At 26% it places on every seed within 40
-# restarts; at 28% on one seed in four.
-#
-# THE FLOOR WAS A MEASUREMENT AND IT WENT THE OPPOSITE WAY TO THE
-# GUESS. The rule was expected to give the board away -- sparse,
-# clustered, big voids. It does the reverse: the exclusion ring around
-# every pair spreads the creatures EVENLY, and clustering is what makes
-# a zero-region, so the auto-opening comes out 30-65% SMALLER than a
-# uniform board of the same density (6.9% against 10.0% at 20.6%), and
-# cells hiding nothing at all drop from 18.8% to 10.7%.
-#
-# So the range left is four points, and inside it density does almost
-# nothing: measured with the honest player from `sim:spells`, walking
-# 20% to 25% on a FIXED board moved the forced guesses from 0.0 to 1.5
-# and left the first six boards at 0.0 -- a ladder with nothing in it,
-# the same failure ARCANE had before it was retuned. Growing the board
-# across the same span gives 0.2 rising to 2.1, which is the curve
-# wanted. Density is still scheduled because it is free to move and
-# every point helps; it is simply not what carries this ladder.
 density = [0.212, 0.219, 0.225, 0.23, 0.234, 0.238, 0.242, 0.245, 0.248, 0.25]
-# HP IS NOT A DIAL HERE, and that is worth stating because it looks
-# like the obvious one. This mode's characteristic gamble is "exactly
-# one of these k cells holds a tier T, the rest are empty" with T read
-# straight off a dead creature's number -- so a wrong guess is one
-# known, lethal blow rather than an accumulation. Measured: the whole
-# ladder at HP 12 and at HP 14 clears the same share of every board as
-# at HP 10, to the point. It keeps NORMAL's 10.
 hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
 lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
 alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
-# The continuation cannot climb density the way every other variant
-# does -- the packing ceiling binds, not the point a board stops being
-# a puzzle -- so it is pinned at the tuned ladder's last step and the
-# schedule grows the board instead, which is the axis anyway.
+# Pinned at the tuned ladder's last density: the packing ceiling binds, so the continuation grows
+# the board instead, which is the axis anyway.
 ceiling = { density_cap = 0.25 }
 
 [[type]]

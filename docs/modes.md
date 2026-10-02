@@ -243,6 +243,23 @@ The rule spreads creatures evenly, so openings are the smallest in the game and 
 is *size*, not density: non-touching dominoes jam at about 25%, and the quota must land exactly, so
 `choosePairs` throws rather than returning a short board. HP and lock barely move it.
 
+PAIRS was tuned with the honest player from `sim:spells` by 20 September 2026, and its density is
+bounded at both ends. The ceiling is structural: dominoes that may not touch cannot exceed two cells
+in six (33.3%), a random lay-down jams far below that (24.8 to 25.6% over 200 seeds across the
+ladder's sizes), and C_k assumes the quota lands exactly, so the schedule stops where placement is
+reliable: at 26% it places on every seed within 40 restarts, at 28% on one seed in four. The floor
+went the opposite way to the guess. The exclusion ring round each pair spreads the creatures evenly,
+and clustering is what makes a zero region, so the opening is 30 to 65% smaller than a uniform
+board's at the same density (6.9% of the board against 10.0% at 20.6%), and the cells hiding
+nothing drop from 18.8% to 10.7%. Inside the four points left, density does almost nothing: 20% to
+25% on a fixed board moved the forced guesses from 0.0 to 1.5 and left the first six boards at 0.0,
+the failure ARCANE had before it was retuned, while growing the board across the same span gives
+0.2 rising to 2.1, the curve wanted; deduction here is local, so a bigger board is more places to
+be cornered. Density is still scheduled, since every point helps, but it does not carry the
+ladder. HP is not a dial either: the characteristic gamble is "one of these k cells holds a
+tier T", with T read off a beaten creature's number, so a wrong guess is one known, lethal blow,
+and the ladder at HP 12 and at 14 clears the same share of every board as at 10.
+
 **DOMINOES** deals the pairs as a full double-six set, every pairing {a, b} once, so the
 distribution is flat by construction, six tiers always, and the tile order from `choosePairs` must
 survive the deal. No blanks: a [0|x] tile breaks the one-neighbour rule. Density is nearly the
