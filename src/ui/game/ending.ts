@@ -70,6 +70,21 @@ export class BoardEnding {
     if (blow) this.fatalBattle = { tier: blow.tier, damage: blow.damage };
   }
 
+  /**
+   * The board, or the run, on screen is abandoned. A run is written down as an attempt: neither
+   * won nor lost, but it did reach a board. A single board writes nothing.
+   */
+  abandon(): void {
+    const run = this.host.run();
+    if (!run) return;
+    this.host.progress.recordRun(ladders, this.host.typeId(), {
+      completed: false,
+      reachedBoard: this.host.boardIndex(),
+      hp: run.hp,
+      seconds: this.host.clock.elapsedSeconds(),
+    });
+  }
+
   /** Cancel a board-clear effect still in flight; a screen rebuild must call this. */
   endVictory(): void {
     this.stopVictory?.();

@@ -538,16 +538,7 @@ export class App {
 
   /** Abandon the board, or the run, on screen: its slot emptied, a run written down as an attempt. */
   private abandon(): void {
-    const run = this.run;
-    // An abandoned run is neither won nor lost, but it did reach a board.
-    if (run) {
-      this.progress.recordRun(ladders, this.typeId, {
-        completed: false,
-        reachedBoard: this.boardIndex,
-        hp: run.hp,
-        seconds: this.clock.elapsedSeconds(),
-      });
-    }
+    this.ending.abandon();
     this.recorder.end('abandoned');
     this.keeper.end();
     this.showBoards(this.typeId);
