@@ -171,7 +171,8 @@ Hints per board, per ladder, per grade, go into the save as the runs do. That is
 telemetry the tuning plan asks for (`docs/human-tuning-plan.md`, open question 1): where players
 ask for help, and at what grade, is where the boards are hard for them, board by board, and it
 comes for free from a feature the player wants anyway. The dev handle exposes it (`cs.hints`).
-Nothing leaves the machine; the game is offline freeware.
+Nothing leaves the machine but what the player copies out: the play statistics' code, pasted into
+a play-test report (decision 0085).
 
 As built: a hinted clear sets no best time and, until a best time exists, keeps the fewest hints
 any clear has taken (decision 0065, amending 0048); the play statistics count hints per board
@@ -201,7 +202,8 @@ Each a commit, on branch `m5-tutor`; the owner reviews and merges.
 2. The trick text table, `src/sim/tricktext.ts`: for every `TrickId` a name, the catalogue's
    sentence as a template, and the section it lives in. `test/tricktext.test.ts` holds every id
    to section 10 of `docs/strategies.md`, both ways.
-3. `src/sim/tutor.ts` and its test (4.3), including the reader option that reads marked cells as unknown.
+3. `src/sim/tutor.ts` and its test (4.3), including the reader option that reads marked cells as
+   unknown.
 4. The board overlay: `drawLesson` in `src/ui/board/overlays.ts`; `BoardDisplay` gains
    `lesson: Lesson | null`. Verified with canvas hashes as the Milestone 3 splits were.
 5. The key, the button, the caption in place of the hint line, dismissal on click, the hint
@@ -254,17 +256,17 @@ shown:   ?  .  digit  kN  mN  covered, open ground, an open number, a beaten cre
 The config is derived from the drawing: the quantities are counted, `startLevel` is an option,
 and every threshold is set to `C_k` exactly (`cumulativeExp`, `src/engine/config.ts`), so each
 level-up on a lesson board is "kill everything at or below", which is also the easiest rule to
-narrate. Facts 1 to 3 of `docs/invariants.md` hold by that construction and `test/invariants.test.ts`
-gains a case saying so. The opening is the `shown` grid and `dealOpening` is not called. A
-placement rule and shape may be passed for the ladder-specific diagrams, which need the rule's
-display (the sprinkles, the bonds) to mean anything.
+narrate. Facts 1 to 3 of `docs/invariants.md` hold by that construction and
+`test/invariants.test.ts` gains a case saying so. The opening is the `shown` grid and `dealOpening`
+is not called. A placement rule and shape may be passed for the ladder-specific diagrams, which need
+the rule's display (the sprinkles, the bonds) to mean anything.
 
-This constructor pays twice more. **The catalogue's diagrams become tests**: `test/strategies.test.ts`
-parses every fenced diagram in `docs/strategies.md`, builds it, runs the tricks, and checks that
-the trick the surrounding text names fires on exactly the cells it says, and that no lower grade
-does. A diagram that drifts from the code fails the build, which is how `docs/architecture.md`'s
-map is held to the tree today. And the engine's tests can state a board as a picture where they
-build one by hand now.
+This constructor pays twice more. **The catalogue's diagrams become tests**:
+`test/strategies.test.ts` parses every fenced diagram in `docs/strategies.md`, builds it, runs the
+tricks, and checks that the trick the surrounding text names fires on exactly the cells it says, and
+that no lower grade does. A diagram that drifts from the code fails the build, which is how
+`docs/architecture.md`'s map is held to the tree today. And the engine's tests can state a board as
+a picture where they build one by hand now.
 
 ### 5.3 The script
 
@@ -376,10 +378,11 @@ Decided by the owner on 26 September 2026:
    that would prove the cell; lesson 8 excepted (5.3).
 4. **The ninth lesson** (the last of a tier, grade 4) is in (5.1).
 
-Open when the plan was drafted; items 6 and 7 have been decided since:
+Open when the plan was drafted; items 5 to 7 have been settled since, and item 8 was not built:
 
 5. **The stuck case** (4.5): the worst case and the levels-away figure are facts about the rules;
-   naming a cell to guess would be advice about odds, and the plan does not. Confirm.
+   naming a cell to guess would be advice about odds, and the plan does not. Built as described in
+   4.5.
 6. **The key.** Decided in the build: `H` (section 10). `?` was the other candidate.
 7. **The guide's words.** Decided 27 September 2026: the game's own, shorter than the catalogue's,
    with the catalogue's sections, headings, tricks and ladder lists held by the tests (decision
@@ -387,8 +390,7 @@ Open when the plan was drafted; items 6 and 7 have been decided since:
    length.
 8. **A post-mortem.** The death screen could say "the move you missed": the tutor's pass on the
    board as it stood before the fatal click. It needs the pre-click state kept, which is one
-   snapshot; it is cheap once Part 1 exists and is not in this plan's scope until the owner wants
-   it.
+   snapshot; it is cheap once Part 1 exists. Not built.
 
 ## 9. Definition of done
 
