@@ -10,6 +10,7 @@ import type { BoardConfig, BoardShape, OpeningRule, Placement, WorkoutRule } fro
 import { RULES, isPlacement, placementRule } from './placement/registry.js';
 import { SHAPES, isShape, shapeRule } from './shape/registry.js';
 import { SPELLS, type SpellId, isSpellId, orderSpells } from './spells.js';
+import { expForTier } from './combat.js';
 
 /** One board's row as `ladders.py` emits it. */
 export interface LadderBoard {
@@ -424,7 +425,7 @@ export function cumulativeExp(quantity: readonly number[]): number[] {
   const out: number[] = [];
   let running = 0;
   for (let i = 0; i < quantity.length; i++) {
-    running += quantity[i]! * 2 ** i;
+    running += quantity[i]! * expForTier(i + 1);
     out.push(running);
   }
   return out;

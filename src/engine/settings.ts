@@ -26,7 +26,7 @@
  */
 
 import type { Tier } from './types.js';
-import { resolveBattle } from './combat.js';
+import { manaForTier, resolveBattle } from './combat.js';
 import { MANA_PER_EMPTY_CELLS } from './spells.js';
 
 /** How the Sweep buttons are gated. */
@@ -246,7 +246,7 @@ export function fightCostFor(level: number, hp: number, tier: Tier, s: GameplayS
 
 /** Mana a defeated tier-E creature pays. Its EXP is never scaled. */
 export function manaRewardFor(tier: number, s: GameplaySettings): number {
-  return Math.max(0, Math.round(tier * s.manaRewardRatio));
+  return Math.max(0, Math.round(manaForTier(tier) * s.manaRewardRatio));
 }
 
 /** What a spell costs after the dial, from its price on the table or WORKOUT's own. */

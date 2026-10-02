@@ -34,6 +34,8 @@
  * movement means the zero-damage guarantee survives magic untouched.
  */
 
+import { manaForTier } from './combat.js';
+
 export type SpellId = 'reveal' | 'census' | 'exercise' | 'beacon' | 'augur';
 
 /** One spell's entry in the table: its name, price, whether it takes a target, its tooltip. */
@@ -171,5 +173,5 @@ export function isSpellId(value: string): value is SpellId {
 
 /** Total mana a board can yield, for sanity-checking a loadout's prices. */
 export function totalMana(quantity: readonly number[]): number {
-  return quantity.reduce((sum, count, i) => sum + count * (i + 1), 0);
+  return quantity.reduce((sum, count, i) => sum + count * manaForTier(i + 1), 0);
 }
