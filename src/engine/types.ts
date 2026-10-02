@@ -214,7 +214,8 @@ export interface BoardConfig {
   readonly givens: number;
   /**
    * How far from already-revealed ground the player may act, in steps of
-   * adjacency. 0 means anywhere on the board, which is every type but DUNGEON.
+   * adjacency. 0 means anywhere on the board, as on every ladder without the
+   * crawl rule.
    *
    * Distance is counted through `neighbours()`, not across the grid, so it is
    * the distance you could WALK: it stops at a wall instead of reaching
@@ -230,8 +231,8 @@ export interface BoardConfig {
    */
   readonly reach: number;
   /**
-   * PETRI DISH's companion to a one-step reach: a covered cell the player has marked counts as
-   * uncovered ground for reach, but only while it is itself within reach of ground really
+   * The companion to a one-step reach (decision 0039): a covered cell the player has marked counts
+   * as uncovered ground for reach, but only while it is itself within reach of ground really
    * uncovered. So a mark carries the reach one step past a creature the player has named, and
    * marks cannot be chained across the board. Nothing checks the mark is right, since the answer
    * would tell the player whether it was. Optional so every config built by hand stays unchanged.
@@ -247,9 +248,10 @@ export interface BoardConfig {
    */
   readonly workout?: WorkoutRule;
   /**
-   * False on a ladder that offers no Sweep at all — EASY, where the numbers are
-   * learned by hand. Absent means Sweep is on offer, subject to the player's
-   * dial. Optional so every config built by hand stays unchanged.
+   * False on a ladder that offers no Sweep at all: EASY, where the numbers are
+   * learned by hand, and PATROL (decision 0063). Absent means Sweep is on offer,
+   * subject to the player's dial. Optional so every config built by hand stays
+   * unchanged.
    */
   readonly sweep?: boolean;
 }

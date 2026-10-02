@@ -62,10 +62,10 @@ export interface LadderType {
   shape_param?: number;
   /**
    * Steps of adjacency the player may act beyond already-revealed ground.
-   * Absent or 0 means the whole board, which is every type but DUNGEON.
+   * Absent or 0 means the whole board, as on every ladder without the crawl rule.
    */
   reach?: number;
-  /** PETRI DISH: a mark touching uncovered ground counts as uncovered for reach. */
+  /** With a reach of 1: a mark touching uncovered ground counts as uncovered for reach. */
   reach_marks?: boolean;
   /** A key of the placement registry (`src/engine/placement/registry.ts`). Absent is uniform. */
   placement?: string;

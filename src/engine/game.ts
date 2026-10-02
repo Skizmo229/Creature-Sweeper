@@ -461,10 +461,10 @@ export class Game {
   }
 
   /**
-   * Whether this ladder offers Sweep at all. EASY does not: it is where the
-   * sum rule is learned, and a button that reads the numbers for you takes
-   * away the one thing the ladder is for. A ladder fact rather than a dial, so
-   * it touches no record — the dial compares players, this compares nothing.
+   * Whether this ladder offers Sweep at all. Not on EASY, where the sum rule is learned and a
+   * button that reads the numbers for you would take away the one thing the ladder is for, nor on
+   * PATROL (decision 0063). A ladder fact rather than a dial, so it touches no record — the dial
+   * compares players, this compares nothing.
    */
   get hasSweep(): boolean {
     return this.config.sweep !== false;
