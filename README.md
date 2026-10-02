@@ -8,9 +8,10 @@ software (see [Licence](#licence)).
 
 ## Play it
 
-Creature Sweeper is free to play in the browser on itch.io. Progress is saved in the browser;
-**Back up / restore save**, on the list of game types, copies the whole save as a code to keep or
-to carry to another browser.
+Creature Sweeper is free to play in the browser on
+[itch.io](https://skizmo.itch.io/creature-sweeper). Progress is saved in the browser; **Back up /
+restore save**, on the list of game types, copies the whole save as a code to keep or to carry to
+another browser.
 
 Three rules:
 
