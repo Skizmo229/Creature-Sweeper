@@ -57,8 +57,9 @@ function provenBelow(game: Game, k: number): Cell[] {
 
 function playBoard(cfg: ReturnType<typeof boardConfig>, seed: number): Board {
   const game = Game.create(cfg, seed);
-  const board: Board = { run: undefined as unknown as HonestRun, risky: 0, unsound: 0 };
-  board.run = play(game, 'none', null, {
+  let risky = 0;
+  let unsound = 0;
+  const run = play(game, 'none', null, {
     rescue: (g) => solve(g).safe,
     guess: (g) => {
       // Stuck, so nothing is proven at the player's level: walk the threshold
@@ -74,9 +75,9 @@ function playBoard(cfg: ReturnType<typeof boardConfig>, seed: number): Board {
         k = g.config.tiers;
       }
       if (!field.length) return null;
-      if (k >= lethalTier(g)) board.risky++;
+      if (k >= lethalTier(g)) risky++;
       const pick = honestGuess(g, new Set(field)) ?? field[0]!;
-      if (pick.tier > k) board.unsound++;
+      if (pick.tier > k) unsound++;
       // The honest player marks what it has named, and a mark above your level
       // locks the cell. Choosing the lowest worst case can mean choosing a
       // creature it has already named — so, like a real player, rub it out
@@ -85,7 +86,7 @@ function playBoard(cfg: ReturnType<typeof boardConfig>, seed: number): Board {
       return pick;
     },
   });
-  return board;
+  return { run, risky, unsound };
 }
 
 function byBoard(type: LadderType, seeds: number): void {

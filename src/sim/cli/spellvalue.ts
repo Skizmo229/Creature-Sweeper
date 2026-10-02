@@ -215,7 +215,7 @@ function main(): void {
   printValueTable(totals, baselines);
 }
 
-/** Add runs to a policy's list, starting one (a copy, never the runs array itself) if it has none. */
+/** Add runs to a policy's list, starting one if it has none: a copy, never `runs` itself. */
 function addRuns(to: Map<Policy, HonestRun[]>, policy: Policy, runs: readonly HonestRun[]): void {
   const list = to.get(policy);
   if (list) list.push(...runs);

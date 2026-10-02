@@ -59,8 +59,8 @@ for (const type of ladders) {
       maxLevel = Math.max(maxLevel, result.finalLevel);
     }
 
-    if (cleared !== seeds || hpLost !== 0) failures++;
     const ok = cleared === seeds && hpLost === 0;
+    if (!ok) failures++;
     console.log(
       String(row.n).padStart(3) +
         `${row.w}x${row.h}`.padStart(9) +
