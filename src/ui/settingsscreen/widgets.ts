@@ -5,6 +5,7 @@
  */
 
 import { el } from '../dom.js';
+import { wearFace } from '../dress.js';
 import { keepFocus } from '../overlays/modal.js';
 import { DEFAULT } from '../presentation.js';
 import type { GameFont } from '../typefaces.js';
@@ -66,11 +67,7 @@ function optionTile(c: Choice, current: string): HTMLButtonElement {
   chip.setAttribute('aria-pressed', String(active));
   if (c.example) chip.append(c.example());
   const caption = el('span', 'chip-label', c.label);
-  if (c.labelFont) {
-    caption.style.fontFamily = c.labelFont.stack;
-    // Set even when it is 1, or the caption inherits the page's own fix.
-    caption.style.setProperty('--ex-fix', String(c.labelFont.exHeightFix ?? 1));
-  }
+  if (c.labelFont) wearFace(caption, c.labelFont);
   chip.append(caption);
   if (c.open) chip.setAttribute('aria-haspopup', 'dialog');
   return chip;

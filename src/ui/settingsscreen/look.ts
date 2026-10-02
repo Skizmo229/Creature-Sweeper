@@ -9,6 +9,7 @@
 
 import type { BoardDisplay } from '../board/view.js';
 import { el } from '../dom.js';
+import { wearFace } from '../dress.js';
 import { ladders } from '../ladders.js';
 import {
   HIGHLIGHT_PIN,
@@ -246,15 +247,11 @@ export function hudCopy(
   return copy;
 }
 
-/**
- * An interface font's example: the HUD's first two readouts, set in the face. It declares its own
- * size correction, as anything wearing a face other than the page's must (see body in styles.css).
- */
+/** An interface font's example: the HUD's first two readouts, set in the face. */
 function hudInFace(face: GameFont, tierColors: TierPalette): () => HTMLElement {
   return () => {
     const copy = hudCopy('font-demo', tierColors, 2);
-    copy.style.fontFamily = face.stack;
-    copy.style.setProperty('--ex-fix', String(face.exHeightFix ?? 1));
+    wearFace(copy, face);
     return copy;
   };
 }
