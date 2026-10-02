@@ -627,3 +627,21 @@ export const TRICKS: Readonly<Record<TrickId, Trick>> = {
 
 /** Every trick id, in `TRICKS`'s order, which is the order the tricks of a grade run in. */
 export const TRICK_IDS = Object.keys(TRICKS) as TrickId[];
+
+const tricksAt = (g: Grade): readonly TrickId[] => TRICK_IDS.filter((id) => TRICKS[id].grade === g);
+
+/** The trick ids of each grade, in `TRICK_IDS`'s order. */
+export const TRICKS_BY_GRADE: Readonly<Record<Grade, readonly TrickId[]>> = {
+  0: tricksAt(0),
+  1: tricksAt(1),
+  2: tricksAt(2),
+  3: tricksAt(3),
+  4: tricksAt(4),
+};
+
+/** What one trick proposes on the view. */
+export function runTrick(id: TrickId, view: View): Moves {
+  const found = noMoves();
+  TRICKS[id].apply(view, found);
+  return found;
+}

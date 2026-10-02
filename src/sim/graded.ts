@@ -30,11 +30,12 @@ import {
   GRADES,
   type Grade,
   type Moves,
-  TRICKS,
+  TRICKS_BY_GRADE,
   TRICK_IDS,
   type TrickId,
   type View,
   noMoves,
+  runTrick,
 } from './tricks.js';
 import { augurAnswer, expectedFreed } from './aim.js';
 import { dungeonScaffold } from './scaffold.js';
@@ -261,11 +262,8 @@ class Player {
       const view = this.view(reading);
       const moves = noMoves();
       let narrowed = 0;
-      for (const id of TRICK_IDS) {
-        const trick = TRICKS[id];
-        if (trick.grade !== grade) continue;
-        const found = noMoves();
-        trick.apply(view, found);
+      for (const id of TRICKS_BY_GRADE[grade]) {
+        const found = runTrick(id, view);
         narrowed += this.narrow(id, found);
         this.credit(id, found, moves);
       }

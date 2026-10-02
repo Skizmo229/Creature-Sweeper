@@ -30,11 +30,11 @@ import {
   type Grade,
   type Moves,
   TRICKS,
-  TRICK_IDS,
+  TRICKS_BY_GRADE,
   type TrickId,
   type View,
   type Why,
-  noMoves,
+  runTrick,
 } from './tricks.js';
 
 /** One proof and everything it concluded. */
@@ -124,10 +124,8 @@ export function explain(game: Game, options: TutorOptions = {}): Explanation {
       const view = pencil.view(peek);
       const concluding: Lesson[] = [];
       let narrowed = 0;
-      for (const id of TRICK_IDS) {
-        if (TRICKS[id].grade !== g) continue;
-        const found = noMoves();
-        TRICKS[id].apply(view, found);
+      for (const id of TRICKS_BY_GRADE[g]) {
+        const found = runTrick(id, view);
         const { before, changed } = pencil.absorb(found);
         narrowed += changed;
         for (const lesson of gather(id, found, view, before)) {
@@ -180,10 +178,8 @@ export function provable(game: Game, most: Grade = 4): Provable {
     for (const g of GRADES) {
       if (g > most) break;
       const view = pencil.view(false);
-      for (const id of TRICK_IDS) {
-        if (TRICKS[id].grade !== g) continue;
-        const found = noMoves();
-        TRICKS[id].apply(view, found);
+      for (const id of TRICKS_BY_GRADE[g]) {
+        const found = runTrick(id, view);
         const { before, changed: moved } = pencil.absorb(found);
         changed += moved;
         for (const cell of before.keys()) narrow.set(cell, pencil.domain(cell));
