@@ -68,7 +68,10 @@ export interface GradedOptions {
 export interface GradedRun {
   cleared: boolean;
   hpLost: number;
-  /** Passes on which nothing at the player's grade yielded a move. */
+  /**
+   * Times nothing at the player's grade yielded a move: one a stuck point (`StuckPoint`),
+   * however many casts were tried there before the next move.
+   */
   stuckPoints: number;
   guesses: number;
   /** Guesses whose worst case could have killed at the HP of the moment. */
@@ -183,7 +186,7 @@ export function play(game: Game, options: GradedOptions): GradedRun {
       run.waits++;
       continue;
     }
-    run.stuckPoints++;
+    if (player.stuck.reached()) run.stuckPoints++;
     waited = 0;
     if (player.spend()) continue;
     if (!player.rescue()) player.guess();

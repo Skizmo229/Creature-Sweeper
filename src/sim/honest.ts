@@ -92,12 +92,21 @@ export const CASTS_AT_A_STUCK_POINT = 2;
 
 /**
  * The stuck point a player is at, and the information casts spent there, held to
- * `CASTS_AT_A_STUCK_POINT`. Both players keep one, so they cannot disagree on when the budget is
- * whole again: at the player's next move, whatever it was (a deduction, a stronger deducer's free
- * cell, a guess). A cast is not a move, so the casts before one share the budget.
+ * `CASTS_AT_A_STUCK_POINT`. Both players keep one, so they cannot disagree on what a stuck point
+ * is: it begins when the player runs out of moves and ends at its next move, whatever that was
+ * (a deduction, a stronger deducer's free cell, a guess). A cast is not a move, so the casts
+ * tried before one share the budget, and the stuck point counts once however many there were.
  */
 export class StuckPoint {
+  private at = false;
   private casts = 0;
+
+  /** The player has run out of moves: true when that begins a stuck point, which then counts. */
+  reached(): boolean {
+    if (this.at) return false;
+    this.at = true;
+    return true;
+  }
 
   /** Whether another information cast is allowed here. */
   get mayCast(): boolean {
@@ -111,6 +120,7 @@ export class StuckPoint {
 
   /** The player moved: whatever stuck point it was at is over. */
   moved(): void {
+    this.at = false;
     this.casts = 0;
   }
 }
@@ -138,6 +148,7 @@ export interface HonestRun {
   cleared: boolean;
   hpLost: number;
   guesses: number;
+  /** Times deduction ran out: one a stuck point (`StuckPoint`), however many casts it took. */
   stuckPoints: number;
   casts: number;
   castsThatHelped: number;
@@ -284,8 +295,10 @@ export function play(
 
     const guess = options.guess ? options.guess(game) : bestGuess(game, constraints);
     if (!guess) break;
-    run.stuckPoints++;
-    if (options.rescue && options.observe && freeMoves().length) run.couldRescue++;
+    if (stuck.reached()) {
+      run.stuckPoints++;
+      if (options.rescue && options.observe && freeMoves().length) run.couldRescue++;
+    }
 
     exerciseBeforeGuess(game, policy, run);
     if (stuck.mayCast && spendAtStuckPoint(game, policy, spellId, guess, constraints, run)) {

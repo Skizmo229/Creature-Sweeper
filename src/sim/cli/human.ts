@@ -16,15 +16,17 @@
  * needed, how many moves were on offer when it had to look, and what it had to guess. The
  * columns:
  *
- *   stuck    passes on which nothing at that grade yielded, a board; each ends in a guess, a
- *            cast (--spells) or a rescue (--solver)
+ *   stuck    stuck points a board: times nothing at that grade yielded a move, each counted once
+ *            however many casts (--spells) were tried there before the next move, which is a
+ *            guess, a rescue (--solver) or what a cast unlocked; spell-less, one a guess or rescue
  *   guess    guesses taken; lethal, those whose worst case could kill at the HP of the moment
  *   clear    share of boards finished; hp, HP lost a board
  *   need>=g  share of boards on which the grade-4 player needed a trick of grade g or above
  *   avail    moves on offer per pass above grade 0, for the grade-4 player: low means scanning
  *   effort   passes weighted by grade cost, plus the guesses (`PASS_COST`, `GUESS_COST`)
  *   unsound  times a trick was wrong about a cell; must be 0
- *   forced   with --solver: stuck points the complete deducer could not rescue either
+ *   forced   with --solver: stuck points the complete deducer did not rescue (with --spells it is
+ *            asked once the casts are tried, so a stuck point a cast settled counts here too)
  *
  * Spell-less unless --spells, and the search ladders are played at level 0. SUDOKU is left out:
  * it is generated guess-free and its tricks are Sudoku's own.
