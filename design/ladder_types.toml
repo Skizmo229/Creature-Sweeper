@@ -1,9 +1,9 @@
 # Creature Sweeper: the per-type ladder schedules, read by ladders.py.
 #
-# One [[type]] per ladder, in menu-independent order (ladders.py sorts them). ladders.py derives
-# every board from these: it apportions the creatures, computes C_k and the thresholds, and
-# continues each schedule past board 10. Edit here, run `python design/ladders.py`, and never edit
-# design/data/ladders.json by hand (CI checks it is the generator's output).
+# One [[type]] per ladder, in the menu's order (CATEGORIES in ladders.py sets it). ladders.py
+# derives every board from these: it apportions the creatures, computes C_k and the thresholds,
+# and continues each schedule past board 10. Edit here, run `python design/ladders.py`, and never
+# edit design/data/ladders.json by hand (CI checks it is the generator's output).
 #
 # The schema, enforced by `load_types` in ladders.py. A schedule is a list of ten, one per board.
 #
