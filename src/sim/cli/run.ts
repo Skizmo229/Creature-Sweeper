@@ -21,6 +21,7 @@
 
 import { loadLadders } from '../../data.js';
 import { FullRun } from '../../engine/run.js';
+import { DEFAULT_GAMEPLAY, healPerBoard } from '../../engine/settings.js';
 import { autoplaySearch, autoplayTierOrder } from '../autoplay.js';
 
 const runs = Number(process.argv[2] ?? 20);
@@ -78,7 +79,7 @@ for (const type of ladders) {
   console.log(
     type.name.padEnd(15) +
       String(type.run_hp).padStart(6) +
-      String(Math.floor(type.run_hp / 2)).padStart(6) +
+      String(healPerBoard(type.run_hp, DEFAULT_GAMEPLAY)).padStart(6) +
       String(type.boards.length).padStart(8) +
       `${result.completed}/${runs}`.padStart(11) +
       String(result.hpLost).padStart(9) +
