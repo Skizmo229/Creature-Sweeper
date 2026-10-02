@@ -3,9 +3,11 @@
  * possible, and bit 0 is empty ground, as in the engine's pencil (`src/engine/notes.ts`).
  */
 
-/** The mask of every tier from 0 to `tiers`. */
+import { allNotes } from '../engine/notes.js';
+
+/** The mask of every tier from 0 to `tiers`: the engine's full pencil (`allNotes`). */
 export function everyTier(tiers: number): number {
-  return (1 << (tiers + 1)) - 1;
+  return allNotes(tiers);
 }
 
 /**
