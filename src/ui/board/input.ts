@@ -5,7 +5,7 @@
  */
 
 import type { Cell } from '../../engine/types.js';
-import { type PinchStart, pinchStart, pinchTo } from '../pinch.js';
+import { type PinchStart, type Point, pinchStart, pinchView } from '../pinch.js';
 
 /** What the input reads of the view and may ask of it: the view implements it. */
 export interface InputHost {
@@ -209,9 +209,8 @@ export class BoardInput {
   private beginPinch(): void {
     const { host } = this;
     this.cancelPress();
-    const [a, b] = [...this.touches.values()];
-    const rect = host.canvas.getBoundingClientRect();
-    this.pinch = pinchStart(a!.x - rect.left, a!.y - rect.top, b!.x - rect.left, b!.y - rect.top, {
+    const [a, b] = this.fingersOnCanvas();
+    this.pinch = pinchStart(a, b, {
       cell: host.cellPx,
       originX: host.originX,
       originY: host.originY,
@@ -268,17 +267,24 @@ export class BoardInput {
   private movePinch(): void {
     if (!this.pinch) return;
     const { host } = this;
-    const [a, b] = [...this.touches.values()];
-    const rect = host.canvas.getBoundingClientRect();
-    const next = pinchTo(
+    const [a, b] = this.fingersOnCanvas();
+    const next = pinchView(
       this.pinch,
-      a!.x - rect.left,
-      a!.y - rect.top,
-      b!.x - rect.left,
-      b!.y - rect.top,
+      a,
+      b,
       host.fittedCell,
       Math.max(host.fittedCell, host.maxCell),
     );
     host.pinchTo(next.cell, next.originX, next.originY);
+  }
+
+  /** The first two fingers down, measured from the canvas's top-left corner. */
+  private fingersOnCanvas(): [Point, Point] {
+    const [a, b] = [...this.touches.values()];
+    const rect = this.host.canvas.getBoundingClientRect();
+    return [
+      { x: a!.x - rect.left, y: a!.y - rect.top },
+      { x: b!.x - rect.left, y: b!.y - rect.top },
+    ];
   }
 }
