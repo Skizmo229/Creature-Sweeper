@@ -109,9 +109,8 @@ export function neighbours(
   // A hole neighbours nothing, in either direction. The other half of this is
   // below; without this half adjacency is asymmetric, because a hole beside an
   // arm would list the arm while the arm rightly refuses to list the hole.
-  // Only ever visible on a shaped board, and it went unnoticed until one was
-  // also wrapped — nothing asks a hole for its neighbours during play, since
-  // `cellAt` will not hand one out.
+  // Easy to miss: only a shaped board has holes, and nothing asks a hole for
+  // its neighbours during play, since `cellAt` will not hand one out.
   if (grid[y]?.[x]?.present === false) return out;
   const wrapX = wrap !== 'none';
   const wrapY = wrap === 'both';

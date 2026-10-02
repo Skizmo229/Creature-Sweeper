@@ -63,8 +63,8 @@ export const DONUT_SHAPE = predicateShape('donut', (param, w, h, x, y) => {
 
 /**
  * The gear's proportions, as shares of its tip radius (half the box's shorter side): eight square
- * teeth, one pointing straight up, about as wide as they are deep, round a hole. The owner chose
- * square teeth pointing straight out over upright blocks, knowing the diagonal four step.
+ * teeth, one pointing straight up, about as wide as they are deep, round a hole. The teeth point
+ * straight out, so the diagonal four step on a square grid (`docs/modes.md`).
  */
 const GEAR = { root: 0.7, hole: 0.3, halfWidth: 0.17 };
 
@@ -100,8 +100,8 @@ export const GEAR_SHAPE = predicateShape('gear', (_param, w, h, x, y) => {
  * A playing card, in a box kept at a card's 5:7: rounded corners, and four suit-shaped holes where
  * a Four's pips sit, spade and heart above, diamond and club below and upside down, as they are
  * printed. The suits are drawn cell by cell and are the same size on every board, since curves
- * at this size read as blobs; the owner chose these over the curves. The corner rounding and where
- * the suits sit are shares of the box.
+ * at this size read as blobs (`docs/modes.md`). The corner rounding and where the suits sit are
+ * shares of the box.
  */
 const CARD = { corner: 0.09, cols: [0.28, 0.72], rows: [0.25, 0.75] } as const;
 

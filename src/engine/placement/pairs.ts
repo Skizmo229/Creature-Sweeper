@@ -309,9 +309,9 @@ function dealPairs(d: Deal): void {
 }
 
 /**
- * A beaten creature's number is its partner's tier, and hovering does not show it, by request: a
- * lone digit read as the creature's own level (decision 0012). The pencil follows the board and
- * does not read it either; Sweep's partner proof still does.
+ * A beaten creature's number is its partner's tier, and hovering does not show it: a lone digit
+ * read as the creature's own level (decision 0012). The pencil follows the board and does not
+ * read it either; Sweep's partner proof still does.
  */
 const PAIRS_DISPLAY: PlacementDisplay = {
   ...PLAIN_DISPLAY,

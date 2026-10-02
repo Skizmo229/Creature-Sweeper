@@ -127,11 +127,10 @@ export const SPELLS: Record<SpellId, Spell> = {
  * disagrees with the label the player is reading. The UI shows the letter in
  * brackets — [B]eacon — which is the whole explanation of the control.
  *
- * Deriving it does mean two spells could want the same letter, and two on
- * paper already did: Echo would have collided with Exercise (it was built as
- * Augur for that reason), and Scry would with Sweep's own `s`. A test asserts the built set stays distinct and clear of the keys
- * the board already uses, so that surfaces when a spell is added rather than
- * when a player presses a key and the wrong thing happens.
+ * Deriving it does mean two spells could want the same letter (decision 0006).
+ * A test asserts the built set stays distinct and clear of the keys the board
+ * already uses, so a clash surfaces when a spell is added rather than when a
+ * player presses a key and the wrong thing happens.
  */
 export function spellKey(id: SpellId): string {
   return SPELLS[id].name[0]!.toLowerCase();
