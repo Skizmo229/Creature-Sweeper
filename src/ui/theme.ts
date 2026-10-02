@@ -1,13 +1,13 @@
 /**
- * Per-type look, and the placeholder creature art.
+ * The colours every board shares and the names the settings screen gives things, and drawing a
+ * creature. The colours are the annotations, each a colour of its own (a mark, a given, a Census,
+ * an Augur, the tutor, a refused click), and the board's own structure (its outline, a pair's bond,
+ * Sudoku's box rules); the names are the sound packs', the sound events' and the clear effects'.
  *
- * Temp assets by design: a tier-N creature is N pips on a 3x3 grid, die-style.
- * No art to draw, procedural at any size, covers exactly the 1..9 range the
- * game needs, and stays countable while the tuning is still moving.
- *
- * The split: pip SHAPE carries type identity (each ladder has its own), pip
- * COLOUR carries tier identity and is global, so a tier-4 creature looks the
- * same everywhere (`tiercolors.ts`). Shape is decoration; colour is information.
+ * A tier-N creature is N pips on a 3x3 grid, die-style: drawn at any size, it covers exactly the
+ * nine tiers the game has, and stays countable. Pip SHAPE carries ladder identity (each ladder has
+ * its own), pip COLOUR carries tier identity and is global, so a tier-4 creature looks the same
+ * everywhere (`tiercolors.ts`). Shape is decoration; colour is information.
  */
 
 import { setNumberFont } from './board/digits.js';

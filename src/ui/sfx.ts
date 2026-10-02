@@ -4,8 +4,7 @@
  * No audio files anywhere in the repo, and that is a deliberate choice rather
  * than a placeholder: a pack is a dozen numbers, it costs nothing to ship, it
  * cannot 404, and a new pack is a new row in a table rather than a round of
- * asset work. The art is still temporary — see the pip creatures — so the
- * sound matches it.
+ * asset work (decision 0024).
  *
  * TWO THINGS THAT WILL BITE ANYONE WHO CHANGES THIS.
  *
