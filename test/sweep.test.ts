@@ -1,7 +1,11 @@
 /**
  * Sweep's proof (`src/engine/sweep.ts`) on boards small enough to read: each proof on its own, the
- * guards, and the guess-free harvest. The ladder-wide checks that Sweep never costs HP on real
- * boards are in `invariants.test.ts`; each placement rule's own proof is tested beside the rule.
+ * guards and the guess-free harvest, then `sweep and marks`, the same proofs through `Game.sweep`.
+ *
+ * Sweep is held elsewhere too: never to cost HP on the real ladders in `invariants.test.ts`; each
+ * placement rule's own proof beside the rule (`sudoku.test.ts`, `checker.test.ts`,
+ * `pairs.test.ts` and the rest); the pencil's guard and a ladder without Sweep in
+ * `game.test.ts`; the dial, a budget of sweeps and the chord in `settings.test.ts`.
  */
 
 import { describe, expect, it } from 'vitest';
