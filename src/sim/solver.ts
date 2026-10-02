@@ -285,7 +285,9 @@ function proveInterior(
       safe.push(c);
       return;
     }
-    (classes.get(d) ?? classes.set(d, []).get(d)!).push(c);
+    const same = classes.get(d);
+    if (same) same.push(c);
+    else classes.set(d, [c]);
   });
   for (const [d, cells] of classes) {
     if (!joint || search.interiorSeen & d) continue;

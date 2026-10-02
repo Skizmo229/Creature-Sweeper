@@ -25,7 +25,14 @@ import { hasNote, noteBit } from '../engine/notes.js';
 import { mulberry32 } from '../engine/rng.js';
 import { fightCostFor } from '../engine/settings.js';
 import type { SpellId } from '../engine/spells.js';
-import { type Constraint, type Reading, everyTier, highestTier, readBoard } from './reader.js';
+import {
+  type Constraint,
+  type Reading,
+  everyTier,
+  highestTier,
+  readBoard,
+  touchingOf,
+} from './reader.js';
 import {
   GRADES,
   type Grade,
@@ -289,15 +296,7 @@ class Player {
     const constraints = reading.constraints.filter(
       (c) => Math.abs(c.cell.x - at.x) <= radius && Math.abs(c.cell.y - at.y) <= radius,
     );
-    const touching = new Map<Cell, Constraint[]>();
-    for (const c of constraints) {
-      for (const n of c.unknown) {
-        const list = touching.get(n);
-        if (list) list.push(c);
-        else touching.set(n, [c]);
-      }
-    }
-    return { ...reading, constraints, touching };
+    return { ...reading, constraints, touching: touchingOf(constraints) };
   }
 
   /** Narrow the pencil by what a trick found, and count what was new. */

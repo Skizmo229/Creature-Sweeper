@@ -199,12 +199,13 @@ function main(): void {
 
       for (const board of type.boards) {
         const cfg = boardConfig(ladders, type.id, board.n);
-        for (let s = 0; s < seeds; s++)
+        for (let s = 0; s < seeds; s++) {
           runs.push(play(Game.create(cfg, seedAt(s)), policy, spellId));
+        }
       }
-      (totals.get(policy) ?? totals.set(policy, []).get(policy)!).push(...runs);
+      addRuns(totals, policy, runs);
       if (policy === 'none') typeBase = runs;
-      else (baselines.get(policy) ?? baselines.set(policy, []).get(policy)!).push(...typeBase);
+      else addRuns(baselines, policy, typeBase);
 
       printPolicyRow(type.name, policy, runs);
     }
@@ -212,6 +213,13 @@ function main(): void {
   }
 
   printValueTable(totals, baselines);
+}
+
+/** Add runs to a policy's list, starting one (a copy, never the runs array itself) if it has none. */
+function addRuns(to: Map<Policy, HonestRun[]>, policy: Policy, runs: readonly HonestRun[]): void {
+  const list = to.get(policy);
+  if (list) list.push(...runs);
+  else to.set(policy, [...runs]);
 }
 
 /** One ladder under one policy: the row of the per-ladder table. */

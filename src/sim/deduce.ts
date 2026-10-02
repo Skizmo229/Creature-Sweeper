@@ -10,6 +10,7 @@ import type { Cell } from '../engine/types.js';
 import { ringIsFree } from '../engine/placement/pairs.js';
 import { missingFrom } from '../engine/placement/packs.js';
 import { placementRule } from '../engine/placement/registry.js';
+import { touchingOf } from './reader.js';
 
 /**
  * What the board tells you, per open numbered cell: how much tier is still
@@ -108,14 +109,7 @@ function constraintsOf(game: Game): Constraint[] {
  */
 function subtractPairs(constraints: Constraint[]): Constraint[] {
   const derived: Constraint[] = [];
-  const over = new Map<Cell, Constraint[]>();
-  for (const c of constraints) {
-    for (const cell of c.unknown) {
-      const list = over.get(cell);
-      if (list) list.push(c);
-      else over.set(cell, [c]);
-    }
-  }
+  const over = touchingOf(constraints);
 
   for (const a of constraints) {
     if (a.unknown.length > 6) continue;

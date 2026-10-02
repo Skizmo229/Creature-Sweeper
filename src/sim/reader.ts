@@ -86,7 +86,6 @@ export interface ReadOptions {
 /** Read the board. `peek` reads a beaten creature's number even where the game hides it. */
 export function readBoard(game: Game, peek: boolean, options: ReadOptions = {}): Reading {
   const constraints: Constraint[] = [];
-  const touching = new Map<Cell, Constraint[]>();
   const unknown: Cell[] = [];
   const marked = new Map<Cell, number>();
 
@@ -113,15 +112,25 @@ export function readBoard(game: Game, peek: boolean, options: ReadOptions = {}):
     }
     if (!numberVisible(game, cell, peek)) continue;
     const c = readNumber(game, cell, believed, shown);
-    if (!c) continue;
-    constraints.push(c);
+    if (c) constraints.push(c);
+  }
+  const touching = touchingOf(constraints);
+  return { constraints, touching, unknown, marked, ...countHiding(game, marked, flags) };
+}
+
+/** The constraints each of their unknown cells is under, each list in the constraints' order. */
+export function touchingOf<C extends { readonly unknown: readonly Cell[] }>(
+  constraints: readonly C[],
+): Map<Cell, C[]> {
+  const touching = new Map<Cell, C[]>();
+  for (const c of constraints) {
     for (const n of c.unknown) {
       const list = touching.get(n);
       if (list) list.push(c);
       else touching.set(n, [c]);
     }
   }
-  return { constraints, touching, unknown, marked, ...countHiding(game, marked, flags) };
+  return touching;
 }
 
 /**
