@@ -5,9 +5,10 @@ deduces from it (the Sweep proof), what the pencil refuses under it, what would 
 and how it was tuned. Measurements are summarised; `docs/tuning.md` and the design reference have
 the full numbers.
 
-The plain ladders (EASY, NORMAL, HUGE, EXTREME, HUGE x EXTREME) differ only in schedule. The magic
-ladders (ARCANE, ORACLE) add spells. BLIND and HUGE x BLIND are search boards, and SEER is a
-search board with spells. The rest follow.
+The plain ladders (EASY, NORMAL, HUGE, EXTREME, HUGE x EXTREME) differ only in schedule, and EASY
+has no Sweep, since it is where the sum rule is learned. The magic ladders (ARCANE, ORACLE) add
+spells. BLIND and HUGE x BLIND are search boards, and SEER is a search board with spells. The rest
+follow.
 
 ## Topology and shape
 
@@ -91,7 +92,7 @@ the honest player against ARCANE's 22.3), with or without the crawl rule.
 
 **GEAR** is a gear, a per-cell mask in a square box: eight square teeth, one pointing straight up,
 about as wide as they are deep, round a hole three tenths of the radius across. The teeth point
-straight out, so the diagonal four step on a square grid; the owner chose that over upright blocks.
+straight out, so the diagonal four step on a square grid, chosen over upright blocks.
 Its proportions are shares of the box because the box is always square, so the outline plays the
 same on every board. It came out harder than ARCANE at ARCANE's schedule, as DONUT did, and ships a
 point and a half below it, on ARCANE's curve (24.1 stuck over the ladder and 82% cleared against
@@ -102,14 +103,14 @@ global 64x32: 45 square, inside the same 2,048 cells.
 four suit-shaped holes where a Four's pips sit, spade and heart above, diamond and club below and
 upside down. The suits are drawn cell by cell, 11 wide and 10 to 12 tall, the same size on every
 board (`SUIT_ART`, with its copy in `ladders.py`): drawn as curves at this size they read as
-blobs, and the owner chose the drawn ones. It started at 48x68 and was made smaller at the
-owner's request, 30x42 growing a sixth each way to 35x49 (984 to 1,439 cells), twice an ordinary
-board; the tall box would be clipped by the continuation's global 64x32, so the continuation keeps
-board 10's card. It sits on ARCANE's forced-guess curve per board, which on a board this size
-means sparser per cell: at ARCANE's schedule it was stuck 51.3 times over the ladder and cleared
-62% (60 seeds). Ramps shifted down stayed flatter than ARCANE's, too many guesses early and too
-few late, so it ships on a ramp from 4.2 density points below ARCANE's to 3.7 (23.1 stuck and 85%
-against 23.9 and 82%, and board 10 4.9 stuck against 5.1; 120 seeds, 26 September 2026).
+blobs. It started at 48x68 and was made smaller, 30x42 growing a sixth each way to 35x49 (984 to
+1,439 cells), twice an ordinary board; the tall box would be clipped by the continuation's global
+64x32, so the continuation keeps board 10's card. It sits on ARCANE's forced-guess curve per
+board, which on a board this size means sparser per cell: at ARCANE's schedule it was stuck 51.3
+times over the ladder and cleared 62% (60 seeds). Ramps shifted down stayed flatter than ARCANE's,
+too many guesses early and too few late, so it ships on a ramp from 4.2 density points below
+ARCANE's to 3.7 (23.1 stuck and 85% against 23.9 and 82%, and board 10 4.9 stuck against 5.1; 120
+seeds, 26 September 2026).
 
 **VALENTINES** is a heart, a per-cell mask filling a square box: the classic heart curve, the
 same the card's heart suit is cut with, stretched to the box's exact extents. At ARCANE's
@@ -201,7 +202,7 @@ reads marks here (`Game.marksAreClaims`). Notes are ordinary.
 
 The price is density. Every creature holds its route for good, four cells a tier, and NORMAL's tier
 mix averages about nine route cells a creature, so NORMAL's 21 to 27% would need more route than
-the board has cells. The owner chose routes that never cross over that density, and the deal packs
+the board has cells. Routes that never cross were chosen over that density, and the deal packs
 at most 8.5% reliably: PATROL runs NORMAL's boards, tiers, HP and gates on a ramp from 6.5 to
 8.5%. At that density the opening uncovers most of the board (409 of 480 cells on board 1, 586 of
 800 on board 10), so most creatures walk in plain sight as a ?, and the honest player, taught to
@@ -242,11 +243,11 @@ whose parity you know is a cheap guess, DUNGEON's doorway finding from another d
 Every creature has exactly one creature neighbour, which forces the occupied cells into dominoes
 that may not touch. A creature's number **is** its partner's tier. `ringIsFree` in `pairs.ts` is
 both Sweep proofs in one: if the partner is within your level, or already open, every other
-covered neighbour is empty ground. Neither can run away, because a freed ring holds one partner
-and blank ground. `pairCandidates` gives the pencil empty ground beside a pair that has met, and nothing beside a
-lone creature, whose number the board hides (decision 0061).
-DOMINOES takes every one of those hooks from the pairing rule by reference (decision 0029); a
-domino board that read any of them differently would lose the deduction silently.
+covered neighbour is empty ground. Neither can run away, because a freed ring holds one partner and
+blank ground. `pairCandidates` gives the pencil empty ground beside a pair that has met, and nothing
+beside a lone creature, whose number the board hides (decision 0061). DOMINOES takes every one of
+those hooks from the pairing rule by reference (decision 0029); a domino board that read any of them
+differently would lose the deduction silently.
 
 The rule spreads creatures evenly, so openings are the smallest in the game and the ladder's axis
 is *size*, not density: non-touching dominoes jam at about 25%, and the quota must land exactly, so
@@ -273,8 +274,8 @@ and the ladder at HP 12 and at 14 clears the same share of every board as at 10.
 distribution is flat by construction, six tiers always, and the tile order from `choosePairs` must
 survive the deal. No blanks: a [0|x] tile breaks the one-neighbour rule. Density is nearly the
 whole dial (18.5 to 23.5%), and it gets harder by getting *smaller* between set counts. A beaten
-creature's number is not drawn on these two ladders, by request, though the engine and the proofs
-still read it.
+creature's number is not drawn on these two ladders (decision 0012), though the engine and the
+proofs still read it.
 
 ## SPRINKLE DONUT
 
@@ -317,8 +318,8 @@ down at any density up to 90%, so the packing never binds.
 Creatures stand in connected packs of one of every tier, and no two packs touch (touching is
 `neighbours()`, so a diagonal counts). `missingFrom` is the Sweep proof: the strongest tier a
 pack has not shown yet; when that is within your level, or nothing is missing, the ring is free.
-Computed over the component of *open* creatures, which errs safe. `packCandidates` gives the
-pencil the tiers the neighbouring pack has not shown. CONGA LINE takes all of it by reference. Density is
+Computed over the component of *open* creatures, which errs safe. `packCandidates` gives the pencil
+the tiers the neighbouring pack has not shown. CONGA LINE takes all of it by reference. Density is
 the dial (22.5 to 31.6%), and the board grows a row or column every step for granularity.
 
 PACKS was tuned with the honest player from `sim:spells`, taught the pack rule, by 20 September
@@ -376,9 +377,9 @@ proof finds nothing at this density; the Sudoku rule itself is deliberately abse
 ## BLIND and HUGE x BLIND
 
 Search boards: one HP, level 0, won by uncovering every empty cell, the creatures untouched until
-the win uncovers them. BLIND climbs 5 to 7 tiers over its ladder. It opens at 70 boards cleared,
-one step after every other counted ladder (decision 0036), and its Full Run heal rounds down to nothing, so a run there is a
-single-mistake run.
+the win uncovers them. BLIND climbs 5 to 7 tiers over its ladder. It opens at 70 boards cleared, one
+step after every other counted ladder (decision 0036), and its Full Run heal rounds down to nothing,
+so a run there is a single-mistake run.
 
 ## SEER
 
