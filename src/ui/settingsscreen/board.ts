@@ -1,6 +1,8 @@
 /**
- * More of the Presentation section's drawn settings, beside those in `look.ts`: what a creature
- * is drawn as. Every example is the standard board (decision 0025).
+ * More of the Presentation section's settings, beside those in `look.ts`: what a creature is
+ * drawn as, the mark colour, the size of the board's digits, the cursor highlight's thickness,
+ * reach shading, and whether a board opens at the zoom ceiling. Every example is a real board
+ * (decision 0025).
  */
 
 import { el } from '../dom.js';

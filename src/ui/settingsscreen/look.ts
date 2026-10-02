@@ -1,10 +1,10 @@
 /**
  * The Presentation section's drawn settings: creature icons (the window of symbols behind the
  * custom tile is in `symbols.ts`) and colours (the custom colours' window is in `customtiers.ts`),
- * board palette, the board's font and the interface's, text size, the game types' palette strip,
- * the cursor highlight and its colour (the custom colour's window is in `customcolor.ts`), the
- * strike-through and the zoom ceiling. Every example is a
- * real board, or for the interface a copy of the HUD (decision 0025).
+ * the board palette, the board's font and the interface's, the cursor highlight and its colour
+ * (the custom colour's window is in `customcolor.ts`), how a beaten creature is drawn and the
+ * zoom ceiling; the section's other rows are in `board.ts` and `effects.ts`. Every example is a
+ * real board, or for the interface font a copy of the HUD (decision 0025).
  */
 
 import type { BoardDisplay } from '../board/view.js';

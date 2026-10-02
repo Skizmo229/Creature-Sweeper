@@ -1,7 +1,8 @@
 /**
  * The Interface section: what the page around the board wears and how it behaves, for every
- * ladder at once. The text size, the size of the settings screen's own examples, and where a
- * game-type card wears its ladder's colour.
+ * ladder at once. The low-vision preset and fullscreen, the text size and the size of the
+ * settings screen's own examples, where a game-type card wears its ladder's colour, the clock,
+ * what a right-click and a long press do, whether Back asks, the play statistics and the hint line.
  */
 
 import { el } from '../dom.js';

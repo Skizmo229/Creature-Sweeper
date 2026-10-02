@@ -87,7 +87,7 @@ function cellsOf(game: Game, pick: (c: Cell) => boolean): Cell[] {
  * Beat the `count` strongest creatures. A creature glyph is only ever visible
  * once it has been beaten — a live one is under a covered tile — so showing the
  * icons at all means showing defeated ones, which is also what puts the
- * strike-through in the picture.
+ * beaten look in the picture.
  *
  * Highest tiers first: a tier 4 draws four pips and a tier 1 draws one, so
  * the big ones are the ones that actually show what a pip SHAPE looks like.
@@ -132,12 +132,12 @@ const once = (key: string, make: () => Game): Game => {
 };
 
 /**
- * The standard example, which the icon, palette, board font and strike
- * galleries draw and the glow after a fight is shown on. It carries everything
- * a palette paints and a face draws (decision 0034): every digit from 0 to 9 in
- * the ink, a beaten creature's number in `hot` (see `samplePin`), covered tiles
- * with their edge, open floor, a mark, and two beaten creatures wearing their
- * glyphs.
+ * The standard example, which the icon, palette, board font, beaten creature
+ * and mark colour galleries draw and the glow after a fight is shown on. It
+ * carries everything a palette paints and a face draws (decision 0034): every
+ * digit from 0 to 9 in the ink, a beaten creature's number in `hot` (see
+ * `samplePin`), covered tiles with their edge, open floor, a mark, and two
+ * beaten creatures wearing their glyphs.
  *
  * Seven creatures of five tiers on twenty cells: the sums run high enough for a
  * two-digit number, which is the only way the ink ever writes a 0 (an empty

@@ -3,11 +3,9 @@
  *
  * Two halves that behave very differently:
  *
- * **Presentation** — icons and their tiers' colours, palette, the board's font
- * and the interface's, sound, the clear effect, the glow after a fight, the
- * cursor highlight and its colour, the struck-out creatures, the zoom ceiling.
- * None of it touches a rule, so none of it can affect whether a clear is
- * recorded. What each one is, and how a saved one is read, is `presentation.ts`.
+ * **Presentation** — how a board looks and sounds, and the page around it. None
+ * of it touches a rule, so none of it can affect whether a clear is recorded.
+ * What each one is, and how a saved one is read, is `presentation.ts`.
  *
  * **Gameplay** — the dials in `engine/settings.ts`. Those change the rules, so
  * they decide whether a board counts. See `isAtLeastAsHard`: a player who

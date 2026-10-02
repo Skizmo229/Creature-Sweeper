@@ -1,6 +1,7 @@
 /**
- * The three settings whose only possible example is themselves: the sound pack, the glow after a
- * fight and the board-clear effect. Each is played, not pictured, which is only possible because
+ * The Presentation section's settings whose only possible example is themselves: the sound pack,
+ * the glow and the motion after a fight, and the board-clear effect, with when it plays, what
+ * holds the clear card and its speed. Each is played, not pictured, which is only possible because
  * these tiles update in place rather than rebuilding the screen (decision 0025).
  */
 
