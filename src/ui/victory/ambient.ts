@@ -39,7 +39,7 @@ export function ambientPainter(effect: VictoryId, stage: Stage): Painter {
  */
 const FIXED_STEP = 1 / 60;
 
-/** A random one of the stage's colours. */
+/** Picks a random one of `colors` each time it is called. */
 const colorPicker = (colors: readonly string[]) => (): string =>
   colors[Math.floor(Math.random() * colors.length)]!;
 
