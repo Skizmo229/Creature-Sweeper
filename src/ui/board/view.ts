@@ -120,6 +120,7 @@ export interface BoardViewOptions {
   fixedCell?: number;
 }
 
+/** What a click, a right-click and the cursor on the board report to the view's owner. */
 export interface BoardViewCallbacks {
   onOpen: (x: number, y: number) => void;
   /** Right-click / long-press: cycle the mark on a covered cell. */
@@ -132,6 +133,11 @@ export interface BoardViewCallbacks {
   lands?: (cell: Cell) => boolean;
 }
 
+/**
+ * A board drawn on a canvas: the game, its theme and display, the cell size and origin, and the
+ * hovered cell. `render` repaints it whole; the game screen, the guide's diagrams and the settings
+ * screen's examples are all one of these.
+ */
 export class BoardView implements InputHost {
   readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;

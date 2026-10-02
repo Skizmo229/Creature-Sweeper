@@ -18,6 +18,7 @@ export interface PinchStart {
   readonly by: number;
 }
 
+/** A view of the board: its cell size and where its origin is, in CSS pixels. */
 export interface PinchView {
   readonly cell: number;
   readonly originX: number;

@@ -17,6 +17,7 @@ import {
 } from './telemetry.js';
 import { dropKept, keepUnreadable } from './progress.js';
 
+/** The play statistics on this device, read from storage and written back after every attempt. */
 export class TelemetryStore {
   private data: TelemetryData;
 

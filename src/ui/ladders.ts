@@ -8,4 +8,5 @@
 import laddersJson from '../../design/data/ladders.json';
 import type { Ladders } from '../engine/config.js';
 
+/** Every ladder, in the order the data lists them: the table every screen reads. */
 export const ladders = laddersJson as unknown as Ladders;

@@ -12,6 +12,7 @@ import { type PausedGame, pausedGames } from '../paused.js';
 import type { Progress } from '../progress.js';
 import { themeFor } from '../looks.js';
 
+/** What the board list reads, and where its tiles and buttons go. */
 export interface BoardListActions {
   progress: Progress;
   back(): void;
@@ -21,6 +22,7 @@ export interface BoardListActions {
   startRun(typeId: string): void;
 }
 
+/** The board list of ladder `typeId`: its tuned boards, then the Full Run and scaling tiles. */
 export function buildBoardList(typeId: string, a: BoardListActions): HTMLElement {
   const { progress } = a;
   const type = ladders.find((t) => t.id === typeId)!;

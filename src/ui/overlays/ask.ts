@@ -7,6 +7,7 @@
 
 import { el } from '../dom.js';
 
+/** A question: its words, its buttons' labels, and what each answer does. */
 export interface AskOptions {
   title: string;
   body: string;

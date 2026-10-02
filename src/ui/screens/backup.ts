@@ -53,6 +53,7 @@ function writeStoredSave(bundle: SaveBundle): boolean {
   }
 }
 
+/** What the backup card asks of the modal that shows it. */
 export interface SaveBackupActions {
   /** Ask before replacing the save. */
   ask(opts: AskOptions): void;

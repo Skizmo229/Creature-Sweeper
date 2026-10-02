@@ -6,6 +6,7 @@
 
 import type { SpellId } from '../../engine/spells.js';
 
+/** The palette's state: the armed tier, pencil or mark, and the armed spell, kept exclusive. */
 export class EntryMode {
   /** Palette selection: -1 is none. 0 is a real choice (empty ground), which is why "none" cannot be 0. */
   markMode = -1;

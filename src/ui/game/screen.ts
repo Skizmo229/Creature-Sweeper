@@ -13,6 +13,7 @@ import { ladders } from '../ladders.js';
 import { type TierPalette, tierColor, tierGilded } from '../tiercolors.js';
 import { themeFor } from '../looks.js';
 
+/** What the game screen's controls report to, and the two settings its furniture is built from. */
 export interface GameScreenActions {
   openSettings(): void;
   /** Leave the board, asking first whether to pause or abandon a game with anything in it. */

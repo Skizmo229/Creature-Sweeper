@@ -30,6 +30,7 @@ import { notesFor } from '../guide/ladders.js';
 /** Where the guide opens: at a trick's entry, or at the top of a section, by its title. */
 export type GuideTarget = { trick: TrickId } | { section: string };
 
+/** What the guide is drawn with: the ladders, the look of its diagrams, and its way out. */
 export interface GuideOptions {
   ladders: readonly LadderType[];
   theme: TypeTheme;

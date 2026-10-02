@@ -28,6 +28,7 @@ export type Wait =
   /** This cell pencilled with exactly these candidates. */
   | { readonly pencil: Spot; readonly tiers: readonly number[] };
 
+/** One step of a lesson: what it says, what the tutor points at, and what it waits for. */
 export interface Step {
   /** What the teacher says. */
   readonly say: string;
@@ -38,6 +39,7 @@ export interface Step {
   readonly key?: true;
 }
 
+/** A lesson: its board as drawn, the level it starts at, and its steps in order. */
 export interface SchoolLesson {
   /** Stable, for the save. */
   readonly id: string;
@@ -58,6 +60,7 @@ const rule = (trick: TrickId): string => TRICK_TEXT[trick].rule;
 /** How to mark a cell, said the same way wherever a lesson asks for it. */
 const HOW_TO_MARK = 'right-click it, or pick its LV button and click it';
 
+/** The school's lessons, in the order its screen lists them. */
 export const LESSONS: readonly SchoolLesson[] = [
   {
     id: 'sum',

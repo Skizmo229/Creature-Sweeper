@@ -5,4 +5,5 @@
 
 import { version } from '../../package.json';
 
+/** The game's version, as `package.json` has it: MAJOR.MINOR.PATCH. */
 export const VERSION: string = version;

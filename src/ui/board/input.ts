@@ -7,6 +7,7 @@
 import type { Cell } from '../../engine/types.js';
 import { type PinchStart, pinchStart, pinchTo } from '../pinch.js';
 
+/** What the input reads of the view and may ask of it: the view implements it. */
 export interface InputHost {
   readonly canvas: HTMLCanvasElement;
   /** False before a game is set; input is ignored. */
@@ -37,6 +38,10 @@ export interface InputHost {
   onCycleMark(x: number, y: number): void;
 }
 
+/**
+ * The board canvas's pointer, wheel and touch input, turned into the host's opens, marks, hovers,
+ * pans and zooms. `attach` installs the listeners; the state is the gesture in progress.
+ */
 export class BoardInput {
   private dragging = false;
   private dragMoved = false;

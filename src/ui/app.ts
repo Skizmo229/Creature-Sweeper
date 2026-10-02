@@ -37,6 +37,7 @@ import { Sfx } from './sfx.js';
 import { Teaching } from './teaching.js';
 import { TelemetryStore } from './telemetrystore.js';
 
+/** The game in the page, built once on its root element by `main.ts`: the router above. */
 export class App {
   private readonly root: HTMLElement;
   private readonly progress = Progress.load();

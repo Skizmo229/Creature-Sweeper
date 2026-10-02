@@ -24,7 +24,10 @@ export interface BoardActionsHost {
   view(): BoardView | null;
   readonly mode: EntryMode;
   readonly sfx: Sfx;
-  /** Where the Beaten toggle is kept, as the speaker keeps the mute. */
+  /**
+   * What a click reads (the chord, what a right-click does), and where the Beaten toggle is kept,
+   * as the speaker keeps the mute.
+   */
   readonly settings: Settings;
   /** Make a move on the board on screen: the one door every action of the player's goes through. */
   move(move: Move): GameEvent[];
@@ -62,6 +65,10 @@ export function nextMark(game: Game, mark: number, rule: RightClick): number {
   return 0;
 }
 
+/**
+ * What the player's clicks, buttons and keys do on the board on screen. Each is decided from the
+ * entry mode and made through the host's `move`; nothing here changes the game any other way.
+ */
 export class BoardActions {
   constructor(private readonly h: BoardActionsHost) {}
 

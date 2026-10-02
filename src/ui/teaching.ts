@@ -45,6 +45,11 @@ export interface TeachingHost {
   ladders(): void;
 }
 
+/**
+ * Everything that teaches, for `App`: the tutor on the board being played, the rules card, the
+ * field guide, a ladder's first-visit card and the school's lesson being taken. It shows screens
+ * and boards only through its host.
+ */
 export class Teaching {
   /** The tutor on the board being played: what it last found, and the hints asked. */
   readonly tutor = new Tutor();

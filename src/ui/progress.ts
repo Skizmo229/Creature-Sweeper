@@ -15,6 +15,7 @@ import { PROGRESS_KEY as KEY } from './savefile.js';
 /** The tuned boards of a ladder the table does not name: the ten every ladder has. */
 const TUNED_BOARDS = 10;
 
+/** What the save holds for one board of a ladder. */
 export interface BoardRecord {
   cleared: boolean;
   /** Cleared without losing a single point of HP. */
@@ -33,6 +34,7 @@ export interface BoardRecord {
   fingerprint?: string;
 }
 
+/** What the save holds for one ladder: how far up it is unlocked, and whether it is cleared. */
 export interface TypeRecord {
   /** Highest board index unlocked; you always start with board 1. */
   highestBoard: number;
@@ -62,6 +64,7 @@ export interface FullRunRecord {
   fingerprint?: string;
 }
 
+/** The stored save, version 1: every record, and what the player has been shown once. */
 export interface SaveData {
   version: 1;
   types: Record<string, TypeRecord>;
@@ -198,6 +201,10 @@ function readSave(parsed: Record<string, unknown>): SaveData {
   };
 }
 
+/**
+ * The save in play: loaded once, read by every screen, and written to storage after every
+ * change. A record is read as it applies to the ladder as it is tuned now (decision 0079).
+ */
 export class Progress {
   private data: SaveData;
 

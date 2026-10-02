@@ -17,12 +17,15 @@
  * reach it. Storage, files and the clipboard are the caller's business.
  */
 
+/** Where the progress is stored (`progress.ts`). */
 export const PROGRESS_KEY = 'creature-sweeper.progress.v1';
+/** Where the settings are stored (`settings.ts`). */
 export const SETTINGS_KEY = 'creature-sweeper.settings.v1';
 
 const PREFIX = 'CS1:';
 const FORMAT = 'creature-sweeper-save';
 
+/** The whole save as stored: the progress and the settings, each its raw JSON. */
 export interface SaveBundle {
   /** The raw progress JSON exactly as stored, or null if there was none. */
   progress: string | null;
@@ -40,6 +43,7 @@ interface Envelope {
   settings: unknown;
 }
 
+/** Text as base64, by its UTF-8 bytes, so any character survives (`btoa` takes Latin-1 only). */
 export function toBase64(text: string): string {
   const bytes = new TextEncoder().encode(text);
   let bin = '';
@@ -47,6 +51,7 @@ export function toBase64(text: string): string {
   return btoa(bin);
 }
 
+/** `toBase64` undone. Throws on a code that is not base64 or not UTF-8. */
 export function fromBase64(code: string): string {
   const bin = atob(code);
   const bytes = new Uint8Array(bin.length);
@@ -88,6 +93,7 @@ export function encodeSave(bundle: SaveBundle, now: Date = new Date(), game?: st
   return PREFIX + toBase64(JSON.stringify(envelope));
 }
 
+/** A code read back: the save, when and by which version it was written, or why it was refused. */
 export type DecodeResult =
   | { ok: true; bundle: SaveBundle; exported: string | null; game: string | null }
   | { ok: false; error: string };

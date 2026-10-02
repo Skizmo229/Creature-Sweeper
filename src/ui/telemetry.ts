@@ -12,6 +12,7 @@
 
 import { fromBase64, toBase64 } from './savefile.js';
 
+/** Where the play statistics are stored: their own key, beside the save's. */
 export const TELEMETRY_KEY = 'creature-sweeper.telemetry.v1';
 
 const PREFIX = 'CST1:';
@@ -51,6 +52,7 @@ export interface Attempt {
   seconds: number;
 }
 
+/** The play statistics as stored and as coded: every board's totals, tuned and modified apart. */
 export interface TelemetryData {
   version: 1;
   /** Boards played on dials at least as hard as the tuned game, by `boardKey`. */
@@ -59,6 +61,7 @@ export interface TelemetryData {
   modified: Record<string, BoardStats>;
 }
 
+/** Statistics with nothing played. */
 export function emptyTelemetry(): TelemetryData {
   return { version: 1, tuned: {}, modified: {} };
 }
@@ -223,6 +226,7 @@ export function encodeTelemetry(
   return PREFIX + toBase64(JSON.stringify(envelope));
 }
 
+/** A statistics code read back: the data, when and by which version, or why it was refused. */
 export type TelemetryDecode =
   | { ok: true; data: TelemetryData; exported: string | null; game: string | null }
   | { ok: false; error: string };

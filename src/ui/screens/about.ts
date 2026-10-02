@@ -25,6 +25,7 @@ export function link(href: string, text: string): HTMLAnchorElement {
   return a;
 }
 
+/** The About card, and its Close button to focus. `onClose` is what Close does. */
 export function buildAbout(onClose: () => void): { overlay: HTMLElement; focus: HTMLElement } {
   const overlay = el('div', 'overlay win');
   const card = el('div', 'overlay-card about');

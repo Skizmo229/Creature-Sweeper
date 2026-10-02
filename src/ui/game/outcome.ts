@@ -36,6 +36,7 @@ function hintsNote(hints: number): HTMLElement {
   return el('p', 'overlay-note', `Cleared with ${hints} hint${hints === 1 ? '' : 's'}.`);
 }
 
+/** How a single board ended, and where the card's buttons go, for `buildBoardOutcome`. */
 export interface BoardOutcome {
   game: Game;
   typeId: string;
@@ -69,6 +70,10 @@ export interface BoardOutcome {
   onList(): void;
 }
 
+/**
+ * The card a single board ends with: CLEAR (or PERFECT CLEAR), GAME OVER or OUT OF TIME, what the
+ * result was, and the ways on. The caller appends it to the screen.
+ */
 export function buildBoardOutcome(o: BoardOutcome): HTMLElement {
   const { game, won } = o;
   // A held card waits while the clear effect plays over the board, or until a click (styles.css).
@@ -153,6 +158,7 @@ export function buildBoardOutcome(o: BoardOutcome): HTMLElement {
   return overlay;
 }
 
+/** How a board of a Full Run ended, and where the card's buttons go, for `buildRunOutcome`. */
 export interface RunOutcome {
   game: Game;
   run: FullRun;

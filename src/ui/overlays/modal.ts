@@ -25,6 +25,10 @@ export function keepFocus(): () => void {
   };
 }
 
+/**
+ * The modal overlay over the screen in `root`: at most one up at a time, each shown through
+ * `show`, with the cards and questions the screens open built here.
+ */
 export class Modal {
   /** The overlay up, if any. */
   private overlay: HTMLElement | null = null;

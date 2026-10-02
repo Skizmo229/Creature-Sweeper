@@ -24,6 +24,10 @@ const EVERY_GRADE: Grade = GRADES[GRADES.length - 1]!;
 /** A saved grade as one the tricks have: whole, and within them. */
 const gradeOf = (n: number): Grade => Math.max(0, Math.min(EVERY_GRADE, Math.round(n))) as Grade;
 
+/**
+ * The tutor's state on the board on screen: what the last press found, which of its lessons is
+ * showing, and the hints asked on this board and this run. Reads the game; never changes it.
+ */
 export class Tutor {
   /** The last press: what it found, and which lesson is showing. Null once the board has moved. */
   private last: { explanation: Explanation; index: number } | null = null;

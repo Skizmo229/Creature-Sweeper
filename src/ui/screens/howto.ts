@@ -8,6 +8,7 @@
 
 import { el } from '../dom.js';
 
+/** The rules card, with its ways to the school and the field guide; `focus` is Got it. */
 export function buildHowTo(
   onDone: () => void,
   onGuide: () => void,

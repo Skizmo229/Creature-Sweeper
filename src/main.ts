@@ -1,3 +1,8 @@
+/**
+ * The browser entry: builds the game on `#app` (`src/ui/app.ts`). In dev it also hangs the app on
+ * `window.cs`, the handle the console and the dev notes use.
+ */
+
 import { App } from './ui/app.js';
 
 const root = document.getElementById('app');

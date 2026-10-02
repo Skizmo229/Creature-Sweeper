@@ -9,6 +9,7 @@ import { SOURCE_URL } from '../screens/about.js';
 import { VERSION } from '../version.js';
 import type { Modal } from './modal.js';
 
+/** The crash card for `message`, and its one button, Back to the list, which runs `onBack`. */
 export function buildCrash(
   message: string,
   onBack: () => void,

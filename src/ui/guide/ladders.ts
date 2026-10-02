@@ -9,6 +9,7 @@
 
 import type { LadderType } from '../../engine/config.js';
 
+/** One of the catalogue's notes on how to play a ladder, or several. */
 export interface LadderNote {
   /** The catalogue's bold lead, without its full stop: the ladders it is about. */
   readonly heading: string;
@@ -23,6 +24,7 @@ const shapedWithMagic = (type: LadderType): boolean => {
   return (type.spells?.length ?? 0) > 0 && !!first && first.cells < first.w * first.h;
 };
 
+/** The notes, in section 7's order. */
 export const LADDER_NOTES: readonly LadderNote[] = [
   {
     heading: 'EASY',

@@ -15,6 +15,7 @@ import type { Settings } from '../settings.js';
 import { themeFor } from '../looks.js';
 import { VERSION } from '../version.js';
 
+/** What the ladder list reads, and where its cards and tools go. */
 export interface LadderListActions {
   progress: Progress;
   settings: Settings;
@@ -46,6 +47,7 @@ export const CATEGORY_NAMES: Record<LadderCategory, string> = {
   special: 'Special',
 };
 
+/** The ladder list: the title and its notices, a card per ladder in its column, and the tools. */
 export function buildLadderList(a: LadderListActions): HTMLElement {
   const { progress, settings } = a;
   const wrap = el('div', 'screen');

@@ -33,6 +33,10 @@ export interface KeeperHost {
   readonly tutor: Tutor;
 }
 
+/**
+ * Keeps the board on screen in its paused-game slot: makes each move, writes the moves down and
+ * the game to the slot after each, and empties the slot when the game ends.
+ */
 export class BoardKeeper {
   private moves: Move[] = [];
   /** This tab's claim on the game's slot, or null while nothing is being kept. */

@@ -45,6 +45,10 @@ export interface EndingHost {
   showBoards(typeId: string): void;
 }
 
+/**
+ * How the board on screen ends: `finish` writes the record, puts up the outcome card and plays
+ * the clear effect; `noteFatal` keeps the blow that ended a lost board for the card.
+ */
 export class BoardEnding {
   /** Stops a running board-clear effect; a screen rebuild must call it. */
   private stopVictory: (() => void) | null = null;

@@ -33,6 +33,10 @@ export interface RecorderHost {
 
 type Counts = Pick<Attempt, 'opens' | 'guesses' | 'sweeps' | 'casts'>;
 
+/**
+ * Tallies one attempt at the board on screen, from `begin` to `end`: every move passes through
+ * `move` on its way to the keeper, and `end` writes the attempt to the play statistics.
+ */
 export class BoardRecorder {
   private counts: Counts = { opens: 0, guesses: 0, sweeps: 0, casts: 0 };
   /** HP, hints and seconds when the attempt began, so the attempt's own are differences. */

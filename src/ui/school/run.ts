@@ -21,6 +21,7 @@ import type { SchoolLesson, Spot, Step, Wait } from './lessons.js';
 /** The catalogue's boards, and so the school's, have five tiers. */
 const TIERS = 5;
 
+/** One lesson being taken: its board, at the lesson's level and with no Sweep, and its place. */
 export class LessonRun {
   readonly game: Game;
   private at = 0;

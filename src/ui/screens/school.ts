@@ -9,12 +9,14 @@ import type { Progress } from '../progress.js';
 import { TRICK_TEXT } from '../../sim/tricktext.js';
 import { LESSONS } from '../school/lessons.js';
 
+/** What the school's list reads, and where its cards go. */
 export interface SchoolListActions {
   progress: Progress;
   back(): void;
   start(index: number): void;
 }
 
+/** The school's screen: a card per lesson, saying what it teaches and whether it was taken. */
 export function buildSchoolList(a: SchoolListActions): HTMLElement {
   const wrap = el('div', 'screen');
   const head = el('header', 'title-bar');

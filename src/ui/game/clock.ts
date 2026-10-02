@@ -10,6 +10,10 @@ import type { GameplaySettings } from '../../engine/settings.js';
 /** The dials the clock reads: whether Time Attack is on, how far below the best it races, the limit. */
 export type ClockSettings = Pick<GameplaySettings, 'timeAttack' | 'timeAttackRatio' | 'timeLimit'>;
 
+/**
+ * The clock of the board on screen, or of the run it belongs to: when it started, the limit it
+ * races, the time held once the board ends, and the frame loop the HUD's readout ticks on.
+ */
 export class BoardClock {
   /** When this board's clock started, or null before a board is dealt. */
   startedAt: number | null = null;

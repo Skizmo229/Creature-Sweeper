@@ -56,6 +56,7 @@ function syncBeatenToggle(btn: HTMLButtonElement, on: boolean): void {
   btn.setAttribute('aria-pressed', String(on));
 }
 
+/** What a refresh of the game screen reads, gathered by `App` from the game and the settings. */
 export interface HudState {
   game: Game;
   run: FullRun | null;
