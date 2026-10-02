@@ -31,6 +31,15 @@ describe('the shape registry', () => {
     );
   });
 
+  it('refuses a topology it does not have, rather than reading it as square', () => {
+    for (const topology of ['hexx', 'Hex', 'constructor']) {
+      const type = { ...structuredClone(ladders[1]!), topology };
+      expect(() => boardConfig([type], type.id, 1), topology).toThrow(
+        `unknown topology "${topology}" (square | hex)`,
+      );
+    }
+  });
+
   it('refuses a hexagon on square cells or on a wrapped board', () => {
     const hive = structuredClone(ladders.find((t) => t.shape === 'hexagon')!);
     expect(() => boardConfig([{ ...hive, topology: 'square' }], hive.id, 1)).toThrow(/hex cells/);

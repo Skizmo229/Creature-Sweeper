@@ -6,7 +6,14 @@
  * those numbers.
  */
 
-import type { BoardConfig, BoardShape, OpeningRule, Placement, WorkoutRule } from './types.js';
+import type {
+  BoardConfig,
+  BoardShape,
+  OpeningRule,
+  Placement,
+  Topology,
+  WorkoutRule,
+} from './types.js';
 import { RULES, isPlacement, placementRule } from './placement/registry.js';
 import { SHAPES, isShape, shapeRule } from './shape/registry.js';
 import { SPELLS, type SpellId, isSpellId, orderSpells } from './spells.js';
@@ -252,6 +259,15 @@ function readOpening(type: LadderType, placement: Placement): OpeningRule {
   return known;
 }
 
+/** The board's cells, square or hex, refusing a topology this build does not have. */
+function readTopology(type: LadderType): Topology {
+  const raw = type.topology ?? 'square';
+  if (raw !== 'square' && raw !== 'hex') {
+    throw new Error(`${type.id}: unknown topology "${raw}" (square | hex)`);
+  }
+  return raw;
+}
+
 /** The board's shape, refusing a type it cannot live on (each shape's `validate`). */
 function readShape(type: LadderType): BoardShape {
   const raw = type.shape ?? 'rect';
@@ -336,6 +352,8 @@ export function boardConfig(
 
   // Search modes put the player at level 0, where no fight can be won.
   const startLevel = type.search ? 0 : 1;
+  // First: the shape and the placement read the topology as the data spells it.
+  const topology = readTopology(type);
   const shape = readShape(type);
   const placement = readPlacement(type, row);
   const spells = readSpells(type);
@@ -361,7 +379,7 @@ export function boardConfig(
     startMana: type.start_mana ?? 0,
     ...(workout ? { workout } : {}),
     ...(type.sweep === false ? { sweep: false } : {}),
-    topology: type.topology === 'hex' ? 'hex' : 'square',
+    topology,
     wrap: readWrap(type, row),
     shape: shape,
     // A seeded shape's parameter is the cell count the mask must land on, and
