@@ -4,15 +4,15 @@
  * without numbers.
  */
 
+import { noteTiers } from '../engine/notes.js';
 import type { Cell } from '../engine/types.js';
 import { type Constraint, highestTier } from './reader.js';
 import type { TrickId, View, Why } from './tricks.js';
 import { TRICK_TEXT } from './tricktext.js';
 
 /** "2 or 5", or "empty" for the ground candidate alone. */
-function list(mask: number): string {
-  const tiers: string[] = [];
-  for (let t = 0; t < 31; t++) if (mask & (1 << t)) tiers.push(t === 0 ? 'empty' : `${t}`);
+function tierList(mask: number): string {
+  const tiers = noteTiers(mask).map((t) => (t === 0 ? 'empty' : `${t}`));
   if (tiers.length <= 1) return tiers[0] ?? '';
   return `${tiers.slice(0, -1).join(', ')} or ${tiers[tiers.length - 1]}`;
 }
@@ -25,7 +25,7 @@ function the(c: Constraint): string {
   return c.residual === n ? `the ${n}` : `the ${n} (${c.residual} hidden)`;
 }
 
-const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+const capitalise = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** "all 5 covered cells are", "its one covered cell is"; or the count alone. */
 function cells(c: Constraint, verb = true): string {
@@ -44,13 +44,13 @@ export interface Told {
 type Captioner = (told: Told, view: View) => string;
 
 /** The first number a proof read; every writer below that uses it is a trick that reads one. */
-const first = (told: Told): Constraint => told.why.constraints[0]!;
-const second = (told: Told): Constraint => told.why.constraints[1]!;
+const firstNumber = (told: Told): Constraint => told.why.constraints[0]!;
+const secondNumber = (told: Told): Constraint => told.why.constraints[1]!;
 
 /** One writer per trick: the proof in a sentence, with its numbers filled in. */
 const CAPTIONS: Readonly<Record<TrickId, Captioner>> = {
   'raw-ring': (t, v) => {
-    const a = first(t);
+    const a = firstNumber(t);
     return (
       `The ${a.cell.num} is at or below your level ${v.level}, so nothing under it is stronger ` +
       `than a ${a.cell.num}: ${cells(a)} safe.`
@@ -67,7 +67,7 @@ const CAPTIONS: Readonly<Record<TrickId, Captioner>> = {
       ? 'A covered cell with no sprinkle is empty ground, free at any level.'
       : 'A cell under a sprinkle is a creature, never empty ground.',
   'residual-ring': (t, v) => {
-    const a = first(t);
+    const a = firstNumber(t);
     const n = a.cell.num;
     if (a.residual === 0) return `The ${n} has all of it on show, so ${cells(a)} empty ground.`;
     return (
@@ -76,7 +76,7 @@ const CAPTIONS: Readonly<Record<TrickId, Captioner>> = {
     );
   },
   'last-cell': (t, v) => {
-    const a = first(t);
+    const a = firstNumber(t);
     const n = a.cell.num;
     const r = a.residual;
     const show = n === r ? '' : ` and ${n - r} on show`;
@@ -87,7 +87,7 @@ const CAPTIONS: Readonly<Record<TrickId, Captioner>> = {
     return `The ${n} has one covered neighbour left${show}, so that cell is a ${r}. ${then}`;
   },
   'census-ring': (t, v) => {
-    const a = first(t);
+    const a = firstNumber(t);
     const k = a.creatures ?? 0;
     if (k === 0)
       return `No creatures are hidden around the ${a.cell.num}, so ${cells(a)} empty ground.`;
@@ -97,7 +97,7 @@ const CAPTIONS: Readonly<Record<TrickId, Captioner>> = {
     );
   },
   'augur-cap': (t, v) => {
-    const a = first(t);
+    const a = firstNumber(t);
     const top = a.ceiling ?? 0;
     const listed = a.tiers?.length ? a.tiers.join(', ') : 'nothing';
     if (top <= v.level)
@@ -111,9 +111,9 @@ const CAPTIONS: Readonly<Record<TrickId, Captioner>> = {
     v.reading.top <= v.level
       ? `The counters show nothing left above tier ${v.reading.top}, at or below your level ` +
         `${v.level}: every covered cell is free.`
-      : `The counters show no ${list(t.struck & ~1)}s left, so this cannot be one.`,
+      : `The counters show no ${tierList(t.struck & ~1)}s left, so this cannot be one.`,
   'lone-dark': (t) => {
-    const a = first(t);
+    const a = firstNumber(t);
     return (
       `Only one dark square is left around ${the(a)}, and the ${a.residual} hidden is even; a ` +
       'dark square carries odd tiers only, so it holds nothing.'
@@ -123,35 +123,36 @@ const CAPTIONS: Readonly<Record<TrickId, Captioner>> = {
     "A beaten creature's number is its partner's tier, since nothing else it touches is a " +
     'creature: the cell beside this one is that partner, or empty ground.',
   subtract: (t) => {
-    const a = first(t);
-    const b = second(t);
+    const a = firstNumber(t);
+    const b = secondNumber(t);
     return (
-      `${cap(the(a))}'s covered cells all lie inside ${the(b)}'s, so the cells only ${the(b)} ` +
-      `sees hold exactly ${b.residual - a.residual}.`
+      `${capitalise(the(a))}'s covered cells all lie inside ${the(b)}'s, so the cells only ` +
+      `${the(b)} sees hold exactly ${b.residual - a.residual}.`
     );
   },
   overlap: (t) =>
-    `${cap(the(first(t)))} and ${the(second(t))} share some covered cells but not all; what ` +
-    'each sees alone is bounded by the other, which decides these cells.',
+    `${capitalise(the(firstNumber(t)))} and ${the(secondNumber(t))} share some covered cells ` +
+    'but not all; what each sees alone is bounded by the other, which decides these cells.',
   bounds: (t, v) => {
-    const a = first(t);
+    const a = firstNumber(t);
     const k = a.unknown.length;
     const floor = a.residual - (k - 1) * v.reading.top;
     const so =
       floor > 0
         ? `each holds at least ${floor}, so all of them are creatures`
         : 'only some tiers can share it that way';
-    return `${cap(the(a))} spreads ${a.residual} over ${plural(k, 'cell')}: ${so}.`;
+    return `${capitalise(the(a))} spreads ${a.residual} over ${plural(k, 'cell')}: ${so}.`;
   },
   'colour-cap': (t) =>
     'Light squares carry even tiers and dark squares odd, so the colour caps what can hide ' +
-    `under ${the(first(t))} on each square.`,
+    `under ${the(firstNumber(t))} on each square.`,
   'pack-gap': () =>
     'A pack is one creature of every tier. Beside this pack a cell holds a tier it has not ' +
     'shown yet, or nothing.',
   'what-if': (t) =>
-    `Suppose this cell were ${list(t.struck)}: the ${plural(t.why.constraints.length, 'number')} ` +
-    'around it could not all be made. So it is not.',
+    `Suppose this cell were ${tierList(t.struck)}: the ` +
+    `${plural(t.why.constraints.length, 'number')} around it could not all be made. ` +
+    'So it is not.',
   'line-reach': () => TRICK_TEXT['line-reach'].rule,
   accounted: (t, v) => {
     const acc = t.why.constraints.reduce((s, c) => s + c.residual, 0);
@@ -167,7 +168,7 @@ const CAPTIONS: Readonly<Record<TrickId, Captioner>> = {
     const last = left === 1 ? `The last tier ${tier}` : `The last ${left} tier ${tier}s`;
     const rings =
       t.why.constraints.length === 1
-        ? `around ${the(first(t))}, which cannot be made without one`
+        ? `around ${the(firstNumber(t))}, which cannot be made without one`
         : `around ${t.why.constraints.length} numbers that cannot be made without one`;
     return `${last} must be ${rings}, so no other cell holds a ${tier}.`;
   },
