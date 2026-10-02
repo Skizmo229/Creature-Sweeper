@@ -36,9 +36,8 @@ import { Game } from '../../engine/game.js';
 import { placementRule } from '../../engine/placement/registry.js';
 import { type GradedOptions, type GradedRun, play } from '../graded.js';
 import { solve } from '../solver.js';
+import { boardRange, mean, pct, seedAt } from '../tables.js';
 import { type Grade, TRICK_IDS, TRICKS } from '../tricks.js';
-
-const seedAt = (s: number): number => s * 2654435761 + 11;
 
 interface Flags {
   peek: boolean;
@@ -64,9 +63,6 @@ function measure(type: LadderType, board: number, seeds: number, grade: Grade, f
   return runs;
 }
 
-const mean = (rs: GradedRun[], pick: (r: GradedRun) => number): number =>
-  rs.reduce((a, r) => a + pick(r), 0) / Math.max(1, rs.length);
-const pct = (x: number): string => `${(100 * x).toFixed(0)}%`;
 const share = (rs: GradedRun[], test: (r: GradedRun) => boolean): string =>
   pct(mean(rs, (r) => (test(r) ? 1 : 0)));
 const avail = (rs: GradedRun[]): string => {
@@ -228,8 +224,7 @@ const flags: Flags = {
 };
 const words = args.filter((a) => !a.startsWith('--'));
 const seeds = Number(words[0] ?? 30);
-const range = words[2]?.split('-').map(Number);
-const only: [number, number] | undefined = range ? [range[0]!, range[1] ?? range[0]!] : undefined;
+const only = boardRange(words[2]);
 if (words[1] && flags.profile) profile(seeds, findLadder(words[1]), only, flags);
 else if (words[1]) byBoard(seeds, findLadder(words[1]), only, flags);
 else everyLadder(seeds, flags);

@@ -132,6 +132,7 @@ src/sim/        headless measurement, all driving the real engine (see docs/tuni
   captions.ts     the tutor's captions: each proof in a sentence, with its numbers filled in
   diagrams.ts     the catalogue's diagrams as boards, for its test and the field guide
   scaffold.ts     a dungeon's corridors, doorways and pockets, read off the silhouette
+  tables.ts       what the commands share: the seed of each board, averages, a board range
   cli/            one command-line entry per measurement, run on import
 src/data.ts     Node-only loader for ladders.json; CS_LADDERS points it at a candidate file
 src/main.ts     browser entry; window.cs in dev

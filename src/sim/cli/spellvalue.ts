@@ -36,6 +36,7 @@ import { boardConfig } from '../../engine/config.js';
 import { Game } from '../../engine/game.js';
 import { SPELLS, type SpellId } from '../../engine/spells.js';
 import { type Policy, type HonestRun, SPELL_POLICIES, play } from '../honest.js';
+import { seedAt } from '../tables.js';
 
 /** Every measured policy with the spell it casts, in the order the tables print them. */
 const MEASURED: ReadonlyArray<{ policy: Policy; spell: SpellId }> = (
@@ -60,8 +61,7 @@ function workoutTable(seeds: number, typeId: string): void {
     'board  density  lock |  none: stuck  clear |  exercise: clear casts |' +
       '  workout: stuck  hp lost  clear  casts  spent/pool',
   );
-  const seedAt = (s: number) => s * 2654435761 + 11;
-  const pct = (rs: HonestRun[]) =>
+  const clearPct = (rs: HonestRun[]) =>
     ((100 * rs.filter((r) => r.cleared).length) / rs.length).toFixed(0).padStart(4) + '%';
   const avg = (rs: HonestRun[], pick: (r: HonestRun) => number) =>
     rs.reduce((a, r) => a + pick(r), 0) / rs.length;
@@ -78,8 +78,8 @@ function workoutTable(seeds: number, typeId: string): void {
       `${String(board.n).padStart(4)}  ${board.density.toFixed(1).padStart(6)}%  ${board.lock}    |` +
         `${avg(none, (r) => r.stuckPoints)
           .toFixed(1)
-          .padStart(12)} ${pct(none)} |` +
-        `${pct(ex).padStart(16)} ${avg(ex, (r) => r.casts)
+          .padStart(12)} ${clearPct(none)} |` +
+        `${clearPct(ex).padStart(16)} ${avg(ex, (r) => r.casts)
           .toFixed(1)
           .padStart(5)} |` +
         `${avg(wo, (r) => r.stuckPoints)
@@ -87,7 +87,7 @@ function workoutTable(seeds: number, typeId: string): void {
           .padStart(15)} ${avg(wo, (r) => r.hpLost)
           .toFixed(2)
           .padStart(8)}` +
-        ` ${pct(wo)} ${avg(wo, (r) => r.casts)
+        ` ${clearPct(wo)} ${avg(wo, (r) => r.casts)
           .toFixed(1)
           .padStart(6)}` +
         `${((100 * avg(wo, (r) => r.manaSpent)) / avg(wo, (r) => r.manaPool)).toFixed(0).padStart(10)}%`,
@@ -120,7 +120,6 @@ function byBoard(seeds: number, typeId: string): void {
 
   for (const board of type.boards) {
     const cfg = boardConfig(ladders, type.id, board.n);
-    const seedAt = (s: number) => s * 2654435761 + 11;
     const base: HonestRun[] = [];
     for (let s = 0; s < seeds; s++) base.push(play(Game.create(cfg, seedAt(s)), 'none', null));
 
@@ -200,9 +199,8 @@ function main(): void {
 
       for (const board of type.boards) {
         const cfg = boardConfig(ladders, type.id, board.n);
-        for (let s = 0; s < seeds; s++) {
-          runs.push(play(Game.create(cfg, s * 2654435761 + 11), policy, spellId));
-        }
+        for (let s = 0; s < seeds; s++)
+          runs.push(play(Game.create(cfg, seedAt(s)), policy, spellId));
       }
       (totals.get(policy) ?? totals.set(policy, []).get(policy)!).push(...runs);
       if (policy === 'none') typeBase = runs;

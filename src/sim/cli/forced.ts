@@ -36,6 +36,7 @@ import { Game } from '../../engine/game.js';
 import { placementRule } from '../../engine/placement/registry.js';
 import { play, type HonestRun } from '../honest.js';
 import { solve } from '../solver.js';
+import { boardRange, mean, pct, seedAt } from '../tables.js';
 
 interface Row {
   honest: HonestRun[];
@@ -43,8 +44,6 @@ interface Row {
   undecided: number;
   bad: number;
 }
-
-const seedAt = (s: number): number => s * 2654435761 + 11;
 
 function measure(typeId: string, board: number, seeds: number): Row {
   const ladders = loadLadders();
@@ -62,10 +61,6 @@ function measure(typeId: string, board: number, seeds: number): Row {
   }
   return row;
 }
-
-const mean = (rs: HonestRun[], pick: (r: HonestRun) => number): number =>
-  rs.reduce((a, r) => a + pick(r), 0) / Math.max(1, rs.length);
-const pct = (x: number): string => `${(100 * x).toFixed(0)}%`;
 
 /** Share of the honest player's stuck points that had a free move in them. */
 const freeShare = (rs: HonestRun[]): number => {
@@ -147,7 +142,6 @@ function everyLadder(seeds: number): void {
 const seeds = Number(process.argv[2] ?? 30);
 // A board range, for the ladders slow enough that running all ten to look at
 // two is most of the cost: `7-10`, or a single board.
-const range = process.argv[4]?.split('-').map(Number);
-const only: [number, number] | undefined = range ? [range[0]!, range[1] ?? range[0]!] : undefined;
+const only = boardRange(process.argv[4]);
 if (process.argv[3]) byBoard(seeds, process.argv[3], only);
 else everyLadder(seeds);

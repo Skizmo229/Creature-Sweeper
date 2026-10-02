@@ -31,6 +31,7 @@ import { biteFor } from '../../engine/settings.js';
 import type { Cell } from '../../engine/types.js';
 import { honestGuess, play, type HonestRun } from '../honest.js';
 import { solve } from '../solver.js';
+import { mean, pct, seedAt } from '../tables.js';
 
 interface Board {
   run: HonestRun;
@@ -39,8 +40,6 @@ interface Board {
   /** Guesses that turned out above the tier the solver proved them under. Must be 0. */
   unsound: number;
 }
-
-const seedAt = (s: number): number => s * 2654435761 + 11;
 
 /** The lowest tier whose fight would end the board from here, or Infinity. */
 function lethalTier(game: Game): number {
@@ -89,9 +88,6 @@ function playBoard(cfg: ReturnType<typeof boardConfig>, seed: number): Board {
   return board;
 }
 
-const mean = (xs: number[]): number => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length);
-const pct = (x: number): string => `${(100 * x).toFixed(0)}%`;
-
 function byBoard(type: LadderType, seeds: number): void {
   const ladders = loadLadders();
   console.log(`\n${type.name}, ${seeds} seeds a board — perfect deduction, safest guessing\n`);
@@ -103,16 +99,16 @@ function byBoard(type: LadderType, seeds: number): void {
     const boards = Array.from({ length: seeds }, (_, s) => playBoard(cfg, seedAt(s)));
     console.log(
       `${String(b.n).padStart(4)}  ${b.density.toFixed(1).padStart(6)}% ${String(b.hp).padStart(3)} |` +
-        `${mean(boards.map((x) => x.run.stuckPoints))
+        `${mean(boards, (x) => x.run.stuckPoints)
           .toFixed(1)
           .padStart(8)}` +
-        `${mean(boards.map((x) => x.risky))
+        `${mean(boards, (x) => x.risky)
           .toFixed(1)
           .padStart(12)} |` +
-        `${pct(mean(boards.map((x) => (x.run.stuckPoints === 0 ? 1 : 0)))).padStart(9)}` +
-        `${pct(mean(boards.map((x) => (x.risky === 0 ? 1 : 0)))).padStart(16)}` +
-        `${pct(mean(boards.map((x) => (x.run.cleared ? 1 : 0)))).padStart(9)}` +
-        `${mean(boards.map((x) => x.run.hpLost))
+        `${pct(mean(boards, (x) => (x.run.stuckPoints === 0 ? 1 : 0))).padStart(9)}` +
+        `${pct(mean(boards, (x) => (x.risky === 0 ? 1 : 0))).padStart(16)}` +
+        `${pct(mean(boards, (x) => (x.run.cleared ? 1 : 0))).padStart(9)}` +
+        `${mean(boards, (x) => x.run.hpLost)
           .toFixed(2)
           .padStart(9)}` +
         (boards.some((x) => x.run.rescueDamage) ? '   SOLVER CALLED A HARMFUL CELL FREE' : '') +
