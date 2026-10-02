@@ -62,4 +62,14 @@ describe('the focus, when an overlay closes', () => {
     expect(document.querySelector('.picker-card')).toBeNull();
     expect(document.activeElement).toBe(tile);
   });
+
+  it('goes back to the button that opened the sound check, which builds its own window', () => {
+    app.showSettings(() => app.showTypes());
+    const opener = button('Sound check');
+    press(opener);
+    expect(document.querySelector('.overlay.picker')).not.toBeNull();
+    button('Close (Esc)').click();
+    expect(document.querySelector('.overlay.picker')).toBeNull();
+    expect(document.activeElement).toBe(opener);
+  });
 });

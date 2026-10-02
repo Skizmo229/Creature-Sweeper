@@ -314,6 +314,8 @@ export function openSoundCheck(ctx: ScreenContext): void {
  */
 class SoundCheck {
   private readonly overlay: HTMLElement;
+  /** Take the window away and hand the focus back to what opened it (`windowShell`). */
+  private readonly remove: () => void;
   private readonly assignBtn = el('button', 'primary small', 'Assign key');
   private readonly clearBtn = el('button', 'ghost small', 'Clear keys');
   private readonly status = el('span', 'soundcheck-status');
@@ -336,8 +338,9 @@ class SoundCheck {
   constructor(private readonly ctx: ScreenContext) {
     load(ctx.settings);
     // Not `settingsWindow`, whose Escape closes at once: this one's steps back first (`back`).
-    const { overlay, card, close } = windowShell('Sound check');
+    const { overlay, card, close, remove } = windowShell('Sound check');
     this.overlay = overlay;
+    this.remove = remove;
     const tools = el('div', 'soundcheck-tools');
     this.status.setAttribute('aria-live', 'polite');
     const loudness = el('div', 'soundcheck-volume');
@@ -461,7 +464,7 @@ class SoundCheck {
   }
 
   private dismiss(): void {
-    this.overlay.remove();
+    this.remove();
     window.removeEventListener('keydown', this.onKey, true);
     window.removeEventListener('keyup', this.onKeyUp, true);
   }

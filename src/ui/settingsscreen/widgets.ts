@@ -121,12 +121,10 @@ export function settingsWindow(
   title: string,
   cardClass = '',
 ): { card: HTMLElement; close: HTMLElement; dismiss: () => void } {
-  const { overlay, card, close } = windowShell(title, cardClass);
-  const giveFocusBack = keepFocus();
+  const { overlay, card, close, remove } = windowShell(title, cardClass);
   const dismiss = (): void => {
-    overlay.remove();
+    remove();
     window.removeEventListener('keydown', onKey, true);
-    giveFocusBack();
   };
   const onKey = (e: KeyboardEvent): void => {
     if (!overlay.isConnected) {
@@ -153,12 +151,13 @@ export function settingsWindow(
 /**
  * A window's overlay and its card, in the picker's clothes: a title bar with a close button,
  * handed back to be wired and filled. `settingsWindow` wires one; the sound check, whose Escape
- * steps back before it closes, wires its own.
+ * steps back before it closes, wires its own. It notes where the focus is as it opens, and
+ * `remove` takes the window away and hands the focus back, so no window closes without it.
  */
 export function windowShell(
   title: string,
   cardClass = '',
-): { overlay: HTMLElement; card: HTMLElement; close: HTMLElement } {
+): { overlay: HTMLElement; card: HTMLElement; close: HTMLElement; remove: () => void } {
   const overlay = el('div', 'overlay picker');
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
@@ -169,7 +168,15 @@ export function windowShell(
   head.append(el('h2', undefined, title), close);
   card.append(head);
   overlay.append(card);
-  return { overlay, card, close };
+  const giveFocusBack = keepFocus();
+  let removed = false;
+  const remove = (): void => {
+    if (removed) return;
+    removed = true;
+    overlay.remove();
+    giveFocusBack();
+  };
+  return { overlay, card, close, remove };
 }
 
 /** A run of a picker's options, shown under its heading if it has one. */
