@@ -340,6 +340,17 @@ double EXP. Anything pricing a spell must ask `Game.spellCost`, not `SPELLS[id].
 only ever adds, so the four facts hold; `config.ts` refuses a multiplier below 1. Measured, it
 barely moves difficulty; the lever if it should cast more is `relief`.
 
+Tuned with the honest player from `sim:spells`, 40 seeds a board (21 September 2026). At NORMAL's
+own density the deeper lock barely registered on boards 1 to 5, and the player cast Exercise once
+or twice a board, spending a tenth of its mana. Two points denser, with the full lock from board 4,
+gives 0.1 forced guesses rising to 5.7 spell-less, and clears 100% falling to 85% casting Exercise
+at each forced guess, a mean of 96.6% over the ten against NORMAL's 98.8% (spell-less, the same
+player). The double EXP moved very little: a player who also farms it, taking every named creature
+at or one past its level on a charge whenever the price is back at 30, casts about five times a
+board rather than two and clears the same share, because the cheap casts are rationed by level-ups
+and a five-tier board has four. The spell earns its clear rate by making forced guesses
+survivable, as on ORACLE and DUNGEON; the EXP is what makes casting it feel good.
+
 ## SUDOKU
 
 9x9, tiers 0 to 8 as the nine digits, so every row, column and box holds exactly one empty cell

@@ -538,33 +538,14 @@ blurb = """\
 # ladder is about.
 size = [[30, 16], [30, 16], [30, 16], [30, 16], [30, 16], [32, 17], [34, 18], [36, 19], [38, 20], [40, 20]]
 tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
-# Measured with the honest player from `sim:spells`, 40 seeds a board.
-# At NORMAL's own density the deeper lock barely registered on boards
-# 1-5 and the player cast Exercise once or twice a board, spending a
-# tenth of its mana - nothing for the spell to do. Two points denser,
-# with the full lock from board 4, gives 0.1 forced guesses rising to
-# 5.7 spell-less, and clears 100% falling to 85% casting Exercise at
-# each forced guess - mean 96.6% over the ten against NORMAL's 98.8%
-# (spell-less, same player). "A little harder than NORMAL" was the
-# brief, and that is what this is.
-#
-# What the measurement said about the double EXP, which is worth
-# knowing before tuning on it: very little. A player who also farms it
-# - takes every named creature at or one past its level on a charge
-# whenever the price is back at 30 - casts about five times a board
-# rather than two and clears the same share. The cheap casts are rationed
-# by level-ups, and a five-tier board has four of them. The spell earns
-# its clear rate by making forced guesses survivable, as it does on
-# ORACLE and DUNGEON; the EXP is what makes casting it feel good.
+# The lock, deeper than NORMAL's 2-3, is the dial the mode is built on: a locked gate holds your
+# level down, so the fight one tier up, the one Exercise makes free, comes round often, and a kill
+# on a borrowed level pays double, so a gate can be reached before its tier is cleared. With the
+# full lock (4 on five tiers, every threshold a C_k gate) from board 4 and two points more density,
+# it is the brief, "a little harder than NORMAL" (the honest player, 40 seeds a board,
+# 21 September 2026; docs/modes.md, WORKOUT).
 density = [0.226, 0.233, 0.24, 0.247, 0.254, 0.261, 0.268, 0.276, 0.283, 0.29]
 hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
-# Deeper than NORMAL's 2-3, and this is the dial the mode is built on.
-# A locked gate is "kill every creature at or below this tier", so it
-# holds your level down, and a level held down is what makes the fight
-# one tier up come round often - the exact fight Exercise makes free.
-# Double EXP is the way over the wall: a kill made on a borrowed level
-# pays twice, so a gate can be reached before its tier is cleared.
-# 4 is the most a five-tier board has: every threshold a C_k gate.
 lock = [3, 3, 3, 4, 4, 4, 4, 4, 4, 4]
 alpha0 = [0.3, 0.291, 0.282, 0.273, 0.264, 0.256, 0.247, 0.238, 0.229, 0.22]
 spells = ["exercise"]
