@@ -125,10 +125,10 @@ const PACK_ATTEMPTS = 60;
  * The most creatures a pack board may be asked for, as a share of the cells
  * they may stand on — where a random lay-down stops landing the quota
  * reliably (measured in the design reference). The tuned ladder sits well
- * under it — see `ladders.py` — because what limits this mode is where a board
- * stops being a puzzle, not the packing. A hand-edited schedule past it fails
- * at the config boundary with the arithmetic in the message, rather than as an
- * occasional seed that cannot be placed.
+ * under it — see `design/ladder_types.toml` — because what limits this mode is
+ * where a board stops being a puzzle, not the packing. A hand-edited schedule
+ * past it fails at the config boundary with the arithmetic in the message,
+ * rather than as an occasional seed that cannot be placed.
  */
 export const PACK_MAX_DENSITY = 0.36;
 

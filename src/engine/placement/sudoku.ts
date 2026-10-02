@@ -424,7 +424,7 @@ function generateSudokuBoard(
   }
   throw new Error(
     `sudoku: no guess-free board with ${givens} givens in ${SUDOKU_ATTEMPTS} attempts — ` +
-      `the givens schedule in ladders.py is below what the propagator can carry`,
+      `the givens schedule in design/ladder_types.toml is below what the propagator can carry`,
   );
 }
 
