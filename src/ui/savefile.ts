@@ -34,7 +34,7 @@ interface Envelope {
   format: typeof FORMAT;
   version: 1;
   exported: string;
-  /** The game's version that wrote the code, from 0.10.0 on (decision 0080); absent before. */
+  /** The game's version that wrote the code, from 0.9.1 on (decision 0080); absent before. */
   game?: string;
   progress: unknown;
   settings: unknown;

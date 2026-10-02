@@ -1,8 +1,9 @@
 /**
  * One lesson being taken (docs/teaching-plan.md, section 5.3): its board, which step is up, what the
  * tutor points at for it, and which clicks the school lets through. Headless, so
- * `test/school.test.ts` takes every lesson through it; the school screen draws it and hands it the
- * player's actions. It never acts on the board itself.
+ * `test/school.test.ts` takes every lesson through it; `teaching.ts` holds the one being taken and
+ * hands it the player's actions, and the game screen draws its board. It never acts on the board
+ * itself.
  *
  * On a lesson board a click that no trick has proven is refused, with the reason, rather than
  * fought, except where guessing is the lesson: a lesson that derails into a death teaches the

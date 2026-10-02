@@ -575,7 +575,7 @@ export class BoardView implements InputHost {
     return this.hoveredCellValue;
   }
 
-  /** Current cell size in CSS pixels, for the zoom readout. */
+  /** Current cell size in CSS pixels, for the dev handle and the tests. */
   get cellSize(): number {
     return this.cellPx;
   }

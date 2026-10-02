@@ -264,7 +264,7 @@ export interface StatsRow {
   hints: number;
   hpLost: number;
   seconds: number;
-  /** "5:2, time:1", the deaths by what dealt them. */
+  /** "5:2 time:1", the deaths by what dealt them. */
   deaths: string;
 }
 

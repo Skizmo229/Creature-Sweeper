@@ -55,7 +55,7 @@ export interface SchoolLesson {
 
 const rule = (trick: TrickId): string => TRICK_TEXT[trick].rule;
 
-/** Pencil mode, and how to reach it, said the same way wherever a lesson asks for it. */
+/** How to mark a cell, said the same way wherever a lesson asks for it. */
 const HOW_TO_MARK = 'right-click it, or pick its LV button and click it';
 
 export const LESSONS: readonly SchoolLesson[] = [

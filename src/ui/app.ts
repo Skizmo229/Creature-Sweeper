@@ -207,8 +207,7 @@ export class App {
   /**
    * Whether a clear on the current settings would go in the record books, which the ladder list
    * says. Presentation never counts against it; only the gameplay dials do, and only in one
-   * direction (decision 0014). A board that has ended is judged by its own dials instead, the ones
-   * it was dealt with, because the settings can be changed while it is being played.
+   * direction (decision 0014).
    */
   private get recordsCount(): boolean {
     return isAtLeastAsHard(this.settings.gameplay);

@@ -93,6 +93,8 @@ export class BoardEnding {
     const won = game.status === 'won';
     const perfect = won && game.hp === game.maxHp;
     const type = ladders.find((t) => t.id === typeId)!;
+    // Judged by the board's own dials, the ones it was dealt with, not by the settings, which can
+    // be changed while it is being played.
     const recorded = isAtLeastAsHard(game.settings);
     // Read before the clear is written down, after which every clear would look like a repeat.
     const firstClear = won && !progress.boardRecord(ladders, typeId, boardIndex).cleared;

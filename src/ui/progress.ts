@@ -12,6 +12,9 @@
 import { type Ladders, boardFingerprint, ladderFingerprint } from '../engine/config.js';
 import { PROGRESS_KEY as KEY } from './savefile.js';
 
+/** The tuned boards of a ladder the table does not name: the ten every ladder has. */
+const TUNED_BOARDS = 10;
+
 export interface BoardRecord {
   cleared: boolean;
   /** Cleared without losing a single point of HP. */
@@ -33,7 +36,7 @@ export interface BoardRecord {
 export interface TypeRecord {
   /** Highest board index unlocked; you always start with board 1. */
   highestBoard: number;
-  /** Board 10 beaten — the type is cleared and unlocks what it gates. */
+  /** The last tuned board beaten: the type is cleared and unlocks what it gates. */
   cleared: boolean;
 }
 
@@ -292,7 +295,7 @@ export class Progress {
   }
 
   /**
-   * Full Run opens once the type's board 10 is cleared.
+   * Full Run opens once the type's last tuned board is cleared.
    *
    * Deliberately the type's own clear and nothing else: a run is a victory lap
    * down a ladder you have already walked, so it can never be the way a player
@@ -336,7 +339,7 @@ export class Progress {
   }
 
   /**
-   * Scaling boards open on the same condition a Full Run does: board 10.
+   * Scaling boards open on the same condition a Full Run does: the last tuned board.
    *
    * Same reasoning too — the continuation is the ladder carried on past its
    * end, so meeting it before finishing the ladder would be meeting the
@@ -379,7 +382,7 @@ export class Progress {
   /**
    * Distinct boards cleared, anywhere in the game or on the one ladder named.
    *
-   * Every board counts once, including the scaling boards past 10 — they are
+   * Every board counts once, including the scaling boards past the tuned ones — they are
    * boards you cleared, and a player who would rather go deep on one ladder
    * than wide across several should get there too.
    */
@@ -427,7 +430,7 @@ export class Progress {
     opts: { perfect: boolean; seconds: number; hints?: number },
   ): { unlockedBoard: number | null; clearedType: boolean } {
     const type = ladders.find((t) => t.id === typeId);
-    const lastBoard = type?.boards.length ?? 10;
+    const lastBoard = type?.boards.length ?? TUNED_BOARDS;
 
     const key = boardKey(typeId, board);
     const prev = this.boardRecord(ladders, typeId, board);
