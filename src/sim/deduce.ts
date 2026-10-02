@@ -521,15 +521,29 @@ export function augurTarget(game: Game, constraints: Constraint[], guess: Cell):
  * upper bound on what perfect aiming could be worth, so a weak result cannot be blamed on the aim.
  */
 export function augurOracle(game: Game, guess: Cell): Cell | null {
+  return firstThatUnlocks(game, guess, 'augur', hiddenTiers);
+}
+
+/**
+ * The first open cell near the guess, in grid order, with no answer of this spell on it yet and a
+ * covered unmarked neighbour, where writing the spell's true answer onto it makes something
+ * provable. Each answer is taken back after it is tried; null when none unlocks anything.
+ */
+function firstThatUnlocks<K extends 'census' | 'augur'>(
+  game: Game,
+  guess: Cell,
+  spell: K,
+  answer: (ring: Cell[]) => NonNullable<Cell[K]>,
+): Cell | null {
   const near = twoSteps(game, guess);
   for (const cell of game.grid.flat()) {
-    if (!cell.present || !cell.open || cell.augur !== null || !near.has(cell)) continue;
+    if (!cell.present || !cell.open || cell[spell] !== null || !near.has(cell)) continue;
     const ns = game.neighboursOf(cell);
     if (!ns.some((n) => !n.open && n.mark === 0)) continue;
 
-    cell.augur = hiddenTiers(ns);
+    cell[spell] = answer(ns);
     const unlocked = safeToOpen(game, allConstraints(game)).some((c) => !c.open);
-    cell.augur = null;
+    cell[spell] = null;
     if (unlocked) return cell;
   }
   return null;
@@ -558,16 +572,5 @@ function twoSteps(game: Game, cell: Cell): Set<Cell> {
  * result cannot be blamed on the harness aiming badly.
  */
 export function censusOracle(game: Game, guess: Cell): Cell | null {
-  const near = twoSteps(game, guess);
-  for (const cell of game.grid.flat()) {
-    if (!cell.present || !cell.open || cell.census !== null || !near.has(cell)) continue;
-    const ns = game.neighboursOf(cell);
-    if (!ns.some((n) => !n.open && n.mark === 0)) continue;
-
-    cell.census = ns.filter((n) => n.tier > 0).length;
-    const unlocked = safeToOpen(game, allConstraints(game)).some((c) => !c.open);
-    cell.census = null;
-    if (unlocked) return cell;
-  }
-  return null;
+  return firstThatUnlocks(game, guess, 'census', (ring) => ring.filter((n) => n.tier > 0).length);
 }
