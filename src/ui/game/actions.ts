@@ -72,9 +72,15 @@ export function nextMark(game: Game, mark: number, rule: RightClick): number {
 export class BoardActions {
   constructor(private readonly host: BoardActionsHost) {}
 
-  onCellPrimary(x: number, y: number): void {
+  /** The game on screen while it is being played; null before it is dealt and after it ends. */
+  private playing(): Game | null {
     const game = this.host.game();
-    if (!game || game.status !== 'playing') return;
+    return game?.status === 'playing' ? game : null;
+  }
+
+  onCellPrimary(x: number, y: number): void {
+    const game = this.playing();
+    if (!game) return;
     // A pending spell claims the click before anything else does.
     if (this.host.mode.pendingSpell) {
       const id = this.host.mode.pendingSpell;
@@ -97,30 +103,34 @@ export class BoardActions {
     if (this.host.mode.notesMode) return;
     // A click on an open cell chords, when the player has asked: its ring swept at a sweep's price.
     if (game.cellAt(x, y)?.open && this.host.settings.presentation.chord) {
-      this.chord(x, y);
+      this.sweepMove({ kind: 'chord', x, y, useMarks: false });
       return;
     }
     if (this.host.refuse(x, y)) return;
     this.host.apply(this.host.move({ kind: 'open', x, y }));
   }
 
-  /** Sweep one open cell's ring, as a sweep of the board would be sounded and refused. */
-  private chord(x: number, y: number): void {
-    const game = this.host.game();
-    if (!game || game.status !== 'playing') return;
+  /**
+   * A sweep of the board, or a chord: one open cell's ring swept at a sweep's price. The engine
+   * refuses either while the dial has Sweep closed, so it is refused here first, with its sound,
+   * and neither the keyboard nor a chord can get past a gate the button is showing.
+   */
+  private sweepMove(move: Extract<Move, { kind: 'sweep' | 'chord' }>): void {
+    const game = this.playing();
+    if (!game) return;
     if (!game.sweepAvailable) {
       this.host.sfx.play('blocked');
       return;
     }
-    const events = this.host.move({ kind: 'chord', x, y, useMarks: false });
+    const events = this.host.move(move);
     if (events.length > 0) this.host.sfx.play('sweep');
     this.host.apply(events);
   }
 
   /** Untargeted spells fire at once; targeted ones arm and wait for a cell. */
   pickSpell(id: SpellId): void {
-    const game = this.host.game();
-    if (!game || game.status !== 'playing' || !game.canCast(id)) return;
+    const game = this.playing();
+    if (!game || !game.canCast(id)) return;
     if (!SPELLS[id].targeted) {
       this.host.mode.cancelSpell();
       this.host.apply(this.host.move({ kind: 'cast', id }));
@@ -142,8 +152,8 @@ export class BoardActions {
    * nothing, and a clear, mark the cell with its own mark, which is how the engine takes one off.
    */
   cycleMark(x: number, y: number): void {
-    const game = this.host.game();
-    if (!game || game.status !== 'playing') return;
+    const game = this.playing();
+    if (!game) return;
     const cell = game.cellAt(x, y);
     if (!cell || cell.open) return;
     const next = nextMark(game, cell.mark, this.host.settings.presentation.rightClick);
@@ -181,23 +191,12 @@ export class BoardActions {
   }
 
   doSweep(useMarks: boolean): void {
-    const game = this.host.game();
-    if (!game || game.status !== 'playing') return;
-    // The engine refuses a sweep the dial has closed, so the keyboard cannot get past a gate the
-    // button is showing.
-    if (!game.sweepAvailable) {
-      this.host.sfx.play('blocked');
-      return;
-    }
-    const events = this.host.move({ kind: 'sweep', useMarks });
-    if (events.length > 0) this.host.sfx.play('sweep');
-    this.host.apply(events);
+    this.sweepMove({ kind: 'sweep', useMarks });
   }
 
   /** PATROL's Wait. The engine refuses it anywhere else, so the key can ask on every board. */
   doWait(): void {
-    const game = this.host.game();
-    if (!game || game.status !== 'playing' || !game.patrols) return;
+    if (!this.playing()?.patrols) return;
     // Charged before the move, which the engine never refuses here, so the game kept after it
     // (the keeper writes the clock down on every move) already holds the second.
     this.host.addSeconds(WAIT_SECONDS);
