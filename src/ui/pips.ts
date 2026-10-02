@@ -1,7 +1,7 @@
 /**
  * The drawn pip shapes: what each is called, and the path each traces. Which shape a ladder's
  * creatures wear is its look's (`looks.ts`); the pips' colour is the tier's (`tiercolors.ts`);
- * a symbol from the pip font is drawn by `theme.ts` instead.
+ * a symbol from the pip font is drawn by `creature.ts` instead.
  *
  * A shape is a tracer: it adds its outline to the path in hand, centred on (cx, cy) and reaching
  * r from it. Whatever is drawn the same way round is filled; a hole is cut the other way round, so

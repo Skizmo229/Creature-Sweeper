@@ -4,7 +4,7 @@
  * round every pip.
  *
  * Global, not per ladder: pip SHAPE carries ladder identity, pip COLOUR carries tier identity, so
- * a tier 4 looks the same on every board (`theme.ts`). The player can choose one of the presets
+ * a tier 4 looks the same on every board (`creature.ts`). The player can choose one of the presets
  * below or mix their own for each tier (decision 0053). DOM-free, so the tests can measure them.
  */
 

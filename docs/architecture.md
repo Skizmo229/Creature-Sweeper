@@ -100,7 +100,8 @@ src/ui/         the game in the browser
   looks.ts        one record per ladder: palette, face, sound pack, clear effect (DOM-free)
   shapelooks.ts   the shape ladders' records, spread into looks.ts's table; apart only for size
   looktypes.ts    what a look is made of: the pip shapes, the palette, sound packs, clear effects
-  theme.ts        the global colours, the picker's names, creature glyphs
+  theme.ts        the global colours and the picker's names
+  creature.ts     drawing a creature: its pips as a die face, its tier as a digit, or both
   pips.ts         the drawn pip shapes: their names, and the path each traces
   tiercolors.ts   the colour of each creature tier and the halo of tiers 6 to 9, and the presets
                   (DOM-free)

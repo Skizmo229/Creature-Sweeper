@@ -10,14 +10,8 @@ import { placementRule } from '../../engine/placement/registry.js';
 import type { Cell } from '../../engine/types.js';
 import { hexPoints, hexRadius } from '../hexgeom.js';
 import type { BeatenLook, CreatureGlyph } from '../presentation.js';
-import {
-  AUGUR_COLOR,
-  CENSUS_COLOR,
-  GIVEN_COLOR,
-  MARK_OUTLINE,
-  drawCreature,
-  noteColor,
-} from '../theme.js';
+import { drawCreature } from '../creature.js';
+import { AUGUR_COLOR, CENSUS_COLOR, GIVEN_COLOR, MARK_OUTLINE, noteColor } from '../theme.js';
 import type { TypeTheme } from '../looktypes.js';
 import { TIER_COUNT, type TierPalette } from '../tiercolors.js';
 import type { GameFont } from '../typefaces.js';

@@ -1,7 +1,7 @@
 /**
  * The bundled faces, and the kind of face each is; which ladder wears which is in `looks.ts`.
  *
- * Kept apart from `theme.ts` because that file draws creatures on a canvas,
+ * Kept apart from `creature.ts` because that file draws creatures on a canvas,
  * and the test pass compiles with no DOM at all — the same reason `preview.ts`
  * builds boards and renders nothing. Everything here is data, so
  * `test/fonts.test.ts` can hold the table, the CSS that loads it, the files

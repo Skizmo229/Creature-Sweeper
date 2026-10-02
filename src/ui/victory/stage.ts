@@ -3,7 +3,7 @@
  * on, and the pre-rendered sprite atlas it copies them from.
  */
 
-import { type CreatureLook, drawCreature } from '../theme.js';
+import { type CreatureLook, drawCreature } from '../creature.js';
 import type { TypeTheme } from '../looktypes.js';
 import type { TierPalette } from '../tiercolors.js';
 
