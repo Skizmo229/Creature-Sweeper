@@ -428,7 +428,8 @@ TYPES = load_types()
 # replaying the last one already gives you.
 
 CEILINGS = dict(
-    # 2048 cells. The largest board the tuned ladders already reach.
+    # 2048 cells: HUGE x BLIND's board 10, the largest box of the rectangular ladders. A ladder
+    # whose own box is bigger or a different shape sets its own (STAR's board 10 is 49x47).
     max_w=64, max_h=32,
     # Past this a board stops being a puzzle and starts being a minefield;
     # search boards cap lower because they have no level economy to lean on.
@@ -446,7 +447,7 @@ CEILINGS = dict(
     givens_floor=12,
     # How far the SCHEDULE is walked, in board-steps. Much larger than the
     # number of boards it yields, because a step that rounds to the same board
-    # is skipped rather than emitted - EXTREME grows 0.444 cells a board, so it
+    # is skipped rather than emitted - EXTREME grows 0.444 columns a board, so it
     # takes two or three steps to earn one board.
     horizon=400,
     # How many boards the continuation may emit. A ceiling on content, not on

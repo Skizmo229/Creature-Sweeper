@@ -203,7 +203,7 @@ class TheContinuation(unittest.TestCase):
 
     def test_stays_inside_the_ceilings(self):
         # A ladder may set its own box (a square one for a round outline), never a bigger board
-        # than the global one, unless its own tuned ladder already is (CARD's).
+        # than the global one, unless its own tuned ladder already is (STAR's).
         for t in BUILT:
             over = next(x for x in L.TYPES if x["id"] == t["id"]).get("ceiling", {})
             last = t["boards"][-1]
