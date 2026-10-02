@@ -545,7 +545,10 @@ export class BoardView implements InputHost {
     if (hovered && game.status === 'playing' && this.display.highlight) {
       const lands = (cell: Cell): boolean =>
         this.cb.lands ? this.cb.lands(cell) : game.inReach(cell);
-      drawHighlight(p, hovered, this.display.highlight, this.display.highlightColor, lands, {
+      drawHighlight(p, hovered, {
+        style: this.display.highlight,
+        color: this.display.highlightColor,
+        lands,
         width: this.display.highlightWidth,
       });
     }
