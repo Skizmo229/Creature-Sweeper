@@ -175,6 +175,7 @@ const coveredUnmarked = (c: Cell): boolean => !c.open && c.mark === 0;
 
 // ------------------------------------------------------------------ grade 0
 
+// A number at or below the level: nothing under it can be stronger, so its whole ring is safe.
 const rawRing: Trick = {
   grade: 0,
   apply(v, m) {
@@ -185,6 +186,7 @@ const rawRing: Trick = {
   },
 };
 
+// A creature marked at or below the level is a free kill.
 const namedKill: Trick = {
   grade: 0,
   apply(v, m) {
@@ -213,6 +215,7 @@ const metPartner: Trick = {
   },
 };
 
+// A dungeon's hallways, doorways and pockets are empty ground (`scaffold.ts`).
 const corridor: Trick = {
   grade: 0,
   apply(v, m) {
@@ -232,6 +235,7 @@ const sprinkles: Trick = {
 
 // ------------------------------------------------------------------ grade 1
 
+// A number less what is on show around it: at or below the level, its whole ring is safe.
 const residualRing: Trick = {
   grade: 1,
   apply(v, m) {
@@ -242,6 +246,7 @@ const residualRing: Trick = {
   },
 };
 
+// A number with one covered neighbour left has named it: it holds exactly what is hidden.
 const lastCell: Trick = {
   grade: 1,
   apply(v, m) {
@@ -252,8 +257,6 @@ const lastCell: Trick = {
   },
 };
 
-// A tier whose creatures are all dead, or all marked, is hiding nowhere; when nothing above the
-// level is hiding at all, every covered cell is free.
 // A Census says how many creatures share the remainder; each is worth at least 1, so the
 // biggest is the remainder less one for every other. Sweep proves the same.
 const censusRing: Trick = {
@@ -293,6 +296,8 @@ const augurCap: Trick = {
   },
 };
 
+// A tier whose creatures are all dead, or all marked, is hiding nowhere; when nothing above the
+// level is hiding at all, every covered cell is free.
 const counters: Trick = {
   grade: 1,
   apply(v, m) {
@@ -392,6 +397,7 @@ const overlap: Trick = {
   },
 };
 
+// One number on its own: only the candidates of each cell that can take part in its sum.
 const bounds: Trick = {
   grade: 2,
   apply(v, m) {
@@ -516,6 +522,7 @@ const whatIf: Trick = {
   },
 };
 
+// What the rule proves empty outright: beside a line's middle, and beyond its ends' reach.
 const lineReach: Trick = {
   grade: 3,
   apply(v, m) {
