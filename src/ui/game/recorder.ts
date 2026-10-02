@@ -31,6 +31,17 @@ export interface RecorderHost {
   play(move: Move): GameEvent[];
 }
 
+type Battle = Extract<GameEvent, { type: 'battle' }>;
+
+/**
+ * The last fight in a move's events that cost HP: on a board the move lost, the blow that ended
+ * it, since a click resolves at most one fight and a sweep stops the moment HP runs out.
+ */
+export function fatalBlow(events: readonly GameEvent[]): Battle | undefined {
+  const fights = events.filter((e): e is Battle => e.type === 'battle' && e.damage > 0);
+  return fights[fights.length - 1];
+}
+
 type Counts = Pick<Attempt, 'opens' | 'guesses' | 'sweeps' | 'casts'>;
 
 /**
@@ -78,9 +89,8 @@ export class BoardRecorder {
       this.counts.casts++;
     }
     if (events.some((e) => e.type === 'lost')) {
-      const fights = events.filter((e) => e.type === 'battle' && e.damage > 0);
-      const last = fights[fights.length - 1];
-      if (last && last.type === 'battle') this.fatalTier = last.tier;
+      const blow = fatalBlow(events);
+      if (blow) this.fatalTier = blow.tier;
     }
     return events;
   }

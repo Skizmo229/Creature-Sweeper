@@ -18,6 +18,7 @@ import type { Sfx } from '../sfx.js';
 import { playVictory } from '../victory/play.js';
 import type { BoardClock } from './clock.js';
 import { buildBoardOutcome, buildRunOutcome } from './outcome.js';
+import { fatalBlow } from './recorder.js';
 import type { Tutor } from './tutor.js';
 
 /** What an ending reads and calls on `App`. Functions, so each read sees the board as it is now. */
@@ -62,18 +63,11 @@ export class BoardEnding {
     this.fatalBattle = null;
   }
 
-  /**
-   * Keep the blow that ended a lost board, before the events go out of scope. The last costly
-   * fight in the batch is the fatal one: a click resolves at most one fight, and a sweep stops the
-   * moment HP runs out.
-   */
+  /** Keep the blow that ended a lost board (`fatalBlow`), before the events go out of scope. */
   noteFatal(game: Game, events: GameEvent[]): void {
     if (game.status !== 'lost') return;
-    const fights = events.filter((ev) => ev.type === 'battle' && ev.damage > 0);
-    const last = fights[fights.length - 1];
-    if (last && last.type === 'battle') {
-      this.fatalBattle = { tier: last.tier, damage: last.damage };
-    }
+    const blow = fatalBlow(events);
+    if (blow) this.fatalBattle = { tier: blow.tier, damage: blow.damage };
   }
 
   /** Cancel a board-clear effect still in flight; a screen rebuild must call this. */
