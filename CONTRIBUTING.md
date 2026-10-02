@@ -120,5 +120,8 @@ format and brings its migration. Before 1.0.0 the 0.9.x releases were the play-t
 numbered 0.9.N whatever a cut added (decision 0083).
 
 To cut one: `npm version <x.y.z> --no-git-tag-version` (it raises the lockfile too), an entry at the
-top of `CHANGELOG.md`, `npm run check`, one commit, and `npm run package` for the itch.io zip,
-which is named after the version. The maintainer tags the merged commit `v<x.y.z>`.
+top of `CHANGELOG.md`, `npm run check`, one commit, and `npm run package` for the itch.io zip
+and the one-file offline page, both named after the version. The maintainer tags the merged
+commit `v<x.y.z>`, uploads the zip to itch.io, and makes a GitHub release on the tag with both
+files attached as `creature-sweeper-web-<x.y.z>.zip` and `creature-sweeper-offline-<x.y.z>.html`
+(decision 0089).

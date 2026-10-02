@@ -9,9 +9,11 @@ software (see [Licence](#licence)).
 ## Play it
 
 Creature Sweeper is free to play in the browser on
-[itch.io](https://skizmo.itch.io/creature-sweeper). Progress is saved in the browser; **Back up /
-restore save**, on the list of game types, copies the whole save as a code to keep or to carry to
-another browser.
+[itch.io](https://skizmo.itch.io/creature-sweeper). To play offline, download
+`creature-sweeper-offline-<version>.html` from the
+[releases](https://github.com/Skizmo229/Creature-Sweeper/releases) and open it in a browser.
+Progress is saved in the browser, apart for each place you play; **Back up / restore save**, on
+the list of game types, copies the whole save as a code to keep or to carry to another.
 
 Three rules:
 
@@ -148,8 +150,9 @@ creature_sweeper/
 ├─ test/          vitest; helpers.ts holds the shared fixtures; ui/ the tests that run the game
 │                 in a browser environment (happy-dom); golden/ the simulator fingerprints
 ├─ scripts/       golden.mjs (behaviour-preservation harness), package.mjs (the itch.io zip),
-│                 playtest.cmd (double-click: build, zip and play), pip_symbols.py (the icon
-│                 symbols' fonts)
+│                 offline.mjs (the one-file offline page), release-name.mjs (their names),
+│                 playtest.cmd (double-click: build, package and play), pip_symbols.py (the
+│                 icon symbols' fonts)
 ├─ public/        served as-is: FONT-LICENSES.txt
 ├─ design/
 │  ├─ ladder_types.toml     each ladder's schedules            <- edit this to tune
@@ -188,7 +191,7 @@ npm run sim:human -- 40 normal     # what each board demands of a person, grade 
 npm run sim:sudoku -- 8 --sweep    # SUDOKU build cost and how tight each board plays
 npm run telemetry -- CODE # a player's play statistics (the CST1: code), one row a board
 npm run build             # production build (relative paths, for itch.io)
-npm run package           # build and zip dist/ into release/
+npm run package           # build, then write the itch.io zip and the offline page to release/
 npm run playtest          # package, then open the build in the browser (or double-click
                           # scripts/playtest.cmd)
 ```
@@ -247,7 +250,8 @@ the generated `design/reference.html` and the ladder data under `design/data/`) 
 **Fonts** under `src/ui/fonts/` and `src/ui/pipfont/` are not ours: twenty-eight faces from Google
 Fonts, and the four Noto faces the creature-icon symbols are cut from, each under the **SIL Open
 Font License 1.1**, with every copyright notice and the licence in
-[`public/FONT-LICENSES.txt`](public/FONT-LICENSES.txt), which ships beside them in every build.
+[`public/FONT-LICENSES.txt`](public/FONT-LICENSES.txt), which ships beside them in every build
+(and in a comment at the top of the offline page).
 
 Neither licence covers the third-party material described above, none of which is in this
 repository. Creature Sweeper is an independent implementation, not affiliated with or endorsed by

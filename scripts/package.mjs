@@ -6,17 +6,15 @@
  * needs no dependency and behaves the same on Windows, macOS and Linux —
  * `Compress-Archive`, `zip` and `tar -a` each exist on only some of those.
  *
- * Output: release/creature-sweeper-web-<version>-<date>-<commit>.zip, the version being
- * package.json's (decision 0068).
+ * Output: release/creature-sweeper-web-<version>-<date>-<commit>.zip (release-name.mjs).
  */
 
-import { execSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { deflateRawSync } from 'node:zlib';
+import { releasePath } from './release-name.mjs';
 
 const DIST = 'dist';
-const OUT_DIR = 'release';
 
 if (!existsSync(join(DIST, 'index.html'))) {
   console.error('dist/index.html not found — run `npm run build` first.');
@@ -106,27 +104,6 @@ end.writeUInt16LE(files.length, 10); // entries in all
 end.writeUInt32LE(centralSize, 12);
 end.writeUInt32LE(offset, 16); // where the central directory starts
 
-let commit = 'nogit';
-try {
-  commit = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
-    .toString()
-    .trim();
-  const dirty = execSync('git status --porcelain', { stdio: ['ignore', 'pipe', 'ignore'] })
-    .toString()
-    .trim();
-  if (dirty) commit += '-dirty';
-} catch {
-  /* not a git checkout; the date still identifies it */
-}
-
-// The local date, to agree with the timestamps inside the zip; `toISOString`
-// is the UTC date and names an evening's build after the following day.
-const two = (n) => String(n).padStart(2, '0');
-const stamp = `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
-
-const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
-
-mkdirSync(OUT_DIR, { recursive: true });
-const out = join(OUT_DIR, `creature-sweeper-web-${version}-${stamp}-${commit}.zip`);
+const out = releasePath('web', 'zip', now);
 writeFileSync(out, Buffer.concat([...locals, ...centrals, end]));
 console.log(`${out}  (${files.length} files, ${(statSync(out).size / 1024).toFixed(0)} KB)`);

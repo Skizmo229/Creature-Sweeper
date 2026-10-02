@@ -156,9 +156,10 @@ test/           vitest. A file directly in test/ is DOM-free and compiled by the
                 hand-built boards. test/ui/ runs in happy-dom: each file opens with its
                 environment line and imports setup.js, and drives the app through driver.ts.
                 test/golden/ holds the sim fingerprints.
-scripts/        golden.mjs (the golden harness), package.mjs (the itch.io zip), playtest.cmd
-                (double-click to build, zip and open the build in the browser), pip_symbols.py
-                (cuts the symbol faces in src/ui/pipfont/ from open fonts)
+scripts/        golden.mjs (the golden harness), package.mjs (the itch.io zip), offline.mjs
+                (the one-file offline page), release-name.mjs (both files' names), playtest.cmd
+                (double-click to build, package and open the build in the browser),
+                pip_symbols.py (cuts the symbol faces in src/ui/pipfont/ from open fonts)
 design/         ladder_types.toml (each ladder's schedules), ladders.py (the generator) and
                 test_ladders.py (its own tests, `npm run test:py`),
                 data/ (its output), and the design reference: page.template.html, built by
@@ -291,4 +292,5 @@ the console without clicking.
 
 The web build ships to itch.io: `base: './'` in `vite.config.ts` because itch serves from a
 per-upload subfolder, and `npm run package` zips `dist/` with `index.html` at the root and refuses
-a build with absolute paths.
+a build with absolute paths. The same command folds `dist/` into one offline page for the GitHub
+release, which plays from disk where the zip's module script cannot load (decision 0089).

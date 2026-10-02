@@ -20,7 +20,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "package": "vite build && node scripts/package.mjs",
+    "package": "vite build && node scripts/package.mjs && node scripts/offline.mjs",
     "playtest": "npm run package && vite preview --open",
     "test": "vitest run",
     "test:watch": "vitest",
