@@ -147,7 +147,7 @@ export function syncGameScreen(els: GameScreenElements, s: HudState): void {
 /** The HUD's readouts: HP, the level in its tier's colour, EXP, the next level, the run. */
 function syncReadouts(els: GameScreenElements, s: HudState): void {
   const { game } = s;
-  els.hud.hp!.textContent = `HP ${game.hp}`;
+  els.hud.hp.textContent = `HP ${game.hp}`;
   // The level number wears its tier's creature colour, the one encoding of a tier the whole game
   // shares; tiers past five carry the halo their pips do, or Level 6 reads as Level 1.
   const levelNum = el('span', 'hud-level-num', String(game.level));
@@ -156,14 +156,14 @@ function syncReadouts(els: GameScreenElements, s: HudState): void {
     levelNum.classList.add('gilded');
     levelNum.style.setProperty('--halo', s.tierColors.halo);
   }
-  els.hud.lv!.replaceChildren('Level ', levelNum);
+  els.hud.lv.replaceChildren('Level ', levelNum);
   // A standing Exercise is a level carried into the next fight, shown on the level until spent.
   if (game.exerciseCharge > 0) {
-    els.hud.lv!.append(el('span', 'hud-buff', ` +${game.exerciseCharge}`));
+    els.hud.lv.append(el('span', 'hud-buff', ` +${game.exerciseCharge}`));
   }
-  els.hud.ex!.textContent = `EXP ${game.ex}`;
-  els.hud.ne!.textContent = `Next Level ${game.progression.toNext()}`;
-  els.hud.hp!.classList.toggle('low', game.hp <= Math.max(1, game.maxHp * LOW_HP_FRACTION));
+  els.hud.ex.textContent = `EXP ${game.ex}`;
+  els.hud.ne.textContent = `Next Level ${game.progression.toNext()}`;
+  els.hud.hp.classList.toggle('low', game.hp <= Math.max(1, game.maxHp * LOW_HP_FRACTION));
   if (els.hud.run && s.run) {
     els.hud.run.textContent = `RUN${s.boardIndex}/${s.run.boardCount}`;
   }
@@ -245,7 +245,6 @@ export function syncClock(
   style: ClockStyle,
 ): void {
   const t = els.hud.t;
-  if (!t) return;
   t.hidden = style === 'hidden';
   t.textContent =
     left === null ? `TIME ${clockText(elapsed, style)}` : `TIME ${clockText(left, style)} LEFT`;

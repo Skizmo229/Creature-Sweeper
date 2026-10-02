@@ -43,12 +43,26 @@ export interface GameScreenActions {
   cancelSpell(): void;
 }
 
+/**
+ * The HUD's readouts, each a span `hud.ts` fills in, with `hud-` and its key as a class so each
+ * can reserve its own width. Mana only on a ladder with spells, the run's place only in a run.
+ */
+export interface HudReadouts {
+  hp: HTMLElement;
+  lv: HTMLElement;
+  ex: HTMLElement;
+  ne: HTMLElement;
+  mp: HTMLElement | null;
+  run: HTMLElement | null;
+  t: HTMLElement;
+}
+
 /** The elements the refresh writes into. */
 export interface GameScreenElements {
   root: HTMLElement;
   stage: HTMLElement;
   canvas: HTMLCanvasElement;
-  hud: Record<string, HTMLElement>;
+  hud: HudReadouts;
   counters: HTMLButtonElement[];
   emptyNoteBtn: HTMLButtonElement;
   notesBtn: HTMLButtonElement;
@@ -118,24 +132,23 @@ function buildHud(
   run: FullRun | null,
   a: GameScreenActions,
   pausable: boolean,
-): { hudEl: HTMLElement; hud: Record<string, HTMLElement> } {
+): { hudEl: HTMLElement; hud: HudReadouts } {
   const hudEl = el('div', 'hud');
-  const hud: Record<string, HTMLElement> = {};
-  const mk = (key: string, cls = '') => {
-    // The key rides along as a class so each readout can reserve its own width.
+  const readout = (key: keyof HudReadouts, cls = ''): HTMLElement => {
     const span = el('span', `hud-item hud-${key} ${cls}`.trim());
-    hud[key] = span;
     hudEl.append(span);
     return span;
   };
-  mk('hp');
-  mk('lv');
-  mk('ex');
-  mk('ne');
-  if (game.spells.length) mk('mp', 'mana');
-  // In a run, how far down the ladder you are is the one thing HP alone cannot tell you.
-  if (run) mk('run', 'run');
-  mk('t', 'right');
+  const hud: HudReadouts = {
+    hp: readout('hp'),
+    lv: readout('lv'),
+    ex: readout('ex'),
+    ne: readout('ne'),
+    mp: game.spells.length ? readout('mp', 'mana') : null,
+    // In a run, how far down the ladder you are is the one thing HP alone cannot tell you.
+    run: run ? readout('run', 'run') : null,
+    t: readout('t', 'right'),
+  };
   // Spelled out rather than a gear glyph: the font is a player setting (decision 0021).
   const gear = el('button', 'ghost small', 'Settings');
   gear.title = 'Settings. The board waits.';
