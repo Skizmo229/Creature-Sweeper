@@ -112,37 +112,62 @@ export function readBoard(game: Game, peek: boolean, options: ReadOptions = {}):
       continue;
     }
     if (!numberVisible(game, cell, peek)) continue;
-    let residual = cell.num;
-    let counted = 0;
-    const covered: Cell[] = [];
-    const ring = game.neighboursOf(cell);
-    // An Augur lists the marked creatures too: each believed mark takes its tier out of the list.
-    const tiers = augurNow(cell, ring);
-    for (const n of ring) {
-      if (n.open) {
-        residual -= n.tier;
-        if (n.tier > 0) counted++;
-      } else if (believed(n)) {
-        residual -= n.mark;
-        counted++;
-        const at = tiers?.indexOf(n.mark) ?? -1;
-        if (at >= 0) tiers!.splice(at, 1);
-      } else covered.push(n);
-    }
-    if (!covered.length) continue;
-    let creatures = cell.census === null ? null : cell.census - counted;
-    if (tiers) creatures = tiers.length;
-    if (shown) creatures = covered.filter((n) => n.tier > 0).length;
-    const ceiling = tiers ? (tiers[0] ?? 0) : null;
-    const c: Constraint = { cell, residual, unknown: covered, creatures, ceiling, tiers };
+    const c = readNumber(game, cell, believed, shown);
+    if (!c) continue;
     constraints.push(c);
-    for (const n of covered) {
+    for (const n of c.unknown) {
       const list = touching.get(n);
       if (list) list.push(c);
       else touching.set(n, [c]);
     }
   }
+  return { constraints, touching, unknown, marked, ...countHiding(game, marked, flags) };
+}
 
+/**
+ * One visible number, less what is on show around it and the marks believed; null when nothing
+ * around it is still covered. `shown` reads the count of creatures off a board that draws them.
+ */
+function readNumber(
+  game: Game,
+  cell: Cell,
+  believed: (cell: Cell) => boolean,
+  shown: boolean,
+): Constraint | null {
+  let residual = cell.num;
+  let counted = 0;
+  const covered: Cell[] = [];
+  const ring = game.neighboursOf(cell);
+  // An Augur lists the marked creatures too: each believed mark takes its tier out of the list.
+  const tiers = augurNow(cell, ring);
+  for (const n of ring) {
+    if (n.open) {
+      residual -= n.tier;
+      if (n.tier > 0) counted++;
+    } else if (believed(n)) {
+      residual -= n.mark;
+      counted++;
+      const at = tiers?.indexOf(n.mark) ?? -1;
+      if (at >= 0) tiers!.splice(at, 1);
+    } else covered.push(n);
+  }
+  if (!covered.length) return null;
+  let creatures = cell.census === null ? null : cell.census - counted;
+  if (tiers) creatures = tiers.length;
+  if (shown) creatures = covered.filter((n) => n.tier > 0).length;
+  const ceiling = tiers ? (tiers[0] ?? 0) : null;
+  return { cell, residual, unknown: covered, creatures, ceiling, tiers };
+}
+
+/**
+ * What the counters say is still hiding in the unknown cells: each tier's count, less the marks
+ * believed (`marked`), plus the marks read as unknown on a search board (`flags`).
+ */
+function countHiding(
+  game: Game,
+  marked: ReadonlyMap<Cell, number>,
+  flags: readonly number[],
+): Pick<Reading, 'hiding' | 'hidingMask' | 'top' | 'totalHiding'> {
   let hidingMask = noteBit(0);
   let top = 0;
   let totalHiding = 0;
@@ -157,7 +182,7 @@ export function readBoard(game: Game, peek: boolean, options: ReadOptions = {}):
     hiding[t] = left;
     totalHiding += t * left;
   }
-  return { constraints, touching, unknown, marked, hiding, hidingMask, top, totalHiding };
+  return { hiding, hidingMask, top, totalHiding };
 }
 
 // ------------------------------------------------------------- candidate sets
