@@ -12,11 +12,8 @@
  *
  * THESE ARE REAL BOARDS, RENDERED BY THE REAL RENDERER. Every tile, number,
  * glyph, mark and highlight below comes out of `Game` and `BoardView` exactly
- * as it does in play. A hand-drawn approximation would have been a quarter of
- * the code and would have started lying the first time anything about cell
- * drawing changed — and a preview that has quietly stopped being true is worse
- * than no preview, because the player has no way to tell. This is the same
- * argument that killed `design/opening.py`.
+ * as it does in play, because a preview that has quietly stopped being true is
+ * worse than no preview: the player has no way to tell (decision 0025).
  *
  * Every example is a pure function of a fixed config and a fixed seed, so all
  * the thumbnails in a gallery show the *same* board and the only thing that
@@ -94,8 +91,6 @@ function cellsOf(game: Game, pick: (c: Cell) => boolean): Cell[] {
  *
  * Highest tiers first: a tier 4 draws four pips and a tier 1 draws one, so
  * the big ones are the ones that actually show what a pip SHAPE looks like.
- * Taking them in reading order picked whatever the seed happened to put top
- * left, and half the time that was a single dot.
  */
 function beatStrongest(game: Game, count: number): void {
   const byTier = cellsOf(game, (c) => c.tier > 0).sort((a, b) => b.tier - a.tier);
@@ -317,53 +312,24 @@ export function zoomSampleBoard(): Game {
 }
 
 /**
- * A board that has actually been cleared, for the board-clear effect.
- *
- * Genuinely won, not a board dressed up as one: every creature is beaten and
- * `status` is 'won', which is the state the effect fires over in play. Only
- * the creatures are opened: the final kill wins the board, and the win
- * uncovers the floor, exactly as it does in play.
- *
- * The only example that takes a seed, and the only one not memoised. The other
- * galleries compare a setting ACROSS tiles and so need one another's boards to
- * be identical; this one is a single tile watched over time, where a fresh
- * layout each time it is played is the point. Caching every seed asked for
- * would grow without bound for no benefit — a ten-by-six board is sixty cells.
- *
- * IT CARRIES EXACTLY THE TIERS THE REAL BOARD DOES — one of each, and none
- * above. `tiers` is the count the board being played actually uses, so NORMAL
- * previews five creatures and HUGE nine, and the player is never shown a
- * creature that cannot appear where they are.
- *
- * Both halves of that matter, because the effects act on the creatures
- * themselves and so what this is really previewing is the glyphs. Missing a
- * tier shows a subset of the art and calls it the art — and tiers 6 to 9 in
- * particular do not look like 1 to 5, since they reuse the five hues wearing a
- * gold halo, which catches the light quite differently when it is tumbling or
- * burning. Showing a tier too many is the same error pointed the other way.
- *
- * Every entry in the quantity is at least 1, which is what makes "one of each"
- * a property of the CONFIG rather than of the seed: the generator deals
- * exactly the quantities it is given. `test/preview.test.ts` holds it to that
- * at every tier count the real ladders use.
- */
-
-/**
- * Creatures per tier on the cleared example, commonest tier first.
- *
- * Sliced to the tier count rather than recomputed, and the shape is doing two
- * jobs. It is the shape a real ladder uses — commoner low tiers, rarer high
- * ones — so the preview is not evenly weighted in a way no real board is. And
- * because the slice gets longer as the tier count does, the density climbs
- * with it: 14 creatures on 60 cells at five tiers, 19 at nine. That tracks the
- * real ladders closely, which run about 23% at five tiers and about 33% at
- * nine, so the example is about as crowded as the board it stands for.
- *
- * Nine entries because nine is the game's ceiling: `DIE_FACES` defines nine
- * faces and `drawCreature` clamps there.
+ * Creatures per tier on the cleared example, commonest tier first, as a real ladder deals them:
+ * sliced to the tier count, so the board grows more crowded as its tiers climb, as a ladder's
+ * boards do. Nine entries, the game's ceiling (`TIER_COUNT`).
  */
 const CLEARED_QUANTITY: readonly number[] = [4, 3, 3, 2, 2, 2, 1, 1, 1];
 
+/**
+ * A board genuinely won, for the board-clear effect: one creature of each of `tiers` tiers and
+ * none above, every one beaten, and the floor uncovered by the win as it is in play. The only
+ * example that takes a seed and is not memoised: it is one tile watched over time, where a fresh
+ * layout each play is the point.
+ *
+ * The effects act on the creatures, so what this previews is the glyphs: a tier missing shows a
+ * subset of the art (tiers 6 to 9 wear the halo, which tumbles and burns differently), and a tier
+ * too many shows a creature that cannot appear where the player is. Every entry of the quantity
+ * is at least 1, so "one of each" is a property of the config rather than of the seed;
+ * `test/preview.test.ts` holds it at every tier count the ladders use.
+ */
 export function clearedBoard(seed: number = SEED, tiers = 5): Game {
   const count = Math.max(1, Math.min(CLEARED_QUANTITY.length, Math.round(tiers)));
   const game = Game.create(
