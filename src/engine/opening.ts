@@ -63,28 +63,39 @@ function zeroRegions(grid: Grid, coveredOnly: boolean, topology: Topology, wrap:
       if (seen[y]![x] || !start.present || start.tier !== 0 || start.num !== 0) continue;
       // Beacon wants a region nobody has touched yet, not the one you started on.
       if (coveredOnly && start.open) continue;
-
-      // Flood the zero cells connected through `neighbours()`, collecting their fringe.
-      const revealed = new Set<Cell>();
-      const stack: Cell[] = [start];
-      seen[y]![x] = true;
-
-      while (stack.length) {
-        const cell = stack.pop()!;
-        revealed.add(cell);
-        for (const n of neighbours(grid, cell.x, cell.y, topology, wrap)) {
-          revealed.add(n);
-          if (n.tier === 0 && n.num === 0 && !seen[n.y]![n.x]) {
-            seen[n.y]![n.x] = true;
-            stack.push(n);
-          }
-        }
-      }
-
-      regions.push({ cells: [...revealed] });
+      regions.push({ cells: floodZeroRegion(grid, start, seen, topology, wrap) });
     }
   }
   return regions;
+}
+
+/**
+ * What opening the zero cell `start` would uncover: the zero cells connected to it through
+ * `neighbours()`, each marked in `seen`, and their fringe of numbered cells, in the order the
+ * flood meets them.
+ */
+function floodZeroRegion(
+  grid: Grid,
+  start: Cell,
+  seen: boolean[][],
+  topology: Topology,
+  wrap: Wrap,
+): Cell[] {
+  const revealed = new Set<Cell>();
+  const stack: Cell[] = [start];
+  seen[start.y]![start.x] = true;
+  while (stack.length) {
+    const cell = stack.pop()!;
+    revealed.add(cell);
+    for (const n of neighbours(grid, cell.x, cell.y, topology, wrap)) {
+      revealed.add(n);
+      if (n.tier === 0 && n.num === 0 && !seen[n.y]![n.x]) {
+        seen[n.y]![n.x] = true;
+        stack.push(n);
+      }
+    }
+  }
+  return [...revealed];
 }
 
 /** How many rows the 'base' opening deals face up, counted from the bottom of the box. */
