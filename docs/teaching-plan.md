@@ -20,9 +20,9 @@ tricks are written and tested, and the retune can go on beside this.
   that, from "subtract what you can see" to the endgame's hunt for the last of a tier, is
   learned or not. The mamono community's own account (`docs/strategies.md`, sources) is that
   people learn at the board, stuck, from someone pointing at the number they missed.
-- **The hint line describes controls, not play.** `hintText` says what a click does in the
-  current mode and, once, the rule a ladder adds (the crawl, the walk, the sprinkles). It never
-  says why a cell is safe.
+- **The hint line describes controls, not play.** `hintLineText` (`src/ui/game/hintline.ts`) says
+  what a click does in the current mode and, once, the rule a ladder adds (the crawl, the walk, the
+  sprinkles). It never says why a cell is safe.
 - **Sweep proves and does not explain.** The engine's Sweep performs the raw ring, the
   subtraction of open tiers and the placement rules' proofs at a keypress, and its label counts
   what it can prove. A player who leans on it clears boards without learning what it did, and
@@ -132,7 +132,7 @@ and the commit says so.
 cheapest yielding grade offers, ordered nearest the player's last action first (the attention
 model's locality, so the tutor points where a person would look). A `Lesson` is the proof, the
 concluded cells, the grade and the filled-in caption. `test/tutor.test.ts` holds it to the same
-alarm as the graded player: on every kind of board in `test/graded.test.ts`'s list, at several
+alarm as the graded player: on every kind of board in `TRICK_KINDS` (`test/helpers.ts`), at several
 points in a game, every cell a lesson calls safe or names is checked against the truth and the
 count of wrong ones is zero.
 
@@ -204,8 +204,8 @@ Each a commit, on branch `m5-tutor`; the owner reviews and merges.
    to section 10 of `docs/strategies.md`, both ways.
 3. `src/sim/tutor.ts` and its test (4.3), including the reader option that reads marked cells as
    unknown.
-4. The board overlay: `drawLesson` in `src/ui/board/overlays.ts`; `BoardDisplay` gains
-   `lesson: Lesson | null`. Verified with canvas hashes as the Milestone 3 splits were.
+4. The board overlay: `drawPointer` in `src/ui/board/overlays.ts`, which the view draws from
+   `BoardView.setPointer`. Verified with canvas hashes as the Milestone 3 splits were.
 5. The key, the button, the caption in place of the hint line, dismissal on click, the hint
    count in `progress.ts`, the clear screen's line, and the best-time rule.
 6. The stuck case (4.5).
@@ -395,7 +395,7 @@ Open when the plan was drafted; items 5 to 7 have been settled since, and item 8
 ## 9. Definition of done
 
 - The tutor is on every ladder, and `test/tutor.test.ts` shows zero unsound conclusions on every
-  kind of board in `test/graded.test.ts`'s list.
+  kind of board in `TRICK_KINDS` (`test/helpers.ts`).
 - The golden outputs are byte-identical to `main` at every commit of the milestone.
 - Every `TrickId` has a text entry, a guide entry and, where the catalogue gives it a diagram, a
   diagram that builds and fires (tests in 4.6, 5.2, 6.1).

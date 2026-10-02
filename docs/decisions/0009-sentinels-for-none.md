@@ -8,8 +8,9 @@ candidate that makes a set safe at LV1), so 0 could no longer mean "nothing sele
 note mask read as a bound would say a cell is both provably safe and certainly fatal.
 
 ## Decision
-`markMode` is -1 for none. Every reader of `notes` checks `hasNotes` first; `lowestNote` returns
--1 rather than a sentinel that would pass a comparison.
+`markMode` is -1 for none (`NO_TIER` in `src/ui/game/mode.ts`). A reader of `notes` checks for an
+empty mask first (`notesGuard` in `src/engine/notes.ts` does, for the pencil's guard); `lowestNote`
+returns -1 rather than a sentinel that would pass a comparison.
 
 ## Consequences
 Anything testing `if (this.markMode)` is wrong in a way that silently arms the empty-ground pencil.

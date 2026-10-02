@@ -200,13 +200,14 @@ order of magnitude of that, so 40 seeds over ten boards is under a minute a ladd
 
 ## 4. Where it plugs in
 
-`play(game, options)` returns a `Run` like the honest player's, extended with the four measures;
-the CLI `src/sim/cli/human.ts` iterates `type.boards` and prints a table per ladder, board by
-board, at grades 1 to 4 side by side, and every-ladder rows at one grade; `--profile` prints how
-often each technique fired. The solver can be attached as the ceiling through the same `rescue`
-hook `forced.ts` uses, which is how "forced at any grade" is reported beside "forced at this
-grade". Two golden runs fix the printout: `human-normal`, and `human-oracle` with `--profile`.
-`docs/tuning.md`'s instrument table and the README's commands list gain the row.
+`play(game, options)` returns a `GradedRun`, a record of the board like the honest player's
+`HonestRun`, with the four measures besides; the CLI `src/sim/cli/human.ts` iterates `type.boards`
+and prints a table per ladder, board by board, at grades 1 to 4 side by side, and every-ladder rows
+at one grade; `--profile` prints how often each technique fired. The solver can be attached as the
+ceiling through the same `rescue` hook `forced.ts` uses, which is how "forced at any grade" is
+reported beside "forced at this grade". Two golden runs fix the printout: `human-normal`, and
+`human-oracle` with `--profile`. `docs/tuning.md`'s instrument table and the README's commands list
+gain the row.
 
 ## 5. Validation
 

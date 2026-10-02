@@ -13,14 +13,14 @@ All in `src/sim/cli/`, all driving the real engine with fixed seeds, all determi
 | --- | --- |
 | `npm run sim [-- seeds]` | Clears every board of every ladder with the omniscient tier-order player. Reports the opening and HP lost; exits non-zero if any board cannot be cleared at full HP. The regression gate for `ladders.py`. |
 | `npm run sim:run` | Completes every type's Full Run ten boards deep on one HP pool. |
-| `npm run sim:spells -- N [ladder]` | The honest player, spell-less and with each spell policy: forced guesses, HP lost, clear rate, HP saved per cast and per mana. `POLICY=gym` plays WORKOUT as a farmer. |
+| `npm run sim:spells -- N [ladder]` | The honest player, spell-less and with each spell policy: forced guesses, HP lost, clear rate, HP saved per cast and per mana. `POLICY=gym` plays WORKOUT as a farmer (on WORKOUT alone). |
 | `npm run sim:forced -- N [ladder] [a-b]` | The honest player beside a player that also takes the complete deducer's free moves, on the same seeds: what share of stuck points had a free move, how often a perfect deducer is still cornered, what share of boards is guess-free. Its `bad` and `hurt` columns must be zero. |
 | `npm run sim:lethal -- N ladders` | The perfect deducer guessing the cell with the lowest proven worst case: could any forced guess kill? |
 | `npm run sim:human -- N [ladder] [a-b]` | The graded player, a person's tricks up to a grade (`docs/strategies.md`): what each board demands, grade by grade; stuck points, lethal guesses and clear rate at each grade; moves on offer when it had to look. `--profile` counts each trick's conclusions, `--peek` reads the numbers PAIRS hides, `--solver` attaches the complete deducer, `--spells` spends mana as the catalogue advises, `--attention=R` looks near the last action first and counts the scans. Its `unsound` column must be zero. |
 | `npm run sim:sudoku -- N [--sweep]` | SUDOKU build cost per givens count and the tightest round of each board. |
 | `npx tsx src/sim/cli/opening.ts`, `placement.ts`, `topology.ts` | The opening, placement and topology experiments; the first two write `design/data/*.json` for the reference page. |
 | `npm run telemetry -- CODE-or-file` | A player's play statistics, pasted from the backup screen (`CST1:` code): per board, attempts and clears, opens and guesses, sweeps, casts, hints, HP lost, seconds and deaths by tier, tuned and modified dials apart. Read beside `sim:human`'s row for the same board. |
-| `npm run sim:golden` / `sim:golden:check` | Records or diffs the text of small fixed-seed runs of the above (the list is `RUNS` in `scripts/golden.mjs`): the behaviour-preservation harness. |
+| `npm run sim:golden` / `sim:golden:check` | Records or diffs the text of small fixed-seed runs of the above (the list is `RUNS` in `scripts/golden.mjs`): the behaviour-preservation harness; `npm run sim:golden:check -- <run>` checks one. |
 
 The **honest player** (`src/sim/honest.ts`) reads only what a player can see and deduces locally,
 so every "cornered" figure it gives is an upper bound. The **complete deducer**
@@ -71,11 +71,17 @@ kept their schedules (0058).
   Reveal exactly"; anything that changes Reveal's price has to move it.
 - `MANA_PER_EMPTY_CELLS = 4` is an untuned first guess. `EXERCISE_LEVELS` is 1 and must stay 1:
   damage is a staircase, so two levels clears two steps at once.
-- The Full Run heal is half the pool, rounded down (so BLIND's pool of 1 heals nothing). A first
-  guess; both ends are one number away in `run.ts`.
+- The Full Run heal is half the pool at the tuned dials, rounded down (so BLIND's pool of 1 heals
+  nothing): `hpRegenRatio` in `src/engine/settings.ts`, which the Full Run regen dial moves. A
+  first guess.
 - The counted unlock schedule opens one ladder per menu category every five boards from 15, BLIND
   last at 70, in a hand-set order that does not follow difficulty (decision 0036).
   `test/unlocks.test.ts` walks it and fails if any gate is unreachable on tuned boards alone.
+- The continuation past board 10 stops at `CEILINGS` in `design/ladders.py`: a 64x32 box, 34%
+  density on a battle board and 30% on a search board, tier 9, and no fewer than 12 SUDOKU givens
+  (the generator refuses most boards at 11). A ladder can set its own in a `ceiling` table, whose
+  keys (`max_w`, `max_h`, `density_cap`, `hp_floor`, `givens_floor`) the TOML's header lists and
+  `load_types` checks.
 
 ## What the spells are worth, measured
 
