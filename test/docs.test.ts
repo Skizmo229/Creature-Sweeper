@@ -67,7 +67,7 @@ describe('the README layout', () => {
       readdirSync(dir)
         .filter((f) => !f.startsWith('.') && keep(f))
         .map((f) => (dir === '.' ? f : `${dir}/${f}`));
-    // Generated and never tracked: the dependencies, the build and the itch.io zips.
+    // Generated and never tracked: the dependencies, the build and the packaged builds.
     const untracked = ['node_modules', 'dist', 'release'];
     const folders = tracked('.', (f) => statSync(f).isDirectory() && !untracked.includes(f));
     const src = tracked('src', (f) => !f.endsWith('.d.ts'));

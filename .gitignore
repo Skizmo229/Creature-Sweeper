@@ -24,5 +24,5 @@ Thumbs.db
 game_types.pdn
 design/screenshots/
 
-# Zipped builds for itch.io, made by `npm run package`.
+# Packaged builds (the itch.io zip and the offline page), made by `npm run package`.
 release/

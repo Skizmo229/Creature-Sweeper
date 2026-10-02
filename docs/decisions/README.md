@@ -136,3 +136,4 @@ Sweep on the ladder since 0063"), so that a reader who lands on it is sent on.
 | [0086](0086-pyramid-is-climbed-by-the-crawl-rule.md) | PYRAMID is climbed by the crawl rule | Adopted. Amends 0038. |
 | [0087](0087-augur-lists-every-hidden-tier.md) | Augur lists every hidden tier | Adopted. Supersedes 0062's answer and 0055's price. |
 | [0088](0088-augur-is-a-lock-deeper-with-extremes-hp.md) | AUGUR is a lock deeper, with EXTREME's HP | Adopted. Amends 0056. |
+| [0089](0089-a-github-release-carries-the-itch-io-zip-and-a-one-file-offline-page.md) | A GitHub release carries the itch.io zip and a one-file offline page | Adopted. Follows 0068. |
