@@ -353,10 +353,10 @@ export class App {
     // first click has been made and the clock is already the player's problem.
     this.game = Game.create(cfg, seed, { settings: this.settings.gameplay });
     this.keeper.begin();
-    this.recorder.begin();
     this.clock.begin();
     const best = this.progress.boardRecord(ladders, typeId, board).bestTime;
     this.clock.arm(best, this.settings.gameplay);
+    this.recorder.begin();
     this.showGame();
   }
 

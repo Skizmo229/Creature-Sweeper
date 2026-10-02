@@ -57,7 +57,11 @@ export class BoardRecorder {
 
   constructor(private readonly host: RecorderHost) {}
 
-  /** A board dealt, or a paused one taken up: tally from here. Nothing is tallied until this. */
+  /**
+   * A board dealt, or a paused one taken up: tally from here. Nothing is tallied until this. The
+   * attempt's seconds are the clock's from now, so call it once the clock reads this board's
+   * start: after `clock.begin` on a board dealt, after the keeper resumes a paused one.
+   */
   begin(): void {
     const game = this.host.game();
     if (!game) return;
