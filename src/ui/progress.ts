@@ -10,7 +10,7 @@
  */
 
 import { type Ladders, boardFingerprint, ladderFingerprint } from '../engine/config.js';
-import { PROGRESS_KEY as KEY } from './savefile.js';
+import { PROGRESS_KEY as KEY, boardKey, isRecord, ladderPrefix } from './savefile.js';
 
 /** The tuned boards of a ladder the table does not name: the ten every ladder has. */
 const TUNED_BOARDS = 10;
@@ -146,15 +146,6 @@ function emptySave(): SaveData {
   };
 }
 
-/** Every board key of a ladder begins with this. */
-function ladderPrefix(typeId: string): string {
-  return `${typeId}#`;
-}
-
-function boardKey(typeId: string, board: number): string {
-  return `${ladderPrefix(typeId)}${board}`;
-}
-
 /**
  * A clear's best time and fewest hints, from the previous record's. A clear without hints races
  * the clock, and its time retires the hint count. A hinted clear sets no best time; while there is
@@ -171,9 +162,6 @@ function bestOf(
   if (prev.bestTime !== null) return { bestTime: prev.bestTime };
   return { bestTime: null, fewestHints: Math.min(prev.fewestHints ?? hints, hints) };
 }
-
-const isRecord = (v: unknown): v is Record<string, unknown> =>
-  typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /**
  * A parsed version-1 save, read field by field: a field of the wrong shape (a null list, a

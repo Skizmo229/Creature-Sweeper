@@ -46,7 +46,7 @@ interface Envelope {
 }
 
 /** Text as base64, by its UTF-8 bytes, so any character survives (`btoa` takes Latin-1 only). */
-export function toBase64(text: string): string {
+function toBase64(text: string): string {
   const bytes = new TextEncoder().encode(text);
   let bin = '';
   for (const b of bytes) bin += String.fromCharCode(b);
@@ -61,8 +61,48 @@ export function fromBase64(code: string): string {
   return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
 }
 
-const isRecord = (v: unknown): v is Record<string, unknown> =>
+/** Whether parsed JSON is an object of named fields: not null, and not a list. */
+export const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** Every board key of a ladder begins with this. */
+export function ladderPrefix(typeId: string): string {
+  return `${typeId}#`;
+}
+
+/** A board's key in the save's records and in the play statistics', so the two read side by side. */
+export function boardKey(typeId: string, board: number): string {
+  return `${ladderPrefix(typeId)}${board}`;
+}
+
+/**
+ * Whitespace, plus the invisible characters some apps slip into a long unbroken string so that it
+ * can wrap: zero-width space, non-joiner and joiner, word joiner, soft hyphen. `\s` covers none of
+ * them, none is base64, and any one left in makes a code read as damaged.
+ */
+const PASTE_JUNK = /[\s\u00ad\u200b-\u200d\u2060]+/g;
+
+/** A pasted code with what a chat app adds taken out: `PASTE_JUNK`, anywhere in it. */
+export function compactCode(text: string): string {
+  return text.trim().replace(PASTE_JUNK, '');
+}
+
+/** An envelope as a code: `prefix`, then its JSON in base64. */
+export function wrapCode(prefix: string, envelope: object): string {
+  return prefix + toBase64(JSON.stringify(envelope));
+}
+
+/** When a code says it was exported, if that is a date, and the version that wrote it, if any. */
+export function stampOf(envelope: Record<string, unknown>): {
+  exported: string | null;
+  game: string | null;
+} {
+  const { exported, game } = envelope;
+  return {
+    exported: typeof exported === 'string' && !Number.isNaN(Date.parse(exported)) ? exported : null,
+    game: typeof game === 'string' ? game : null,
+  };
+}
 
 /** A calendar date in the player's own time zone, as YYYY-MM-DD. The obvious
  *  `toISOString().slice(0, 10)` is the UTC date, which names a save made on
@@ -92,7 +132,7 @@ export function encodeSave(bundle: SaveBundle, now: Date = new Date(), game?: st
     progress: parse(bundle.progress),
     settings: parse(bundle.settings),
   };
-  return PREFIX + toBase64(JSON.stringify(envelope));
+  return wrapCode(PREFIX, envelope);
 }
 
 /** A code read back: the save, when and by which version it was written, or why it was refused. */
@@ -118,11 +158,7 @@ export function decodeSave(text: string): DecodeResult {
   if (trimmed.startsWith('{')) {
     json = trimmed;
   } else {
-    // Whitespace, plus the invisible characters some apps slip into a long
-    // unbroken string so that it can wrap — zero-width space, non-joiner and
-    // joiner, word joiner, soft hyphen. `\s` covers none of them, none is
-    // base64, and any one left in makes the code read as damaged.
-    const compact = trimmed.replace(/[\s\u00ad\u200b-\u200d\u2060]+/g, '');
+    const compact = compactCode(trimmed);
     if (!compact.startsWith(PREFIX)) {
       return { ok: false, error: 'That is not a Creature Sweeper save code.' };
     }
@@ -163,11 +199,7 @@ export function decodeSave(text: string): DecodeResult {
       progress: JSON.stringify(progress),
       settings: isRecord(settings) ? JSON.stringify(settings) : null,
     },
-    exported:
-      typeof envelope.exported === 'string' && !Number.isNaN(Date.parse(envelope.exported))
-        ? envelope.exported
-        : null,
-    game: typeof envelope.game === 'string' ? envelope.game : null,
+    ...stampOf(envelope),
   };
 }
 

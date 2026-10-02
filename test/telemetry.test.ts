@@ -10,10 +10,10 @@ import { Game } from '../src/engine/game.js';
 import type { Move } from '../src/engine/replay.js';
 import { DEFAULT_GAMEPLAY } from '../src/engine/settings.js';
 import { BoardRecorder } from '../src/ui/game/recorder.js';
+import { boardKey } from '../src/ui/savefile.js';
 import {
   type Attempt,
   addAttempt,
-  boardKey,
   decodeTelemetry,
   describeTelemetry,
   emptyTelemetry,
