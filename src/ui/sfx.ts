@@ -21,8 +21,6 @@
 
 import type { SfxEvent, SfxPackId } from './looktypes.js';
 
-export type { SfxEvent } from './looktypes.js';
-
 interface Voice {
   wave: OscillatorType;
   /** Starting frequency in Hz. */

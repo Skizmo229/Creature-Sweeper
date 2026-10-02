@@ -8,7 +8,8 @@
  */
 
 import type { GameEvent } from '../../engine/types.js';
-import type { Sfx, SfxEvent } from '../sfx.js';
+import type { SfxEvent } from '../looktypes.js';
+import type { Sfx } from '../sfx.js';
 
 /** Each sound an action can make, loudest first, and what in the action's events calls for it. */
 const BY_CONSEQUENCE: ReadonlyArray<readonly [SfxEvent, (events: GameEvent[]) => boolean]> = [
