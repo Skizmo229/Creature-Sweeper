@@ -1,4 +1,4 @@
-# Creature Sweeper: codebase improvement plan
+# Milestone 3: the readability refactor (complete)
 
 Status: adopted 24 September 2026 as **Milestone 3**, and complete: the owner closed it on 24
 September 2026, and features resumed. Written for the owner and for the reviewer who read the code
@@ -258,9 +258,9 @@ never pay for the next one", "one sound per action, not per event", "every scree
 read 1,800 lines of notes will violate one of them, and most of them fail silently.
 
 There is no glossary. The vocabulary is large and specific (ladder, type, board, run, tier, lock
-depth, `C_k`, `alpha0`, opening, cascade, mark, pencil, given, census, reach, crawl, placement, shape,
-topology, wrap, search board, honest player, complete deducer, stuck point, forced guess, tier-order
-player, continuation, Full Run) and a reader meets all of it in the first file they open.
+depth, `C_k`, `alpha0`, opening, cascade, mark, pencil, given, census, reach, crawl, placement,
+shape, topology, wrap, search board, honest player, complete deducer, stuck point, forced guess,
+tier-order player, continuation, Full Run) and a reader meets all of it in the first file they open.
 
 ### 3.2 Comments are essays
 
