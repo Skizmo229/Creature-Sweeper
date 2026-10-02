@@ -113,6 +113,16 @@ describe('the sound check', () => {
     }
   });
 
+  it('lists each pack’s sounds in the order of the switches that say which play', () => {
+    const window = openSoundCheck();
+    const switches = [...window.querySelectorAll('label.toggle span')].map((s) => s.textContent);
+    const firstPack = window.querySelector('.soundcheck-grid')!;
+    const sounds = [...firstPack.querySelectorAll('.soundcheck-sound > span:first-child')].map(
+      (s) => s.textContent,
+    );
+    expect(sounds).toEqual(switches);
+  });
+
   it('drops malformed entries from a save and keeps the rest', () => {
     localStorage.setItem(
       SETTINGS_KEY,

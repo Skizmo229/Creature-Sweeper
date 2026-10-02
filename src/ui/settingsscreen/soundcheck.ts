@@ -180,7 +180,8 @@ function soundGrid(onClick: (s: Sound) => void): { grid: HTMLElement; buttons: S
   for (const pack of Object.keys(SFX_NAMES) as SfxPackId[]) {
     grid.append(el('h3', 'soundcheck-pack', SFX_NAMES[pack]));
     const packGrid = el('div', 'soundcheck-grid');
-    for (const event of Object.keys(SFX_EVENT_NAMES) as SfxEvent[]) {
+    // SFX_EVENTS's order, as the switches above have it, not the names record's.
+    for (const event of SFX_EVENTS) {
       const sound = { pack, event };
       const btn = el('button', 'soundcheck-sound');
       const badge = el('span', 'soundcheck-key');
