@@ -195,67 +195,95 @@ function numbersOf(grid: SudokuGrid): number[] {
 function propagate(cand: number[], open: boolean[], nums: number[]): boolean {
   let changed = true;
   while (changed) {
-    changed = false;
+    const solved = eliminateSolved(cand);
+    if (solved === null) return false;
+    const singles = placeHiddenSingles(cand);
+    if (singles === null) return false;
+    const sums = boundBySums(cand, open, nums);
+    if (sums === null) return false;
+    changed = solved || singles || sums;
+  }
+  return true;
+}
 
-    for (let i = 0; i < SUDOKU_CELLS; i++) {
-      if (popCount(cand[i]!) !== 1) continue;
-      const d = lowestNote(cand[i]!);
-      for (const p of SUDOKU_PEERS[i]!) {
-        if (cand[p]! & noteBit(d)) {
-          cand[p] = cand[p]! & ~noteBit(d);
-          if (!cand[p]) return false;
-          changed = true;
-        }
-      }
-    }
+/** What one pass of a channel did: true if it narrowed a candidate set, null on a contradiction. */
+type Pass = boolean | null;
 
-    for (const unit of SUDOKU_UNITS) {
-      for (let d = 0; d < DIGITS; d++) {
-        let home = -1;
-        let count = 0;
-        for (const c of unit) {
-          if (cand[c]! & noteBit(d)) {
-            home = c;
-            count++;
-          }
-        }
-        if (count === 0) return false;
-        if (count === 1 && popCount(cand[home]!) > 1) {
-          cand[home] = noteBit(d);
-          changed = true;
-        }
-      }
-    }
-
-    for (let i = 0; i < SUDOKU_CELLS; i++) {
-      if (!open[i]) continue;
-      const ns = SUDOKU_NBRS[i]!;
-      let lo = 0;
-      let hi = 0;
-      for (const n of ns) {
-        lo += lowestNote(cand[n]!);
-        hi += highestBit(cand[n]!);
-      }
-      const target = nums[i]!;
-      if (target < lo || target > hi) return false;
-      for (const n of ns) {
-        const othersLo = lo - lowestNote(cand[n]!);
-        const othersHi = hi - highestBit(cand[n]!);
-        let keep = 0;
-        for (let d = 0; d < DIGITS; d++) {
-          if (!(cand[n]! & noteBit(d))) continue;
-          const rest = target - d;
-          if (rest >= othersLo && rest <= othersHi) keep |= noteBit(d);
-        }
-        if (!keep) return false;
-        if (keep !== cand[n]) {
-          cand[n] = keep;
-          changed = true;
-        }
+/** A solved cell's digit is no candidate for any of its peers. */
+function eliminateSolved(cand: number[]): Pass {
+  let changed = false;
+  for (let i = 0; i < SUDOKU_CELLS; i++) {
+    if (popCount(cand[i]!) !== 1) continue;
+    const d = lowestNote(cand[i]!);
+    for (const p of SUDOKU_PEERS[i]!) {
+      if (cand[p]! & noteBit(d)) {
+        cand[p] = cand[p]! & ~noteBit(d);
+        if (!cand[p]) return null;
+        changed = true;
       }
     }
   }
-  return true;
+  return changed;
+}
+
+/** A digit with one home left in a row, column or box takes it. */
+function placeHiddenSingles(cand: number[]): Pass {
+  let changed = false;
+  for (const unit of SUDOKU_UNITS) {
+    for (let d = 0; d < DIGITS; d++) {
+      let home = -1;
+      let count = 0;
+      for (const c of unit) {
+        if (cand[c]! & noteBit(d)) {
+          home = c;
+          count++;
+        }
+      }
+      if (count === 0) return null;
+      if (count === 1 && popCount(cand[home]!) > 1) {
+        cand[home] = noteBit(d);
+        changed = true;
+      }
+    }
+  }
+  return changed;
+}
+
+/**
+ * Each open cell's number bounds its neighbours: a candidate survives only if the others, at their
+ * least and most, can still make up the rest. The bounds are taken once per open cell, before any
+ * of its neighbours narrows.
+ */
+function boundBySums(cand: number[], open: boolean[], nums: number[]): Pass {
+  let changed = false;
+  for (let i = 0; i < SUDOKU_CELLS; i++) {
+    if (!open[i]) continue;
+    const ns = SUDOKU_NBRS[i]!;
+    let lo = 0;
+    let hi = 0;
+    for (const n of ns) {
+      lo += lowestNote(cand[n]!);
+      hi += highestBit(cand[n]!);
+    }
+    const target = nums[i]!;
+    if (target < lo || target > hi) return null;
+    for (const n of ns) {
+      const othersLo = lo - lowestNote(cand[n]!);
+      const othersHi = hi - highestBit(cand[n]!);
+      let keep = 0;
+      for (let d = 0; d < DIGITS; d++) {
+        if (!(cand[n]! & noteBit(d))) continue;
+        const rest = target - d;
+        if (rest >= othersLo && rest <= othersHi) keep |= noteBit(d);
+      }
+      if (!keep) return null;
+      if (keep !== cand[n]) {
+        cand[n] = keep;
+        changed = true;
+      }
+    }
+  }
+  return changed;
 }
 
 /**
