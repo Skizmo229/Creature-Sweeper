@@ -7,7 +7,8 @@
  *   npm run sim:human -- [seeds] normal --profile  how often each trick fired, per board
  *   npm run sim:human -- [seeds] pairs --peek      read numbers the game hides (PAIRS, DOMINOES)
  *   npm run sim:human -- [seeds] oracle --solver   with the complete deducer attached: `forced`
- *   npm run sim:human -- [seeds] oracle --spells   spending mana: Reveal, Census, Beacon, Exercise
+ *   npm run sim:human -- [seeds] oracle --spells   spending mana: Reveal, Augur, Census, Beacon,
+ *                                                  Exercise
  *   npm run sim:human -- [seeds] huge --attention=4   look within 4 cells of the last action first
  *
  * The graded player (`graded.ts`) plays with the tricks of `docs/strategies.md` up to a grade,
@@ -15,7 +16,8 @@
  * needed, how many moves were on offer when it had to look, and what it had to guess. The
  * columns:
  *
- *   stuck    passes on which nothing at that grade yielded, a board (the forced guesses)
+ *   stuck    passes on which nothing at that grade yielded, a board; each ends in a guess, a
+ *            cast (--spells) or a rescue (--solver)
  *   guess    guesses taken; lethal, those whose worst case could kill at the HP of the moment
  *   clear    share of boards finished; hp, HP lost a board
  *   need>=g  share of boards on which the grade-4 player needed a trick of grade g or above
@@ -24,8 +26,8 @@
  *   unsound  times a trick was wrong about a cell; must be 0
  *   forced   with --solver: stuck points the complete deducer could not rescue either
  *
- * Spell-less, and the search ladders are played at level 0. SUDOKU is left out: it is generated
- * guess-free and its tricks are Sudoku's own.
+ * Spell-less unless --spells, and the search ladders are played at level 0. SUDOKU is left out:
+ * it is generated guess-free and its tricks are Sudoku's own.
  */
 
 import { loadLadders } from '../../data.js';

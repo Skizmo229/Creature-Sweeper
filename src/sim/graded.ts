@@ -15,8 +15,8 @@
  * against its real tier, and `unsound` counts the times a trick was wrong. It must stay zero
  * (`test/graded.test.ts`), or nothing the instrument measures means anything.
  *
- * Spell-less in this version; the honest player's spending policies are the next step
- * (docs/human-tuning-plan.md, section 10).
+ * With `spells` it spends mana before HP, as docs/strategies.md section 8 advises: an
+ * information spell at a stuck point (`spend`), and Exercise before a guess that could hurt.
  */
 
 import type { Game } from '../engine/game.js';
