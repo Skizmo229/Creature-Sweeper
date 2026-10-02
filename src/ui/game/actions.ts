@@ -8,6 +8,7 @@ import type { Game } from '../../engine/game.js';
 import type { Move } from '../../engine/replay.js';
 import { SPELLS, type SpellId, spellKey } from '../../engine/spells.js';
 import type { Cell, GameEvent } from '../../engine/types.js';
+import { ZOOM_STEP } from '../board/geometry.js';
 import { offersBeatenNumbers } from '../board/paint.js';
 import type { BoardView } from '../board/view.js';
 import type { RightClick } from '../presentation.js';
@@ -206,8 +207,8 @@ export class BoardActions {
   /** Zoom in or out a step, or fit the board to the stage; false for any other key. */
   private zoomKey(e: KeyboardEvent, key: string): boolean {
     const view = this.host.view();
-    if (e.key === '+' || e.key === '=') view?.nudgeZoom(2);
-    else if (e.key === '-' || e.key === '_') view?.nudgeZoom(-2);
+    if (e.key === '+' || e.key === '=') view?.nudgeZoom(ZOOM_STEP);
+    else if (e.key === '-' || e.key === '_') view?.nudgeZoom(-ZOOM_STEP);
     else if (key === 'f') view?.fit();
     else return false;
     e.preventDefault();
