@@ -13,15 +13,16 @@
  *
  * TWO FAMILIES, AND THE SECOND ONE NEEDS THE BOARD'S HELP.
  *
- * *Ambient* effects (confetti, burst, ripple, sparkle) are decoration over the
- * top and know nothing about what they are covering.
+ * *Ambient* effects (`ambient.ts`) are decoration over the top and know nothing
+ * about what they are covering.
  *
- * *Icon* effects (tumble, cascade, pop, burn, the wipes) animate the board's
- * own creatures, so they need two things from the renderer: where every glyph
- * is, and for the board to stop drawing them. Without the second the original
- * icons stay painted underneath and every creature appears to leave a ghost of
- * itself behind. That is what `VictorySource` is for, and why the effect puts
- * the glyphs back when it ends — including when it is cut short.
+ * *Icon* effects (`ICON_EFFECTS`, in `icons.ts` and `departures.ts`) animate
+ * the board's own creatures, so they need two things from the renderer: where
+ * every glyph is, and for the board to stop drawing them. Without the second
+ * the original icons stay painted underneath and every creature appears to
+ * leave a ghost of itself behind. That is what `VictorySource` is for, and why
+ * the effect puts the glyphs back when it ends — including when it is cut
+ * short.
  *
  * Every effect is finite and removes itself. There is no idle loop.
  */
@@ -227,10 +228,10 @@ function borrow(
   rect: DOMRect,
   source: VictorySource | undefined,
 ): { chosen: VictoryId; sprites: VictorySprite[] } {
-  // Line the board's coordinates up with this layer's. The board canvas sits
-  // inside the stage and may be panned, so its offset is not zero.
   if (!ICON_EFFECTS.has(effect)) return { chosen: effect, sprites: [] };
   if (source && source.sprites.length > 0) {
+    // Line the board's coordinates up with this layer's. The board canvas sits
+    // inside the stage and may be panned, so its offset is not zero.
     const board = source.canvas.getBoundingClientRect();
     const dx = board.left - rect.left;
     const dy = board.top - rect.top;
