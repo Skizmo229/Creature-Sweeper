@@ -278,47 +278,54 @@ export function choiceRow(screen: HTMLElement, host: HTMLElement, spec: ChoiceRo
   wideRow(host, spec.label, spec.hint, gallery([spec.fallback, user], spec.current, spec.onPick));
 }
 
+/** What a slider is made of. */
+export interface SliderSpec {
+  readonly min: number;
+  readonly max: number;
+  readonly step: number;
+  readonly value: number;
+  /** The value as the readout beside the slider spells it. */
+  readonly format: (v: number) => string;
+  /** Every step of a drag. */
+  readonly onInput: (value: number) => void;
+  /** Once, on release: for a setting too big to apply on every frame of a drag. */
+  readonly onRelease?: (value: number) => void;
+  /** The default, which gives the slider a Reset. */
+  readonly resetTo?: number;
+}
+
 /**
  * A slider with its value spelled out beside it.
  *
- * `input` rather than `change`, so the number under the thumb tracks the drag. `onCommit`, if
- * given, fires once on release, for a setting too big to apply on every frame of a drag. With a
- * `defaultValue` the slider carries a Reset, lit while it stands anywhere else, which moves it
- * there as a drag and a release would: a slider is the one control on the screen with no tile
- * to say what the default is, or to get back to it short of resetting its whole section.
+ * `input` rather than `change`, so the number under the thumb tracks the drag. With `resetTo` the
+ * slider carries a Reset, lit while it stands anywhere else, which moves it there as a drag and a
+ * release would: a slider is the one control on the screen with no tile to say what the default
+ * is, or to get back to it short of resetting its whole section.
  */
-export function slider(
-  min: number,
-  max: number,
-  step: number,
-  current: number,
-  format: (v: number) => string,
-  onSet: (value: number) => void,
-  onCommit?: (value: number) => void,
-  defaultValue?: number,
-): HTMLElement {
+export function slider(spec: SliderSpec): HTMLElement {
+  const { format, onInput, onRelease, resetTo } = spec;
   const box = el('div', 'settings-slider');
   const input = el('input');
   input.type = 'range';
-  input.min = String(min);
-  input.max = String(max);
-  input.step = String(step);
-  input.value = String(current);
-  const read = el('span', 'settings-value', format(current));
+  input.min = String(spec.min);
+  input.max = String(spec.max);
+  input.step = String(spec.step);
+  input.value = String(spec.value);
+  const read = el('span', 'settings-value', format(spec.value));
   input.addEventListener('input', () => {
     const v = Number(input.value);
     read.textContent = format(v);
-    onSet(v);
+    onInput(v);
   });
-  if (onCommit) input.addEventListener('change', () => onCommit(Number(input.value)));
+  if (onRelease) input.addEventListener('change', () => onRelease(Number(input.value)));
   box.append(input, read);
-  if (defaultValue !== undefined) {
-    box.dataset.default = String(defaultValue);
+  if (resetTo !== undefined) {
+    box.dataset.default = String(resetTo);
     const reset = el('button', 'ghost small settings-reset', 'Reset');
     reset.type = 'button';
-    reset.title = `Back to ${format(defaultValue)}`;
+    reset.title = `Back to ${format(resetTo)}`;
     reset.addEventListener('click', () => {
-      input.value = String(defaultValue);
+      input.value = String(resetTo);
       // Through the input's own events, so everything listening to the drag hears the reset.
       input.dispatchEvent(new Event('input'));
       input.dispatchEvent(new Event('change'));
@@ -360,4 +367,7 @@ export function toggle(current: boolean, onSet: (v: boolean) => void): HTMLEleme
 }
 
 /** A ratio as the sliders spell it: `×1.00`. */
-export const ratio = (v: number): string => `×${v.toFixed(2)}`;
+export const times = (v: number): string => `×${v.toFixed(2)}`;
+
+/** A multiple as a percentage: `150%`. */
+export const percent = (v: number): string => `${Math.round(v * 100)}%`;

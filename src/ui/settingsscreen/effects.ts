@@ -28,7 +28,7 @@ import { playVictory } from '../victory/play.js';
 import { type ScreenContext, typeName } from './context.js';
 import { renderPreview } from './render.js';
 import { openSoundCheck } from './soundcheck.js';
-import { type Choice, gallery, ratio, slider, wideRow } from './widgets.js';
+import { type Choice, gallery, slider, times, wideRow } from './widgets.js';
 
 /**
  * The board-clear demo currently running, if any. Module-level because a screen rebuild throws
@@ -204,16 +204,16 @@ function clearEffectOptions(ctx: ScreenContext, host: HTMLElement, replay: () =>
     host,
     'Clear effect speed',
     'How fast the effect runs. Picking a speed replays it below.',
-    slider(
-      MIN_EFFECT_SPEED,
-      MAX_EFFECT_SPEED,
-      RATIO_STEP,
-      p.effectSpeed,
-      ratio,
-      (v) => ctx.set({ effectSpeed: Math.round(v * 100) / 100 }),
-      replay,
-      DEFAULT_EFFECT_SPEED,
-    ),
+    slider({
+      min: MIN_EFFECT_SPEED,
+      max: MAX_EFFECT_SPEED,
+      step: RATIO_STEP,
+      value: p.effectSpeed,
+      format: times,
+      onInput: (v) => ctx.set({ effectSpeed: Math.round(v * 100) / 100 }),
+      onRelease: replay,
+      resetTo: DEFAULT_EFFECT_SPEED,
+    }),
   );
 }
 

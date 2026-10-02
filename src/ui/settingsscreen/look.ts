@@ -449,20 +449,19 @@ export function zoomRow(ctx: ScreenContext, host: HTMLElement): void {
 
   const zoomControl = el('div', 'settings-stack');
   zoomControl.append(
-    slider(
-      MIN_MAX_ZOOM,
-      MAX_MAX_ZOOM,
-      4,
-      p.maxZoom,
-      (v) => `${Math.round(v)}px per cell`,
-      (v) => {
+    slider({
+      min: MIN_MAX_ZOOM,
+      max: MAX_MAX_ZOOM,
+      step: 4,
+      value: p.maxZoom,
+      format: (v) => `${Math.round(v)}px per cell`,
+      onInput: (v) => {
         const cell = Math.round(v);
         drawZoom(cell);
         ctx.set({ maxZoom: cell });
       },
-      undefined,
-      DEFAULT_MAX_ZOOM,
-    ),
+      resetTo: DEFAULT_MAX_ZOOM,
+    }),
   );
   zoomControl.append(zoomBox);
 

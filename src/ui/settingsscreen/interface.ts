@@ -28,7 +28,7 @@ import { type PresentationPatch, type ScreenContext, previewCell, typeName } fro
 import { hudCopy } from './look.js';
 import { lowVisionRow } from './presets.js';
 import { CHIP_CELL, renderPreview } from './render.js';
-import { gallery, row, section, slider, toggle, wideRow } from './widgets.js';
+import { gallery, percent, row, section, slider, toggle, wideRow } from './widgets.js';
 
 /** The Interface section, appended to the screen. */
 export function interfaceSection(ctx: ScreenContext): void {
@@ -43,16 +43,15 @@ export function interfaceSection(ctx: ScreenContext): void {
   row(
     host,
     'Long press to mark',
-    slider(
-      MIN_LONG_PRESS,
-      MAX_LONG_PRESS,
-      50,
-      ctx.p.longPress,
-      (v) => (v === 0 ? 'Off' : `${Math.round(v)} ms`),
-      (v) => ctx.settings.setPresentation({ longPress: Math.round(v) }),
-      undefined,
-      DEFAULT_LONG_PRESS,
-    ),
+    slider({
+      min: MIN_LONG_PRESS,
+      max: MAX_LONG_PRESS,
+      step: 50,
+      value: ctx.p.longPress,
+      format: (v) => (v === 0 ? 'Off' : `${Math.round(v)} ms`),
+      onInput: (v) => ctx.settings.setPresentation({ longPress: Math.round(v) }),
+      resetTo: DEFAULT_LONG_PRESS,
+    }),
     'On a touch screen, how long a finger holds a covered cell before the hold does what a ' +
       'right-click does. Off, the LV buttons are the only way to mark by touch.',
   );
@@ -201,16 +200,16 @@ function textSizeRow(ctx: ScreenContext, host: HTMLElement): void {
   const textControl = el('div', 'settings-stack');
   textControl.dataset.setting = 'textSize';
   textControl.append(
-    slider(
-      MIN_TEXT_SIZE,
-      MAX_TEXT_SIZE,
-      RATIO_STEP,
-      p.textSize,
-      (v) => `${Math.round(v * 100)}%`,
-      showTextSize,
-      (v) => pickHoldingRow(ctx, textControl, { textSize: v }),
-      DEFAULT_TEXT_SIZE,
-    ),
+    slider({
+      min: MIN_TEXT_SIZE,
+      max: MAX_TEXT_SIZE,
+      step: RATIO_STEP,
+      value: p.textSize,
+      format: percent,
+      onInput: showTextSize,
+      onRelease: (v) => pickHoldingRow(ctx, textControl, { textSize: v }),
+      resetTo: DEFAULT_TEXT_SIZE,
+    }),
   );
   textControl.append(textDemo);
 
@@ -243,16 +242,16 @@ function previewSizeRow(ctx: ScreenContext, host: HTMLElement): void {
   const control = el('div', 'settings-stack');
   control.dataset.setting = 'previewSize';
   control.append(
-    slider(
-      MIN_PREVIEW_SIZE,
-      MAX_PREVIEW_SIZE,
-      RATIO_STEP,
-      p.previewSize,
-      (v) => `${Math.round(v * 100)}%`,
-      drawSample,
-      (v) => pickHoldingRow(ctx, control, { previewSize: v }),
-      DEFAULT_PREVIEW_SIZE,
-    ),
+    slider({
+      min: MIN_PREVIEW_SIZE,
+      max: MAX_PREVIEW_SIZE,
+      step: RATIO_STEP,
+      value: p.previewSize,
+      format: percent,
+      onInput: drawSample,
+      onRelease: (v) => pickHoldingRow(ctx, control, { previewSize: v }),
+      resetTo: DEFAULT_PREVIEW_SIZE,
+    }),
   );
   control.append(sample);
 

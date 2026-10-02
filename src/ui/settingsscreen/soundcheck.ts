@@ -20,7 +20,7 @@ import { sfxPitch, sfxRatio, sfxSoundId } from '../sfx.js';
 import { SFX_EVENT_NAMES, SFX_NAMES } from '../theme.js';
 import type { ScreenContext } from './context.js';
 import { type PianoRoll, nearestNote, noteName, pianoRoll } from './pianoroll.js';
-import { slider } from './widgets.js';
+import { percent, slider } from './widgets.js';
 
 interface Sound {
   pack: SfxPackId;
@@ -346,22 +346,22 @@ class SoundCheck {
     const loudness = el('div', 'soundcheck-volume');
     loudness.append(
       el('span', undefined, 'Volume'),
-      slider(
-        0,
-        MAX_SOUND_CHECK_VOLUME,
-        RATIO_STEP,
-        volume,
-        (v) => `${Math.round(v * 100)}%`,
-        (v) => {
+      slider({
+        min: 0,
+        max: MAX_SOUND_CHECK_VOLUME,
+        step: RATIO_STEP,
+        value: volume,
+        format: percent,
+        onInput: (v) => {
           volume = v;
         },
         // On release, so the new level is saved once and heard without a sound per step.
-        () => {
+        onRelease: () => {
           save(this.ctx.settings);
           if (this.tuning) this.play(this.tuning);
         },
-        DEFAULT_SOUND_CHECK_VOLUME,
-      ),
+        resetTo: DEFAULT_SOUND_CHECK_VOLUME,
+      }),
     );
     tools.append(this.assignBtn, this.clearBtn, loudness, this.status);
 

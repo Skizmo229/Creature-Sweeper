@@ -31,7 +31,7 @@ import type { ScreenContext } from './context.js';
 import { type TakenColor, openColorWindow } from './customcolor.js';
 import { highlightChip } from './look.js';
 import { renderPreview } from './render.js';
-import { type Choice, gallery, row, slider, toggle, wideRow } from './widgets.js';
+import { type Choice, gallery, percent, row, slider, toggle, wideRow } from './widgets.js';
 
 /** The colours the board already means something by, which a mark must stay clear of. */
 const TAKEN: readonly TakenColor[] = [
@@ -117,16 +117,16 @@ export function digitSizeRow(ctx: ScreenContext, host: HTMLElement): void {
   drawSample(p.digitSize);
   const control = el('div', 'settings-stack');
   control.append(
-    slider(
-      MIN_DIGIT_SIZE,
-      MAX_DIGIT_SIZE,
-      RATIO_STEP,
-      p.digitSize,
-      (v) => `${Math.round(v * 100)}%`,
-      drawSample,
-      (v) => ctx.pick({ digitSize: v }),
-      DEFAULT_DIGIT_SIZE,
-    ),
+    slider({
+      min: MIN_DIGIT_SIZE,
+      max: MAX_DIGIT_SIZE,
+      step: RATIO_STEP,
+      value: p.digitSize,
+      format: percent,
+      onInput: drawSample,
+      onRelease: (v) => ctx.pick({ digitSize: v }),
+      resetTo: DEFAULT_DIGIT_SIZE,
+    }),
     sample,
   );
   wideRow(
@@ -150,16 +150,16 @@ export function highlightWidthRow(ctx: ScreenContext, host: HTMLElement): void {
   drawSample(p.highlightWidth);
   const control = el('div', 'settings-stack');
   control.append(
-    slider(
-      MIN_HIGHLIGHT_WIDTH,
-      MAX_HIGHLIGHT_WIDTH,
-      1,
-      p.highlightWidth,
-      (v) => `${Math.round(v)}px`,
-      drawSample,
-      (v) => ctx.pick({ highlightWidth: Math.round(v) }),
-      DEFAULT_HIGHLIGHT_WIDTH,
-    ),
+    slider({
+      min: MIN_HIGHLIGHT_WIDTH,
+      max: MAX_HIGHLIGHT_WIDTH,
+      step: 1,
+      value: p.highlightWidth,
+      format: (v) => `${Math.round(v)}px`,
+      onInput: drawSample,
+      onRelease: (v) => ctx.pick({ highlightWidth: Math.round(v) }),
+      resetTo: DEFAULT_HIGHLIGHT_WIDTH,
+    }),
     sample,
   );
   wideRow(
