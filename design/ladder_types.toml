@@ -945,12 +945,9 @@ density = [0.8888888888888888, 0.8888888888888888, 0.8888888888888888, 0.8888888
 # because the boards stop being interesting.
 givens = [26, 24, 22, 21, 20, 19, 18, 17, 16, 15]
 hp = [20, 20, 19, 19, 18, 18, 17, 16, 15, 14]
-# The continuation stops where generation does. Timed: 14 givens costs
-# 6ms a board, 13 costs 20ms, 12 costs ~100ms, and at 11 the generator
-# refuses six boards in eight. So 12 is the floor, which gives SUDOKU
-# one of the shortest continuations - correctly, because the rule took
-# its other dials away.
-ceiling = { givens_floor = 12 }
+# The continuation stops where generation does, at the givens floor in
+# ladders.py's CEILINGS, which gives SUDOKU one of the shortest
+# continuations - correctly, because the rule took its other dials away.
 lock = [3, 3, 4, 4, 5, 5, 6, 6, 7, 7]
 alpha0 = [0.55, 0.53, 0.51, 0.49, 0.47, 0.45, 0.43, 0.41, 0.39, 0.37]
 

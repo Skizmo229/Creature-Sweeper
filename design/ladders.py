@@ -439,6 +439,11 @@ CEILINGS = dict(
     alpha_floor=.05,
     tier=9,
     boss=6,
+    # The fewest givens a SUDOKU board is asked for. Timed by the initial commit (20 September
+    # 2026): 14 givens cost 6ms a board, 13 cost 20ms, 12 about 100ms, and at 11 the generator
+    # refuses six boards in eight. It throws rather than ship a board it cannot vouch for, so the
+    # continuation stops above that.
+    givens_floor=12,
     # How far the SCHEDULE is walked, in board-steps. Much larger than the
     # number of boards it yields, because a step that rounds to the same board
     # is skipped rather than emitted - EXTREME grows 0.444 cells a board, so it
@@ -566,11 +571,7 @@ def extend(t):
         if t.get("boss"):
             row["boss"] = min(CEILINGS["boss"], round(t["boss"][-1] + dboss * i))
         if t.get("givens"):
-            # Measured floor, not a taste call: at 12 givens a guess-free board
-            # costs ~100ms to find, at 11 the generator refuses three boards in
-            # four. Below its floor it throws rather than shipping a board it
-            # cannot vouch for, so the schedule must stop above it.
-            row["givens"] = max(over.get("givens_floor", 12),
+            row["givens"] = max(over.get("givens_floor", CEILINGS["givens_floor"]),
                                 round(t["givens"][-1] + dgiv * i))
         if t.get("placement") == "dominoes":
             box = _domino_box(t, T, i, row["density"], max_w, max_h)

@@ -241,11 +241,12 @@ class TheContinuation(unittest.TestCase):
                 self.assertEqual(b["cells"], 3 * r * (r + 1) + 1, f"{t['id']}#{b['n']}")
 
     def test_keeps_the_givens_above_the_sudoku_generators_floor(self):
+        floor = L.CEILINGS["givens_floor"]
         for t in BUILT:
             if t.get("placement") != "sudoku":
                 continue
             for b in t["extended"]:
-                self.assertGreaterEqual(b["givens"], 12, f"{t['id']}#{b['n']}")
+                self.assertGreaterEqual(b["givens"], floor, f"{t['id']}#{b['n']}")
 
 
 if __name__ == "__main__":
