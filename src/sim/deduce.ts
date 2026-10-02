@@ -15,8 +15,8 @@ import { placementRule } from '../engine/placement/registry.js';
  * What the board tells you, per open numbered cell: how much tier is still
  * hidden behind it, and which cells that is spread over.
  *
- * Marks only ever come from Reveal here, so a mark is an exact tier rather
- * than a claim, and subtracting it is as sound as subtracting an open cell.
+ * Marks here are exact: the player marks only what it proved, and a given is
+ * the truth. So subtracting a mark is as sound as subtracting an open cell.
  */
 export interface Constraint {
   readonly cell: Cell;
@@ -328,10 +328,10 @@ function packCaps(game: Game): Map<Cell, number> {
 /**
  * Everything that can be opened without a gamble.
  *
- * Four rules, in order of how much they need to know:
- *   nothing left to hide  — residual 0, so every covered neighbour is empty;
+ * The rules, in the order they are tried:
  *   a named creature      — Reveal or deduction gave an exact tier, and it is
  *                           at or under your level, so the fight is free;
+ *   nothing left to hide  — residual 0, so every covered neighbour is empty;
  *   Sweep's bound         — the whole residual fits under your level, so no
  *                           single cell behind it can be over your level;
  *   the Census bound      — knowing how many creatures share the residual puts
@@ -342,7 +342,10 @@ function packCaps(game: Game): Map<Cell, number> {
  *                           as a residual of zero, and anything short of the
  *                           full count says which cells only by luck;
  *   the Augur ceiling     — the strongest tier around the number, so at or
- *                           under your level nothing behind it can hurt.
+ *                           under your level nothing behind it can hurt;
+ *   the colour bound      — the placement rule's cap, cell by cell;
+ *   the pairing ring      — a creature's number is its partner's tier;
+ *   the pack ring         — beside a pack, only a tier it has not shown.
  */
 export function safeToOpen(game: Game, constraints: Constraint[]): Cell[] {
   const safe = new Set<Cell>();
