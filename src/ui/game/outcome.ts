@@ -9,6 +9,7 @@ import type { FullRun } from '../../engine/run.js';
 import { type GameplaySettings, easierThanDefault } from '../../engine/settings.js';
 import { el } from '../dom.js';
 import type { CardHold } from '../presentation.js';
+import { plural } from '../words.js';
 
 /**
  * The ladder that teaches, and so the only one that explains a death. A claim about the ladder's
@@ -33,7 +34,7 @@ function modifiedNote(gameplay: GameplaySettings): HTMLElement {
  * look like a bug; the tile says what the clear left behind instead (decision 0065).
  */
 function hintsNote(hints: number): HTMLElement {
-  return el('p', 'overlay-note', `Cleared with ${hints} hint${hints === 1 ? '' : 's'}.`);
+  return el('p', 'overlay-note', `Cleared with ${plural(hints, 'hint')}.`);
 }
 
 /** How a single board ended, and where the card's buttons go, for `buildBoardOutcome`. */
@@ -247,8 +248,7 @@ export function buildRunOutcome(o: RunOutcome): HTMLElement {
       el(
         'p',
         'overlay-note',
-        `${run.legs.length} board${run.legs.length === 1 ? '' : 's'} cleared. ` +
-          'Starts again from board 1.',
+        `${plural(run.legs.length, 'board')} cleared. ` + 'Starts again from board 1.',
       ),
     );
   }

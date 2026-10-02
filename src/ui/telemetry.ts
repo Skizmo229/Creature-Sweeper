@@ -11,6 +11,7 @@
  */
 
 import { fromBase64, toBase64 } from './savefile.js';
+import { plural } from './words.js';
 
 /** Where the play statistics are stored: their own key, beside the save's. */
 export const TELEMETRY_KEY = 'creature-sweeper.telemetry.v1';
@@ -200,7 +201,6 @@ export function describeTelemetry(data: TelemetryData): string {
   const t = totals(data.tuned);
   const m = totals(data.modified);
   if (t.attempts + m.attempts === 0) return 'Nothing played yet.';
-  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
   const tuned = `${plural(t.attempts, 'attempt')} on ${plural(t.boards, 'board')}`;
   return m.attempts
     ? `${tuned}, and ${plural(m.attempts, 'attempt')} on modified dials.`

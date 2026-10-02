@@ -57,6 +57,7 @@ src/ui/         the game in the browser
   teaching.ts     the tutor, the rules card, the field guide and the school's lessons, for app.ts
   dress.ts        the page in the presentation settings: the faces, the text size, the board's slice
   dom.ts          el(), the one DOM helper
+  words.ts        plural(): wording the screens and the codes share (DOM-free)
   mute.ts         the always-present speaker
   ladders.ts      the ladder data, bundled into the build (src/data.ts is Node's loader)
   version.ts      the game's version, read from package.json (decision 0068)

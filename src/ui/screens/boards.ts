@@ -11,6 +11,7 @@ import { ladders } from '../ladders.js';
 import { type PausedGame, pausedGames } from '../paused.js';
 import type { Progress } from '../progress.js';
 import { themeFor } from '../looks.js';
+import { plural } from '../words.js';
 
 /** What the board list reads, and where its tiles and buttons go. */
 export interface BoardListActions {
@@ -78,7 +79,7 @@ export function buildBoardList(typeId: string, a: BoardListActions): HTMLElement
 /** A best time, or with none set, the fewest hints a clear took (decision 0065). */
 function bestText(rec: { bestTime: number | null; fewestHints?: number }): string {
   if (rec.bestTime !== null) return `${rec.bestTime}s`;
-  return `${rec.fewestHints} hint${rec.fewestHints === 1 ? '' : 's'}`;
+  return plural(rec.fewestHints!, 'hint');
 }
 
 /** A tile with a game paused on it: where the game stands, and that a click carries it on. */

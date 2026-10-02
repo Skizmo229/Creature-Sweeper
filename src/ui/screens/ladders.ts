@@ -14,6 +14,7 @@ import type { Progress } from '../progress.js';
 import type { Settings } from '../settings.js';
 import { themeFor } from '../looks.js';
 import { VERSION } from '../version.js';
+import { plural } from '../words.js';
 
 /** What the ladder list reads, and where its cards and tools go. */
 export interface LadderListActions {
@@ -59,7 +60,7 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
   head.append(el('h1', 'game-title', 'Creature Sweeper'));
   head.append(el('p', 'sub', `Version ${VERSION}`));
   // Boards cleared is a currency, so it is shown whether or not anything is waiting on it.
-  head.append(el('p', 'sub boards-cleared', `${cleared} board${cleared === 1 ? '' : 's'} cleared`));
+  head.append(el('p', 'sub boards-cleared', `${plural(cleared, 'board')} cleared`));
   // A player who left a dial easier than default a week ago should not have to open Settings
   // to find out why nothing is unlocking.
   if (!a.recordsCount) {
@@ -124,7 +125,7 @@ export function buildLadderList(a: LadderListActions): HTMLElement {
     } else {
       // Counted, scaling boards included, rather than the board you are on: the card is a record.
       const n = progress.boardsCleared(type.id);
-      const boards = `${n} board${n === 1 ? '' : 's'}`;
+      const boards = plural(n, 'board');
       if (rec.cleared) {
         const run = progress.runRecord(ladders, type.id);
         meta.textContent =

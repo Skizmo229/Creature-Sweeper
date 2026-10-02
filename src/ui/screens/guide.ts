@@ -14,7 +14,7 @@ import { type Diagram, diagramPicture, pressDiagram } from '../../sim/diagrams.j
 import type { TrickId } from '../../sim/tricks.js';
 import type { Lesson } from '../../sim/tutor.js';
 import { type BoardDisplay, BoardView } from '../board/view.js';
-import { el } from '../dom.js';
+import { type OverlayCard, el } from '../dom.js';
 import type { TypeTheme } from '../looktypes.js';
 import {
   type Block,
@@ -225,7 +225,7 @@ export function buildLadderCard(
   ladder: LadderType,
   guide: () => void,
   close: () => void,
-): { overlay: HTMLElement; focus: HTMLElement } {
+): OverlayCard {
   const overlay = el('div', 'overlay win');
   const card = el('div', 'overlay-card howto');
   card.append(el('h2', undefined, `HOW TO PLAY ${ladder.name}`));

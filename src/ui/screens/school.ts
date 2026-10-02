@@ -4,7 +4,7 @@
  * lesson. Offered, never required: nothing waits on a lesson (principle 7).
  */
 
-import { el } from '../dom.js';
+import { type OverlayCard, el } from '../dom.js';
 import type { Progress } from '../progress.js';
 import { TRICK_TEXT } from '../../sim/tricktext.js';
 import { LESSONS } from '../school/lessons.js';
@@ -56,7 +56,7 @@ export function buildLessonDone(
   title: string,
   onNext: (() => void) | null,
   onSchool: () => void,
-): { overlay: HTMLElement; focus: HTMLElement } {
+): OverlayCard {
   const overlay = el('div', 'overlay win');
   const card = el('div', 'overlay-card');
   card.append(el('h2', undefined, 'LESSON TAKEN'));

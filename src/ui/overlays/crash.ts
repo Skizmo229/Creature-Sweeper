@@ -4,16 +4,13 @@
  * since the board it happened on can no longer be trusted.
  */
 
-import { el } from '../dom.js';
+import { type OverlayCard, el } from '../dom.js';
 import { SOURCE_URL } from '../screens/about.js';
 import { VERSION } from '../version.js';
 import type { Modal } from './modal.js';
 
 /** The crash card for `message`, and its one button, Back to the list, which runs `onBack`. */
-export function buildCrash(
-  message: string,
-  onBack: () => void,
-): { overlay: HTMLElement; focus: HTMLElement } {
+export function buildCrash(message: string, onBack: () => void): OverlayCard {
   const overlay = el('div', 'overlay lose');
   const card = el('div', 'overlay-card crash');
   card.append(el('h2', undefined, 'SOMETHING BROKE'));

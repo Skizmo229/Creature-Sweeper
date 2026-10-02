@@ -6,14 +6,14 @@
  * Three rules, a line each; the lessons and the guide have the rest.
  */
 
-import { el } from '../dom.js';
+import { type OverlayCard, el } from '../dom.js';
 
 /** The rules card, with its ways to the school and the field guide; `focus` is Got it. */
 export function buildHowTo(
   onDone: () => void,
   onGuide: () => void,
   onSchool: () => void,
-): { overlay: HTMLElement; focus: HTMLElement } {
+): OverlayCard {
   const overlay = el('div', 'overlay win');
   const card = el('div', 'overlay-card howto');
   card.append(el('h2', undefined, 'HOW TO PLAY'));

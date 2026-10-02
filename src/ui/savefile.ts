@@ -17,6 +17,8 @@
  * reach it. Storage, files and the clipboard are the caller's business.
  */
 
+import { plural } from './words.js';
+
 /** Where the progress is stored (`progress.ts`). */
 export const PROGRESS_KEY = 'creature-sweeper.progress.v1';
 /** Where the settings are stored (`settings.ts`). */
@@ -179,10 +181,7 @@ export function describeSave(bundle: SaveBundle): string {
     };
     const boards = Object.values(p.boards ?? {}).filter((b) => b?.cleared).length;
     const types = Object.values(p.types ?? {}).filter((t) => t?.cleared).length;
-    return (
-      `${boards} board${boards === 1 ? '' : 's'} cleared, ` +
-      `${types} game type${types === 1 ? '' : 's'} finished.`
-    );
+    return `${plural(boards, 'board')} cleared, ${plural(types, 'game type')} finished.`;
   } catch {
     return 'Unreadable progress.';
   }

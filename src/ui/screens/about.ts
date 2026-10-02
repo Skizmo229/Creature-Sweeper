@@ -6,7 +6,7 @@
  * the game runs in a frame, and the pages it links to will not load inside one.
  */
 
-import { el } from '../dom.js';
+import { type OverlayCard, el } from '../dom.js';
 import { VERSION } from '../version.js';
 
 /** The repository: the source, the licence, and where bugs and ideas go. */
@@ -26,7 +26,7 @@ export function link(href: string, text: string): HTMLAnchorElement {
 }
 
 /** The About card, and its Close button to focus. `onClose` is what Close does. */
-export function buildAbout(onClose: () => void): { overlay: HTMLElement; focus: HTMLElement } {
+export function buildAbout(onClose: () => void): OverlayCard {
   const overlay = el('div', 'overlay win');
   const card = el('div', 'overlay-card about');
   card.append(el('h2', undefined, 'CREATURE SWEEPER'));
