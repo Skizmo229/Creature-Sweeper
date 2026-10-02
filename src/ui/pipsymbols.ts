@@ -18,6 +18,7 @@ import table from './pipsymbols.json';
 /** The family every symbol is drawn in, as a CSS font-family value. */
 export const PIP_FAMILY = "'Pip Symbols'";
 
+/** One symbol the custom-icon window offers. */
 export interface PipSymbol {
   pip: GlyphPip;
   /** The symbol itself, as text. */
@@ -28,12 +29,14 @@ export interface PipSymbol {
   code: number | null;
 }
 
+/** One font's symbols, a tab of the window: Dingbats, or one of the Wingdings. */
 export interface SymbolSet {
   id: string;
   name: string;
   symbols: readonly PipSymbol[];
 }
 
+/** Every set, in the window's order, read from `pipsymbols.json`. */
 export const SYMBOL_SETS: readonly SymbolSet[] = table.sets.map((set) => ({
   id: set.id,
   name: set.name,
@@ -47,6 +50,7 @@ export const SYMBOL_SETS: readonly SymbolSet[] = table.sets.map((set) => ({
 
 const GLYPH = /^U\+([0-9A-F]{4,6})$/;
 
+/** Whether a pip is a symbol, written `U+` and its code point, rather than a drawn shape. */
 export function isGlyphPip(pip: Pip | string): pip is GlyphPip {
   return GLYPH.test(pip);
 }

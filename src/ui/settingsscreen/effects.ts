@@ -49,6 +49,7 @@ export function stopSettingsDemo(): void {
   stopDemo = null;
 }
 
+/** The sound pack: a tile per pack, each played as it is picked, and the sound check's button. */
 export function soundRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, ident } = ctx;
   const check = el('button', 'ghost small soundcheck-open', 'Sound check');

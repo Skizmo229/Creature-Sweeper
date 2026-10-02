@@ -29,6 +29,7 @@ import { fullscreenRow, lowVisionRow } from './presets.js';
 import { CHIP_CELL, renderPreview } from './render.js';
 import { gallery, row, section, slider, toggle, wideRow } from './widgets.js';
 
+/** The Interface section, appended to the screen. */
 export function interfaceSection(ctx: ScreenContext): void {
   const host = section(ctx.host, 'Interface', 'The page around the board, on every ladder.');
   lowVisionRow(ctx, host);

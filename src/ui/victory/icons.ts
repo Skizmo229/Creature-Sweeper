@@ -8,6 +8,7 @@ import type { VictoryId } from '../looktypes.js';
 import { flip, float, march, scatter, spin, swarm } from './departures.js';
 import { type Painter, type Stage, type VictorySprite, blit, movers } from './stage.js';
 
+/** The painter for an icon effect; the three wipes are one painter. */
 export function iconPainter(effect: VictoryId, stage: Stage): Painter {
   switch (effect) {
     case 'tumble':

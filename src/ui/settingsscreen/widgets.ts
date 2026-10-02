@@ -9,6 +9,7 @@ import { keepFocus } from '../overlays/modal.js';
 import { DEFAULT } from '../presentation.js';
 import type { GameFont } from '../typefaces.js';
 
+/** One option in a gallery: its value, its name and its example. */
 export interface Choice {
   value: string;
   label: string;
@@ -23,6 +24,7 @@ export interface Choice {
   open?: () => void;
 }
 
+/** A section of the screen under its heading, appended to `host`. */
 export function section(host: HTMLElement, title: string, blurb?: string): HTMLElement {
   const box = el('section', 'settings-group');
   box.append(el('h2', 'settings-head', title));
@@ -31,6 +33,7 @@ export function section(host: HTMLElement, title: string, blurb?: string): HTMLE
   return box;
 }
 
+/** A setting's row: its name and hint beside its control. */
 export function row(host: HTMLElement, label: string, control: HTMLElement, hint?: string): void {
   const line = el('div', 'settings-row');
   const text = el('div', 'settings-label');
@@ -174,6 +177,7 @@ export interface PickerSort {
   groups: readonly SortGroup[];
 }
 
+/** A setting shown as two tiles and a window of every option (`choiceRow`). */
 export interface ChoiceRowSpec {
   label: string;
   hint: string;
@@ -344,6 +348,7 @@ export function showSliderValue(
   syncReset(box);
 }
 
+/** A checkbox labelled On. */
 export function toggle(current: boolean, onSet: (v: boolean) => void): HTMLElement {
   const label = el('label', 'toggle');
   const box = el('input');
@@ -354,4 +359,5 @@ export function toggle(current: boolean, onSet: (v: boolean) => void): HTMLEleme
   return label;
 }
 
+/** A ratio as the sliders spell it: `×1.00`. */
 export const ratio = (v: number): string => `×${v.toFixed(2)}`;

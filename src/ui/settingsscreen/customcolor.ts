@@ -32,6 +32,7 @@ export interface TakenColor {
   readonly name: string;
 }
 
+/** What a colour window opens with. */
 export interface ColorWindowSpec {
   title: string;
   /** What the window is for, under its title. */
@@ -61,6 +62,7 @@ function legend(spec: ColorWindowSpec): { box: HTMLElement; mixed: HTMLElement }
   return { box, mixed };
 }
 
+/** Open a colour window over the settings screen, on `spec.current`, the red slider focused. */
 export function openColorWindow(screen: HTMLElement, spec: ColorWindowSpec): void {
   const { card, dismiss } = settingsWindow(screen, spec.title, 'color-card');
 

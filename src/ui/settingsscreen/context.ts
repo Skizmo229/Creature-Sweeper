@@ -15,6 +15,7 @@ import { lookFor, themeFor } from '../looks.js';
 import { CHIP_CELL, DEMO_CELL, renderPreview } from './render.js';
 import { inLadderScope } from './scope.js';
 
+/** What the app hands the settings screen. */
 export interface SettingsScreenOptions {
   settings: Settings;
   /** The ladder the player came from: what "game type default" refers to. */
@@ -37,6 +38,10 @@ export interface SettingsScreenOptions {
 /** A visual patch to the presentation settings. */
 export type PresentationPatch = Parameters<Settings['setPresentation']>[0];
 
+/**
+ * What every section of one build of the screen is handed: the store and the ladder, the settings
+ * in force and how the board currently looks, the examples' sizes, and the ways to save a pick.
+ */
 export interface ScreenContext {
   readonly settings: Settings;
   readonly typeId: string;
@@ -70,6 +75,7 @@ export interface ScreenContext {
   rebuild(): void;
 }
 
+/** A ladder's name as the list shows it, or its id in capitals for one this build lacks. */
 export function typeName(typeId: string): string {
   return ladders.find((t) => t.id === typeId)?.name ?? typeId.toUpperCase();
 }
@@ -79,6 +85,10 @@ export function previewCell(base: number, scale: number): number {
   return Math.round(base * scale);
 }
 
+/**
+ * The context for one build of the screen, read from the store as it stands. A pick rebuilds the
+ * screen, and with it the context; a setting saved without a pick is not seen until then.
+ */
 export function makeContext(
   opts: SettingsScreenOptions,
   host: HTMLElement,

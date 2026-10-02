@@ -33,8 +33,11 @@ export const OFF = 'off';
 export type IconChoice = typeof DEFAULT | Pip;
 /** A game type id, whose palette is borrowed wholesale. */
 export type PaletteChoice = typeof DEFAULT | string;
+/** A bundled face, for the board's numbers or for the interface. */
 export type FontChoice = typeof DEFAULT | FontId;
+/** A sound pack, or silence. */
 export type SfxChoice = typeof DEFAULT | typeof OFF | SfxPackId;
+/** A board-clear effect, or none. */
 export type VictoryChoice = typeof DEFAULT | typeof OFF | VictoryId;
 
 /**
@@ -284,6 +287,10 @@ export const MAX_SFX_VOLUME = 3;
 /** The level every pack was voiced at, and what a save from before the setting reads as. */
 export const DEFAULT_SFX_VOLUME = 1;
 
+/**
+ * Every presentation setting, as the store keeps them for every ladder; a ladder's own are a part
+ * of the same record (`LadderOwn`). A `DEFAULT` choice is resolved on a ladder by `Settings`.
+ */
 export interface PresentationSettings {
   readonly icons: IconChoice;
   /** What a creature is drawn as: its pips, its tier as a digit, or both (`CreatureGlyph`). */
@@ -429,6 +436,7 @@ export interface PresentationSettings {
   readonly chord: boolean;
 }
 
+/** A new player's settings, and what Reset presentation goes back to. */
 export const DEFAULT_PRESENTATION: PresentationSettings = {
   icons: DEFAULT,
   glyph: 'pips',
@@ -480,12 +488,14 @@ export const DEFAULT_PRESENTATION: PresentationSettings = {
 // value each, falling back rather than throwing, and the gameplay reader in
 // `settings.ts` borrows them.
 
+/** A saved value if it is one of `allowed`, else the fallback. */
 export function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
   return typeof value === 'string' && (allowed as readonly string[]).includes(value)
     ? (value as T)
     : fallback;
 }
 
+/** A saved number, snapped to the sliders' step and into range (`snapRatio`), else the fallback. */
 export function num(value: unknown, min: number, max: number, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value)
     ? snapRatio(value, min, max)
@@ -529,6 +539,10 @@ function readTierPalette(raw: unknown): TierPalette | null {
   return { colors: read as string[], halo: ring };
 }
 
+/**
+ * A saved presentation read back: each setting the save holds and this build can read, and the
+ * default for every other. Never throws, whatever it is handed.
+ */
 export function readPresentation(raw: unknown): PresentationSettings {
   const p = (raw ?? {}) as Record<string, unknown>;
   const str = (k: string, fallback: string): string =>

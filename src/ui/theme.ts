@@ -25,6 +25,7 @@ export function pipName(pip: Pip): string {
   return isGlyphPip(pip) ? (findSymbol(pip)?.symbol.name ?? pip) : (PIP_NAMES[pip] ?? pip);
 }
 
+/** Each sound pack as the settings screen names it. */
 export const SFX_NAMES: Record<SfxPackId, string> = {
   chime: 'Chimes — soft bells',
   blip: 'Blips — arcade square waves',
@@ -53,6 +54,7 @@ export const SFX_EVENT_NAMES: Record<SfxEvent, string> = {
   lose: 'Lose',
 };
 
+/** Each board-clear effect as the settings screen names it. */
 export const VICTORY_NAMES: Record<VictoryId, string> = {
   confetti: 'Confetti — falling chips',
   burst: 'Burst — rays from the centre',

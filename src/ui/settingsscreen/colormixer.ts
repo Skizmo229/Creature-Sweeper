@@ -49,6 +49,7 @@ function hexField(): HTMLInputElement {
   return hex;
 }
 
+/** A colour mixer's controls, and the colour they say. */
 export interface ColorMixer {
   /** The three channels' lines and the hex's, in that order, to lay out in a form. */
   readonly lines: HTMLElement[];

@@ -306,6 +306,7 @@ function take(e: KeyboardEvent): void {
   e.stopImmediatePropagation();
 }
 
+/** Open the sound check over the settings screen. */
 export function openSoundCheck(ctx: ScreenContext): void {
   new SoundCheck(ctx);
 }

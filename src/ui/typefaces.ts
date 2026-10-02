@@ -54,6 +54,7 @@ export type FontId =
   | 'press-start-2p'
   | 'courier-prime';
 
+/** A bundled face, and what the board and the interface need to draw in it. */
 export interface GameFont {
   /** The face's own name, as the picker shows it. */
   name: string;
@@ -171,6 +172,7 @@ export const FONTS: Record<FontId, GameFont> = {
   'courier-prime': { name: 'Courier Prime', stack: `"Courier Prime", ${MONO}`, weight: 700 },
 };
 
+/** Every face's id, in `FONTS`'s order. */
 export const FONT_IDS = Object.keys(FONTS) as FontId[];
 
 /** What kind of face each is, for the font windows' Style order. */

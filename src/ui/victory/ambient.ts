@@ -17,6 +17,7 @@ interface Particle {
   color: string;
 }
 
+/** The painter for an ambient effect. */
 export function ambientPainter(effect: VictoryId, stage: Stage): Painter {
   if (effect === 'fireworks') return fireworks(stage);
   const { w, h, colors } = stage;

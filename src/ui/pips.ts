@@ -31,6 +31,7 @@ export const PIP_SHAPES: readonly PipShape[] = [
   'club',
 ];
 
+/** Each shape as the icon picker names it. */
 export const PIP_NAMES: Record<PipShape, string> = {
   circle: 'Dots',
   square: 'Blocks',

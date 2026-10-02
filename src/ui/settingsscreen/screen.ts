@@ -41,6 +41,7 @@ import { section } from './widgets.js';
 
 export type { SettingsScreenOptions } from './context.js';
 
+/** The settings screen, built detached and handed back; it rebuilds itself in place. */
 export function buildSettingsScreen(opts: SettingsScreenOptions): HTMLElement {
   const { typeId, onBack } = opts;
 

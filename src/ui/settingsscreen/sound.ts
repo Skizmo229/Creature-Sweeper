@@ -76,6 +76,7 @@ function playedRow(ctx: ScreenContext, host: HTMLElement): void {
   );
 }
 
+/** The Sound section, appended to the screen. */
 export function soundSection(ctx: ScreenContext): void {
   const { p, settings } = ctx;
   const host = section(ctx.host, 'Sound', 'Every sound the game makes, on every ladder.');

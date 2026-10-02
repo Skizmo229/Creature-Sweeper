@@ -99,6 +99,11 @@ function readGameplay(raw: unknown): GameplaySettings {
   };
 }
 
+/**
+ * The player's settings: the presentation for every ladder, each ladder's own, and the gameplay
+ * dials. Every change is saved and heard by `onChange`'s listeners; the resolvers say what a
+ * setting comes to on a ladder.
+ */
 export class Settings {
   private data: SettingsData;
   private readonly listeners = new Set<() => void>();

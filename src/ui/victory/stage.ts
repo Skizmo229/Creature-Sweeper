@@ -65,8 +65,14 @@ export function movers(stage: Stage, axisOf: (s: VictorySprite) => number = () =
   }));
 }
 
+/** One pre-rendered glyph per tier (`buildAtlas`). */
 export type Atlas = Map<number, HTMLCanvasElement>;
 
+/**
+ * What an effect paints on and with: the layer's size in CSS pixels, the board's theme and tier
+ * colours, the colours its particles take, the creatures borrowed and their atlas, and how long it
+ * runs, in seconds.
+ */
 export interface Stage {
   w: number;
   h: number;
@@ -78,6 +84,7 @@ export interface Stage {
   seconds: number;
 }
 
+/** One effect, made for a stage: what it paints each frame. */
 export interface Painter {
   /** `t` is 0..1 through the effect; `dt` is seconds since the last paint. */
   paint: (ctx: CanvasRenderingContext2D, t: number, dt: number) => void;
@@ -118,6 +125,10 @@ export function buildAtlas(look: VictoryLook, sprites: VictorySprite[]): Atlas {
   return atlas;
 }
 
+/**
+ * Copy a mover's glyph from the atlas onto the layer, centred where it is and turned as it is,
+ * scaled, faded or nudged by `opts`. A tier with no glyph in the atlas draws nothing.
+ */
 export function blit(
   ctx: CanvasRenderingContext2D,
   atlas: Atlas,

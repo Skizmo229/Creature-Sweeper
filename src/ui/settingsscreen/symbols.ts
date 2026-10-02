@@ -130,6 +130,7 @@ function markChosen(btn: Element, on: boolean): void {
   btn.setAttribute('aria-pressed', String(on));
 }
 
+/** Open the window of symbols over the screen, on `current`; `onPick` hears the one saved. */
 export function openSymbolWindow(
   ctx: ScreenContext,
   current: Pip,

@@ -15,6 +15,7 @@ const HIGHEST_NOTE = 96;
 const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const BLACK = new Set([1, 3, 6, 8, 10]);
 
+/** A MIDI number as the keyboard names its note: C4 is middle C. */
 export const noteName = (note: number): string => `${NAMES[note % 12]}${Math.floor(note / 12) - 1}`;
 
 /** The nearest key to a frequency, kept on the keyboard. */
@@ -23,6 +24,7 @@ export function nearestNote(hz: number): number {
   return Math.min(HIGHEST_NOTE, Math.max(LOWEST_NOTE, note));
 }
 
+/** What the keyboard shows for the sound it is tuning. */
 export interface PianoState {
   /** The key nearest the sound's own pitch, which wears a dot. */
   own: number;
@@ -32,6 +34,7 @@ export interface PianoState {
   letters?: ReadonlyMap<number, string>;
 }
 
+/** The keyboard, and how the sound check drives it. */
 export interface PianoRoll {
   readonly element: HTMLElement;
   /** Light the chosen key and mark the sound's own; null greys the keyboard out. */

@@ -15,6 +15,7 @@ export const CHIP_CELL = 26;
 /** Cell size for the cleared board the clear effect is demonstrated on; the creatures need room. */
 export const DEMO_CELL = 22;
 
+/** How one example board is drawn. */
 export interface PreviewOptions {
   /** Cell size in CSS pixels. */
   cell: number;

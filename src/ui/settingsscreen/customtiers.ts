@@ -14,6 +14,7 @@ import { settingsWindow } from './widgets.js';
 /** The swatches' order: the nine tiers, then the halo. */
 const HALO = TIER_COUNT;
 
+/** What the creature colours' window opens with. */
 export interface TierWindowSpec {
   /** The palette the window opens on. */
   current: TierPalette;
@@ -46,6 +47,7 @@ function swatchButtons(onChoose: (slot: number) => void): HTMLButtonElement[] {
   });
 }
 
+/** Open the creature colours' window over the settings screen, tier 1's swatch chosen. */
 export function openTierWindow(screen: HTMLElement, spec: TierWindowSpec): void {
   const { card, dismiss } = settingsWindow(screen, 'Custom creature colours', 'color-card');
   let colors = [...spec.current.colors, spec.current.halo];

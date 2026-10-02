@@ -6,6 +6,7 @@
 
 import type { FontId } from './typefaces.js';
 
+/** The shapes a creature's pips can be drawn in, each traced in `pips.ts`. */
 export type PipShape =
   | 'circle'
   | 'square'
@@ -33,6 +34,11 @@ export type GlyphPip = `U+${string}`;
 /** What a creature's pips are drawn as: a drawn shape, or a symbol from the pip font. */
 export type Pip = PipShape | GlyphPip;
 
+/**
+ * A board's look as the renderer takes it: the colours the settings call its palette, the pip its
+ * creatures wear, and the accent the menus wear. `Settings.themeFor` puts a ladder's together from
+ * the palette and the icon chosen for it.
+ */
 export interface TypeTheme {
   /** Covered tile. */
   tile: string;

@@ -7,6 +7,7 @@
 
 import type { LadderLook } from './looktypes.js';
 
+/** The shape ladders' looks, by ladder id. */
 export const SHAPE_LOOKS: Record<string, LadderLook> = {
   wraparound: {
     palette: {

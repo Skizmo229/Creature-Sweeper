@@ -45,6 +45,7 @@ import { fontSorts, paletteSorts } from './sorts.js';
 import { openSymbolWindow } from './symbols.js';
 import { type Choice, choiceRow, gallery, slider, wideRow } from './widgets.js';
 
+/** The creature icons: the ladder's own, every drawn shape, or any symbol. */
 export function iconsRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, typeId, currentTheme, currentPip } = ctx;
   const own = themeFor(typeId).pip;
@@ -149,6 +150,7 @@ export function tierColorsRow(ctx: ScreenContext, host: HTMLElement): void {
   );
 }
 
+/** The board palette: the ladder's own or any other ladder's, each in the icon in force. */
 export function paletteRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, typeId, currentPip } = ctx;
   choiceRow(ctx.host, host, {
@@ -185,6 +187,7 @@ function fontOwner(id: FontId): string {
     .join(', ');
 }
 
+/** The board's font: the ladder's own or any bundled face, each on the standard example. */
 export function boardFontRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, ident, currentTheme } = ctx;
   choiceRow(ctx.host, host, {
@@ -296,6 +299,7 @@ export function highlightChip(ctx: ScreenContext, over: Partial<BoardDisplay>): 
     ).canvas;
 }
 
+/** The cursor highlight's shape, each lit on the highlight example, or none. */
 export function highlightRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, typeId } = ctx;
   const hex = ladders.find((t) => t.id === typeId)?.topology === 'hex';

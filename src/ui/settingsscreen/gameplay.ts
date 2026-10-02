@@ -70,6 +70,7 @@ interface Play {
   refreshStatus: () => void;
 }
 
+/** The Gameplay section, appended to the screen. */
 export function gameplaySection(ctx: ScreenContext): void {
   const host = section(
     ctx.host,

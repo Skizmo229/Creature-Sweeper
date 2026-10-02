@@ -10,10 +10,12 @@ type Lab = [number, number, number];
 
 export const CHANNEL_MAX = 255;
 
+/** A `#rrggbb` colour's red, green and blue. */
 export function rgbOf(color: string): Rgb {
   return [1, 3, 5].map((at) => parseInt(color.slice(at, at + 2), 16)) as Rgb;
 }
 
+/** Red, green and blue as a `#rrggbb` colour in lower case. */
 export function hexOf(rgb: Rgb): string {
   return `#${rgb.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
