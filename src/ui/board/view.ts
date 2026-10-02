@@ -304,7 +304,7 @@ export class BoardView implements InputHost {
     const ceiling = Math.max(this.fittedCell, this.display.maxCell);
     this.cellPxValue = zoomed
       ? Math.max(this.fittedCell, Math.min(this.cellPx, ceiling))
-      : opening && this.display.startAtCeiling && !fixed
+      : opening && this.display.startAtCeiling
         ? ceiling
         : this.fittedCell;
 
@@ -584,11 +584,6 @@ export class BoardView implements InputHost {
   /** Current cell size in CSS pixels, for the dev handle and the tests. */
   get cellSize(): number {
     return this.cellPx;
-  }
-
-  /** True when zooming out further would do nothing. */
-  get atFit(): boolean {
-    return this.cellPx <= this.fittedCell;
   }
 
   /** Step the zoom from a button or key, anchored on the stage centre. */

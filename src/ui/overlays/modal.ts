@@ -145,16 +145,9 @@ export class Modal {
   }
 
   /** The rules card, with its ways to the field guide and the school. */
-  howTo(onGuide: () => void, onSchool: () => void, onClose?: () => void): void {
-    const { overlay, focus } = buildHowTo(
-      () => {
-        this.close();
-        onClose?.();
-      },
-      onGuide,
-      onSchool,
-    );
-    if (!this.show(overlay, focus)) onClose?.();
+  howTo(onGuide: () => void, onSchool: () => void): void {
+    const { overlay, focus } = buildHowTo(() => this.close(), onGuide, onSchool);
+    this.show(overlay, focus);
   }
 
   /** Who made the game, its licence and its source (decision 0069). */

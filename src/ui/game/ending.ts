@@ -106,12 +106,11 @@ export class BoardEnding {
     let unlocked: number | null = null;
     // A board cleared on settings easier than the tuned ones is not written down at all.
     if (won && recorded) {
-      const result = progress.recordClear(ladders, typeId, boardIndex, {
+      unlocked = progress.recordClear(ladders, typeId, boardIndex, {
         perfect,
         seconds,
         hints: tutor.hints,
       });
-      unlocked = result.unlockedBoard;
     }
     this.h.sfx.play(won ? 'win' : 'lose');
 
