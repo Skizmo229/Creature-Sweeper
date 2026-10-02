@@ -8,13 +8,13 @@
 import { el, link } from '../dom.js';
 import type { AskOptions } from '../overlays/ask.js';
 import {
-  PROGRESS_KEY,
-  SETTINGS_KEY,
   type SaveBundle,
   decodeSave,
   describeSave,
   encodeSave,
   localDate,
+  readStoredSave,
+  writeStoredSave,
 } from '../savefile.js';
 import { describeTelemetry, encodeTelemetry } from '../telemetry.js';
 import { VERSION } from '../version.js';
@@ -23,35 +23,6 @@ import { SOURCE_URL } from './about.js';
 
 /** Where a play-tester sends the statistics: the repository's play-test report (decision 0085). */
 export const PLAYTEST_REPORT_URL = `${SOURCE_URL}/issues/new?template=playtest.yml`;
-
-/** The save exactly as stored. Blocked storage reads as no save at all. */
-function readStoredSave(): SaveBundle {
-  const read = (key: string): string | null => {
-    try {
-      return localStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  };
-  return { progress: read(PROGRESS_KEY), settings: read(SETTINGS_KEY) };
-}
-
-/**
- * Replace the stored save, and report whether it actually landed. A save with no settings in it
- * clears them rather than keeping this browser's, so a restore is the exported state and not a
- * mixture of two. Read back afterwards because a blocked store can fail without throwing.
- */
-function writeStoredSave(bundle: SaveBundle): boolean {
-  try {
-    if (bundle.progress === null) localStorage.removeItem(PROGRESS_KEY);
-    else localStorage.setItem(PROGRESS_KEY, bundle.progress);
-    if (bundle.settings === null) localStorage.removeItem(SETTINGS_KEY);
-    else localStorage.setItem(SETTINGS_KEY, bundle.settings);
-    return localStorage.getItem(PROGRESS_KEY) === bundle.progress;
-  } catch {
-    return false;
-  }
-}
 
 /** What the backup card asks of the modal that shows it. */
 export interface SaveBackupActions {

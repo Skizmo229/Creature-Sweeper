@@ -10,7 +10,15 @@
  */
 
 import { type Ladders, boardFingerprint, ladderFingerprint } from '../engine/config.js';
-import { PROGRESS_KEY as KEY, boardKey, isRecord, ladderPrefix } from './savefile.js';
+import {
+  PROGRESS_KEY as KEY,
+  boardKey,
+  dropKept,
+  hasKept,
+  isRecord,
+  keepUnreadable,
+  ladderPrefix,
+} from './savefile.js';
 
 /** The tuned boards of a ladder the table does not name: the ten every ladder has. */
 const TUNED_BOARDS = 10;
@@ -94,42 +102,6 @@ export interface SaveData {
   lessons: string[];
   /** Ladders whose first-visit card has been shown, by id. Absent in saves before the cards. */
   ladderCards: string[];
-}
-
-/**
- * Where a stored value this build could not read is kept, beside the fresh one that replaces it
- * (decision 0080): a save from a newer version, or a damaged one, is set aside rather than
- * written over, so a later build, or a person, can still get at it.
- */
-export function keptKey(key: string): string {
-  return `${key}.unreadable`;
-}
-
-/** Set an unreadable stored value aside under its kept key. Storage that throws keeps nothing. */
-export function keepUnreadable(key: string, raw: string): void {
-  try {
-    localStorage.setItem(keptKey(key), raw);
-  } catch {
-    // Blocked storage: nothing could be read from it, and nothing can be written to it.
-  }
-}
-
-/** Whether something is kept aside under this key. */
-function hasKept(key: string): boolean {
-  try {
-    return localStorage.getItem(keptKey(key)) !== null;
-  } catch {
-    return false;
-  }
-}
-
-/** Let what was kept aside under this key go, as Reset progress does. */
-export function dropKept(key: string): void {
-  try {
-    localStorage.removeItem(keptKey(key));
-  } catch {
-    // Nothing to do.
-  }
 }
 
 function emptySave(): SaveData {

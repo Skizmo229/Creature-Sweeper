@@ -1,5 +1,5 @@
 /**
- * Save export and import.
+ * The save in storage, and its export and import.
  *
  * A save lives in one browser on one device, and on itch.io that is more
  * fragile than it sounds: the game runs in a third-party iframe, Safari caps
@@ -14,7 +14,9 @@
  * version so a later format can still read this one.
  *
  * Deliberately DOM-free, so the test pass that compiles with no DOM library can
- * reach it. Storage, files and the clipboard are the caller's business.
+ * reach it. Storage is read and written here, every access guarded, and so is a
+ * stored value a build cannot read, which is set aside rather than written over
+ * (decision 0080); files and the clipboard are the caller's business.
  */
 
 import { plural } from './words.js';
@@ -216,5 +218,72 @@ export function describeSave(bundle: SaveBundle): string {
     return `${plural(boards, 'board')} cleared, ${plural(types, 'game type')} finished.`;
   } catch {
     return 'Unreadable progress.';
+  }
+}
+
+// ------------------------------------------------------------------ storage
+
+/** The save exactly as stored. Blocked storage reads as no save at all. */
+export function readStoredSave(): SaveBundle {
+  const read = (key: string): string | null => {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  };
+  return { progress: read(PROGRESS_KEY), settings: read(SETTINGS_KEY) };
+}
+
+/**
+ * Replace the stored save, and report whether it actually landed. A save with no settings in it
+ * clears them rather than keeping this browser's, so a restore is the exported state and not a
+ * mixture of two. Read back afterwards because a blocked store can fail without throwing.
+ */
+export function writeStoredSave(bundle: SaveBundle): boolean {
+  try {
+    if (bundle.progress === null) localStorage.removeItem(PROGRESS_KEY);
+    else localStorage.setItem(PROGRESS_KEY, bundle.progress);
+    if (bundle.settings === null) localStorage.removeItem(SETTINGS_KEY);
+    else localStorage.setItem(SETTINGS_KEY, bundle.settings);
+    return localStorage.getItem(PROGRESS_KEY) === bundle.progress;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Where a stored value this build could not read is kept, beside the fresh one that replaces it
+ * (decision 0080): a save from a newer version, or a damaged one, is set aside rather than
+ * written over, so a later build, or a person, can still get at it.
+ */
+export function keptKey(key: string): string {
+  return `${key}.unreadable`;
+}
+
+/** Set an unreadable stored value aside under its kept key. Storage that throws keeps nothing. */
+export function keepUnreadable(key: string, raw: string): void {
+  try {
+    localStorage.setItem(keptKey(key), raw);
+  } catch {
+    // Blocked storage: nothing could be read from it, and nothing can be written to it.
+  }
+}
+
+/** Whether something is kept aside under this key. */
+export function hasKept(key: string): boolean {
+  try {
+    return localStorage.getItem(keptKey(key)) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** Let what was kept aside under this key go, as Reset progress does. */
+export function dropKept(key: string): void {
+  try {
+    localStorage.removeItem(keptKey(key));
+  } catch {
+    // Nothing to do.
   }
 }

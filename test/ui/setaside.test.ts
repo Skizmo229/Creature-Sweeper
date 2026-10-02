@@ -8,8 +8,7 @@
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../src/ui/app.js';
-import { keptKey } from '../../src/ui/progress.js';
-import { PROGRESS_KEY } from '../../src/ui/savefile.js';
+import { PROGRESS_KEY, keptKey } from '../../src/ui/savefile.js';
 import { TELEMETRY_KEY } from '../../src/ui/telemetry.js';
 import { TelemetryStore } from '../../src/ui/telemetrystore.js';
 
