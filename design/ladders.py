@@ -736,23 +736,15 @@ def board_row(t, d):
         # all - it falls out of how big a board the set is laid on. `sets`
         # copies of the set scale the count without bending the curve.
         q = [(T + 1) * sets] * T
+    elif t.get("placement") in ("packs", "congo"):
+        # The rule IS the distribution, as for DOMINOES: every pack is one
+        # of each tier, so n packs is n of every tier and the curve is flat
+        # by construction. Unlike a domino set a pack is small, so density
+        # still drives the count directly - rounded DOWN to whole packs,
+        # the direction that can never push a board past its packing.
+        q = [round(density * cells) // T] * T
     else:
         M = round(density * cells)
-        if t.get("placement") in ("packs", "congo"):
-            # The rule IS the distribution, as for DOMINOES: every pack is one
-            # of each tier, so n packs is n of every tier and the curve is flat
-            # by construction. Unlike a domino set a pack is small, so density
-            # still drives the count directly - rounded DOWN to whole packs,
-            # the direction that can never push a board past its packing.
-            q = [M // T] * T
-            C = cumulative_exp(q)
-            ea = exp_array(q, lock, alpha0)
-            return dict(
-                n=n, w=W, h=H, cells=cells, monsters=sum(q),
-                density=round(100 * sum(q) / cells, 1),
-                tiers=T, quantity=q, hp=hp, lock=lock, exp=ea, givens=givens,
-                total_exp=C[-1], empty=cells - sum(q),
-            )
         if t.get("placement") in ("pairs", "sprinkles"):
             # Every creature has exactly one partner, so an odd total leaves
             # one of them with nobody. Rounded DOWN rather than up, because the
