@@ -9,9 +9,9 @@
 import './setup.js';
 import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
 import { encodeSave } from '../../src/ui/savefile.js';
 import { PLAYTEST_REPORT_URL } from '../../src/ui/screens/backup.js';
+import { key, mountApp } from './driver.js';
 
 const progress = JSON.stringify({
   version: 1,
@@ -40,9 +40,7 @@ const askToRestore = (): void => {
 };
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  new App(document.getElementById('app')!);
+  mountApp();
 });
 
 describe('cancelling REPLACE SAVE?', () => {
@@ -66,7 +64,7 @@ describe('cancelling REPLACE SAVE?', () => {
   it('with Escape brings the card back with the pasted code', () => {
     openBackup();
     askToRestore();
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    key('Escape');
     expect(question()).toBeNull();
     expect(card()).not.toBeNull();
     expect(restoreBox().value).toBe(code);

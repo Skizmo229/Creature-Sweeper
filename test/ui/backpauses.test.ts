@@ -6,29 +6,14 @@
 
 import './setup.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Game } from '../../src/engine/game.js';
-import { App } from '../../src/ui/app.js';
 import { ladders } from '../../src/ui/ladders.js';
 import { pausedGames } from '../../src/ui/paused.js';
-import type { Progress } from '../../src/ui/progress.js';
 import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
+import { type AppDriver, key, mountApp, settingsRow } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  runFull(typeId: string, seed?: number): void;
-  readonly current: Game | null;
-  readonly progress: Progress;
-  readonly settings: Settings;
-  readonly actions: { onCellPrimary(x: number, y: number): void };
-  showSettings(back: () => void): void;
-  showTypes(): void;
-}
+let app: AppDriver;
 
-let app: Driver;
-
-const key = (k: string): boolean =>
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
 const onGame = (): boolean => document.querySelector('.screen.game') !== null;
 
 /**
@@ -47,9 +32,7 @@ function freeMove(): boolean {
 }
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
   app.progress.setUnlockAll(true);
 });
 
@@ -103,9 +86,7 @@ describe('back pauses without asking', () => {
 
   it('is a toggle on the settings screen, and reads a save without it as off', () => {
     app.showSettings(() => app.showTypes());
-    const row = [...document.querySelectorAll('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Back pauses without asking',
-    )!;
+    const row = settingsRow('Back pauses without asking');
     const box = row.querySelector<HTMLInputElement>('input[type=checkbox]')!;
     expect(box.checked).toBe(false);
     box.click();

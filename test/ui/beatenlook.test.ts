@@ -7,7 +7,6 @@
 
 import './setup.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { App } from '../../src/ui/app.js';
 import { BEATEN_ALPHA, STRIKE_ALPHA, beatenParts } from '../../src/ui/board/paint.js';
 import { type BoardDisplay, DEFAULT_DISPLAY } from '../../src/ui/board/view.js';
 import { themeFor } from '../../src/ui/looks.js';
@@ -17,21 +16,12 @@ import { SETTINGS_KEY } from '../../src/ui/savefile.js';
 import { Settings } from '../../src/ui/settings.js';
 import { renderPreview } from '../../src/ui/settingsscreen/render.js';
 import { TIER_COUNT } from '../../src/ui/tiercolors.js';
+import { type AppDriver, mountApp, settingsRow, tileLabel, tiles } from './driver.js';
 
-interface Driver {
-  play(typeId: string, board: number, seed?: number): void;
-  showSettings(back: () => void): void;
-  showTypes(): void;
-  readonly settings: Settings;
-  readonly view: { readonly display: BoardDisplay } | null;
-}
-
-let app: Driver;
+let app: AppDriver;
 
 beforeEach(() => {
-  localStorage.clear();
-  document.body.innerHTML = '<div id="app"></div>';
-  app = new App(document.getElementById('app')!) as unknown as Driver;
+  app = mountApp();
 });
 
 /**
@@ -150,11 +140,9 @@ describe('the setting', () => {
 
   it('is a gallery of the seven looks on the standard example', () => {
     app.showSettings(() => app.showTypes());
-    const row = [...document.querySelectorAll('.settings-row')].find(
-      (r) => r.querySelector('.settings-name')?.textContent === 'Beaten creatures',
-    )!;
-    const tiles = [...row.querySelectorAll<HTMLButtonElement>('.preview-chip')];
-    expect(tiles.map((t) => t.querySelector('.chip-label')!.textContent)).toEqual([
+    const row = settingsRow('Beaten creatures');
+    const looks = tiles(row);
+    expect(looks.map(tileLabel)).toEqual([
       'Dimmed and struck through',
       'Struck through',
       'Dimmed and crossed out',
@@ -164,7 +152,7 @@ describe('the setting', () => {
       'Plain',
     ]);
     expect(row.querySelectorAll('.preview-chip canvas')).toHaveLength(7);
-    tiles[5]!.click();
+    looks[5]!.click();
     expect(Settings.load().presentation.beatenLook).toBe('grey');
   });
 
