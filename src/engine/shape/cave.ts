@@ -51,6 +51,14 @@ function rimLimit(rng: Rng): (angle: number) => number {
       (0.5 + 0.2 * Math.sin(2 * a + p1) + 0.2 * Math.sin(3 * a + p2) + 0.1 * Math.sin(5 * a + p3));
 }
 
+/**
+ * How far out a point is on the rim's superellipse, its offsets from the centre given as shares of
+ * the semi-axes: 1 on the unwobbled rim, less inside it.
+ */
+function rimRadius(dx: number, dy: number): number {
+  return (Math.abs(dx) ** CAVE_RIM_POWER + Math.abs(dy) ** CAVE_RIM_POWER) ** (1 / CAVE_RIM_POWER);
+}
+
 /** How much more room than its target the cave is grown into, as a fraction (`caveSpace`). */
 const CAVE_SLACK = 0.08;
 
@@ -83,9 +91,7 @@ function caveSpace(w: number, h: number, target: number, rng: Rng): Mask {
     for (let x = 0; x < w; x++) {
       const dx = (x - cx) / a;
       const dy = (y - cy) / b;
-      const r =
-        (Math.abs(dx) ** CAVE_RIM_POWER + Math.abs(dy) ** CAVE_RIM_POWER) ** (1 / CAVE_RIM_POWER);
-      if (r <= limit(Math.atan2(dy, dx))) space[y]![x] = true;
+      if (rimRadius(dx, dy) <= limit(Math.atan2(dy, dx))) space[y]![x] = true;
     }
   }
 
@@ -95,11 +101,7 @@ function caveSpace(w: number, h: number, target: number, rng: Rng): Mask {
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       if (!space[y]![x]) continue;
-      const dx = (x - cx) / a;
-      const dy = (y - cy) / b;
-      const r =
-        (Math.abs(dx) ** CAVE_RIM_POWER + Math.abs(dy) ** CAVE_RIM_POWER) ** (1 / CAVE_RIM_POWER);
-      if (r <= CAVE_VOID_REACH) inner.push(y * w + x);
+      if (rimRadius((x - cx) / a, (y - cy) / b) <= CAVE_VOID_REACH) inner.push(y * w + x);
     }
   }
   if (!inner.length) return space;
@@ -239,6 +241,60 @@ function stampGain(placed: Mask, ox: number, oy: number): number {
 }
 
 /**
+ * Where growth starts: a square drawn from the eighth of the chamber's squares nearest its middle,
+ * so growth can spread every way at once rather than crawling out from a wall.
+ */
+function centralOrigin(origins: readonly number[], w: number, rng: Rng): number {
+  let sumX = 0;
+  let sumY = 0;
+  for (const idx of origins) {
+    sumX += idx % w;
+    sumY += (idx - (idx % w)) / w;
+  }
+  const midX = sumX / origins.length;
+  const midY = sumY / origins.length;
+  const central = [...origins].sort((p, q) => {
+    const px = p % w;
+    const qx = q % w;
+    return (
+      (px - midX) ** 2 +
+      ((p - px) / w - midY) ** 2 -
+      ((qx - midX) ** 2 + ((q - qx) / w - midY) ** 2)
+    );
+  });
+  return central[randInt(rng, Math.max(1, Math.floor(central.length / 8)))]!;
+}
+
+/**
+ * Sweep the whole frontier for the square that adds the most within `budget` without a corner
+ * touch, the first on a tie, or -1 for none; and the frontier less the squares with nothing left
+ * to give, dropped while we are here.
+ */
+function biggestFittingStamp(
+  frontier: readonly number[],
+  placed: Mask,
+  w: number,
+  h: number,
+  budget: number,
+): { chosen: number; live: number[] } {
+  const live: number[] = [];
+  let chosen = -1;
+  let bestGain = 0;
+  for (const idx of frontier) {
+    const ox = idx % w;
+    const oy = (idx - ox) / w;
+    const gain = stampGain(placed, ox, oy);
+    if (gain === 0) continue;
+    live.push(idx);
+    if (gain > bestGain && gain <= budget && !cornerTouch(placed, w, h, ox, oy)) {
+      chosen = idx;
+      bestGain = gain;
+    }
+  }
+  return { chosen, live };
+}
+
+/**
  * Spend the budget, two cells wide, until it is gone.
  *
  * The endgame is the fiddly part. With four cells left any square will do, but
@@ -253,27 +309,7 @@ function growCave(space: Mask, w: number, h: number, target: number, rng: Rng): 
     throw new Error(`cave ${w}x${h}: chamber holds ${room.cells}, needs ${target}`);
   }
   const usable = new Set(room.origins);
-
-  // Start near the middle of the chamber so growth can spread every way at
-  // once rather than crawling out from a wall.
-  let sumX = 0;
-  let sumY = 0;
-  for (const idx of room.origins) {
-    sumX += idx % w;
-    sumY += (idx - (idx % w)) / w;
-  }
-  const midX = sumX / room.origins.length;
-  const midY = sumY / room.origins.length;
-  const central = [...room.origins].sort((p, q) => {
-    const px = p % w;
-    const qx = q % w;
-    return (
-      (px - midX) ** 2 +
-      ((p - px) / w - midY) ** 2 -
-      ((qx - midX) ** 2 + ((q - qx) / w - midY) ** 2)
-    );
-  });
-  const seed = central[randInt(rng, Math.max(1, Math.floor(central.length / 8)))]!;
+  const seed = centralOrigin(room.origins, w, rng);
 
   const placed = blankMask(w, h);
   let count = 0;
@@ -321,22 +357,9 @@ function growCave(space: Mask, w: number, h: number, target: number, rng: Rng): 
     }
 
     if (chosen < 0) {
-      // Sweep the whole frontier, take the biggest that fits, and drop the
-      // squares that have nothing left to give while we are here.
-      const live: number[] = [];
-      let bestGain = 0;
-      for (const idx of frontier) {
-        const ox = idx % w;
-        const oy = (idx - ox) / w;
-        const gain = stampGain(placed, ox, oy);
-        if (gain === 0) continue;
-        live.push(idx);
-        if (gain > bestGain && gain <= budget && !cornerTouch(placed, w, h, ox, oy)) {
-          chosen = idx;
-          bestGain = gain;
-        }
-      }
-      frontier = live;
+      const swept = biggestFittingStamp(frontier, placed, w, h, budget);
+      chosen = swept.chosen;
+      frontier = swept.live;
     }
 
     if (chosen < 0) {
