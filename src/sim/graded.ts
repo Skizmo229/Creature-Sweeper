@@ -130,6 +130,9 @@ const SCAN_COST = 4;
 /** Passes of the play loop a board is allowed, per cell and per wait, before the player stops. */
 const PASSES_PER_CELL = 8;
 
+/** Mixed into the board's seed for the player's own tie-breaking draw, apart from the deal's. */
+const DRAW_SALT = 0x9e3779b9;
+
 /**
  * Play one board as the graded player, a pass at a time, until it is won or lost; with nothing
  * left to gamble on, it forfeits. Mutates the game; returns what the board demanded and cost.
@@ -213,8 +216,13 @@ class Player {
     private readonly run: GradedRun,
   ) {
     this.scaffold = dungeonScaffold(game);
-    this.draw = mulberry32(game.seed ^ 0x9e3779b9);
+    this.draw = mulberry32(game.seed ^ DRAW_SALT);
     this.all = everyTier(game.config.tiers);
+  }
+
+  /** Whether a beaten creature's number is read where the game hides it. */
+  private get peek(): boolean {
+    return this.options.peek ?? false;
   }
 
   private domain(cell: Cell): number {
@@ -231,7 +239,7 @@ class Player {
       game: this.game,
       reading,
       level: this.game.level,
-      peek: this.options.peek ?? false,
+      peek: this.peek,
       domain: (cell) => this.domain(cell),
       scaffold: this.scaffold,
     };
@@ -263,7 +271,7 @@ class Player {
   private passOver(grade: Grade, radius: number): boolean {
     const { game, run } = this;
     for (let round = 0; round < NARROW_ROUNDS; round++) {
-      const reading = this.nearby(readBoard(game, this.options.peek ?? false), radius);
+      const reading = this.nearby(readBoard(game, this.peek), radius);
       const view = this.view(reading);
       const moves = noMoves();
       let narrowed = 0;
@@ -435,13 +443,14 @@ class Player {
       // that kills at the dial in force.
       const worst =
         ceiling <= game.level ? 0 : fightCostFor(game.level, game.hp, ceiling, game.settings);
-      const key = [worst >= game.hp ? 1 : 0, ceiling, mean, -near.length];
+      const lethal = worst >= game.hp;
+      const key = [lethal ? 1 : 0, ceiling, mean, -near.length];
       const order = best ? compare(key, best.key) : -1;
       if (order < 0) {
-        best = { cell, key, ceiling, near };
+        best = { cell, key, lethal, ceiling, near };
         ties = 1;
       } else if (order === 0 && this.draw() * ++ties < 1) {
-        best = { cell, key, ceiling, near };
+        best = { cell, key, lethal, ceiling, near };
       }
     }
     return best;
@@ -450,7 +459,7 @@ class Player {
   /** Gamble, spending an Exercise first where the worst case is above the level and it can. */
   guess(): void {
     const { game, run } = this;
-    const gamble = this.pick(readBoard(game, this.options.peek ?? false));
+    const gamble = this.pick(readBoard(game, this.peek));
     if (!gamble) {
       game.forfeit();
       return;
@@ -459,7 +468,7 @@ class Player {
     if (this.options.spells && gamble.ceiling > game.level && game.exerciseCharge === 0) {
       this.cast('exercise');
     }
-    if (gamble.key[0] === 1) run.lethalGuesses++;
+    if (gamble.lethal) run.lethalGuesses++;
     run.guesses++;
     run.effort += GUESS_COST;
     const hp = game.hp;
@@ -479,7 +488,7 @@ class Player {
   spend(): boolean {
     const { game } = this;
     if (!this.options.spells || this.castsHere >= CASTS_AT_A_STUCK_POINT) return false;
-    const gamble = this.pick(readBoard(game, this.options.peek ?? false));
+    const gamble = this.pick(readBoard(game, this.peek));
     if (!gamble) return false;
     if (this.cast('reveal', gamble.cell)) return true;
     const augur = game.canCast('augur') ? this.augurTarget() : null;
@@ -497,7 +506,7 @@ class Player {
   /** The number whose Augur would free most, on average, of what the pencil leaves open. */
   private augurTarget(): Constraint | null {
     const { game } = this;
-    const reading = readBoard(game, this.options.peek ?? false);
+    const reading = readBoard(game, this.peek);
     let best: Constraint | null = null;
     let most = 0;
     for (const c of reading.constraints) {
@@ -525,15 +534,19 @@ class Player {
   }
 }
 
+/** A cell to gamble on, and what ranked it. */
 interface Gamble {
   cell: Cell;
+  /** The ranking, lowest first, compared in order: lethal, ceiling, mean, -(numbers touching). */
   key: number[];
+  /** Whether its worst case could kill at the HP of the moment. */
+  lethal: boolean;
   ceiling: number;
   near: readonly Constraint[];
 }
 
+/** Two keys of the same length in lexicographic order: negative when `a` ranks first. */
 function compare(a: readonly number[], b: readonly number[]): number {
-  if (!b.length) return -1;
   for (let i = 0; i < a.length; i++) {
     if (a[i]! !== b[i]!) return a[i]! < b[i]! ? -1 : 1;
   }
