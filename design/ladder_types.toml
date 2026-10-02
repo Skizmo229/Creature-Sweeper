@@ -403,20 +403,12 @@ axis = "Four suits cut out"
 blurb = """\
   A playing card, twice an ordinary board, with its four suits cut out where a Four's pips sit. \
   Every hole is another edge. Carries Reveal and Census."""
-# A card's 5:7 portrait. It started at 48x68; the owner then asked for a
-# smaller card with bigger suits, and chose suits drawn cell by cell, 11
-# wide, over curves. 30x42 at board 1, growing a sixth each way: 984 to
-# 1,439 cells.
+# A card's 5:7 portrait, growing a sixth each way (docs/modes.md, CARD, says how it got here).
 size = [[30, 42], [30, 42], [30, 42], [31, 44], [31, 44], [33, 46], [33, 46], [34, 48], [34, 48], [35, 49]]
 tiers = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
-# On ARCANE's forced-guess curve per board, which on boards twice
-# ARCANE's size means sparser per cell. Measured with the honest player,
-# 26 September 2026: at ARCANE's schedule it was stuck 51.3 times over the
-# ladder and cleared 62% (60 seeds); ramps shifted down stayed flatter
-# than ARCANE's, too many guesses early and too few late, so this one
-# starts 4.2 points below ARCANE's and ends 3.7 below: 23.1 stuck and 85%
-# cleared against ARCANE's 23.9 and 82%, and board 10 4.9 stuck against
-# 5.1 (120 seeds).
+# On ARCANE's forced-guess curve per board, which on boards twice ARCANE's size means sparser per
+# cell: 4.2 points below ARCANE's schedule at board 1 and 3.7 below at board 10 (the honest
+# player, 120 seeds a board, 26 September 2026; docs/modes.md, CARD, has the figures).
 density = [0.223, 0.232, 0.241, 0.251, 0.26, 0.27, 0.279, 0.289, 0.298, 0.308]
 hp = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
 lock = [2, 2, 2, 2, 2, 3, 3, 3, 3, 3]

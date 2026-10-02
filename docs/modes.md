@@ -103,12 +103,13 @@ four suit-shaped holes where a Four's pips sit, spade and heart above, diamond a
 upside down. The suits are drawn cell by cell, 11 wide and 10 to 12 tall, the same size on every
 board (`SUIT_ART`, with its copy in `ladders.py`): drawn as curves at this size they read as
 blobs, and the owner chose the drawn ones. It started at 48x68 and was made smaller at the
-owner's request, 30x42 growing to 35x49, twice an ordinary board; the tall box would be clipped
-by the continuation's global 64x32, so the continuation keeps board 10's card. It sits on
-ARCANE's forced-guess curve per board, which on a board this size means sparser per cell: at
-ARCANE's schedule it was stuck 51.3 times over the ladder and cleared 62%, and it ships on a ramp
-from 4.2 density points below ARCANE's to 3.7 (23.1 stuck and 85% against 23.9 and 82%; 120
-seeds, 26 September 2026).
+owner's request, 30x42 growing a sixth each way to 35x49 (984 to 1,439 cells), twice an ordinary
+board; the tall box would be clipped by the continuation's global 64x32, so the continuation keeps
+board 10's card. It sits on ARCANE's forced-guess curve per board, which on a board this size
+means sparser per cell: at ARCANE's schedule it was stuck 51.3 times over the ladder and cleared
+62% (60 seeds). Ramps shifted down stayed flatter than ARCANE's, too many guesses early and too
+few late, so it ships on a ramp from 4.2 density points below ARCANE's to 3.7 (23.1 stuck and 85%
+against 23.9 and 82%, and board 10 4.9 stuck against 5.1; 120 seeds, 26 September 2026).
 
 **VALENTINES** is a heart, a per-cell mask filling a square box: the classic heart curve, the
 same the card's heart suit is cut with, stretched to the box's exact extents. At ARCANE's
