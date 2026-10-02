@@ -286,8 +286,6 @@ export class Settings {
   highlightStyle(typeId: string): HighlightStyle | null {
     const choice = this.presentationFor(typeId).highlight;
     if (choice === OFF) return null;
-    // No type currently overrides this, but resolving through `lookFor`'s
-    // sibling would be the place to start if one ever wants to.
     if (choice !== DEFAULT) return choice;
     // No ladder overrides this today, so every type's default is the true
     // adjacency ring. `lookFor(typeId)` is where a per-type answer would
