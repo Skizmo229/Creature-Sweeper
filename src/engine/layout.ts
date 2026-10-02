@@ -167,29 +167,61 @@ export function readLayout(
   shown: readonly string[],
   options: LayoutOptions = {},
 ): Drawing {
-  const what = tokens(truth, 'truth');
-  const seen = tokens(shown, 'shown');
-  if (what.length !== seen.length || what[0]!.length !== seen[0]!.length) {
+  const truthTokens = tokens(truth, 'truth');
+  const shownTokens = tokens(shown, 'shown');
+  if (
+    truthTokens.length !== shownTokens.length ||
+    truthTokens[0]!.length !== shownTokens[0]!.length
+  ) {
     throw new Error(
-      `the truth is ${what[0]!.length}x${what.length} and the shown drawing ` +
-        `${seen[0]!.length}x${seen.length}`,
+      `the truth is ${truthTokens[0]!.length}x${truthTokens.length} and the shown drawing ` +
+        `${shownTokens[0]!.length}x${shownTokens.length}`,
     );
   }
-  const grid = layTruth(what);
-  const cells = grid.flat();
+  const grid = layTruth(truthTokens);
+  const quantity = countQuantity(grid.flat(), options.tiers);
+  const tiers = quantity.length;
+  const { opened, marked } = readShownCells(grid, shownTokens, tiers);
 
+  const exp = cumulativeExp(quantity).slice(0, tiers - 1);
+  const paid = opened.filter((c) => c.tier > 0).reduce((sum, c) => sum + expForTier(c.tier), 0);
+  const startLevel = drawnStartLevel(exp, paid, tiers, options.startLevel);
+  const config = drawnConfig(grid, quantity, exp, startLevel, options);
+  const fault = placementRule(config.placement).fault(grid, config);
+  if (fault) throw new Error(`the drawing breaks the ${config.placement} placement: ${fault}`);
+  return { config, grid, opened, marked, paid };
+}
+
+/**
+ * How many creatures of each tier the truth holds, over `asked` tiers or the highest drawn. Throws
+ * for a truth with no creature, or fewer tiers asked for than it draws.
+ */
+function countQuantity(cells: readonly Cell[], asked: number | undefined): number[] {
   const top = Math.max(0, ...cells.map((c) => c.tier));
   if (top === 0) throw new Error('the truth has no creature');
-  const tiers = options.tiers ?? top;
+  const tiers = asked ?? top;
   if (!Number.isInteger(tiers) || tiers < top) {
     throw new Error(`tiers is ${tiers}; the drawing needs at least ${top}`);
   }
   const quantity = new Array<number>(tiers).fill(0);
   for (const c of cells) if (c.tier > 0) quantity[c.tier - 1]!++;
+  return quantity;
+}
 
+/**
+ * Read what the shown drawing says of every cell: what is open and what is marked, in reading
+ * order. Throws, besides what `readShown` refuses, for an open 0 beside a covered cell and for a
+ * board with nothing left alive.
+ */
+function readShownCells(
+  grid: Grid,
+  shownTokens: readonly string[][],
+  tiers: number,
+): { opened: Cell[]; marked: Array<readonly [Cell, number]> } {
+  const cells = grid.flat();
   const opened: Cell[] = [];
   const marked: Array<readonly [Cell, number]> = [];
-  for (const c of cells) readShown(c, seen[c.y]![c.x]!, tiers, opened, marked);
+  for (const c of cells) readShown(c, shownTokens[c.y]![c.x]!, tiers, opened, marked);
   const open = new Set(opened);
   // Opening any cell numbered 0 cascades through every neighbour (`Game.reveal`).
   for (const c of opened) {
@@ -197,30 +229,48 @@ export function readLayout(
       throw new Error(`the 0 at ${c.x},${c.y} would have opened the covered cells beside it`);
     }
   }
-  const beaten = opened.filter((c) => c.tier > 0);
   if (!cells.some((c) => c.alive && !open.has(c))) {
     throw new Error('nothing is left alive, so the board is already won');
   }
+  return { opened, marked };
+}
 
-  const exp = cumulativeExp(quantity).slice(0, tiers - 1);
-  const paid = beaten.reduce((sum, c) => sum + expForTier(c.tier), 0);
+/**
+ * The level a drawing starts at: `asked`, or what the `paid` EXP buys against thresholds `exp`.
+ * Throws for a level below what the EXP buys or above the top tier.
+ */
+function drawnStartLevel(
+  exp: readonly number[],
+  paid: number,
+  tiers: number,
+  asked: number | undefined,
+): number {
   const bought = new Progression(1, exp);
   bought.award(paid);
-  const startLevel = options.startLevel ?? bought.level;
+  const startLevel = asked ?? bought.level;
   if (!Number.isInteger(startLevel) || startLevel < bought.level || startLevel > tiers) {
     throw new Error(
       `level ${startLevel} is not in ${bought.level}..${tiers}: ${paid} EXP buys level ` +
         `${bought.level} on this board, where each level costs every creature at or below it`,
     );
   }
+  return startLevel;
+}
 
-  const placement = options.placement ?? 'uniform';
-  const config: BoardConfig = {
+/** The config a drawing is played by: counted off it, and the options' where they say. */
+function drawnConfig(
+  grid: Grid,
+  quantity: number[],
+  exp: number[],
+  startLevel: number,
+  options: LayoutOptions,
+): BoardConfig {
+  return {
     typeId: options.typeId ?? 'layout',
     board: 1,
     width: grid[0]!.length,
     height: grid.length,
-    tiers,
+    tiers: quantity.length,
     quantity,
     hp: options.hp ?? DRAWN_HP,
     startLevel,
@@ -234,16 +284,13 @@ export function readLayout(
     // keeps its hallways clear), and a drawing has no way to be checked against one yet.
     shape: 'rect',
     shapeParam: 0,
-    placement,
+    placement: options.placement ?? 'uniform',
     givens: 0,
     reach: 0,
     spells: [],
     startMana: 0,
     ...(options.sweep === false ? { sweep: false } : {}),
   };
-  const fault = placementRule(placement).fault(grid, config);
-  if (fault) throw new Error(`the drawing breaks the ${placement} placement: ${fault}`);
-  return { config, grid, opened, marked, paid };
 }
 
 /**
