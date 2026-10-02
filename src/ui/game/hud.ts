@@ -63,7 +63,7 @@ export interface HudState {
   boardIndex: number;
   mode: EntryMode;
   hovered: Cell | null;
-  /** What the tutor is saying, in place of the hint line, while a lesson is showing. */
+  /** What the tutor is saying, in place of the hint line, while it is pointing at something. */
   tutor: string | null;
   /** On a lesson board, what the lesson says there instead of the hint. */
   lesson: LessonLine | null;

@@ -67,14 +67,14 @@ export interface GameScreenElements {
   next: HTMLButtonElement;
 }
 
-/** `lesson` is a school lesson's title, shown in place of the board's label. */
+/** `lessonTitle` is a school lesson's title, shown in place of the board's label. */
 export function buildGameScreen(
   game: Game,
   typeId: string,
   boardIndex: number,
   run: FullRun | null,
   a: GameScreenActions,
-  lesson: string | null = null,
+  lessonTitle: string | null = null,
 ): GameScreenElements {
   const type = ladders.find((t) => t.id === typeId)!;
   const wrap = el('div', 'screen game');
@@ -82,10 +82,12 @@ export function buildGameScreen(
   // the menus stay recognisable however the board is painted.
   wrap.style.setProperty('--tint', themeFor(typeId).accent);
 
-  const { hudEl, hud } = buildHud(game, run, a, lesson === null);
+  const { hudEl, hud } = buildHud(game, run, a, lessonTitle === null);
   wrap.append(
     hudEl,
-    lesson ? el('div', 'board-label', lesson) : boardLabel(type.name, game, boardIndex, run),
+    lessonTitle
+      ? el('div', 'board-label', lessonTitle)
+      : boardLabel(type.name, game, boardIndex, run),
   );
 
   const stage = el('div', 'stage');

@@ -196,7 +196,7 @@ function drawDiagram(d: Diagram, o: GuideOptions): HTMLElement {
   const picture = diagramPicture(d);
   view.setGame(picture, o.theme, { ...o.display, highlight: null });
   const { lesson } = pressDiagram(d);
-  if (lesson) view.setLesson(within(lesson, picture.config.width));
+  if (lesson) view.setPointer(within(lesson, picture.config.width));
   figure.append(canvas);
   if (lesson) figure.append(el('figcaption', undefined, `Hint says: ${lesson.caption}`));
   return figure;

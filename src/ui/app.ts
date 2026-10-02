@@ -467,7 +467,6 @@ export class App {
     wearInterfaceFont(this.settings, this.typeId);
     this.clearScreen();
 
-    const lesson = this.teaching.lessonTitle();
     const els = buildGameScreen(
       game,
       this.typeId,
@@ -497,7 +496,7 @@ export class App {
         pickSpell: (id) => this.actions.pickSpell(id),
         cancelSpell: () => this.actions.cancelSpell(),
       },
-      lesson,
+      this.teaching.lessonTitle(),
     );
     this.els = els;
     this.root.append(els.root);
@@ -600,7 +599,7 @@ export class App {
       beatenNumbers: this.settings.presentation.beatenNumbers,
       hintLine: this.settings.presentation.hintLine,
     });
-    this.view?.setLesson(this.teaching.pointer());
+    this.view?.setPointer(this.teaching.pointer());
     this.view?.render();
     this.updateClock();
   }

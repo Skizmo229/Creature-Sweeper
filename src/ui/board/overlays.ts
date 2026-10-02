@@ -1,7 +1,7 @@
 /**
  * What is drawn over or around the cells: the ghost band beyond a wrapped edge, the board's
- * silhouette, the placement rule's box rules and bonds, the wrap seams, and the
- * cursor highlight. Each is its own pass over the finished board, because a cell drawn later would
+ * silhouette, the placement rule's box rules and bonds, the wrap seams, the tutor's pointer and
+ * the cursor highlight. Each is its own pass over the finished board, because a cell drawn later would
  * paint over its neighbour's half of a shared line.
  */
 
@@ -444,13 +444,13 @@ export function drawHighlight(
 }
 
 /**
- * Point at a lesson (docs/teaching-plan.md, Part 1): the numbers and cells its proof read, ringed
- * in the tutor's colour with the covered cells each number sees lit faintly around it; what it
- * concludes, washed in the mark green where it is safe to open, ringed in the tier's colour with
- * the tier written on it where it is named, and ringed dashed with the candidates where it is
- * only narrowed. Nothing here is a mark: the player still writes every one.
+ * Point at a proof, the tutor's or a school step's (docs/teaching-plan.md, Part 1): the numbers and
+ * cells it read, ringed in the tutor's colour with the covered cells each number sees lit faintly
+ * around it; what it concludes, washed in the mark green where it is safe to open, ringed in the
+ * tier's colour with the tier written on it where it is named, and ringed dashed with the
+ * candidates where it is only narrowed. Nothing here is a mark: the player still writes every one.
  */
-export function drawLesson(p: Paint, lesson: Lesson): void {
+export function drawPointer(p: Paint, pointer: Lesson): void {
   const { ctx, layout } = p;
   ctx.save();
   ctx.lineWidth = 2;
@@ -458,7 +458,7 @@ export function drawLesson(p: Paint, lesson: Lesson): void {
   // The rings each number sees, faint, so the shape of the proof is visible before its parts.
   ctx.globalAlpha = 0.35;
   ctx.strokeStyle = TUTOR_COLOR;
-  for (const c of lesson.why.constraints) {
+  for (const c of pointer.why.constraints) {
     for (const n of c.unknown) {
       const { cx, cy } = centreOf(layout, n.x, n.y);
       tracePath(p, cx, cy, 3);
@@ -467,7 +467,7 @@ export function drawLesson(p: Paint, lesson: Lesson): void {
   }
 
   ctx.globalAlpha = 1;
-  for (const cell of [...lesson.why.constraints.map((c) => c.cell), ...lesson.why.cells]) {
+  for (const cell of [...pointer.why.constraints.map((c) => c.cell), ...pointer.why.cells]) {
     const { cx, cy } = centreOf(layout, cell.x, cell.y);
     ctx.strokeStyle = TUTOR_COLOR;
     ctx.lineWidth = 3;
@@ -475,9 +475,9 @@ export function drawLesson(p: Paint, lesson: Lesson): void {
     ctx.stroke();
   }
   // A proof that read a beaten creature's number has to be checkable without the cursor on it, so
-  // the number is written on the creature while the lesson shows, unless the board already shows
+  // the number is written on the creature while the pointer shows, unless the board already shows
   // it there (hovered, or with the Beaten toggle on; decision 0067).
-  for (const c of lesson.why.constraints) {
+  for (const c of pointer.why.constraints) {
     if (c.cell.tier > 0 && !showsBeatenNumber(p, c.cell)) {
       const { cx, cy } = centreOf(layout, c.cell.x, c.cell.y);
       writeOnCell(p, cx, cy, String(c.cell.num), TUTOR_COLOR, 0.5);
@@ -485,7 +485,7 @@ export function drawLesson(p: Paint, lesson: Lesson): void {
   }
 
   ctx.lineWidth = 2;
-  for (const cell of lesson.open) {
+  for (const cell of pointer.open) {
     const { cx, cy } = centreOf(layout, cell.x, cell.y);
     ctx.globalAlpha = 0.35;
     ctx.fillStyle = p.markColor;
@@ -496,7 +496,7 @@ export function drawLesson(p: Paint, lesson: Lesson): void {
     ctx.stroke();
   }
 
-  for (const [cell, tier] of lesson.mark) {
+  for (const [cell, tier] of pointer.mark) {
     const { cx, cy } = centreOf(layout, cell.x, cell.y);
     ctx.strokeStyle = tierColor(p.tierColors, tier);
     tracePath(p, cx, cy, 2);
@@ -505,7 +505,7 @@ export function drawLesson(p: Paint, lesson: Lesson): void {
   }
 
   ctx.setLineDash([4, 3]);
-  for (const [cell, mask] of lesson.narrow) {
+  for (const [cell, mask] of pointer.narrow) {
     const { cx, cy } = centreOf(layout, cell.x, cell.y);
     ctx.strokeStyle = TUTOR_COLOR;
     tracePath(p, cx, cy, 2);

@@ -195,7 +195,7 @@ export class Teaching {
     return { say: step.say, next: 'next' in step.wait, refused: this.refused };
   }
 
-  /** What to point at on the board: the tutor's own lesson if asked, else the step's. */
+  /** What to point at on the board: the tutor's pointer if it was asked, else the step's. */
   pointer(): Lesson | null {
     return this.tutor.pointer() ?? this.lesson?.pointer() ?? null;
   }

@@ -38,7 +38,7 @@ import {
   drawBoxRules,
   drawGhostBand,
   drawHighlight,
-  drawLesson,
+  drawPointer,
   drawReach,
   drawSeams,
   drawSilhouette,
@@ -172,8 +172,11 @@ export class BoardView implements InputHost {
   private canPanValue = false;
   private readonly options: BoardViewOptions;
 
-  /** The tutor's lesson pointed at on the board, if one is showing (docs/teaching-plan.md). */
-  private lesson: Lesson | null = null;
+  /**
+   * What the tutor, or a school lesson's step, is pointing at on the board: a proof's numbers,
+   * cells and conclusions (docs/teaching-plan.md). Null while nothing is.
+   */
+  private pointer: Lesson | null = null;
 
   /**
    * The faces this view has asked the browser for and is waiting on, so a repaint is requested
@@ -225,10 +228,10 @@ export class BoardView implements InputHost {
     this.render();
   }
 
-  /** Point at a lesson, or at nothing. The lesson is drawn over everything but the cursor. */
-  setLesson(lesson: Lesson | null): void {
-    if (this.lesson === lesson) return;
-    this.lesson = lesson;
+  /** Point at a proof, or at nothing. The pointer is drawn over everything but the cursor. */
+  setPointer(pointer: Lesson | null): void {
+    if (this.pointer === pointer) return;
+    this.pointer = pointer;
     this.render();
   }
 
@@ -522,7 +525,7 @@ export class BoardView implements InputHost {
     drawBonds(p);
     drawSeams(p);
 
-    if (this.lesson && game.status === 'playing') drawLesson(p, this.lesson);
+    if (this.pointer && game.status === 'playing') drawPointer(p, this.pointer);
 
     const hovered = this.hoveredCellValue;
     if (hovered && game.status === 'playing' && this.display.highlight) {
