@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { boardConfig } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
-import { ladders, SEEDS } from './helpers.js';
+import { ladders, MASK_SEEDS } from './helpers.js';
 
 /**
  * The ragged cave is the only board whose shape is not a predicate, so it is
@@ -16,7 +16,6 @@ import { ladders, SEEDS } from './helpers.js';
  */
 describe('the ragged cave', () => {
   const cave = ladders.find((t) => t.id === 'cave')!;
-  const caveSeeds = [...SEEDS, 0x1d107, 0xfeed];
 
   /**
    * The load-bearing one, and the reason a ragged cave was deferred for so
@@ -29,7 +28,7 @@ describe('the ragged cave', () => {
   it('leaves exactly the cell count the ladder was tuned against', () => {
     for (const board of cave.boards) {
       const cfg = boardConfig(ladders, 'cave', board.n);
-      for (const seed of caveSeeds) {
+      for (const seed of MASK_SEEDS) {
         const game = Game.create(cfg, seed);
         expect(
           game.grid.flat().filter((c) => c.present).length,
@@ -42,7 +41,7 @@ describe('the ragged cave', () => {
   it('carves one connected cave, never an archipelago', () => {
     for (const board of cave.boards) {
       const cfg = boardConfig(ladders, 'cave', board.n);
-      for (const seed of caveSeeds) {
+      for (const seed of MASK_SEEDS) {
         const game = Game.create(cfg, seed);
         const present = game.grid.flat().filter((c) => c.present);
         const seen = new Set([present[0]!]);
@@ -64,7 +63,7 @@ describe('the ragged cave', () => {
   it('never lets the cave touch the edge of its bounding box', () => {
     for (const board of cave.boards) {
       const cfg = boardConfig(ladders, 'cave', board.n);
-      for (const seed of caveSeeds) {
+      for (const seed of MASK_SEEDS) {
         const game = Game.create(cfg, seed);
         const onEdge = game.grid
           .flat()
@@ -93,7 +92,7 @@ describe('the ragged cave', () => {
 
     for (const board of cave.boards) {
       const cfg = boardConfig(ladders, 'cave', board.n);
-      for (const seed of caveSeeds) {
+      for (const seed of MASK_SEEDS) {
         const cells = Game.create(cfg, seed)
           .grid.flat()
           .filter((c) => c.present);
@@ -121,7 +120,7 @@ describe('the ragged cave', () => {
 
     for (const board of cave.boards) {
       const cfg = boardConfig(ladders, 'cave', board.n);
-      for (const seed of caveSeeds) {
+      for (const seed of MASK_SEEDS) {
         const game = Game.create(cfg, seed);
         // Flood the absent cells inward from outside the cave; an absent cell
         // the flood never reaches is a hole with cave all the way round it.
@@ -158,7 +157,7 @@ describe('the ragged cave', () => {
   it('never leaves a passage one cell wide', () => {
     for (const board of cave.boards) {
       const cfg = boardConfig(ladders, 'cave', board.n);
-      for (const seed of caveSeeds) {
+      for (const seed of MASK_SEEDS) {
         const grid = Game.create(cfg, seed).grid;
         const on = (x: number, y: number) =>
           x >= 0 && y >= 0 && x < cfg.width && y < cfg.height && grid[y]![x]!.present;
@@ -188,7 +187,7 @@ describe('the ragged cave', () => {
   it('never joins two parts of the cave at a single corner', () => {
     for (const board of cave.boards) {
       const cfg = boardConfig(ladders, 'cave', board.n);
-      for (const seed of caveSeeds) {
+      for (const seed of MASK_SEEDS) {
         const grid = Game.create(cfg, seed).grid;
         const on = (x: number, y: number) =>
           x >= 0 && y >= 0 && x < cfg.width && y < cfg.height && grid[y]![x]!.present;

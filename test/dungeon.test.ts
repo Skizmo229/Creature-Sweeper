@@ -8,7 +8,7 @@ import { boardConfig, findType } from '../src/engine/config.js';
 import { Game } from '../src/engine/game.js';
 import { mulberry32 } from '../src/engine/rng.js';
 import { dungeonMap } from '../src/engine/shape/dungeon.js';
-import { ladders, SEEDS } from './helpers.js';
+import { ladders, MASK_SEEDS } from './helpers.js';
 
 /**
  * The dungeon is the other seeded mask, and the one with rules of its own:
@@ -22,7 +22,6 @@ import { ladders, SEEDS } from './helpers.js';
  */
 describe('the dungeon', () => {
   const dungeon = findType(ladders, 'dungeon');
-  const dungeonSeeds = [...SEEDS, 0x1d107, 0xfeed];
 
   function layout(board: number, seed: number) {
     const cfg = boardConfig(ladders, 'dungeon', board);
@@ -40,7 +39,7 @@ describe('the dungeon', () => {
   /** Every board, every seed, once — the sweep the per-rule tests read from. */
   function eachBoard(fn: (l: ReturnType<typeof layout>, label: string) => void): void {
     for (const board of dungeon.boards) {
-      for (const seed of dungeonSeeds) {
+      for (const seed of MASK_SEEDS) {
         fn(layout(board.n, seed), `dungeon#${board.n} seed ${seed}`);
       }
     }
@@ -55,7 +54,7 @@ describe('the dungeon', () => {
   it('leaves exactly the cell count the ladder was tuned against', () => {
     for (const board of dungeon.boards) {
       const cfg = boardConfig(ladders, 'dungeon', board.n);
-      for (const seed of dungeonSeeds) {
+      for (const seed of MASK_SEEDS) {
         const present = Game.create(cfg, seed)
           .grid.flat()
           .filter((c) => c.present);
@@ -191,7 +190,7 @@ describe('the dungeon', () => {
 
   it('leaves every room reachable from every other', () => {
     for (const board of dungeon.boards) {
-      for (const seed of dungeonSeeds) {
+      for (const seed of MASK_SEEDS) {
         const game = Game.create(boardConfig(ladders, 'dungeon', board.n), seed);
         const present = game.grid.flat().filter((c) => c.present);
         const seen = new Set([present[0]!]);
@@ -212,7 +211,7 @@ describe('the dungeon', () => {
   it('never lets the map touch the edge of its bounding box', () => {
     for (const board of dungeon.boards) {
       const cfg = boardConfig(ladders, 'dungeon', board.n);
-      for (const seed of dungeonSeeds) {
+      for (const seed of MASK_SEEDS) {
         const grid = Game.create(cfg, seed).grid;
         const onEdge = grid
           .flat()

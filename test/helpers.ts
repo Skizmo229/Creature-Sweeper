@@ -50,11 +50,17 @@ export const TRICK_KINDS = [
   'sprinkle_donut',
 ];
 
-/** The seeds a board-walking test plays each board with. */
+/**
+ * The seeds a board-walking test plays each board with. The two lists below add two more each,
+ * for checks that want more boards; `scaling.test.ts` keeps its own, shorter one.
+ */
 export const SEEDS = [0xc0ffee, 0x5eed, 0xbeef];
 
 /** Two more for the placement-rule tests, whose structural checks want more boards. */
 export const PLACEMENT_SEEDS = [...SEEDS, 0x1d10, 0xfeed];
+
+/** Two more for the seeded shapes, the cave and the dungeon, whose masks move with the seed. */
+export const MASK_SEEDS = [...SEEDS, 0x1d107, 0xfeed];
 
 /**
  * Settings with the Sweep gate taken off.

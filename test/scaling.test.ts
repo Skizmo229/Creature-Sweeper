@@ -25,7 +25,8 @@ import { autoplaySearch, autoplayTierOrder } from '../src/sim/autoplay.js';
 import { ladders } from './helpers.js';
 import { shapeRule } from '../src/engine/shape/registry.js';
 
-const SEEDS = [0xc0ffee, 0x5eed];
+/** The seeds each scaling board is built with: fewer than `SEEDS`, over many more boards. */
+const SCALING_SEEDS = [0xc0ffee, 0x5eed];
 
 /** Every board past the tuned ladder, as configs. */
 function scalingOf(typeId: string) {
@@ -243,7 +244,7 @@ describe('scaling boards are real boards', () => {
           shapeRule(cfg.shape).cellCount(cfg.shapeParam, cfg.width, cfg.height),
           `${type.id}#${row.n}: engine mask and ladders.py disagree`,
         ).toBe(row.cells);
-        for (const seed of SEEDS) {
+        for (const seed of SCALING_SEEDS) {
           const game = Game.create(cfg, seed);
           expect(
             game.grid.flat().filter((c) => c.present).length,
