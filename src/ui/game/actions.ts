@@ -45,8 +45,16 @@ export interface BoardActionsHost {
   guide(): void;
   /** Whether opening this cell is refused (a lesson board's rule), said to the player if so. */
   refuse(x: number, y: number): boolean;
+  /** Whether a school lesson is being taken on this board. */
+  inLesson(): boolean;
   /** On a lesson board: go on to the next step. */
   next(): void;
+}
+
+/** Whether Enter already does something where it was pressed: on a button, a link or a field. */
+function takesEnter(target: EventTarget | null): boolean {
+  const controls = 'button, a[href], input, select, textarea, summary, [role="button"]';
+  return target instanceof Element && target.closest(controls) !== null;
 }
 
 /**
@@ -253,10 +261,13 @@ export class BoardActions {
   /**
    * What one of the board's own keys does, or null for any other: S sweeps (Shift trusting marks)
    * and D sweeps trusting marks, W is PATROL's Wait, P pauses, H asks the tutor, G opens the
-   * guide, and Enter goes on with a lesson.
+   * guide, and Enter goes on with a lesson. Anywhere else Enter is the browser's, as it is on a
+   * focused control in a lesson too, so a button reached by Tab still presses.
    */
   private boardKey(e: KeyboardEvent, key: string, game: Game): (() => void) | null {
-    if (e.key === 'Enter') return () => this.host.next();
+    if (e.key === 'Enter') {
+      return this.host.inLesson() && !takesEnter(e.target) ? () => this.host.next() : null;
+    }
     switch (key) {
       case 's':
         return () => this.doSweep(e.shiftKey);

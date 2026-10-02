@@ -31,6 +31,33 @@ describe('a shortcut with a modifier held', () => {
   });
 });
 
+describe('Enter on a board', () => {
+  /** Press Enter at `target`, and whether the board claimed it from the browser. */
+  const claimed = (target: EventTarget): boolean => {
+    const press = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    target.dispatchEvent(press);
+    return press.defaultPrevented;
+  };
+
+  it('is the browser’s outside a lesson, so a focused button still takes it', () => {
+    const app = startApp();
+    app.play('normal', 1, 7);
+    const pause = [...document.querySelectorAll<HTMLButtonElement>('.screen.game button')][0]!;
+    pause.focus();
+    expect(claimed(pause)).toBe(false);
+    expect(claimed(window)).toBe(false);
+  });
+
+  it('goes on with a lesson, unless a focused control takes it', () => {
+    const app = startApp();
+    app.teaching.startLesson(0);
+    expect(claimed(window)).toBe(true);
+    const button = document.querySelector<HTMLButtonElement>('.screen.game button')!;
+    button.focus();
+    expect(claimed(button)).toBe(false);
+  });
+});
+
 /** A board on screen, with what its input reports. */
 function board(): { canvas: HTMLCanvasElement; marks: number; opens: number } {
   const canvas = document.createElement('canvas');

@@ -80,6 +80,7 @@ export class App {
     hint: () => this.askHint(),
     guide: () => this.teaching.guideFromBoard(),
     refuse: (x, y) => this.teaching.refuse(this.game?.cellAt(x, y) ?? null),
+    inLesson: () => this.teaching.lesson !== null,
     next: () => this.teaching.next(),
   });
   private readonly clock = new BoardClock();
