@@ -173,11 +173,13 @@ how a touch screen, which has no hover, sees those numbers.
 
 **Tutor / hint.** The tutor shows the next move a trick proves on the board in front of you, and
 why, pointing on the board in violet; it opens nothing. Each press of `H` or the [H]int button is
-a hint, and a hinted clear sets no best time.
+a hint, and a hinted clear sets no best time. In the code one proof the tutor shows is a `Lesson`
+(`src/sim/tutor.ts`), and what the board draws of it is the pointer (`BoardView.setPointer`).
 
 **School / lesson.** Nine short lessons, each on a board drawn so that one trick is the only move,
 offered from the ladder list and the rules card and required by nothing. A lesson is played at the
-tuned dials and touches no record.
+tuned dials and touches no record. In the code a school lesson is a `SchoolLesson`, and one being
+taken a `LessonRun`; neither is the tutor's `Lesson`.
 
 **Catalogue / field guide.** The catalogue is `docs/strategies.md`: every trick a person uses,
 graded. The field guide is the catalogue inside the game, in shorter words, opened from the rules
@@ -195,10 +197,10 @@ share of it you choose, and reaching zero loses the board.
 drawn), a face (the board's typeface), a sound pack and a clear effect. The player can override any
 part, for every ladder or for one alone.
 
-**Tile / example / standard example.** On the settings screen each option is a tile, a button,
-and what is drawn on it is an example: a real board in that option. The standard example is the
-board the icon, palette, board font and strike galleries share, dealt so that it shows every digit
-and every colour a palette paints. Its thumbnails are also called the board preview icons.
+**Tile / example / standard example.** On the settings screen each option is a tile, a button, and
+what is drawn on it is an example: a real board in that option. The standard example is the board
+the icon, palette, board font and beaten-creature galleries share, dealt so that it shows every
+digit and every colour a palette paints. Its thumbnails are also called the board preview icons.
 
 **Record / best time / fingerprint.** What the save keeps of a board: whether it was cleared, the
 best time, and, until a best time exists, the fewest hints a hinted clear took. A record carries
