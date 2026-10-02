@@ -425,11 +425,11 @@ and 17% for the count. It costs 50, Census and the old Augur together (decision 
 figure, 1 cast in 67 freeing a ring (decision 0055), measured a player that cast only where a whole
 ring could come free, not the answer.
 
-The ladder is ARCANE's boards and density with a lock deeper (3, then 4 from board 4) and
-EXTREME's HP, 10 falling to 8 (decision 0088). At ARCANE's lock and HP the graded player was stuck
-0.6 times a board and cleared everything, so an answer had nothing to settle. Here a grade-4 player
-spending mana on the new aim (`src/sim/aim.ts`) clears every early board, 88% of board 9 and 61% of
-board 10, the hard ladders' target; without spells 80% and 57%, with a guess more on each top
-board (80 seeds, 30 September 2026). Density stays at ARCANE's ceiling, where it was measured to
-move nothing (decision 0056); lock 5 measured the same as lock 4 on five tiers, and HP 7 the same
-as 8.
+The ladder is ARCANE's boards and density with a lock deeper (3, then 4 from board 4) and EXTREME's
+HP, 10 falling to 8 (decision 0088). At ARCANE's lock and HP the graded player was stuck 0.6 times a
+board and cleared everything, so an answer had nothing to settle. Here a grade-4 player spending
+mana on the new aim (`src/sim/aim.ts`) clears every early board, 88% of board 9 and 63% of board 10,
+the hard ladders' target; without spells 80% and 57%, with a guess more on each top board (80 seeds,
+30 September 2026; board 10 recounted 2 October 2026, decision 0088). Density stays at ARCANE's
+ceiling, where it was measured to move nothing (decision 0056); lock 5 measured the same as lock 4
+on five tiers, and HP 7 the same as 8.

@@ -26,3 +26,8 @@ If the ladder should bite, the lever is the lock (decision 0041's for EXTREME), 
 look is parchment and bronze with a deep teal `hot`, and it wears ORACLE's face, the other reader
 of signs (decision 0031 allows the share). Golden outputs `boards` and `runs` re-recorded for the
 new ladder, and a golden run `spells-augur` fingerprints the honest player on it.
+
+**Note, 2 October 2026.** The forced guesses above are the graded player's stuck column with
+spells, which then counted a stuck point again for every cast that settled nothing there, so
+counted once they would be lower. They cannot be measured again: AUGUR's schedule (0088) and
+Augur's answer (0087) have changed since.

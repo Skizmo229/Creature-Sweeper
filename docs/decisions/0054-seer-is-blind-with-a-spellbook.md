@@ -46,3 +46,8 @@ test now counts a search ladder's pool honestly (kills pay nothing there): SEER'
 Census 5.8 times and Beacon twice. `sim:spells` no longer skips search ladders, and a golden run
 `spells-seer` fingerprints the honest player there. Golden outputs `boards`, `runs` and the new
 `spells-seer` re-recorded; the continuation past board 10 climbs toward the 30% search cap.
+
+**Recounted, 2 October 2026.** With the graded player's casts at a stuck point coming back after a
+guess or a rescue, board 9 clears 43% rather than 40%. Boards 6 to 8 measured 60, 65 and 48% the
+same day before that fix, against the 55, 57 and 53% above: a drift from changes made between 27
+September and then, not traced.
