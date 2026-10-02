@@ -131,7 +131,6 @@ function popCount(mask: number): number {
  */
 export function sudokuSolution(rng: Rng): SudokuGrid {
   const cells = new Int32Array(81).fill(-1);
-  const used: number[] = new Array(81).fill(0);
 
   const order: number[][] = [];
   for (let i = 0; i < 81; i++) {
@@ -162,7 +161,6 @@ export function sudokuSolution(rng: Rng): SudokuGrid {
   };
 
   if (!solve(0)) throw new Error('sudoku: no solution from an empty grid, which cannot happen');
-  void used;
 
   const grid: SudokuGrid = [];
   for (let y = 0; y < SUDOKU_SIZE; y++) {

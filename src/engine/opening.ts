@@ -9,8 +9,6 @@ import { type Grid, neighbours } from './grid.js';
 export interface Opening {
   /** Every cell the cascade would uncover: the zero-region plus its fringe. */
   cells: Cell[];
-  /** How many of those are zero cells (the region itself). */
-  zeroCount: number;
 }
 
 /**
@@ -67,14 +65,12 @@ function zeroRegions(grid: Grid, coveredOnly: boolean, topology: Topology, wrap:
       if (coveredOnly && start.open) continue;
 
       // Flood the zero cells connected through `neighbours()`, collecting their fringe.
-      const region: Cell[] = [];
       const revealed = new Set<Cell>();
       const stack: Cell[] = [start];
       seen[y]![x] = true;
 
       while (stack.length) {
         const cell = stack.pop()!;
-        region.push(cell);
         revealed.add(cell);
         for (const n of neighbours(grid, cell.x, cell.y, topology, wrap)) {
           revealed.add(n);
@@ -85,7 +81,7 @@ function zeroRegions(grid: Grid, coveredOnly: boolean, topology: Topology, wrap:
         }
       }
 
-      regions.push({ cells: [...revealed], zeroCount: region.length });
+      regions.push({ cells: [...revealed] });
     }
   }
   return regions;

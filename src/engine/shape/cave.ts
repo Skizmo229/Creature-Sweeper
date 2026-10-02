@@ -229,7 +229,7 @@ function cornerTouch(placed: Mask, w: number, h: number, ox: number, oy: number)
 }
 
 /** Cells this square would add that are not already there. */
-function stampGain(placed: Mask, w: number, ox: number, oy: number): number {
+function stampGain(placed: Mask, ox: number, oy: number): number {
   let n = 0;
   for (let dy = 0; dy <= 1; dy++)
     for (let dx = 0; dx <= 1; dx++) {
@@ -303,7 +303,7 @@ function growCave(space: Mask, w: number, h: number, target: number, rng: Rng): 
   const fits = (idx: number, budget: number): boolean => {
     const ox = idx % w;
     const oy = (idx - ox) / w;
-    const gain = stampGain(placed, w, ox, oy);
+    const gain = stampGain(placed, ox, oy);
     return gain >= 1 && gain <= budget && !cornerTouch(placed, w, h, ox, oy);
   };
 
@@ -328,7 +328,7 @@ function growCave(space: Mask, w: number, h: number, target: number, rng: Rng): 
       for (const idx of frontier) {
         const ox = idx % w;
         const oy = (idx - ox) / w;
-        const gain = stampGain(placed, w, ox, oy);
+        const gain = stampGain(placed, ox, oy);
         if (gain === 0) continue;
         live.push(idx);
         if (gain > bestGain && gain <= budget && !cornerTouch(placed, w, h, ox, oy)) {
