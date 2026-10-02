@@ -102,6 +102,14 @@ describe('the setting', () => {
     expect(Settings.load().presentation.reachShading).toBe(true);
   });
 
+  it('names every ladder with a crawl rule, read off the ladder data', () => {
+    app.showSettings(() => app.showTypes());
+    const hint = settingsRow('Reach shading').querySelector('.settings-hint')!.textContent!;
+    const crawling = ladders.filter((t) => (t.reach ?? 0) > 0);
+    expect(crawling.length).toBeGreaterThan(2);
+    for (const type of crawling) expect(hint, type.id).toContain(type.name);
+  });
+
   it('reads a save from before it, or one holding anything but true or false, as off', () => {
     for (const presentation of [{}, { reachShading: 'yes' }]) {
       localStorage.setItem(

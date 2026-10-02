@@ -7,6 +7,7 @@
 
 import { RATIO_STEP } from '../../engine/settings.js';
 import { el } from '../dom.js';
+import { ladders } from '../ladders.js';
 import { reachSampleBoard, sampleBoard, samplePin } from '../preview.js';
 import {
   type CreatureGlyph,
@@ -27,6 +28,7 @@ import {
   REFUSAL_COLOR,
   TUTOR_COLOR,
 } from '../theme.js';
+import { listed } from '../words.js';
 import type { ScreenContext } from './context.js';
 import { type TakenColor, colorRow } from './customcolor.js';
 import { highlightChip } from './look.js';
@@ -160,6 +162,9 @@ export function startAtCeilingRow(ctx: ScreenContext, host: HTMLElement): void {
   );
 }
 
+/** The ladders with a crawl rule, by name: those the ladder data gives a reach. */
+const CRAWL_LADDERS = listed(ladders.filter((t) => (t.reach ?? 0) > 0).map((t) => t.name));
+
 /** Shading the cells out of reach, or not, each on a board with a crawl rule opened at one end. */
 export function reachShadingRow(ctx: ScreenContext, host: HTMLElement): void {
   const { p, currentTheme } = ctx;
@@ -175,7 +180,7 @@ export function reachShadingRow(ctx: ScreenContext, host: HTMLElement): void {
   wideRow(
     host,
     'Reach shading',
-    'On DUNGEON and PETRI DISH a cell opens only within reach of ground you have uncovered. ' +
+    `On ${CRAWL_LADDERS} a cell opens only within reach of ground you have uncovered. ` +
       'Shaded, the cells out of reach are darkened; the cursor crosses one out either way.',
     gallery(
       [
