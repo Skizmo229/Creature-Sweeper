@@ -209,10 +209,9 @@ export type MenuStrip = 'left' | 'sides' | 'all' | typeof OFF;
 const MENU_STRIPS: readonly MenuStrip[] = ['left', 'sides', 'all', OFF];
 
 /**
- * How large the interface's text can be set, as a multiple of the browser's
- * own size. Applied as the root font size, which every size in the stylesheet
- * is written against, so the HUD, the menus and this screen all follow it and
- * the board — a canvas, sized by its cells — does not.
+ * How large the interface's text can be set, as a multiple of the browser's own size. Applied as
+ * the root font size, which every size in the stylesheet is written against, so the HUD, the
+ * menus and this screen all follow it and the board, a canvas sized by its cells, does not.
  */
 export const MIN_TEXT_SIZE = 0.75;
 export const MAX_TEXT_SIZE = 1.75;
@@ -276,7 +275,7 @@ export const DEFAULT_SOUND_CHECK_VOLUME = 1;
  * mixer's limiter holds the peaks down, so a loud setting cannot clip or blast.
  */
 export const MAX_SFX_VOLUME = 3;
-/** The level every pack was voiced at, and what a save from before the setting reads as. */
+/** The level every pack was voiced at. */
 export const DEFAULT_SFX_VOLUME = 1;
 
 /**
@@ -379,14 +378,9 @@ export interface PresentationSettings {
   /** Size of the settings screen's example boards, as a multiple. */
   readonly previewSize: number;
   /**
-   * Silence everything, from the always-present speaker in the corner.
-   *
-   * Deliberately NOT the same thing as setting `sfx` to OFF, even though both
-   * end in silence. The pack is a taste — which of five voices the game
-   * speaks in — and muting is a circumstance: someone walked in, the room is
-   * quiet, it is late. Folding the second into the first would throw the
-   * player's chosen pack away every time they silenced the game for a minute,
-   * and there would be nothing to restore when they turned it back on.
+   * Silence everything, from the always-present speaker in the corner. Not the same as `sfx` set
+   * to OFF: the pack is a taste and muting a circumstance, so muting keeps the pack to come back
+   * to (decision 0024).
    */
   readonly muted: boolean;
   readonly soundCheck: SoundCheckSettings;
