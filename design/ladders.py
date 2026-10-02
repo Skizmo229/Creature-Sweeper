@@ -644,39 +644,13 @@ UNLOCKS = {
     "huge_blind": ["huge", "blind"],
 }
 
-# Boards cleared anywhere in the game, counting each board once. 0 means the
-# type has no board-count gate at all.
-#
-# Every five boards from 15 opens the next ladder in each menu category that
-# has one left (decision 0036), so a step offers a choice of what kind of
-# thing to play next rather than the next thing. It starts at 15 so the first
-# step arrives after EASY and half of NORMAL, not on EASY alone. Within a
-# category the order follows CATEGORIES, and BLIND waits one step past the
-# last of the rest, where its old Full Run gate used to put it: 1 HP with no
-# fighting is the game's hardest discipline, not its next lesson.
-#
-# The type gates alone offer 20 ladder boards (EASY, NORMAL), past the first
-# step at 15, and every step opens at least ten boards for the five it asks,
-# so the schedule is met without a single scaling board;
-# `test/unlocks.test.ts` walks it in order to check exactly that. Scaling
-# boards past 10 count too, for a player who would rather go deep.
-#
-# THE ORDER IS A DESIGN CHOICE, not the measured difficulty ranking (decision
-# 0018). It is set by hand to pace what the player meets. For reference, the
-# honest player from `sim:spells`, spell-less, 30 seeds a board, mean clear rate
-# over the tuned ten, ranks the ladders that used to be counted:
-#
-#   WRAPAROUND 99.0   DUNGEON 97.7   CHECKERBOARD 97.4   DIAMOND 95.5
-#   CROSS 94.0        CONGA LINE 92.8 HIVE 92.7          PAIRS 92.1
-#   RAGGED CAVE 89.0  DONUT 84.9
-#
-# Spell-less on purpose, so every ladder is measured by the same player; the
-# shaped ladders carry spells in play, which only makes them gentler than this.
-# HIVE and PAIRS are within the noise of each other. SUDOKU cannot be measured
-# on the same scale -- it is guess-free by construction -- so it closes its
-# category. DUNGEON, the second easiest, closes Magic: it carries spells and
-# the crawl rule, and by then the player has met every spell on ARCANE,
-# WORKOUT and ORACLE.
+# Boards cleared anywhere in the game, each counted once; 0 means the type has no board-count
+# gate. Every five boards from 15 opens the next ladder in each menu category that has one left,
+# in CATEGORIES's order, so a step offers a choice of what kind of thing to play next rather than
+# the next thing (decision 0036). It starts at 15 so the first step arrives after EASY and half of
+# NORMAL, not on EASY alone, and BLIND waits a step past the rest: 1 HP with no fighting is the
+# game's hardest discipline, not its next lesson. The order is set by hand to pace what the player
+# meets, not by measured difficulty (decision 0018); `test/unlocks.test.ts` walks it.
 BOARD_STEP = 5
 FIRST_STEP = 15
 BLIND_AFTER_STEPS = 1

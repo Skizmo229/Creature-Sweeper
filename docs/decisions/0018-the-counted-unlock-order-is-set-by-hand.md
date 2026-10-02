@@ -8,6 +8,16 @@ interest in; counting boards cleared anywhere lets them arrive from any directio
 easiest-first at first, and DOMINOES and PACKS were gated on clearing PAIRS until they joined the
 count.
 
+The easiest-first order was the honest player's, measured on 21 September 2026 with
+`npm run sim:spells`: spell-less, so every ladder met the same player, 30 seeds a board, the mean
+clear rate over the tuned ten. The shaped ladders carry spells in play, which only makes them
+gentler than this; HIVE and PAIRS are within the noise of each other; SUDOKU cannot be measured on
+this scale, being guess-free by construction.
+
+    WRAPAROUND 99.0   DUNGEON 97.7      CHECKERBOARD 97.4   DIAMOND 95.5
+    CROSS 94.0        CONGA LINE 92.8   HIVE 92.7           PAIRS 92.1
+    RAGGED CAVE 89.0  DONUT 84.9
+
 ## Decision
 WRAPAROUND 15, CROSS 20, HIVE 25, DIAMOND 30, PAIRS 35, DOMINOES 40, WORKOUT 45, PACKS 50, DONUT
 55, CHECKERBOARD 60, CONGA LINE 65, RAGGED CAVE 70, DUNGEON 75, SUDOKU 80, by request, and it does
