@@ -118,48 +118,6 @@ export function readBoard(game: Game, peek: boolean, options: ReadOptions = {}):
   return { constraints, touching, unknown, marked, ...countHiding(game, marked, flags) };
 }
 
-/** The constraints each of their unknown cells is under, each list in the constraints' order. */
-export function touchingOf<C extends { readonly unknown: readonly Cell[] }>(
-  constraints: readonly C[],
-): Map<Cell, C[]> {
-  const touching = new Map<Cell, C[]>();
-  for (const c of constraints) {
-    for (const n of c.unknown) {
-      const list = touching.get(n);
-      if (list) list.push(c);
-      else touching.set(n, [c]);
-    }
-  }
-  return touching;
-}
-
-/**
- * The open creatures joined to `start` through open creatures, which is how a pack shows: a flood
- * fill from `start`, adding each creature it reaches to `seen` and passing over those already in it.
- */
-export function openPiece(game: Game, start: Cell, seen: Set<Cell>): Cell[] {
-  const piece = [start];
-  seen.add(start);
-  for (let i = 0; i < piece.length; i++) {
-    for (const n of game.neighboursOf(piece[i]!)) {
-      if (n.open && n.tier > 0 && !seen.has(n)) {
-        seen.add(n);
-        piece.push(n);
-      }
-    }
-  }
-  return piece;
-}
-
-/** The one covered cell touching a piece; null when none does, or more than one. */
-export function soleCoveredRim(game: Game, piece: readonly Cell[]): Cell | null {
-  const rim = new Set<Cell>();
-  for (const c of piece) for (const n of game.neighboursOf(c)) if (!n.open) rim.add(n);
-  if (rim.size !== 1) return null;
-  const [only] = rim;
-  return only!;
-}
-
 /**
  * One visible number, less what is on show around it and the marks believed; null when nothing
  * around it is still covered. `shown` reads the count of creatures off a board that draws them.
@@ -219,6 +177,48 @@ function countHiding(
     totalHiding += t * left;
   }
   return { hiding, hidingMask, top, totalHiding };
+}
+
+/** The constraints each of their unknown cells is under, each list in the constraints' order. */
+export function touchingOf<C extends { readonly unknown: readonly Cell[] }>(
+  constraints: readonly C[],
+): Map<Cell, C[]> {
+  const touching = new Map<Cell, C[]>();
+  for (const c of constraints) {
+    for (const n of c.unknown) {
+      const list = touching.get(n);
+      if (list) list.push(c);
+      else touching.set(n, [c]);
+    }
+  }
+  return touching;
+}
+
+/**
+ * The open creatures joined to `start` through open creatures, which is how a pack shows: a flood
+ * fill from `start` that adds each creature it reaches to `seen` and passes over those in it.
+ */
+export function openPiece(game: Game, start: Cell, seen: Set<Cell>): Cell[] {
+  const piece = [start];
+  seen.add(start);
+  for (let i = 0; i < piece.length; i++) {
+    for (const n of game.neighboursOf(piece[i]!)) {
+      if (n.open && n.tier > 0 && !seen.has(n)) {
+        seen.add(n);
+        piece.push(n);
+      }
+    }
+  }
+  return piece;
+}
+
+/** The one covered cell touching a piece; null when none does, or more than one. */
+export function soleCoveredRim(game: Game, piece: readonly Cell[]): Cell | null {
+  const rim = new Set<Cell>();
+  for (const c of piece) for (const n of game.neighboursOf(c)) if (!n.open) rim.add(n);
+  if (rim.size !== 1) return null;
+  const [only] = rim;
+  return only!;
 }
 
 // ------------------------------------------------------------- candidate sets
